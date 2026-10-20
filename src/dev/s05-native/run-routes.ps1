@@ -10,8 +10,9 @@
 # Writes one result directory per run and summary.json under -Destination. Exit 1 (the kit
 # axis) when a build is refused or fails, a result has an error finding, a case does not
 # complete, a record set does not verify, an incremental equality claim is FAIL or BLOCKED,
-# an incremental route claim is FAIL, or a query equality, fact reproduction or dynamic SQL
-# claim is FAIL or BLOCKED. Requirement-axis results do not fail the run: language
+# an incremental route claim is FAIL, an incremental run lacks the mandatory reuse
+# observation (result r3, #217) or a case's observation claim is not PASS/NOT_CLAIMED, or a
+# query equality, fact reproduction or dynamic SQL claim is FAIL or BLOCKED. Requirement-axis results do not fail the run: language
 # expectation failures, query expectation claims (judged by `tsgk qualify` as Q) and a
 # route BLOCKED on an error tree are recorded in requirement_results, API claims (the
 # runtime node API disagreeing with its cursor) in api_findings, for disposition.
@@ -130,7 +131,9 @@ function New-Root($r) {
   return $root
 }
 
-function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, [string]$Format = '', $SvcContext = $null) {
+# #217: every Add-Result run requires the logger observation of each native parse (result
+# r3); the large AUTO inputs (no edits) stay without the logger.
+function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [string]$Output, $Cases, $Decls, [string]$Format = '', $SvcContext = $null, [bool]$Observe = $true) {
   # the profile requires byte-ascending paths
   $sorted = [Collections.Generic.List[object]]::new()
   foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
@@ -147,6 +150,7 @@ function Invoke-Profile($r, [string]$Root, [string]$Id, [string]$Operation, [str
   $cliArgs = @('incremental', '--root', $Root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
     '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache)
   if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
+  if ($Observe) { $cliArgs += '--reuse-observation' }
   $line = & $cli @cliArgs
   $code = $LASTEXITCODE
   $res = $line | ConvertFrom-Json
@@ -230,7 +234,13 @@ function Add-Result([string]$Label, $Run) {
       steps = @($res.build.steps | ForEach-Object { [ordered]@{ name = $_.name; status = $_.result.status; exit = $_.result.exit_code; wall_ms = $_.result.wall_ms } }) }
   }
   foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $script:summary.failures += "${Label}: $($f.code)" } }
+  # #217: the mandatory observation axis is a kit axis, checked apart from the verdict so a
+  # grammar requirement failure stays a requirement result
+  $schema = $(if ($res.PSObject.Properties['result_schema']) { $res.result_schema } else { $null })
+  if ($schema -ne 'tsgk-incremental-result/r3') { $script:summary.failures += "${Label}: result $schema without mandatory reuse observation" }
   foreach ($c in @($res.cases)) {
+    $observed = $(if ($c.PSObject.Properties['reuse_observation_claim']) { $c.reuse_observation_claim } else { $null })
+    if ($observed -notin @('PASS', 'NOT_CLAIMED')) { $script:summary.failures += "$Label/$($c.id): reuse observation $observed $($c.code)" }
     $fails = @($c.expectations | Where-Object { $_.result -ne 'PASS' } | ForEach-Object { "step $($_.step): $($_.result) $($_.detail)" })
     $entry.cases += [ordered]@{ id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code; claims = $c.claims; expectation_failures = $fails
       steps = @($c.steps | ForEach-Object { [ordered]@{ step = $_.step; has_error = $(if ($_.incremental) { $_.incremental.has_error } else { $null }); digest = $(if ($_.incremental) { $_.incremental.digest } else { $null }); equal = $(if ($_.comparison) { $_.comparison.equal } else { $null }); reused = $(if ($_.route) { $_.route.reused_nodes } else { $null })
@@ -433,7 +443,7 @@ if ($Large -and -not $IsWindows) {
     $cases += [ordered]@{ id = $fx.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = $sha; bytes = $bytes.Length }; edits = @()
       points = @($fx.points | ForEach-Object { [ordered]@{ id = $_.id; byte = $_.byte } }); expect = @($fx.expect | ForEach-Object { [ordered]@{ step = 0; syntax = $_.syntax; contains = @(); declarations = $_.declarations } }) }
   }
-  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r3' 'auto' $cases (Get-Declarations $r.route)
+  $run = Invoke-Profile $r $root 's05-large' 'real-world-source-r3' 'auto' $cases (Get-Declarations $r.route) -Observe $false
   if (-not @($run.res.cases).Count) { $summary.failures += "large: $($run.res.execution_status) build or refusal" }
   foreach ($c in @($run.res.cases)) {
     $t = if (@($c.steps).Count) { $c.steps[0].incremental } else { $null }

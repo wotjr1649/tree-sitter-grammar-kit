@@ -27,7 +27,11 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 	if e != nil {
 		return e
 	}
-	if top.ResultSchema != "tsgk-incremental-result/r2" || top.ReuseObservationPolicy != reuseobs.Policy || len(top.ObservationRunID) == 0 || len(top.ObservationRunID) > 128 {
+	schema := "tsgk-incremental-result/r2"
+	if x.mandatoryObservation {
+		schema = "tsgk-incremental-result/r3"
+	}
+	if top.ResultSchema != schema || top.ReuseObservationPolicy != reuseobs.Policy || len(top.ObservationRunID) == 0 || len(top.ObservationRunID) > 128 {
 		return fail(KindUnsupported, "OBSERVATION_SCHEMA_UNSUPPORTED", path, nil)
 	}
 	return nil
@@ -203,17 +207,22 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		}
 	}
 	var claim string
-	g.check(len(c.ReuseObservationClaim) > 0 && c.ReuseObservationClaim[0] == '"' && jsonv2.Unmarshal(c.ReuseObservationClaim, &claim) == nil && claim == reuseobs.Judge(all), c.ID, "OBSERVATION_CLAIM_MISMATCH", "관측 판정이 별도 축의 재계산과 다르다")
+	want := reuseobs.Judge(all)
+	if x.mandatoryObservation {
+		want, _ = mandatoryObservations(c)
+	}
+	g.check(len(c.ReuseObservationClaim) > 0 && c.ReuseObservationClaim[0] == '"' && jsonv2.Unmarshal(c.ReuseObservationClaim, &claim) == nil && claim == want, c.ID, "OBSERVATION_CLAIM_MISMATCH", "관측 판정이 별도 축의 재계산과 다르다")
 	if len(groups) > 0 {
 		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
-	for _, start := range slices.Sorted(maps.Keys(groups)) {
+	starts := slices.Sorted(maps.Keys(groups))
+	for i, start := range starts {
 		steps := groups[start]
 		path := fmt.Sprintf("responses/%05d-%s.json", index, c.ID)
 		if len(c.Segments) > 0 {
 			path = fmt.Sprintf("responses/%05d-%s-segment-%05d.json", index, c.ID, start)
 		}
-		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest); e != nil {
+		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest, c.ExecutionStatus == StatusCompleted || i < len(starts)-1); e != nil {
 			return e
 		}
 	}
@@ -221,8 +230,10 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 }
 
 // Only the versioned observation projection is decoded here; native trees are still
-// judged from the recorded public trees by the existing twelve-field comparator.
-func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest string) *Error {
+// judged from the recorded public trees by the existing twelve-field comparator. Under r4
+// the last response of a case that ended early (finished false) may keep its unfinished last
+// step, which steps_completed omits, only with a noncomplete response status.
+func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest string, finished bool) *Error {
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
 		g.fail(id, "OBSERVATION_RESPONSE_MISSING", "관측 원 응답이 등록되지 않았다")
@@ -233,6 +244,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 		return e
 	}
 	var wire struct {
+		Status         string  `json:"status"`
 		Protocol       string  `json:"protocol"`
 		ID             string  `json:"id"`
 		Complete       *bool   `json:"complete"`
@@ -244,7 +256,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 	count := 0
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
-		case "protocol", "id", "producer", "complete", "steps_completed":
+		case "protocol", "id", "producer", "complete", "steps_completed", "status":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), &wire)
 		}
 		return nil
@@ -277,7 +289,33 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 	if e != nil {
 		return e
 	}
-	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && wire.StepsCompleted != nil && *wire.StepsCompleted == uint64(count) && wire.Protocol == "tsgk-native/r3" && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
+	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, x.mandatoryObservation && !finished)
+	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == "tsgk-native/r3" && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
+}
+
+// mandatoryObservations recomputes the r4 case claim (#217) and each step's claim from the
+// recorded observations with the live rule (reuseobs.CaseClaim); their binding and agreement
+// with the raw responses are the reuse-observation gate's (replayObservations). An unreadable
+// step list reads as missing.
+func mandatoryObservations(c *rcCase) (string, []string) {
+	steps := make([]reuseobs.Step, len(c.Steps))
+	claims := make([]string, len(c.Steps))
+	for i, s := range c.Steps {
+		var observations []reuseobs.Observation
+		if len(s.Observations) > 0 && jsonv2.Unmarshal(s.Observations, &observations) != nil {
+			observations = nil
+		}
+		steps[i] = reuseobs.Step{Native: s.Incremental != nil || s.Composite != nil && s.Composite.Inline != nil, Edit: s.Step > 0 && !s.Restarted, Observations: observations}
+		claims[i] = reuseobs.CaseClaim(steps[i:i+1], true)
+	}
+	return reuseobs.CaseClaim(steps, c.ExecutionStatus == StatusCompleted), claims
+}
+
+// stepsCounted reports whether a raw response's steps_completed fits its count steps: all of
+// them, or, when an unfinished last step is allowed (the last native response of an r4 case
+// that ended early), all but that one in a RESOURCE_LIMIT or FAILED response.
+func stepsCounted(completed uint64, count int, status string, unfinished bool) bool {
+	return completed == uint64(count) || unfinished && count > 0 && completed == uint64(count-1) && (status == StatusResourceLimit || status == StatusFailed)
 }

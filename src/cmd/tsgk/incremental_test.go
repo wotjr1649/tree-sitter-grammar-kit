@@ -313,7 +313,7 @@ func testCLIReuseReplay(t *testing.T, out string, profile, published, source []b
 	if err := json.Unmarshal(published, &top); err != nil {
 		t.Fatal(err)
 	}
-	if top.ResultSchema != "tsgk-incremental-result/r2" || top.ObservationRunID == "" || top.ReuseObservationPolicy != "tsgk-reuse-log/r1" || top.Cases[0].ReuseObservationClaim != "PASS" {
+	if top.ResultSchema != "tsgk-incremental-result/r3" || top.ObservationRunID == "" || top.ReuseObservationPolicy != "tsgk-reuse-log/r1" || top.Cases[0].ReuseObservationClaim != "PASS" {
 		t.Fatalf("observation stdout contract: %+v", top)
 	}
 	if err := os.WriteFile(filepath.Join(out, "workload.json"), profile, 0o644); err != nil {
@@ -344,7 +344,7 @@ func testCLIReuseReplay(t *testing.T, out string, profile, published, source []b
 			policy = id.SHA256
 		}
 	}
-	reg, err := json.Marshal(map[string]any{"schema": kit.ReplaySchema, "id": "cli-reuse-replay", "reducer": "native-result-r3", "operation": "evidence-replay",
+	reg, err := json.Marshal(map[string]any{"schema": kit.ReplaySchema, "id": "cli-reuse-replay", "reducer": "native-result-r4", "operation": "evidence-replay",
 		"subject":    map[string]any{"run": "cli-test", "attempt": 1, "platform": top.Platform, "commit": "fixture", "evidence_mode": "NEW_RUN", "execution_status": "COMPLETED", "assessment": "PASS"},
 		"identities": map[string]string{"workload": sum(profile), "policy": policy, "operation": prof.Operation, "platform": top.Platform, "producer": top.Build.Identity, "executable": top.Build.ExecutableSHA256, "compiler": top.Build.Compiler.SHA256, "runtime": top.Build.RuntimeCommit}, "records": nil, "members": members})
 	if err != nil {

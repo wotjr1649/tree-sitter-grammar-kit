@@ -17,7 +17,9 @@ import (
 // requirement_results for disposition and never appended to failures. Everything else
 // that fails the job today (set verification, error findings, a non-completed case,
 // incremental equality FAIL/BLOCKED, incremental route FAIL, query equality, fact
-// reproduction and dynamic SQL FAIL/BLOCKED, a build refusal) still does.
+// reproduction and dynamic SQL FAIL/BLOCKED, a build refusal) still does, and so does the
+// mandatory reuse observation axis of an incremental run (#217): a result without it or a
+// case observation claim other than PASS/NOT_CLAIMED, even with a BLOCKED route.
 
 // psRouteRun is the pwsh harness: it defines run-routes.ps1's result functions from the
 // script's own AST (the script itself builds every route) and feeds them synthetic runs.
@@ -48,7 +50,7 @@ type routeRunSummary struct {
 }
 
 func rrCase(id, eq, route, code string, oracle map[string]string) map[string]any {
-	c := map[string]any{"id": id, "execution_status": "COMPLETED", "assessment": "FAIL", "code": code,
+	c := map[string]any{"id": id, "execution_status": "COMPLETED", "assessment": "FAIL", "code": code, "reuse_observation_claim": "PASS",
 		"claims":       map[string]string{"incremental_equality": eq, "incremental_route": route, "expectations": "NOT_CLAIMED"},
 		"expectations": []any{}, "steps": []any{}}
 	if oracle != nil {
@@ -84,9 +86,21 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		c["segments"] = []any{map[string]any{"start_step": 0, "end_step": 2, "claims": map[string]string{"incremental_equality": eq, "incremental_route": route, "expectations": "PASS"}}}
 		return c
 	}
+	observed := func(id, claim string) map[string]any {
+		c := rrCase(id, "PASS", "BLOCKED", "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1", nil)
+		c["reuse_observation_claim"] = claim
+		if claim == "" {
+			delete(c, "reuse_observation_claim")
+		}
+		return c
+	}
 	runs := map[string]any{
 		"incremental": []any{map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": filepath.Join(dir, "r"), "res": map[string]any{
-			"execution_status": "COMPLETED", "assessment": "FAIL", "build": nil, "findings": []any{}, "cases": []any{
+			"result_schema": "tsgk-incremental-result/r3", "execution_status": "COMPLETED", "assessment": "FAIL", "build": nil, "findings": []any{}, "cases": []any{
+				observed("obs-fail", "FAIL"),
+				observed("obs-blocked", "BLOCKED"),
+				observed("obs-missing", ""),
+				observed("obs-not-claimed", "NOT_CLAIMED"),
 				rrCase("route-fail", "PASS", "FAIL", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1", nil),
 				rrCase("route-blocked", "PASS", "BLOCKED", blocked, nil),
 				rrCase("eq-blocked", "BLOCKED", "PASS", "", nil),
@@ -94,7 +108,9 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 				segmentCase("segment-eq-blocked", "BLOCKED", "PASS", nil),
 				segmentCase("segment-route-fail", "PASS", "FAIL", nil),
 				segmentCase("segment-route-blocked", "PASS", "BLOCKED", nil),
-			}}}}},
+			}}}},
+			map[string]any{"label": "legacy", "run": map[string]any{"code": 0, "out": filepath.Join(dir, "legacy"), "res": map[string]any{
+				"result_schema": "tsgk-incremental-result/r1", "execution_status": "COMPLETED", "assessment": "PASS", "build": nil, "findings": []any{}, "cases": []any{}}}}},
 		"oracle": []any{
 			map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": out, "res": map[string]any{
 				"execution_status": "COMPLETED", "assessment": "FAIL", "set": map[string]any{"valid": true}, "build": nil, "findings": []any{}, "cases": []any{
@@ -151,13 +167,15 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		"oracle bad: SET_BROKEN", "oracle bad: record set not verified", "oracle bad: FAILED build or refusal",
 		"r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "r/segment-route-fail segment [0,2): incremental PASS/FAIL",
 		"oracle r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "oracle r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "oracle r/segment-route-fail segment [0,2): incremental PASS/FAIL",
+		"r/obs-fail: reuse observation FAIL", "r/obs-blocked: reuse observation BLOCKED", "r/obs-missing: reuse observation", "legacy: result tsgk-incremental-result/r1 without mandatory reuse observation",
 	} {
 		if !has(want) {
 			t.Errorf("kit-axis failure %q not recorded: %q", want, s.Failures)
 		}
 	}
 	for _, f := range s.Failures {
-		if strings.Contains(f, "query_expectations") || strings.Contains(f, "route-blocked") || strings.Contains(f, "r/q-fail:") {
+		if strings.Contains(f, "query_expectations") || strings.Contains(f, "route-blocked") || strings.Contains(f, "r/q-fail:") || strings.Contains(f, "obs-not-claimed") ||
+			strings.HasPrefix(f, "r: result") {
 			t.Errorf("requirement-axis result failed the job: %q", f)
 		}
 	}
@@ -165,7 +183,12 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 	for _, r := range s.Requirements {
 		got[r.Case+" "+r.Claim] = r.Result + " " + r.Code + " " + strings.Join(r.Failures, ";")
 	}
+	unverified := "BLOCKED INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1 "
 	want := map[string]string{
+		"r/obs-fail incremental_route":                                   unverified,
+		"r/obs-blocked incremental_route":                                unverified,
+		"r/obs-missing incremental_route":                                unverified,
+		"r/obs-not-claimed incremental_route":                            unverified,
 		"oracle r/q-fail query_expectations":                             "FAIL ORACLE_CLAIM_FAILED q.x step 0: FAIL capture 0",
 		"r/route-blocked incremental_route":                              "BLOCKED " + blocked + " ",
 		"oracle r/route-blocked incremental_route":                       "BLOCKED " + blocked + " ",
@@ -196,5 +219,8 @@ func TestRunRoutesFailureAxesGuard(t *testing.T) {
 	}
 	if strings.Count(routes, "Add-RequirementResult ") != 2 {
 		t.Error("both result functions must record requirement results")
+	}
+	if !strings.Contains(routes, "if ($Observe) { $cliArgs += '--reuse-observation' }") || strings.Count(routes, "-Observe $false") != 1 || !strings.Contains(routes, "$observed -notin @('PASS', 'NOT_CLAIMED')") {
+		t.Error("incremental runs must require reuse observation (only the large AUTO run opts out) and fail on its claim")
 	}
 }

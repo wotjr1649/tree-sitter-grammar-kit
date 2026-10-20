@@ -1,14 +1,18 @@
 package native
 
-import "github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
+import (
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
+)
 
-// observeCase keeps the logger judgement separate from all existing case gates.
+// observeCase sets the case's mandatory observation claim (#217) and folds it into a
+// completed case's assessment last, so every return path of a case, segment or batch frame
+// keeps it: a FAIL replaces the code of a case it turns from another assessment to FAIL.
 func (x Context) observeCase(c *CaseResult) {
 	if x.Protocol != ProtocolR3 {
 		return
 	}
-	var all []reuseobs.Observation
-	missing := false
+	steps := make([]reuseobs.Step, len(c.Steps))
 	for i := range c.Steps {
 		s := &c.Steps[i]
 		native := s.Incremental != nil || s.Composite != nil && s.Composite.Inline != nil
@@ -25,23 +29,21 @@ func (x Context) observeCase(c *CaseResult) {
 					Status: "UNAVAILABLE", Reason: "NO_NATIVE_PARSE", Counts: &reuseobs.Counts{}})
 			}
 		}
-		roles := []string{"initial"}
-		if s.Step > 0 && !s.Restarted {
-			roles = []string{"incremental", "fresh"}
-		}
-		if len(s.Observations) != len(roles) {
-			missing = true
-		} else {
-			for j, role := range roles {
-				if s.Observations[j].Role != role || native == (s.Observations[j].Reason == "NO_NATIVE_PARSE") {
-					missing = true
-				}
-			}
-		}
-		all = append(all, s.Observations...)
+		steps[i] = reuseobs.Step{Native: native, Edit: s.Step > 0 && !s.Restarted, Observations: s.Observations}
 	}
-	c.ReuseObservationClaim = reuseobs.Judge(all)
-	if missing && c.ReuseObservationClaim != ClaimFail {
-		c.ReuseObservationClaim = ClaimBlocked
+	completed := c.ExecutionStatus == kit.StatusCompleted
+	c.ReuseObservationClaim = reuseobs.CaseClaim(steps, completed)
+	if !completed {
+		return
+	}
+	switch c.ReuseObservationClaim {
+	case ClaimFail:
+		if c.Assessment != kit.AssessFail {
+			c.Assessment, c.Code = kit.AssessFail, "REUSE_OBSERVATION_FAILED"
+		}
+	case ClaimBlocked:
+		if c.Assessment == kit.AssessPass {
+			c.Assessment, c.Code = kit.AssessBlocked, "REUSE_OBSERVATION_LIMIT"
+		}
 	}
 }
