@@ -481,10 +481,12 @@ func validCorpusProcess(r runner.Result, bytes uint64) bool {
 }
 
 // corpusProfiles reads the plan's pinned profiles beside the plan and checks that they are
-// registered, allowed and cover exactly the expected cases; execution and replay share it.
+// registered, allowed, agree on one producer per route and cover exactly the expected cases,
+// an SVC case with its pinned source; execution and replay share it.
 func corpusProfiles(profileRoot *os.Root, plan corpusPlan, expected map[string]corpusExpected) ([]kit.OracleProfile, error) {
 	profiles := []kit.OracleProfile{}
 	seen := map[string]bool{}
+	producers := map[string]kit.IncrementalProfile{}
 	var profileBytes uint64
 	for _, p := range plan.Profiles {
 		if p.Bytes > 67108864-profileBytes {
@@ -505,13 +507,19 @@ func corpusProfiles(profileRoot *os.Root, plan corpusPlan, expected map[string]c
 		if !corpusProfileAllowed(prof) {
 			return nil, errors.New("CORPUS_PROFILE_POLICY_MISMATCH")
 		}
+		// one build per route serves every profile of that route
+		if first, ok := producers[prof.Native.Route]; ok && (first.Symbol != prof.Native.Symbol || first.Compiler != prof.Native.Compiler || !slices.Equal(first.Grammar, prof.Native.Grammar)) {
+			return nil, errors.New("CORPUS_PRODUCER_MISMATCH")
+		}
+		producers[prof.Native.Route] = prof.Native
 		for _, c := range prof.Native.Cases {
 			e, ok := expected[c.ID]
 			route := prof.Native.Route
 			if prof.Native.Format == kit.SvcFormat {
 				route = "svc"
 			}
-			if !ok || seen[c.ID] || e.Route != route || e.Encoding != c.Encoding || e.Input != c.Input || len(c.Edits) != 0 || len(c.Points) != 0 || len(c.Expect) != 0 {
+			// the profile parser binds a present svc_source to the input pin; an SVC case must carry it
+			if !ok || seen[c.ID] || e.Route != route || e.Encoding != c.Encoding || e.Input != c.Input || len(c.Edits) != 0 || len(c.Points) != 0 || len(c.Expect) != 0 || (route == "svc") != (c.SvcSource != nil) {
 				return nil, errors.New("CORPUS_PROFILE_SET_MISMATCH")
 			}
 			seen[c.ID] = true

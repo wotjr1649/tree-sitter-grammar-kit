@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -16,7 +17,7 @@ import (
 // corpusTestProfile writes beside the plan a corpus-mode profile of the registered route that
 // covers exactly the given cases, as executeCorpus requires, and returns its pin. The caller
 // runs from the repository root, where the route registry is read.
-func corpusTestProfile(t *testing.T, dir string, cases ...corpusExpected) pinnedFile {
+func corpusTestProfile(t *testing.T, dir, name string, source []byte, edit func(map[string]any), cases ...corpusExpected) pinnedFile {
 	t.Helper()
 	data, err := os.ReadFile("src/contracts/native-routes.json")
 	if err != nil {
@@ -50,15 +51,21 @@ func corpusTestProfile(t *testing.T, dir string, cases ...corpusExpected) pinned
 		"queries": []any{}, "fact_pack": nil, "api": true, "cases": list}
 	if cases[0].Route == "svc" {
 		doc["format"] = kit.SvcFormat
+		for _, c := range list {
+			c["svc_source"] = base64.StdEncoding.EncodeToString(source)
+		}
+	}
+	if edit != nil {
+		edit(doc)
 	}
 	b, err := json.Marshal(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, "profile.json"), b, 0600); err != nil {
+	if err = os.WriteFile(filepath.Join(dir, name), b, 0600); err != nil {
 		t.Fatal(err)
 	}
-	return pinnedFile{Path: "profile.json", SHA: digest(b), Bytes: uint64(len(b))}
+	return pinnedFile{Path: name, SHA: digest(b), Bytes: uint64(len(b))}
 }
 
 // This is a data-only replay fixture, not an observation of native execution.
@@ -123,7 +130,7 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 				pe.Route = "svc"
 			}
 			if mutation != "profile_missing" {
-				plan.Profiles = []pinnedFile{corpusTestProfile(t, dir, pe)}
+				plan.Profiles = []pinnedFile{corpusTestProfile(t, dir, "profile.json", source, nil, pe)}
 			}
 			if mutation == "profile_bytes" {
 				write(filepath.Join(dir, "profile.json"), []byte("{}"))
@@ -203,6 +210,59 @@ func TestCorpusReplayRejectsBindingAndCSTTampering(t *testing.T) {
 			}
 			if want, ok := map[string]string{"profile_missing": "CORPUS_REPLAY_PLAN_INVALID", "profile_case": "CORPUS_PROFILE_SET_MISMATCH", "profile_route": "CORPUS_PROFILE_SET_MISMATCH", "profile_bytes": "PINNED_INPUT_SIZE_MISMATCH"}[mutation]; ok && err.Error() != want {
 				t.Fatalf("mutation=%s err=%v, want %s", mutation, err, want)
+			}
+		})
+	}
+}
+
+// The shared profile check holds one producer per route and the pinned source of an SVC case,
+// which execution needs and replay must not skip.
+func TestCorpusProfilesSharedChecks(t *testing.T) {
+	t.Chdir("../../..")
+	src := []byte("<%@ ServiceHost Service=\"A\" %>")
+	in := kit.NativeInput{Path: "input", Role: "case", SHA256: digest(src), Bytes: uint64(len(src))}
+	a := corpusExpected{ID: "a", Route: "csharp", Encoding: kit.EncodingUTF8, Input: in}
+	b := corpusExpected{ID: "b", Route: "csharp", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "other", Role: "case", SHA256: digest(src), Bytes: uint64(len(src))}}
+	svc := corpusExpected{ID: "s", Route: "svc", Encoding: kit.EncodingUTF8, Input: in}
+	otherCompiler := func(doc map[string]any) {
+		doc["compiler"] = kit.ToolIdentity{Name: "cc", Version: "other", SHA256: strings.Repeat("b", 64), Bytes: 1}
+	}
+	noSource := func(doc map[string]any) {
+		for _, c := range doc["cases"].([]map[string]any) {
+			delete(c, "svc_source")
+		}
+	}
+	for _, tc := range []struct {
+		name  string
+		build func(dir string) []pinnedFile
+		cases []corpusExpected
+		want  string
+	}{
+		{"same-producer", func(dir string) []pinnedFile {
+			return []pinnedFile{corpusTestProfile(t, dir, "a.json", src, nil, a), corpusTestProfile(t, dir, "b.json", src, nil, b)}
+		}, []corpusExpected{a, b}, ""},
+		{"compiler-differs", func(dir string) []pinnedFile {
+			return []pinnedFile{corpusTestProfile(t, dir, "a.json", src, nil, a), corpusTestProfile(t, dir, "b.json", src, otherCompiler, b)}
+		}, []corpusExpected{a, b}, "CORPUS_PRODUCER_MISMATCH"},
+		{"svc-with-source", func(dir string) []pinnedFile { return []pinnedFile{corpusTestProfile(t, dir, "s.json", src, nil, svc)} }, []corpusExpected{svc}, ""},
+		{"svc-without-source", func(dir string) []pinnedFile {
+			return []pinnedFile{corpusTestProfile(t, dir, "s.json", src, noSource, svc)}
+		}, []corpusExpected{svc}, "CORPUS_PROFILE_SET_MISMATCH"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			plan := corpusPlan{Profiles: tc.build(dir)}
+			expected := map[string]corpusExpected{}
+			for _, e := range tc.cases {
+				expected[e.ID] = e
+			}
+			root, err := os.OpenRoot(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			if _, err = corpusProfiles(root, plan, expected); (err == nil) != (tc.want == "") || err != nil && err.Error() != tc.want {
+				t.Fatalf("err=%v want %q", err, tc.want)
 			}
 		})
 	}
