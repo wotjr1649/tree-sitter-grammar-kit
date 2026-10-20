@@ -357,6 +357,15 @@ func reducerTable() map[string]reducer {
 		return replayNativeResult(x)
 	}
 	t[r.info.ID] = r
+	r4 := r
+	r4.info.ID, r4.info.Revision = "native-result-r4", "r4"
+	r4.info.Inputs = []string{"tsgk-incremental-result/r3 result.json", "tsgk-incremental/r2 or r1 workload profile", "tsgk-native/r3 responses"}
+	r4.info.Description += "; r4 (#217): every native parse must be observed, an error-tree BLOCKED route needs the old tree observed passed, and the observation claim folds into the case verdict"
+	r4.run = func(x *replayEnv) *Error {
+		x.mandatoryObservation = true
+		return r.run(x)
+	}
+	t[r4.info.ID] = r4
 	return t
 }
 
@@ -419,6 +428,7 @@ type replayEnv struct {
 
 	nativeInputBytes     uint64
 	reuseObservation     bool
+	mandatoryObservation bool // r4: the observation claim is mandatory and folds into the verdict
 	observationResponses map[string]bool
 	queryReference       *QueryReferenceConnectionResult
 }

@@ -475,6 +475,12 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		}
 	}
 	var claims, recorded []string // recomputed claims; recorded-only claims
+	var observed []string         // r4: each step's mandatory observation claim
+	if x.mandatoryObservation {
+		var claim string
+		claim, observed = mandatoryObservations(c)
+		claims = append(claims, claim)
+	}
 	segments := [][2]int{}
 	if x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat {
 		segments = svcNativeSegments(c.Steps)
@@ -541,6 +547,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
 			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
 			v := routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental)
+			if v == claimBlocked && observed != nil && observed[k+1] != claimPass && observed[k+1] != claimBlocked {
+				v = claimFail // r4: an error-tree BLOCKED needs the old tree observed passed
+			}
 			ir = worseClaim(ir, v)
 			if seg := segmentAt(k + 1); seg != nil {
 				seg.IncrementalRoute = worseClaim(seg.IncrementalRoute, v)
@@ -1242,7 +1251,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.reuseObservation {
+	if x.mandatoryObservation {
+		wantSchema = "tsgk-incremental-result/r3"
+	} else if x.reuseObservation {
 		wantSchema = "tsgk-incremental-result/r2"
 	}
 	if top.Schema != ReportSchema || top.ResultSchema != wantSchema || (!x.reuseObservation && (top.ReuseObservationPolicy != "" || top.ObservationRunID != "")) {

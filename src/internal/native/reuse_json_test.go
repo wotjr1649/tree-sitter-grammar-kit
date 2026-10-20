@@ -40,8 +40,10 @@ func TestNativeReuseJSONKeepsBlockedRoutes(t *testing.T) {
 				t.Fatalf("JSON %s collector: %+v %+v", tc.id, inc, fresh)
 			}
 			if omit {
-				if r.ReuseObservationClaim != ClaimFail || inc.OldTree || inc.Counts.NewParse != 1 || inc.Counts.Accepted != 0 {
-					t.Fatal("JSON old-tree omission undetected")
+				// #217: the omitted old tree is a kit FAIL, not hidden behind the error-tree BLOCKED
+				if r.ReuseObservationClaim != ClaimFail || inc.OldTree || inc.Counts.NewParse != 1 || inc.Counts.Accepted != 0 ||
+					r.Assessment != kit.AssessFail || r.Claims.IncrementalRoute != ClaimFail || r.Code != "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1" {
+					t.Fatalf("JSON old-tree omission undetected: assessment=%s route=%s code=%s", r.Assessment, r.Claims.IncrementalRoute, r.Code)
 				}
 			} else if r.Assessment != kit.AssessBlocked || r.Claims.IncrementalRoute != ClaimBlocked || r.ReuseObservationClaim != ClaimPass || !inc.OldTree || inc.Counts.ParseAfterEdit != 1 || inc.Counts.Accepted == 0 || r.Steps[1].Route.ReusedNodes != 0 {
 				t.Fatalf("JSON %s existing BLOCKED or separate logger evidence changed", tc.id)

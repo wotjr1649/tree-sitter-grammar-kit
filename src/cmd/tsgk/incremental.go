@@ -47,7 +47,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	runWall := fs.Int("run-wall", 0, "seconds; narrows the operation run wall (0 keeps it)")
 	var reuseObservation bool
 	if kind == "incremental" {
-		fs.BoolVar(&reuseObservation, "reuse-observation", false, "record bounded public logger observations (result r2)")
+		fs.BoolVar(&reuseObservation, "reuse-observation", false, "require bounded public logger observations of every native parse (result r3)")
 	}
 	var pack *string
 	var sourceWitness bool

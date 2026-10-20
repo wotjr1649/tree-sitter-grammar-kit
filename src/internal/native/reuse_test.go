@@ -79,14 +79,18 @@ func TestNativeReuseObservations(t *testing.T) {
 			x := testContext("native-parse-edit")
 			x.Protocol, x.ObservationRunID = ProtocolR3, req.ObservationRunID
 			r := b.RunCase(context.Background(), x, kit.IncrementalCase{ID: req.ID, Encoding: req.Encoding, Edits: req.Edits}, req.Source)
-			want := ClaimBlocked
-			if tc.name == "normal" {
-				want = ClaimPass
+			// #217: in a completed case only a collection cap is BLOCKED; a missing logger or
+			// an unknown format is a kit FAIL folded into the case verdict
+			want, assessment := ClaimFail, kit.AssessFail
+			switch tc.status {
+			case "COMPLETE":
+				if tc.name == "normal" {
+					want, assessment = ClaimPass, kit.AssessPass
+				}
+			case "TRUNCATED", "OVERFLOW":
+				want, assessment = ClaimBlocked, kit.AssessBlocked
 			}
-			if tc.name == "omit-old" {
-				want = ClaimFail
-			}
-			if r.ReuseObservationClaim != want || len(r.Steps) != 2 || r.Claims.IncrementalEquality != ClaimPass {
+			if r.ReuseObservationClaim != want || r.Assessment != assessment || len(r.Steps) != 2 || r.Claims.IncrementalEquality != ClaimPass {
 				t.Fatalf("host projection/claim: %+v", r)
 			}
 		})

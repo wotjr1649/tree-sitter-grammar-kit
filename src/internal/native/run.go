@@ -446,7 +446,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	out.ExecutionStatus = kit.StatusCompleted
 	blocked := ""
 	if len(c.Edits) > 0 {
-		blocked = judgeIncremental(&out)
+		blocked = judgeIncremental(&out, x.Protocol == ProtocolR3)
 	}
 	if svc != nil {
 		out.Expectations, out.Claims.Expectations = evaluateSvc(c.Expect, checked.Steps, svc)
@@ -475,8 +475,10 @@ func finishCase(out *CaseResult, blocked string) {
 
 // judgeIncremental sets the incremental_equality and incremental_route claims of a
 // completed case with edits and the code of the first failing step; it returns the code
-// of the first blocked route step, which is the case code only when nothing fails.
-func judgeIncremental(out *CaseResult) string {
+// of the first blocked route step, which is the case code only when nothing fails. With
+// mandatory observation (observed) an error-tree step is BLOCKED only when its parses are
+// observed with the old tree actually passed (#217); a failed observation fails the route.
+func judgeIncremental(out *CaseResult, observed bool) string {
 	blocked := ""
 	out.Claims.IncrementalEquality, out.Claims.IncrementalRoute = ClaimPass, ClaimPass
 	for k, s := range out.Steps[1:] {
@@ -488,7 +490,15 @@ func judgeIncremental(out *CaseResult) string {
 				out.Code = fmt.Sprintf("INCREMENTAL_FRESH_MISMATCH_STEP_%d", s.Step)
 			}
 		}
-		switch stepRoute(out.Steps[k], s) {
+		v := stepRoute(out.Steps[k], s)
+		if ov := reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: s.Observations}}, true); v == ClaimBlocked && observed && ov != ClaimPass && ov != ClaimBlocked {
+			out.Claims.IncrementalRoute = ClaimFail
+			if out.Code == "" {
+				out.Code = fmt.Sprintf("%s%d", oldTreeUnverifiedPrefix, s.Step)
+			}
+			continue
+		}
+		switch v {
 		case ClaimFail:
 			out.Claims.IncrementalRoute = ClaimFail
 			if out.Code == "" {
@@ -507,6 +517,10 @@ func judgeIncremental(out *CaseResult) string {
 // routeUnobservablePrefix starts the code of a case whose first blocked route step is the
 // suffix: the step reused no node and its old or new full tree has an error.
 const routeUnobservablePrefix = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_"
+
+// oldTreeUnverifiedPrefix starts the code of a case whose first failing step would be an
+// error-tree BLOCKED but its observation does not show the old tree passed (#217).
+const oldTreeUnverifiedPrefix = "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_"
 
 // stepRoute judges the incremental route of edit step s, whose old tree is the
 // incremental tree of step old. A proven route passes. An instrumented edit with changes

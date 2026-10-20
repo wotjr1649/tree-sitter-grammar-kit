@@ -4,7 +4,7 @@
 
 ## #197 logger 관측의 offline validator
 
-`src/kit/reuseobs`는 native host와 offline replay가 공유하는 실험적 pure Go validator다. `Observation`, `Counts`, `Binding`, `Decode`와 `Judge` 및 고정 schema/policy/runtime·수집 상한, 기록된 관측을 읽을 runtime manifest를 판정하는 `VerifiedRuntimeManifest`를 제공한다. `Decode`는 호출자가 독립적으로 검증한 입력·build·run·history·role의 `Binding`과 versioned 관측을 대조하며, `Judge`는 유효한 수집과 actual old-tree 전달의 별도 축만 판정한다. event 수로 공개 node 재사용·구문 적합성·성능을 판정하지 않는다. 자체 구조 검증은 실행의 인증을 대신하지 않으며 연결되지 않은 관측을 `Judge`에 제공하는 것만으로 workload 결속을 주장할 수 없다. package는 파일·process·network를 사용하지 않는다. native 실행·logger 설치는 계속 CLI의 별도 process 경계 안에 있고 `TestOfflineClosure`의 기존 금지는 유지한다. 구체적인 값·상태는 [native protocol](tree-and-adapter-protocol.md), 공개 replay 선택자는 [identity/evidence](identity-and-evidence.md)가 소유한다.
+`src/kit/reuseobs`는 native host와 offline replay가 공유하는 실험적 pure Go validator다. `Observation`, `Counts`, `Binding`, `Decode`와 `Judge` 및 고정 schema/policy/runtime·수집 상한, 기록된 관측을 읽을 runtime manifest를 판정하는 `VerifiedRuntimeManifest`를 제공한다. `Decode`는 호출자가 독립적으로 검증한 입력·build·run·history·role의 `Binding`과 versioned 관측을 대조하며, `Judge`는 유효한 수집과 actual old-tree 전달의 별도 축만 판정한다(결과 r2의 의미). `Mandatory`·`CaseClaim`·`Step`은 모든 native parse 관측을 필수로 요구하는 결과 r3의 판정이며(#217), 역할 순서 누락과 host marker 모순도 판정한다. event 수로 공개 node 재사용·구문 적합성·성능을 판정하지 않는다. 자체 구조 검증은 실행의 인증을 대신하지 않으며 연결되지 않은 관측을 `Judge`에 제공하는 것만으로 workload 결속을 주장할 수 없다. package는 파일·process·network를 사용하지 않는다. native 실행·logger 설치는 계속 CLI의 별도 process 경계 안에 있고 `TestOfflineClosure`의 기존 금지는 유지한다. 구체적인 값·상태는 [native protocol](tree-and-adapter-protocol.md), 공개 replay 선택자는 [identity/evidence](identity-and-evidence.md)가 소유한다.
 
 ## S01 함수와 소유권
 

@@ -161,11 +161,11 @@ cache record는 caller-owned 비적대적 directory 안의 신뢰 기준이다. 
 
 ### `incremental --reuse-observation` (#197)
 
-이 boolean flag는 incremental에서만 허용한다. 생략하면 기존 `tsgk-incremental-result/r1`과 native r1을 그대로 사용한다. 지정하면 native r3를 요청하고 `tsgk-incremental-result/r2`를 기록한다. workload profile revision과 기존 실행 권한·경로·한도는 바꾸지 않는다. oracle record는 이 flag를 usage error로 거부한다.
+이 boolean flag는 incremental에서만 허용한다. 생략하면 기존 `tsgk-incremental-result/r1`과 native r1을 그대로 사용한다. 지정하면 native r3를 요청하고 `tsgk-incremental-result/r3`(#217)를 기록한다. workload profile revision과 기존 실행 권한·경로·한도는 바꾸지 않는다. oracle record는 이 flag를 usage error로 거부한다. 결과 r3는 모든 native parse의 관측을 필수로 요구하고 관측 claim을 사례 판정에 접는다([tree/protocol](tree-and-adapter-protocol.md) `필수 관측 판정`). 관측을 별도 축으로만 기록하던 결과 r2는 더 만들지 않으며 기존 기록은 `native-result-r3`로 당시 의미대로 replay한다.
 
-결과 r2는 최상위 `reuse_observation_policy:"tsgk-reuse-log/r1"`, `observation_run_id`, step별 `observations`, case별 `reuse_observation_claim`을 더한다. run ID는 invocation마다 생성한 correlation ID이고 모든 실제 parse의 producer SHA는 검증된 build identity다. 배치와 SVC reference도 같은 정책·run ID를 전달한다. SVC segment의 원 응답은 `responses/<case-index>-<case-id>-segment-<start-step>.json`에 따로 보존한다. source 검사 등으로 parse를 시작하지 못하고 관측 step도 없으면 claim은 `NOT_CLAIMED`다.
+결과 r3는 최상위 `reuse_observation_policy:"tsgk-reuse-log/r1"`, `observation_run_id`, step별 `observations`, case별 `reuse_observation_claim`을 더한다. run ID는 invocation마다 생성한 correlation ID이고 모든 실제 parse의 producer SHA는 검증된 build identity다. 배치와 SVC reference도 같은 정책·run ID를 전달한다. SVC segment의 원 응답은 `responses/<case-index>-<case-id>-segment-<start-step>.json`에 따로 보존한다. source 검사 등으로 parse를 시작하지 못하고 관측 step도 없으면 claim은 `NOT_CLAIMED`다.
 
-관측 claim은 완료된 native 관측의 initial/fresh `new_parse`·old-tree 없음·accept event 0, incremental `parse_after_edit`·실제 old-tree 전달을 확인하면 PASS다. 완료 관측에서 그 경로가 다르면 FAIL, native 관측 수집이 불완전하면 BLOCKED, host-only 단계뿐이면 NOT_CLAIMED다. FAIL이 BLOCKED보다 우선한다. native 없는 host marker는 별도 경로 판정에서 제외하므로 SVC의 전체 history 재사용을 주장하지 않는다. 이 claim은 기존 `claims` 세 축과 case/run assessment를 대체하거나 승격하지 않는다. full CST 12-field 비교와 기존 public `TSNode.id` route 판정은 그대로이며 JSON repair-close/break-close/repair-colon의 기존 BLOCKED도 유지한다. event 수를 고유 node 수·재사용률·속도 개선으로 표시하지 않는다.
+결과 r3의 관측 claim과 사례 판정 fold는 [tree/protocol](tree-and-adapter-protocol.md) `필수 관측 판정`이 정한다. 완료 사례의 logger 누락·형식 미상·역할과 모순된 old-tree 인자는 수집 상한과 무관하게 FAIL이며 단순 관측 한도가 아니다. full CST 12-field 비교와 public `TSNode.id` route 증명은 그대로다. 정상 관측을 가진 JSON repair-close/break-close/repair-colon의 오류 tree route BLOCKED는 유지된다. event 수를 고유 node 수·재사용률·속도 개선으로 표시하지 않는다. 결과 r2에서 이 claim은 사례 판정을 바꾸지 않는 별도 축이었고, 불완전 수집은 BLOCKED였다. 그 기록은 `native-result-r3`가 당시 의미대로 replay한다.
 
 ## S06 구현 — oracle record, oracle profile r2
 

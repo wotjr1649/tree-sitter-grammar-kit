@@ -233,7 +233,7 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 }
 
 func svcSegmentCode(code string, start int) string {
-	for _, prefix := range []string{"INCREMENTAL_FRESH_MISMATCH_STEP_", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_", routeUnobservablePrefix} {
+	for _, prefix := range []string{"INCREMENTAL_FRESH_MISMATCH_STEP_", "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_", routeUnobservablePrefix, oldTreeUnverifiedPrefix} {
 		if strings.HasPrefix(code, prefix) {
 			if step, err := strconv.Atoi(strings.TrimPrefix(code, prefix)); err == nil {
 				return prefix + strconv.Itoa(start+step)

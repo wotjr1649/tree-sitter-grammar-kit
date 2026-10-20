@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 // routeCase is a completed case with two edit steps whose incremental trees carry the given
@@ -57,7 +58,7 @@ func TestIncrementalRouteOnErrorTree(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := routeCase(tc.hasError, tc.routes)
-			blocked := judgeIncremental(out)
+			blocked := judgeIncremental(out, false)
 			if out.Claims.IncrementalRoute != tc.claim || out.Code != tc.code || blocked != tc.blocked || out.Claims.IncrementalEquality != ClaimPass {
 				t.Fatalf("claims %+v code %q blocked %q, want route %s code %q blocked %q", out.Claims, out.Code, blocked, tc.claim, tc.code, tc.blocked)
 			}
@@ -81,7 +82,7 @@ func TestIncrementalRouteNeedsFullTrees(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			out := routeCase(tc.hasError, [2]*Route{notReused, reused})
 			out.Steps[tc.summary].Incremental.Form = "summary"
-			blocked := judgeIncremental(out)
+			blocked := judgeIncremental(out, false)
 			if out.Claims.IncrementalRoute != ClaimFail || out.Code != "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1" || blocked != "" {
 				t.Fatalf("claims %+v code %q blocked %q, want route FAIL", out.Claims, out.Code, blocked)
 			}
@@ -96,13 +97,13 @@ func TestBlockedRouteCode(t *testing.T) {
 	const code = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"
 	out := routeCase([3]bool{true, true, true}, [2]*Route{notReused, notReused})
 	out.Claims.Expectations = ClaimNotClaimed
-	finishCase(out, judgeIncremental(out))
+	finishCase(out, judgeIncremental(out, false))
 	if out.Assessment != kit.AssessBlocked || out.Code != code {
 		t.Fatalf("assessment %s code %q", out.Assessment, out.Code)
 	}
 	out = routeCase([3]bool{true, true, true}, [2]*Route{notReused, notReused})
 	out.Claims.Expectations = ClaimFail
-	blocked := judgeIncremental(out)
+	blocked := judgeIncremental(out, false)
 	out.Code = "EXPECTATION_FAILED"
 	finishCase(out, blocked)
 	if out.Assessment != kit.AssessFail || out.Code != "EXPECTATION_FAILED" {
@@ -113,7 +114,7 @@ func TestBlockedRouteCode(t *testing.T) {
 	out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
 	out.Claims.Expectations = ClaimNotClaimed
 	out.Steps[0].Incremental.Queries = []QueryOut{{ID: "q", Status: kit.StatusCompleted}}
-	finishCase(out, judgeIncremental(out))
+	finishCase(out, judgeIncremental(out, false))
 	if out.Code != code {
 		t.Fatalf("code %q before the oracle judgement", out.Code)
 	}
@@ -141,9 +142,91 @@ func TestIncrementalEqualityFold(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			out := routeCase([3]bool{}, [2]*Route{reused, reused})
 			out.Steps[1].Comparison, out.Steps[2].Comparison = tc.comps[0], tc.comps[1]
-			judgeIncremental(out)
+			judgeIncremental(out, false)
 			if out.Claims.IncrementalEquality != tc.claim || out.Code != tc.code || out.Claims.IncrementalRoute != ClaimPass {
 				t.Fatalf("claims %+v code %q, want equality %s code %q", out.Claims, out.Code, tc.claim, tc.code)
+			}
+		})
+	}
+}
+
+// observedPair is the incremental and fresh observation of an edit step; oldTree false is
+// the omitted old-tree fault.
+func observedPair(step int, oldTree bool, status string) []reuseobs.Observation {
+	base := reuseobs.Observation{Schema: reuseobs.Schema, Policy: reuseobs.Policy, RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256,
+		RequestID: "case", RunID: "run", ProducerSHA256: sha([]byte("producer")), Step: uint64(step), SourceSHA256: sha([]byte("new")), SourceBytes: 3,
+		Status: "COMPLETE", Events: 2, Bytes: 20, Counts: &reuseobs.Counts{NewParse: 1, Done: 1}}
+	inc, fresh := base, base
+	inc.Role, fresh.Role = "incremental", "fresh"
+	if oldTree {
+		old := sha([]byte("old"))
+		inc.OldTree, inc.OldSourceSHA256, inc.Counts = true, &old, &reuseobs.Counts{ParseAfterEdit: 1, Done: 1}
+	}
+	if status == "TRUNCATED" { // a capped prefix without the start event
+		inc.Status, inc.Reason, inc.Counts = "TRUNCATED", "MESSAGE_LIMIT", &reuseobs.Counts{Done: 1}
+	}
+	return []reuseobs.Observation{inc, fresh}
+}
+
+// With mandatory observation an error-tree step stays BLOCKED only when the old tree was
+// observed passed; an omitted old tree or a missing observation fails the route with its own
+// code, a collection cap keeps it BLOCKED, and a proven route is judged by the claim fold.
+func TestErrorTreeRouteNeedsObservedOldTree(t *testing.T) {
+	const blockedCode = "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1"
+	for _, tc := range []struct {
+		name         string
+		routes       [2]*Route
+		observations []reuseobs.Observation
+		claim, code  string
+		blocked      string
+	}{
+		{"observed", [2]*Route{notReused, reused}, observedPair(1, true, "COMPLETE"), ClaimBlocked, "", blockedCode},
+		{"omitted-old-tree", [2]*Route{notReused, reused}, observedPair(1, false, "COMPLETE"), ClaimFail, "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1", ""},
+		{"missing", [2]*Route{notReused, reused}, nil, ClaimFail, "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1", ""},
+		{"truncated", [2]*Route{notReused, reused}, observedPair(1, true, "TRUNCATED"), ClaimBlocked, "", blockedCode},
+		{"proven", [2]*Route{reused, reused}, observedPair(1, false, "COMPLETE"), ClaimPass, "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out := routeCase([3]bool{true, true, false}, tc.routes)
+			out.Steps[1].Observations = tc.observations
+			out.Steps[2].Observations = observedPair(2, true, "COMPLETE")
+			blocked := judgeIncremental(out, true)
+			if out.Claims.IncrementalRoute != tc.claim || out.Code != tc.code || blocked != tc.blocked {
+				t.Fatalf("claims %+v code %q blocked %q, want route %s code %q blocked %q", out.Claims, out.Code, blocked, tc.claim, tc.code, tc.blocked)
+			}
+		})
+	}
+	if got := svcSegmentCode("INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1", 2); got != "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_3" {
+		t.Fatalf("segment code %s", got)
+	}
+}
+
+// The mandatory observation claim folds into a completed case last: a FAIL turns a BLOCKED
+// case FAIL with the observation code, never weakens an earlier FAIL or its code, and a
+// case that ended early keeps its terminal verdict.
+func TestObservationClaimFold(t *testing.T) {
+	x := Context{Protocol: ProtocolR3}
+	for _, tc := range []struct {
+		name, status, assessment, code string
+		oldTree                        bool
+		wantAssessment, wantCode       string
+	}{
+		{"blocked-to-fail", kit.StatusCompleted, kit.AssessBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1", false, kit.AssessFail, "REUSE_OBSERVATION_FAILED"},
+		{"pass-to-fail", kit.StatusCompleted, kit.AssessPass, "", false, kit.AssessFail, "REUSE_OBSERVATION_FAILED"},
+		{"fail-kept", kit.StatusCompleted, kit.AssessFail, "EXPECTATION_FAILED", false, kit.AssessFail, "EXPECTATION_FAILED"},
+		{"observed", kit.StatusCompleted, kit.AssessPass, "", true, kit.AssessPass, ""},
+		{"ended-early", kit.StatusResourceLimit, kit.AssessBlocked, "PARSE_TIME_LIMIT", false, kit.AssessBlocked, "PARSE_TIME_LIMIT"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			initial := observedPair(0, false, "COMPLETE")[1]
+			initial.Role = "initial"
+			c := CaseResult{ID: "case", ExecutionStatus: tc.status, Assessment: tc.assessment, Code: tc.code, Steps: []StepResult{
+				{Incremental: &TreeOut{}, Observations: []reuseobs.Observation{initial}},
+				{Step: 1, Incremental: &TreeOut{}, Observations: observedPair(1, tc.oldTree, "COMPLETE")}}}
+			x.observeCase(&c)
+			x.observeCase(&c) // every return path may observe again
+			if c.Assessment != tc.wantAssessment || c.Code != tc.wantCode || c.ReuseObservationClaim != map[bool]string{true: ClaimPass, false: ClaimFail}[tc.oldTree] {
+				t.Fatalf("assessment %s code %q claim %s", c.Assessment, c.Code, c.ReuseObservationClaim)
 			}
 		})
 	}

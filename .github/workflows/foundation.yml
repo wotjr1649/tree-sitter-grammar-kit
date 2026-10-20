@@ -645,7 +645,8 @@ jobs:
           & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
           if ($LASTEXITCODE -ne 0) { throw 'run identity failed' }
           if ($routesExit -ne 0) { throw 'route run reported failures' }
-          # #197: logger observation is a separate axis; the three JSON route BLOCKEDs stay.
+          # #217: the route run above requires observation; the three JSON route BLOCKEDs stay
+          # with the old tree observed, and the omit-old control fails the route.
           $env:TSGK_NATIVE_REQUIRED = '1'
           $env:TSGK_CGROUP_PARENT = $cgroup
           $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'

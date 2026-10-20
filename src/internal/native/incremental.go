@@ -21,7 +21,11 @@ import (
 
 // ResultSchema is the published incremental result.
 const ResultSchema = "tsgk-incremental-result/r1"
-const ObservationResultSchema = "tsgk-incremental-result/r2"
+
+// ObservationResultSchema is the result of a run with mandatory reuse observation (#217):
+// the observation claim folds into the case verdict. r2, where it was a separate axis, is
+// replayed by native-result-r3 and no longer produced.
+const ObservationResultSchema = "tsgk-incremental-result/r3"
 
 var testHookOutputFinalization func(stage string, output, responses *outputDirectory)
 
