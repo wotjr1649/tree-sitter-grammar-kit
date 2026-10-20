@@ -115,6 +115,12 @@ func readBoundSource(root *os.Root, rel string, size int64) (data []byte, result
 	if !opened.Mode().IsRegular() {
 		return nil, errSourceLink
 	}
+	// r0 rejects hard links like the core guard; a same-bytes link would still pass the hash check
+	if links, err := sourceLinks(f); err != nil {
+		return nil, err
+	} else if links != 1 {
+		return nil, errSourceLink
+	}
 	if !os.SameFile(before, opened) {
 		return nil, errors.New("source file changed during lookup")
 	}

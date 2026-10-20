@@ -7,6 +7,15 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+// sourceLinks returns the hard link count of an opened source file.
+func sourceLinks(f *os.File) (uint64, error) {
+	var d windows.ByHandleFileInformation
+	if err := windows.GetFileInformationByHandle(windows.Handle(f.Fd()), &d); err != nil {
+		return 0, err
+	}
+	return uint64(d.NumberOfLinks), nil
+}
+
 func openSourceLeaf(parent *os.File, name string) (*os.File, error) {
 	u, err := windows.NewNTUnicodeString(name)
 	if err != nil {

@@ -300,7 +300,7 @@ func (t *corpusTree) consume(p corpusPage, inputBytes uint64) error {
 			f := p.CST.Fields[row[2]]
 			n.Field = &f
 		}
-		if (i == 0 && n.Parent != -1) || (i > 0 && (n.Parent < 0 || uint64(n.Parent) >= i)) || (n.Field != nil && (i == 0 || *n.Field == "")) || n.Type == "" {
+		if (i == 0 && n.Parent != -1) || (i > 0 && (n.Parent < 0 || uint64(n.Parent) >= i)) || (n.Field != nil && (i == 0 || *n.Field == "")) { // a type may be empty: alias(rule, "")
 			return errors.New("CST_PARENT_OR_FIELD_INVALID")
 		}
 		for len(t.stack) > 0 && t.stack[len(t.stack)-1] != n.Parent {

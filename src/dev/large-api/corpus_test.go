@@ -51,6 +51,16 @@ func TestCorpusPagesRecomputeCanonicalDigest(t *testing.T) {
 	}
 }
 
+func TestCorpusPageAcceptsEmptyAliasType(t *testing.T) {
+	p := publicPage()
+	p.CST.Types[1] = "" // the generator accepts alias(rule, "")
+	full := []kit.TreeNode{{Parent: -1, Type: "root", Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}, {Parent: 0, Type: "", Field: &p.CST.Fields[0], Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}}
+	tree := newCorpusTree()
+	if err := tree.consume(p, 1); err != nil || hex.EncodeToString(tree.h.Sum(nil)) != kit.TreeDigest(full) {
+		t.Fatalf("empty alias type page: %v", err)
+	}
+}
+
 func TestCorpusPageRejectsGapAndInvalidStructure(t *testing.T) {
 	changes := map[string]func(*corpusPage){
 		"gap":        func(p *corpusPage) { p.Start = 1 },
