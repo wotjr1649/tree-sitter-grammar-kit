@@ -474,7 +474,62 @@ func corpusPageRun(ctx context.Context, exe, sha, dir string, req native.Request
 
 func validCorpusProcess(r runner.Result, bytes uint64) bool {
 	op := kit.NativeOperations()["native-query-large"]
-	return r.Succeeded() && r.Reason == runner.ReasonExited && r.Cleanup.Scope == "JOB_OBJECT" && r.Cleanup.ResidualAfterExit == 0 && !r.StdoutTruncated && !r.StderrTruncated && r.StdoutBytes >= 0 && uint64(r.StdoutBytes) == bytes && r.StderrBytes >= 0 && r.StderrBytes <= 65536 && r.WallMillis >= 0 && r.WallMillis <= op.ParseWall.Milliseconds()+5000 && r.Memory.Enforcement == runner.MemoryHard && r.Memory.Limit == op.MemoryBytes && r.Memory.PeakKnown && !r.Memory.LimitHit && r.Memory.Peak <= r.Memory.Limit
+	// the whole cleanup receipt and backend are the ones the Windows job-object runner emits
+	c := r.Capabilities
+	return r.Succeeded() && r.Reason == runner.ReasonExited && r.Cleanup.Method == "JOB_OBJECT" && r.Cleanup.Scope == "JOB_OBJECT" && r.Cleanup.Detail == "" && r.Cleanup.ResidualAfterExit == 0 &&
+		c.Backend == "windows-job-object" && c.TreeCleanup == "JOB_OBJECT" && c.EscapedDescendants == runner.Contained && c.Memory == runner.MemoryHard && !r.StdoutTruncated && !r.StderrTruncated && r.StdoutBytes >= 0 && uint64(r.StdoutBytes) == bytes && r.StderrBytes >= 0 && r.StderrBytes <= 65536 && r.WallMillis >= 0 && r.WallMillis <= op.ParseWall.Milliseconds()+5000 && r.Memory.Enforcement == runner.MemoryHard && r.Memory.Limit == op.MemoryBytes && r.Memory.PeakKnown && !r.Memory.LimitHit && r.Memory.Peak <= r.Memory.Limit
+}
+
+// corpusProfiles reads the plan's pinned profiles beside the plan and checks that they are
+// registered, allowed, agree on one producer per route and cover exactly the expected cases,
+// an SVC case with its pinned source; execution and replay share it.
+func corpusProfiles(profileRoot *os.Root, plan corpusPlan, expected map[string]corpusExpected) ([]kit.OracleProfile, error) {
+	profiles := []kit.OracleProfile{}
+	seen := map[string]bool{}
+	producers := map[string]kit.IncrementalProfile{}
+	var profileBytes uint64
+	for _, p := range plan.Profiles {
+		if p.Bytes > 67108864-profileBytes {
+			return nil, errors.New("CORPUS_PROFILE_TOTAL_BYTES_LIMIT")
+		}
+		profileBytes += p.Bytes
+		b, err := readPinned(profileRoot, p, 16777216)
+		if err != nil {
+			return nil, err
+		}
+		prof, err := kit.ParseOracleProfile(b)
+		if err != nil {
+			return nil, err
+		}
+		if err = corpusRegisteredProfile(prof); err != nil {
+			return nil, err
+		}
+		if !corpusProfileAllowed(prof) {
+			return nil, errors.New("CORPUS_PROFILE_POLICY_MISMATCH")
+		}
+		// one build per route serves every profile of that route
+		if first, ok := producers[prof.Native.Route]; ok && (first.Symbol != prof.Native.Symbol || first.Compiler != prof.Native.Compiler || !slices.Equal(first.Grammar, prof.Native.Grammar)) {
+			return nil, errors.New("CORPUS_PRODUCER_MISMATCH")
+		}
+		producers[prof.Native.Route] = prof.Native
+		for _, c := range prof.Native.Cases {
+			e, ok := expected[c.ID]
+			route := prof.Native.Route
+			if prof.Native.Format == kit.SvcFormat {
+				route = "svc"
+			}
+			// the profile parser binds a present svc_source to the input pin; an SVC case must carry it
+			if !ok || seen[c.ID] || e.Route != route || e.Encoding != c.Encoding || e.Input != c.Input || len(c.Edits) != 0 || len(c.Points) != 0 || len(c.Expect) != 0 || (route == "svc") != (c.SvcSource != nil) {
+				return nil, errors.New("CORPUS_PROFILE_SET_MISMATCH")
+			}
+			seen[c.ID] = true
+		}
+		profiles = append(profiles, prof)
+	}
+	if len(seen) != len(expected) {
+		return nil, errors.New("CORPUS_PROFILE_CASE_MISSING")
+	}
+	return profiles, nil
 }
 
 func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnErr error) {
@@ -524,43 +579,9 @@ func executeCorpus(prepared, cc, work, out, rootName, planName string) (returnEr
 	if sourceBytes > kit.DefaultCorpusLimits().TotalBytes {
 		return errors.New("CORPUS_TOTAL_SOURCE_LIMIT")
 	}
-	profiles := []kit.OracleProfile{}
-	seen := map[string]bool{}
-	var profileBytes uint64
-	for _, p := range plan.Profiles {
-		if p.Bytes > 67108864-profileBytes {
-			return errors.New("CORPUS_PROFILE_TOTAL_BYTES_LIMIT")
-		}
-		profileBytes += p.Bytes
-		b, err := readPinned(profileRoot, p, 16777216)
-		if err != nil {
-			return err
-		}
-		prof, err := kit.ParseOracleProfile(b)
-		if err != nil {
-			return err
-		}
-		if err = corpusRegisteredProfile(prof); err != nil {
-			return err
-		}
-		if !corpusProfileAllowed(prof) {
-			return errors.New("CORPUS_PROFILE_POLICY_MISMATCH")
-		}
-		for _, c := range prof.Native.Cases {
-			e, ok := expected[c.ID]
-			route := prof.Native.Route
-			if prof.Native.Format == kit.SvcFormat {
-				route = "svc"
-			}
-			if !ok || seen[c.ID] || e.Route != route || e.Encoding != c.Encoding || e.Input != c.Input || len(c.Edits) != 0 || len(c.Points) != 0 || len(c.Expect) != 0 {
-				return errors.New("CORPUS_PROFILE_SET_MISMATCH")
-			}
-			seen[c.ID] = true
-		}
-		profiles = append(profiles, prof)
-	}
-	if len(seen) != len(expected) {
-		return errors.New("CORPUS_PROFILE_CASE_MISSING")
+	profiles, err := corpusProfiles(profileRoot, plan, expected)
+	if err != nil {
+		return err
 	}
 	root, err := os.OpenRoot(rootName)
 	if err != nil {

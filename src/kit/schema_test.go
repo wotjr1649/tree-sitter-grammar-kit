@@ -158,6 +158,18 @@ func withoutPaths(ds []SchemaDifference) string {
 	return string(data)
 }
 
+// The pinned v0.27.1 generator emits alias(rule, "") as a node and a reference with an empty
+// type (bot review of #238/#245): the exact generated node-types.json is a valid schema.
+func TestSchemaAcceptsEmptyAliasType(t *testing.T) {
+	generated := `[{"type":"doc","named":true,"root":true,"fields":{},"children":{"multiple":true,"required":false,"types":[{"type":"item","named":true}]}},` +
+		`{"type":"item","named":true,"fields":{},"children":{"multiple":false,"required":true,"types":[{"type":"","named":true}]}},` +
+		`{"type":"","named":true},{"type":";","named":false}]`
+	res, err := schemaCheck(t, generated)
+	if err != nil || res.Assessment != AssessPass || res.Input.Counts == nil || res.Input.Counts.Nodes != 4 {
+		t.Fatalf("empty alias type: %v %+v", err, res.Report)
+	}
+}
+
 // S03-A01/A02/A10: reordered keys, entries and unordered alternatives are the same static
 // contract; the same spelling with different named status is two identities.
 func TestSchemaEquivalence(t *testing.T) {
@@ -288,7 +300,6 @@ func TestSchemaInvalid(t *testing.T) {
 		{"entry-not-object", `[1]`, AssessFail, []string{"JSON_TYPE"}},
 		{"named-not-bool", `[{"type":"a","named":"yes"}]`, AssessFail, []string{"JSON_TYPE"}},
 		{"type-not-string", `[{"type":7,"named":true}]`, AssessFail, []string{"JSON_TYPE"}},
-		{"type-empty", `[{"type":"","named":true}]`, AssessFail, []string{"NODE_TYPE_EMPTY"}},
 		{"missing-type", `[{"named":true}]`, AssessFail, []string{"JSON_MISSING_FIELD"}},
 		{"missing-named", `[{"type":"a"}]`, AssessFail, []string{"JSON_MISSING_FIELD"}},
 		{"duplicate-node", `[{"type":"a","named":true},{"type":"a","named":true}]`, AssessFail, []string{"NODE_DUPLICATE"}},
@@ -457,8 +468,8 @@ func TestSchemaFindingBounds(t *testing.T) {
 	if res, _ := schemaCheck(t, only); res.Assessment != AssessBlocked {
 		t.Fatalf("only uninterpreted keys: %s", res.Assessment)
 	}
-	hidden := "[" + b.String() + `{"type":"","named":true}]`
-	if res, _ := schemaCheck(t, hidden); res.Assessment != AssessFail || hasCode(res.Findings, "NODE_TYPE_EMPTY") {
+	hidden := "[" + b.String() + `{"named":true}]`
+	if res, _ := schemaCheck(t, hidden); res.Assessment != AssessFail || hasCode(res.Findings, "JSON_MISSING_FIELD") {
 		t.Fatalf("violation beyond the kept findings: %s", res.Assessment)
 	}
 	d, err := schemaDiff(t, schemaBase, many)
