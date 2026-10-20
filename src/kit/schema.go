@@ -556,10 +556,9 @@ func parseNode(v *jv, add func(code, sev string, at *jv, suffix, msg string), co
 		case "type":
 			if val.kind != '"' {
 				add(jsonKindCode(val), "error", val, "", "type은 문자열이어야 한다")
-			} else if n.ref.typ = val.s; val.s == "" {
-				add("NODE_TYPE_EMPTY", "error", val, "", "type이 비어 있다")
 			} else {
-				typeOK = true
+				// an empty type is valid: the pinned generator emits alias(rule, "") as {"type": ""}
+				n.ref.typ, typeOK = val.s, true
 			}
 		case "named":
 			n.ref.named, namedOK = boolOf(val, add, "named는 boolean이어야 한다")
@@ -685,9 +684,8 @@ func parseRefs(v *jv, add func(code, sev string, at *jv, suffix, msg string), co
 				if val.kind != '"' {
 					add(jsonKindCode(val), "error", val, "", "type은 문자열이어야 한다")
 					good = false
-				} else if ref.typ = val.s; val.s == "" {
-					add("NODE_TYPE_EMPTY", "error", val, "", "type이 비어 있다")
-					good = false
+				} else {
+					ref.typ = val.s
 				}
 			case "named":
 				hasNamed = true
