@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -51,6 +53,57 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 	}
 	report.Metrics = metrics
 	return report, jobsData, core
+}
+
+func TestMarginJobsSettled(t *testing.T) {
+	_, jobsData, _ := marginFixture(t, "100")
+	var fixture struct {
+		Jobs []marginAPIJob `json:"jobs"`
+	}
+	if decode(jobsData, &fixture) != nil {
+		t.Fatal("fixture jobs")
+	}
+	dir := t.TempDir()
+	expected := filepath.Join(dir, "expected.json")
+	if err := os.WriteFile(expected, encoded(t, expectation()), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "margin", "metadata"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	cli := func(data []byte) int {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(dir, "margin", "metadata", "jobs.json"), data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		return run([]string{"margin-settled", "-expected", expected, "-history", filepath.Join(dir, "margin")}, io.Discard)
+	}
+	// the gate itself is still running and is not measured
+	if !marginJobsSettled(jobsData) || cli(jobsData) != 0 {
+		t.Fatal("settled snapshot rejected")
+	}
+	for name, mutate := range map[string]func(jobs []marginAPIJob) []marginAPIJob{
+		"job-running":  func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Status, jobs[7].End = "in_progress", ""; return jobs },
+		"job-no-end":   func(jobs []marginAPIJob) []marginAPIJob { jobs[8].End = ""; return jobs },
+		"step-running": func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Steps[0].Status = "in_progress"; return jobs },
+		"step-missing": func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Steps = nil; return jobs },
+		"job-missing":  func(jobs []marginAPIJob) []marginAPIJob { return jobs[1:] },
+	} {
+		t.Run(name, func(t *testing.T) {
+			jobs := slices.Clone(fixture.Jobs)
+			for i := range jobs {
+				jobs[i].Steps = slices.Clone(jobs[i].Steps)
+			}
+			jobs = mutate(jobs)
+			data := encoded(t, map[string]any{"total_count": len(jobs), "jobs": jobs})
+			if marginJobsSettled(data) || cli(data) != 3 {
+				t.Fatalf("%s snapshot treated as settled", name)
+			}
+		})
+	}
+	if cli([]byte("{")) != 3 {
+		t.Fatal("malformed snapshot treated as settled")
+	}
 }
 
 func TestMarginThresholdAndIndependentRuns(t *testing.T) {

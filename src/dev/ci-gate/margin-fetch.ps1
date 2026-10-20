@@ -6,7 +6,18 @@ function Get-CIMarginEvidence {
   $metadata = Join-Path $root 'metadata'
   New-Item -ItemType Directory -Path $metadata | Out-Null
   $endpoint = 'https://api.github.com/repos/wotjr1649/tree-sitter-grammar-kit/actions'
-  Get-CIGateFile -Client $Client -Uri "$endpoint/runs/$env:GITHUB_RUN_ID/attempts/$env:GITHUB_RUN_ATTEMPT/jobs?per_page=100" -Out (Join-Path $metadata 'jobs.json') -Limit 1048576 -Cancellation $Cancellation -Token $Token
+  # The jobs API can trail the finished producers this gate needs: fetch a new snapshot while it
+  # still shows a measured job or step running; the margin check itself stays unchanged.
+  $jobs = Join-Path $metadata 'jobs.json'
+  for ($try = 1; ; $try++) {
+    Get-CIGateFile -Client $Client -Uri "$endpoint/runs/$env:GITHUB_RUN_ID/attempts/$env:GITHUB_RUN_ATTEMPT/jobs?per_page=100" -Out $jobs -Limit 1048576 -Cancellation $Cancellation -Token $Token
+    & $Gate margin-settled -expected $Expected -history $root
+    if ($LASTEXITCODE -eq 0 -or ($LASTEXITCODE -eq 3 -and $try -ge 4)) { break }
+    if ($LASTEXITCODE -ne 3) { throw 'margin job settlement check failed' }
+    Remove-Item -LiteralPath $jobs
+    # inside the existing 120 s collection deadline; a longer API outage still fails below
+    if ($Cancellation.WaitHandle.WaitOne([TimeSpan]::FromSeconds(15))) { throw 'margin settlement deadline' }
+  }
   $cutoff = [DateTime]::UtcNow
   @{ cutoff = $cutoff.ToString('yyyy-MM-ddTHH:mm:ssZ') } | ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $metadata 'cutoff.json') -Encoding utf8NoBOM
   $window = [Uri]::EscapeDataString($cutoff.AddDays(-30).ToString('yyyy-MM-ddTHH:mm:ssZ') + '..' + $cutoff.ToString('yyyy-MM-ddTHH:mm:ssZ'))

@@ -61,8 +61,7 @@ jobs:
           GOSUMDB: sum.golang.org
         run: |
           # Only the modules pinned by go.mod/go.sum (golang.org/x/sys); later steps run with GOPROXY=off.
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -277,8 +276,7 @@ jobs:
           GOSUMDB: sum.golang.org
         run: |
           # Only the modules pinned by go.mod/go.sum (golang.org/x/sys); later steps run with GOPROXY=off.
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: go test -race (진단, CGO)
@@ -381,8 +379,7 @@ jobs:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
         run: |
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -478,8 +475,7 @@ jobs:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
         run: |
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -576,8 +572,7 @@ jobs:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
         run: |
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -767,8 +762,7 @@ jobs:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
         run: |
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -855,8 +849,7 @@ jobs:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
         run: |
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
@@ -872,6 +865,35 @@ jobs:
         with:
           pattern: s05-routes-*-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/qualification-hosts
+      - name: 세 host 근거 목록 지연 확인
+        id: hosts
+        if: ${{ needs.native-routes.result == 'success' && needs.native-routes-macos.result == 'success' }}
+        run: |
+          # The producers succeeded, but the artifact listing can trail them; wait once before qualify.
+          $hosts = Join-Path $env:RUNNER_TEMP 'qualification-hosts'
+          $missing = @('windows', 'linux', 'darwin') | Where-Object { -not (Test-Path -LiteralPath (Join-Path $hosts "s05-routes-$_-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT")) }
+          if ($missing) {
+            Write-Output "artifact listing missing $($missing -join ','); retrying once after 60 s"
+            Start-Sleep -Seconds 60
+          }
+          "missing=$($missing -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: 세 host 근거 다시 받기
+        if: ${{ steps.hosts.outputs.missing != '' && steps.hosts.outcome == 'success' }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: s05-routes-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification-hosts-retry
+      - name: 다시 받은 host 근거 반영
+        if: ${{ steps.hosts.outputs.missing != '' && steps.hosts.outcome == 'success' }}
+        env:
+          MISSING_HOSTS: ${{ steps.hosts.outputs.missing }}
+        run: |
+          # Only the hosts absent from the first download move in; already received hosts are kept.
+          foreach ($os in $env:MISSING_HOSTS.Split(',')) {
+            $name = "s05-routes-$os-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            $retry = Join-Path (Join-Path $env:RUNNER_TEMP 'qualification-hosts-retry') $name
+            if (Test-Path -LiteralPath $retry) { Move-Item -LiteralPath $retry -Destination (Join-Path (Join-Path $env:RUNNER_TEMP 'qualification-hosts') $name) } else { Write-Output "host evidence still missing: $os" }
+          }
       - name: 78칸 qualification 집계
         env:
           CANDIDATE: ${{ github.sha }}
@@ -951,8 +973,7 @@ jobs:
           $sha = git rev-parse HEAD
           if ($LASTEXITCODE -ne 0 -or $sha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
-          go mod download -json
-          if ($LASTEXITCODE -ne 0) { throw 'pinned module download failed' }
+          & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
           $env:GOPROXY = 'off'
