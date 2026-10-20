@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -130,6 +131,14 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			early(r[0], "OUTPUT_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"], r[0]["response_status"] = []any{}, []any{}, claimNotClaimed, StatusCompleted
 		}},
+		{name: "stepless-bogus-status", code: "OBSERVATION_RESPONSE_UNBOUND", record: func(r []map[string]any) { // no live end
+			early(r[0], "OUTPUT_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"], r[0]["response_status"] = []any{}, []any{}, claimNotClaimed, "BOGUS"
+		}},
+		{name: "stepless-other-code", code: "OBSERVATION_RESPONSE_UNBOUND", record: func(r []map[string]any) { // a parse limit keeps its steps
+			early(r[0], "PARSE_TIME_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+		}},
 		{name: "protocol-r2", code: "PROTOCOL_MISMATCH", manifest: func(m map[string]any) { m["protocol"] = "tsgk-native/r2" }},
 		{name: "other-run", code: "OBSERVATION_INVALID", manifest: func(m map[string]any) { m["producer"].(map[string]string)["observation_run_id"] = "other-run" }},
 		{name: "unbound-raw", code: "RESPONSE_UNBOUND", manifest: func(m map[string]any) { // never read, so never verified
@@ -164,5 +173,31 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				t.Fatalf("%s: mechanism %s, want %s in %v %+v", tc.name, cell.Mechanism, tc.code, setCodes(cell), cell.Set.Gates)
 			}
 		})
+	}
+}
+
+// steplessEnds selects the raw responses that dropped every step: a plain case without
+// steps by its response end, the last native segment of an early SVC case without a
+// recorded step of it by the case's end; nothing for a case or segment with steps.
+func TestSteplessEnds(t *testing.T) {
+	segments := []rcSvcSegment{{StartStep: 0, EndStep: 1}, {StartStep: 1, EndStep: 2}}
+	step := []observationStep{{}}
+	for _, tc := range []struct {
+		name   string
+		c      rcCase
+		groups map[int][]observationStep
+		want   map[string][2]string
+	}{
+		{"plain", rcCase{ID: "c", ResponseStatus: StatusResourceLimit, ResponseCode: "OUTPUT_LIMIT"}, nil,
+			map[string][2]string{"raw/00003-c.json": {StatusResourceLimit, "OUTPUT_LIMIT"}}},
+		{"plain-with-steps", rcCase{ID: "c", Steps: []rcStep{{}}}, map[int][]observationStep{0: step}, map[string][2]string{}},
+		{"svc-last-segment", rcCase{ID: "c", Segments: segments, ExecutionStatus: StatusResourceLimit, Code: "OUTPUT_LIMIT", Steps: []rcStep{{}}},
+			map[int][]observationStep{0: step}, map[string][2]string{"raw/00003-c-segment-00001.json": {StatusResourceLimit, "OUTPUT_LIMIT"}}},
+		{"svc-completed", rcCase{ID: "c", Segments: segments, ExecutionStatus: StatusCompleted}, map[int][]observationStep{0: step}, map[string][2]string{}},
+		{"svc-last-segment-with-steps", rcCase{ID: "c", Segments: segments, ExecutionStatus: StatusResourceLimit}, map[int][]observationStep{0: step, 1: step}, map[string][2]string{}},
+	} {
+		if got := steplessEnds(&tc.c, tc.groups, "raw/", 3); !maps.Equal(got, tc.want) {
+			t.Errorf("%s: %v, want %v", tc.name, got, tc.want)
+		}
 	}
 }

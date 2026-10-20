@@ -191,8 +191,10 @@ func qfxRaw(c map[string]any) []byte {
 	completed := len(steps)
 	if c["response_status"] != StatusCompleted && completed > 0 {
 		completed-- // the unfinished last step is kept but not counted
+	} else if completed == 0 {
+		completed = 1 // a response that dropped its steps keeps the earlier completed count
 	}
-	b, _ := json.Marshal(map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "producer": c["producer"], "steps": steps,
+	b, _ := json.Marshal(map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": c["producer"], "steps": steps,
 		"steps_completed": completed, "complete": true})
 	return b
 }

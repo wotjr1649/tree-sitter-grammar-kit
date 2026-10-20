@@ -218,11 +218,14 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	}
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
-	if path := fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID); len(c.Steps) == 0 && x.members[path].Role == "response" {
-		// a limit response that dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT, a query
-		// time limit) still binds to its case: no observation step, its recorded status
-		return x.compareObservationResponse(path, c, nil, top, manifest, "")
+	for path, end := range steplessEnds(c, groups, dir, index) {
+		if x.members[path].Role == "response" {
+			if e := x.compareObservationResponse(path, c, nil, top, manifest, "", end); e != nil {
+				return e
+			}
+		}
 	}
+	queries := x.observationWire == "tsgk-native/r4" // only r4 responses carry queries
 	for i, start := range starts {
 		steps := groups[start]
 		path := fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)
@@ -234,26 +237,55 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 			last := c.Steps[len(c.Steps)-1]
 			for _, t := range []*rcTree{last.Incremental, last.Fresh} {
 				if t != nil && open == "" {
-					var queries []string
+					var statuses []string
 					for _, q := range t.Queries {
-						queries = append(queries, q.Status)
+						if queries {
+							statuses = append(statuses, q.Status)
+						}
 					}
-					open = openStatus(t.Status, queries)
+					open = openStatus(t.Status, statuses)
 				}
 			}
 		}
-		if e := x.compareObservationResponse(path, c, steps, top, manifest, open); e != nil {
+		if e := x.compareObservationResponse(path, c, steps, top, manifest, open, [2]string{}); e != nil {
 			return e
 		}
 	}
 	return nil
 }
 
+// steplessEnds names each raw response of a case that dropped every step (Codex A217F/A217G)
+// with the end it must record: for a case without SVC segments and steps, the recorded
+// response status and code; for the last native segment of an early SVC case that recorded
+// no step of it, the case's status and code, which the segment's run set.
+func steplessEnds(c *rcCase, groups map[int][]observationStep, dir string, index int) map[string][2]string {
+	out := map[string][2]string{}
+	if len(c.Segments) == 0 {
+		if len(c.Steps) == 0 {
+			out[fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)] = [2]string{c.ResponseStatus, c.ResponseCode}
+		}
+		return out
+	}
+	if last := c.Segments[len(c.Segments)-1]; c.ExecutionStatus != StatusCompleted && groups[last.StartStep] == nil {
+		out[fmt.Sprintf("%s%05d-%s-segment-%05d.json", dir, index, c.ID, last.StartStep)] = [2]string{c.ExecutionStatus, c.Code}
+	}
+	return out
+}
+
+// steplessEnd reports whether live Check accepts a response without steps that ends with
+// status and code: an output, allocation or language limit, or a query time limit of a
+// revision with queries.
+func steplessEnd(status, code string, queries bool) bool {
+	return (status == StatusResourceLimit || status == StatusFailed) &&
+		(code == "OUTPUT_LIMIT" || code == "ALLOCATION_LIMIT" || code == "LANGUAGE_INCOMPATIBLE" || queries && code == "QUERY_TIME_LIMIT" && status == StatusResourceLimit)
+}
+
 // Only the versioned observation projection is decoded here; native trees are still
 // judged from the recorded public trees by the existing twelve-field comparator. Under r4
 // the last response of a case that ended early may keep its unfinished last step, which
 // steps_completed omits: open is that step's recorded noncomplete tree status, "" otherwise.
-func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []observationStep, top nativeResult, manifest, open string) *Error {
+// A response that dropped every step (want nil) must end with end, its recorded status and code.
+func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []observationStep, top nativeResult, manifest, open string, end [2]string) *Error {
 	id := c.ID
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
@@ -266,6 +298,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	}
 	var wire struct {
 		Status         string  `json:"status"`
+		Code           string  `json:"code"`
 		Protocol       string  `json:"protocol"`
 		ID             string  `json:"id"`
 		Complete       *bool   `json:"complete"`
@@ -277,7 +310,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	count, rawOpen := 0, ""
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
-		case "protocol", "id", "producer", "complete", "steps_completed", "status":
+		case "protocol", "id", "producer", "complete", "steps_completed", "status", "code":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), &wire)
 		}
 		return nil
@@ -308,11 +341,11 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		rawOpen = ""
 		for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
 			if t != nil && rawOpen == "" {
-				var queries []string
-				for _, q := range t.Queries {
-					queries = append(queries, q.Status)
+				var statuses []string
+				for _, q := range t.Queries { // a forged r3 query cannot open it: open ignores r3 queries
+					statuses = append(statuses, q.Status)
 				}
-				rawOpen = openStatus(t.Status, queries)
+				rawOpen = openStatus(t.Status, statuses)
 			}
 		}
 		got, err := decodeObservations(step.Observations, b, true)
@@ -323,8 +356,9 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		return e
 	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
-	if want == nil { // a stepless limit response: the recorded response status
-		counted = counted && wire.Status == c.ResponseStatus && wire.Status != StatusCompleted
+	if want == nil {
+		// live Check leaves steps_completed of a response that dropped its steps unconstrained
+		counted = wire.StepsCompleted != nil && [2]string{wire.Status, wire.Code} == end && steplessEnd(wire.Status, wire.Code, wire.Protocol == "tsgk-native/r4")
 	}
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true

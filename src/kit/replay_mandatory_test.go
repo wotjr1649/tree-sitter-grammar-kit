@@ -110,10 +110,11 @@ func TestReplayMandatoryObservationRevisions(t *testing.T) {
 // an early case whose trees all completed.
 func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	for _, tc := range []struct {
-		name              string
-		early, unfinished bool
-		valid             bool
-	}{{"resource-limit", true, true, true}, {"completed-short-count", false, false, false}, {"early-trees-complete", true, false, false}} {
+		name                     string
+		early, unfinished, query bool
+		valid                    bool
+	}{{"resource-limit", true, true, false, true}, {"completed-short-count", false, false, false, false}, {"early-trees-complete", true, false, false, false},
+		{"r3-query-limit", true, false, true, false}} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
 			c := f.cases[1]
@@ -131,6 +132,11 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit}
 				step["incremental"].(map[string]any)["status"], step["fresh"] = StatusResourceLimit, nil
 				step["route"], step["comparison"] = nil, nil
+			}
+			if tc.query { // r3 carries no queries: a forged query limit does not open the last step
+				limited := []any{map[string]any{"id": "q", "status": StatusResourceLimit}}
+				step["incremental"].(map[string]any)["queries"] = limited
+				wire["steps"].([]any)[1].(map[string]any)["incremental"] = map[string]any{"status": StatusCompleted, "queries": limited}
 			}
 			if tc.early {
 				c["execution_status"], c["assessment"], c["code"] = StatusResourceLimit, AssessBlocked, "PARSE_TIME_LIMIT"
