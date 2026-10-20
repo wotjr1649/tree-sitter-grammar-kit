@@ -222,7 +222,16 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		if len(c.Segments) > 0 {
 			path = fmt.Sprintf("responses/%05d-%s-segment-%05d.json", index, c.ID, start)
 		}
-		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest, c.ExecutionStatus == StatusCompleted || i < len(starts)-1); e != nil {
+		open := "" // r4: the recorded unfinished last step of an early case, by its tree status
+		if x.mandatoryObservation && c.ExecutionStatus != StatusCompleted && i == len(starts)-1 && len(c.Steps) > 0 {
+			last := c.Steps[len(c.Steps)-1]
+			for _, t := range []*rcTree{last.Incremental, last.Fresh} {
+				if t != nil && open == "" && t.Status != StatusCompleted {
+					open = t.Status
+				}
+			}
+		}
+		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest, open); e != nil {
 			return e
 		}
 	}
@@ -231,9 +240,9 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 
 // Only the versioned observation projection is decoded here; native trees are still
 // judged from the recorded public trees by the existing twelve-field comparator. Under r4
-// the last response of a case that ended early (finished false) may keep its unfinished last
-// step, which steps_completed omits, only with a noncomplete response status.
-func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest string, finished bool) *Error {
+// the last response of a case that ended early may keep its unfinished last step, which
+// steps_completed omits: open is that step's recorded noncomplete tree status, "" otherwise.
+func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest, open string) *Error {
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
 		g.fail(id, "OBSERVATION_RESPONSE_MISSING", "관측 원 응답이 등록되지 않았다")
@@ -253,7 +262,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 			ReuseObservation jsontext.Value `json:"reuse_observation"`
 		} `json:"producer"`
 	}
-	count := 0
+	count, rawOpen := 0, ""
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
 		case "protocol", "id", "producer", "complete", "steps_completed", "status":
@@ -268,6 +277,8 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 			SourceSHA256 string         `json:"source_sha256"`
 			Observations jsontext.Value `json:"observations"`
 			Edit         *rcEdit        `json:"edit"`
+			Incremental  *treeStatus    `json:"incremental"`
+			Fresh        *treeStatus    `json:"fresh"`
 		}
 		if e := decodeRecord(path, raw, &step); e != nil {
 			return e
@@ -282,6 +293,12 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 		if i > 0 {
 			b.PreviousSourceSHA256 = want[i-1].observations[0].SourceSHA256
 		}
+		rawOpen = ""
+		for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
+			if t != nil && rawOpen == "" && t.Status != StatusCompleted {
+				rawOpen = t.Status
+			}
+		}
 		got, err := decodeObservations(step.Observations, b, true)
 		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit), id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit가 원 응답과 다르다")
 		return x.r.check()
@@ -289,7 +306,7 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 	if e != nil {
 		return e
 	}
-	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, x.mandatoryObservation && !finished)
+	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == "tsgk-native/r3" && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
@@ -314,8 +331,16 @@ func mandatoryObservations(c *rcCase) (string, []string) {
 }
 
 // stepsCounted reports whether a raw response's steps_completed fits its count steps: all of
-// them, or, when an unfinished last step is allowed (the last native response of an r4 case
-// that ended early), all but that one in a RESOURCE_LIMIT or FAILED response.
-func stepsCounted(completed uint64, count int, status string, unfinished bool) bool {
-	return completed == uint64(count) || unfinished && count > 0 && completed == uint64(count-1) && (status == StatusResourceLimit || status == StatusFailed)
+// them, or all but the last when that step is unfinished in both the record (open, allowed
+// only for the last native response of an r4 case that ended early) and the raw response
+// (rawOpen, its last step's first noncomplete tree status), each the response's RESOURCE_LIMIT
+// or FAILED status, as live Check requires.
+func stepsCounted(completed uint64, count int, status, open, rawOpen string) bool {
+	return completed == uint64(count) || count > 0 && completed == uint64(count-1) &&
+		(status == StatusResourceLimit || status == StatusFailed) && open == status && rawOpen == status
+}
+
+// treeStatus is the only member of a raw response tree the short-count check reads.
+type treeStatus struct {
+	Status string `json:"status"`
 }

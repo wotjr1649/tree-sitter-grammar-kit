@@ -105,14 +105,15 @@ func TestReplayMandatoryObservationRevisions(t *testing.T) {
 }
 
 // A case that ended early keeps its unfinished last step in the raw response, which
-// steps_completed omits; r4 accepts it only for that case (Codex A217B P2), never for a
-// completed one.
+// steps_completed omits; r4 accepts the short count only when that step is unfinished in
+// both the record and the raw response (Codex A217B/A217D P2), never for a completed case or
+// an early case whose trees all completed.
 func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		early bool
-		valid bool
-	}{{"resource-limit", true, true}, {"completed-short-count", false, false}} {
+		name              string
+		early, unfinished bool
+		valid             bool
+	}{{"resource-limit", true, true, true}, {"completed-short-count", false, false, false}, {"early-trees-complete", true, false, false}} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
 			c := f.cases[1]
@@ -123,12 +124,15 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 				t.Fatal(err)
 			}
 			wire["steps_completed"], wire["status"] = 1, StatusResourceLimit
-			if tc.early {
+			if tc.unfinished {
 				observations[0].Status, observations[0].Reason, observations[0].Counts.Done = "UNAVAILABLE", "PARSE_INCOMPLETE", 0
 				observations[1].Status, observations[1].Reason, observations[1].Events, observations[1].Bytes, observations[1].Counts = "UNAVAILABLE", "PARSE_NOT_RUN", 0, 0, &reuseobs.Counts{}
-				wire["steps"].([]any)[1].(map[string]any)["observations"] = observations
+				raw := wire["steps"].([]any)[1].(map[string]any)
+				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit}
 				step["incremental"].(map[string]any)["status"], step["fresh"] = StatusResourceLimit, nil
 				step["route"], step["comparison"] = nil, nil
+			}
+			if tc.early {
 				c["execution_status"], c["assessment"], c["code"] = StatusResourceLimit, AssessBlocked, "PARSE_TIME_LIMIT"
 				c["claims"] = map[string]string{"incremental_equality": claimNotClaimed, "incremental_route": claimNotClaimed, "expectations": claimNotClaimed}
 				all := []reuseobs.Step{{Native: true, Observations: c["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)}, {Native: true, Edit: true, Observations: observations}}
@@ -150,27 +154,29 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	}
 }
 
-// Only the last native response of an early case may omit its unfinished step: a completed
-// segment before it, a completed case or a COMPLETED response must count every step (Codex
-// A217C P2). replayObservations passes unfinished only for the last group of such a case.
+// The short count needs the response's noncomplete status in both the recorded and the raw
+// last step: open is "" for a completed case, an earlier segment or a recorded step whose
+// trees completed (Codex A217C/A217D P2).
 func TestStepsCounted(t *testing.T) {
+	const rl = StatusResourceLimit
 	for _, tc := range []struct {
-		name       string
-		completed  uint64
-		count      int
-		status     string
-		unfinished bool
-		want       bool
+		name                  string
+		completed             uint64
+		count                 int
+		status, open, rawOpen string
+		want                  bool
 	}{
-		{"all-counted", 2, 2, StatusCompleted, false, true},
-		{"last-unfinished", 1, 2, StatusResourceLimit, true, true},
-		{"earlier-segment", 1, 2, StatusResourceLimit, false, false},
-		{"completed-status", 1, 2, StatusCompleted, true, false},
-		{"missing-status", 1, 2, "", true, false},
-		{"two-short", 0, 2, StatusResourceLimit, true, false},
-		{"empty", 0, 0, StatusResourceLimit, true, true},
+		{"all-counted", 2, 2, StatusCompleted, "", "", true},
+		{"last-unfinished", 1, 2, rl, rl, rl, true},
+		{"not-allowed", 1, 2, rl, "", rl, false},
+		{"raw-trees-complete", 1, 2, rl, rl, "", false},
+		{"other-status", 1, 2, rl, StatusFailed, rl, false},
+		{"completed-status", 1, 2, StatusCompleted, StatusCompleted, StatusCompleted, false},
+		{"missing-status", 1, 2, "", "", "", false},
+		{"two-short", 0, 2, rl, rl, rl, false},
+		{"empty", 0, 0, rl, "", "", true},
 	} {
-		if got := stepsCounted(tc.completed, tc.count, tc.status, tc.unfinished); got != tc.want {
+		if got := stepsCounted(tc.completed, tc.count, tc.status, tc.open, tc.rawOpen); got != tc.want {
 			t.Errorf("%s: got %v want %v", tc.name, got, tc.want)
 		}
 	}
