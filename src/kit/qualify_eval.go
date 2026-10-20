@@ -548,8 +548,8 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	if observe && (top.ObservationRunID == "" || len(top.ObservationRunID) > 128) {
 		add("OBSERVATION_RUN_UNBOUND", manPath, "관측 set에 observation run id가 없다")
 	}
-	var responses []string // r4: raw responses, each read once by the observation comparison
-	overResponses := map[string]bool{}
+	var responses []OracleMember   // r4: raw responses, each read once by the observation comparison
+	overCases := map[string]bool{} // a record or response beyond the limits: its raw stays unverified (BLOCKED)
 	ids := make([]string, len(w.Cases))
 	want := map[string]*QualCase{}
 	for i := range w.Cases {
@@ -597,7 +597,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		listed[full] = true
 		h.used[full] = true
 		if mem.Role != "record" && observe {
-			responses = append(responses, full) // registered below, before any record reads it
+			responses = append(responses, mem) // registered above, before any record reads it
 			continue
 		}
 		if mem.Role != "record" {
@@ -618,7 +618,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			return nil, e
 		}
 		if e != nil && e.Code == "FILE_BYTES_LIMIT" {
-			over = true
+			over, overCases[mem.Case] = true, true
 			s.Records++
 			perCase[mem.Case]++
 			next++
@@ -669,7 +669,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 					return nil, e
 				}
 				if e.Code == "FILE_BYTES_LIMIT" {
-					over, overResponses[x.overAt] = true, true // not verified: BLOCKED, never unbound
+					over, overCases[c.ID] = true, true // not verified: BLOCKED, never unbound
 				} else {
 					add(e.Code, full, "관측 원 응답을 확인하지 못했다")
 				}
@@ -698,9 +698,9 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			return nil, e
 		}
 	}
-	for _, path := range responses {
-		if !x.observationResponses[path] && !overResponses[path] {
-			add("RESPONSE_UNBOUND", path, "관측 원 응답이 case/segment와 결속되지 않았다")
+	for _, mem := range responses {
+		if !x.observationResponses[dir+mem.Path] && !overCases[mem.Case] {
+			add("RESPONSE_UNBOUND", dir+mem.Path, "관측 원 응답이 case/segment와 결속되지 않았다")
 		}
 	}
 	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})

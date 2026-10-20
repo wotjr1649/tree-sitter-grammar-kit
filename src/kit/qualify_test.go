@@ -167,20 +167,33 @@ func qfxObserve(c map[string]any) {
 // qfxRaw is a record's raw tsgk-native/r4 response, built from the (mutated) record: the
 // observation projection the qualification compares and each tree's status.
 func qfxRaw(c map[string]any) []byte {
-	var steps []any
+	steps := []any{}
 	for _, v := range c["steps"].([]any) {
 		s := v.(map[string]any)
 		status := func(t any) any {
-			if m, ok := t.(map[string]any); ok {
-				return map[string]any{"status": m["status"]}
+			m, ok := t.(map[string]any)
+			if !ok {
+				return nil
 			}
-			return nil
+			out := map[string]any{"status": m["status"]}
+			if qs, ok := m["queries"].([]any); ok {
+				var queries []any
+				for _, q := range qs {
+					queries = append(queries, map[string]any{"status": q.(map[string]any)["status"]})
+				}
+				out["queries"] = queries
+			}
+			return out
 		}
 		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
 			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})
 	}
+	completed := len(steps)
+	if c["response_status"] != StatusCompleted && completed > 0 {
+		completed-- // the unfinished last step is kept but not counted
+	}
 	b, _ := json.Marshal(map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "producer": c["producer"], "steps": steps,
-		"steps_completed": len(steps), "complete": true})
+		"steps_completed": completed, "complete": true})
 	return b
 }
 
@@ -272,7 +285,7 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 			}{{"record", rec}, {"raw", raw}}
 			if observe {
 				files[1].b = qfxRaw(c)
-				if !slices.ContainsFunc(c["steps"].([]any), func(s any) bool { return s.(map[string]any)["incremental"] != nil }) {
+				if steps := c["steps"].([]any); len(steps) > 0 && !slices.ContainsFunc(steps, func(s any) bool { return s.(map[string]any)["incremental"] != nil }) {
 					files = files[:1] // no native parse: no driver response
 				}
 			}

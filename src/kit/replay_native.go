@@ -151,6 +151,8 @@ type rcCase struct {
 	Case                  string           `json:"case"`
 	ID                    string           `json:"id"`
 	Input                 NativeInput      `json:"input"`
+	ResponseStatus        string           `json:"response_status"`
+	ResponseCode          string           `json:"response_code"`
 	ExecutionStatus       string           `json:"execution_status"`
 	Assessment            string           `json:"assessment"`
 	Code                  string           `json:"code"`

@@ -1,6 +1,8 @@
 package kit
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -38,6 +40,72 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			t.Fatalf("collection limit: mechanism %s %v", cell.Mechanism, setCodes(cell))
 		}
 	})
+	// Codex A217F: a regular limit ending binds its raw response like live Check, and a
+	// record beyond the read limits leaves its raw responses unverified, never unbound.
+	early := func(c map[string]any, code string) {
+		c["execution_status"], c["response_status"], c["response_code"], c["assessment"], c["code"] = StatusResourceLimit, StatusResourceLimit, code, AssessBlocked, code
+		c["claims"] = map[string]string{"incremental_equality": claimNotClaimed, "incremental_route": claimNotClaimed, "expectations": claimNotClaimed}
+		c["oracle_claims"] = map[string]string{"query_equality": claimNotClaimed, "query_expectations": claimNotClaimed, "api": claimNotClaimed, "fact_reproduction": claimNotClaimed, "dynamic_sql": claimNotClaimed}
+	}
+	for _, tc := range []struct {
+		name   string
+		record func(records []map[string]any)
+	}{
+		{"query-limited-step", func(r []map[string]any) { // a completed tree whose query hit a limit
+			early(r[0], "CAPTURE_LIMIT")
+			r[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"id": "q.x", "status": StatusResourceLimit,
+				"code": "CAPTURE_LIMIT", "evaluation": "NOT_EVALUATED", "captures": nil}}
+			r[0]["expectations"] = []any{}
+			observations := r[0]["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)
+			r[0]["reuse_observation_claim"] = reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Observations: observations}}, false)
+		}},
+		{"stepless-limit", func(r []map[string]any) { // OUTPUT_LIMIT drops every step
+			early(r[0], "OUTPUT_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newQfx(t)
+			f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit // a registered limit ending
+			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
+				if set == "s06-fxh" {
+					tc.record(records)
+				}
+			}}}))
+			row := roleRow(r, "fx-history", "windows-amd64")
+			if len(row.Sets) != 1 {
+				t.Fatalf("%s: %+v", tc.name, row)
+			}
+			for _, g := range row.Sets[0].Gates {
+				if g.ID == "reuse-observation" && g.Failed > 0 {
+					t.Fatalf("%s: %+v", tc.name, g)
+				}
+			}
+			if codes := codes(row.Sets[0].Findings); slices.Contains(codes, "RESPONSE_UNBOUND") || row.Mechanism == AssessFail {
+				t.Fatalf("%s: mechanism %s %v %+v", tc.name, row.Mechanism, codes, row.Sets[0].Gates)
+			}
+		})
+	}
+	t.Run("record-beyond-limit", func(t *testing.T) {
+		f := newQfx(t)
+		limit := QualificationLimits().FileBytes
+		var record string
+		hosts := f.all(t, map[string]qfxMut{"windows-amd64": {manifest: func(set string, m map[string]any) {
+			if set != "s06-fxa" {
+				return
+			}
+			members := m["members"].([]OracleMember)
+			i := slices.IndexFunc(members, func(mem OracleMember) bool { return mem.Role == "record" && mem.Case == "c2" })
+			members[i].Bytes, record = limit+1, members[i].Path
+		}}})
+		if err := os.Truncate(filepath.Join(hosts["windows-amd64"], "records", "s06-fxa", filepath.FromSlash(record)), int64(limit+1)); err != nil {
+			t.Fatal(err)
+		}
+		cell := cellOf(f.run(t, hosts), "fxa", "windows-amd64")
+		if cell.Mechanism != AssessBlocked || slices.Contains(setCodes(cell), "RESPONSE_UNBOUND") {
+			t.Fatalf("record beyond limit: mechanism %s %v", cell.Mechanism, setCodes(cell))
+		}
+	})
 	for _, tc := range []struct {
 		name, code string // code: the reuse-observation gate code, or a set finding
 		record     func(records []map[string]any)
@@ -57,6 +125,10 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			c := c2(r)
 			omitOld(c)
 			c["assessment"], c["code"] = AssessFail, "REUSE_OBSERVATION_FAILED"
+		}},
+		{name: "stepless-completed-raw", code: "OBSERVATION_RESPONSE_UNBOUND", record: func(r []map[string]any) { // no limit response claims completion
+			early(r[0], "OUTPUT_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"], r[0]["response_status"] = []any{}, []any{}, claimNotClaimed, StatusCompleted
 		}},
 		{name: "protocol-r2", code: "PROTOCOL_MISMATCH", manifest: func(m map[string]any) { m["protocol"] = "tsgk-native/r2" }},
 		{name: "other-run", code: "OBSERVATION_INVALID", manifest: func(m map[string]any) { m["producer"].(map[string]string)["observation_run_id"] = "other-run" }},

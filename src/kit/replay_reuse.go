@@ -217,23 +217,32 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
 	starts := slices.Sorted(maps.Keys(groups))
+	dir := cmp.Or(x.responseDir, "responses/")
+	if path := fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID); len(c.Steps) == 0 && x.members[path].Role == "response" {
+		// a limit response that dropped its steps (OUTPUT_LIMIT, ALLOCATION_LIMIT, a query
+		// time limit) still binds to its case: no observation step, its recorded status
+		return x.compareObservationResponse(path, c, nil, top, manifest, "")
+	}
 	for i, start := range starts {
 		steps := groups[start]
-		dir := cmp.Or(x.responseDir, "responses/")
 		path := fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)
 		if len(c.Segments) > 0 {
 			path = fmt.Sprintf("%s%05d-%s-segment-%05d.json", dir, index, c.ID, start)
 		}
-		open := "" // r4: the recorded unfinished last step of an early case, by its tree status
+		open := "" // r4: the recorded unfinished last step of an early case, by its trees and queries
 		if x.mandatoryObservation && c.ExecutionStatus != StatusCompleted && i == len(starts)-1 && len(c.Steps) > 0 {
 			last := c.Steps[len(c.Steps)-1]
 			for _, t := range []*rcTree{last.Incremental, last.Fresh} {
-				if t != nil && open == "" && t.Status != StatusCompleted {
-					open = t.Status
+				if t != nil && open == "" {
+					var queries []string
+					for _, q := range t.Queries {
+						queries = append(queries, q.Status)
+					}
+					open = openStatus(t.Status, queries)
 				}
 			}
 		}
-		if e := x.compareObservationResponse(path, c.ID, steps, top, manifest, open); e != nil {
+		if e := x.compareObservationResponse(path, c, steps, top, manifest, open); e != nil {
 			return e
 		}
 	}
@@ -244,7 +253,8 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 // judged from the recorded public trees by the existing twelve-field comparator. Under r4
 // the last response of a case that ended early may keep its unfinished last step, which
 // steps_completed omits: open is that step's recorded noncomplete tree status, "" otherwise.
-func (x *replayEnv) compareObservationResponse(path, id string, want []observationStep, top nativeResult, manifest, open string) *Error {
+func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []observationStep, top nativeResult, manifest, open string) *Error {
+	id := c.ID
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
 		g.fail(id, "OBSERVATION_RESPONSE_MISSING", "관측 원 응답이 등록되지 않았다")
@@ -297,8 +307,12 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 		}
 		rawOpen = ""
 		for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
-			if t != nil && rawOpen == "" && t.Status != StatusCompleted {
-				rawOpen = t.Status
+			if t != nil && rawOpen == "" {
+				var queries []string
+				for _, q := range t.Queries {
+					queries = append(queries, q.Status)
+				}
+				rawOpen = openStatus(t.Status, queries)
 			}
 		}
 		got, err := decodeObservations(step.Observations, b, true)
@@ -309,6 +323,9 @@ func (x *replayEnv) compareObservationResponse(path, id string, want []observati
 		return e
 	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
+	if want == nil { // a stepless limit response: the recorded response status
+		counted = counted && wire.Status == c.ResponseStatus && wire.Status != StatusCompleted
+	}
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
@@ -342,7 +359,25 @@ func stepsCounted(completed uint64, count int, status, open, rawOpen string) boo
 		(status == StatusResourceLimit || status == StatusFailed) && open == status && rawOpen == status
 }
 
-// treeStatus is the only member of a raw response tree the short-count check reads.
+// treeStatus is the only member of a raw response tree, and of each of its r4 queries, the
+// short-count check reads.
 type treeStatus struct {
-	Status string `json:"status"`
+	Status  string `json:"status"`
+	Queries []struct {
+		Status string `json:"status"`
+	} `json:"queries"`
+}
+
+// openStatus is a tree's first noncomplete status as live Check counts a step unfinished:
+// the tree's own, else its first RESOURCE_LIMIT or FAILED query (r4); "" when finished.
+func openStatus(tree string, queries []string) string {
+	if tree != StatusCompleted {
+		return tree
+	}
+	for _, q := range queries {
+		if q == StatusResourceLimit || q == StatusFailed {
+			return q
+		}
+	}
+	return ""
 }
