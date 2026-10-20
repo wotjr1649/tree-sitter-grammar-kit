@@ -207,13 +207,64 @@ runpy.run_path(entry, run_name='__main__')
             with self.assertRaisesRegex(RuntimeError, 'REFERENCE_BATCH_'):
                 batch(good, ids)
 
+    def test_acquire_refuses_redirects_and_counts_every_byte(self):
+        import email.message, io, time, urllib.request, urllib.response
+        import acquire
+        calls = []
+
+        class Fake(urllib.request.BaseHandler):
+            handler_order = 100  # answers before the real HTTPS handler; no network
+
+            def __init__(self, status, body):
+                self.status, self.body = status, body
+
+            def https_open(self, req):
+                calls.append(req.full_url)
+                headers = email.message.Message()
+                if self.status == 302:
+                    headers['Location'] = 'http://elsewhere.example/demo.crate'
+                response = urllib.response.addinfourl(io.BytesIO(self.body), headers, req.full_url, self.status)
+                response.msg = 'fake'
+                return response
+
+            def http_open(self, req):
+                calls.append(req.full_url)
+                raise AssertionError('redirect followed to ' + req.full_url)
+
+        package = {'name': 'demo', 'version': '1.0.0', 'checksum': '0' * 64, 'source': 'registry+https://github.com/rust-lang/crates.io-index'}
+        saved = acquire.OPENER, acquire.TOTAL, acquire.DEADLINE
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                acquire.OPENER = urllib.request.build_opener(acquire.RefuseRedirect, Fake(302, b''))
+                with self.assertRaisesRegex(RuntimeError, 'unexpected dependency redirect'):
+                    acquire.acquire(package, Path(directory))
+                self.assertEqual(len(calls), 1)
+                calls.clear()
+                acquire.TOTAL = 0
+                acquire.OPENER = urllib.request.build_opener(acquire.RefuseRedirect, Fake(200, b'x' * 1000))
+                with self.assertRaisesRegex(RuntimeError, 'crate checksum mismatch'):
+                    acquire.acquire(package, Path(directory))
+                self.assertEqual(acquire.TOTAL, 1000)
+                calls.clear()
+                acquire.TOTAL = acquire.LIMIT
+                with self.assertRaisesRegex(RuntimeError, 'total download bound'):
+                    acquire.acquire(package, Path(directory))
+                self.assertEqual(calls, [])
+                acquire.TOTAL = 0
+                acquire.DEADLINE = time.monotonic() - 1
+                with self.assertRaisesRegex(RuntimeError, 'size/time bound'):
+                    acquire.acquire(package, Path(directory))
+                self.assertEqual(calls, [])
+        finally:
+            acquire.OPENER, acquire.TOTAL, acquire.DEADLINE = saved
+
     def test_optimized_python_rejected_before_arguments_or_work(self):
-        for script in ("build.py", "check.py"):
+        for script in ("acquire.py", "build.py", "check.py"):
             for flags, optimize in ((["-O"], ""), ([], "1")):
                 with tempfile.TemporaryDirectory() as directory:
                     work = Path(directory) / "must-not-exist"
                     env = dict(os.environ, PYTHONOPTIMIZE=optimize)
-                    result = subprocess.run([sys.executable, *flags, str(Path(__file__).with_name(script)), "--work", str(work)], env=env, capture_output=True, timeout=5)
+                    result = subprocess.run([sys.executable, "-B", *flags, str(Path(__file__).with_name(script)), "--work", str(work)], env=env, capture_output=True, timeout=5)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(b"assertions must be enabled", result.stderr)
                     self.assertNotIn(b"required", result.stderr)
