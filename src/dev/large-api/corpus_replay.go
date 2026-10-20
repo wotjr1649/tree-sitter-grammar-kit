@@ -126,7 +126,7 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 	if err = jsonv2.Unmarshal(planBytes, &plan, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return err
 	}
-	if plan.Schema != "tsgk-corpus-cst-api-plan/r1" || len(plan.Expected) == 0 || len(plan.Expected) > 26000 {
+	if plan.Schema != "tsgk-corpus-cst-api-plan/r1" || len(plan.Expected) == 0 || len(plan.Expected) > 26000 || len(plan.Profiles) == 0 || len(plan.Profiles) > 500 {
 		return errors.New("CORPUS_REPLAY_PLAN_INVALID")
 	}
 	root, err := os.OpenRoot(resolved)
@@ -162,6 +162,15 @@ func replayCorpus(evidenceName, sourceName, planName, registrationName, outName 
 			return errors.New("CORPUS_REPLAY_EXPECTED_DUPLICATE")
 		}
 		expected[e.ID] = e
+	}
+	// the plan's pinned profiles must still be the registered, allowed set for exactly these cases
+	profileRoot, err := os.OpenRoot(filepath.Dir(planName))
+	if err != nil {
+		return err
+	}
+	defer profileRoot.Close()
+	if _, err = corpusProfiles(profileRoot, plan, expected); err != nil {
+		return err
 	}
 	producers := map[string]string{}
 	for _, p := range result.Producers {
