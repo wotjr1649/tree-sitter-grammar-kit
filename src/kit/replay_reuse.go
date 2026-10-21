@@ -255,6 +255,31 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	return nil
 }
 
+// liveSteps reports whether a raw response's step statuses fit live Check: every step but
+// the last finished, steps_completed counting the finished steps, and an unfinished last
+// step only in a response that ends with that step's status (Codex review on #250).
+func liveSteps(opens []string, completed uint64, status string) bool {
+	n := len(opens)
+	for i := 0; i+1 < n; i++ {
+		if opens[i] != "" {
+			return false
+		}
+	}
+	if n > 0 && opens[n-1] != "" {
+		return completed == uint64(n-1) && status == opens[n-1]
+	}
+	return completed == uint64(n) && status == StatusCompleted
+}
+
+// liveEnd reports whether a response end with steps is one live RunCase records: COMPLETED
+// without a code, or a RESOURCE_LIMIT or FAILED end with a code that is the case's own end.
+func liveEnd(end [2]string, c *rcCase) bool {
+	if end == [2]string{StatusCompleted, ""} {
+		return true
+	}
+	return (end[0] == StatusResourceLimit || end[0] == StatusFailed) && end[1] != "" && end == [2]string{c.ExecutionStatus, c.Code}
+}
+
 // steplessEnds names each raw response of a case that dropped every step (Codex A217F/A217G)
 // with the end it must record: for a case without SVC segments and steps, the recorded
 // response status and code; for the last native segment of an early SVC case that recorded
@@ -322,6 +347,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		} `json:"producer"`
 	}
 	count, rawOpen := 0, ""
+	var opens []string // each raw step's first noncomplete tree or query status
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
 		case "protocol", "id", "producer", "complete", "steps_completed", "status", "code":
@@ -364,6 +390,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 				rawOpen = openStatus(t.Status, statuses)
 			}
 		}
+		opens = append(opens, rawOpen)
 		got, err := decodeObservations(step.Observations, b, true)
 		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit), id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit가 원 응답과 다르다")
 		return x.r.check()
@@ -372,8 +399,8 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		return e
 	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
-	if x.mandatoryObservation && want != nil { // r4: the response's final status and code are the record's
-		counted = counted && [2]string{wire.Status, wire.Code} == end
+	if x.mandatoryObservation && want != nil { // r4: the response ends as live Check accepts and as recorded
+		counted = counted && liveSteps(opens, *wire.StepsCompleted, wire.Status) && [2]string{wire.Status, wire.Code} == end && liveEnd(end, c)
 	}
 	if want == nil {
 		// live Check leaves steps_completed of a response that dropped its steps unconstrained

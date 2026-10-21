@@ -48,18 +48,35 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		c["claims"] = map[string]string{"incremental_equality": claimNotClaimed, "incremental_route": claimNotClaimed, "expectations": claimNotClaimed}
 		c["oracle_claims"] = map[string]string{"query_equality": claimNotClaimed, "query_expectations": claimNotClaimed, "api": claimNotClaimed, "fact_reproduction": claimNotClaimed, "dynamic_sql": claimNotClaimed}
 	}
+	queryLimited := func(r []map[string]any) { // a completed tree whose query hit a limit
+		early(r[0], "CAPTURE_LIMIT")
+		r[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"id": "q.x", "status": StatusResourceLimit,
+			"code": "CAPTURE_LIMIT", "evaluation": "NOT_EVALUATED", "captures": nil}}
+		r[0]["expectations"] = []any{}
+		observations := r[0]["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)
+		r[0]["reuse_observation_claim"] = reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Observations: observations}}, false)
+	}
+	t.Run("early-end-other-code", func(t *testing.T) { // record and raw agree on a code the case did not end with
+		f := newQfx(t)
+		f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
+			if set == "s06-fxh" {
+				queryLimited(records)
+				records[0]["response_code"] = "MATCH_LIMIT"
+			}
+		}}}))
+		row := roleRow(r, "fx-history", "windows-amd64")
+		if len(row.Sets) != 1 || !slices.ContainsFunc(row.Sets[0].Gates, func(g ReplayGate) bool {
+			return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+		}) {
+			t.Fatalf("an end the case did not record bound: %+v", row)
+		}
+	})
 	for _, tc := range []struct {
 		name   string
 		record func(records []map[string]any)
 	}{
-		{"query-limited-step", func(r []map[string]any) { // a completed tree whose query hit a limit
-			early(r[0], "CAPTURE_LIMIT")
-			r[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"id": "q.x", "status": StatusResourceLimit,
-				"code": "CAPTURE_LIMIT", "evaluation": "NOT_EVALUATED", "captures": nil}}
-			r[0]["expectations"] = []any{}
-			observations := r[0]["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)
-			r[0]["reuse_observation_claim"] = reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Observations: observations}}, false)
-		}},
+		{"query-limited-step", queryLimited},
 		{"stepless-limit", func(r []map[string]any) { // OUTPUT_LIMIT drops every step
 			early(r[0], "OUTPUT_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
@@ -164,6 +181,19 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		{name: "raw-other-end", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // a completed record, a failed raw response
 			if raw["id"] == "c1" {
 				raw["status"], raw["code"] = StatusFailed, "PARSE_NULL"
+			}
+		}},
+		{name: "bogus-end-both", code: "OBSERVATION_RESPONSE_UNBOUND", record: func(r []map[string]any) { // record and raw agree on no live end
+			r[0]["response_status"], r[0]["response_code"] = "BOGUS", "X"
+		}},
+		{name: "raw-step-failed", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // a completed response with an unfinished step
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["incremental"].(map[string]any)["status"] = StatusFailed
+			}
+		}},
+		{name: "raw-query-limited", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "q1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"status": StatusResourceLimit}}
 			}
 		}},
 		{name: "stepless-raw-removed", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) {
