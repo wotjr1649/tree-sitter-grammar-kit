@@ -207,8 +207,12 @@ func qfxRaw(c map[string]any) map[string]any {
 			}
 			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "digest": m["digest"], "queries": queries, "api": api}
 		}
-		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
-			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})
+		raw := map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
+			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])}
+		if r, ok := s["route"].(map[string]any); ok { // the wire route, without the record's derived proof
+			raw["route"] = map[string]any{"edit_has_changes": r["edit_has_changes"], "edited_root_end_byte": r["edited_root_end_byte"], "reused_nodes": r["reused_nodes"], "fresh_reused_nodes": r["fresh_reused_nodes"]}
+		}
+		steps = append(steps, raw)
 	}
 	completed := len(steps)
 	if c["response_status"] != StatusCompleted && completed > 0 {

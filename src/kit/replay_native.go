@@ -93,10 +93,8 @@ type rcStep struct {
 	SourceBytes  uint64         `json:"source_bytes"`
 	SourceSHA256 string         `json:"source_sha256"`
 	Route        *struct {
-		EditHasChanges   bool   `json:"edit_has_changes"`
-		ReusedNodes      uint64 `json:"reused_nodes"`
-		FreshReusedNodes uint64 `json:"fresh_reused_nodes"`
-		Proven           bool   `json:"proven"`
+		wireRoute
+		Proven bool `json:"proven"`
 	} `json:"route"`
 	Comparison *struct {
 		Equal bool            `json:"equal"`

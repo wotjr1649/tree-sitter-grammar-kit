@@ -113,6 +113,15 @@ func decodeObservations(raw jsontext.Value, b reuseobs.Binding, native bool) ([]
 type observationStep struct {
 	observations []reuseobs.Observation
 	edit         *rcEdit
+	route        *wireRoute // the recorded route of an edit step, which r4 qualification binds to the raw step
+}
+
+// wireRoute is an edit step's route as live DecodeResponse reads it and the record keeps it.
+type wireRoute struct {
+	EditHasChanges    bool   `json:"edit_has_changes"`
+	EditedRootEndByte uint32 `json:"edited_root_end_byte"`
+	ReusedNodes       uint64 `json:"reused_nodes"`
+	FreshReusedNodes  uint64 `json:"fresh_reused_nodes"`
 }
 
 func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, registered *IncrementalCase) *Error {
@@ -206,7 +215,11 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 			if local == 0 {
 				edit = nil
 			}
-			groups[start] = append(groups[start], observationStep{observations, edit})
+			var route *wireRoute
+			if s.Route != nil {
+				route = &s.Route.wireRoute
+			}
+			groups[start] = append(groups[start], observationStep{observations, edit, route})
 		}
 	}
 	var claim string
@@ -250,7 +263,9 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 			start = c.Segments[len(c.Segments)-1].StartStep
 		}
 		// a recorded stepless limit end came from a driver response, which must be present
-		if x.members[path].Role == "response" || steplessEnd(end[0], end[1], x.observationWire == "tsgk-native/r4" && x.observationQueries) {
+		// by the recorded response end or the case's own, so erasing one of them does not skip it (review on #250)
+		queries := x.observationWire == "tsgk-native/r4" && x.observationQueries
+		if x.members[path].Role == "response" || steplessEnd(end[0], end[1], queries) || steplessEnd(c.ExecutionStatus, c.Code, queries) {
 			if e := x.compareObservationResponse(path, c, nil, top, manifest, [2]string{}, end, sourceAt(start), apiPoints); e != nil {
 				return e
 			}
@@ -446,12 +461,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 			Incremental jsontext.Value `json:"incremental"`
 			Fresh       jsontext.Value `json:"fresh"`
 		}
-		var route struct { // an edit step's route, typed and closed as live DecodeResponse reads it
-			EditHasChanges    bool   `json:"edit_has_changes"`
-			EditedRootEndByte uint32 `json:"edited_root_end_byte"`
-			ReusedNodes       uint64 `json:"reused_nodes"`
-			FreshReusedNodes  uint64 `json:"fresh_reused_nodes"`
-		}
+		var route wireRoute // an edit step's route, typed and closed as live DecodeResponse reads it
 		absent := func(v jsontext.Value) bool { return len(v) == 0 || string(v) == "null" }
 		shape = shape && onlyMembers(raw, "step", "source_bytes", "source_sha256", "edit", "route", "incremental", "fresh", "observations") &&
 			jsonv2.Unmarshal(raw, &slots) == nil && (absent(slots.Route) || i > 0 && jsonv2.Unmarshal(slots.Route, &route, jsonv2.RejectUnknownMembers(true)) == nil) &&
@@ -494,8 +504,14 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		// on the first, and a fresh tree on an edit step unless its incremental tree ended it
 		wireEnds = wireEnds && incOK && freshOK && (i == 0) == (step.Fresh == nil) || wireEnds && incOK && i > 0 && step.Fresh == nil && incEnd != ([2]string{})
 		opens = append(opens, rawOpen)
+		var rawRoute *wireRoute
+		if !absent(slots.Route) {
+			rawRoute = &route
+		}
+		// r4: the raw route is the recorded one, which the route claim was judged from (review on #250)
+		routeBound := x.observationWire != "tsgk-native/r4" || reflect.DeepEqual(rawRoute, want[i].route)
 		got, err := decodeObservations(step.Observations, b, true)
-		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit), id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit가 원 응답과 다르다")
+		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit) && routeBound, id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit·route가 원 응답과 다르다")
 		return x.r.check()
 	})
 	if e != nil {

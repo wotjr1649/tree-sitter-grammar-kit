@@ -274,7 +274,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			}
 		}},
 		// review on #250: the members and first-step shape live DecodeResponse and Check accept
-		{name: "raw-first-step-route", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+		{name: "raw-first-step-route", code: "OBSERVATION_PROJECTION_MISMATCH", raw: func(raw map[string]any) {
 			if raw["id"] == "c1" {
 				raw["steps"].([]any)[0].(map[string]any)["route"] = map[string]any{"edit_has_changes": false, "edited_root_end_byte": 0, "reused_nodes": 0, "fresh_reused_nodes": 0}
 			}
@@ -314,7 +314,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"] = "x"
 			}
 		}},
-		{name: "raw-edit-route-type", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+		{name: "raw-edit-route-type", code: "OBSERVATION_PROJECTION_MISMATCH", raw: func(raw map[string]any) {
 			if raw["id"] == "c2" {
 				raw["steps"].([]any)[1].(map[string]any)["route"] = "x"
 			}
@@ -371,6 +371,23 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
 		}, manifest: func(m map[string]any) { // the response leaves the set with its member
 			m["members"] = slices.DeleteFunc(m["members"].([]OracleMember), func(mem OracleMember) bool { return mem.Role == "raw" && mem.Case == "c1" })
+		}},
+		{name: "stepless-end-erased", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) { // review on #250
+			early(r[0], "OUTPUT_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+			r[0]["response_status"], r[0]["response_code"] = "", ""
+		}, manifest: func(m map[string]any) {
+			m["members"] = slices.DeleteFunc(m["members"].([]OracleMember), func(mem OracleMember) bool { return mem.Role == "raw" && mem.Case == "c1" })
+		}},
+		{name: "raw-route-reused-nodes", code: "OBSERVATION_PROJECTION_MISMATCH", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["route"].(map[string]any)["reused_nodes"] = 2
+			}
+		}},
+		{name: "raw-route-removed", code: "OBSERVATION_PROJECTION_MISMATCH", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				delete(raw["steps"].([]any)[1].(map[string]any), "route")
+			}
 		}},
 		{name: "protocol-r2", code: "PROTOCOL_MISMATCH", manifest: func(m map[string]any) { m["protocol"] = "tsgk-native/r2" }},
 		{name: "other-run", code: "OBSERVATION_INVALID", manifest: func(m map[string]any) { m["producer"].(map[string]string)["observation_run_id"] = "other-run" }},
