@@ -172,7 +172,7 @@ type QualRole struct {
 	Workloads     []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r3 document: the exact
+// QualificationInventory is a decoded tsgk-qualification-inventory/r4 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
 // added the route error node types, the rows' production alternatives and the cases'
 // alternatives and W samples to r1; r3 adds the step expectation anchors.
@@ -647,7 +647,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r3 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r4 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
