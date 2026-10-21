@@ -220,10 +220,35 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	}
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
+	// the source length and API point bytes of the request of the response starting at a
+	// step, as live Check binds them: the registered input, else the recomputed or recorded version
+	sourceAt := func(start int) *uint64 {
+		if start == 0 {
+			return &registered.Input.Bytes
+		}
+		if start > 0 && start < len(versions) {
+			n := uint64(len(versions[start]))
+			return &n
+		}
+		for _, s := range c.Steps {
+			if s.Step == start {
+				return &s.SourceBytes
+			}
+		}
+		return nil
+	}
+	var apiPoints []uint32
+	for _, p := range registered.Points {
+		apiPoints = append(apiPoints, p.Byte)
+	}
 	for path, end := range steplessEnds(c, groups, dir, index) {
+		start := 0
+		if len(c.Segments) > 0 {
+			start = c.Segments[len(c.Segments)-1].StartStep
+		}
 		// a recorded stepless limit end came from a driver response, which must be present
 		if x.members[path].Role == "response" || steplessEnd(end[0], end[1], x.observationWire == "tsgk-native/r4" && x.observationQueries) {
-			if e := x.compareObservationResponse(path, c, nil, top, manifest, [2]string{}, end); e != nil {
+			if e := x.compareObservationResponse(path, c, nil, top, manifest, [2]string{}, end, sourceAt(start), apiPoints); e != nil {
 				return e
 			}
 		}
@@ -244,7 +269,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 				}
 			}
 		}
-		if e := x.compareObservationResponse(path, c, steps, top, manifest, open, responseEnd(c, start)); e != nil {
+		if e := x.compareObservationResponse(path, c, steps, top, manifest, open, responseEnd(c, start), sourceAt(start), apiPoints); e != nil {
 			return e
 		}
 	}
@@ -335,7 +360,8 @@ func steplessEnd(status, code string, queries bool) bool {
 // the last response of a case that ended early may keep its unfinished last step, which
 // steps_completed omits: open is that step's recorded noncomplete tree status, "" otherwise.
 // A response that dropped every step (want nil) must end with end, its recorded status and code.
-func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []observationStep, top nativeResult, manifest string, open, end [2]string) *Error {
+// source is its request's source length and points its API point bytes (nil when unknown).
+func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []observationStep, top nativeResult, manifest string, open, end [2]string, source *uint64, points []uint32) *Error {
 	id := c.ID
 	g := x.gate("reuse-observation")
 	if member, ok := x.members[path]; !ok || member.Role != "response" {
@@ -353,7 +379,13 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		ID             string  `json:"id"`
 		Complete       *bool   `json:"complete"`
 		StepsCompleted *uint64 `json:"steps_completed"`
+		SourceBytes    *uint64 `json:"source_bytes"`
 		Producer       struct {
+			Query            string         `json:"query"`
+			API              *string        `json:"api"`
+			Predicates       *string        `json:"predicates"`
+			SymbolCount      *uint32        `json:"symbol_count"`
+			FieldCount       *uint32        `json:"field_count"`
 			ReuseObservation jsontext.Value `json:"reuse_observation"`
 		} `json:"producer"`
 	}
@@ -361,7 +393,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	var opens [][2]string // each raw step's first noncomplete tree or query status and code
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
-		case "protocol", "id", "producer", "complete", "steps_completed", "status", "code":
+		case "protocol", "id", "producer", "complete", "steps_completed", "source_bytes", "status", "code":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), &wire)
 		}
 		return nil
@@ -392,10 +424,10 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		var incEnd, freshEnd [2]string
 		incOK, freshOK := step.Incremental != nil, step.Fresh == nil
 		if step.Incremental != nil {
-			incEnd, incOK = x.rawTreeEnd(step.Incremental, step.SourceBytes)
+			incEnd, incOK = x.rawTreeEnd(step.Incremental, step.SourceBytes, points)
 		}
 		if step.Fresh != nil {
-			freshEnd, freshOK = x.rawTreeEnd(step.Fresh, step.SourceBytes)
+			freshEnd, freshOK = x.rawTreeEnd(step.Fresh, step.SourceBytes, points)
 		}
 		rawOpen = cmp.Or(incEnd, freshEnd)
 		// the tree slots live Check requires: an incremental tree on every step, no fresh tree
@@ -422,6 +454,14 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	if want == nil {
 		// live Check leaves steps_completed of a response that dropped its steps unconstrained
 		counted = wire.StepsCompleted != nil && wire.Code != nil && wireEnd == end && steplessEnd(wireEnd[0], wireEnd[1], wire.Protocol == "tsgk-native/r4" && x.observationQueries)
+	}
+	if x.observationWire == "tsgk-native/r4" {
+		// the request source and the producer capabilities live Check and RunCase bind: an r4
+		// producer declares them all, and the workload's queries and API exactly (review on #250)
+		p := wire.Producer
+		counted = counted && wire.SourceBytes != nil && source != nil && *wire.SourceBytes == *source &&
+			p.Query != "" && p.API != nil && p.Predicates != nil && *p.Predicates == "NOT_EVALUATED" && p.SymbolCount != nil && p.FieldCount != nil &&
+			(!x.observationQueries || p.Query == "tsgk-query/r1") && (!x.observationAPI || *p.API == "tsgk-api/r1")
 	}
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
@@ -470,18 +510,19 @@ type treeStatus struct {
 // rawTreeEnd is a raw tree's first noncomplete status and code as live Check counts a step
 // unfinished: the tree's own, else its first RESOURCE_LIMIT or FAILED query (r4); zero when
 // finished. ok reports the tree shape live checkTree accepts: a code member, query and API
-// members exactly on the r4 wire, a form only on a COMPLETED tree without a code, null
+// members exactly on the r4 wire, a full, summary or record form only on a COMPLETED tree without a code, null
 // query and API members on a RESOURCE_LIMIT or FAILED tree with a code, and an r4 query
 // stream the live wire validator accepts for the workload's query sources (review on #250).
-func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64) (end [2]string, ok bool) {
+func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64, points []uint32) (end [2]string, ok bool) {
 	r4 := x.observationWire == "tsgk-native/r4"
 	null := func(v jsontext.Value) bool { return len(v) == 0 || string(bytes.TrimSpace(v)) == "null" }
 	if t.Code == nil || r4 != (t.Queries != nil) || r4 != (t.API != nil) {
 		return [2]string{}, false
 	}
+	var form string // the decoded form, as live DecodeResponse reads it (Codex A217L)
 	switch t.Status {
 	case StatusCompleted:
-		if *t.Code != "" || null(t.Form) {
+		if *t.Code != "" || null(t.Form) || jsonv2.Unmarshal(t.Form, &form) != nil || !slices.Contains([]string{"full", "summary", "record"}, form) {
 			return [2]string{}, false
 		}
 	case StatusResourceLimit, StatusFailed:
@@ -494,22 +535,10 @@ func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64) (end [2]string
 	}
 	// the API payload of a full tree of an API workload, as live checkAPI frames it; its rows
 	// are judged against the recorded tree like the nodes (review on #250)
-	if want := x.observationAPI && string(bytes.TrimSpace(t.Form)) == `"full"`; null(t.API) == want {
+	if want := x.observationAPI && form == "full"; null(t.API) == want {
 		return [2]string{}, false
-	} else if want {
-		var api struct {
-			Revision     string         `json:"revision"`
-			Nodes        [][]int64      `json:"nodes"`
-			ChildFields  jsontext.Value `json:"child_fields"`
-			FieldLookups jsontext.Value `json:"field_lookups"`
-			Points       jsontext.Value `json:"points"`
-			Names        jsontext.Value `json:"names"`
-		}
-		if querywire.RequireMembers(t.API, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names") != nil ||
-			jsonv2.Unmarshal(t.API, &api, jsonv2.RejectUnknownMembers(true)) != nil || api.Revision != "tsgk-api/r1" || uint64(len(api.Nodes)) != t.DescendantCount ||
-			slices.ContainsFunc(api.Nodes, func(row []int64) bool { return len(row) != 13 }) {
-			return [2]string{}, false
-		}
+	} else if _, err := querywire.DecodeAPI(t.API, int64(t.DescendantCount), points); want && err != nil {
+		return [2]string{}, false
 	}
 	queries, err := querywire.DecodeSummary(t.Queries, x.observationSources, sourceBytes, t.DescendantCount)
 	if err != nil {

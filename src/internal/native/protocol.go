@@ -245,14 +245,7 @@ type WirePredicate = querypolicy.Predicate
 type PredStep = querypolicy.Step
 
 // WireAPI is the tsgk-api/r1 observation of one full tree.
-type WireAPI struct {
-	Revision     string    `json:"revision"`
-	Nodes        [][]int64 `json:"nodes"`
-	ChildFields  [][]int64 `json:"child_fields"`
-	FieldLookups [][]int64 `json:"field_lookups"`
-	Points       [][]int64 `json:"points"`
-	Names        []string  `json:"names"`
-}
+type WireAPI = querywire.API
 
 // WireErrors is the capped ERROR/MISSING list.
 type WireErrors struct {
@@ -539,39 +532,21 @@ func (t *Tree) checkAPI(req Request) error {
 	if !want {
 		return bad("unrequested")
 	}
-	if err := requireMembers(t.Wire.API, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names"); err != nil {
-		return err
+	a, err := querywire.DecodeAPI(t.Wire.API, int64(len(t.Nodes)), pointBytes(req.Points))
+	if err != nil {
+		return invalid(err.Code, err.Cause)
 	}
-	var a WireAPI
-	if err := jsonv2.Unmarshal(t.Wire.API, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
-		return invalid("RESPONSE_MALFORMED", err)
-	}
-	n := int64(len(t.Nodes))
-	if a.Revision != "tsgk-api/r1" || int64(len(a.Nodes)) != n || len(a.Points) != len(req.Points) {
-		return bad("header")
-	}
-	for _, r := range a.Nodes {
-		if len(r) != 13 {
-			return bad("node row")
-		}
-	}
-	for _, r := range a.ChildFields {
-		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[2] < 0 || r[2] >= int64(len(a.Names)) {
-			return bad("child field row")
-		}
-	}
-	for _, r := range a.FieldLookups {
-		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[1] >= int64(len(a.Names)) {
-			return bad("field lookup row")
-		}
-	}
-	for k, r := range a.Points {
-		if len(r) != 4 || r[0] != int64(req.Points[k].Byte) {
-			return bad("point row")
-		}
-	}
-	t.API = &a
+	t.API = a
 	return nil
+}
+
+// pointBytes is the byte of each requested API point.
+func pointBytes(points []kit.NativePoint) []uint32 {
+	out := make([]uint32, len(points))
+	for k, p := range points {
+		out[k] = p.Byte
+	}
+	return out
 }
 
 // Checked is a response validated against its request and the kit's own intermediate

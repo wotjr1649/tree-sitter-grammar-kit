@@ -664,7 +664,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			}
 		}
 		next++
-		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect, Encoding: EncodingUTF8}
+		reg := IncrementalCase{ID: qc.ID, Input: qc.Input, Edits: qc.Edits, Expect: qc.Expect, Encoding: EncodingUTF8, Points: qc.Points}
 		if w.Format == SvcFormat && qc.Source != nil {
 			reg.SvcSource = []byte(*qc.Source)
 		}

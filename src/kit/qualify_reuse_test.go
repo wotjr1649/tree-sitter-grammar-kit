@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"encoding/json"
 	"maps"
 	"os"
 	"path/filepath"
@@ -255,6 +256,38 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				api["nodes"] = api["nodes"].([]any)[1:]
 			}
 		}},
+		// review on #250: the form, API tables, producer capabilities and request source live Check binds
+		{name: "raw-form-bogus", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				tree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+				tree["form"], tree["api"] = "BOGUS", nil // no full tree, so no API payload is due
+			}
+		}},
+		{name: "raw-api-child-fields", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)["child_fields"] = "x"
+			}
+		}},
+		{name: "raw-api-field-index", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)["field_lookups"] = []any{[]int64{0, 0, 0}}
+			}
+		}},
+		{name: "raw-producer-query", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "q1" {
+				raw["producer"].(map[string]any)["query"] = "UNSUPPORTED"
+			}
+		}},
+		{name: "raw-producer-api", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["producer"].(map[string]any)["api"] = "UNSUPPORTED"
+			}
+		}},
+		{name: "raw-source-bytes", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["source_bytes"] = 0
+			}
+		}},
 		{name: "raw-response-code-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "c1" {
 				delete(raw, "code")
@@ -353,5 +386,39 @@ func TestQualificationRawAPIUnrequested(t *testing.T) {
 		return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
 	}) {
 		t.Fatalf("unrequested API payload bound: %s %v %+v", cell.Mechanism, setCodes(cell), cell.Set.Gates)
+	}
+}
+
+// A raw API payload answers the registered case's API points, one row at each point's byte,
+// and the tree form binds as decoded, as live Check reads them (Codex A217L).
+func TestQualificationRawAPIPoints(t *testing.T) {
+	answered := []any{[]int64{0, 0, 0, 0}}
+	for _, tc := range []struct {
+		name string
+		rows []any
+		form any
+		bad  bool
+	}{{"answered", answered, nil, false}, {"escaped-form", answered, json.RawMessage(`"\u0066ull"`), false},
+		{"missing", []any{}, nil, true}, {"other-byte", []any{[]int64{1, 0, 0, 0}}, nil, true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newQfx(t)
+			f.inv.Routes[0].Workload.Cases[0].Points = []NativePoint{{ID: "P0", Byte: 0}}
+			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
+				if set == "s06-fxa" && raw["id"] == "c1" {
+					tree := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+					tree["api"].(map[string]any)["points"] = tc.rows
+					if tc.form != nil {
+						tree["form"] = tc.form
+					}
+				}
+			}}}))
+			cell := cellOf(r, "fxa", "windows-amd64")
+			unbound := slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+				return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+			})
+			if unbound != tc.bad || !tc.bad && cell.Mechanism != "PASS" {
+				t.Fatalf("API points %v: %s %v %+v", tc.rows, cell.Mechanism, setCodes(cell), cell.Set.Gates)
+			}
+		})
 	}
 }

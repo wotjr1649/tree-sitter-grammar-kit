@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -215,8 +216,10 @@ func qfxRaw(c map[string]any) map[string]any {
 	} else if completed == 0 {
 		completed = 1 // a response that dropped its steps keeps the earlier completed count
 	}
-	return map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": c["producer"], "steps": steps,
-		"steps_completed": completed, "complete": true}
+	producer := maps.Clone(c["producer"].(map[string]any)) // the r4 capabilities live Check requires
+	producer["api"], producer["predicates"], producer["symbol_count"], producer["field_count"] = "tsgk-api/r1", "NOT_EVALUATED", 1, 0
+	return map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": producer, "steps": steps,
+		"steps_completed": completed, "complete": true, "source_bytes": c["input"].(map[string]any)["bytes"]}
 }
 
 // host writes one platform's evidence directory for every workload of the inventory that
@@ -268,8 +271,12 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 			for _, q := range c.QueryExpect {
 				qe = append(qe, q)
 			}
+			points := []any{}
+			for _, p := range c.Points {
+				points = append(points, p)
+			}
 			pcases = append(pcases, map[string]any{"id": c.ID, "input": map[string]any{"path": "cases/" + c.ID + ".txt", "role": "case", "sha256": c.Input.SHA256, "bytes": c.Input.Bytes},
-				"edits": edits, "points": []any{}, "expect": expect, "query_expect": qe, "dynamic_sql_expect": nil})
+				"edits": edits, "points": points, "expect": expect, "query_expect": qe, "dynamic_sql_expect": nil})
 		}
 		prof := map[string]any{"schema": OracleSchema, "id": w.Profile, "route": w.Route, "operation": w.Operation, "symbol": w.Symbol, "encoding": "UTF-8", "output": w.Output,
 			"compiler": map[string]any{"name": "cc", "version": "host", "sha256": fxCompiler, "bytes": 1}, "grammar": w.Grammar, "declarations": nil, "cases": pcases,
