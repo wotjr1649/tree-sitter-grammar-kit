@@ -119,7 +119,7 @@ type artifactSpec struct {
 func artifacts(r kit.RunIdentity) []artifactSpec {
 	var a []artifactSpec
 	for _, p := range platforms {
-		a = append(a, artifactSpec{fmt.Sprintf("s05-routes-%s-%s-%s", p.os, r.RunID, r.RunAttempt), 10000, 553648128})
+		a = append(a, artifactSpec{fmt.Sprintf("s05-routes-%s-%s-%s", p.os, r.RunID, r.RunAttempt), 10000, int64(kit.QualificationLimits().TotalBytes)})
 	}
 	a = append(a, artifactSpec{"s08-qualification-" + r.RunID + "-" + r.RunAttempt, 1, 16777216})
 	return append(a, artifactSpec{"large-api-" + r.RunID + "-" + r.RunAttempt, 2, 16842752})

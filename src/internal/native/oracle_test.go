@@ -403,6 +403,60 @@ func TestRevisions(t *testing.T) {
 	}
 }
 
+// #217: r4 carries the r2 queries and API and the r3 observations on the same parse; its
+// response answers in r4 with both capabilities and is no answer to an r2 or r3 request.
+func TestRevisionR4(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	req := baseRequest("a = 1;", "native-query")
+	req.Protocol, req.Queries, req.API = ProtocolR4, []QuerySource{{ID: "q0", Source: []byte("(number) @n\n")}}, true
+	req.ObservationRunID, req.ObservationProducerSHA256 = "r4-run", b.Identity
+	res, resp, err := rawExec(t, b, Frame(req.Encode()), "native-query")
+	if err != nil || resp.Protocol != ProtocolR4 || resp.Producer.Query != QueryCapability || resp.Producer.API == nil || len(resp.Producer.ReuseObservation) == 0 {
+		t.Fatalf("r4 %v %+v", err, resp.Producer)
+	}
+	versions, points, _ := kit.ApplyEdits(kit.EncodingUTF8, req.Source, nil, 65536)
+	checked, err := Check(resp, req, versions, points, res.ExitCode)
+	if err != nil || len(checked.Steps) != 1 || len(checked.Steps[0].Observations) != 1 || checked.Steps[0].Observations[0].Status != "COMPLETE" || checked.Steps[0].Incremental.Wire.Queries == nil {
+		t.Fatalf("r4 check %v %+v", err, checked.Steps)
+	}
+	for _, other := range []string{ProtocolR2, ProtocolR3} {
+		o := req
+		o.Protocol = other
+		if other == ProtocolR3 {
+			o.Queries, o.API = nil, false
+		}
+		if _, err := Check(resp, o, versions, points, res.ExitCode); err == nil {
+			t.Fatalf("r4 response accepted for an %s request", other)
+		}
+	}
+}
+
+// #217: an r4 oracle case folds the mandatory observation: an observed edit passes with its
+// queries, and the owned old-tree omission is a kit FAIL next to passing query claims.
+func TestOracleObservation(t *testing.T) {
+	src := "z = [1, 2];\na = f(1);\n"
+	for _, omit := range []bool{false, true} {
+		var defines []string
+		if omit {
+			defines = []string{"TSGK_FAULT_OMIT_OLD_TREE"}
+		}
+		b := fixtureBuild(t, "plain", defines...)
+		x := oracleContext(true, "(number) @n\n")
+		x.Protocol, x.ObservationRunID, x.ObservationProducerSHA256 = ProtocolR4, "oracle-run", b.Identity
+		r := runOracleCase(t, b, x, src, editsBy(src, edit{"f(1)", "g(1, 2)"}))
+		if r.ExecutionStatus != kit.StatusCompleted || r.Oracle == nil || r.Oracle.QueryEquality != ClaimPass || len(r.Steps) != 2 || len(r.Steps[1].Observations) != 2 || len(r.Steps[1].Incremental.Queries) != 1 {
+			t.Fatalf("omit=%t: %s %s %+v %+v", omit, r.ExecutionStatus, r.Code, r.Oracle, r.Steps)
+		}
+		want := [2]string{ClaimPass, kit.AssessPass}
+		if omit {
+			want = [2]string{ClaimFail, kit.AssessFail} // the route without reuse names the code
+		}
+		if got := [2]string{r.ReuseObservationClaim, r.Assessment}; got != want {
+			t.Fatalf("omit=%t: %v, want %v", omit, got, want)
+		}
+	}
+}
+
 // S06-A08: a producer that does not declare the query capability blocks a query case
 // before any capture is read.
 func TestCapabilityMissing(t *testing.T) {

@@ -1,4 +1,5 @@
-/* tsgk-native generic driver: r1 (S05), r2 (S06), r3 (bounded public logger observations).
+/* tsgk-native generic driver: r1 (S05), r2 (S06), r3 (bounded public logger observations),
+ * r4 (r2 queries and API with r3 observations on the same parse, #217).
  *
  * Contract: docs/specs/tree-and-adapter-protocol.md, "S05 구현" and "S06 구현". An r1
  * request gets exactly the r1 response; r2 adds queries, API observations and a capability
@@ -34,6 +35,9 @@ const TSLanguage *tsgk_language(void);
 #define PROTOCOL_R1 "tsgk-native/r1"
 #define PROTOCOL_R2 "tsgk-native/r2"
 #define PROTOCOL_R3 "tsgk-native/r3"
+#define PROTOCOL_R4 "tsgk-native/r4"
+#define REV_QUERIES(v) ((v) == 2 || (v) == 4) /* queries, query limits and the API switch */
+#define REV_OBSERVES(v) ((v) >= 3)           /* bounded logger observations */
 #define REUSE_POLICY "tsgk-reuse-log/r1"
 #define REUSE_EVENTS 16384u
 #define REUSE_BYTES 1048576u
@@ -73,8 +77,8 @@ static char observation_run_id[MAX_TEXT + 1], observation_producer_sha256[MAX_TE
 static uint64_t observation_history_start;
 static uint32_t cur_source_bytes, cur_steps_done;
 static int req_rev = 1; /* protocol revision of the current request; 1 until r2 is read */
-static char producer_json[3][384];
-static const char *protocol_name(void) { return req_rev == 3 ? PROTOCOL_R3 : req_rev == 2 ? PROTOCOL_R2 : PROTOCOL_R1; }
+static char producer_json[4][512];
+static const char *protocol_name(void) { return req_rev == 4 ? PROTOCOL_R4 : req_rev == 3 ? PROTOCOL_R3 : req_rev == 2 ? PROTOCOL_R2 : PROTOCOL_R1; }
 static const char *producer(void) { return producer_json[req_rev - 1]; }
 static void fatal_allocation(void);
 static void fatal_limit(const char *code);
@@ -397,6 +401,7 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   if (!strcmp(word, PROTOCOL_R1)) r->rev = 1;
   else if (!strcmp(word, PROTOCOL_R2)) r->rev = 2;
   else if (!strcmp(word, PROTOCOL_R3)) r->rev = 3;
+  else if (!strcmp(word, PROTOCOL_R4)) r->rev = 4;
   else return "PROTOCOL_MISMATCH";
   req_rev = r->rev;
   lit(&c, ",\"id\":");
@@ -424,7 +429,7 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   lit(&c, ",\"memory_bytes\":"); r->memory_bytes = num(&c);
   lit(&c, ",\"errors\":"); r->errors = num(&c);
   lit(&c, ",\"partial_nodes\":"); r->partial_nodes = num(&c);
-  if (r->rev == 2) {
+  if (REV_QUERIES(r->rev)) {
     lit(&c, ",\"matches\":"); r->matches = num(&c);
     lit(&c, ",\"captures\":"); r->captures = num(&c);
     lit(&c, ",\"query_ms\":"); r->query_ms = num(&c);
@@ -440,9 +445,9 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
   if (!e) e = bounded(r->memory_bytes, MAX_MEMORY);
   if (!e) e = bounded(r->errors, MAX_ERRORS);
   if (!e) e = bounded(r->partial_nodes, MAX_PARTIAL);
-  if (!e && r->rev == 2) e = bounded(r->matches, MAX_MATCHES);
-  if (!e && r->rev == 2) e = bounded(r->captures, MAX_CAPTURES);
-  if (!e && r->rev == 2) e = bounded(r->query_ms, MAX_QUERY_MS);
+  if (!e && REV_QUERIES(r->rev)) e = bounded(r->matches, MAX_MATCHES);
+  if (!e && REV_QUERIES(r->rev)) e = bounded(r->captures, MAX_CAPTURES);
+  if (!e && REV_QUERIES(r->rev)) e = bounded(r->query_ms, MAX_QUERY_MS);
   if (e) return e;
   lit(&c, ",\"declarations\":[");
   while (!c.err && !peek(&c, ']')) {
@@ -514,8 +519,8 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
     lit(&c, "}");
   }
   lit(&c, "]");
-  if (r->rev == 2) {
-    /* r2: queries (id, base64 UTF-8 source) and the API-observation switch */
+  if (REV_QUERIES(r->rev)) {
+    /* r2/r4: queries (id, base64 UTF-8 source) and the API-observation switch */
     lit(&c, ",\"queries\":[");
     while (!c.err && !peek(&c, ']')) {
       if (r->nqueries && !lit(&c, ",")) break;
@@ -533,7 +538,7 @@ static const char *parse_request(const uint8_t *data, size_t n, Req *r) {
     lit(&c, "],\"api\":");
     if (peek(&c, 't')) { lit(&c, "true"); r->api = true; } else lit(&c, "false");
   }
-  if (r->rev == 3) {
+  if (REV_OBSERVES(r->rev)) {
     lit(&c, ",\"reuse_observation\":");
     if (!text(&c, word, false)) return c.err;
     if (strcmp(word, REUSE_POLICY)) return "REUSE_POLICY_UNSUPPORTED";
@@ -838,7 +843,7 @@ static void emit_reuse(Buf *out, const Reuse *r, int step, const char *role, con
 }
 
 static void emit_reuse_step(Buf *out, int step, const Src *src, const Reuse *inc, const Reuse *fresh) {
-  if (req_rev != 3) return;
+  if (!REV_OBSERVES(req_rev)) return;
   puts_(out, ",\"observations\":[");
   emit_reuse(out, inc, step, step ? "incremental" : "initial", src);
   if (step) { put(out, ",", 1); emit_reuse(out, fresh, step, "fresh", src); }
@@ -852,7 +857,7 @@ static TSTree *parse(TSParser *p, const TSTree *old, const Src *old_source, Src 
   Clock clock = {now_ms(), limit, false};
   TSParseOptions opt = {&clock, progress};
   TSLogger previous = {0};
-  if (req_rev == 3) {
+  if (REV_OBSERVES(req_rev)) {
     *reuse = reuse_not_run();
     reuse->old_tree = old != NULL; reuse->old_source = old ? old_source : NULL;
     reuse->status = "ACTIVE"; reuse->reason = "";
@@ -893,7 +898,7 @@ static TSTree *parse(TSParser *p, const TSTree *old, const Src *old_source, Src 
 #ifdef TSGK_FAULT_NULL_TREE
   if (t && old) { ts_tree_delete(t); t = NULL; } /* owned fault: a null tree without cancellation */
 #endif
-  if (req_rev == 3) {
+  if (REV_OBSERVES(req_rev)) {
     TSLogger installed = ts_parser_logger(p);
     if (!strcmp(reuse->status, "ACTIVE")) {
       if (installed.log != reuse_log || installed.payload != reuse) reuse_stop(reuse, "UNAVAILABLE", "LOGGER_MISSING");
@@ -1288,7 +1293,7 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
   puts_(out, ",\"parse_ms\":"); putu(out, ms);
   const char *qcode = NULL;
   if (strcmp(status, "COMPLETED")) {
-    puts_(out, r->rev == 2 ? ",\"form\":null,\"queries\":null,\"api\":null}" : ",\"form\":null}");
+    puts_(out, REV_QUERIES(r->rev) ? ",\"form\":null,\"queries\":null,\"api\":null}" : ",\"form\":null}");
   } else {
     puts_(out, ",\"form\":"); putstr(out, x.full ? "full" : form == OUT_RECORD ? "record" : "summary");
     if (!x.full && form == OUT_AUTO) { puts_(out, ",\"reason\":"); putstr(out, reason); }
@@ -1334,7 +1339,7 @@ static const char *emit_tree(Buf *out, Req *r, TSTree *t, const char *code, uint
       if (parts.over) out->over = true; else put(out, parts.data, parts.len);
       buf_free(&parts);
     }
-    if (r->rev == 2) {
+    if (REV_QUERIES(r->rev)) {
       /* the serialization buffers are released first: the queries may need the memory */
       buf_free(&x.nodes); buf_free(&x.errs); buf_free(&x.decls);
       qcode = emit_queries(out, r, t);
@@ -1941,6 +1946,13 @@ int main(int argc, char **argv) {
            "{\"language_version\":%u,\"runtime_language_version\":%u,\"runtime_min_compatible\":%u,\"query\":\"UNSUPPORTED\","
            "\"reuse_observation\":{\"policy\":\"" REUSE_POLICY "\",\"runtime_manifest_sha256\":\"" TSGK_RUNTIME_MANIFEST_SHA256 "\"}}",
            abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
+  /* r4: the r2 capabilities and the r3 observation capability of the same producer */
+  snprintf(producer_json[3], sizeof producer_json[3],
+           "{\"language_version\":%u,\"runtime_language_version\":%u,\"runtime_min_compatible\":%u,\"query\":\"%s\",\"api\":\"tsgk-api/r1\","
+           "\"predicates\":\"NOT_EVALUATED\",\"symbol_count\":%u,\"field_count\":%u,"
+           "\"reuse_observation\":{\"policy\":\"" REUSE_POLICY "\",\"runtime_manifest_sha256\":\"" TSGK_RUNTIME_MANIFEST_SHA256 "\"}}",
+           abi, (unsigned)TREE_SITTER_LANGUAGE_VERSION, (unsigned)TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION, query_cap,
+           (unsigned)ts_language_symbol_count(lang), (unsigned)ts_language_field_count(lang));
   for (;;) {
     uint8_t hdr[4];
     size_t got = read_full(hdr, 4);

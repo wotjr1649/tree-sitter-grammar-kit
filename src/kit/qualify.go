@@ -13,8 +13,8 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r3"
-	QualificationResultSchema    = "tsgk-qualification-result/r3"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r4"
+	QualificationResultSchema    = "tsgk-qualification-result/r4"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
@@ -64,10 +64,10 @@ var caseKinds = []string{"P", "N", "R", "E", "Q", "W"}
 
 // QualificationLimits are the bounds of one `qualification` operation (S08): per host
 // 10000 files, 64 MiB per file (the windows-only NET461 large records reach 56 MiB),
-// 528 MiB read and 100000 records; one wall of 360 s and a 16 MiB result for the whole
+// 576 MiB read (#217) and 100000 records; one wall of 360 s and a 16 MiB result for the whole
 // aggregation.
 func QualificationLimits() ReplayLimits {
-	return ReplayLimits{Files: 10000, FileBytes: 67108864, TotalBytes: 553648128, Records: 100000, RecordBytes: 67108864, OutputBytes: 16777216, Wall: 360 * time.Second, WallMillis: 360000}
+	return ReplayLimits{Files: 10000, FileBytes: 67108864, TotalBytes: 603979776, Records: 100000, RecordBytes: 67108864, OutputBytes: 16777216, Wall: 360 * time.Second, WallMillis: 360000}
 }
 
 // QualPlatform is one registered OS/architecture of the inventory.
@@ -172,7 +172,7 @@ type QualRole struct {
 	Workloads     []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r3 document: the exact
+// QualificationInventory is a decoded tsgk-qualification-inventory/r4 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
 // added the route error node types, the rows' production alternatives and the cases'
 // alternatives and W samples to r1; r3 adds the step expectation anchors.
@@ -647,7 +647,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r3 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r4 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P

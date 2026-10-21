@@ -93,10 +93,8 @@ type rcStep struct {
 	SourceBytes  uint64         `json:"source_bytes"`
 	SourceSHA256 string         `json:"source_sha256"`
 	Route        *struct {
-		EditHasChanges   bool   `json:"edit_has_changes"`
-		ReusedNodes      uint64 `json:"reused_nodes"`
-		FreshReusedNodes uint64 `json:"fresh_reused_nodes"`
-		Proven           bool   `json:"proven"`
+		wireRoute
+		Proven bool `json:"proven"`
 	} `json:"route"`
 	Comparison *struct {
 		Equal bool            `json:"equal"`
@@ -151,6 +149,8 @@ type rcCase struct {
 	Case                  string           `json:"case"`
 	ID                    string           `json:"id"`
 	Input                 NativeInput      `json:"input"`
+	ResponseStatus        string           `json:"response_status"`
+	ResponseCode          string           `json:"response_code"`
 	ExecutionStatus       string           `json:"execution_status"`
 	Assessment            string           `json:"assessment"`
 	Code                  string           `json:"code"`
@@ -1123,6 +1123,16 @@ func (x *replayEnv) oneMember(role string) (ReplayMember, *Error) {
 	return ms[0], nil
 }
 
+// nativeBuild is the producer build of a native result.
+type nativeBuild struct {
+	Identity         string `json:"identity"`
+	ExecutableSHA256 string `json:"executable_sha256"`
+	RuntimeCommit    string `json:"runtime_commit"`
+	Compiler         struct {
+		SHA256 string `json:"sha256"`
+	} `json:"compiler"`
+}
+
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
 	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
@@ -1136,14 +1146,7 @@ type nativeResult struct {
 	Operation              struct {
 		Name string `json:"name"`
 	} `json:"operation"`
-	Build *struct {
-		Identity         string `json:"identity"`
-		ExecutableSHA256 string `json:"executable_sha256"`
-		RuntimeCommit    string `json:"runtime_commit"`
-		Compiler         struct {
-			SHA256 string `json:"sha256"`
-		} `json:"compiler"`
-	} `json:"build"`
+	Build   *nativeBuild `json:"build"`
 	Summary struct {
 		Cases       int            `json:"cases"`
 		Statuses    map[string]int `json:"execution_statuses"`

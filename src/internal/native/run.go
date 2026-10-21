@@ -245,13 +245,16 @@ type Context struct {
 	Format                    string
 	CgroupParent              string
 	PolicyRef                 kit.IdentityRef
-	Protocol                  string // "" (r1) or ProtocolR2
+	Protocol                  string // "" (r1), ProtocolR2, ProtocolR3 or ProtocolR4
 	Queries                   []QuerySource
 	API                       bool
 	ObservationRunID          string
 	ObservationProducerSHA256 string
 	ObservationHistoryStart   uint64
 }
+
+// observes reports whether the context's revision carries the bounded logger observations.
+func (x Context) observes() bool { return Request{Protocol: x.Protocol}.observes() }
 
 // PolicyRef binds the operation limits, output form and encoding into a policy identity.
 func PolicyRef(op kit.NativeOperation, output string) kit.IdentityRef {
@@ -313,7 +316,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 			}
 			// No C# inline code to parse in some step: the composite is the directive
 			// observation alone and no driver process runs.
-			if req.Revision() == ProtocolR2 {
+			if req.queries() {
 				out.Oracle = &OracleClaims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}
 			}
 			for k, o := range svc {
@@ -379,7 +382,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if err != nil {
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
 	}
-	r2 := req.Revision() == ProtocolR2
+	r2 := req.queries()
 	// a required capability the producer does not declare blocks the case before any of its
 	// observations is interpreted; a response that is not even a well-formed r2 answer to
 	// this request (no producer declaration, another id, an exit that contradicts its
@@ -388,7 +391,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	exits := map[string]int{kit.StatusCompleted: 0, "INVALID_REQUEST": 2, kit.StatusResourceLimit: 3, kit.StatusFailed: 4}
 	exit, known := exits[resp.Status]
 	wellFormed := p.Query != "" && p.API != nil && p.Predicates != nil && p.SymbolCount != nil && p.FieldCount != nil && resp.ID == req.ID && known && exit == res.ExitCode
-	if r2 && resp.Protocol == ProtocolR2 && wellFormed {
+	if r2 && resp.Protocol == req.Revision() && wellFormed {
 		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
 			out.Producer = &resp.Producer
 			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
@@ -446,7 +449,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	out.ExecutionStatus = kit.StatusCompleted
 	blocked := ""
 	if len(c.Edits) > 0 {
-		blocked = judgeIncremental(&out, x.Protocol == ProtocolR3)
+		blocked = judgeIncremental(&out, x.observes())
 	}
 	if svc != nil {
 		out.Expectations, out.Claims.Expectations = evaluateSvc(c.Expect, checked.Steps, svc)

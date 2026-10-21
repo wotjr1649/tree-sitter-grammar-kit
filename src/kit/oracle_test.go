@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/fs"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -285,5 +286,21 @@ func TestCompareCaptures(t *testing.T) {
 	b[1].Node = 2
 	if d := CompareCaptures(a, b); d == nil || d.Field != "node" {
 		t.Fatalf("node index change not detected: %+v", d)
+	}
+}
+
+// #217: an r4 SVC segment raw member keeps the full 128-character case id; the suffix is a
+// raw-only form and never names a record.
+func TestOracleMemberPathSegments(t *testing.T) {
+	id := strings.Repeat("a", 128)
+	for path, want := range map[string]bool{
+		"raw/00001-" + id + ".json":                   true,
+		"raw/00001-" + id + "-segment-00002.json":     true,
+		"records/00001-" + id + "-segment-00002.json": false,
+		"raw/00001-" + id + "a.json":                  false,
+	} {
+		if memberPath.MatchString(path) != want {
+			t.Errorf("%s: want %v", path, want)
+		}
 	}
 }

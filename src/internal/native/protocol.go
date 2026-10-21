@@ -18,12 +18,14 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
-// Driver protocol revisions: r1 (S05), r2 (S06), r3 (opt-in logger observations). The
-// driver answers each request in the revision it was asked in.
+// Driver protocol revisions: r1 (S05), r2 (S06), r3 (opt-in logger observations), r4 (the
+// r2 queries and API with the r3 observations on the same parse, #217). The driver answers
+// each request in the revision it was asked in.
 const (
 	Protocol   = "tsgk-native/r1"
 	ProtocolR2 = "tsgk-native/r2"
 	ProtocolR3 = "tsgk-native/r3"
+	ProtocolR4 = "tsgk-native/r4"
 )
 
 // MaxRequestFrame is the request frame payload ceiling.
@@ -71,12 +73,18 @@ func (r Request) Revision() string {
 	return r.Protocol
 }
 
+// queries reports whether the revision carries the query limits, queries and API switch (r2, r4).
+func (r Request) queries() bool { return r.Revision() == ProtocolR2 || r.Revision() == ProtocolR4 }
+
+// observes reports whether the revision carries the bounded logger observations (r3, r4).
+func (r Request) observes() bool { return r.Revision() == ProtocolR3 || r.Revision() == ProtocolR4 }
+
 // Encode renders the canonical request payload (fixed key order, no whitespace). An r1
 // request is exactly the S05 payload; r2 adds the query limits, queries and the API switch.
 func (r Request) Encode() []byte {
 	var b bytes.Buffer
 	b64 := base64.StdEncoding.EncodeToString
-	r2 := r.Revision() == ProtocolR2
+	r2 := r.queries()
 	fmt.Fprintf(&b, `{"protocol":%q,"id":%q,"encoding":%q,"output":%q,`, r.Revision(), r.ID, r.Encoding, r.Output)
 	l := r.Limits
 	fmt.Fprintf(&b, `"limits":{"input_bytes":%d,"nodes":%d,"full_nodes":%d,"depth":%d,"output_bytes":%d,"parse_ms":%d,"memory_bytes":%d,"errors":%d,"partial_nodes":%d`,
@@ -131,7 +139,7 @@ func (r Request) Encode() []byte {
 		}
 		fmt.Fprintf(&b, `],"api":%t`, r.API)
 	}
-	if r.Revision() == ProtocolR3 {
+	if r.observes() {
 		fmt.Fprintf(&b, `,"reuse_observation":%q,"observation_run_id":%q,"observation_producer_sha256":%q,"observation_history_start":%d`, reuseobs.Policy, r.ObservationRunID, r.ObservationProducerSHA256, r.ObservationHistoryStart)
 	}
 	b.WriteByte('}')
@@ -237,14 +245,7 @@ type WirePredicate = querypolicy.Predicate
 type PredStep = querypolicy.Step
 
 // WireAPI is the tsgk-api/r1 observation of one full tree.
-type WireAPI struct {
-	Revision     string    `json:"revision"`
-	Nodes        [][]int64 `json:"nodes"`
-	ChildFields  [][]int64 `json:"child_fields"`
-	FieldLookups [][]int64 `json:"field_lookups"`
-	Points       [][]int64 `json:"points"`
-	Names        []string  `json:"names"`
-}
+type WireAPI = querywire.API
 
 // WireErrors is the capped ERROR/MISSING list.
 type WireErrors struct {
@@ -399,7 +400,7 @@ func requireMembers(raw jsontext.Value, array bool, names ...string) error {
 // requested queries and API observations.
 func checkTree(w WireTree, sourceBytes uint64, nodes uint64, req Request) (Tree, error) {
 	t := Tree{Status: w.Status, Code: w.Code, Wire: w}
-	r2 := req.Revision() == ProtocolR2
+	r2 := req.queries()
 	if r2 != (w.Queries != nil) || r2 != (w.API != nil) {
 		return t, invalid("RESPONSE_INVALID", errors.New("query/api members do not match the revision"))
 	}
@@ -531,39 +532,21 @@ func (t *Tree) checkAPI(req Request) error {
 	if !want {
 		return bad("unrequested")
 	}
-	if err := requireMembers(t.Wire.API, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names"); err != nil {
-		return err
+	a, err := querywire.DecodeAPI(t.Wire.API, int64(len(t.Nodes)), pointBytes(req.Points))
+	if err != nil {
+		return invalid(err.Code, err.Cause)
 	}
-	var a WireAPI
-	if err := jsonv2.Unmarshal(t.Wire.API, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
-		return invalid("RESPONSE_MALFORMED", err)
-	}
-	n := int64(len(t.Nodes))
-	if a.Revision != "tsgk-api/r1" || int64(len(a.Nodes)) != n || len(a.Points) != len(req.Points) {
-		return bad("header")
-	}
-	for _, r := range a.Nodes {
-		if len(r) != 13 {
-			return bad("node row")
-		}
-	}
-	for _, r := range a.ChildFields {
-		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[2] < 0 || r[2] >= int64(len(a.Names)) {
-			return bad("child field row")
-		}
-	}
-	for _, r := range a.FieldLookups {
-		if len(r) != 3 || r[0] < 0 || r[0] >= n || r[1] < 0 || r[1] >= int64(len(a.Names)) {
-			return bad("field lookup row")
-		}
-	}
-	for k, r := range a.Points {
-		if len(r) != 4 || r[0] != int64(req.Points[k].Byte) {
-			return bad("point row")
-		}
-	}
-	t.API = &a
+	t.API = a
 	return nil
+}
+
+// pointBytes is the byte of each requested API point.
+func pointBytes(points []kit.NativePoint) []uint32 {
+	out := make([]uint32, len(points))
+	for k, p := range points {
+		out[k] = p.Byte
+	}
+	return out
 }
 
 // Checked is a response validated against its request and the kit's own intermediate
@@ -609,20 +592,20 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 		return c, invalid("RESPONSE_INVALID", errors.New("code"))
 	}
 	p := r.Producer
-	if req.Revision() != Protocol && req.Revision() != ProtocolR2 && req.Revision() != ProtocolR3 {
+	if req.Revision() != Protocol && req.Revision() != ProtocolR2 && req.Revision() != ProtocolR3 && req.Revision() != ProtocolR4 {
 		return c, invalid("RESPONSE_PROTOCOL_MISMATCH", errors.New("unknown protocol"))
 	}
 	if req.Revision() == ProtocolR3 && (len(req.Queries) != 0 || req.API) {
 		return c, invalid("RESPONSE_INVALID", errors.New("r3 query/API combination"))
 	}
-	if req.Revision() == Protocol || req.Revision() == ProtocolR3 {
+	if !req.queries() {
 		if p.Query != "UNSUPPORTED" || p.API != nil || p.Predicates != nil || p.SymbolCount != nil || p.FieldCount != nil {
 			return c, invalid("RESPONSE_INVALID", errors.New("r1 producer"))
 		}
 	} else if p.API == nil || p.Predicates == nil || *p.Predicates != "NOT_EVALUATED" || p.SymbolCount == nil || p.FieldCount == nil || p.Query == "" {
 		return c, invalid("RESPONSE_INVALID", errors.New("r2 producer capabilities"))
 	}
-	if req.Revision() == ProtocolR3 {
+	if req.observes() {
 		if err := requireMembers(p.ReuseObservation, false, "policy", "runtime_manifest_sha256"); err != nil {
 			return c, err
 		}
@@ -671,7 +654,7 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 			return c, err
 		}
 		cs := CheckedStep{Step: s, Incremental: inc}
-		if req.Revision() == ProtocolR3 {
+		if req.observes() {
 			var raw []jsontext.Value
 			if err := jsonv2.Unmarshal(s.Observations, &raw); err != nil || len(raw) != 1+min(k, 1) {
 				return c, invalid("RESPONSE_INVALID", errors.New("observation roles"))
@@ -726,7 +709,7 @@ func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, 
 	if r.Status != kit.StatusCompleted {
 		if len(c.Steps) == 0 {
 			if r.Code != "OUTPUT_LIMIT" && r.Code != "ALLOCATION_LIMIT" && r.Code != "LANGUAGE_INCOMPATIBLE" &&
-				(r.Code != "QUERY_TIME_LIMIT" || req.Revision() != ProtocolR2 || len(req.Queries) == 0 || r.Status != kit.StatusResourceLimit) {
+				(r.Code != "QUERY_TIME_LIMIT" || !req.queries() || len(req.Queries) == 0 || r.Status != kit.StatusResourceLimit) {
 				return c, invalid("RESPONSE_INVALID", errors.New("noncomplete response without steps"))
 			}
 		} else {

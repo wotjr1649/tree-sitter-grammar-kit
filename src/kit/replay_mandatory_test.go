@@ -112,8 +112,10 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		early, unfinished bool
+		forge             string // r3 carries no queries: a query limit forged on the "record", "raw" or "both" trees
 		valid             bool
-	}{{"resource-limit", true, true, true}, {"completed-short-count", false, false, false}, {"early-trees-complete", true, false, false}} {
+	}{{"resource-limit", true, true, "", true}, {"completed-short-count", false, false, "", false}, {"early-trees-complete", true, false, "", false},
+		{"r3-query-limit", true, false, "both", false}, {"r3-raw-query-limit", true, true, "raw", false}, {"r3-record-query-limit", true, true, "record", false}} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
 			c := f.cases[1]
@@ -128,12 +130,21 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 				observations[0].Status, observations[0].Reason, observations[0].Counts.Done = "UNAVAILABLE", "PARSE_INCOMPLETE", 0
 				observations[1].Status, observations[1].Reason, observations[1].Events, observations[1].Bytes, observations[1].Counts = "UNAVAILABLE", "PARSE_NOT_RUN", 0, 0, &reuseobs.Counts{}
 				raw := wire["steps"].([]any)[1].(map[string]any)
-				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit}
-				step["incremental"].(map[string]any)["status"], step["fresh"] = StatusResourceLimit, nil
+				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit, "code": "PARSE_TIME_LIMIT", "form": nil}
+				delete(raw, "fresh") // the limited incremental tree ended the step
+				step["incremental"].(map[string]any)["status"], step["incremental"].(map[string]any)["code"], step["fresh"] = StatusResourceLimit, "PARSE_TIME_LIMIT", nil
 				step["route"], step["comparison"] = nil, nil
+			}
+			limited := []any{map[string]any{"id": "q", "status": StatusResourceLimit}}
+			if tc.forge == "record" || tc.forge == "both" { // a completed recorded tree that only a query opens
+				step["incremental"].(map[string]any)["status"], step["incremental"].(map[string]any)["queries"] = StatusCompleted, limited
+			}
+			if tc.forge == "raw" || tc.forge == "both" {
+				wire["steps"].([]any)[1].(map[string]any)["incremental"] = map[string]any{"status": StatusCompleted, "queries": limited}
 			}
 			if tc.early {
 				c["execution_status"], c["assessment"], c["code"] = StatusResourceLimit, AssessBlocked, "PARSE_TIME_LIMIT"
+				c["response_status"], c["response_code"], wire["code"] = StatusResourceLimit, "PARSE_TIME_LIMIT", "PARSE_TIME_LIMIT"
 				c["claims"] = map[string]string{"incremental_equality": claimNotClaimed, "incremental_route": claimNotClaimed, "expectations": claimNotClaimed}
 				all := []reuseobs.Step{{Native: true, Observations: c["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)}, {Native: true, Edit: true, Observations: observations}}
 				c["reuse_observation_claim"] = reuseobs.CaseClaim(all, false)
@@ -154,30 +165,52 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 	}
 }
 
-// The short count needs the response's noncomplete status in both the recorded and the raw
-// last step: open is "" for a completed case, an earlier segment or a recorded step whose
-// trees completed (Codex A217C/A217D P2).
+// The short count needs the response's noncomplete end in both the recorded and the raw last
+// step: open is zero for a completed case, an earlier segment or a recorded step whose trees
+// completed (Codex A217C/A217D P2); the code is part of the end (review on #250).
 func TestStepsCounted(t *testing.T) {
-	const rl = StatusResourceLimit
+	rl, none := [2]string{StatusResourceLimit, "PARSE_TIME_LIMIT"}, [2]string{}
 	for _, tc := range []struct {
 		name                  string
 		completed             uint64
 		count                 int
-		status, open, rawOpen string
+		status, open, rawOpen [2]string
 		want                  bool
 	}{
-		{"all-counted", 2, 2, StatusCompleted, "", "", true},
+		{"all-counted", 2, 2, [2]string{StatusCompleted, ""}, none, none, true},
 		{"last-unfinished", 1, 2, rl, rl, rl, true},
-		{"not-allowed", 1, 2, rl, "", rl, false},
-		{"raw-trees-complete", 1, 2, rl, rl, "", false},
-		{"other-status", 1, 2, rl, StatusFailed, rl, false},
-		{"completed-status", 1, 2, StatusCompleted, StatusCompleted, StatusCompleted, false},
-		{"missing-status", 1, 2, "", "", "", false},
+		{"not-allowed", 1, 2, rl, none, rl, false},
+		{"raw-trees-complete", 1, 2, rl, rl, none, false},
+		{"other-status", 1, 2, rl, [2]string{StatusFailed, "PARSE_NULL"}, rl, false},
+		{"other-code", 1, 2, rl, rl, [2]string{StatusResourceLimit, "MATCH_LIMIT"}, false},
+		{"completed-status", 1, 2, [2]string{StatusCompleted, ""}, [2]string{StatusCompleted, ""}, [2]string{StatusCompleted, ""}, false},
+		{"missing-status", 1, 2, none, none, none, false},
 		{"two-short", 0, 2, rl, rl, rl, false},
-		{"empty", 0, 0, rl, "", "", true},
+		{"empty", 0, 0, rl, none, none, true},
 	} {
 		if got := stepsCounted(tc.completed, tc.count, tc.status, tc.open, tc.rawOpen); got != tc.want {
 			t.Errorf("%s: got %v want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// An r3 raw tree carries no query or API member: one added to a response that otherwise
+// binds is no live r3 answer (Codex A217J).
+func TestReplayMandatoryRawTreeMembers(t *testing.T) {
+	for _, member := range []string{"queries", "api"} {
+		t.Run(member, func(t *testing.T) {
+			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
+			var wire map[string]any
+			if err := json.Unmarshal(f.extra["responses/00001-c2.json"], &wire); err != nil {
+				t.Fatal(err)
+			}
+			wire["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)[member] = []any{}
+			f.extra["responses/00001-c2.json"], _ = json.Marshal(wire)
+			root, reg := writeMandatoryFixture(t, f, "tsgk-incremental-result/r3")
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			if err != nil || r.EvidenceValid || gateOf(r, "reuse-observation").Code != "OBSERVATION_RESPONSE_UNBOUND" {
+				t.Fatalf("r3 tree with %s bound: %v %+v", member, err, r.Gates)
+			}
+		})
 	}
 }

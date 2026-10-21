@@ -181,7 +181,7 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 
 ### 선택적 public logger 관측 — `tsgk-native/r3` (#197)
 
-`r3`는 incremental에만 적용하는 명시적 opt-in이다. r1 request의 마지막 `edits` 뒤에 `reuse_observation:"tsgk-reuse-log/r1"`, `observation_run_id`, `observation_producer_sha256`, `observation_history_start`를 그 순서로 더한다. query/API인 r2와 결합하지 않는다. 기본 r1과 oracle r2의 wire shape는 유지한다. producer는 `reuse_observation:{policy,runtime_manifest_sha256}` capability를 선언한다. 현재 정책은 내장 `runtime-manifest.json`의 SHA-256 `1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541`(runtime `v0.27.1`, [#213](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/213))에만 적용하며, manifest가 달라지면 같은 정책으로 성공 관측을 해석하지 않는다. #213은 `659cda7`과 `v0.27.1`의 `lib/src/parser.c` log 형식 문자열 집합이 같음을 확인하고 정책을 새 manifest로 옮겼다. live producer capability는 현재 manifest만 허용한다. offline `native-result-r3`는 같은 reducer revision의 의미를 유지하도록, 기록 producer가 선언하고(native parse가 없어 producer가 없는 사례는 첫 host marker가 선언하고) 관측마다 결속한 manifest가 현재 manifest 또는 이전 manifest(`affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080`, runtime `659cda7`)일 때 그 manifest로 재검증한다(`reuseobs.VerifiedRuntimeManifest`). 그 밖의 manifest, case producer와 원 응답 producer 또는 관측의 manifest가 서로 다른 기록은 거부한다. 이는 runtime release version이나 generator version을 뜻하지 않는다.
+`r3`는 incremental에만 적용하는 명시적 opt-in이다. oracle의 query/API와 같은 parse에서 관측하는 결합은 `r4`다(아래 `tsgk-native/r4`). r1 request의 마지막 `edits` 뒤에 `reuse_observation:"tsgk-reuse-log/r1"`, `observation_run_id`, `observation_producer_sha256`, `observation_history_start`를 그 순서로 더한다. query/API인 r2와 결합하지 않는다. 기본 r1과 oracle r2의 wire shape는 유지한다. producer는 `reuse_observation:{policy,runtime_manifest_sha256}` capability를 선언한다. 현재 정책은 내장 `runtime-manifest.json`의 SHA-256 `1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541`(runtime `v0.27.1`, [#213](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/213))에만 적용하며, manifest가 달라지면 같은 정책으로 성공 관측을 해석하지 않는다. #213은 `659cda7`과 `v0.27.1`의 `lib/src/parser.c` log 형식 문자열 집합이 같음을 확인하고 정책을 새 manifest로 옮겼다. live producer capability는 현재 manifest만 허용한다. offline `native-result-r3`는 같은 reducer revision의 의미를 유지하도록, 기록 producer가 선언하고(native parse가 없어 producer가 없는 사례는 첫 host marker가 선언하고) 관측마다 결속한 manifest가 현재 manifest 또는 이전 manifest(`affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080`, runtime `659cda7`)일 때 그 manifest로 재검증한다(`reuseobs.VerifiedRuntimeManifest`). 그 밖의 manifest, case producer와 원 응답 producer 또는 관측의 manifest가 서로 다른 기록은 거부한다. 이는 runtime release version이나 generator version을 뜻하지 않는다.
 
 각 step에 `observations`를 더한다. 최초 parse는 `initial` 하나, edit step은 `incremental`, `fresh` 순서의 두 항목이다. 각 항목은 `tsgk-reuse-observation/r1`이며 다음 member를 모두 요구한다. 생략된 0과 실제 0을 같게 처리하지 않는다.
 
@@ -217,6 +217,12 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 * host marker는 native 관측이 아니다. native 관측이 없으면 `NOT_CLAIMED`이며, gap 경계의 reuse는 주장하지 않는다.
 
 관측 claim은 완료 사례의 판정에 마지막으로 접는다. case·SVC segment·batch frame의 모든 반환 경로에서 같다. FAIL은 FAIL이 아니던 사례를 FAIL로 바꾸고 code를 `REUSE_OBSERVATION_FAILED`로 둔다. BLOCKED는 PASS 사례만 BLOCKED(`REUSE_OBSERVATION_LIMIT`)로 바꾼다. 이미 FAIL인 사례의 code는 유지한다. 일찍 끝난 사례는 종료 판정을 유지하고 claim만 기록한다. 이 claim은 parse 시작과 old-tree 인자의 축이며 전체 logger 수집 완결성, CST 동치나 node 재사용 증명이 아니다. accepted≥1에 근거한 새 reuse 증명 claim은 이 revision에 없다.
+
+### query·API와 필수 관측 — `tsgk-native/r4` (#217)
+
+`r4`는 r2 request(query 한도 세 개, `queries`, `api`)의 끝에 r3의 관측 member 네 개를 같은 순서로 더한다. 응답은 r2의 query·API member와 step별 `observations`를 함께 담는다. producer는 r2 capability 전부와 r3 `reuse_observation` capability를 선언한다. 같은 parse 호출이 query·API 대상 tree와 관측을 함께 만든다. 따라서 별도 실행의 관측으로 oracle 실행의 old-tree 전달을 대신하지 않는다. r4 응답은 r2·r3 request의 응답이 아니며, 그 반대도 같다. r1·r2·r3의 wire shape와 의미는 바뀌지 않는다.
+
+`oracle record --reuse-observation`이 r4로 기록한다. 사례 판정은 위 `필수 관측 판정`을 incremental 결과 r3와 같은 규칙으로 접는다. oracle claim이 FAIL이면 관측 한도 code(`REUSE_OBSERVATION_LIMIT`) 대신 `ORACLE_CLAIM_FAILED`가 사례 code다. 기록 set은 manifest `protocol:"tsgk-native/r4"`, `producer.observation_run_id`로 관측 실행을 결속한다. SVC native segment의 원 응답은 `raw/<case-index>-<case-id>-segment-<start-step>.json` member로 보존한다. qualification이 이 set을 소비하는 규칙은 [identity/evidence](identity-and-evidence.md) `필수 관측 qualification`이 정한다. `native-query-large`처럼 edit를 허용하지 않는 연산은 logger 비용 때문에 r2로 기록한다.
 
 ## S06 구현 — `tsgk-native/r2` query·API 관측·기록 set
 
