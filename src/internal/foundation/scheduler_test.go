@@ -252,7 +252,7 @@ func lightModePolicy(text string) error {
 		}
 	}
 	// the labels come from the API at run time (a re-run reuses the event payload) and label
-	// events are no triggers: an unrelated label run would evict a pending run in the group
+	// events are no triggers: a label run would only add an unneeded run to the shared lane
 	for _, required := range []string{"          EVENT: ${{ github.event_name }}\n", "          PR: ${{ github.event.pull_request.number }}\n",
 		`            $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')` + "\n"} {
 		if !strings.Contains(mode, required) {
