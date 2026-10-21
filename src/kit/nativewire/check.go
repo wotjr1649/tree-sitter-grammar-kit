@@ -350,7 +350,7 @@ func CheckHeader(r Response, n int, e Expect) (stop bool, err error) {
 // shape and edit, then its incremental tree, its observations and its fresh tree.
 func CheckStep(k int, s Step, e Expect) (CheckedStep, error) {
 	cs := CheckedStep{Step: s}
-	if k >= len(e.Sources) || k > 0 && k > len(e.Edits) {
+	if k < 0 || k >= len(e.Sources) || k > 0 && k > len(e.Edits) {
 		return cs, invalid("RESPONSE_INVALID", fmt.Errorf("step %d has no expectation", k))
 	}
 	want := e.Sources[k]

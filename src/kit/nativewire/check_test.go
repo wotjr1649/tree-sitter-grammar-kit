@@ -64,6 +64,7 @@ func TestCheckAbsentExpectations(t *testing.T) {
 		"points-wrong":            {func(r *Response, _ *Expect) { r.Steps[1].Edit.NewEndPoint = [2]uint32{0, 3} }, "EDIT_POINT_MISMATCH"},
 		"points-short":            {func(_ *Response, e *Expect) { e.EditPoints = e.EditPoints[:0] }, "RESPONSE_INVALID"},
 		"sources-short":           {func(_ *Response, e *Expect) { e.Sources = e.Sources[:1] }, "RESPONSE_INVALID"},
+		"sources-absent":          {func(_ *Response, e *Expect) { e.Sources = nil }, "RESPONSE_INVALID"},
 		// an unfinished step that is not the last fails before the later step's source mismatch
 		"open-before-later-step": {func(r *Response, e *Expect) {
 			three := 3
@@ -125,5 +126,12 @@ func TestValidateTreeCause(t *testing.T) {
 	var te *TreeError
 	if code(err) != "RESPONSE_INVALID" || !errors.As(err, &te) || te.Code != "TREE_RANGE_INVALID" || te.Path != "#/nodes/0" {
 		t.Fatalf("tree cause: %v", err)
+	}
+}
+
+func TestCheckStepIndex(t *testing.T) {
+	r, e := editResponse()
+	if _, err := CheckStep(-1, r.Steps[0], e); code(err) != "RESPONSE_INVALID" {
+		t.Fatalf("negative step index: %v", err)
 	}
 }
