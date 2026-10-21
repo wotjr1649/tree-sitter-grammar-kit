@@ -408,7 +408,9 @@ type OracleSetReport struct {
 	Findings        []Finding `json:"findings"`
 }
 
-var memberPath = regexp.MustCompile(`^(records|raw)/[0-9]{5}-[A-Za-z0-9._-]{1,128}\.json$`)
+// memberPath names a record or raw response by case position and id; an r4 SVC native
+// segment's raw response adds its start step after the full-length id (#217).
+var memberPath = regexp.MustCompile(`^(?:(?:records|raw)/[0-9]{5}-[A-Za-z0-9._-]{1,128}|raw/[0-9]{5}-[A-Za-z0-9._-]{1,128}-segment-[0-9]{5})\.json$`)
 var sourceMemberPath = regexp.MustCompile(`^source/[0-9]{5}-[A-Za-z0-9._-]{1,128}\.bin$`)
 
 // VerifyOracleSet verifies a published record set offline: the manifest decodes strictly

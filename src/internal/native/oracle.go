@@ -268,7 +268,6 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 					ref.ExecutionStatus, ref.Assessment, ref.Code = kit.StatusNotRun, kit.AssessBlocked, err.(*Error).Code
 				} else {
 					judgeOracle(&ref, oc, prof, pack, x, src)
-					x.observeCase(&ref)
 				}
 				refs[oc.ID] = ref
 			}
@@ -300,9 +299,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 					cr = b.RunCase(runCtx, x, c, src)
 					linkSvcReferences(&cr, refs)
 					judgeOracle(&cr, oc, prof, pack, x, src)
-					x.observeCase(&cr)
 				}
 			}
+			x.observeCase(&cr) // last, on every case: one that never parsed is NOT_CLAIMED
 			cases = append(cases, cr)
 			name := fmt.Sprintf("%05d-%s.json", i, c.ID)
 			if sourceMember != nil {
