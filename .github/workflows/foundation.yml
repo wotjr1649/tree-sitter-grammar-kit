@@ -12,9 +12,13 @@ on:
 permissions:
   contents: read
 
+# One lane for every run keeps the heavy width at 3 (D12). queue: max keeps up to 100
+# pending runs instead of letting a newly queued run cancel the pending one (#252), which
+# once dropped a main post-merge run; superseded PR runs are cancelled by procedure.
 concurrency:
   group: tsgk-campaign-heavy
   cancel-in-progress: false
+  queue: max
 
 env:
   CGO_ENABLED: '0'
