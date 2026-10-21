@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"unicode/utf8"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 // index-euc-kr is the pinned WHATWG table (see data/NOTICE-index-euc-kr.md).
@@ -174,11 +176,7 @@ type Edit struct {
 }
 
 // EditPoints are the native edit points of one applied edit.
-type EditPoints struct {
-	Start  Point `json:"start_point"`
-	OldEnd Point `json:"old_end_point"`
-	NewEnd Point `json:"new_end_point"`
-}
+type EditPoints = nativewire.EditPoints
 
 // ApplyEdits validates and applies edits in order under the declared encoding, returning
 // every intermediate source (versions[0] is source) and the computed edit points. Any

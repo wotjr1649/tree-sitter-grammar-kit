@@ -297,6 +297,30 @@ func CaptureText(src []byte, c Capture) (string, error)
 
 공용 data-only 지원 package는 `src/kit/querypolicy`(고정 predicate metadata·support·filter)와 `src/kit/querywire`(native query wire validation)다. 기존 native caller와 이 API는 각각 같은 구현을 사용한다. `FilterChecked`는 checkpoint 오류를 별도로 반환하며 중도 취소 결과를 정상 빈 capture로 바꾸지 않는다. 두 package 모두 실행 capability를 갖지 않으며 `kit`을 경유하지 않고 호출할 경우에도 source·문서 크기·full CST의 선행 validation 책임은 해당 함수 주석을 따른다.
 
+`src/kit/nativewire`(#251)는 native driver 응답의 data-only 검증을 담는 실험적 package다. native host와 offline replay가 같은 구현을 쓰기 위해 둔다. 제공 범위는 다음과 같다.
+
+- wire 타입: `Response`, `Producer`, `Step`, `StepEdit`, `Route`, `WireTree`와 그 하위 타입
+- 엄격 decoder `DecodeResponse`, compact node 변환 `Nodes`, tree 검사 `CheckTree`
+- 응답 검사 `Check`와 그 단계 `CheckHeader`·`CheckStep`·`CheckOpen`·`CheckEnd`·`Tally`
+- 입력 `Expect`·`EditSpan`·`SourceID`·`Binding`
+- tree 기본 타입 `Point`·`TreeNode`·`EditPoints`와 `TreeDigest`·`ValidateTree`
+- 오류 `*Error{Code, Cause}`와 `*TreeError{Code, Path}`
+
+`kit`의 `Point`·`TreeNode`·`EditPoints`는 이 타입의 alias다. 이름·필드·JSON tag는 그대로라 기존 source와 JSON이 바뀌지 않는다. 다만 다른 package의 struct라서 `go vet`은 unkeyed literal(`Point{1, 2}`)을 경고하므로 field 이름을 쓴 literal을 권한다. `kit.ValidateTree`·`kit.TreeDigest`는 이 구현을 호출하며, `kit.ValidateTree`는 계속 `*kit.Error`를 반환한다.
+
+`Expect`의 값은 caller가 요청과 자체 계산에서 공급하며, 응답에서 복사하지 않는다. 생략할 수 있는 값과 그때 생략되는 검사는 다음뿐이다.
+
+- `Exit`가 nil이면 exit 일치 검사만 생략한다.
+- `EditPoints`가 nil이면 point 비교만 생략하고 edit byte 범위는 항상 비교한다.
+
+그 밖의 경우는 다음과 같다.
+
+- `Sources`가 응답 step보다 적으면 거부한다.
+- r3/r4 revision인데 `Observation`이 없으면 거부한다.
+- 잘못된 `Expect`도 panic 없이 오류로 끝난다.
+
+이 package는 파일·process·network를 쓰지 않고 `kit`을 import하지 않는다. 검사 통과는 응답이 요청과 caller의 계산에 맞는 형식이라는 뜻이다. 실행의 인증이나 결과 claim을 대신하지 않는다.
+
 ```go
 func VerifyQueryWitness(ctx context.Context, req QueryWitnessRequest) (QueryWitnessResult, error)
 ```

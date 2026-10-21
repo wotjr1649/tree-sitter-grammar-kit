@@ -1,6 +1,7 @@
 package native
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -20,6 +21,21 @@ func TestWireFieldInput(t *testing.T) {
 	root[2] = 0
 	if _, err := Nodes([][]int64{root}, []string{"node"}, []string{"name"}); err == nil {
 		t.Fatal("root field accepted")
+	}
+}
+
+func TestTreeCauseIsKitError(t *testing.T) {
+	// the shared tree rules report a tree cause that the native error keeps as the kit's (#251)
+	form := "full"
+	root := []kit.TreeNode{{Parent: -1, Type: "node", Named: true, EndByte: 5, EndPoint: kit.Point{Column: 5}}}
+	w := WireTree{Status: kit.StatusCompleted, Form: &form, Digest: kit.TreeDigest(root), DescendantCount: 1, Types: []string{"node"},
+		Nodes: [][]int64{{-1, 0, -1, 1, 0, 5, 0, 0, 0, 5}}}
+	_, err := checkTree(w, 1, 2, Request{Protocol: Protocol})
+	ne, ok := err.(*Error)
+	ke, kok := errors.Unwrap(err).(*kit.Error)
+	if !ok || ne.Kind != kit.KindIO || ne.Code != "RESPONSE_INVALID" || !kok ||
+		*ke != (kit.Error{Kind: kit.KindInvalidInput, Code: "TREE_RANGE_INVALID", Path: "#/nodes/0"}) {
+		t.Fatalf("tree cause: %#v", err)
 	}
 }
 
