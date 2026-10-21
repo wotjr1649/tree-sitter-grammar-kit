@@ -218,6 +218,9 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	if len(groups) > 0 {
 		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
+	// qualification evidence is a new run, which live Check binds to the current runtime
+	// manifest; earlier verified manifests stay readable only for recorded replays (review on #250)
+	g.check(x.observationWire != "tsgk-native/r4" || manifest == reuseobs.RuntimeManifestSHA256, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "qualification 관측은 현재 runtime manifest여야 한다")
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
 	// the source length and API point bytes of the request of the response starting at a
@@ -438,12 +441,21 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 			return e
 		}
 		var slots struct {
+			Edit        jsontext.Value `json:"edit"`
 			Route       jsontext.Value `json:"route"`
 			Incremental jsontext.Value `json:"incremental"`
 			Fresh       jsontext.Value `json:"fresh"`
 		}
+		var route struct { // an edit step's route, typed and closed as live DecodeResponse reads it
+			EditHasChanges    bool   `json:"edit_has_changes"`
+			EditedRootEndByte uint32 `json:"edited_root_end_byte"`
+			ReusedNodes       uint64 `json:"reused_nodes"`
+			FreshReusedNodes  uint64 `json:"fresh_reused_nodes"`
+		}
+		absent := func(v jsontext.Value) bool { return len(v) == 0 || string(v) == "null" }
 		shape = shape && onlyMembers(raw, "step", "source_bytes", "source_sha256", "edit", "route", "incremental", "fresh", "observations") &&
-			jsonv2.Unmarshal(raw, &slots) == nil && (i > 0 || len(slots.Route) == 0 || string(slots.Route) == "null")
+			jsonv2.Unmarshal(raw, &slots) == nil && (absent(slots.Route) || i > 0 && jsonv2.Unmarshal(slots.Route, &route, jsonv2.RejectUnknownMembers(true)) == nil) &&
+			(absent(slots.Edit) || onlyMembers(slots.Edit, "start_byte", "old_end_byte", "new_end_byte", "start_point", "old_end_point", "new_end_point"))
 		for _, t := range []jsontext.Value{slots.Incremental, slots.Fresh} {
 			// the members and the scalar and table types live DecodeResponse reads; the payload
 			// structure (nodes, errors, declarations, partial trees) stays judged from the record (#251)

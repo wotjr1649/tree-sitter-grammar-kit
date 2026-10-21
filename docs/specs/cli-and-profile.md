@@ -226,7 +226,7 @@ registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema
 
 policy `tsgk-evidence-policy/r1`(strict, 모르는 필드 거부): `schema`, `id`, `evidence_sha256`(입력 root의 `evidence.json` bytes에 대한 caller 신뢰 anchor), `required`(`node`, `kind`, `identities`), `carry_forward`(`node`, `origin`, `relation`, `authorized_by`), `eligibility`(`null` 또는 `{nodes, modes}`)다. 예시는 `src/contracts/examples/evidence-policy-r1.json`, 거부 예시는 `invalid/evidence-*.json`이다. graph 문서 `tsgk-evidence/r1`은 입력 root의 `evidence.json`이며 node(`id`, `kind`, 세 축, `recorded_assessment`, `identities`, `files`, `refs`)를 담는다. 검사는 `evidence-replay` 한도로 한다.
 
-## S08 구현 — qualify, qualification inventory r3
+## S08 구현 — qualify, qualification inventory r4
 
 ```text
 tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--out PATH]

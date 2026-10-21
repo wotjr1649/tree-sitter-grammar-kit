@@ -314,6 +314,28 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"] = "x"
 			}
 		}},
+		{name: "raw-edit-route-type", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["route"] = "x"
+			}
+		}},
+		{name: "raw-edit-unknown-member", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["edit"].(map[string]any)["bogus"] = true
+			}
+		}},
+		{name: "historical-manifest", code: "OBSERVATION_CAPABILITY_MISMATCH", record: func(r []map[string]any) {
+			for _, c := range r { // every record, raw and observation consistently on 659cda7's verified manifest
+				c["producer"].(map[string]any)["reuse_observation"].(map[string]any)["runtime_manifest_sha256"] = qfxHistoricalManifest
+				for _, s := range c["steps"].([]any) {
+					if os, ok := s.(map[string]any)["observations"].([]reuseobs.Observation); ok {
+						for i := range os {
+							os[i].RuntimeManifestSHA256 = qfxHistoricalManifest
+						}
+					}
+				}
+			}
+		}},
 		{name: "raw-digest-short", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "c1" {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = "00"
@@ -503,3 +525,6 @@ func TestQualificationRawCountLimit(t *testing.T) {
 		}
 	}
 }
+
+// qfxHistoricalManifest is 659cda7's runtime manifest, verified for recorded replays only.
+const qfxHistoricalManifest = "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"

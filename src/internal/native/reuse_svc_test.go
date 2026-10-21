@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
@@ -39,5 +40,23 @@ func TestNativeReuseSvcBoundaries(t *testing.T) {
 	noInline := b.RunCase(context.Background(), x, kit.IncrementalCase{ID: "svc-host-only", Encoding: kit.EncodingUTF8}, []byte(`<%@ ServiceHost Language="C#" Service="S" %>`))
 	if noInline.ReuseObservationClaim != ClaimNotClaimed || len(noInline.Steps) != 1 || noInline.Steps[0].Observations[0].Reason != "NO_NATIVE_PARSE" || noInline.Process != nil {
 		t.Fatalf("no native: %+v", noInline)
+	}
+}
+
+// An observed SVC history whose first native segment ends early keeps that segment's
+// observed steps and its producer declaration together (review on #250).
+func TestNativeReuseSvcEarlySegmentProducer(t *testing.T) {
+	b := fixtureBuild(t, "plain")
+	x := testContext("native-parse-edit")
+	x.Format, x.Protocol, x.ObservationRunID = kit.SvcFormat, ProtocolR3, "svc-early-run"
+	x.Op.Nodes, x.Op.FullNodes = 64, 64
+	source := "<%@ ServiceHost Language=\"C#\" Service=\"S\" %>\na = f(1);"
+	c := kit.IncrementalCase{ID: "svc-early", Encoding: kit.EncodingUTF8, Edits: editsBy(source, edit{"a = f(1);", strings.Repeat("a = f(1);\n", 128)}, edit{"Language=\"C#\" ", ""})}
+	r := b.RunCase(context.Background(), x, c, []byte(source)) // the edit step overflows the first native segment; the host-only step splits the history
+	if r.ExecutionStatus != kit.StatusResourceLimit || len(r.Segments) != 1 || len(r.Steps) == 0 || len(r.Steps[0].Observations) == 0 {
+		t.Fatalf("early segment: %s %s %+v", r.ExecutionStatus, r.Code, r.Segments)
+	}
+	if r.Producer == nil || len(r.Producer.ReuseObservation) == 0 {
+		t.Fatalf("observed steps without their producer declaration: %+v", r.Producer)
 	}
 }
