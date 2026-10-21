@@ -410,8 +410,13 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
 		case "producer":
+			var abi struct { // typed as live DecodeResponse reads them (review on #250)
+				LanguageVersion        uint32 `json:"language_version"`
+				RuntimeLanguageVersion uint32 `json:"runtime_language_version"`
+				RuntimeMinCompatible   uint32 `json:"runtime_min_compatible"`
+			}
 			shape = shape && onlyMembers(raw, "language_version", "runtime_language_version", "runtime_min_compatible", "query", "api", "predicates",
-				"symbol_count", "field_count", "reuse_observation")
+				"symbol_count", "field_count", "reuse_observation") && jsonv2.Unmarshal(raw, &abi) == nil
 			fallthrough
 		case "protocol", "id", "complete", "steps_completed", "source_bytes", "status", "code":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), &wire)
@@ -440,8 +445,19 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		shape = shape && onlyMembers(raw, "step", "source_bytes", "source_sha256", "edit", "route", "incremental", "fresh", "observations") &&
 			jsonv2.Unmarshal(raw, &slots) == nil && (i > 0 || len(slots.Route) == 0 || string(slots.Route) == "null")
 		for _, t := range []jsontext.Value{slots.Incremental, slots.Fresh} {
+			// the members and the scalar and table types live DecodeResponse reads; the payload
+			// structure (nodes, errors, declarations, partial trees) stays judged from the record (#251)
+			var typed struct {
+				ParseMillis uint64    `json:"parse_ms"`
+				Reason      string    `json:"reason"`
+				MaxDepth    uint64    `json:"max_depth"`
+				HasError    bool      `json:"has_error"`
+				Types       []string  `json:"types"`
+				Fields      []string  `json:"fields"`
+				Nodes       [][]int64 `json:"nodes"`
+			}
 			shape = shape && (len(t) == 0 || string(t) == "null" || onlyMembers(t, "status", "code", "parse_ms", "form", "reason", "descendant_count", "max_depth",
-				"has_error", "digest", "types", "fields", "nodes", "errors", "declarations", "partial_trees", "queries", "api"))
+				"has_error", "digest", "types", "fields", "nodes", "errors", "declarations", "partial_trees", "queries", "api") && jsonv2.Unmarshal(t, &typed) == nil)
 		}
 		if i >= len(want) {
 			g.fail(id, "OBSERVATION_PROJECTION_MISMATCH", "원 응답에 추가 관측 step이 있다")

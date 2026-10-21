@@ -299,6 +299,21 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["bogus"] = true
 			}
 		}},
+		{name: "raw-producer-abi-type", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["producer"].(map[string]any)["language_version"] = "15"
+			}
+		}},
+		{name: "raw-tree-scalar-type", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["has_error"] = "no"
+			}
+		}},
+		{name: "raw-tree-nodes-type", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"] = "x"
+			}
+		}},
 		{name: "raw-digest-short", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "c1" {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = "00"
