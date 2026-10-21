@@ -535,7 +535,7 @@ func judgeOracle(cr *CaseResult, oc kit.OracleCase, prof kit.OracleProfile, pack
 					a, b := items[k], s05[k]
 					var an, bn *NameSpan
 					if a.Name != nil {
-						an = &NameSpan{a.Name.StartByte, a.Name.EndByte}
+						an = &NameSpan{StartByte: a.Name.StartByte, EndByte: a.Name.EndByte}
 					}
 					bn = b.Name
 					d.Reproduces = a.Fact == b.Fact && a.NodeType == b.NodeType && a.StartByte == b.StartByte && a.EndByte == b.EndByte && a.Status == b.Status &&

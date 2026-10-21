@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 func field(s string) *string { return &s }
@@ -16,11 +18,11 @@ func field(s string) *string { return &s }
 // two same-span zero-width siblings and a duplicated parent/child range
 func sampleTree() []TreeNode {
 	return []TreeNode{
-		{Parent: -1, Type: "source_file", Named: true, StartByte: 0, EndByte: 4, EndPoint: Point{0, 4}},
-		{Parent: 0, Type: "assignment", Named: true, HasError: true, StartByte: 0, EndByte: 4, EndPoint: Point{0, 4}},
-		{Parent: 1, Type: "identifier", Field: field("name"), Named: true, StartByte: 0, EndByte: 1, EndPoint: Point{0, 1}},
-		{Parent: 1, Type: ")", IsMissing: true, StartByte: 4, EndByte: 4, StartPoint: Point{0, 4}, EndPoint: Point{0, 4}},
-		{Parent: 1, Type: ";", IsMissing: true, StartByte: 4, EndByte: 4, StartPoint: Point{0, 4}, EndPoint: Point{0, 4}},
+		{Parent: -1, Type: "source_file", Named: true, StartByte: 0, EndByte: 4, EndPoint: Point{Row: 0, Column: 4}},
+		{Parent: 0, Type: "assignment", Named: true, HasError: true, StartByte: 0, EndByte: 4, EndPoint: Point{Row: 0, Column: 4}},
+		{Parent: 1, Type: "identifier", Field: field("name"), Named: true, StartByte: 0, EndByte: 1, EndPoint: Point{Row: 0, Column: 1}},
+		{Parent: 1, Type: ")", IsMissing: true, StartByte: 4, EndByte: 4, StartPoint: Point{Row: 0, Column: 4}, EndPoint: Point{Row: 0, Column: 4}},
+		{Parent: 1, Type: ";", IsMissing: true, StartByte: 4, EndByte: 4, StartPoint: Point{Row: 0, Column: 4}, EndPoint: Point{Row: 0, Column: 4}},
 	}
 }
 
@@ -82,8 +84,8 @@ func TestCompareTreeDiagnostics(t *testing.T) {
 		{"is_missing", "false", "true", func(n *TreeNode) { n.IsMissing = true }},
 		{"start_byte", "0", "4294967295", func(n *TreeNode) { n.StartByte = ^uint32(0) }},
 		{"end_byte", "1", "0", func(n *TreeNode) { n.EndByte = 0 }},
-		{"start_point", "[0,0]", "[1,2]", func(n *TreeNode) { n.StartPoint = Point{1, 2} }},
-		{"end_point", "[0,1]", "[3,4]", func(n *TreeNode) { n.EndPoint = Point{3, 4} }},
+		{"start_point", "[0,0]", "[1,2]", func(n *TreeNode) { n.StartPoint = Point{Row: 1, Column: 2} }},
+		{"end_point", "[0,1]", "[3,4]", func(n *TreeNode) { n.EndPoint = Point{Row: 3, Column: 4} }},
 	} {
 		a, b := sampleTree(), sampleTree()
 		tc.mutate(&b[2])
@@ -122,7 +124,7 @@ func TestValidateTree(t *testing.T) {
 		"forward-parent": {func(n []TreeNode) []TreeNode { n[2].Parent = 3; return n }, "TREE_PARENT_INVALID"},
 		"range":          {func(n []TreeNode) []TreeNode { n[2].EndByte = 9; return n }, "TREE_RANGE_INVALID"},
 		"inverted":       {func(n []TreeNode) []TreeNode { n[2].StartByte = 2; return n }, "TREE_RANGE_INVALID"},
-		"point":          {func(n []TreeNode) []TreeNode { n[2].StartPoint = Point{1, 0}; return n }, "TREE_POINT_INVALID"},
+		"point":          {func(n []TreeNode) []TreeNode { n[2].StartPoint = Point{Row: 1, Column: 0}; return n }, "TREE_POINT_INVALID"},
 		"root-not-first": {func(n []TreeNode) []TreeNode { n[0].Parent = 0; return n }, "TREE_ROOT_INVALID"},
 	} {
 		err := ValidateTree(tc.mutate(sampleTree()), 4)
@@ -139,7 +141,7 @@ func TestValidateTree(t *testing.T) {
 	}
 	// A parent that is not on the current ancestor chain breaks contiguous preorder.
 	bad := sampleTree()
-	bad = append(bad, TreeNode{Parent: 2, Type: "x", StartByte: 0, EndByte: 1, EndPoint: Point{0, 1}})
+	bad = append(bad, TreeNode{Parent: 2, Type: "x", StartByte: 0, EndByte: 1, EndPoint: Point{Row: 0, Column: 1}})
 	var ke *Error
 	if err := ValidateTree(bad, 4); !errors.As(err, &ke) || ke.Code != "TREE_PREORDER_INVALID" {
 		t.Fatalf("non-contiguous ancestry: %v", err)
@@ -218,14 +220,14 @@ func TestApplyEdits(t *testing.T) {
 	if err != nil || string(v[1]) != "a\r\n\xED\x95\x9Cxyb\nc" {
 		t.Fatalf("%v %q", err, v)
 	}
-	if p[0].Start != (Point{1, 3}) || p[0].OldEnd != (Point{1, 4}) || p[0].NewEnd != (Point{1, 5}) {
+	if p[0].Start != (Point{Row: 1, Column: 3}) || p[0].OldEnd != (Point{Row: 1, Column: 4}) || p[0].NewEnd != (Point{Row: 1, Column: 5}) {
 		t.Fatalf("points %+v", p[0])
 	}
-	if got := PointAt(EncodingUTF8, v[1], len(v[1])); got != (Point{2, 1}) {
+	if got := PointAt(EncodingUTF8, v[1], len(v[1])); got != (Point{Row: 2, Column: 1}) {
 		t.Fatalf("eof point %+v", got)
 	}
 	le := []byte{'a', 0, '\n', 0, 'b', 0}
-	if got := PointAt(EncodingUTF16LE, le, 4); got != (Point{1, 0}) {
+	if got := PointAt(EncodingUTF16LE, le, 4); got != (Point{Row: 1, Column: 0}) {
 		t.Fatalf("utf16 point %+v", got)
 	}
 	for name, tc := range map[string]struct {
@@ -258,4 +260,11 @@ func TestApplyEdits(t *testing.T) {
 func hasErrCode(err error, code string) bool {
 	var ke *Error
 	return errors.As(err, &ke) && ke.Code == code
+}
+
+func TestNativewireStatuses(t *testing.T) {
+	// the shared response validator compares the kit's execution statuses (#251)
+	if nativewire.StatusCompleted != StatusCompleted || nativewire.StatusResourceLimit != StatusResourceLimit || nativewire.StatusFailed != StatusFailed {
+		t.Fatal("nativewire statuses differ from the kit's")
+	}
 }

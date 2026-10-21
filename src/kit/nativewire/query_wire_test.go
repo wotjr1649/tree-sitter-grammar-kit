@@ -1,10 +1,11 @@
-package native
+package nativewire
 
 import (
 	jsonv2 "encoding/json/v2"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 func TestQueryNodeLinkFields(t *testing.T) {
@@ -26,16 +27,16 @@ func TestQueryNodeLinkFields(t *testing.T) {
 		{"end-column", func(q *WireQuery) { q.Captures[0][11] = 0 }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			q := WireQuery{ID: "q", Status: kit.StatusCompleted, Patterns: 1, Matches: 1,
-				CaptureNames: []string{"x"}, Types: []string{"identifier"}, Predicates: []WirePredicate{},
+			q := WireQuery{ID: "q", Status: StatusCompleted, Patterns: 1, Matches: 1,
+				CaptureNames: []string{"x"}, Types: []string{"identifier"}, Predicates: []querypolicy.Predicate{},
 				Captures: [][]int64{{0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}}}
 			raw, err := jsonv2.Marshal([]WireQuery{q})
 			if err != nil {
 				t.Fatal(err)
 			}
 			tree := Tree{Wire: WireTree{DescendantCount: 1, Queries: raw},
-				Nodes: []kit.TreeNode{{Type: "identifier", Named: true, EndByte: 1, EndPoint: kit.Point{Column: 1}}}}
-			req := Request{Queries: []QuerySource{{ID: "q", Source: []byte("(identifier) @x")}}}
+				Nodes: []TreeNode{{Type: "identifier", Named: true, EndByte: 1, EndPoint: Point{Column: 1}}}}
+			req := []querywire.Source{{ID: "q", Source: []byte("(identifier) @x")}}
 			if err := tree.checkQueries(req, 1); err != nil || len(tree.Queries) != 1 {
 				t.Fatalf("normal link failed: %+v %v", tree.Queries, err)
 			}

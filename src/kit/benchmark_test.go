@@ -17,10 +17,10 @@ import (
 func benchmarkTree(n int) []TreeNode {
 	field := "item"
 	nodes := make([]TreeNode, n+1)
-	nodes[0] = TreeNode{Parent: -1, Type: "document", Named: true, EndByte: uint32(n), EndPoint: Point{0, uint32(n)}}
+	nodes[0] = TreeNode{Parent: -1, Type: "document", Named: true, EndByte: uint32(n), EndPoint: Point{Row: 0, Column: uint32(n)}}
 	for i := 1; i <= n; i++ {
 		nodes[i] = TreeNode{Parent: 0, Type: "identifier", Field: &field, Named: true,
-			StartByte: uint32(i - 1), EndByte: uint32(i), StartPoint: Point{0, uint32(i - 1)}, EndPoint: Point{0, uint32(i)}}
+			StartByte: uint32(i - 1), EndByte: uint32(i), StartPoint: Point{Row: 0, Column: uint32(i - 1)}, EndPoint: Point{Row: 0, Column: uint32(i)}}
 	}
 	return nodes
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 func policyCapture(name, quantifier string) PredStep {
@@ -40,10 +41,12 @@ func policyOut(t *testing.T, q WireQuery, encoding string) QueryOut {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tree := Tree{Status: kit.StatusCompleted, Wire: WireTree{DescendantCount: 4, Queries: raw}}
-	if err := tree.checkQueries(Request{Queries: queries}, uint64(len(source))); err != nil {
-		t.Fatalf("invalid owned wire fixture: %v", err)
+	// the summary-form wire validation checkTree applies to a tree's queries
+	decoded, werr := querywire.DecodeSummary(raw, queries, uint64(len(source)), 4)
+	if werr != nil {
+		t.Fatalf("invalid owned wire fixture: %v", werr)
 	}
+	tree := Tree{Status: kit.StatusCompleted, Wire: WireTree{DescendantCount: 4, Queries: raw}, Queries: decoded}
 	return queryOuts(tree, queries, encoding, source)[0]
 }
 
