@@ -74,11 +74,12 @@ func snapshot(t *testing.T, dir string) map[string]string {
 }
 
 // #217: an observed record set is r4 with its run id, and every case carries its claim: a
-// parsed case PASS, one whose input changed before the run NOT_CLAIMED (never empty).
+// parsed case PASS, one whose input is gone before the run (refused before any parse)
+// NOT_CLAIMED, never empty.
 func TestOracleRecordObservedSet(t *testing.T) {
 	t.Parallel()
 	profile, root := oracleProfile(t, nil, "a = f(1);\n", "b = 2;\n")
-	if err := os.WriteFile(filepath.Join(root, "caseb.txt"), []byte("b = 3;\n"), 0o644); err != nil {
+	if err := os.Remove(filepath.Join(root, "caseb.txt")); err != nil {
 		t.Fatal(err)
 	}
 	out := filepath.Join(t.TempDir(), "set")
