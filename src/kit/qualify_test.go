@@ -176,11 +176,11 @@ func qfxRaw(c map[string]any) map[string]any {
 			if !ok {
 				return nil
 			}
-			out := map[string]any{"status": m["status"]}
+			out := map[string]any{"status": m["status"], "code": m["code"]}
 			if qs, ok := m["queries"].([]any); ok {
 				var queries []any
 				for _, q := range qs {
-					queries = append(queries, map[string]any{"status": q.(map[string]any)["status"]})
+					queries = append(queries, map[string]any{"status": q.(map[string]any)["status"], "code": q.(map[string]any)["code"]})
 				}
 				out["queries"] = queries
 			}

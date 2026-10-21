@@ -196,6 +196,11 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"status": StatusResourceLimit}}
 			}
 		}},
+		{name: "raw-query-bogus", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // no wire query status
+			if raw["id"] == "q1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"status": "BOGUS", "code": ""}}
+			}
+		}},
 		{name: "stepless-raw-removed", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) {
 			early(r[0], "OUTPUT_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
