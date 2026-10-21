@@ -280,27 +280,31 @@ func TestOracleRecordSet(t *testing.T) {
 			t.Fatalf("%d winners", ok)
 		}
 	})
-	t.Run("write-failure", func(t *testing.T) {
-		out := filepath.Join(base, "fail")
-		orig := createExclusive
-		defer func() { createExclusive = orig }()
-		createExclusive = func(root *os.Root, path string, data []byte) error {
-			if strings.Contains(path, "00001-cb") {
-				return errors.New("injected write failure")
-			}
-			return orig(root, path, data)
+}
+
+// The failure hook is a package variable, so this test stays sequential: run in parallel it
+// failed another test's records/00001-cb.json (TestOracleRecordObservedSet).
+func TestOracleRecordSetWriteFailure(t *testing.T) {
+	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "ids", Source: "(identifier) @id"}}, "a = f(1);\n", "{ b = 2; }\n")
+	out := filepath.Join(t.TempDir(), "fail")
+	orig := createExclusive
+	defer func() { createExclusive = orig }()
+	createExclusive = func(root *os.Root, path string, data []byte) error {
+		if strings.Contains(path, "00001-cb") {
+			return errors.New("injected write failure")
 		}
-		res, err := runOracle(t, oracleRequest(t, profile, root, out))
-		if err != nil || res.ExecutionStatus != kit.StatusFailed || res.Set != nil {
-			t.Fatalf("%v %s %+v", err, res.ExecutionStatus, res.Set)
-		}
-		if _, err := os.Stat(filepath.Join(out, "manifest.json")); !errors.Is(err, os.ErrNotExist) {
-			t.Fatalf("manifest written after a failed member: %v", err)
-		}
-		if set := kit.VerifyOracleSet(os.DirFS(out)); set.Valid || set.Findings[0].Code != "MANIFEST_MISSING" {
-			t.Fatalf("incomplete set verified: %+v", set)
-		}
-	})
+		return orig(root, path, data)
+	}
+	res, err := runOracle(t, oracleRequest(t, profile, root, out))
+	if err != nil || res.ExecutionStatus != kit.StatusFailed || res.Set != nil {
+		t.Fatalf("%v %s %+v", err, res.ExecutionStatus, res.Set)
+	}
+	if _, err := os.Stat(filepath.Join(out, "manifest.json")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("manifest written after a failed member: %v", err)
+	}
+	if set := kit.VerifyOracleSet(os.DirFS(out)); set.Valid || set.Findings[0].Code != "MANIFEST_MISSING" {
+		t.Fatalf("incomplete set verified: %+v", set)
+	}
 }
 
 // C1-REAL-WORLD-SOURCE-WINDOWS-R3: on a host outside the operation's platform scope both
