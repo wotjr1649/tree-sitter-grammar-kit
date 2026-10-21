@@ -143,6 +143,7 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 			}
 			if tc.early {
 				c["execution_status"], c["assessment"], c["code"] = StatusResourceLimit, AssessBlocked, "PARSE_TIME_LIMIT"
+				c["response_status"], c["response_code"], wire["code"] = StatusResourceLimit, "PARSE_TIME_LIMIT", "PARSE_TIME_LIMIT"
 				c["claims"] = map[string]string{"incremental_equality": claimNotClaimed, "incremental_route": claimNotClaimed, "expectations": claimNotClaimed}
 				all := []reuseobs.Step{{Native: true, Observations: c["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)}, {Native: true, Edit: true, Observations: observations}}
 				c["reuse_observation_claim"] = reuseobs.CaseClaim(all, false)

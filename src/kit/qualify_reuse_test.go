@@ -132,6 +132,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		name, code string // code: the reuse-observation gate code, or a set finding
 		record     func(records []map[string]any)
 		manifest   func(m map[string]any)
+		raw        func(raw map[string]any)
 	}{
 		{name: "claim", code: "OBSERVATION_CLAIM_MISMATCH", record: func(r []map[string]any) { r[0]["reuse_observation_claim"] = "FAIL" }},
 		{name: "null-claim", code: "OBSERVATION_CLAIM_MISMATCH", record: func(r []map[string]any) { r[0]["reuse_observation_claim"] = nil }},
@@ -160,6 +161,17 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			early(r[0], "PARSE_TIME_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
 		}},
+		{name: "raw-other-end", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // a completed record, a failed raw response
+			if raw["id"] == "c1" {
+				raw["status"], raw["code"] = StatusFailed, "PARSE_NULL"
+			}
+		}},
+		{name: "stepless-raw-removed", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) {
+			early(r[0], "OUTPUT_LIMIT")
+			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
+		}, manifest: func(m map[string]any) { // the response leaves the set with its member
+			m["members"] = slices.DeleteFunc(m["members"].([]OracleMember), func(mem OracleMember) bool { return mem.Role == "raw" && mem.Case == "c1" })
+		}},
 		{name: "protocol-r2", code: "PROTOCOL_MISMATCH", manifest: func(m map[string]any) { m["protocol"] = "tsgk-native/r2" }},
 		{name: "other-run", code: "OBSERVATION_INVALID", manifest: func(m map[string]any) { m["producer"].(map[string]string)["observation_run_id"] = "other-run" }},
 		{name: "unbound-raw", code: "RESPONSE_UNBOUND", manifest: func(m map[string]any) { // never read, so never verified
@@ -179,6 +191,10 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 			}, manifest: func(set string, m map[string]any) {
 				if set == "s06-fxa" && tc.manifest != nil {
 					tc.manifest(m)
+				}
+			}, raw: func(set string, raw map[string]any) {
+				if set == "s06-fxa" && tc.raw != nil {
+					tc.raw(raw)
 				}
 			}}
 			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": mut}))

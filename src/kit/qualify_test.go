@@ -85,6 +85,7 @@ type qfxMut struct {
 	profile  func(set string, prof map[string]any)
 	identity func(id map[string]any)
 	skip     func(set string) bool
+	raw      func(set string, raw map[string]any) // an r4 raw response alone, after its record
 }
 
 func qfxRecord(id, src string, edits bool, query bool) map[string]any {
@@ -166,7 +167,7 @@ func qfxObserve(c map[string]any) {
 
 // qfxRaw is a record's raw tsgk-native/r4 response, built from the (mutated) record: the
 // observation projection the qualification compares and each tree's status.
-func qfxRaw(c map[string]any) []byte {
+func qfxRaw(c map[string]any) map[string]any {
 	steps := []any{}
 	for _, v := range c["steps"].([]any) {
 		s := v.(map[string]any)
@@ -194,9 +195,8 @@ func qfxRaw(c map[string]any) []byte {
 	} else if completed == 0 {
 		completed = 1 // a response that dropped its steps keeps the earlier completed count
 	}
-	b, _ := json.Marshal(map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": c["producer"], "steps": steps,
-		"steps_completed": completed, "complete": true})
-	return b
+	return map[string]any{"protocol": "tsgk-native/r4", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": c["producer"], "steps": steps,
+		"steps_completed": completed, "complete": true}
 }
 
 // host writes one platform's evidence directory for every workload of the inventory that
@@ -286,7 +286,11 @@ func (f *qfx) host(t *testing.T, p QualPlatform, m qfxMut) string {
 				b    []byte
 			}{{"record", rec}, {"raw", raw}}
 			if observe {
-				files[1].b = qfxRaw(c)
+				raw := qfxRaw(c)
+				if m.raw != nil {
+					m.raw(w.Set, raw)
+				}
+				files[1].b, _ = json.Marshal(raw)
 				if steps := c["steps"].([]any); len(steps) > 0 && !slices.ContainsFunc(steps, func(s any) bool { return s.(map[string]any)["incremental"] != nil }) {
 					files = files[:1] // no native parse: no driver response
 				}

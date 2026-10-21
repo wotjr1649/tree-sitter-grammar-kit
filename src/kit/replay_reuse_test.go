@@ -55,7 +55,7 @@ func reuseFixtureFor(t *testing.T, producerManifest, observationManifest string)
 		if c["id"] == "c2" {
 			path = "responses/00001-c2.json"
 		}
-		f.extra[path], _ = json.Marshal(map[string]any{"protocol": "tsgk-native/r3", "id": c["id"], "producer": c["producer"], "steps": wireSteps, "steps_completed": len(wireSteps), "complete": true})
+		f.extra[path], _ = json.Marshal(map[string]any{"protocol": "tsgk-native/r3", "id": c["id"], "status": c["response_status"], "code": c["response_code"], "producer": c["producer"], "steps": wireSteps, "steps_completed": len(wireSteps), "complete": true})
 	}
 	return f
 }

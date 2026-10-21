@@ -219,7 +219,8 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
 	for path, end := range steplessEnds(c, groups, dir, index) {
-		if x.members[path].Role == "response" {
+		// a recorded stepless limit end came from a driver response, which must be present
+		if x.members[path].Role == "response" || steplessEnd(end[0], end[1], x.observationWire == "tsgk-native/r4" && x.observationQueries) {
 			if e := x.compareObservationResponse(path, c, nil, top, manifest, "", end); e != nil {
 				return e
 			}
@@ -247,7 +248,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 				}
 			}
 		}
-		if e := x.compareObservationResponse(path, c, steps, top, manifest, open, [2]string{}); e != nil {
+		if e := x.compareObservationResponse(path, c, steps, top, manifest, open, responseEnd(c, start)); e != nil {
 			return e
 		}
 	}
@@ -262,14 +263,27 @@ func steplessEnds(c *rcCase, groups map[int][]observationStep, dir string, index
 	out := map[string][2]string{}
 	if len(c.Segments) == 0 {
 		if len(c.Steps) == 0 {
-			out[fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)] = [2]string{c.ResponseStatus, c.ResponseCode}
+			out[fmt.Sprintf("%s%05d-%s.json", dir, index, c.ID)] = responseEnd(c, 0)
 		}
 		return out
 	}
 	if last := c.Segments[len(c.Segments)-1]; c.ExecutionStatus != StatusCompleted && groups[last.StartStep] == nil {
-		out[fmt.Sprintf("%s%05d-%s-segment-%05d.json", dir, index, c.ID, last.StartStep)] = [2]string{c.ExecutionStatus, c.Code}
+		out[fmt.Sprintf("%s%05d-%s-segment-%05d.json", dir, index, c.ID, last.StartStep)] = responseEnd(c, last.StartStep)
 	}
 	return out
+}
+
+// responseEnd is the status and code the native response starting at step start must
+// record: a plain case's response status and code; an SVC segment's COMPLETED, except the
+// last segment of a case that ended early, whose run set the case's status and code.
+func responseEnd(c *rcCase, start int) [2]string {
+	if len(c.Segments) == 0 {
+		return [2]string{c.ResponseStatus, c.ResponseCode}
+	}
+	if c.ExecutionStatus != StatusCompleted && start == c.Segments[len(c.Segments)-1].StartStep {
+		return [2]string{c.ExecutionStatus, c.Code}
+	}
+	return [2]string{StatusCompleted, ""}
 }
 
 // steplessEnd reports whether live Check accepts a response without steps that ends with
@@ -358,6 +372,9 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		return e
 	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wire.Status, open, rawOpen)
+	if x.mandatoryObservation && want != nil { // r4: the response's final status and code are the record's
+		counted = counted && [2]string{wire.Status, wire.Code} == end
+	}
 	if want == nil {
 		// live Check leaves steps_completed of a response that dropped its steps unconstrained
 		counted = wire.StepsCompleted != nil && [2]string{wire.Status, wire.Code} == end && steplessEnd(wire.Status, wire.Code, wire.Protocol == "tsgk-native/r4" && x.observationQueries)
