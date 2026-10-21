@@ -290,7 +290,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 		Large json.RawMessage `json:"large"`
 	}
 	if decode(core, &rawCore) != nil || requiredFields(rawCore.Large, "max_page_wall_ms") != nil ||
-		decode(jobsData, &jobs) != nil || jobs.Total != len(jobs.Jobs) || jobs.Total < 10 || jobs.Total > 13 ||
+		decode(jobsData, &jobs) != nil || jobs.Total != len(jobs.Jobs) || jobs.Total < 11 || jobs.Total > 14 ||
 		decode(core, &gate) != nil || gate.Assessment != "PASS" || !sameRun(&gate.Run, expected) ||
 		len(configs) != len(marginJobs) {
 		return nil, errors.New("margin current evidence invalid")

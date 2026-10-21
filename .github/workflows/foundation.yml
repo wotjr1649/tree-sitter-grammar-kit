@@ -448,13 +448,46 @@ jobs:
             if ($outcome -ne 'success') { throw 'regeneration diagnostic did not succeed' }
           }
 
+  mode:
+    # #252: a PR iteration labelled ci:light runs only the foundation; the heavy evidence
+    # starts at native-prepare and is skipped, so the always() integration gate fails and
+    # only a full run integrates. The label is read at run time, not from the event, so a
+    # whole-run re-run after removing it is full; a failed lookup falls back to full.
+    name: CI mode
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      heavy: ${{ steps.mode.outputs.heavy }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $heavy = 'true'
+          if ($env:EVENT -eq 'pull_request') {
+            $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')
+            if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }
+          }
+          "heavy=$heavy" >> $env:GITHUB_OUTPUT
+          "CI mode: heavy=$heavy"
+          exit 0 # a failed lookup already chose full; its exit code must not fail the job
+
   native-prepare:
     # S05: one Linux job fetches the 26 pinned route sources, applies the patch chains of
     # the 6 adopted routes and regenerates all 26 parsers with tsgk reproduce (the other 20
     # without patches, C2-REGENERATE-r1); every file is hash-checked against
     # src/contracts/native-routes.json before it is handed on.
     name: native prepare (ubuntu-24.04)
-    needs: foundation
+    needs: [foundation, mode]
+    if: ${{ needs.mode.outputs.heavy == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
