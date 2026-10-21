@@ -44,6 +44,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 		}
 		jobs = append(jobs, job)
 	}
+	jobs = append(jobs, marginAPIJob{marginStep: marginStep{Name: "CI mode", Status: "completed", Conclusion: "success"}}) // #252, unmeasured
 	jobs = append(jobs, marginAPIJob{marginStep: marginStep{Name: "integration gate", Status: "in_progress"}})
 	jobsData := encoded(t, map[string]any{"total_count": len(jobs), "jobs": jobs})
 	core := encoded(t, map[string]any{"assessment": "PASS", "run": r, "large": map[string]any{"max_page_wall_ms": 63000}})
@@ -593,5 +594,31 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// The workflow has 11 jobs on a PR (nine producers, CI mode, the gate) and 14 with the
+// three main diagnostics (#252); other totals are not the current workflow.
+func TestMarginWorkflowJobCount(t *testing.T) {
+	r, jobsData, core := marginFixture(t, "123")
+	var jobs struct {
+		Jobs []marginAPIJob `json:"jobs"`
+	}
+	if err := json.Unmarshal(jobsData, &jobs); err != nil {
+		t.Fatal(err)
+	}
+	diagnostic := func(name string) marginAPIJob {
+		return marginAPIJob{marginStep: marginStep{Name: name, Status: "completed", Conclusion: "success"}}
+	}
+	main := append(slices.Clone(jobs.Jobs), diagnostic("race diagnostic (ubuntu-24.04)"), diagnostic("race diagnostic (macos-15)"), diagnostic("regenerate diagnostic (macos-15)"))
+	noMode := slices.DeleteFunc(slices.Clone(jobs.Jobs), func(j marginAPIJob) bool { return j.Name == "CI mode" })
+	for name, tc := range map[string]struct {
+		jobs []marginAPIJob
+		ok   bool
+	}{"pr": {jobs.Jobs, true}, "main": {main, true}, "extra": {append(slices.Clone(main), diagnostic("extra")), false}, "no-mode": {noMode, false}} {
+		_, err := currentMargins(r.Run, r.Configs, encoded(t, map[string]any{"total_count": len(tc.jobs), "jobs": tc.jobs}), core)
+		if (err == nil) != tc.ok {
+			t.Fatalf("%s: %d jobs: %v", name, len(tc.jobs), err)
+		}
 	}
 }

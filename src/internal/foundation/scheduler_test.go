@@ -29,8 +29,8 @@ func workflowPeak(text string) (int, error) {
 		}
 		body := jobs[entry[1]:end]
 		width[i] = 1
-		if name == "qualification" || name == "integration-gate" {
-			width[i] = 0 // Offline aggregation does not start a native/compiler workload.
+		if name == "qualification" || name == "integration-gate" || name == "mode" {
+			width[i] = 0 // Offline aggregation and the label lookup start no native/compiler workload.
 		}
 		if strings.Contains(body, "    strategy:\n") {
 			m := regexp.MustCompile(`(?m)^      max-parallel: ([1-9][0-9]*)$`).FindStringSubmatch(body)
@@ -43,10 +43,10 @@ func workflowPeak(text string) (int, error) {
 			needs[i] = strings.FieldsFunc(m[1], func(r rune) bool { return r == '[' || r == ']' || r == ',' || r == ' ' })
 		}
 	}
-	if len(names) != 9 {
+	if len(names) != 10 {
 		return 0, fmt.Errorf("review newly added or missing jobs")
 	}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification", "race", "macos-regenerate", "integration-gate"} {
+	for _, name := range []string{"foundation", "mode", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification", "race", "macos-regenerate", "integration-gate"} {
 		if _, ok := names[name]; !ok {
 			return 0, fmt.Errorf("missing job: %s", name)
 		}
@@ -234,6 +234,102 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 			}
 			if integrationPolicy(broken) == nil {
 				t.Fatal("invalid scheduler policy accepted")
+			}
+		})
+	}
+}
+
+// lightModePolicy is #252: only native-prepare consults the run-time mode, which is light
+// only for a pull_request carrying ci:light and full otherwise or on a failed lookup; the
+// integration gate neither needs mode nor skips, so a light run cannot pass it.
+func lightModePolicy(text string) error {
+	mode := workflowJobBody(text, "mode")
+	for _, required := range []string{"    name: CI mode\n", "    runs-on: ubuntu-24.04\n", "    timeout-minutes: 5\n", "    permissions:\n      pull-requests: read\n    outputs:\n",
+		"      heavy: ${{ steps.mode.outputs.heavy }}\n", "          $heavy = 'true'\n", "          if ($env:EVENT -eq 'pull_request') {\n",
+		"            if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }\n", `          "heavy=$heavy" >> $env:GITHUB_OUTPUT` + "\n", "          exit 0 # a failed lookup already chose full"} {
+		if !strings.Contains(mode, required) {
+			return fmt.Errorf("mode policy missing: %q", required)
+		}
+	}
+	// the labels come from the API at run time (a re-run reuses the event payload) and label
+	// events are no triggers: a label run would only add an unneeded run to the shared lane
+	for _, required := range []string{"          EVENT: ${{ github.event_name }}\n", "          PR: ${{ github.event.pull_request.number }}\n",
+		`            $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')` + "\n"} {
+		if !strings.Contains(mode, required) {
+			return fmt.Errorf("mode must read the current labels: %q", required)
+		}
+	}
+	if !strings.Contains(text, "on:\n  pull_request:\n    branches: [main]\n  push:\n") || strings.Contains(text, "labeled") {
+		return fmt.Errorf("label events must not trigger the workflow")
+	}
+	if strings.Contains(mode, "actions/checkout@") || strings.Contains(mode, "continue-on-error:") || strings.Count(mode, "$heavy = 'false'") != 1 {
+		return fmt.Errorf("mode checks out code, hides failures or has another light path")
+	}
+	prepare := workflowJobBody(text, "native-prepare")
+	if !strings.Contains(prepare, "    needs: [foundation, mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' }}\n") {
+		return fmt.Errorf("native-prepare must start only on a full mode")
+	}
+	for _, name := range []string{"foundation", "native-routes", "native-routes-macos", "large-api", "qualification", "integration-gate", "race", "macos-regenerate"} {
+		if strings.Contains(workflowJobBody(text, name), "mode") {
+			return fmt.Errorf("only native-prepare consults the mode: %s", name)
+		}
+	}
+	return nil
+}
+
+func TestWorkflowLightModePolicy(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := lightModePolicy(text); err != nil {
+		t.Fatal(err)
+	}
+	for name, broken := range map[string]string{
+		"unconditional-skip":     strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", "    if: ${{ false }}\n", 1),
+		"light-on-main":          strings.Replace(text, "          if ($env:EVENT -eq 'pull_request') {\n", "          if ($true) {\n", 1),
+		"default-light":          strings.Replace(text, "          $heavy = 'true'\n", "          $heavy = 'false'\n", 1),
+		"failed-lookup-light":    strings.Replace(text, "if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light')", "if ($LASTEXITCODE -ne 0 -or $labels -contains 'ci:light')", 1),
+		"gate-skips-light":       strings.Replace(text, "    name: integration gate\n", "    name: integration gate\n    # mode\n", 1),
+		"route-skips-light":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    # mode\n", 1),
+		"lookup-exit-fails-mode": strings.Replace(text, "          exit 0 # a failed lookup", "          # a failed lookup", 1),
+		"label-trigger":          strings.Replace(text, "  pull_request:\n    branches: [main]\n", "  pull_request:\n    types: [opened, synchronize, reopened, labeled, unlabeled]\n    branches: [main]\n", 1),
+		"payload-labels":         strings.Replace(text, `@(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')`, `@($env:LABELS -split ',')`, 1),
+		"mode-checkout":          strings.Replace(text, "    steps:\n      - id: mode\n", "    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n      - id: mode\n", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || lightModePolicy(broken) == nil {
+				t.Fatal("light mode control not rejected")
+			}
+		})
+	}
+}
+
+// concurrencyPolicy is #252: one workflow-level lane that never cancels a running run and
+// keeps the queue instead of replacing the pending run; no job may set its own concurrency.
+func concurrencyPolicy(text string) error {
+	if strings.Count(text, "concurrency:") != 1 || !strings.Contains(text, "\nconcurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n\nenv:\n") {
+		return fmt.Errorf("the workflow must hold exactly one shared lane with a kept queue")
+	}
+	return nil
+}
+
+func TestWorkflowConcurrencyPolicy(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := concurrencyPolicy(text); err != nil {
+		t.Fatal(err)
+	}
+	block := "concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n"
+	for name, broken := range map[string]string{
+		"single-queue":       strings.Replace(text, "  queue: max\n", "  queue: single\n", 1),
+		"default-queue":      strings.Replace(text, "  queue: max\n", "", 1),
+		"cancel-in-progress": strings.Replace(text, "  cancel-in-progress: false\n", "  cancel-in-progress: true\n", 1),
+		"per-pr-group":       strings.Replace(text, "  group: tsgk-campaign-heavy\n", "  group: tsgk-${{ github.event.pull_request.number || github.ref }}\n", 1),
+		"no-lane":            strings.Replace(text, block, "", 1),
+		"job-level-lane": strings.Replace(strings.Replace(text, block, "", 1), "    name: CI mode\n",
+			"    name: CI mode\n    concurrency:\n      group: tsgk-campaign-heavy\n      cancel-in-progress: false\n      queue: max\n", 1),
+		"extra-job-lane": strings.Replace(text, "    name: CI mode\n", "    name: CI mode\n    concurrency:\n      group: other\n", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || concurrencyPolicy(broken) == nil {
+				t.Fatal("concurrency control not rejected")
 			}
 		})
 	}
