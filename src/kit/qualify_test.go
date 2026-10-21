@@ -205,7 +205,7 @@ func qfxRaw(c map[string]any) map[string]any {
 				}
 				api = map[string]any{"revision": "tsgk-api/r1", "nodes": rows, "child_fields": []any{}, "field_lookups": []any{}, "points": []any{}, "names": []any{}}
 			}
-			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "queries": queries, "api": api}
+			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "digest": m["digest"], "queries": queries, "api": api}
 		}
 		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
 			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})

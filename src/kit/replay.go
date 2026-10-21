@@ -437,6 +437,7 @@ type replayEnv struct {
 	responseDir, observationWire string
 	observationQueries           bool               // the set's workload registers queries
 	observationAPI               bool               // the set's workload requests API observations
+	observationNodes             uint64             // the set operation's node limit, bounding a raw tree's count
 	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
 }

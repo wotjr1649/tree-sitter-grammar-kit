@@ -273,6 +273,37 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)["field_lookups"] = []any{[]int64{0, 0, 0}}
 			}
 		}},
+		// review on #250: the members and first-step shape live DecodeResponse and Check accept
+		{name: "raw-first-step-route", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["route"] = map[string]any{"edit_has_changes": false, "edited_root_end_byte": 0, "reused_nodes": 0, "fresh_reused_nodes": 0}
+			}
+		}},
+		{name: "raw-unknown-member", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["bogus"] = true
+			}
+		}},
+		{name: "raw-unknown-producer-member", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["producer"].(map[string]any)["bogus"] = true
+			}
+		}},
+		{name: "raw-unknown-step-member", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["bogus"] = true
+			}
+		}},
+		{name: "raw-unknown-tree-member", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["bogus"] = true
+			}
+		}},
+		{name: "raw-digest-short", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = "00"
+			}
+		}},
 		{name: "raw-producer-query", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "q1" {
 				raw["producer"].(map[string]any)["query"] = "UNSUPPORTED"
@@ -420,5 +451,40 @@ func TestQualificationRawAPIPoints(t *testing.T) {
 				t.Fatalf("API points %v: %s %v %+v", tc.rows, cell.Mechanism, setCodes(cell), cell.Set.Gates)
 			}
 		})
+	}
+}
+
+// A completed raw tree counts its nodes within the operation's limit, as live checkTree
+// requires; the control keeps the count (review on #250).
+func TestQualificationRawCountLimit(t *testing.T) {
+	for _, over := range []bool{false, true} {
+		f := newQfx(t)
+		f.inv.Routes[0].Workload.API = false // no API payload, so only the count bound judges it
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {profile: func(set string, prof map[string]any) {
+			if set == "s06-fxa" {
+				prof["api"] = false
+			}
+		}, raw: func(set string, raw map[string]any) {
+			if set != "s06-fxa" {
+				return
+			}
+			for _, s := range raw["steps"].([]any) {
+				for _, slot := range []string{"incremental", "fresh"} {
+					if tree, ok := s.(map[string]any)[slot].(map[string]any); ok && tree["api"] != nil {
+						tree["api"] = nil
+						if over && raw["id"] == "c1" {
+							tree["descendant_count"] = NativeOperations()["native-query"].Nodes + 1
+						}
+					}
+				}
+			}
+		}}}))
+		cell := cellOf(r, "fxa", "windows-amd64")
+		unbound := slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+			return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+		})
+		if unbound != over {
+			t.Fatalf("count over limit %v: %s %v %+v", over, cell.Mechanism, setCodes(cell), cell.Set.Gates)
+		}
 	}
 }

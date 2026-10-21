@@ -552,7 +552,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	}
 	x.reuseObservation, x.mandatoryObservation = observe, observe
 	x.responseDir, x.observationWire, x.observationResponses = dir+"raw/", "tsgk-native/r4", map[string]bool{}
-	x.observationQueries, x.observationAPI = len(w.Queries) > 0, w.API
+	x.observationQueries, x.observationAPI, x.observationNodes = len(w.Queries) > 0, w.API, NativeOperations()[w.Operation].Nodes
 	top := nativeResult{ObservationRunID: man.Producer["observation_run_id"], Build: &nativeBuild{Identity: man.Producer["build_identity"]}}
 	if observe && (top.ObservationRunID == "" || len(top.ObservationRunID) > 128) {
 		add("OBSERVATION_RUN_UNBOUND", manPath, "관측 set에 observation run id가 없다")

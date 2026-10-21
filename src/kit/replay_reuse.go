@@ -276,6 +276,21 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 	return nil
 }
 
+// onlyMembers reports whether raw is an object of distinct members all named in names, as
+// live DecodeResponse rejects unknown and duplicate members.
+func onlyMembers(raw jsontext.Value, names ...string) bool {
+	var m map[string]jsontext.Value
+	if jsonv2.Unmarshal(raw, &m) != nil {
+		return false
+	}
+	for k := range m {
+		if !slices.Contains(names, k) {
+			return false
+		}
+	}
+	return true
+}
+
 // recordedEnd is a recorded tree's first noncomplete status and code: the tree's own, else
 // its first RESOURCE_LIMIT or FAILED query when the wire carries queries; zero when finished.
 func recordedEnd(t *rcTree, queries bool) [2]string {
@@ -390,12 +405,18 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		} `json:"producer"`
 	}
 	count, rawOpen, wireEnds := 0, [2]string{}, true
+	shape := true         // r4: only the members live DecodeResponse knows, and no route on the first step
 	var opens [][2]string // each raw step's first noncomplete tree or query status and code
 	e = x.streamTop(m, "steps", func(name string, raw jsontext.Value) *Error {
 		switch name {
-		case "protocol", "id", "producer", "complete", "steps_completed", "source_bytes", "status", "code":
+		case "producer":
+			shape = shape && onlyMembers(raw, "language_version", "runtime_language_version", "runtime_min_compatible", "query", "api", "predicates",
+				"symbol_count", "field_count", "reuse_observation")
+			fallthrough
+		case "protocol", "id", "complete", "steps_completed", "source_bytes", "status", "code":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), &wire)
 		}
+		shape = false
 		return nil
 	}, func(raw jsontext.Value, i int) *Error {
 		count++
@@ -410,6 +431,17 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		}
 		if e := decodeRecord(path, raw, &step); e != nil {
 			return e
+		}
+		var slots struct {
+			Route       jsontext.Value `json:"route"`
+			Incremental jsontext.Value `json:"incremental"`
+			Fresh       jsontext.Value `json:"fresh"`
+		}
+		shape = shape && onlyMembers(raw, "step", "source_bytes", "source_sha256", "edit", "route", "incremental", "fresh", "observations") &&
+			jsonv2.Unmarshal(raw, &slots) == nil && (i > 0 || len(slots.Route) == 0 || string(slots.Route) == "null")
+		for _, t := range []jsontext.Value{slots.Incremental, slots.Fresh} {
+			shape = shape && (len(t) == 0 || string(t) == "null" || onlyMembers(t, "status", "code", "parse_ms", "form", "reason", "descendant_count", "max_depth",
+				"has_error", "digest", "types", "fields", "nodes", "errors", "declarations", "partial_trees", "queries", "api"))
 		}
 		if i >= len(want) {
 			g.fail(id, "OBSERVATION_PROJECTION_MISMATCH", "원 응답에 추가 관측 step이 있다")
@@ -459,7 +491,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		// the request source and the producer capabilities live Check and RunCase bind: an r4
 		// producer declares them all, and the workload's queries and API exactly (review on #250)
 		p := wire.Producer
-		counted = counted && wire.SourceBytes != nil && source != nil && *wire.SourceBytes == *source &&
+		counted = counted && shape && wire.SourceBytes != nil && source != nil && *wire.SourceBytes == *source &&
 			p.Query != "" && p.API != nil && p.Predicates != nil && *p.Predicates == "NOT_EVALUATED" && p.SymbolCount != nil && p.FieldCount != nil &&
 			(!x.observationQueries || p.Query == "tsgk-query/r1") && (!x.observationAPI || *p.API == "tsgk-api/r1")
 	}
@@ -503,6 +535,7 @@ type treeStatus struct {
 	Code            *string        `json:"code"`
 	Form            jsontext.Value `json:"form"`
 	DescendantCount uint64         `json:"descendant_count"`
+	Digest          string         `json:"digest"`
 	Queries         jsontext.Value `json:"queries"`
 	API             jsontext.Value `json:"api"`
 }
@@ -532,6 +565,10 @@ func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64, points []uint3
 	}
 	if !r4 {
 		return [2]string{}, true
+	}
+	// the completed tree header live checkTree requires: a digest and a count within the limit
+	if len(t.Digest) != 64 || t.DescendantCount == 0 || t.DescendantCount > x.observationNodes {
+		return [2]string{}, false
 	}
 	// the API payload of a full tree of an API workload, as live checkAPI frames it; its rows
 	// are judged against the recorded tree like the nodes (review on #250)
