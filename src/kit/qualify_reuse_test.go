@@ -239,6 +239,22 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{q, q}
 			}
 		}},
+		{name: "raw-api-empty", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // review on #250
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"] = map[string]any{}
+			}
+		}},
+		{name: "raw-api-member-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				delete(raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any), "names")
+			}
+		}},
+		{name: "raw-api-rows", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // a row per node
+			if raw["id"] == "c1" {
+				api := raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["api"].(map[string]any)
+				api["nodes"] = api["nodes"].([]any)[1:]
+			}
+		}},
 		{name: "raw-response-code-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "c1" {
 				delete(raw, "code")
@@ -319,5 +335,23 @@ func TestSteplessEnds(t *testing.T) {
 		if got := steplessEnds(&tc.c, tc.groups, "raw/", 3); !maps.Equal(got, tc.want) {
 			t.Errorf("%s: %v, want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// An API payload is a full tree's answer to an API workload only: one on a workload without
+// API observations is unrequested, as live checkAPI rejects it (review on #250).
+func TestQualificationRawAPIUnrequested(t *testing.T) {
+	f := newQfx(t)
+	f.inv.Routes[0].Workload.API = false
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {profile: func(set string, prof map[string]any) {
+		if set == "s06-fxa" {
+			prof["api"] = false
+		}
+	}}}))
+	cell := cellOf(r, "fxa", "windows-amd64")
+	if !slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+		return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+	}) {
+		t.Fatalf("unrequested API payload bound: %s %v %+v", cell.Mechanism, setCodes(cell), cell.Set.Gates)
 	}
 }

@@ -492,6 +492,25 @@ func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64) (end [2]string
 	if !r4 {
 		return [2]string{}, true
 	}
+	// the API payload of a full tree of an API workload, as live checkAPI frames it; its rows
+	// are judged against the recorded tree like the nodes (review on #250)
+	if want := x.observationAPI && string(bytes.TrimSpace(t.Form)) == `"full"`; null(t.API) == want {
+		return [2]string{}, false
+	} else if want {
+		var api struct {
+			Revision     string         `json:"revision"`
+			Nodes        [][]int64      `json:"nodes"`
+			ChildFields  jsontext.Value `json:"child_fields"`
+			FieldLookups jsontext.Value `json:"field_lookups"`
+			Points       jsontext.Value `json:"points"`
+			Names        jsontext.Value `json:"names"`
+		}
+		if querywire.RequireMembers(t.API, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names") != nil ||
+			jsonv2.Unmarshal(t.API, &api, jsonv2.RejectUnknownMembers(true)) != nil || api.Revision != "tsgk-api/r1" || uint64(len(api.Nodes)) != t.DescendantCount ||
+			slices.ContainsFunc(api.Nodes, func(row []int64) bool { return len(row) != 13 }) {
+			return [2]string{}, false
+		}
+	}
 	queries, err := querywire.DecodeSummary(t.Queries, x.observationSources, sourceBytes, t.DescendantCount)
 	if err != nil {
 		return [2]string{}, false

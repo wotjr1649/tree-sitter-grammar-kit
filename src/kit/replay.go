@@ -436,6 +436,7 @@ type replayEnv struct {
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
 	responseDir, observationWire string
 	observationQueries           bool               // the set's workload registers queries
+	observationAPI               bool               // the set's workload requests API observations
 	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
 }

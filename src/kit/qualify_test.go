@@ -196,7 +196,15 @@ func qfxRaw(c map[string]any) map[string]any {
 					queries = append(queries, qfxWireQuery(q.(map[string]any)["id"].(string), q.(map[string]any)["status"].(string), q.(map[string]any)["code"].(string)))
 				}
 			}
-			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "queries": queries, "api": m["api"]}
+			var api any // the wire payload live checkAPI frames, one 13-value row per node
+			if m["api"] != nil {
+				rows := []any{}
+				for range m["descendant_count"].(int) {
+					rows = append(rows, make([]int64, 13))
+				}
+				api = map[string]any{"revision": "tsgk-api/r1", "nodes": rows, "child_fields": []any{}, "field_lookups": []any{}, "points": []any{}, "names": []any{}}
+			}
+			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "queries": queries, "api": api}
 		}
 		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
 			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})
