@@ -251,6 +251,17 @@ func lightModePolicy(text string) error {
 			return fmt.Errorf("mode policy missing: %q", required)
 		}
 	}
+	// the labels come from the API at run time (a re-run reuses the event payload) and label
+	// events are no triggers: an unrelated label run would evict a pending run in the group
+	for _, required := range []string{"          EVENT: ${{ github.event_name }}\n", "          PR: ${{ github.event.pull_request.number }}\n",
+		`            $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')` + "\n"} {
+		if !strings.Contains(mode, required) {
+			return fmt.Errorf("mode must read the current labels: %q", required)
+		}
+	}
+	if !strings.Contains(text, "on:\n  pull_request:\n    branches: [main]\n  push:\n") || strings.Contains(text, "labeled") {
+		return fmt.Errorf("label events must not trigger the workflow")
+	}
 	if strings.Contains(mode, "actions/checkout@") || strings.Contains(mode, "continue-on-error:") || strings.Count(mode, "$heavy = 'false'") != 1 {
 		return fmt.Errorf("mode checks out code, hides failures or has another light path")
 	}
@@ -279,6 +290,8 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 		"gate-skips-light":       strings.Replace(text, "    name: integration gate\n", "    name: integration gate\n    # mode\n", 1),
 		"route-skips-light":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    # mode\n", 1),
 		"lookup-exit-fails-mode": strings.Replace(text, "          exit 0 # a failed lookup", "          # a failed lookup", 1),
+		"label-trigger":          strings.Replace(text, "  pull_request:\n    branches: [main]\n", "  pull_request:\n    types: [opened, synchronize, reopened, labeled, unlabeled]\n    branches: [main]\n", 1),
+		"payload-labels":         strings.Replace(text, `@(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')`, `@($env:LABELS -split ',')`, 1),
 		"mode-checkout":          strings.Replace(text, "    steps:\n      - id: mode\n", "    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n      - id: mode\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {

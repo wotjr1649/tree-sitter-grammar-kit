@@ -610,7 +610,7 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 	diagnostic := func(name string) marginAPIJob {
 		return marginAPIJob{marginStep: marginStep{Name: name, Status: "completed", Conclusion: "success"}}
 	}
-	main := append(slices.Clone(jobs.Jobs), diagnostic("race diagnostic (ubuntu-24.04)"), diagnostic("race diagnostic (windows-2025)"), diagnostic("regenerate diagnostic (macos-15)"))
+	main := append(slices.Clone(jobs.Jobs), diagnostic("race diagnostic (ubuntu-24.04)"), diagnostic("race diagnostic (macos-15)"), diagnostic("regenerate diagnostic (macos-15)"))
 	noMode := slices.DeleteFunc(slices.Clone(jobs.Jobs), func(j marginAPIJob) bool { return j.Name == "CI mode" })
 	for name, tc := range map[string]struct {
 		jobs []marginAPIJob
