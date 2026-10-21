@@ -145,9 +145,10 @@ func (b *Build) runSvcSegments(ctx context.Context, x Context, c kit.Incremental
 		segmentContext.ObservationHistoryStart = uint64(k)
 		result := b.RunCase(ctx, segmentContext, part, versions[k])
 		out.Segments = append(out.Segments, SvcSegment{StartStep: k, EndStep: end, Process: result.Process, Claims: result.Claims})
-		if x.Protocol == ProtocolR3 {
+		if x.observes() {
 			out.Segments[len(out.Segments)-1].Raw = result.Raw
 			if result.ExecutionStatus != kit.StatusCompleted {
+				out.Producer = result.Producer // the observed steps below need their capability declaration (review on #250)
 				for _, s := range result.Steps {
 					s.Step += k
 					if s.Step == k && k > 0 {

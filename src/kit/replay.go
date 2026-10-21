@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 // Replay schemas and the evidence modes and assessments S07 adds to E0.
@@ -430,7 +432,14 @@ type replayEnv struct {
 	reuseObservation     bool
 	mandatoryObservation bool // r4: the observation claim is mandatory and folds into the verdict
 	observationResponses map[string]bool
-	queryReference       *QueryReferenceConnectionResult
+	// qualification of an r4 oracle set: the raw responses are under responseDir (default
+	// "responses/") and answer in observationWire (default tsgk-native/r3)
+	responseDir, observationWire string
+	observationQueries           bool               // the set's workload registers queries
+	observationAPI               bool               // the set's workload requests API observations
+	observationNodes             uint64             // the set operation's node limit, bounding a raw tree's count
+	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
+	queryReference               *QueryReferenceConnectionResult
 }
 
 func (x *replayEnv) finding(code, path, msg string) {

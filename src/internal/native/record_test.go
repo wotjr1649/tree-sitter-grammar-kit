@@ -73,6 +73,35 @@ func snapshot(t *testing.T, dir string) map[string]string {
 	return out
 }
 
+// #217: an observed record set is r4 with its run id, and every case carries its claim: a
+// parsed case PASS, one whose input is gone before the run (refused before any parse)
+// NOT_CLAIMED, never empty.
+func TestOracleRecordObservedSet(t *testing.T) {
+	t.Parallel()
+	profile, root := oracleProfile(t, nil, "a = f(1);\n", "b = 2;\n")
+	if err := os.Remove(filepath.Join(root, "caseb.txt")); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "set")
+	req := oracleRequest(t, profile, root, out)
+	req.ReuseObservation = true
+	res, err := runOracle(t, req)
+	if err != nil || res.Set == nil || !res.Set.Valid || len(res.Cases) != 2 || res.ObservationRunID == "" {
+		t.Fatalf("%v %s %+v %+v", err, res.ExecutionStatus, res.Set, res.Findings)
+	}
+	if got := [2]string{res.Cases[0].ReuseObservationClaim, res.Cases[1].ReuseObservationClaim}; got != [2]string{ClaimPass, ClaimNotClaimed} || res.Cases[1].ExecutionStatus != kit.StatusNotRun {
+		t.Fatalf("claims %v %+v", got, res.Cases)
+	}
+	data, err := os.ReadFile(filepath.Join(out, "manifest.json"))
+	var manifest struct {
+		Protocol string            `json:"protocol"`
+		Producer map[string]string `json:"producer"`
+	}
+	if err != nil || json.Unmarshal(data, &manifest) != nil || manifest.Protocol != ProtocolR4 || manifest.Producer["observation_run_id"] != res.ObservationRunID {
+		t.Fatalf("manifest %v %+v", err, manifest)
+	}
+}
+
 // Query-free API records still publish an empty identity array in the manifest.
 func TestOracleRecordSetWithoutQueries(t *testing.T) {
 	t.Parallel() // Independent build and output, like TestOracleRecordSet.

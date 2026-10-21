@@ -94,6 +94,11 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		}
 		return c
 	}
+	oracleObserved := func(id, claim string) map[string]any { // an S06 CaseLine always has oracle_claims
+		c := rrCase(id, "PASS", "PASS", "", map[string]string{})
+		c["reuse_observation_claim"] = claim
+		return c
+	}
 	runs := map[string]any{
 		"incremental": []any{map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": filepath.Join(dir, "r"), "res": map[string]any{
 			"result_schema": "tsgk-incremental-result/r3", "execution_status": "COMPLETED", "assessment": "FAIL", "build": nil, "findings": []any{}, "cases": []any{
@@ -112,7 +117,7 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 			map[string]any{"label": "legacy", "run": map[string]any{"code": 0, "out": filepath.Join(dir, "legacy"), "res": map[string]any{
 				"result_schema": "tsgk-incremental-result/r1", "execution_status": "COMPLETED", "assessment": "PASS", "build": nil, "findings": []any{}, "cases": []any{}}}}},
 		"oracle": []any{
-			map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": out, "res": map[string]any{
+			map[string]any{"label": "r", "run": map[string]any{"code": 1, "out": out, "res": map[string]any{"observation_run_id": "run",
 				"execution_status": "COMPLETED", "assessment": "FAIL", "set": map[string]any{"valid": true}, "build": nil, "findings": []any{}, "cases": []any{
 					rrCase("q-fail", "NOT_CLAIMED", "NOT_CLAIMED", "ORACLE_CLAIM_FAILED", map[string]string{"query_expectations": "FAIL"}),
 					rrCase("q-eq-fail", "PASS", "PASS", "ORACLE_CLAIM_FAILED", map[string]string{"query_equality": "FAIL"}),
@@ -123,6 +128,8 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 					segmentCase("segment-eq-blocked", "BLOCKED", "PASS", map[string]string{}),
 					segmentCase("segment-route-fail", "PASS", "FAIL", map[string]string{}),
 					segmentCase("segment-route-blocked", "PASS", "BLOCKED", map[string]string{}),
+					oracleObserved("obs-fail", "FAIL"),
+					oracleObserved("obs-not-claimed", "NOT_CLAIMED"),
 				}}}},
 			map[string]any{"label": "bad", "run": map[string]any{"code": 1, "out": filepath.Join(dir, "bad"), "res": map[string]any{
 				"execution_status": "FAILED", "assessment": "NOT_ASSESSED", "set": map[string]any{"valid": false}, "build": nil,
@@ -168,6 +175,7 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 		"r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "r/segment-route-fail segment [0,2): incremental PASS/FAIL",
 		"oracle r/segment-eq-fail segment [0,2): incremental FAIL/PASS", "oracle r/segment-eq-blocked segment [0,2): incremental BLOCKED/PASS", "oracle r/segment-route-fail segment [0,2): incremental PASS/FAIL",
 		"r/obs-fail: reuse observation FAIL", "r/obs-blocked: reuse observation BLOCKED", "r/obs-missing: reuse observation", "legacy: result tsgk-incremental-result/r1 without mandatory reuse observation",
+		"oracle r/obs-fail: reuse observation FAIL", "oracle bad: record run without mandatory reuse observation",
 	} {
 		if !has(want) {
 			t.Errorf("kit-axis failure %q not recorded: %q", want, s.Failures)
@@ -175,7 +183,7 @@ func TestRunRoutesFailureAxes(t *testing.T) {
 	}
 	for _, f := range s.Failures {
 		if strings.Contains(f, "query_expectations") || strings.Contains(f, "route-blocked") || strings.Contains(f, "r/q-fail:") || strings.Contains(f, "obs-not-claimed") ||
-			strings.HasPrefix(f, "r: result") {
+			strings.HasPrefix(f, "r: result") || strings.HasPrefix(f, "oracle r: record run") {
 			t.Errorf("requirement-axis result failed the job: %q", f)
 		}
 	}
@@ -220,7 +228,8 @@ func TestRunRoutesFailureAxesGuard(t *testing.T) {
 	if strings.Count(routes, "Add-RequirementResult ") != 2 {
 		t.Error("both result functions must record requirement results")
 	}
-	if !strings.Contains(routes, "if ($Observe) { $cliArgs += '--reuse-observation' }") || strings.Count(routes, "-Observe $false") != 1 || !strings.Contains(routes, "$observed -notin @('PASS', 'NOT_CLAIMED')") {
-		t.Error("incremental runs must require reuse observation (only the large AUTO run opts out) and fail on its claim")
+	if strings.Count(routes, "if ($Observe) { $cliArgs += '--reuse-observation' }") != 2 || strings.Count(routes, "-Observe $false") != 3 || strings.Count(routes, "$observed -notin @('PASS', 'NOT_CLAIMED')") != 2 ||
+		!strings.Contains(routes, "record run without mandatory reuse observation") {
+		t.Error("incremental and oracle runs must require reuse observation (only the large AUTO and native-query-large runs opt out) and fail on its claim")
 	}
 }

@@ -9,7 +9,7 @@ import (
 // completed case's assessment last, so every return path of a case, segment or batch frame
 // keeps it: a FAIL replaces the code of a case it turns from another assessment to FAIL.
 func (x Context) observeCase(c *CaseResult) {
-	if x.Protocol != ProtocolR3 {
+	if !x.observes() {
 		return
 	}
 	steps := make([]reuseobs.Step, len(c.Steps))

@@ -346,3 +346,52 @@ func rejectNullPrimitives(raw jsontext.Value) error {
 	}
 	return walk(false)
 }
+
+// API is the tsgk-api/r1 observation of one full tree.
+type API struct {
+	Revision     string    `json:"revision"`
+	Nodes        [][]int64 `json:"nodes"`
+	ChildFields  [][]int64 `json:"child_fields"`
+	FieldLookups [][]int64 `json:"field_lookups"`
+	Points       [][]int64 `json:"points"`
+	Names        []string  `json:"names"`
+}
+
+// DecodeAPI validates the shape of the API observation of a full tree of nodes nodes for
+// the requested point bytes: every member, the revision, one 13-value row per node, a row
+// per point at its byte, and every table row's arity and indices in range. Whether the
+// values agree with the tree is the caller's.
+func DecodeAPI(raw jsontext.Value, nodes int64, points []uint32) (*API, *Error) {
+	bad := func(what string) *Error { return invalid("RESPONSE_INVALID", errors.New("api: "+what)) }
+	if err := RequireMembers(raw, false, "revision", "nodes", "child_fields", "field_lookups", "points", "names"); err != nil {
+		return nil, err
+	}
+	var a API
+	if err := jsonv2.Unmarshal(raw, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return nil, invalid("RESPONSE_MALFORMED", err)
+	}
+	if a.Revision != "tsgk-api/r1" || int64(len(a.Nodes)) != nodes || len(a.Points) != len(points) {
+		return nil, bad("header")
+	}
+	for _, r := range a.Nodes {
+		if len(r) != 13 {
+			return nil, bad("node row")
+		}
+	}
+	for _, r := range a.ChildFields {
+		if len(r) != 3 || r[0] < 0 || r[0] >= nodes || r[1] < 0 || r[2] < 0 || r[2] >= int64(len(a.Names)) {
+			return nil, bad("child field row")
+		}
+	}
+	for _, r := range a.FieldLookups {
+		if len(r) != 3 || r[0] < 0 || r[0] >= nodes || r[1] < 0 || r[1] >= int64(len(a.Names)) {
+			return nil, bad("field lookup row")
+		}
+	}
+	for k, r := range a.Points {
+		if len(r) != 4 || r[0] != int64(points[k]) {
+			return nil, bad("point row")
+		}
+	}
+	return &a, nil
+}
