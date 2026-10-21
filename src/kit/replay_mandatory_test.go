@@ -130,7 +130,8 @@ func TestReplayMandatoryObservationEarlyEnd(t *testing.T) {
 				observations[0].Status, observations[0].Reason, observations[0].Counts.Done = "UNAVAILABLE", "PARSE_INCOMPLETE", 0
 				observations[1].Status, observations[1].Reason, observations[1].Events, observations[1].Bytes, observations[1].Counts = "UNAVAILABLE", "PARSE_NOT_RUN", 0, 0, &reuseobs.Counts{}
 				raw := wire["steps"].([]any)[1].(map[string]any)
-				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit, "code": "PARSE_TIME_LIMIT"}
+				raw["observations"], raw["incremental"] = observations, map[string]any{"status": StatusResourceLimit, "code": "PARSE_TIME_LIMIT", "form": nil}
+				delete(raw, "fresh") // the limited incremental tree ended the step
 				step["incremental"].(map[string]any)["status"], step["incremental"].(map[string]any)["code"], step["fresh"] = StatusResourceLimit, "PARSE_TIME_LIMIT", nil
 				step["route"], step["comparison"] = nil, nil
 			}
@@ -190,5 +191,26 @@ func TestStepsCounted(t *testing.T) {
 		if got := stepsCounted(tc.completed, tc.count, tc.status, tc.open, tc.rawOpen); got != tc.want {
 			t.Errorf("%s: got %v want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// An r3 raw tree carries no query or API member: one added to a response that otherwise
+// binds is no live r3 answer (Codex A217J).
+func TestReplayMandatoryRawTreeMembers(t *testing.T) {
+	for _, member := range []string{"queries", "api"} {
+		t.Run(member, func(t *testing.T) {
+			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
+			var wire map[string]any
+			if err := json.Unmarshal(f.extra["responses/00001-c2.json"], &wire); err != nil {
+				t.Fatal(err)
+			}
+			wire["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)[member] = []any{}
+			f.extra["responses/00001-c2.json"], _ = json.Marshal(wire)
+			root, reg := writeMandatoryFixture(t, f, "tsgk-incremental-result/r3")
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			if err != nil || r.EvidenceValid || gateOf(r, "reuse-observation").Code != "OBSERVATION_RESPONSE_UNBOUND" {
+				t.Fatalf("r3 tree with %s bound: %v %+v", member, err, r.Gates)
+			}
+		})
 	}
 }

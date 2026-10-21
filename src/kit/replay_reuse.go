@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"cmp"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
@@ -8,8 +9,8 @@ import (
 	"maps"
 	"reflect"
 	"slices"
-	"strings"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
@@ -239,13 +240,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 			last := c.Steps[len(c.Steps)-1]
 			for _, t := range []*rcTree{last.Incremental, last.Fresh} {
 				if t != nil && open == ([2]string{}) {
-					var ends [][2]string
-					for _, q := range t.Queries {
-						if queries {
-							ends = append(ends, [2]string{q.Status, q.Code})
-						}
-					}
-					open, _ = openEnd([2]string{t.Status, t.Code}, ends)
+					open = recordedEnd(t, queries)
 				}
 			}
 		}
@@ -254,6 +249,20 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		}
 	}
 	return nil
+}
+
+// recordedEnd is a recorded tree's first noncomplete status and code: the tree's own, else
+// its first RESOURCE_LIMIT or FAILED query when the wire carries queries; zero when finished.
+func recordedEnd(t *rcTree, queries bool) [2]string {
+	if t.Status != StatusCompleted {
+		return [2]string{t.Status, t.Code}
+	}
+	for _, q := range t.Queries {
+		if queries && (q.Status == StatusResourceLimit || q.Status == StatusFailed) {
+			return [2]string{q.Status, q.Code}
+		}
+	}
+	return [2]string{}
 }
 
 // liveSteps reports whether a raw response's step ends fit live Check: every step but the
@@ -339,7 +348,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	}
 	var wire struct {
 		Status         string  `json:"status"`
-		Code           string  `json:"code"`
+		Code           *string `json:"code"`
 		Protocol       string  `json:"protocol"`
 		ID             string  `json:"id"`
 		Complete       *bool   `json:"complete"`
@@ -380,23 +389,18 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		if i > 0 {
 			b.PreviousSourceSHA256 = want[i-1].observations[0].SourceSHA256
 		}
-		rawOpen = [2]string{}
-		for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
-			if t == nil {
-				continue
-			}
-			var ends [][2]string
-			for _, q := range t.Queries {
-				if x.observationWire == "tsgk-native/r4" { // only r4 responses carry queries
-					ends = append(ends, [2]string{q.Status, q.Code})
-				}
-			}
-			o, valid := openEnd([2]string{t.Status, t.Code}, ends)
-			wireEnds = wireEnds && valid
-			if rawOpen == ([2]string{}) {
-				rawOpen = o
-			}
+		var incEnd, freshEnd [2]string
+		incOK, freshOK := step.Incremental != nil, step.Fresh == nil
+		if step.Incremental != nil {
+			incEnd, incOK = x.rawTreeEnd(step.Incremental, step.SourceBytes)
 		}
+		if step.Fresh != nil {
+			freshEnd, freshOK = x.rawTreeEnd(step.Fresh, step.SourceBytes)
+		}
+		rawOpen = cmp.Or(incEnd, freshEnd)
+		// the tree slots live Check requires: an incremental tree on every step, no fresh tree
+		// on the first, and a fresh tree on an edit step unless its incremental tree ended it
+		wireEnds = wireEnds && incOK && freshOK && (i == 0) == (step.Fresh == nil) || wireEnds && incOK && i > 0 && step.Fresh == nil && incEnd != ([2]string{})
 		opens = append(opens, rawOpen)
 		got, err := decodeObservations(step.Observations, b, true)
 		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit), id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit가 원 응답과 다르다")
@@ -405,14 +409,19 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 	if e != nil {
 		return e
 	}
-	wireEnd := [2]string{wire.Status, wire.Code}
+	wireEnd := [2]string{wire.Status, ""}
+	if wire.Code != nil {
+		wireEnd[1] = *wire.Code
+	} else {
+		wireEnds = false // live Check requires the response code member
+	}
 	counted := wire.StepsCompleted != nil && stepsCounted(*wire.StepsCompleted, count, wireEnd, open, rawOpen)
 	if x.mandatoryObservation && want != nil { // r4: the response ends as live Check accepts and as recorded
 		counted = counted && wireEnds && liveSteps(opens, *wire.StepsCompleted, wireEnd) && wireEnd == end && liveEnd(end, c)
 	}
 	if want == nil {
 		// live Check leaves steps_completed of a response that dropped its steps unconstrained
-		counted = wire.StepsCompleted != nil && [2]string{wire.Status, wire.Code} == end && steplessEnd(wire.Status, wire.Code, wire.Protocol == "tsgk-native/r4" && x.observationQueries)
+		counted = wire.StepsCompleted != nil && wire.Code != nil && wireEnd == end && steplessEnd(wireEnd[0], wireEnd[1], wire.Protocol == "tsgk-native/r4" && x.observationQueries)
 	}
 	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다")
 	x.observationResponses[path], x.consumed[path] = true, true
@@ -447,35 +456,50 @@ func stepsCounted(completed uint64, count int, end, open, rawOpen [2]string) boo
 		(end[0] == StatusResourceLimit || end[0] == StatusFailed) && open == end && rawOpen == end
 }
 
-// treeStatus is the end of a raw response tree, and of each of its r4 queries, that the
-// step-count checks read.
+// treeStatus is the shape of a raw response tree the step checks read; its nodes and query
+// captures stay judged from the record.
 type treeStatus struct {
-	Status  string `json:"status"`
-	Code    string `json:"code"`
-	Queries []struct {
-		Status string `json:"status"`
-		Code   string `json:"code"`
-	} `json:"queries"`
+	Status          string         `json:"status"`
+	Code            *string        `json:"code"`
+	Form            jsontext.Value `json:"form"`
+	DescendantCount uint64         `json:"descendant_count"`
+	Queries         jsontext.Value `json:"queries"`
+	API             jsontext.Value `json:"api"`
 }
 
-// openEnd is a tree's first noncomplete status and code as live Check counts a step
+// rawTreeEnd is a raw tree's first noncomplete status and code as live Check counts a step
 // unfinished: the tree's own, else its first RESOURCE_LIMIT or FAILED query (r4); zero when
-// finished. valid reports whether the tree and every query end is a wire end: COMPLETED
-// without a code, a RESOURCE_LIMIT or FAILED with one, or a query's INVALID_QUERY with its
-// QUERY_ code.
-func openEnd(tree [2]string, queries [][2]string) (open [2]string, valid bool) {
-	valid = tree == [2]string{StatusCompleted, ""} || (tree[0] == StatusResourceLimit || tree[0] == StatusFailed) && tree[1] != ""
-	for _, q := range queries {
-		valid = valid && (q == [2]string{StatusCompleted, ""} || (q[0] == StatusResourceLimit || q[0] == StatusFailed) && q[1] != "" ||
-			q[0] == "INVALID_QUERY" && strings.HasPrefix(q[1], "QUERY_"))
+// finished. ok reports the tree shape live checkTree accepts: a code member, query and API
+// members exactly on the r4 wire, a form only on a COMPLETED tree without a code, null
+// query and API members on a RESOURCE_LIMIT or FAILED tree with a code, and an r4 query
+// stream the live wire validator accepts for the workload's query sources (review on #250).
+func (x *replayEnv) rawTreeEnd(t *treeStatus, sourceBytes uint64) (end [2]string, ok bool) {
+	r4 := x.observationWire == "tsgk-native/r4"
+	null := func(v jsontext.Value) bool { return len(v) == 0 || string(bytes.TrimSpace(v)) == "null" }
+	if t.Code == nil || r4 != (t.Queries != nil) || r4 != (t.API != nil) {
+		return [2]string{}, false
 	}
-	if tree[0] != StatusCompleted {
-		return tree, valid
+	switch t.Status {
+	case StatusCompleted:
+		if *t.Code != "" || null(t.Form) {
+			return [2]string{}, false
+		}
+	case StatusResourceLimit, StatusFailed:
+		return [2]string{t.Status, *t.Code}, *t.Code != "" && null(t.Form) && (!r4 || null(t.Queries) && null(t.API))
+	default:
+		return [2]string{}, false
+	}
+	if !r4 {
+		return [2]string{}, true
+	}
+	queries, err := querywire.DecodeSummary(t.Queries, x.observationSources, sourceBytes, t.DescendantCount)
+	if err != nil {
+		return [2]string{}, false
 	}
 	for _, q := range queries {
-		if q[0] == StatusResourceLimit || q[0] == StatusFailed {
-			return q, valid
+		if q.Status == StatusResourceLimit || q.Status == StatusFailed {
+			return [2]string{q.Status, q.Code}, true
 		}
 	}
-	return [2]string{}, valid
+	return [2]string{}, true
 }

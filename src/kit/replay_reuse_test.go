@@ -47,7 +47,13 @@ func reuseFixtureFor(t *testing.T, producerManifest, observationManifest string)
 			}
 			s["observations"] = observations
 			all = append(all, observations...)
-			wireSteps = append(wireSteps, map[string]any{"step": k, "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": observations, "edit": s["edit"]})
+			ws := map[string]any{"step": k, "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": observations, "edit": s["edit"]}
+			for _, slot := range []string{"incremental", "fresh"} {
+				if t, ok := s[slot].(map[string]any); ok {
+					ws[slot] = map[string]any{"status": t["status"], "code": t["code"], "form": t["form"], "descendant_count": t["descendant_count"]}
+				}
+			}
+			wireSteps = append(wireSteps, ws)
 			previous = o.SourceSHA256
 		}
 		c["reuse_observation_claim"] = reuseobs.Judge(all)

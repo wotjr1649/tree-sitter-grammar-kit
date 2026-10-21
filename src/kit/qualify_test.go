@@ -165,6 +165,16 @@ func qfxObserve(c map[string]any) {
 	c["reuse_observation_claim"] = reuseobs.CaseClaim(all, true)
 }
 
+// qfxWireQuery is a live wire result of the registered query (word) @w with no capture.
+func qfxWireQuery(id, status, code string) map[string]any {
+	q := map[string]any{"id": id, "status": status, "code": code, "query_ms": 0, "error": nil, "patterns": 1, "capture_names": []string{"w"},
+		"predicates": []any{}, "matches": 0, "partial": status == StatusResourceLimit, "types": []string{}, "captures": []any{}}
+	if status == StatusFailed {
+		q["captures"] = nil
+	}
+	return q
+}
+
 // qfxRaw is a record's raw tsgk-native/r4 response, built from the (mutated) record: the
 // observation projection the qualification compares and each tree's status.
 func qfxRaw(c map[string]any) map[string]any {
@@ -176,15 +186,17 @@ func qfxRaw(c map[string]any) map[string]any {
 			if !ok {
 				return nil
 			}
-			out := map[string]any{"status": m["status"], "code": m["code"]}
-			if qs, ok := m["queries"].([]any); ok {
-				var queries []any
-				for _, q := range qs {
-					queries = append(queries, map[string]any{"status": q.(map[string]any)["status"], "code": q.(map[string]any)["code"]})
-				}
-				out["queries"] = queries
+			if m["status"] != StatusCompleted {
+				return map[string]any{"status": m["status"], "code": m["code"], "form": nil, "queries": nil, "api": nil}
 			}
-			return out
+			queries := []any{qfxWireQuery("q.x", StatusCompleted, "")} // every tree answers the registered query
+			if qs, ok := m["queries"].([]any); ok {
+				queries = nil
+				for _, q := range qs {
+					queries = append(queries, qfxWireQuery(q.(map[string]any)["id"].(string), q.(map[string]any)["status"].(string), q.(map[string]any)["code"].(string)))
+				}
+			}
+			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "queries": queries, "api": m["api"]}
 		}
 		steps = append(steps, map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
 			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])})

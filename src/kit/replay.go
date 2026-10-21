@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 // Replay schemas and the evidence modes and assessments S07 adds to E0.
@@ -433,7 +435,8 @@ type replayEnv struct {
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
 	responseDir, observationWire string
-	observationQueries           bool // the set's workload registers queries
+	observationQueries           bool               // the set's workload registers queries
+	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
 }
 

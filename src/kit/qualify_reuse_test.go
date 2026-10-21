@@ -193,12 +193,60 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		}},
 		{name: "raw-query-limited", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
 			if raw["id"] == "q1" {
-				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"status": StatusResourceLimit}}
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{qfxWireQuery("q.x", StatusResourceLimit, "CAPTURE_LIMIT")}
+			}
+		}},
+		// Codex A217J: the raw tree slots and query streams live Check accepts
+		{name: "raw-trees-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				for _, s := range raw["steps"].([]any) {
+					delete(s.(map[string]any), "incremental")
+					delete(s.(map[string]any), "fresh")
+				}
+			}
+		}},
+		{name: "raw-fresh-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				delete(raw["steps"].([]any)[1].(map[string]any), "fresh")
+			}
+		}},
+		{name: "raw-first-fresh", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				first := raw["steps"].([]any)[0].(map[string]any)
+				first["fresh"] = first["incremental"]
+			}
+		}},
+		{name: "raw-query-invalid-code", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "q1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{qfxWireQuery("q.x", "INVALID_QUERY", "QUERY_BOGUS")}
+			}
+		}},
+		{name: "raw-query-code-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "q1" {
+				q := qfxWireQuery("q.x", StatusCompleted, "")
+				delete(q, "code")
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{q}
+			}
+		}},
+		{name: "raw-queries-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				delete(raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any), "queries")
+			}
+		}},
+		{name: "raw-queries-duplicated", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				q := qfxWireQuery("q.x", StatusCompleted, "")
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{q, q}
+			}
+		}},
+		{name: "raw-response-code-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				delete(raw, "code")
 			}
 		}},
 		{name: "raw-query-bogus", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) { // no wire query status
 			if raw["id"] == "q1" {
-				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{map[string]any{"status": "BOGUS", "code": ""}}
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{qfxWireQuery("q.x", "BOGUS", "")}
 			}
 		}},
 		{name: "stepless-raw-removed", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) {

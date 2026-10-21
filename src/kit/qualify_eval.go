@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 // qualifier is the state of one qualification: the shared run and the opened hosts.
@@ -461,6 +463,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	x := h.x
 	x.startSvcReferences(w.SvcContext)
 	x.svcFormat = w.Format
+	x.observationSources = nil // the set profile's query sources, read below
 	x.nativeInputBytes = NativeOperations()[w.Operation].InputBytes
 	x.gates, x.findings, x.seen = nil, nil, map[string]map[string]bool{}
 	over := false
@@ -521,8 +524,13 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		prof, pe := parseOracle(pdata)
 		if pe != nil {
 			add("PROFILE_INVALID_"+pe.Code, profPath, "workload profile이 계약에 맞지 않는다")
-		} else if d := registrationDiff(prof, w); d != "" {
-			add("REGISTRATION_MISMATCH", profPath, "host workload가 등록 inventory와 다르다: "+d)
+		} else {
+			if d := registrationDiff(prof, w); d != "" {
+				add("REGISTRATION_MISMATCH", profPath, "host workload가 등록 inventory와 다르다: "+d)
+			}
+			for _, q := range prof.Queries {
+				x.observationSources = append(x.observationSources, querywire.Source{ID: q.ID, Source: []byte(q.Source)})
+			}
 		}
 	}
 	plat := man.Producer["platform"]
