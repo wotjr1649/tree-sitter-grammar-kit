@@ -137,10 +137,18 @@ func saveMarginConfig(identity, compiler, out string) error {
 	return writeNewJSON(out, c, 65536)
 }
 
-func checkMarginConfig(c marginConfig, j marginJob, expected kit.RunIdentity) error {
+// marginGo is the pinned CI toolchain; a historical report may also carry the former pin, a
+// separate configuration by its key (#261).
+const marginGo, marginFormerGo = "go1.27.2", "go1.27.1"
+
+func marginToolchain(v string, historical bool) bool {
+	return v == marginGo || historical && v == marginFormerGo
+}
+
+func checkMarginConfig(c marginConfig, j marginJob, expected kit.RunIdentity, historical bool) error {
 	r := c.Run
 	if c.Schema != "tsgk-ci-config/r1" || !sameRun(&r, expected) || r.Job != j.job || r.GOOS != j.goos || r.GOARCH != j.arch ||
-		r.GoVersion != "go1.27.1" || !hex64.MatchString(c.Source) ||
+		!marginToolchain(r.GoVersion, historical) || !hex64.MatchString(c.Source) ||
 		len(r.Image) > 128 || r.RunnerOS != map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos] ||
 		r.RunnerArch != map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch] ||
 		!strings.Contains(r.Image, "/") || strings.HasPrefix(r.Image, "/") || strings.HasSuffix(r.Image, "/") ||
@@ -298,7 +306,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 	var metrics []marginMetric
 	for i, j := range marginJobs {
 		c := configs[i]
-		if checkMarginConfig(c, j, expected) != nil {
+		if checkMarginConfig(c, j, expected, false) != nil {
 			return nil, errors.New("margin current configuration invalid")
 		}
 		var found []marginAPIJob
@@ -355,7 +363,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 }
 
 func validateMarginReport(r marginReport, historical bool) error {
-	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) {
+	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) || !marginToolchain(r.Run.GoVersion, historical) {
 		return errors.New("margin report shape")
 	}
 	expected := map[string]string{}
@@ -367,7 +375,7 @@ func validateMarginReport(r marginReport, historical bool) error {
 		if historical && j.job == "native-routes-macos" && c.Run.Job == "native-routes" {
 			j.job = "native-routes"
 		}
-		if checkMarginConfig(c, j, r.Run) != nil || c.Source != r.Configs[0].Source {
+		if checkMarginConfig(c, j, r.Run, historical) != nil || c.Source != r.Configs[0].Source {
 			return errors.New("margin report configuration")
 		}
 		id := j.job + "/" + j.goos + "/job"
@@ -516,7 +524,7 @@ func verifyMargins(ctx context.Context, expected kit.RunIdentity, coreRoot, meta
 	for i, a := range plan.Current {
 		b, err := readMarginZIP(ctx, a, filepath.Join(historyRoot, "zips"), filepath.Join(historyRoot, "unpacked"), "config.json")
 		var c marginConfig
-		if err != nil || decodeMarginConfig(b, &c) != nil || checkMarginConfig(c, marginJobs[i], expected) != nil || c.Source != source {
+		if err != nil || decodeMarginConfig(b, &c) != nil || checkMarginConfig(c, marginJobs[i], expected, false) != nil || c.Source != source {
 			return errors.New("margin producer configuration invalid")
 		}
 		if err := bindMarginHost(c, coreRoot, expected); err != nil {
