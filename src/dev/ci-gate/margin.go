@@ -53,9 +53,9 @@ type marginJob struct {
 }
 
 var marginJobs = []marginJob{
-	{"foundation (windows-2025)", "foundation", "windows", "amd64", 15, true},
-	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 15, true},
-	{"foundation (macos-15)", "foundation", "darwin", "arm64", 15, true},
+	{"foundation (windows-2025)", "foundation", "windows", "amd64", 55, true},
+	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 55, true},
+	{"foundation (macos-15)", "foundation", "darwin", "arm64", 55, true},
 	{"native prepare (ubuntu-24.04)", "native-prepare", "linux", "amd64", 30, false},
 	{"native routes (windows-2025)", "native-routes", "windows", "amd64", 60, true},
 	{"native routes (ubuntu-24.04)", "native-routes", "linux", "amd64", 60, true},
@@ -259,7 +259,7 @@ func elapsed(s marginStep) (int64, error) {
 func marginStepLimits(j marginJob) map[string]int64 {
 	limits := map[string]int64{}
 	if j.job == "foundation" {
-		limits["frame 상태와 native cancellation 반복 시험 (#65)"] = 4
+		limits["frame 상태와 native cancellation 반복 시험 (#65)"] = 6
 		if j.goos == "linux" {
 			limits["isolated bind-mount output boundary (#196)"] = 2
 			limits["S04 runner tree 정리 반복 시험 (Linux cgroup v2)"] = 4

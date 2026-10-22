@@ -363,6 +363,74 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 	}
 }
 
+// foundationBudget is #260: every foundation step carries its own timeout, which outlasts
+// the go test timeouts and timeout(1) wrappers it runs in sequence plus 30 seconds to build
+// each go test; the job outlasts, on every host, the sum of the steps that host runs plus one
+// minute for the runner. A hang then fails in its own step with that step's diagnostics.
+func foundationBudget(text string) error {
+	body := workflowJobBody(text, "foundation")
+	head, steps, ok := strings.Cut(body, "\n    steps:\n")
+	m := regexp.MustCompile(`(?m)^    timeout-minutes: ([0-9]+)$`).FindStringSubmatch(head)
+	if !ok || m == nil {
+		return fmt.Errorf("foundation job limit missing")
+	}
+	job, _ := strconv.Atoi(m[1])
+	sum := map[string]int{"Windows": 1, "Linux": 1, "macOS": 1}
+	for _, step := range strings.Split("\n"+steps, "\n      - ")[1:] {
+		name, _, _ := strings.Cut(step, "\n")
+		m := regexp.MustCompile(`(?m)^        timeout-minutes: ([0-9]+)$`).FindStringSubmatch(step)
+		if m == nil {
+			return fmt.Errorf("unbounded foundation step: %s", name)
+		}
+		minutes, _ := strconv.Atoi(m[1])
+		inner := 30 * strings.Count(step, "go test ")
+		for _, t := range regexp.MustCompile(`go test [^\n]* -timeout ([0-9]+)s`).FindAllStringSubmatch(step, -1) {
+			n, _ := strconv.Atoi(t[1])
+			inner += n
+		}
+		for _, t := range regexp.MustCompile(`timeout --kill-after=([0-9]+)s ([0-9]+)s `).FindAllStringSubmatch(step, -1) {
+			k, _ := strconv.Atoi(t[1])
+			n, _ := strconv.Atoi(t[2])
+			inner += k + n
+		}
+		if inner > minutes*60 {
+			return fmt.Errorf("step %s: inner timeouts %ds exceed %d minutes", name, inner, minutes)
+		}
+		for host := range sum {
+			if c := regexp.MustCompile(`(?m)^        if: runner.os == '([A-Za-z]+)'$`).FindStringSubmatch(step); c == nil || c[1] == host {
+				sum[host] += minutes
+			}
+		}
+	}
+	for host, total := range sum {
+		if total > job {
+			return fmt.Errorf("foundation job %d minutes below the %s step sum %d", job, host, total)
+		}
+	}
+	return nil
+}
+
+func TestWorkflowFoundationBudget(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := foundationBudget(text); err != nil {
+		t.Fatal(err)
+	}
+	for name, broken := range map[string]string{
+		"job-below-sum":    strings.Replace(text, "    timeout-minutes: 55\n", "    timeout-minutes: 15\n", 1),
+		"unbounded-step":   strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n", 1),
+		"native-outlasts":  strings.Replace(text, "go test $nativePackage -count=1 -v -timeout 420s", "go test $nativePackage -count=1 -v -timeout 480s", 1),
+		"frame-outlasts":   strings.Replace(text, "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 6\n", "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 4\n", 1),
+		"wrapper-outlasts": strings.Replace(text, "timeout --kill-after=5s 40s unshare", "timeout --kill-after=5s 100s unshare", 1),
+		"linux-step-grows": strings.Replace(text, "        if: runner.os == 'Linux'\n        timeout-minutes: 4\n", "        if: runner.os == 'Linux'\n        timeout-minutes: 7\n", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || foundationBudget(broken) == nil {
+				t.Fatal("foundation budget control not rejected")
+			}
+		})
+	}
+}
+
 // concurrencyPolicy is #252: one workflow-level lane that never cancels a running run and
 // keeps the queue instead of replacing the pending run; no job may set its own concurrency.
 func concurrencyPolicy(text string) error {
