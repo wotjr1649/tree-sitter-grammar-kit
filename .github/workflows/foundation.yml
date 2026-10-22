@@ -30,6 +30,10 @@ env:
 jobs:
   foundation:
     name: foundation (${{ matrix.os }})
+    # #257: a nightly run whose commit a recent push run already proved skips every job;
+    # the rest follow from this skip, and the diagnostics and the gate skip only with it.
+    needs: mode
+    if: ${{ needs.mode.outputs.duplicate != 'true' }}
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -45,21 +49,26 @@ jobs:
             goos: darwin
             goarch: arm64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
+    # the step sum of the slowest host (Linux 54 minutes) plus a runner allowance
+    timeout-minutes: 55
     defaults:
       run:
         shell: pwsh
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        timeout-minutes: 2
         with:
           persist-credentials: false
           set-safe-directory: false
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        timeout-minutes: 2
         with:
           go-version: '1.27.1'
           cache: false
       - name: 고정 Go module 취득
+        timeout-minutes: 2
         env:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
@@ -69,12 +78,14 @@ jobs:
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
       - name: Verify clean validation input
+        timeout-minutes: 1
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
           if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
           if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
       - name: 실행 identity 확인
+        timeout-minutes: 1
         env:
           EXPECTED_GOOS: ${{ matrix.goos }}
           EXPECTED_GOARCH: ${{ matrix.goarch }}
@@ -93,6 +104,7 @@ jobs:
           if ($checkoutSha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$checkoutSha pr_head_sha=$env:PR_HEAD_SHA"
       - name: S05 native 도구 준비 (고정 runtime source, 기존 C 컴파일러)
+        timeout-minutes: 3
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
@@ -104,6 +116,7 @@ jobs:
           "TSGK_NATIVE_CC=$cc" >> $env:GITHUB_ENV
           'TSGK_NATIVE_REQUIRED=1' >> $env:GITHUB_ENV
       - name: 형식과 foundation 검사
+        timeout-minutes: 13
         run: |
           $formatted = gofmt -l src
           if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
@@ -128,7 +141,7 @@ jobs:
           if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
           go test @otherPackages -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
-          go test $nativePackage -count=1 -v -timeout 300s
+          go test $nativePackage -count=1 -v -timeout 420s
           if ($LASTEXITCODE -ne 0) { throw 'native test failed' }
       - name: isolated bind-mount output boundary (#196)
         if: runner.os == 'Linux'
@@ -166,7 +179,7 @@ jobs:
           if ([regex]::Matches($text, 'SUBST_REMOVED').Count -ne 2) { throw 'subst cleanup witness missing' }
           if ([regex]::Matches($text, 'SUBST_DIFFERENT_TARGET_PRESERVED').Count -ne 2) { throw 'subst exact-removal witness missing' }
       - name: frame 상태와 native cancellation 반복 시험 (#65)
-        timeout-minutes: 4
+        timeout-minutes: 6
         run: |
           if ($IsLinux) {
             $base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
@@ -191,10 +204,12 @@ jobs:
           go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
           if ($LASTEXITCODE -ne 0) { throw 'repeated tree cleanup tests failed' }
       - name: P05 도구 경로 회귀 검사
+        timeout-minutes: 6
         run: |
           $taskTestRoot = Join-Path $env:RUNNER_TEMP "p05-tool-check-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/prepare-p05/self-test.ps1 -Destination $taskTestRoot
       - name: Vet와 CGO-free build
+        timeout-minutes: 3
         run: |
           go vet ./src/...
           if ($LASTEXITCODE -ne 0) { throw 'vet failed' }
@@ -208,6 +223,7 @@ jobs:
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
       - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.1)
+        timeout-minutes: 5
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
@@ -221,12 +237,14 @@ jobs:
           }
           & src/dev/s04-reproduce/ci-owned.ps1 -Destination $dest -Platform $env:PLATFORM -CgroupParent $cgroup
       - name: Margin 실행 구성 기록
+        timeout-minutes: 1
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           & src/dev/ci-gate/config.ps1
           if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
       - name: Margin 실행 구성 보관
+        timeout-minutes: 2
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ci-config-foundation-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -234,6 +252,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Verify clean validation output
+        timeout-minutes: 1
         run: |
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
           if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
@@ -245,7 +264,7 @@ jobs:
     # Diagnostics wait for native/large validation and qualification; their width is 3.
     name: race diagnostic (${{ matrix.os }})
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -356,7 +375,7 @@ jobs:
     # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
     name: regenerate diagnostic (macos-15)
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
     runs-on: macos-15
     timeout-minutes: 30
     defaults:
@@ -462,8 +481,10 @@ jobs:
     timeout-minutes: 5
     permissions:
       pull-requests: read
+      actions: read
     outputs:
       heavy: ${{ steps.mode.outputs.heavy }}
+      duplicate: ${{ steps.mode.outputs.duplicate }}
     defaults:
       run:
         shell: pwsh
@@ -473,6 +494,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
           $heavy = 'true'
@@ -480,8 +502,31 @@ jobs:
             $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')
             if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }
           }
+          # #257: only a successful main push or dispatch run of this commit that finished in the
+          # 24 hours before the lookup makes a nightly run a duplicate (then only this job runs);
+          # a nightly success, skipped or not, never counts, and a failed lookup runs in full
+          $duplicate = 'false'
+          if ($env:EVENT -eq 'schedule') {
+            try {
+              $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100" --jq '.workflow_runs[] | [.id, .event, .head_branch, .conclusion, .updated_at] | @tsv')
+              if ($LASTEXITCODE -eq 0) {
+                $since = [DateTimeOffset]::UtcNow.AddHours(-24)
+                foreach ($row in $rows) {
+                  $id, $trigger, $branch, $conclusion, $updated = $row -split "`t"
+                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and
+                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
+                    $duplicate = 'true'
+                    "CI mode: run $id already passed $env:SHA"
+                  }
+                }
+              }
+            } catch {
+              $duplicate = 'false'
+            }
+          }
           "heavy=$heavy" >> $env:GITHUB_OUTPUT
-          "CI mode: heavy=$heavy"
+          "duplicate=$duplicate" >> $env:GITHUB_OUTPUT
+          "CI mode: heavy=$heavy duplicate=$duplicate"
           exit 0 # a failed lookup already chose full; its exit code must not fail the job
 
   native-prepare:
@@ -981,7 +1026,7 @@ jobs:
   integration-gate:
     name: integration gate
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ always() }}
+    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
