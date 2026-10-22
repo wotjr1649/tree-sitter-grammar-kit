@@ -371,9 +371,11 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 // the sum of the steps that host runs plus one minute of runner allowance. A go test over
 // several packages applies its timeout per package, so its own wall time is not bounded by it,
 // and the runner allowance is operational, not a measured bound. Only the canonical forms
-// below are accepted outside comments; any other form of these commands fails.
+// below are accepted outside whole-line comments, and a line that runs one of these commands
+// may carry no inline comment, so a # inside a string can never hide code; any other form
+// of these commands fails.
 func foundationBudget(text string, read func(string) (string, error)) error {
-	uncomment := regexp.MustCompile(`(?m)(^|\s)#.*$`)
+	uncomment := regexp.MustCompile(`(?m)^\s*#.*$`)
 	// A witness pattern must match exactly count times in the uncommented script; its first
 	// group, if any, adds factor times each captured number of seconds to the nominal sum.
 	type witness struct {
@@ -381,14 +383,14 @@ func foundationBudget(text string, read func(string) (string, error)) error {
 		count, factor int
 	}
 	scripts := map[string]struct {
-		args      string // a call must carry these arguments
+		args      string // the rest of a call's line must match this pattern
 		witnesses []witness
 	}{
 		"src/dev/ci-gate/modules.ps1":            {"", nil},
 		"src/dev/ci-gate/config.ps1":             {"", nil},
 		"src/dev/s05-native/select-compiler.ps1": {"", nil},
 		// no route is reproduced; Invoke-WebRequest -TimeoutSec bounds a connection, not a download
-		"src/dev/s05-native/prepare-routes.ps1": {" -Routes none", nil},
+		"src/dev/s05-native/prepare-routes.ps1": {` -Routes none$`, nil},
 		// two reproduce workspaces, each under the profile's one wall_seconds
 		"src/dev/s04-reproduce/ci-owned.ps1": {"", []witness{{"src/dev/s04-reproduce/ci-owned.ps1", `wall_seconds`, 1, 0},
 			{"src/dev/s04-reproduce/ci-owned.ps1", `wall_seconds = ([0-9]+);`, 1, 2}}},
@@ -428,6 +430,11 @@ func foundationBudget(text string, read func(string) (string, error)) error {
 		}
 		minutes, _ := strconv.Atoi(m[1])
 		code := uncomment.ReplaceAllString(step, "")
+		for _, line := range strings.Split(code, "\n") {
+			if strings.Contains(line, "#") && (anyGoTest.MatchString(line) || strings.Contains(line, ".ps1") || regexp.MustCompile(`(^|[ &])timeout\s`).MatchString(line)) {
+				return fmt.Errorf("step %s: inline comment on a budget line: %s", name, line)
+			}
+		}
 		inner := 0
 		for _, line := range anyGoTest.FindAllString(code, -1) {
 			inner += 30
@@ -456,7 +463,7 @@ func foundationBudget(text string, read func(string) (string, error)) error {
 		}
 		for _, c := range calls {
 			s, ok := scripts[c[1]]
-			if !ok || !strings.Contains(c[2], s.args) {
+			if !ok || !regexp.MustCompile(s.args).MatchString(c[2]) {
 				return fmt.Errorf("step %s: script call without a declared nominal sum: %s%s", name, c[1], c[2])
 			}
 			for _, w := range s.witnesses {
@@ -527,6 +534,8 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		"unknown-script":    strings.Replace(text, "          & src/dev/ci-gate/config.ps1\n", "          & src/dev/ci-gate/config.ps1\n          & src/dev/ci-gate/other.ps1\n", 1),
 		"quoted-script":     strings.Replace(text, vet, "          & 'src/dev/ci-gate/other.ps1'\n"+vet, 1),
 		"routes-reproduced": strings.Replace(text, " -Platform $env:PLATFORM -Routes none", " -Platform $env:PLATFORM", 1),
+		"routes-listed":     strings.Replace(text, " -Platform $env:PLATFORM -Routes none", " -Platform $env:PLATFORM -Routes none,go", 1),
+		"string-hides-code": strings.Replace(text, vet, "          Write-Output 'log #1'; go test ./src/internal/runner\n"+vet, 1),
 		"bare-dash-step":    strings.Replace(text, "      - name: Verify clean validation output\n", "      -\n        name: extra\n        run: Start-Sleep 3600\n      - name: Verify clean validation output\n", 1),
 		"host-case":         strings.Replace(text, "      - name: Verify clean validation output\n", "      - name: extra Linux work\n        if: runner.os == 'LINUX'\n        timeout-minutes: 3\n        run: Write-Output 'extra'\n      - name: Verify clean validation output\n", 1),
 	} {
@@ -540,6 +549,7 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		"collection-grows":   {"src/dev/prepare-p05/collect.ps1", "TotalSeconds -gt 120", "TotalSeconds -gt 1200"},
 		"reproduce-override": {"src/dev/s04-reproduce/ci-owned.ps1", "\n$profile", "\n$profile.limits.wall_seconds = 600\n$profile"},
 		"reproduce-grows":    {"src/dev/s04-reproduce/ci-owned.ps1", "wall_seconds = 120;", "wall_seconds = 600;"},
+		"reproduce-inline":   {"src/dev/s04-reproduce/ci-owned.ps1", "\n$profilePath", "\nWrite-Output 'S04 #260'; $profile.limits.wall_seconds = 240\n$profilePath"},
 		"run-timer-grows":    {"src/dev/prepare-p05/self-test.ps1", "Run 'burst' @() 2 ", "Run 'burst' @() 400 "},
 		"build-wait-grows":   {"src/dev/prepare-p05/self-test.ps1", "WaitForExit(30000)", "WaitForExit(300000)"},
 	} {
