@@ -135,42 +135,63 @@ func TestMarginMacHostBinding(t *testing.T) {
 	}
 }
 
-// #260: a past report under a former limit is valid history of another configuration; a
-// changed limit still has to carry its own key and stay a positive bounded value.
+// #260: a past report of another source under a former limit is valid history of another
+// configuration; the same source must carry the current limits, a changed limit its own key
+// and a positive bounded value, and the current report the current limits exactly.
 func TestMarginFormerLimitHistory(t *testing.T) {
 	current, _, _ := marginFixture(t, "900")
-	former := func(limit int64, rekey bool) marginReport {
+	former := func(limit int64, rekey, source bool) marginReport {
 		past, _, _ := marginFixture(t, "1")
+		for i := range past.Configs {
+			if source {
+				past.Configs[i].Source = strings.Repeat("e", 64)
+			}
+		}
 		for i := range past.Metrics {
 			m := &past.Metrics[i]
-			if m.ID != "foundation/windows/job" {
-				continue
+			if m.ID == "foundation/windows/job" {
+				m.Limit = limit
 			}
-			m.Limit = limit
 			for _, c := range past.Configs {
-				if rekey && strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
-					m.Config = marginKey(c, m.ID, limit)
+				if (rekey || m.ID != "foundation/windows/job") && strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+					m.Config = marginKey(c, m.ID, m.Limit)
 				}
 			}
 		}
 		return past
 	}
-	if failed, err := evaluateMargins(&current, []marginReport{former(600000, true)}); err != nil || failed {
+	if failed, err := evaluateMargins(&current, []marginReport{former(600000, true, true)}); err != nil || failed {
 		t.Fatalf("former limit rejected: failed=%v err=%v", failed, err)
 	}
 	for _, m := range current.Metrics {
-		if want := map[bool]int{true: 1, false: 2}[m.ID == "foundation/windows/job"]; m.Samples != want {
-			t.Fatalf("%s samples=%d want %d", m.ID, m.Samples, want)
+		if m.Samples != 1 {
+			t.Fatalf("%s samples=%d: another source counted", m.ID, m.Samples)
 		}
 	}
-	for name, past := range map[string]marginReport{"stale-key": former(600000, false), "zero": former(0, true), "unbounded": former(24*time.Hour.Milliseconds()+1, true)} {
+	for name, past := range map[string]marginReport{"same-source": former(600000, true, false), "stale-key": former(600000, false, true),
+		"zero": former(0, true, true), "unbounded": former(24*time.Hour.Milliseconds()+1, true, true)} {
 		if _, err := evaluateMargins(&current, []marginReport{past}); err == nil {
 			t.Fatalf("%s history accepted", name)
 		}
 	}
-	changed, _, _ := marginFixture(t, "900")
-	changed.Metrics[0].Limit++
-	if _, err := evaluateMargins(&changed, nil); err == nil {
-		t.Fatal("current report accepted under a former limit")
+	for _, id := range []string{"foundation/windows/job", "foundation/windows/step/frame 상태와 native cancellation 반복 시험 (#65)", "large-api/windows/page-max"} {
+		changed, _, _ := marginFixture(t, "900")
+		found := false
+		for i := range changed.Metrics {
+			m := &changed.Metrics[i]
+			if m.ID != id {
+				continue
+			}
+			found = true
+			m.Limit++
+			for _, c := range changed.Configs {
+				if strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+					m.Config = marginKey(c, m.ID, m.Limit)
+				}
+			}
+		}
+		if _, err := evaluateMargins(&changed, nil); !found || err == nil {
+			t.Fatalf("current report accepted under another limit: %s", id)
+		}
 	}
 }

@@ -412,6 +412,10 @@ func evaluateMargins(current *marginReport, history []marginReport) (bool, error
 	}
 	seen := map[string]bool{current.Run.RunID: true}
 	counts := map[string]int{}
+	limits := map[string]int64{}
+	for _, m := range current.Metrics {
+		limits[m.ID] = m.Limit
+	}
 	for _, r := range history {
 		if seen[r.Run.RunID] {
 			return false, errors.New("margin duplicate run sample")
@@ -423,6 +427,12 @@ func evaluateMargins(current *marginReport, history []marginReport) (bool, error
 		for _, c := range r.Configs {
 			if c.Run.Job == "native-routes" && c.Run.GOOS == "darwin" && c.Source == current.Configs[0].Source {
 				return false, errors.New("legacy margin identity claims current configuration")
+			}
+		}
+		// #260: the source binds the workflow and the limit table, so one source has one limit set
+		for _, m := range r.Metrics {
+			if r.Configs[0].Source == current.Configs[0].Source && m.Limit != limits[m.ID] {
+				return false, errors.New("former margin limit claims current configuration")
 			}
 		}
 		for _, m := range r.Metrics {
