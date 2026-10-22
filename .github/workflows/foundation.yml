@@ -743,7 +743,7 @@ jobs:
           go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'reuse holdout disposition or omit-old control failed' }
           # a skipped run passes go test; the ledger must have run in full
-          if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -SimpleMatch -Quiet -Pattern '--- PASS: TestNativeReuseHoldouts')) { throw 'reuse holdouts did not run' }
+          if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }

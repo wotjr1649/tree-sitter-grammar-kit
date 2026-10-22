@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -178,22 +179,112 @@ func TestReuseHoldoutRegistry(t *testing.T) {
 	}
 }
 
-// TestReuseHoldoutWorkflow keeps the native routes job checking the ledger (#217): the
-// disposition gate reads the route run's summary, and the holdouts must run in full.
-func TestReuseHoldoutWorkflow(t *testing.T) {
-	text := string(mustRead(t, filepath.Join(repository(t), ".github", "workflows", "foundation.yml")))
-	for _, want := range []string{
-		"          if ($routesExit -ne 0) { throw 'route run reported failures' }\n",
-		"          & src/dev/s05-native/check-dispositions.ps1 -Summary (Join-Path $out 'summary.json')\n",
-		"          go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1\n          if ($LASTEXITCODE -ne 0) {",
-		"-SimpleMatch -Quiet -Pattern '--- PASS: TestNativeReuseHoldouts')) { throw",
-	} {
-		if strings.Count(text, want) != 1 {
-			t.Errorf("foundation.yml: %q not present exactly once", want)
+// holdoutWorkflowSteps are the top-level statements of the native routes run step that check
+// the ledger (#217), in their required order; the holdout run's exit and log checks follow
+// it directly.
+var holdoutWorkflowSteps = []string{
+	"if ($routesExit -ne 0) { throw 'route run reported failures' }",
+	"& src/dev/s05-native/check-dispositions.ps1 -Summary (Join-Path $out 'summary.json')",
+	"foreach ($route in @('json', 'tsql')) {",
+	"go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1",
+	"if ($LASTEXITCODE -ne 0) { throw 'reuse holdout disposition or omit-old control failed' }",
+	`if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }`,
+}
+
+// holdoutWorkflowOrder finds the native routes step that runs run-routes.ps1 and checks that
+// its executable top-level lines (outside comments, at the step's own indentation) hold the
+// ledger checks once each, in order, with the last three adjacent.
+func holdoutWorkflowOrder(text string) error {
+	body := workflowJobBody(text, "native-routes")
+	at := strings.Index(body, "run-routes.ps1 -Prepared")
+	start := strings.LastIndex(body[:max(at, 0)], "run: |\n")
+	if at < 0 || start < 0 {
+		return fmt.Errorf("native-routes run step not found")
+	}
+	var lines []string
+	comment, indent := false, ""
+	for _, line := range strings.Split(body[start+len("run: |\n"):], "\n") {
+		trimmed := strings.TrimLeft(line, " ")
+		if indent == "" {
+			indent = line[:len(line)-len(trimmed)]
+		}
+		if trimmed != "" && !strings.HasPrefix(line, indent) {
+			break // the next step
+		}
+		switch {
+		case comment:
+			comment = !strings.Contains(trimmed, "#>")
+		case strings.HasPrefix(trimmed, "<#"):
+			comment = !strings.Contains(trimmed, "#>")
+		case trimmed != "" && !strings.HasPrefix(trimmed, "#") && len(line)-len(trimmed) == len(indent):
+			lines = append(lines, trimmed)
 		}
 	}
-	if strings.Index(text, "check-dispositions.ps1") < strings.Index(text, "throw 'route run reported failures'") {
-		t.Error("foundation.yml: the disposition gate runs before the route run's result is checked")
+	prev := -1
+	for k, want := range holdoutWorkflowSteps {
+		i := slices.Index(lines, want)
+		if i < 0 || slices.Index(lines[i+1:], want) >= 0 {
+			return fmt.Errorf("top-level %q not present exactly once", want)
+		}
+		if i <= prev || k >= 4 && i != prev+1 {
+			return fmt.Errorf("%q out of order", want)
+		}
+		prev = i
+	}
+	return nil
+}
+
+// TestReuseHoldoutWorkflow keeps the native routes job checking the ledger (#217): the
+// disposition gate reads the route run's summary before the holdouts run, and the holdouts
+// must run in full. Controls comment out, guard or reorder a check.
+func TestReuseHoldoutWorkflow(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github", "workflows", "foundation.yml")))
+	if err := holdoutWorkflowOrder(text); err != nil {
+		t.Fatalf("foundation.yml: %v", err)
+	}
+	gate, logCheck := "          "+holdoutWorkflowSteps[1]+"\n", "          "+holdoutWorkflowSteps[5]+"\n"
+	for name, broken := range map[string]string{
+		"block-comment": strings.Replace(text, gate, "          <#\n"+gate+"          #>\n", 1),
+		"line-comment":  strings.Replace(text, gate, "          # "+holdoutWorkflowSteps[1]+"\n", 1),
+		"guarded":       strings.Replace(text, gate, "          if ($false) {\n  "+gate+"          }\n", 1),
+		"gate-late":     strings.Replace(strings.Replace(text, gate, "", 1), logCheck, logCheck+gate, 1),
+		"log-early":     strings.Replace(strings.Replace(text, logCheck, "", 1), gate, gate+logCheck, 1),
+	} {
+		if broken == text {
+			t.Fatalf("%s control did not mutate the workflow", name)
+		}
+		if holdoutWorkflowOrder(broken) == nil {
+			t.Errorf("%s control accepted", name)
+		}
+	}
+}
+
+// TestReuseHoldoutLogCheck runs the workflow's log check on go test logs: only the top-level
+// PASS line of TestNativeReuseHoldouts counts as a run.
+func TestReuseHoldoutLogCheck(t *testing.T) {
+	pwsh, err := exec.LookPath("pwsh")
+	if err != nil {
+		t.Skip("pwsh not available: the log check is not executed (TestReuseHoldoutWorkflow still applies)")
+	}
+	for _, tc := range []struct {
+		name, log string
+		ran       bool
+	}{
+		{"parent-pass", "=== RUN   TestNativeReuseHoldouts\n--- PASS: TestNativeReuseHoldouts (64.07s)\nPASS\n", true},
+		{"skip-only", "=== RUN   TestNativeReuseHoldouts\n--- SKIP: TestNativeReuseHoldouts (0.00s)\nPASS\n", false},
+		{"child-pass-parent-skip", "    --- PASS: TestNativeReuseHoldouts/child (0.00s)\n--- SKIP: TestNativeReuseHoldouts (0.00s)\n", false},
+		{"similar-name", "--- PASS: TestNativeReuseHoldoutsMeasure (0.00s)\n", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			if err := os.WriteFile(filepath.Join(dir, "reuse-observation.log"), []byte(tc.log), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference = 'Stop'; $out = '"+dir+"'; "+holdoutWorkflowSteps[5]).CombinedOutput()
+			if (err == nil) != tc.ran {
+				t.Fatalf("ran=%t, check err=%v:\n%s", tc.ran, err, out)
+			}
+		})
 	}
 }
 
@@ -221,8 +312,14 @@ func TestCheckDispositions(t *testing.T) {
 		{"missing", `{"schema": "tsgk-s05-route-run/r1"}`, "!requirement_results missing or not an array"},
 		{"null", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": null}`, "!requirement_results missing or not an array"},
 		{"object", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": ` + route("tsql/a") + `}`, "!requirement_results missing or not an array"},
-		{"no-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a"}]}`, "!requirement result without a claim"},
+		{"no-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a"}]}`, "!requirement result without a known claim"},
+		{"empty-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a", "claim": "", "result": "BLOCKED"}]}`, "!requirement result without a known claim"},
+		{"padded-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a", "claim": "incremental_route ", "result": "BLOCKED"}]}`, "!requirement result without a known claim"},
+		{"unknown-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a", "claim": "Incremental_Route", "result": "BLOCKED"}]}`, "!requirement result without a known claim"},
 		{"schema", `{"schema": "tsgk-s05-route-run/r0", "requirement_results": []}`, "!not a tsgk-s05-route-run/r1 summary"},
+		{"top-level-array", `[{"schema": "tsgk-s05-route-run/r1", "requirement_results": []}]`, "!not a tsgk-s05-route-run/r1 summary"},
+		{"schema-empty-array", `{"schema": [], "requirement_results": []}`, "!not a tsgk-s05-route-run/r1 summary"},
+		{"schema-array", `{"schema": ["tsgk-s05-route-run/r1"], "requirement_results": []}`, "!not a tsgk-s05-route-run/r1 summary"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "summary.json")
