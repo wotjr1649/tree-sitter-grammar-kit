@@ -176,6 +176,34 @@ func qfxWireQuery(id, status, code string) map[string]any {
 	return q
 }
 
+// qfxWireNodes is the compact live wire of a recorded full tree: its type and field tables
+// and one 10-value row per node.
+func qfxWireNodes(nodes []TreeNode) (types, fields []string, rows [][]int64) {
+	index := func(table *[]string, name string) int64 {
+		if i := slices.Index(*table, name); i >= 0 {
+			return int64(i)
+		}
+		*table = append(*table, name)
+		return int64(len(*table) - 1)
+	}
+	types, fields = []string{}, []string{}
+	for _, n := range nodes {
+		field := int64(-1)
+		if n.Field != nil {
+			field = index(&fields, *n.Field)
+		}
+		var flags int64
+		for bit, on := range []bool{n.Named, n.Extra, n.IsError, n.HasError, n.IsMissing} {
+			if on {
+				flags |= 1 << bit
+			}
+		}
+		rows = append(rows, []int64{n.Parent, index(&types, n.Type), field, flags, int64(n.StartByte), int64(n.EndByte),
+			int64(n.StartPoint.Row), int64(n.StartPoint.Column), int64(n.EndPoint.Row), int64(n.EndPoint.Column)})
+	}
+	return types, fields, rows
+}
+
 // qfxRaw is a record's raw tsgk-native/r4 response, built from the (mutated) record: the
 // observation projection the qualification compares and each tree's status.
 func qfxRaw(c map[string]any) map[string]any {
@@ -198,14 +226,20 @@ func qfxRaw(c map[string]any) map[string]any {
 				}
 			}
 			var api any // the wire payload live checkAPI frames, one 13-value row per node
-			if m["api"] != nil {
+			if m["api"] != nil && m["form"] == "full" {
 				rows := []any{}
 				for range m["descendant_count"].(int) {
 					rows = append(rows, make([]int64, 13))
 				}
 				api = map[string]any{"revision": "tsgk-api/r1", "nodes": rows, "child_fields": []any{}, "field_lookups": []any{}, "points": []any{}, "names": []any{}}
 			}
-			return map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "digest": m["digest"], "queries": queries, "api": api}
+			w := map[string]any{"status": m["status"], "code": m["code"], "form": m["form"], "descendant_count": m["descendant_count"], "has_error": m["has_error"], "digest": m["digest"], "queries": queries, "api": api}
+			if tree, ok := m["tree"].(map[string]any); ok && m["form"] == "full" {
+				w["types"], w["fields"], w["nodes"] = qfxWireNodes(tree["nodes"].([]TreeNode))
+			} else { // a summary or record form: the capped error list without nodes
+				w["errors"] = map[string]any{"limit": 100, "total": 0, "truncated": false, "items": []any{}}
+			}
+			return w
 		}
 		raw := map[string]any{"step": s["step"], "source_bytes": s["source_bytes"], "source_sha256": s["source_sha256"], "observations": s["observations"],
 			"edit": s["edit"], "incremental": status(s["incremental"]), "fresh": status(s["fresh"])}

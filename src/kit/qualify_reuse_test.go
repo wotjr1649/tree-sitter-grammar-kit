@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
@@ -57,6 +58,26 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		observations := r[0]["steps"].([]any)[0].(map[string]any)["observations"].([]reuseobs.Observation)
 		r[0]["reuse_observation_claim"] = reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Observations: observations}}, false)
 	}
+	t.Run("early-end-record-open", func(t *testing.T) { // the record's unfinished last step ends otherwise than its raw response (Codex PLAN251C)
+		f := newQfx(t)
+		f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit
+		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
+			if set == "s06-fxh" {
+				queryLimited(records)
+				records[0]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"].([]any)[0].(map[string]any)["code"] = "MATCH_LIMIT"
+			}
+		}, raw: func(set string, raw map[string]any) {
+			if set == "s06-fxh" && raw["steps"] != nil && len(raw["steps"].([]any)) > 0 && raw["status"] == StatusResourceLimit {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{qfxWireQuery("q.x", StatusResourceLimit, "CAPTURE_LIMIT")}
+			}
+		}}}))
+		row := roleRow(r, "fx-history", "windows-amd64")
+		if len(row.Sets) != 1 || !slices.ContainsFunc(row.Sets[0].Gates, func(g ReplayGate) bool {
+			return g.ID == "reuse-observation" && g.Code == "OBSERVATION_RESPONSE_UNBOUND" && g.Failed > 0
+		}) {
+			t.Fatalf("a record end the raw response did not end with bound: %+v", row)
+		}
+	})
 	t.Run("early-end-other-code", func(t *testing.T) { // record and raw agree on a code the case did not end with
 		f := newQfx(t)
 		f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit
@@ -366,6 +387,33 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["queries"] = []any{qfxWireQuery("q.x", "BOGUS", "")}
 			}
 		}},
+		// #251: the live wire rules themselves judge the raw trees, and the replay keeps the
+		// tree code member the strict decode reads as "" when absent (Codex PLAN251C)
+		{name: "raw-digest-mismatch", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = strings.Repeat("0", 64)
+			}
+		}},
+		{name: "raw-node-arity", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["nodes"].([][]int64)[0] = []int64{-1, 0}
+			}
+		}},
+		{name: "raw-fresh-node-span", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["nodes"].([][]int64)[0][5] = 1 << 20
+			}
+		}},
+		{name: "raw-tree-code-missing", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c1" {
+				delete(raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any), "code")
+			}
+		}},
+		{name: "raw-fresh-code-null", code: "OBSERVATION_RESPONSE_UNBOUND", raw: func(raw map[string]any) {
+			if raw["id"] == "c2" {
+				raw["steps"].([]any)[1].(map[string]any)["fresh"].(map[string]any)["code"] = nil
+			}
+		}},
 		{name: "stepless-raw-removed", code: "OBSERVATION_RESPONSE_MISSING", record: func(r []map[string]any) {
 			early(r[0], "OUTPUT_LIMIT")
 			r[0]["steps"], r[0]["expectations"], r[0]["reuse_observation_claim"] = []any{}, []any{}, claimNotClaimed
@@ -525,7 +573,9 @@ func TestQualificationRawCountLimit(t *testing.T) {
 			for _, s := range raw["steps"].([]any) {
 				for _, slot := range []string{"incremental", "fresh"} {
 					if tree, ok := s.(map[string]any)[slot].(map[string]any); ok && tree["api"] != nil {
-						tree["api"] = nil
+						// a summary form, whose count no node table repeats (Codex A251C)
+						tree["api"], tree["form"], tree["errors"] = nil, "summary", map[string]any{"limit": 100, "total": 0, "truncated": false, "items": []any{}}
+						delete(tree, "nodes")
 						if over && raw["id"] == "c1" {
 							tree["descendant_count"] = NativeOperations()["native-query"].Nodes + 1
 						}
@@ -545,3 +595,39 @@ func TestQualificationRawCountLimit(t *testing.T) {
 
 // qfxHistoricalManifest is 659cda7's runtime manifest, verified for recorded replays only.
 const qfxHistoricalManifest = "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+
+// TestQualificationRawPriority keeps the replay's first failure: a projection mismatch of a
+// later step precedes a live-rule failure of an earlier one, which the response records at
+// its end (#251, Codex PLAN251B).
+func TestQualificationRawPriority(t *testing.T) {
+	f := newQfx(t)
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
+		if set == "s06-fxa" && raw["id"] == "c2" {
+			raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = strings.Repeat("0", 64)
+			raw["steps"].([]any)[1].(map[string]any)["route"].(map[string]any)["reused_nodes"] = 99
+		}
+	}}}))
+	cell := cellOf(r, "fxa", "windows-amd64")
+	if !slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+		return g.ID == "reuse-observation" && g.Code == "OBSERVATION_PROJECTION_MISMATCH" && g.Failed > 0
+	}) {
+		t.Fatalf("first failure: %+v", cell.Set.Gates)
+	}
+}
+
+// TestQualificationRawFirstRouteType keeps a present but unreadable route on the first step a
+// projection mismatch first, never an absent route (Codex A251C).
+func TestQualificationRawFirstRouteType(t *testing.T) {
+	f := newQfx(t)
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
+		if set == "s06-fxa" && raw["id"] == "c1" {
+			raw["steps"].([]any)[0].(map[string]any)["route"] = "x"
+		}
+	}}}))
+	cell := cellOf(r, "fxa", "windows-amd64")
+	if !slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+		return g.ID == "reuse-observation" && g.Code == "OBSERVATION_PROJECTION_MISMATCH" && g.Failed > 0
+	}) {
+		t.Fatalf("first failure: %+v", cell.Set.Gates)
+	}
+}
