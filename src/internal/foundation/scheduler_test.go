@@ -313,10 +313,13 @@ func nightlyDuplicatePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
 	for _, required := range []string{"      duplicate: ${{ steps.mode.outputs.duplicate }}\n", "          SHA: ${{ github.sha }}\n",
 		"          $duplicate = 'false'\n          if ($env:EVENT -eq 'schedule') {\n            try {\n",
-		`/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100"`,
+		`/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100" --jq '.workflow_runs[] | [.id, .event, .head_branch, .conclusion, .updated_at] | @tsv')` + "\n",
 		"              if ($LASTEXITCODE -eq 0) {\n                $since = [DateTimeOffset]::UtcNow.AddHours(-24)\n",
-		"                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and\n",
-		"                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n",
+		// the fields bind in order and the one duplicate assignment sits inside the whole condition
+		"                  $id, $trigger, $branch, $conclusion, $updated = $row -split \"`t\"\n" +
+			"                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and\n" +
+			"                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n" +
+			"                    $duplicate = 'true'\n",
 		"            } catch {\n              $duplicate = 'false'\n            }\n", `          "duplicate=$duplicate" >> $env:GITHUB_OUTPUT` + "\n"} {
 		if !strings.Contains(mode, required) {
 			return fmt.Errorf("nightly duplicate policy missing: %q", required)
@@ -338,15 +341,19 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, broken := range map[string]string{
-		"any-event":         strings.Replace(text, "          if ($env:EVENT -eq 'schedule') {\n            try {\n", "          if ($true) {\n            try {\n", 1),
-		"nightly-counts":    strings.Replace(text, "@('push', 'workflow_dispatch')", "@('push', 'workflow_dispatch', 'schedule')", 1),
-		"no-window":         strings.Replace(text, " -and $conclusion -eq 'success' -and\n                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n", ") {\n", 1),
-		"any-branch":        strings.Replace(text, " -and $branch -eq 'main'", "", 1),
-		"default-duplicate": strings.Replace(text, "          $duplicate = 'false'\n          if ($env:EVENT", "          $duplicate = 'true'\n          if ($env:EVENT", 1),
-		"failed-lookup":     strings.Replace(text, "              if ($LASTEXITCODE -eq 0) {\n                $since", "              if ($true) {\n                $since", 1),
-		"error-duplicate":   strings.Replace(text, "            } catch {\n              $duplicate = 'false'\n", "            } catch {\n              $duplicate = 'true'\n", 1),
-		"foundation-always": strings.Replace(text, "    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", 1),
-		"gate-skips-on-pr":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
+		"any-event":          strings.Replace(text, "          if ($env:EVENT -eq 'schedule') {\n            try {\n", "          if ($true) {\n            try {\n", 1),
+		"nightly-counts":     strings.Replace(text, "@('push', 'workflow_dispatch')", "@('push', 'workflow_dispatch', 'schedule')", 1),
+		"no-window":          strings.Replace(text, " -and $conclusion -eq 'success' -and\n                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n", ") {\n", 1),
+		"any-branch":         strings.Replace(text, " -and $branch -eq 'main'", "", 1),
+		"default-duplicate":  strings.Replace(text, "          $duplicate = 'false'\n          if ($env:EVENT", "          $duplicate = 'true'\n          if ($env:EVENT", 1),
+		"failed-lookup":      strings.Replace(text, "              if ($LASTEXITCODE -eq 0) {\n                $since", "              if ($true) {\n                $since", 1),
+		"error-duplicate":    strings.Replace(text, "            } catch {\n              $duplicate = 'false'\n", "            } catch {\n              $duplicate = 'true'\n", 1),
+		"foundation-always":  strings.Replace(text, "    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", 1),
+		"gate-skips-on-pr":   strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
+		"event-constant":     strings.Replace(text, "[.id, .event, .head_branch,", `[.id, "push", .head_branch,`, 1),
+		"branch-constant":    strings.Replace(text, "[.id, .event, .head_branch,", `[.id, .event, "main",`, 1),
+		"fields-swapped":     strings.Replace(text, "$id, $trigger, $branch, $conclusion, $updated =", "$id, $branch, $trigger, $conclusion, $updated =", 1),
+		"assignment-outside": strings.Replace(text, " -ge $since) {\n                    $duplicate = 'true'\n", " -ge $since) {\n                  }\n                  $duplicate = 'true'\n                  {\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || nightlyDuplicatePolicy(broken) == nil {

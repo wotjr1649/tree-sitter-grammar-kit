@@ -487,9 +487,9 @@ jobs:
             $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')
             if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }
           }
-          # #257: only a successful push or dispatch run of this commit in the last 24 hours makes
-          # a nightly run a duplicate; nightly successes never count, so an unchanged main still
-          # runs in full once a day, and a failed lookup runs in full
+          # #257: only a successful main push or dispatch run of this commit that finished in the
+          # 24 hours before the lookup makes a nightly run a duplicate (then only this job runs);
+          # a nightly success, skipped or not, never counts, and a failed lookup runs in full
           $duplicate = 'false'
           if ($env:EVENT -eq 'schedule') {
             try {
