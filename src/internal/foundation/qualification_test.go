@@ -386,7 +386,7 @@ func buildInventory(t *testing.T, root string) []byte {
 		rows := reqs[route]
 		symbol, grammar := grammarOf(route)
 		errNodes := errorNodesOf(route)
-		w := kit.QualWorkload{Set: "s06-" + route, Profile: "s06-" + route, Route: route, Operation: "native-query", Output: "tree", Symbol: symbol,
+		w := kit.QualWorkload{Set: "s06-" + route, Profile: "s06-" + route, Route: route, Operation: "native-query-batch", Output: "tree", Symbol: symbol,
 			Grammar: grammar, Declarations: declsOf(route), FactPack: packRef(route), API: true}
 		for _, kind := range []string{"routes", "gaps", "n461"} {
 			p := "src/testdata/native/" + kind + "/" + route + ".json"

@@ -318,7 +318,7 @@ func reducerTable() map[string]reducer {
 			Recorded:    []string{"driver response payloads (tsgk-native protocol decoding is not part of the offline API)", "expectations with declarations on r1 full trees", "digests of record and summary form trees"},
 			Description: "S05 incremental result: exact case consumption against the workload profile, tree digest and structure, incremental/fresh comparison, route proof, expectations and verdict fold recomputed from the recorded trees"}, replayNativeResult},
 		"oracle-set-r1": {ReducerInfo{ID: "oracle-set-r1", Revision: "r1", Operation: "evidence-replay",
-			Inputs:      []string{"tsgk-oracle-manifest/r1 manifest.json", "tsgk-oracle-record/r1 records/", "raw/ driver responses", "tsgk-oracle/r2 or r1 workload profile"},
+			Inputs:      []string{"tsgk-oracle-manifest/r1 or r3 manifest.json", "tsgk-oracle-record/r1 or r2 records/", "raw/ driver responses", "tsgk-oracle/r2 or r1 workload profile"},
 			Roles:       []string{"workload-profile", "manifest", "record", "raw", "retained"},
 			Gates:       append(slices.Clone(nativeGates), "query-equality"),
 			Recorded:    []string{"api (tsgk-api/r1 observations stay in the raw response)", "query_expectations, fact_reproduction, dynamic_sql (need the case source bytes)", "runtime structural capture streams of UNSUPPORTED queries"},

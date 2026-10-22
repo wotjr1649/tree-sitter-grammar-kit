@@ -403,7 +403,7 @@ foreach ($r in $registry.routes) {
     $oc = @(Add-OracleFields $cases) + @($qc.cases) + @(Get-DynamicCases $r.route $root)
     $queries = @($qc.queries) + @(Get-PackQueries $r.route)
     $usePack = [bool]($pack.routes | Where-Object { $_.route -eq $r.route })
-    Add-OracleResult $r.route (Invoke-Oracle $r $root "s06-$($r.route)" 'native-query' 'tree' $oc (Get-Declarations $r.route) $queries $usePack $true)
+    Add-OracleResult $r.route (Invoke-Oracle $r $root "s06-$($r.route)" 'native-query-batch' 'tree' $oc (Get-Declarations $r.route) $queries $usePack $true)
   }
 }
 

@@ -233,6 +233,7 @@ type CaseResult struct {
 	QueryExpect           []QueryExpectResult  `json:"query_expectations,omitempty"`
 	Facts                 *FactsOut            `json:"facts,omitempty"`
 	Raw                   []byte               `json:"-"`
+	Transport             *FrameTransport      `json:"-"` // an r2 record's frame (#266)
 }
 
 // Context is the per-profile information a case run needs.
@@ -286,14 +287,74 @@ func (b *Build) Exec(ctx context.Context, mode string, stdin []byte, wall time.D
 	return runner.Run(ctx, spec)
 }
 
+// caseRequest is a validated case ready for its driver frame.
+type caseRequest struct {
+	req      Request
+	versions [][]byte
+	points   []kit.EditPoints
+	svc      []kit.SvcObservation
+	payload  []byte
+	wall     time.Duration
+}
+
+// newCaseResult is a case before any frame: nothing claimed.
+func newCaseResult(c kit.IncrementalCase) CaseResult {
+	return CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
+}
+
+func finishEarly(out *CaseResult, status, assess, code string) {
+	out.ExecutionStatus, out.Assessment, out.Code = status, assess, code
+}
+
 // RunCase validates the case, runs one driver process for it and assesses the result.
 func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte) (out CaseResult) {
 	x.ObservationProducerSHA256 = b.Identity
-	out = CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
+	out = newCaseResult(c)
 	defer func() { x.observeCase(&out) }()
 	notRun := func(status, assess, code string) CaseResult {
-		out.ExecutionStatus, out.Assessment, out.Code = status, assess, code
+		finishEarly(&out, status, assess, code)
 		return out
+	}
+	cr, done := b.prepareCase(ctx, x, c, source, &out)
+	if done {
+		return out
+	}
+	res, err := b.Exec(ctx, "single", Frame(cr.payload), cr.wall, x.Op, x.CgroupParent)
+	if err != nil {
+		var ne *Error
+		if errors.As(err, &ne) {
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, ne.Code)
+		}
+		var re *runner.Error
+		if errors.As(err, &re) {
+			return notRun(kit.StatusNotRun, kit.AssessBlocked, re.Code)
+		}
+		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "START_FAILED")
+	}
+	out.Process = &res
+	switch {
+	case !res.Cleanup.Verified:
+		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "PROCESS_CLEANUP_UNVERIFIED")
+	case res.Status == runner.StatusCancelled:
+		return notRun(kit.StatusCancelled, kit.AssessNotAssessed, "CANCELLED")
+	case res.Status == runner.StatusResourceLimit:
+		return notRun(kit.StatusResourceLimit, kit.AssessBlocked, res.Reason)
+	}
+	frame, err := SplitFrame(res.Stdout)
+	if err != nil {
+		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
+	}
+	exit := res.ExitCode
+	b.judgeFrame(x, c, cr, frame, &exit, &out)
+	return out
+}
+
+// prepareCase validates the case and builds its request; done is true when no driver frame
+// runs (a refusal, or an SVC case finished without a single frame) and out is final.
+func (b *Build) prepareCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte, out *CaseResult) (cr caseRequest, done bool) {
+	notRun := func(status, assess, code string) (caseRequest, bool) {
+		finishEarly(out, status, assess, code)
+		return cr, true
 	}
 	versions, points, err := kit.ApplyEdits(c.Encoding, source, c.Edits, x.Op.InputBytes)
 	if err != nil {
@@ -312,7 +373,8 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		}
 		if slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { return o.IncludedRanges == nil }) {
 			if slices.ContainsFunc(svc, func(o kit.SvcObservation) bool { return o.IncludedRanges != nil }) {
-				return b.runSvcSegments(ctx, x, c, versions, points, svc, out)
+				*out = b.runSvcSegments(ctx, x, c, versions, points, svc, *out)
+				return cr, true
 			}
 			// No C# inline code to parse in some step: the composite is the directive
 			// observation alone and no driver process runs.
@@ -341,7 +403,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 					out.Code = "SVC_EXPECTATION_UNASSESSABLE"
 				}
 			}
-			return out
+			return cr, true
 		}
 	}
 	payload := req.Encode()
@@ -352,35 +414,19 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if len(c.Edits) > 0 {
 		wall = x.Op.EditWall
 	}
-	res, err := b.Exec(ctx, "single", Frame(payload), wall, x.Op, x.CgroupParent)
-	if err != nil {
-		var ne *Error
-		if errors.As(err, &ne) {
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, ne.Code)
-		}
-		var re *runner.Error
-		if errors.As(err, &re) {
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, re.Code)
-		}
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "START_FAILED")
-	}
-	out.Process = &res
-	switch {
-	case !res.Cleanup.Verified:
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "PROCESS_CLEANUP_UNVERIFIED")
-	case res.Status == runner.StatusCancelled:
-		return notRun(kit.StatusCancelled, kit.AssessNotAssessed, "CANCELLED")
-	case res.Status == runner.StatusResourceLimit:
-		return notRun(kit.StatusResourceLimit, kit.AssessBlocked, res.Reason)
-	}
-	frame, err := SplitFrame(res.Stdout)
-	if err != nil {
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
-	}
+	return caseRequest{req: req, versions: versions, points: points, svc: svc, payload: payload, wall: wall}, false
+}
+
+// judgeFrame assesses one response frame of the case. exit is the driver exit code of a
+// single process; a batch frame has none (nil), and the batch process is checked apart.
+func (b *Build) judgeFrame(x Context, c kit.IncrementalCase, cr caseRequest, frame []byte, exit *int, out *CaseResult) {
+	notRun := func(status, assess, code string) { finishEarly(out, status, assess, code) }
+	req, versions, points, svc := cr.req, cr.versions, cr.points, cr.svc
 	out.Raw = frame
 	resp, err := DecodeResponse(frame)
 	if err != nil {
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
+		notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
+		return
 	}
 	r2 := req.queries()
 	// a required capability the producer does not declare blocks the case before any of its
@@ -389,21 +435,24 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	// status) is left to Check and fails instead
 	p := resp.Producer
 	exits := map[string]int{kit.StatusCompleted: 0, "INVALID_REQUEST": 2, kit.StatusResourceLimit: 3, kit.StatusFailed: 4}
-	exit, known := exits[resp.Status]
-	wellFormed := p.Query != "" && p.API != nil && p.Predicates != nil && p.SymbolCount != nil && p.FieldCount != nil && resp.ID == req.ID && known && exit == res.ExitCode
+	code, known := exits[resp.Status]
+	wellFormed := p.Query != "" && p.API != nil && p.Predicates != nil && p.SymbolCount != nil && p.FieldCount != nil && resp.ID == req.ID && known && (exit == nil || code == *exit)
 	if r2 && resp.Protocol == req.Revision() && wellFormed {
 		if len(x.Queries) > 0 && resp.Producer.Query != QueryCapability {
 			out.Producer = &resp.Producer
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
+			notRun(kit.StatusNotRun, kit.AssessBlocked, "QUERY_CAPABILITY_MISSING")
+			return
 		}
 		if x.API && *resp.Producer.API != APICapability {
 			out.Producer = &resp.Producer
-			return notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
+			notRun(kit.StatusNotRun, kit.AssessBlocked, "API_CAPABILITY_MISSING")
+			return
 		}
 	}
-	checked, err := Check(resp, req, versions, points, res.ExitCode)
+	checked, err := checkExit(resp, req, versions, points, exit)
 	if err != nil {
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
+		notRun(kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code)
+		return
 	}
 	out.ResponseStatus, out.ResponseCode, out.Producer = resp.Status, resp.Code, &resp.Producer
 	if r2 {
@@ -440,16 +489,19 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	switch resp.Status {
 	case "INVALID_REQUEST":
 		// The kit validated the request first: a driver rejection is a disagreement.
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "DRIVER_REJECTED_"+resp.Code)
+		notRun(kit.StatusFailed, kit.AssessNotAssessed, "DRIVER_REJECTED_"+resp.Code)
+		return
 	case kit.StatusResourceLimit:
-		return notRun(kit.StatusResourceLimit, kit.AssessBlocked, resp.Code)
+		notRun(kit.StatusResourceLimit, kit.AssessBlocked, resp.Code)
+		return
 	case kit.StatusFailed:
-		return notRun(kit.StatusFailed, kit.AssessNotAssessed, resp.Code)
+		notRun(kit.StatusFailed, kit.AssessNotAssessed, resp.Code)
+		return
 	}
 	out.ExecutionStatus = kit.StatusCompleted
 	blocked := ""
 	if len(c.Edits) > 0 {
-		blocked = judgeIncremental(&out, x.observes())
+		blocked = judgeIncremental(out, x.observes())
 	}
 	if svc != nil {
 		out.Expectations, out.Claims.Expectations = evaluateSvc(c.Expect, checked.Steps, svc)
@@ -463,8 +515,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if out.Claims.Expectations == ClaimFail && out.Code == "" {
 		out.Code = "EXPECTATION_FAILED"
 	}
-	finishCase(&out, blocked)
-	return out
+	finishCase(out, blocked)
 }
 
 // finishCase folds a completed case's assessment; a blocked route code is the case code

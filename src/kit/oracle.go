@@ -3,6 +3,7 @@ package kit
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -22,6 +23,10 @@ const (
 	// OracleSourceManifestSchema is an opt-in set retaining exact initial source bytes.
 	OracleSourceManifestSchema = "tsgk-oracle-manifest/r2"
 	MaxOracleSourceBytes       = 32 << 20
+	// A set run through batch driver processes (#266): each r2 record names its batch and
+	// frame instead of a process, and the r3 manifest lists every batch process once.
+	OracleBatchRecordSchema   = "tsgk-oracle-record/r2"
+	OracleBatchManifestSchema = "tsgk-oracle-manifest/r3"
 )
 
 // oracleSchemaR1 is still decoded (without anchors) so earlier evidence replays.
@@ -394,7 +399,81 @@ type OracleManifest struct {
 	Records         int               `json:"records"`
 	Cases           []string          `json:"cases"` // the profile's case ids in order
 	Members         []OracleMember    `json:"members"`
+	Batches         []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
 	Complete        bool              `json:"complete"`
+}
+
+// OracleBatch is one batch driver process of a manifest r3 set: the cases sent to it in
+// frame order and the facts of the process. ExitCode is the natural exit code, 0 when a
+// limit or a signal ended the process (Status and Reason say which).
+type OracleBatch struct {
+	Index           int      `json:"index"`
+	Cases           []string `json:"cases"`
+	Status          string   `json:"status"`
+	Reason          string   `json:"reason"`
+	ExitCode        int      `json:"exit_code"`
+	WallMillis      int64    `json:"wall_ms"`
+	PeakBytes       uint64   `json:"peak_bytes"`
+	CleanupVerified bool     `json:"cleanup_verified"`
+	TrailingBytes   int64    `json:"trailing_bytes"`
+}
+
+// Accepted reports whether the process may vouch for its answered frames: it exited 0 by
+// itself (status COMPLETED, so not a signal), cleanup is verified and nothing followed the
+// last response. Any other end accepts none: a limit, cancellation or crash, STATE_LEAK, the
+// exit 3 of a fatal resource response, or a process that did not exit after its last frame.
+// A batch that left a sent frame unanswered accepts none either (checkBatches, live run).
+func (b OracleBatch) Accepted() bool {
+	return b.Status == "COMPLETED" && b.Reason == "EXITED" && b.ExitCode == 0 && b.CleanupVerified && b.TrailingBytes == 0
+}
+
+// recordTransport is what an r2 record says about its frame; Sent is false for a case that
+// no batch process received. Fail is a completed case's own FAIL, kept even when its batch
+// is not accepted: a failure is never a support claim.
+type recordTransport struct {
+	Sent         bool
+	Batch, Frame uint64
+	Answered     bool
+	Fail         bool
+}
+
+// checkBatches checks a manifest r3 set's records against its batches: every sent case
+// names a frame of a listed batch that holds that case, a raw response exists exactly for
+// the answered cases, and a completed case that is not a FAIL was answered by an accepted
+// batch without an unanswered sent frame, with a raw response that answers that case.
+// rawIDs maps a case to the id its raw response answers; nil skips that comparison (the r4
+// qualification binds the responses through the observations).
+func checkBatches(m OracleManifest, transports map[string]recordTransport, statuses map[string]string, raws map[string]int, rawIDs map[string]string, add func(code, path, msg string)) {
+	for i, b := range m.Batches {
+		if b.Index != i || len(b.Cases) == 0 || slices.ContainsFunc(b.Cases, func(c string) bool { return !slices.Contains(m.Cases, c) }) {
+			add("BATCH_INVALID", "manifest.json", fmt.Sprintf("batch %d의 순번이나 사례 목록이 틀렸다", i))
+		}
+	}
+	unanswered := map[uint64]bool{}
+	for _, t := range transports {
+		if t.Sent && !t.Answered {
+			unanswered[t.Batch] = true
+		}
+	}
+	for _, c := range m.Cases {
+		t, known := transports[c]
+		if !known {
+			continue // the record itself is reported missing
+		}
+		if t.Sent && (t.Batch >= uint64(len(m.Batches)) || t.Frame >= uint64(len(m.Batches[t.Batch].Cases)) || m.Batches[t.Batch].Cases[t.Frame] != c) {
+			add("BATCH_FRAME_MISMATCH", "manifest.json", "record의 batch frame이 manifest batch와 다르다: "+c)
+			continue
+		}
+		if (raws[c] == 1) != t.Answered || raws[c] > 1 {
+			add("BATCH_RAW_MISMATCH", "manifest.json", "응답한 frame에만 raw 응답이 하나 있어야 한다: "+c)
+		}
+		if statuses[c] == StatusCompleted && !t.Fail && !(t.Answered && m.Batches[t.Batch].Accepted() && !unanswered[t.Batch]) {
+			add("BATCH_SUCCESS_UNACCEPTED", "manifest.json", "완료 사례는 정상 종료한 batch의 응답이어야 한다: "+c)
+		}
+		if statuses[c] == StatusCompleted && rawIDs != nil && rawIDs[c] != c {
+			add("BATCH_RAW_MISMATCH", "manifest.json", "완료 사례의 raw 응답이 그 사례의 응답이 아니다: "+c)
+		}
+	}
 }
 
 // OracleSetReport is the result of VerifyOracleSet. Valid means the set is complete and
@@ -446,7 +525,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		return r
 	}
 	var m OracleManifest
-	if e := decodeOracleManifestVersion(data, &m, true); e != nil {
+	if e := decodeOracleManifestVersion(data, &m, OracleManifestSchema, OracleSourceManifestSchema, OracleBatchManifestSchema); e != nil {
 		add(e.Code, e.Path, "manifest가 완결되지 않았거나 형식이 틀렸다")
 		return r
 	}
@@ -456,6 +535,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	perCase := map[string]int{}
 	sources := map[string]int{}
 	recordInputs := map[string]OracleMember{}
+	transports, statuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	caseOrdinals := map[string]int{}
 	for i, c := range m.Cases {
 		caseOrdinals[c] = i
@@ -506,9 +586,16 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			records++
 			perCase[mem.Case]++
 			recordInputs[mem.Case] = mem
-			if code := checkRecord(b, mem); code != "" {
+			tr, code := checkRecord(b, mem, m.Schema)
+			if code != "" {
 				add(code, mem.Path, "record가 완결되지 않았거나 member identity와 다르다")
+			} else {
+				transports[mem.Case], statuses[mem.Case] = tr, mem.ExecutionStatus
 			}
+		}
+		if mem.Role == "raw" {
+			raws[mem.Case]++
+			rawIDs[mem.Case] = responseID(b)
 		}
 		if mem.Role == "source" {
 			sources[mem.Case]++
@@ -527,6 +614,9 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if m.Schema == OracleSourceManifestSchema && sources[c] != 1 {
 			add("CASE_SOURCE_MISMATCH", "manifest.json", "사례마다 source witness가 정확히 하나여야 한다: "+c)
 		}
+	}
+	if m.Schema == OracleBatchManifestSchema {
+		checkBatches(m, transports, statuses, raws, rawIDs, add)
 	}
 	if m.Schema == OracleSourceManifestSchema {
 		if len(m.Cases) == 0 {
@@ -554,18 +644,33 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	return r
 }
 
-func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
-	// Legacy replay and qualification do not acquire source-witness semantics implicitly.
-	return decodeOracleManifestVersion(data, m, false)
+// responseID is the request id a raw driver response answers ("" when it has none).
+func responseID(raw []byte) string {
+	var r struct {
+		ID string `json:"id"`
+	}
+	if jsonv2.Unmarshal(raw, &r) != nil {
+		return ""
+	}
+	return r.ID
 }
 
-func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowSource bool) *Error {
+func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
+	// Legacy replay and qualification do not acquire source-witness semantics implicitly; they
+	// read batch sets (#266) through the shared batch checks.
+	return decodeOracleManifestVersion(data, m, OracleManifestSchema, OracleBatchManifestSchema)
+}
+
+func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...string) *Error {
 	t := typed{doc: "manifest"}
 	v, e := decodeStrict(t.doc, data, MaxDocumentBytes)
 	if e != nil {
 		return e
 	}
 	keys := []string{"schema", "workload", "producer", "policy", "protocol", "comparators", "queries", "fact_pack", "execution_status", "assessment", "records", "cases", "members", "complete"}
+	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleBatchManifestSchema {
+		keys = slices.Insert(keys, len(keys)-1, "batches")
+	}
 	mm, e := t.object(v, keys)
 	if e != nil {
 		return e
@@ -576,7 +681,7 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowSource boo
 	}
 	if s, e := t.str(mm["schema"]); e != nil {
 		return e
-	} else if s != OracleManifestSchema && !(allowSource && s == OracleSourceManifestSchema) {
+	} else if !slices.Contains(allowed, s) {
 		return t.bad("SCHEMA_UNSUPPORTED", mm["schema"])
 	} else {
 		m.Schema = s
@@ -711,20 +816,62 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowSource boo
 		}
 		m.Members = append(m.Members, mem)
 	}
+	if m.Schema == OracleBatchManifestSchema {
+		bs, e := t.array(mm["batches"])
+		if e != nil {
+			return e
+		}
+		for _, bv := range bs {
+			bm, e := t.object(bv, []string{"index", "cases", "status", "reason", "exit_code", "wall_ms", "peak_bytes", "cleanup_verified", "trailing_bytes"})
+			if e != nil {
+				return e
+			}
+			var b OracleBatch
+			nums := map[string]uint64{}
+			for _, name := range []string{"index", "exit_code", "wall_ms", "peak_bytes", "trailing_bytes"} {
+				if nums[name], e = t.uint(bm[name]); e != nil {
+					return e
+				}
+			}
+			b.Index, b.ExitCode, b.WallMillis, b.PeakBytes, b.TrailingBytes = int(min(nums["index"], 1<<31)), int(min(nums["exit_code"], 1<<31)), int64(nums["wall_ms"]), nums["peak_bytes"], int64(nums["trailing_bytes"])
+			if b.Status, e = t.str(bm["status"]); e != nil {
+				return e
+			}
+			if b.Reason, e = t.str(bm["reason"]); e != nil {
+				return e
+			}
+			if b.CleanupVerified, e = t.boolean(bm["cleanup_verified"]); e != nil {
+				return e
+			}
+			cs, e := t.array(bm["cases"])
+			if e != nil {
+				return e
+			}
+			for _, cv := range cs {
+				c, e := t.str(cv)
+				if e != nil {
+					return e
+				}
+				b.Cases = append(b.Cases, c)
+			}
+			m.Batches = append(m.Batches, b)
+		}
+	}
 	m.Complete = true
 	return nil
 }
 
 // checkRecord checks a record's own completeness and binding: schema, the final complete
 // member, the case id, the input identity and, when steps exist, step 0's source identity.
-func checkRecord(data []byte, mem OracleMember) string {
+func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTransport, string) {
+	var tr recordTransport
 	t := typed{doc: "record"}
 	v, e := decodeStrict(t.doc, data, MaxDocumentBytes*4)
 	if e != nil {
-		return e.Code
+		return tr, e.Code
 	}
 	if v.kind != '{' || len(v.keys) == 0 || v.keys[len(v.keys)-1] != "complete" || v.vals[len(v.vals)-1].kind != 't' {
-		return "RECORD_INCOMPLETE"
+		return tr, "RECORD_INCOMPLETE"
 	}
 	get := func(o *jv, k string) *jv {
 		if o == nil || o.kind != '{' {
@@ -741,23 +888,54 @@ func checkRecord(data []byte, mem OracleMember) string {
 		}
 		return o.s
 	}
-	if str(get(v, "schema")) != OracleRecordSchema || str(get(v, "case")) != mem.Case {
-		return "RECORD_IDENTITY_MISMATCH"
+	schema := OracleRecordSchema
+	if manifestSchema == OracleBatchManifestSchema {
+		schema = OracleBatchRecordSchema
+	}
+	if str(get(v, "schema")) != schema || str(get(v, "case")) != mem.Case {
+		return tr, "RECORD_IDENTITY_MISMATCH"
 	}
 	in := get(v, "input")
 	if str(get(in, "sha256")) != mem.InputSHA256 || get(in, "bytes") == nil || get(in, "bytes").s != itoa(mem.InputBytes) {
-		return "RECORD_INPUT_MISMATCH"
+		return tr, "RECORD_INPUT_MISMATCH"
 	}
 	if str(get(v, "execution_status")) != mem.ExecutionStatus {
-		return "RECORD_STATUS_MISMATCH"
+		return tr, "RECORD_STATUS_MISMATCH"
 	}
 	if steps := get(v, "steps"); steps != nil && steps.kind == '[' && len(steps.vals) > 0 {
 		s0 := steps.vals[0]
 		if str(get(s0, "source_sha256")) != mem.InputSHA256 || get(s0, "source_bytes") == nil || get(s0, "source_bytes").s != itoa(mem.InputBytes) {
-			return "RECORD_STEP_MISMATCH"
+			return tr, "RECORD_STEP_MISMATCH"
 		}
 	}
-	return ""
+	// r2: a batch frame instead of a process; a case no batch received has a null transport
+	transport := get(v, "transport")
+	if schema == OracleRecordSchema {
+		if transport != nil {
+			return tr, "RECORD_TRANSPORT_INVALID"
+		}
+		return tr, ""
+	}
+	if p := get(v, "process"); p == nil || p.kind != 'n' || transport == nil {
+		return tr, "RECORD_TRANSPORT_INVALID"
+	}
+	if transport.kind == 'n' {
+		return tr, ""
+	}
+	tm, e := t.object(transport, []string{"batch", "frame", "state", "frame_wall_ms"})
+	if e != nil {
+		return tr, "RECORD_TRANSPORT_INVALID"
+	}
+	state, se := t.str(tm["state"])
+	var be, fe, we *Error
+	tr.Batch, be = t.uint(tm["batch"])
+	tr.Frame, fe = t.uint(tm["frame"])
+	_, we = t.uint(tm["frame_wall_ms"])
+	if se != nil || be != nil || fe != nil || we != nil || state != "SENT" && state != "ANSWERED" {
+		return tr, "RECORD_TRANSPORT_INVALID"
+	}
+	tr.Sent, tr.Answered, tr.Fail = true, state == "ANSWERED", str(get(v, "assessment")) == AssessFail
+	return tr, ""
 }
 
 func itoa(n uint64) string {

@@ -352,7 +352,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			got = foldClaims([]string{got, r.Assessment})
 		}
 		out.recomputedAssessment = got
-		x.gate("api").check(c.Schema != OracleRecordSchema || c.Oracle != nil, name, "ORACLE_CLAIMS_MISSING", "Oracle record에 claim이 없다")
+		x.gate("api").check(c.Schema != OracleRecordSchema && c.Schema != OracleBatchRecordSchema || c.Oracle != nil, name, "ORACLE_CLAIMS_MISSING", "Oracle record에 claim이 없다")
 		if c.Oracle != nil {
 			x.gate("api").check(c.Oracle.API == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 API를 주장할 수 없다")
 			x.gate("query-equality").check(c.Oracle.QueryEquality == claimNotClaimed, name, "CLAIM_MISMATCH", "tree 없는 SVC는 query equality를 주장할 수 없다")
@@ -1413,6 +1413,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	defer x.checkSvcReferences()
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
+	transports, caseStatuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	records := 0
 	for i, mem := range man.Members {
 		pmem, registered := x.members[mem.Path]
@@ -1422,10 +1423,18 @@ func replayOracleSet(x *replayEnv) *Error {
 		}
 		if mem.Role != "record" {
 			// the raw driver response is bound by its hash; the offline API does not decode it
-			if e := x.verifyFile(mem.Path, mem.Bytes, mem.SHA256); e != nil {
+			// beyond a batch set's request id (#266)
+			if man.Schema == OracleBatchManifestSchema {
+				b, e := x.member(mem.Path)
+				if e != nil {
+					return e
+				}
+				rawIDs[mem.Case] = responseID(b)
+			} else if e := x.verifyFile(mem.Path, mem.Bytes, mem.SHA256); e != nil {
 				return e
 			}
 			x.consumed[mem.Path] = true
+			raws[mem.Case]++
 			continue
 		}
 		b, e := x.member(mem.Path)
@@ -1433,10 +1442,12 @@ func replayOracleSet(x *replayEnv) *Error {
 			return e
 		}
 		records++
-		if code := checkRecord(b, mem); code != "" {
+		tr, code := checkRecord(b, mem, man.Schema)
+		if code != "" {
 			x.finding(code, mem.Path, "record가 완결되지 않았거나 member identity와 다르다")
 			continue
 		}
+		transports[mem.Case], caseStatuses[mem.Case] = tr, mem.ExecutionStatus
 		var c rcCase
 		if e := decodeRecord(mem.Path, b, &c); e != nil {
 			return e
@@ -1453,6 +1464,9 @@ func replayOracleSet(x *replayEnv) *Error {
 		}
 	}
 	cons.close()
+	if man.Schema == OracleBatchManifestSchema {
+		checkBatches(man, transports, caseStatuses, raws, rawIDs, func(code, _, msg string) { x.finding(code, mm.Path, msg) })
+	}
 	sg.check(records == man.Records, mm.Path, "RECORD_COUNT_MISMATCH", "record 수가 manifest와 다르다")
 	sg.check(aggregateRecorded(statuses, assessments, records) == Verdict{man.ExecutionStatus, man.Assessment}, mm.Path, "RUN_VERDICT_MISMATCH", "set 판정이 record 판정의 집계와 다르다")
 	x.recorded = Verdict{man.ExecutionStatus, man.Assessment}

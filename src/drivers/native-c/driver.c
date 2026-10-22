@@ -2005,6 +2005,16 @@ int main(int argc, char **argv) {
 #ifdef TSGK_FAULT_TRAILING
       fwrite("junk", 1, 4, stdout); /* owned fault: bytes after the last response */
 #endif
+#ifdef TSGK_FAULT_LINGER /* owned fault: a driver that does not exit after its last frame */
+      fflush(stdout);
+      for (;;) {
+#ifdef _WIN32
+        Sleep(1000);
+#else
+        nanosleep(&(struct timespec){1, 0}, NULL);
+#endif
+      }
+#endif
       return 0;
     }
     req_id[0] = 0;
