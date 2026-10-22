@@ -282,6 +282,11 @@ func (r Request) expect(versions [][]byte, points []kit.EditPoints, exit *int) n
 // step sequence, each step's source identity and edit points against the kit's own
 // computation, and every tree's structure.
 func Check(r Response, req Request, versions [][]byte, points []kit.EditPoints, exitCode int) (Checked, error) {
-	c, err := nativewire.Check(r, req.expect(versions, points, &exitCode))
+	return checkExit(r, req, versions, points, &exitCode)
+}
+
+// checkExit is Check where a nil exit (a batch frame) skips only the exit agreement.
+func checkExit(r Response, req Request, versions [][]byte, points []kit.EditPoints, exit *int) (Checked, error) {
+	c, err := nativewire.Check(r, req.expect(versions, points, exit))
 	return c, wireError(err)
 }

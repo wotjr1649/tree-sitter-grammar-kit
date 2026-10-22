@@ -68,8 +68,8 @@ const R3PlatformReason = "NET461 workload is Windows-hosted (WinForms/.NET Frame
 // NativeOperations returns the adopted operations: the small registered edit cases
 // (native-parse-edit), the real-world large-source profiles (real-world-source-r2 kept as
 // S05 history, real-world-source-r3 windows/amd64 only), the private corpus batch
-// (private-corpus-local, S05 wall 3600 s) and the S06 query operations (native-query and
-// the windows/amd64 native-query-large).
+// (private-corpus-local, S05 wall 3600 s) and the S06 query operations (native-query, its
+// batch form native-query-batch and the windows/amd64 native-query-large).
 func NativeOperations() map[string]NativeOperation {
 	rw := NativeOperation{Name: "real-world-source-r2", InputBytes: 33554432, Nodes: 25000000, FullNodes: 50000, Depth: 100000, OutputBytes: 16777216,
 		ParseMillis: 60000, MemoryBytes: 4294967296, Errors: 1000, PartialNodes: 1000, ParseWall: 90 * time.Second, EditWall: 300 * time.Second,
@@ -88,7 +88,12 @@ func NativeOperations() map[string]NativeOperation {
 	nq.Name, nq.Matches, nq.Captures, nq.QueryMillis = "native-query", 10000, 10000, 4000
 	ql := r3
 	ql.Name, ql.MaxEdits, ql.Outputs, ql.Matches, ql.Captures, ql.QueryMillis = "native-query-large", 0, []string{OutputAuto}, 1000000, 1000000, 20000
-	return map[string]NativeOperation{pe.Name: pe, rw.Name: rw, r3.Name: r3, pc.Name: pc, nq.Name: nq, ql.Name: ql}
+	// #266: native-query cases in batch processes that compile a query list once; the frame
+	// watchdog (FrameWall + the 5 s grace) ends a frame at the same 10 s as the single wall
+	nb := nq
+	nb.Name, nb.Batch, nb.BatchFiles, nb.BatchBytes = "native-query-batch", true, 64, 268435456
+	nb.FrameWall, nb.BatchWall = nq.ParseWall-5*time.Second, 64*nq.ParseWall
+	return map[string]NativeOperation{pe.Name: pe, rw.Name: rw, r3.Name: r3, pc.Name: pc, nq.Name: nq, ql.Name: ql, nb.Name: nb}
 }
 
 // Build ceilings of the c-build operation.

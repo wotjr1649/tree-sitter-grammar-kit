@@ -531,11 +531,13 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				c.ExecutionStatus, c.Assessment, c.Code = kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code
 			}
 		}
-		if br.TrailingBytes > 0 || !br.Process.Cleanup.Verified || (br.Process.ExitCode != 0 && !fatal && br.Process.Reason == runner.ReasonExited) {
+		if br.TrailingBytes > 0 || !br.Process.Cleanup.Verified || (br.Process.ExitCode != 0 && !fatal && br.Process.Reason == runner.ReasonExited) || br.Process.Reason == runner.ReasonBatchExit {
 			// The batch broke the protocol or cleanup: none of its frames is accepted.
 			code := "RESPONSE_TRAILING_BYTES"
 			if !br.Process.Cleanup.Verified {
 				code = "PROCESS_CLEANUP_UNVERIFIED"
+			} else if br.Process.Reason == runner.ReasonBatchExit {
+				code = "BATCH_EXIT_TIMEOUT" // it did not exit after its last frame
 			} else if br.TrailingBytes == 0 {
 				code = "BATCH_EXIT_NONZERO"
 			}

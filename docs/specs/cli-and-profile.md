@@ -183,6 +183,9 @@ profile `tsgk-oracle/r2`는 `tsgk-incremental/r2`의 모든 필드(같은 strict
 |---|---|---|---|---|---|---|---|---|---|---|
 | `native-query` | 65536 | 10000 / 10000 | 8388608 | 10000 / 10000 | 10초 | 4초 | 10초 | 4 (`tree`만) | 1000 | 세 OS |
 | `native-query-large` | 33554432 | 25000000 / 50000 | 16777216 | 1000000 / 1000000 | 60초 | 20초 | 90초 | 0 (`auto`만) | 64 | windows/amd64 |
+| `native-query-batch` | `native-query`와 같음 | | | | | | | | | 세 OS |
+
+`native-query-batch`(#266)는 `native-query`의 모든 요청 한도를 그대로 쓰고, 등록 사례를 batch driver process 하나에 최대 64건·framed 요청 256 MiB씩 보낸다. frame watchdog은 `FrameWall` 5초 + grace 5초로 단일 process wall과 같은 10초에 끝난다. batch wall은 640초와 run 잔여 시간 중 작은 값이고, batch stdout 상한은 그 batch 사례 수 × (출력 상한 + 4)다. 메모리 상한은 process 전체(보관 query 목록 포함)에 같은 4294967296을 적용한다. SVC 사례와 source witness set은 이 연산을 쓰지 않는다(`BATCH_SCOPE_UNSUPPORTED`).
 
 query 열은 query 실행 하나의 시간 예산이며 process wall 안에 들어가도록 정했다(등록 wall 10초·90초는 그대로). 사용자 등록 값이 아니라 S06이 wall 안에서 정한 값이다.
 

@@ -586,6 +586,10 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	perCase := map[string]int{}
 	var maxWall int64
 	var maxPeak uint64
+	transports, statuses, raws := map[string]recordTransport{}, map[string]string{}, map[string]int{}
+	for _, b := range man.Batches { // a batch set's process facts are its batches' (#266)
+		maxWall, maxPeak = max(maxWall, b.WallMillis), max(maxPeak, b.PeakBytes)
+	}
 	next := 0
 	if observe {
 		for _, mem := range man.Members {
@@ -605,6 +609,9 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 		listed[full] = true
 		h.used[full] = true
+		if mem.Role == "raw" {
+			raws[mem.Case]++
+		}
 		if mem.Role != "record" && observe {
 			responses = append(responses, mem) // registered above, before any record reads it
 			continue
@@ -642,10 +649,12 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		if h.records++; h.records > uint64(q.lim.Records) {
 			return nil, fail(KindResourceLimit, "RECORDS_LIMIT", full, nil)
 		}
-		if code := checkRecord(b, mem); code != "" {
+		tr, code := checkRecord(b, mem, man.Schema)
+		if code != "" {
 			add(code, full, "record가 완결되지 않았거나 member identity와 다르다")
 			continue
 		}
+		transports[mem.Case], statuses[mem.Case] = tr, mem.ExecutionStatus
 		var c rcCase
 		var extra qRecord
 		if e := decodeRecord(full, b, &c); e != nil {
@@ -713,6 +722,9 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 	}
 	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
+	if man.Schema == OracleBatchManifestSchema {
+		checkBatches(man, transports, statuses, raws, func(code, path, msg string) { add(code, manPath, msg) })
+	}
 	if s.Records != man.Records || len(man.Cases) != man.Records {
 		add("RECORD_COUNT_MISMATCH", manPath, "record 수가 manifest와 다르다")
 	}

@@ -104,7 +104,8 @@ type OracleRecord struct {
 	Case     string `json:"case"`
 	Workload string `json:"workload"`
 	CaseResult
-	Complete bool `json:"complete"`
+	Transport json.RawMessage `json:"transport,omitempty"` // r2: the frame, null when never sent
+	Complete  bool            `json:"complete"`
 }
 
 // hostPlatform is this host as goos/goarch (a test may substitute another host).
@@ -155,6 +156,11 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return stop(refuse(kit.KindUnsupported, "SOURCE_WITNESS_SVC_UNSUPPORTED", nil))
 	}
 	op := kit.NativeOperations()[n.Operation]
+	// #266: a batch set runs ordinary registered cases only; SVC cases and source witness
+	// sets stay one process per case
+	if op.Batch && (req.SourceWitness || n.Format == kit.SvcFormat || n.Format == kit.SvcLegacyFormat || n.SvcContext != nil) {
+		return stop(refuse(kit.KindUnsupported, "BATCH_SCOPE_UNSUPPORTED", nil))
+	}
 	res.ProfileID, res.Route, res.Operation, res.ProfileSHA256 = n.ID, n.Route, op, n.SHA256
 	protocol := ProtocolR2
 	if req.ReuseObservation {
@@ -233,6 +239,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	writeFailed := false
 	var members []kit.OracleMember
 	var cases []CaseResult
+	batches := []kit.OracleBatch{}
 	write := func(rel string, data []byte) bool {
 		if err := createExclusive(memberRoots[filepath.Dir(filepath.FromSlash(rel))], filepath.Base(filepath.FromSlash(rel)), data); err != nil {
 			res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", rel, "record set member를 쓰지 못했다"))
@@ -261,6 +268,11 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			x.ObservationRunID, x.ObservationProducerSHA256 = res.ObservationRunID, b.Identity
 		}
 		refs := b.runSvcReferences(runCtx, x, n.Cases, req.Root, caseHandle)
+		var batched []CaseResult
+		var batchSources [][]byte
+		if op.Batch {
+			batched, batchSources, batches = b.oracleBatch(runCtx, x, n.Cases, req.Root, caseHandle)
+		}
 		for _, oc := range prof.OracleCases {
 			if ref, found := refs[oc.ID]; found && ref.ExecutionStatus == kit.StatusCompleted {
 				src, err := readCase(req.Root, oc.Input, caseHandle)
@@ -276,8 +288,12 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			c := oc.IncrementalCase
 			var cr CaseResult
 			var sourceMember *kit.OracleMember
-			src, err := readCase(req.Root, c.Input, caseHandle)
-			if err != nil {
+			if op.Batch { // read, prepared and run above; the source is not read again
+				cr = batched[i]
+				if batchSources[i] != nil {
+					judgeOracle(&cr, oc, prof, pack, x, batchSources[i])
+				}
+			} else if src, err := readCase(req.Root, c.Input, caseHandle); err != nil {
 				if req.SourceWitness {
 					writeFailed = true // No complete source-witness set may omit a case's source.
 					res.Findings = append(res.Findings, finding("SOURCE_WITNESS_UNAVAILABLE", "error", c.ID, "source를 읽지 못해 witness set을 완결할 수 없다"))
@@ -326,7 +342,14 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 				}
 			}
 			if !writeFailed {
-				data, err := json.Marshal(OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true})
+				rec := OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true}
+				if op.Batch {
+					rec.Schema, rec.Transport = kit.OracleBatchRecordSchema, json.RawMessage("null")
+					if cr.Transport != nil {
+						rec.Transport, _ = json.Marshal(cr.Transport)
+					}
+				}
+				data, err := json.Marshal(rec)
 				if err != nil {
 					res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "record를 직렬화하지 못했다"))
 					writeFailed = true
@@ -361,6 +384,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
 		if req.SourceWitness {
 			m.Schema = kit.OracleSourceManifestSchema
+		}
+		if op.Batch {
+			m.Schema, m.Batches = kit.OracleBatchManifestSchema, batches
 		}
 		if m.Members == nil {
 			m.Members = []kit.OracleMember{}
