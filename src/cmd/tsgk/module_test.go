@@ -101,7 +101,7 @@ func TestModuleProxyConsumer(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeTree(t, module, map[string]string{"main.go": string(main),
-		"go.mod": "module example.invalid/tsgkconsumer\n\ngo 1.27.1\n\nrequire " + modulePath + " " + moduleVersion + "\n"})
+		"go.mod": "module example.invalid/tsgkconsumer\n\ngo 1.27.2\n\nrequire " + modulePath + " " + moduleVersion + "\n"})
 	consumer := filepath.Join(module, "consumer"+exeSuffix())
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()

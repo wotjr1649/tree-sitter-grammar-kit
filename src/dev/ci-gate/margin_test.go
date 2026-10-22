@@ -31,7 +31,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 		host.Job, host.GOOS, host.GOARCH = j.job, j.goos, j.arch
 		host.RunnerOS = map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos]
 		host.RunnerArch = map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch]
-		host.Image, host.GoVersion = j.goos+"/image-v1", "go1.27.1"
+		host.Image, host.GoVersion = j.goos+"/image-v1", marginGo
 		c := marginConfig{Schema: "tsgk-ci-config/r1", Run: host, Source: strings.Repeat("c", 64)}
 		if j.compiler {
 			c.Compiler = &fileDigest{strings.Repeat("d", 64), 100}
@@ -194,7 +194,8 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 		"duplicate":          func(r *marginReport) { r.Metrics[1] = r.Metrics[0] },
 		"forged-key":         func(r *marginReport) { r.Metrics[0].Config = strings.Repeat("0", 64) },
 		"compiler":           func(r *marginReport) { r.Configs[0].Compiler = nil },
-		"toolchain":          func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.2" },
+		"toolchain":          func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.3" },
+		"former-toolchain":   func(r *marginReport) { r.Configs[0].Run.GoVersion = marginFormerGo },
 	} {
 		t.Run(name, func(t *testing.T) {
 			bad, _, _ := marginFixture(t, "900")
