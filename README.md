@@ -24,7 +24,7 @@ Campaign qualification requires [26 syntax routes](docs/validation/language-feat
 
 ## Verify this checkout
 
-Use Go 1.27.1, Git, and PowerShell 7 (`pwsh`). Core checks use `CGO_ENABLED=0`; Node, Python and WSL are not prerequisites, and native tests skip locally without a C compiler. The only external Go dependency is the pinned `golang.org/x/sys` used by the process runner; download it first as the [validation contract](docs/validation/validation.md) describes.
+Use Go 1.27.2, Git, and PowerShell 7 (`pwsh`). Core checks use `CGO_ENABLED=0`; Node, Python and WSL are not prerequisites, and native tests skip locally without a C compiler. The only external Go dependency is the pinned `golang.org/x/sys` used by the process runner; download it first as the [validation contract](docs/validation/validation.md) describes.
 
 From the repository root in PowerShell 7:
 

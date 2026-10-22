@@ -23,6 +23,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 	r.RunID = id
 	r.Event = "push"
 	r.HeadSHA = r.SHA
+	r.GoVersion = marginGo
 	report := marginReport{Schema: marginSchema, Run: r, CoreSHA: strings.Repeat("f", 64), Cutoff: "2026-10-16T04:00:00Z"}
 	var jobs []marginAPIJob
 	number, _ := strconv.ParseUint(id, 10, 64)
@@ -31,7 +32,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 		host.Job, host.GOOS, host.GOARCH = j.job, j.goos, j.arch
 		host.RunnerOS = map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos]
 		host.RunnerArch = map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch]
-		host.Image, host.GoVersion = j.goos+"/image-v1", "go1.27.1"
+		host.Image, host.GoVersion = j.goos+"/image-v1", marginGo
 		c := marginConfig{Schema: "tsgk-ci-config/r1", Run: host, Source: strings.Repeat("c", 64)}
 		if j.compiler {
 			c.Compiler = &fileDigest{strings.Repeat("d", 64), 100}
@@ -194,7 +195,8 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 		"duplicate":          func(r *marginReport) { r.Metrics[1] = r.Metrics[0] },
 		"forged-key":         func(r *marginReport) { r.Metrics[0].Config = strings.Repeat("0", 64) },
 		"compiler":           func(r *marginReport) { r.Configs[0].Compiler = nil },
-		"toolchain":          func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.2" },
+		"toolchain":          func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.3" },
+		"former-toolchain":   func(r *marginReport) { r.Configs[0].Run.GoVersion = marginFormerGo },
 	} {
 		t.Run(name, func(t *testing.T) {
 			bad, _, _ := marginFixture(t, "900")
@@ -619,6 +621,34 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 		_, err := currentMargins(r.Run, r.Configs, encoded(t, map[string]any{"total_count": len(tc.jobs), "jobs": tc.jobs}), core)
 		if (err == nil) != tc.ok {
 			t.Fatalf("%s: %d jobs: %v", name, len(tc.jobs), err)
+		}
+	}
+}
+
+// TestMarginToolchain pins the toolchain each report accepts (#261): the current report only
+// the pinned Go, a historical one also the former pin, both for every measured configuration
+// and for the report's own run.
+func TestMarginToolchain(t *testing.T) {
+	report, _, _ := marginFixture(t, "900")
+	for _, tc := range []struct {
+		version             string
+		current, historical bool
+	}{{marginGo, true, true}, {marginFormerGo, false, true}, {"go1.27.3", false, false}, {"", false, false}} {
+		for _, historical := range []bool{false, true} {
+			want := tc.current
+			if historical {
+				want = tc.historical
+			}
+			c := report.Configs[0]
+			c.Run.GoVersion = tc.version
+			if got := checkMarginConfig(c, marginJobs[0], report.Run, historical) == nil; got != want {
+				t.Fatalf("configuration %q historical %v: accepted %v", tc.version, historical, got)
+			}
+			r := report
+			r.Run.GoVersion = tc.version
+			if got := validateMarginReport(r, historical) == nil; got != want {
+				t.Fatalf("report run %q historical %v: accepted %v", tc.version, historical, got)
+			}
 		}
 	}
 }
