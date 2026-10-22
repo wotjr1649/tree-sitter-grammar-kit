@@ -191,39 +191,64 @@ var holdoutWorkflowSteps = []string{
 	`if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }`,
 }
 
+// psTopStatements prints the first line of each top-level statement of a PowerShell script,
+// from the PowerShell parser's own AST: comments are not statements and a statement nested
+// in a conditional or loop is not top-level, whatever its indentation.
+const psTopStatements = `param([string]$Script)
+$ErrorActionPreference = 'Stop'
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($Script, [ref]$null, [ref]$errors)
+if ($errors.Count) { throw "parse errors: $($errors[0].Message)" }
+foreach ($s in $ast.EndBlock.Statements) { ($s.Extent.Text -split "\r?\n")[0] }
+`
+
 // holdoutWorkflowOrder finds the native routes step that runs run-routes.ps1 and checks that
-// its executable top-level lines (outside comments, at the step's own indentation) hold the
-// ledger checks once each, in order, with the last three adjacent.
-func holdoutWorkflowOrder(text string) error {
+// its top-level PowerShell statements hold the ledger checks once each, in order, with the
+// last three adjacent.
+func holdoutWorkflowOrder(pwsh, text string) error {
 	body := workflowJobBody(text, "native-routes")
 	at := strings.Index(body, "run-routes.ps1 -Prepared")
 	start := strings.LastIndex(body[:max(at, 0)], "run: |\n")
 	if at < 0 || start < 0 {
 		return fmt.Errorf("native-routes run step not found")
 	}
-	var lines []string
-	comment, indent := false, ""
+	var script []string
+	indent := ""
 	for _, line := range strings.Split(body[start+len("run: |\n"):], "\n") {
 		trimmed := strings.TrimLeft(line, " ")
+		if trimmed == "" {
+			script = append(script, "")
+			continue
+		}
 		if indent == "" {
 			indent = line[:len(line)-len(trimmed)]
 		}
-		if trimmed != "" && !strings.HasPrefix(line, indent) {
-			break // the next step
+		if !strings.HasPrefix(line, indent) {
+			break // the block scalar ends at the first shallower non-blank line
 		}
-		switch {
-		case comment:
-			comment = !strings.Contains(trimmed, "#>")
-		case strings.HasPrefix(trimmed, "<#"):
-			comment = !strings.Contains(trimmed, "#>")
-		case trimmed != "" && !strings.HasPrefix(trimmed, "#") && len(line)-len(trimmed) == len(indent):
-			lines = append(lines, trimmed)
-		}
+		script = append(script, strings.TrimPrefix(line, indent))
 	}
+	dir, err := os.MkdirTemp("", "tsgk-holdout-workflow-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+	runPath, parsePath := filepath.Join(dir, "run.ps1"), filepath.Join(dir, "parse.ps1")
+	if err := os.WriteFile(runPath, []byte(strings.Join(script, "\n")), 0o644); err != nil {
+		return err
+	}
+	if err := os.WriteFile(parsePath, []byte(psTopStatements), 0o644); err != nil {
+		return err
+	}
+	out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-File", parsePath, "-Script", runPath).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("parse run step: %v: %s", err, out)
+	}
+	statements := strings.Split(strings.ReplaceAll(strings.TrimSpace(string(out)), "\r\n", "\n"), "\n")
 	prev := -1
 	for k, want := range holdoutWorkflowSteps {
-		i := slices.Index(lines, want)
-		if i < 0 || slices.Index(lines[i+1:], want) >= 0 {
+		i := slices.Index(statements, want)
+		if i < 0 || slices.Index(statements[i+1:], want) >= 0 {
 			return fmt.Errorf("top-level %q not present exactly once", want)
 		}
 		if i <= prev || k >= 4 && i != prev+1 {
@@ -236,25 +261,47 @@ func holdoutWorkflowOrder(text string) error {
 
 // TestReuseHoldoutWorkflow keeps the native routes job checking the ledger (#217): the
 // disposition gate reads the route run's summary before the holdouts run, and the holdouts
-// must run in full. Controls comment out, guard or reorder a check.
+// must run in full. Controls comment out, guard or reorder a check; a leading whitespace-only
+// line in the block keeps the workflow valid.
 func TestReuseHoldoutWorkflow(t *testing.T) {
+	pwsh, err := exec.LookPath("pwsh")
+	if err != nil {
+		t.Skip("pwsh not available: the run step's PowerShell AST is not parsed")
+	}
 	text := string(mustRead(t, filepath.Join(repository(t), ".github", "workflows", "foundation.yml")))
-	if err := holdoutWorkflowOrder(text); err != nil {
+	if err := holdoutWorkflowOrder(pwsh, text); err != nil {
 		t.Fatalf("foundation.yml: %v", err)
 	}
-	gate, logCheck := "          "+holdoutWorkflowSteps[1]+"\n", "          "+holdoutWorkflowSteps[5]+"\n"
+	const pad = "          "
+	gate, logCheck := pad+holdoutWorkflowSteps[1]+"\n", pad+holdoutWorkflowSteps[5]+"\n"
+	body := workflowJobBody(text, "native-routes")
+	runAt := strings.LastIndex(body[:strings.Index(body, "run-routes.ps1 -Prepared")], "run: |\n") + len("run: |\n")
+	blank := strings.Replace(text, body, body[:runAt]+"  \n"+body[runAt:], 1)
+	if blank == text || holdoutWorkflowOrder(pwsh, blank) != nil {
+		t.Fatal("a leading whitespace-only line rejected the workflow")
+	}
+	// nextStep moves a line into the step after the run-routes step
+	nextStep := func(s, line string) string {
+		at := strings.Index(s, "run-routes.ps1 -Prepared")
+		end := at + strings.Index(s[at:], "\n      - name: ") + 1
+		return s[:end] + "      - name: moved\n        shell: pwsh\n        run: |\n" + line + s[end:]
+	}
 	for name, broken := range map[string]string{
-		"block-comment": strings.Replace(text, gate, "          <#\n"+gate+"          #>\n", 1),
-		"line-comment":  strings.Replace(text, gate, "          # "+holdoutWorkflowSteps[1]+"\n", 1),
-		"guarded":       strings.Replace(text, gate, "          if ($false) {\n  "+gate+"          }\n", 1),
-		"gate-late":     strings.Replace(strings.Replace(text, gate, "", 1), logCheck, logCheck+gate, 1),
-		"log-early":     strings.Replace(strings.Replace(text, logCheck, "", 1), gate, gate+logCheck, 1),
+		"block-comment":        strings.Replace(text, gate, pad+"<#\n"+gate+pad+"#>\n", 1),
+		"line-comment":         strings.Replace(text, gate, pad+"# "+holdoutWorkflowSteps[1]+"\n", 1),
+		"guarded":              strings.Replace(text, gate, pad+"if ($false) {\n"+gate+pad+"}\n", 1),
+		"comment-then-guarded": strings.Replace(text, gate, pad+"<# skip #> if ($false) {\n"+gate+pad+"}\n", 1),
+		"gate-late":            strings.Replace(strings.Replace(text, gate, "", 1), logCheck, logCheck+gate, 1),
+		"log-early":            strings.Replace(strings.Replace(text, logCheck, "", 1), gate, gate+logCheck, 1),
+		"gate-in-next-step":    nextStep(strings.Replace(text, gate, "", 1), gate),
 	} {
 		if broken == text {
 			t.Fatalf("%s control did not mutate the workflow", name)
 		}
-		if holdoutWorkflowOrder(broken) == nil {
+		if err := holdoutWorkflowOrder(pwsh, broken); err == nil {
 			t.Errorf("%s control accepted", name)
+		} else {
+			t.Logf("%s: %v", name, err)
 		}
 	}
 }
@@ -276,11 +323,14 @@ func TestReuseHoldoutLogCheck(t *testing.T) {
 		{"similar-name", "--- PASS: TestNativeReuseHoldoutsMeasure (0.00s)\n", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			dir := t.TempDir()
+			dir := filepath.Join(t.TempDir(), "o'brien") // a quote in the path stays a literal
+			if err := os.Mkdir(dir, 0o755); err != nil {
+				t.Fatal(err)
+			}
 			if err := os.WriteFile(filepath.Join(dir, "reuse-observation.log"), []byte(tc.log), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference = 'Stop'; $out = '"+dir+"'; "+holdoutWorkflowSteps[5]).CombinedOutput()
+			out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference = 'Stop'; $out = '"+strings.ReplaceAll(dir, "'", "''")+"'; "+holdoutWorkflowSteps[5]).CombinedOutput()
 			if (err == nil) != tc.ran {
 				t.Fatalf("ran=%t, check err=%v:\n%s", tc.ran, err, out)
 			}
