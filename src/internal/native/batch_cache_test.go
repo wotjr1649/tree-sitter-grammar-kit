@@ -70,15 +70,6 @@ func TestBatchQueryCache(t *testing.T) {
 	small := x.request(kit.IncrementalCase{ID: "small-memory", Encoding: kit.EncodingUTF8}, src)
 	small.Limits.MemoryBytes = 4096 // fatal ALLOCATION_LIMIT: the last frame of the batch
 	reqs = append(reqs, small)
-	single := func(b *Build, r Request) []byte {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-		res, err := b.Exec(ctx, "single", Frame(r.Encode()), x.Op.ParseWall, x.Op, os.Getenv("TSGK_CGROUP_PARENT"))
-		if err != nil || len(res.Stdout) < 4 {
-			t.Fatalf("single %s: %v %d bytes", r.ID, err, len(res.Stdout))
-		}
-		return batchTiming.ReplaceAll(res.Stdout[4:], []byte(`"ms":0`))
-	}
 	for _, build := range []struct {
 		defines []string
 		differ  []int // frames a broken cache answers differently
@@ -90,12 +81,95 @@ func TestBatchQueryCache(t *testing.T) {
 		}
 		var differ []int
 		for i, r := range reqs {
-			if !bytes.Equal(batchTiming.ReplaceAll(frames[i], []byte(`"ms":0`)), single(b, r)) {
+			if !bytes.Equal(normalFrame(frames[i]), singleFrame(t, b, x.Op, r)) {
 				differ = append(differ, i)
 			}
 		}
 		if fmt.Sprint(differ) != fmt.Sprint(build.differ) {
 			t.Errorf("%v: frames differing from their single process %v, want %v", build.defines, differ, build.differ)
+		}
+	}
+}
+
+func normalFrame(f []byte) []byte { return batchTiming.ReplaceAll(f, []byte(`"ms":0`)) }
+
+// singleFrame runs one request in its own single process and returns its normalised response.
+func singleFrame(t *testing.T, b *Build, op kit.NativeOperation, r Request) []byte {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	res, err := b.Exec(ctx, "single", Frame(r.Encode()), op.ParseWall, op, os.Getenv("TSGK_CGROUP_PARENT"))
+	if err != nil || !res.Cleanup.Verified || res.Reason != runner.ReasonExited {
+		t.Fatalf("single %s: %v %s cleanup %v", r.ID, err, res.Reason, res.Cleanup.Verified)
+	}
+	body, err := SplitFrame(res.Stdout)
+	if err != nil {
+		t.Fatalf("single %s: %v", r.ID, err)
+	}
+	return normalFrame(body)
+}
+
+// #266: a request with another query list frees the kept list before its own memory limit
+// applies, so a limit its single process fits is not exceeded by the previous list.
+func TestBatchQueryCacheMissFreesFirst(t *testing.T) {
+	t.Parallel()
+	b := fixtureBuild(t, "plain")
+	src := []byte("a = f(1);\nb = a;\n")
+	big := oracleContext(false)
+	for i := range 4 {
+		big.Queries = append(big.Queries, QuerySource{ID: fmt.Sprintf("big%d", i), Source: []byte(strings.Repeat("(identifier) @x\n", 2000))})
+	}
+	bare := oracleContext(false)
+	limited := func(x Context, limit uint64) Request {
+		r := x.request(kit.IncrementalCase{ID: "limited", Encoding: kit.EncodingUTF8}, src)
+		r.Limits.MemoryBytes = limit
+		return r
+	}
+	completed := []byte(`"status":"COMPLETED"`)
+	limit := uint64(65536)
+	for !bytes.Contains(singleFrame(t, b, bare.Op, limited(bare, limit)), completed) {
+		if limit *= 2; limit > 1<<26 {
+			t.Fatal("no limit fits the query-free request")
+		}
+	}
+	if bytes.Contains(singleFrame(t, b, big.Op, limited(big, limit)), completed) {
+		t.Fatalf("the big list fits %d bytes: it cannot show a kept list counted against the next limit", limit)
+	}
+	next := limited(bare, limit)
+	frames, res := runDriverBatch(t, b, big.Op, []Request{big.request(kit.IncrementalCase{ID: "big", Encoding: kit.EncodingUTF8}, src), next})
+	if len(frames) != 2 || res.ExitCode != 0 || !res.Cleanup.Verified || !bytes.Equal(normalFrame(frames[1]), singleFrame(t, b, bare.Op, next)) {
+		t.Fatalf("after a kept list: %d frames, exit %d, limit %d, frame %.200s", len(frames), res.ExitCode, limit, frames[len(frames)-1])
+	}
+}
+
+// #266: a kept list serves r4 requests with their own source, edit history, API switch and
+// observation run, each answering as its own single process, and the batch ends cleanly.
+func TestBatchQueryCacheHistory(t *testing.T) {
+	t.Parallel()
+	b := fixtureBuild(t, "plain")
+	x := oracleContext(true, "(call function: (identifier) @fn)\n(number) @n\n")
+	x.Protocol, x.ObservationProducerSHA256 = ProtocolR4, b.Identity
+	var reqs []Request
+	for i, c := range []struct {
+		src, run string
+		api      bool
+		edits    []edit
+	}{
+		{"z = [1, 2];\na = f(1);\n", "run-a", true, []edit{{"f(1)", "g(1, 2)"}, {"[1, 2]", "[1]"}}},
+		{"b = h(3);\n", "run-b", false, []edit{{"h(3)", "k(3, 4)"}}},
+		{"z = [1, 2];\na = f(1);\n", "run-a", true, []edit{{"[1, 2]", "[]"}}},
+	} {
+		y := x
+		y.API, y.ObservationRunID = c.api, c.run
+		reqs = append(reqs, y.request(kit.IncrementalCase{ID: fmt.Sprintf("h%d", i), Encoding: kit.EncodingUTF8, Edits: editsBy(c.src, c.edits...)}, []byte(c.src)))
+	}
+	frames, res := runDriverBatch(t, b, x.Op, reqs)
+	if len(frames) != len(reqs) || res.ExitCode != 0 || !res.Cleanup.Verified {
+		t.Fatalf("%d frames for %d requests, exit %d, cleanup %v", len(frames), len(reqs), res.ExitCode, res.Cleanup.Verified)
+	}
+	for i, r := range reqs {
+		if !bytes.Equal(normalFrame(frames[i]), singleFrame(t, b, x.Op, r)) {
+			t.Errorf("frame %d differs from its single process", i)
 		}
 	}
 }

@@ -1801,6 +1801,13 @@ static int handle(const uint8_t *data, size_t n) {
   cur_source_bytes = cur_steps_done = 0;
   const char *code = parse_request(data, n, &r);
   if (code) { respond("INVALID_REQUEST", code, 0, 0, NULL, MAX_OUTPUT); req_free(&r); return 2; }
+  /* a miss frees the kept list before this request's limit applies: never two lists at once */
+  bool hit = batch_mode && cache_n == r.nqueries;
+#ifndef TSGK_FAULT_CACHE_ANY /* owned fault: a cache that ignores the query bytes */
+  for (int i = 0; hit && i < r.nqueries; i++)
+    hit = cache_q[i].len == r.queries[i].len && !strcmp(cache_q[i].id, r.queries[i].id) && !memcmp(cache_q[i].src, r.queries[i].src, r.queries[i].len);
+#endif
+  if (!hit && cache_n >= 0) cache_free();
   mem_limit = r.memory_bytes;
   cur_source_bytes = r.source_len;
   Src v[MAX_EDITS + 1];
@@ -1823,20 +1830,12 @@ static int handle(const uint8_t *data, size_t n) {
     code = "LANGUAGE_INCOMPATIBLE";
   } else {
     /* queries compile once, before the first parse; an invalid one is reported per tree */
-    bool hit = batch_mode && cache_n == r.nqueries;
-#ifndef TSGK_FAULT_CACHE_ANY /* owned fault: a cache that ignores the query bytes */
-    for (int i = 0; hit && i < r.nqueries; i++)
-      hit = cache_q[i].len == r.queries[i].len && !strcmp(cache_q[i].id, r.queries[i].id) && !memcmp(cache_q[i].src, r.queries[i].src, r.queries[i].len);
-#endif
-    if (!hit && cache_n >= 0) cache_free(); /* a miss never holds two lists at once */
     uint64_t before = mem_used;
     bool keep = batch_mode && !hit && r.nqueries > 0;
     for (int i = 0; i < r.nqueries; i++) {
       Query *q = &r.queries[i];
       if (hit) {
         q->q = cache_q[i].q;
-        q->err_offset = cache_q[i].err_offset;
-        q->err = cache_q[i].err;
         q->borrowed = true;
       } else {
         q->q = ts_query_new(tsgk_language(), (const char *)q->src, q->len, &q->err_offset, &q->err);
