@@ -723,7 +723,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	}
 	x.checkSeen(map[string]string{"producer": man.Producer["build_identity"], "policy": man.Policy.SHA256})
 	if man.Schema == OracleBatchManifestSchema {
-		checkBatches(man, transports, statuses, raws, func(code, path, msg string) { add(code, manPath, msg) })
+		checkBatches(man, transports, statuses, raws, nil, func(code, path, msg string) { add(code, manPath, msg) })
 	}
 	if s.Records != man.Records || len(man.Cases) != man.Records {
 		add("RECORD_COUNT_MISMATCH", manPath, "record 수가 manifest와 다르다")

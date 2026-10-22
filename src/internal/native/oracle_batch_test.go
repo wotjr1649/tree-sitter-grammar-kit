@@ -200,6 +200,17 @@ func TestOracleBatchSet(t *testing.T) {
 	if err != nil || !res.Set.Valid || r["execution_status"] != kit.StatusNotRun || r["transport"] != nil {
 		t.Fatalf("missing input: %v %+v %v %v", err, res.Set, r["execution_status"], r["transport"])
 	}
+	// no input at all: no process runs, and the set still verifies with an empty batch list
+	for _, name := range []string{"casea.txt", "casec.txt", "cased.txt"} {
+		if err := os.Remove(filepath.Join(root, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	none := filepath.Join(t.TempDir(), "set")
+	res, err = runOracle(t, oracleRequest(t, withOperation(t, profile, "native-query-batch"), root, none))
+	if b, ok := readDoc(t, filepath.Join(none, "manifest.json"))["batches"].([]any); err != nil || !res.Set.Valid || !ok || len(b) != 0 {
+		t.Fatalf("no input: %v %+v %+v", err, res.Set, res.Findings)
+	}
 }
 
 // #266: the shared batch rules reject a frame bound to another case, a missing raw response,
@@ -244,6 +255,23 @@ func TestOracleBatchSetControls(t *testing.T) {
 		"r1-record": {func(t *testing.T, set string) {
 			rewriteMember(t, set, "records/00001-cb.json", func(r map[string]any) { r["schema"] = kit.OracleRecordSchema; delete(r, "transport") })
 		}, "RECORD_IDENTITY_MISMATCH"},
+		"raw-of-another-case": {func(t *testing.T, set string) {
+			other, err := os.ReadFile(filepath.Join(set, "raw", "00001-cb.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(set, "raw", "00000-ca.json"), other, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			sum := sha256.Sum256(other)
+			rewriteManifest(t, set, func(m map[string]any) {
+				for _, mem := range m["members"].([]any) {
+					if mm := mem.(map[string]any); mm["path"] == "raw/00000-ca.json" {
+						mm["bytes"], mm["sha256"] = float64(len(other)), hex.EncodeToString(sum[:])
+					}
+				}
+			})
+		}, "BATCH_RAW_MISMATCH"},
 		"batches-missing": {func(t *testing.T, set string) {
 			rewriteManifest(t, set, func(m map[string]any) { delete(m, "batches") })
 		}, "JSON_MISSING_FIELD"},
@@ -278,7 +306,7 @@ func TestOracleBatchFailures(t *testing.T) {
 		var out []CaseResult
 		var pending []int
 		for i := range n {
-			c := kit.IncrementalCase{ID: "c" + string(rune('0'+i)), Encoding: kit.EncodingUTF8}
+			c := kit.IncrementalCase{ID: fmt.Sprintf("c%02d", i), Encoding: kit.EncodingUTF8}
 			res := newCaseResult(c)
 			cr, done := b.prepareCase(context.Background(), x, c, []byte("a = f(1);\n"), &res)
 			if done {
@@ -330,6 +358,19 @@ func TestOracleBatchFailures(t *testing.T) {
 		corpus, records := runBatches(ctx, b, y, root, []kit.IncrementalCase{{ID: "a", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "a.txt", Role: "case", SHA256: hex.EncodeToString(sum[:]), Bytes: uint64(len(src))}}}, nil, nil)
 		if corpus[0].ExecutionStatus != kit.StatusFailed || corpus[0].Code != "BATCH_EXIT_TIMEOUT" || records[0].Fatal != "BATCH_EXIT_TIMEOUT" {
 			t.Fatalf("private corpus accepted a lingering driver: %s %s %+v", corpus[0].ExecutionStatus, corpus[0].Code, records)
+		}
+	})
+	t.Run("split", func(t *testing.T) {
+		b := fixtureBuild(t, "plain")
+		cases, reqs, out, pending := prepare(b, 65)
+		batches := b.runOracleBatches(ctx, x, cases, reqs, out, pending)
+		if len(batches) != 2 || len(batches[0].Cases) != 64 || len(batches[1].Cases) != 1 || !batches[0].Accepted() || !batches[1].Accepted() {
+			t.Fatalf("65 cases: %d batches", len(batches))
+		}
+		for i, c := range out {
+			if c.ExecutionStatus != kit.StatusCompleted || c.Transport == nil || c.Transport.Batch != i/64 || c.Transport.Frame != i%64 || c.Transport.State != "ANSWERED" {
+				t.Fatalf("case %d: %s %s %+v", i, c.ExecutionStatus, c.Code, c.Transport)
+			}
 		}
 	})
 	t.Run("leak", func(t *testing.T) {

@@ -1413,7 +1413,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	defer x.checkSvcReferences()
 	var outs []caseOutcome
 	statuses, assessments := map[string]int{}, map[string]int{}
-	transports, caseStatuses, raws := map[string]recordTransport{}, map[string]string{}, map[string]int{}
+	transports, caseStatuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	records := 0
 	for i, mem := range man.Members {
 		pmem, registered := x.members[mem.Path]
@@ -1423,7 +1423,14 @@ func replayOracleSet(x *replayEnv) *Error {
 		}
 		if mem.Role != "record" {
 			// the raw driver response is bound by its hash; the offline API does not decode it
-			if e := x.verifyFile(mem.Path, mem.Bytes, mem.SHA256); e != nil {
+			// beyond a batch set's request id (#266)
+			if man.Schema == OracleBatchManifestSchema {
+				b, e := x.member(mem.Path)
+				if e != nil {
+					return e
+				}
+				rawIDs[mem.Case] = responseID(b)
+			} else if e := x.verifyFile(mem.Path, mem.Bytes, mem.SHA256); e != nil {
 				return e
 			}
 			x.consumed[mem.Path] = true
@@ -1458,7 +1465,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	}
 	cons.close()
 	if man.Schema == OracleBatchManifestSchema {
-		checkBatches(man, transports, caseStatuses, raws, func(code, _, msg string) { x.finding(code, mm.Path, msg) })
+		checkBatches(man, transports, caseStatuses, raws, rawIDs, func(code, _, msg string) { x.finding(code, mm.Path, msg) })
 	}
 	sg.check(records == man.Records, mm.Path, "RECORD_COUNT_MISMATCH", "record 수가 manifest와 다르다")
 	sg.check(aggregateRecorded(statuses, assessments, records) == Verdict{man.ExecutionStatus, man.Assessment}, mm.Path, "RUN_VERDICT_MISMATCH", "set 판정이 record 판정의 집계와 다르다")

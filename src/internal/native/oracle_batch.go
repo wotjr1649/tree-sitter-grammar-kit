@@ -65,6 +65,7 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 		var idx []int
 		var frames []runner.Frame
 		var bytes, stdout uint64
+		var walls time.Duration
 		for len(queue) > 0 && len(idx) < x.Op.BatchFiles {
 			i := queue[0]
 			n := uint64(len(reqs[i].payload) + 4)
@@ -72,7 +73,7 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 				break
 			}
 			idx, frames, queue = append(idx, i), append(frames, runner.Frame{ID: cases[i].ID, Request: reqs[i].payload}), queue[1:]
-			bytes, stdout = bytes+n, stdout+x.Op.OutputBytes+4
+			bytes, stdout, walls = bytes+n, stdout+x.Op.OutputBytes+4, walls+reqs[i].wall
 		}
 		if err := b.Verify(); err != nil {
 			for _, i := range idx {
@@ -81,7 +82,7 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 			stop = "EXECUTABLE_MISMATCH"
 			break
 		}
-		wall := x.Op.BatchWall
+		wall := min(x.Op.BatchWall, walls) // no more than its cases' own walls together
 		if bounded {
 			wall = min(wall, time.Until(deadline))
 		}
@@ -105,7 +106,7 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 		ob := kit.OracleBatch{Index: len(batches), Status: br.Process.Status, Reason: br.Process.Reason, ExitCode: max(br.Process.ExitCode, 0),
 			WallMillis: br.Process.WallMillis, PeakBytes: br.Process.Memory.Peak, CleanupVerified: br.Process.Cleanup.Verified, TrailingBytes: br.TrailingBytes}
 		var requeue, answered []int
-		fatal, progress := false, false
+		fatal, progress, unanswered := false, false, false
 		for k, fr := range br.Frames {
 			i := idx[k]
 			ob.Cases = append(ob.Cases, cases[i].ID)
@@ -124,11 +125,13 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 			default:
 				status, assess, code := unansweredFrame(fr)
 				finishEarly(c, status, assess, code)
+				unanswered = true
 			}
 		}
-		if !ob.Accepted() {
+		if !ob.Accepted() || unanswered {
 			for _, i := range answered {
-				if out[i].ExecutionStatus == kit.StatusCompleted {
+				// a completed FAIL stays: a failure is never a support claim
+				if out[i].ExecutionStatus == kit.StatusCompleted && out[i].Assessment != kit.AssessFail {
 					// the response stays as diagnostic raw; nothing of it is claimed
 					raw, tr := out[i].Raw, out[i].Transport
 					out[i] = newCaseResult(cases[i])

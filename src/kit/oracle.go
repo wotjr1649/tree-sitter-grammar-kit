@@ -3,6 +3,7 @@ package kit
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -398,13 +399,13 @@ type OracleManifest struct {
 	Records         int               `json:"records"`
 	Cases           []string          `json:"cases"` // the profile's case ids in order
 	Members         []OracleMember    `json:"members"`
-	Batches         []OracleBatch     `json:"batches,omitempty"` // manifest r3 only
+	Batches         []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
 	Complete        bool              `json:"complete"`
 }
 
 // OracleBatch is one batch driver process of a manifest r3 set: the cases sent to it in
-// frame order and the facts of the process. ExitCode is the natural exit code (0 when the
-// process was ended by a limit, which Reason names).
+// frame order and the facts of the process. ExitCode is the natural exit code, 0 when a
+// limit or a signal ended the process (Status and Reason say which).
 type OracleBatch struct {
 	Index           int      `json:"index"`
 	Cases           []string `json:"cases"`
@@ -417,31 +418,41 @@ type OracleBatch struct {
 	TrailingBytes   int64    `json:"trailing_bytes"`
 }
 
-// Accepted reports whether the batch's answered frames may count as completed cases: cleanup
-// is verified, nothing followed the last response, and the process either exited 0 by
-// itself or was ended by a limit or cancellation that the in-flight frame carries. A natural
-// nonzero exit (a crash or STATE_LEAK after a response, or the exit 3 of a fatal resource
-// response) and a process that did not exit after its last frame accept none.
+// Accepted reports whether the process may vouch for its answered frames: it exited 0 by
+// itself (status COMPLETED, so not a signal), cleanup is verified and nothing followed the
+// last response. Any other end accepts none: a limit, cancellation or crash, STATE_LEAK, the
+// exit 3 of a fatal resource response, or a process that did not exit after its last frame.
+// A batch that left a sent frame unanswered accepts none either (checkBatches, live run).
 func (b OracleBatch) Accepted() bool {
-	ended := slices.Contains([]string{"FRAME_WATCHDOG", "RESPONSE_BYTES_LIMIT", "MEMORY_LIMIT", "WALL_LIMIT", "OUTPUT_LIMIT", "CANCELLED"}, b.Reason)
-	return b.CleanupVerified && b.TrailingBytes == 0 && (b.Reason == "EXITED" && b.ExitCode == 0 || ended)
+	return b.Status == "COMPLETED" && b.Reason == "EXITED" && b.ExitCode == 0 && b.CleanupVerified && b.TrailingBytes == 0
 }
 
 // recordTransport is what an r2 record says about its frame; Sent is false for a case that
-// no batch process received.
+// no batch process received. Fail is a completed case's own FAIL, kept even when its batch
+// is not accepted: a failure is never a support claim.
 type recordTransport struct {
 	Sent         bool
 	Batch, Frame uint64
 	Answered     bool
+	Fail         bool
 }
 
 // checkBatches checks a manifest r3 set's records against its batches: every sent case
 // names a frame of a listed batch that holds that case, a raw response exists exactly for
-// the answered cases, and a completed case was answered by an accepted batch.
-func checkBatches(m OracleManifest, transports map[string]recordTransport, statuses map[string]string, raws map[string]int, add func(code, path, msg string)) {
+// the answered cases, and a completed case that is not a FAIL was answered by an accepted
+// batch without an unanswered sent frame, with a raw response that answers that case.
+// rawIDs maps a case to the id its raw response answers; nil skips that comparison (the r4
+// qualification binds the responses through the observations).
+func checkBatches(m OracleManifest, transports map[string]recordTransport, statuses map[string]string, raws map[string]int, rawIDs map[string]string, add func(code, path, msg string)) {
 	for i, b := range m.Batches {
 		if b.Index != i || len(b.Cases) == 0 || slices.ContainsFunc(b.Cases, func(c string) bool { return !slices.Contains(m.Cases, c) }) {
 			add("BATCH_INVALID", "manifest.json", fmt.Sprintf("batch %d의 순번이나 사례 목록이 틀렸다", i))
+		}
+	}
+	unanswered := map[uint64]bool{}
+	for _, t := range transports {
+		if t.Sent && !t.Answered {
+			unanswered[t.Batch] = true
 		}
 	}
 	for _, c := range m.Cases {
@@ -456,8 +467,11 @@ func checkBatches(m OracleManifest, transports map[string]recordTransport, statu
 		if (raws[c] == 1) != t.Answered || raws[c] > 1 {
 			add("BATCH_RAW_MISMATCH", "manifest.json", "응답한 frame에만 raw 응답이 하나 있어야 한다: "+c)
 		}
-		if statuses[c] == StatusCompleted && !(t.Answered && m.Batches[t.Batch].Accepted()) {
+		if statuses[c] == StatusCompleted && !t.Fail && !(t.Answered && m.Batches[t.Batch].Accepted() && !unanswered[t.Batch]) {
 			add("BATCH_SUCCESS_UNACCEPTED", "manifest.json", "완료 사례는 정상 종료한 batch의 응답이어야 한다: "+c)
+		}
+		if statuses[c] == StatusCompleted && rawIDs != nil && rawIDs[c] != c {
+			add("BATCH_RAW_MISMATCH", "manifest.json", "완료 사례의 raw 응답이 그 사례의 응답이 아니다: "+c)
 		}
 	}
 }
@@ -521,7 +535,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	perCase := map[string]int{}
 	sources := map[string]int{}
 	recordInputs := map[string]OracleMember{}
-	transports, statuses, raws := map[string]recordTransport{}, map[string]string{}, map[string]int{}
+	transports, statuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	caseOrdinals := map[string]int{}
 	for i, c := range m.Cases {
 		caseOrdinals[c] = i
@@ -581,6 +595,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		if mem.Role == "raw" {
 			raws[mem.Case]++
+			rawIDs[mem.Case] = responseID(b)
 		}
 		if mem.Role == "source" {
 			sources[mem.Case]++
@@ -601,7 +616,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 	}
 	if m.Schema == OracleBatchManifestSchema {
-		checkBatches(m, transports, statuses, raws, add)
+		checkBatches(m, transports, statuses, raws, rawIDs, add)
 	}
 	if m.Schema == OracleSourceManifestSchema {
 		if len(m.Cases) == 0 {
@@ -627,6 +642,17 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	r.Records = records
 	r.Valid = len(r.Findings) == 0
 	return r
+}
+
+// responseID is the request id a raw driver response answers ("" when it has none).
+func responseID(raw []byte) string {
+	var r struct {
+		ID string `json:"id"`
+	}
+	if jsonv2.Unmarshal(raw, &r) != nil {
+		return ""
+	}
+	return r.ID
 }
 
 func decodeOracleManifest(data []byte, m *OracleManifest) *Error {
@@ -908,7 +934,7 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	if se != nil || be != nil || fe != nil || we != nil || state != "SENT" && state != "ANSWERED" {
 		return tr, "RECORD_TRANSPORT_INVALID"
 	}
-	tr.Sent, tr.Answered = true, state == "ANSWERED"
+	tr.Sent, tr.Answered, tr.Fail = true, state == "ANSWERED", str(get(v, "assessment")) == AssessFail
 	return tr, ""
 }
 
