@@ -16,7 +16,7 @@
 | [#166](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/166) | CHANGETABLE의 CHANGES/VERSION 인자를 전용 규칙으로 분리 | sync version의 일반 expression 과잉수용 제거; VERSION column 목록과 value 목록 분리; 두 form의 optional FORCESEEK 보존 |
 | [#168](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/168) | ROLLUP/CUBE 내부 tuple을 non-empty 전용 규칙으로 분리 | 함수의 빈 tuple 거부; 직접 GROUP BY ()와 GROUPING SETS(())의 정상 grand-total set 보존 |
 | [#169](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/169) | 회귀 입력을 긴 정상 source 뒤에 반복 배치해 evidence 읽기 상한 초과 | 기존 353개 history와 모든 기존 source/edit/expect prefix를 보존하고 동일한 107개 추가 입력을 작은 최종 NO_ERROR source 뒤에 재배치; raw/hash 검증과 512 MiB 상한 유지 |
-| [#170](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/170) | 오류 history에 변경되지 않는 정상 subtree가 없어 incremental E 의무의 reuse 미관측 | 11개 history 앞에 보호된 정상 sibling을 추가; 원래 모든 source state는 suffix로 보존하고 ERROR 기대값·기존 main edits·E coverage·reuse guard 유지 |
+| [#170](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/170) | 오류 history에 변경되지 않는 정상 subtree가 없어 incremental E 의무의 reuse 미관측 | 11개 history 앞에 보호된 정상 sibling을 추가; 원래 모든 source state는 suffix로 보존하고 ERROR 기대값·기존 main edits·E coverage·reuse guard 유지. #217에서 sibling을 `-r2` ID로 바꾸고 원본(`-r1`)은 [reuse holdout 원장](issue-217-reuse-dispositions.md)에서 처분 |
 
 ## Unicode 공백 추가 리뷰 (#171)
 

@@ -30,49 +30,12 @@ func benchmarkJSONBuild(b testing.TB, defines ...string) *Build {
 	if cached := buildCache[key]; cached != nil {
 		return cached
 	}
-	data, err := os.ReadFile(filepath.Join("..", "..", "contracts", "native-routes.json"))
-	if err != nil {
-		b.Fatal(err)
-	}
-	var registry struct {
-		Routes []struct {
-			Route, Symbol string
-			Files         []kit.NativeInput
-		}
-	}
-	if err := json.Unmarshal(data, &registry); err != nil {
-		b.Fatal(err)
-	}
-	var grammar []kit.NativeInput
-	var symbol string
-	for _, route := range registry.Routes {
-		if route.Route == "json" {
-			grammar, symbol = route.Files, route.Symbol
-		}
-	}
-	if len(grammar) == 0 || symbol != "tree_sitter_json" {
+	built := registeredBuildLocked(b, "json", prepared, cc, defines)
+	if built.Symbol != "tree_sitter_json" {
 		b.Fatal("registered JSON closure missing")
-	}
-	compiler, err := os.ReadFile(cc)
-	if err != nil {
-		b.Fatal(err)
-	}
-	sum := sha256.Sum256(compiler)
-	if buildWork == "" {
-		buildWork, err = os.MkdirTemp("", "tsgk-native-benchmark-")
-		if err != nil {
-			b.Fatal(err)
-		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	req := testBuildRequest(buildWork, filepath.Join(prepared, "runtime"), filepath.Join(prepared, "routes", "json"), grammar, cc, kit.ToolIdentity{Name: "cc", Version: "benchmark", SHA256: hex.EncodeToString(sum[:]), Bytes: uint64(len(compiler))})
-	req.Symbol = symbol
-	req.Defines = defines
-	built, err := NewBuild(ctx, req)
-	if err != nil {
-		b.Fatalf("registered build refused: %v", err)
-	}
 	baseline, err := os.ReadFile(filepath.Join("..", "..", "dev", "benchmark", "native", "parse.c"))
 	if err != nil {
 		b.Fatal(err)
@@ -81,7 +44,7 @@ func benchmarkJSONBuild(b testing.TB, defines ...string) *Build {
 		b.Fatal(err)
 	}
 	args := []string{"-O2", "-std=c11", "-D_POSIX_C_SOURCE=200112L", "-I", "runtime/lib/include", "baseline.c", "lib.o", "parser.o", "-o", "baseline.exe"}
-	if req.Sanitize {
+	if built.Sanitize {
 		args = append(args, "-fsanitize=address,undefined", "-fno-omit-frame-pointer", "-fno-sanitize-recover=undefined")
 	}
 	result, err := runner.Run(ctx, runner.Spec{Path: cc, Dir: built.Dir, Env: buildEnv(cc, built.Dir),
@@ -101,6 +64,72 @@ func benchmarkJSONBuild(b testing.TB, defines ...string) *Build {
 }
 
 var benchmarkBaselineHashes = map[string]string{}
+
+// registeredBuild builds the native driver of a registered route from the prepared closure
+// (TSGK_BENCH_PREPARED), once per route and defines.
+func registeredBuild(b testing.TB, route string, defines ...string) *Build {
+	b.Helper()
+	prepared, cc := os.Getenv("TSGK_BENCH_PREPARED"), os.Getenv("TSGK_NATIVE_CC")
+	if !filepath.IsAbs(prepared) || !filepath.IsAbs(cc) {
+		b.Fatal("absolute TSGK_BENCH_PREPARED and TSGK_NATIVE_CC required")
+	}
+	buildMu.Lock()
+	defer buildMu.Unlock()
+	return registeredBuildLocked(b, route, prepared, cc, defines)
+}
+
+func registeredBuildLocked(b testing.TB, route, prepared, cc string, defines []string) *Build {
+	b.Helper()
+	key := "registered|" + route + "|" + prepared + "|" + cc + "|" + os.Getenv("TSGK_CGROUP_PARENT") + "|" + os.Getenv("TSGK_NATIVE_SANITIZE") + "|" + strings.Join(defines, ",")
+	if cached := buildCache[key]; cached != nil {
+		return cached
+	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "contracts", "native-routes.json"))
+	if err != nil {
+		b.Fatal(err)
+	}
+	var registry struct {
+		Routes []struct {
+			Route, Symbol string
+			Files         []kit.NativeInput
+		}
+	}
+	if err := json.Unmarshal(data, &registry); err != nil {
+		b.Fatal(err)
+	}
+	var grammar []kit.NativeInput
+	var symbol string
+	for _, r := range registry.Routes {
+		if r.Route == route {
+			grammar, symbol = r.Files, r.Symbol
+		}
+	}
+	if len(grammar) == 0 || symbol == "" {
+		b.Fatalf("registered %s closure missing", route)
+	}
+	compiler, err := os.ReadFile(cc)
+	if err != nil {
+		b.Fatal(err)
+	}
+	sum := sha256.Sum256(compiler)
+	if buildWork == "" {
+		buildWork, err = os.MkdirTemp("", "tsgk-native-benchmark-")
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	req := testBuildRequest(buildWork, filepath.Join(prepared, "runtime"), filepath.Join(prepared, "routes", route), grammar, cc, kit.ToolIdentity{Name: "cc", Version: "benchmark", SHA256: hex.EncodeToString(sum[:]), Bytes: uint64(len(compiler))})
+	req.Symbol = symbol
+	req.Defines = defines
+	built, err := NewBuild(ctx, req)
+	if err != nil {
+		b.Fatalf("registered build refused: %v", err)
+	}
+	buildCache[key] = built
+	return built
+}
 
 type benchmarkParseObservation struct {
 	ParseNS  uint64 `json:"parse_ns"`
