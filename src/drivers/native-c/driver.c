@@ -274,7 +274,7 @@ typedef struct { char fact[MAX_TEXT + 1], node[MAX_TEXT + 1], name[MAX_TEXT + 1]
 typedef struct { char id[MAX_TEXT + 1]; uint32_t byte; } Point;
 typedef struct { uint32_t start, old_end, new_end, old_len, new_len; uint8_t *old, *neu; } Edit;
 /* r2 query: source bytes, and after compilation the query or its error */
-typedef struct { char id[MAX_TEXT + 1]; uint8_t *src; uint32_t len; TSQuery *q; uint32_t err_offset; TSQueryError err; } Query;
+typedef struct { char id[MAX_TEXT + 1]; uint8_t *src; uint32_t len; TSQuery *q; uint32_t err_offset; TSQueryError err; bool borrowed; } Query;
 typedef struct {
   char id[MAX_TEXT + 1];
   int rev, enc, out;
@@ -380,12 +380,29 @@ static uint8_t *b64(Cur *c, uint64_t max, uint32_t *len) {
 
 static const char *bounded(uint64_t v, uint64_t max) { return v == 0 || v > max ? "LIMIT_INVALID" : NULL; }
 
+/* batch (#266): the last query list whose queries all compiled, reused by a frame with the
+   same ids and source bytes. Its bytes stay counted: after each frame the allocator must be
+   back at exactly cache_bytes. */
+static bool batch_mode;
+static int cache_n = -1;
+static Query cache_q[MAX_QUERIES];
+static uint64_t cache_bytes;
+
+static void cache_free(void) {
+  for (int i = 0; i < cache_n; i++) {
+    ts_query_delete(cache_q[i].q);
+    t_free(cache_q[i].src);
+  }
+  cache_n = -1;
+  cache_bytes = 0;
+}
+
 static void req_free(Req *r) {
   t_free(r->source);
   for (int i = 0; i < r->nedits; i++) { t_free(r->edits[i].old); t_free(r->edits[i].neu); }
   for (int i = 0; i < r->nqueries; i++) {
     t_free(r->queries[i].src);
-    if (r->queries[i].q) ts_query_delete(r->queries[i].q);
+    if (r->queries[i].q && !r->queries[i].borrowed) ts_query_delete(r->queries[i].q);
   }
   r->source = NULL;
   r->nedits = 0;
@@ -1784,6 +1801,13 @@ static int handle(const uint8_t *data, size_t n) {
   cur_source_bytes = cur_steps_done = 0;
   const char *code = parse_request(data, n, &r);
   if (code) { respond("INVALID_REQUEST", code, 0, 0, NULL, MAX_OUTPUT); req_free(&r); return 2; }
+  /* a miss frees the kept list before this request's limit applies: never two lists at once */
+  bool hit = batch_mode && cache_n == r.nqueries;
+#ifndef TSGK_FAULT_CACHE_ANY /* owned fault: a cache that ignores the query bytes */
+  for (int i = 0; hit && i < r.nqueries; i++)
+    hit = cache_q[i].len == r.queries[i].len && !strcmp(cache_q[i].id, r.queries[i].id) && !memcmp(cache_q[i].src, r.queries[i].src, r.queries[i].len);
+#endif
+  if (!hit && cache_n >= 0) cache_free();
   mem_limit = r.memory_bytes;
   cur_source_bytes = r.source_len;
   Src v[MAX_EDITS + 1];
@@ -1806,9 +1830,27 @@ static int handle(const uint8_t *data, size_t n) {
     code = "LANGUAGE_INCOMPATIBLE";
   } else {
     /* queries compile once, before the first parse; an invalid one is reported per tree */
+    uint64_t before = mem_used;
+    bool keep = batch_mode && !hit && r.nqueries > 0;
     for (int i = 0; i < r.nqueries; i++) {
       Query *q = &r.queries[i];
-      q->q = ts_query_new(tsgk_language(), (const char *)q->src, q->len, &q->err_offset, &q->err);
+      if (hit) {
+        q->q = cache_q[i].q;
+        q->borrowed = true;
+      } else {
+        q->q = ts_query_new(tsgk_language(), (const char *)q->src, q->len, &q->err_offset, &q->err);
+        keep = keep && q->q;
+      }
+    }
+    if (keep) { /* the entry takes the queries and a private copy of each source */
+      for (int i = 0; i < r.nqueries; i++) {
+        cache_q[i] = r.queries[i];
+        cache_q[i].src = t_malloc(r.queries[i].len);
+        memcpy(cache_q[i].src, r.queries[i].src, r.queries[i].len);
+        r.queries[i].borrowed = true;
+      }
+      cache_n = r.nqueries;
+      cache_bytes = mem_used - before;
     }
     uint64_t ms;
     const char *pcode;
@@ -1895,6 +1937,9 @@ static int handle(const uint8_t *data, size_t n) {
   for (int k = 1; k <= r.nedits; k++) t_free(v[k].s);
   req_free(&r);
   mem_limit = MAX_MEMORY;
+#ifdef TSGK_FAULT_LEAK
+  mem_used += 16; /* owned fault: a frame leaves 16 counted bytes behind (no real allocation for LeakSanitizer to report) */
+#endif
   return exit_for(status);
 }
 
@@ -1924,7 +1969,7 @@ int main(int argc, char **argv) {
     fputs("usage: tsgk-native-driver single|batch\n", stderr);
     return 2;
   }
-  bool batch = !strcmp(argv[1], "batch");
+  bool batch = batch_mode = !strcmp(argv[1], "batch");
   ts_set_allocator(t_malloc, t_calloc, t_realloc, t_free);
   const TSLanguage *lang = tsgk_language();
   unsigned abi = ts_language_abi_version(lang);
@@ -1976,5 +2021,9 @@ int main(int argc, char **argv) {
     int code = handle(data, len);
     t_free(data);
     if (!batch) return code;
+    if (mem_used != cache_bytes) { /* the frame left allocations behind: no later frame is trusted */
+      fputs("STATE_LEAK\n", stderr);
+      return 5;
+    }
   }
 }
