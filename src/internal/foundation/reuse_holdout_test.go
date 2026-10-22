@@ -298,10 +298,8 @@ func TestReuseHoldoutWorkflow(t *testing.T) {
 		if broken == text {
 			t.Fatalf("%s control did not mutate the workflow", name)
 		}
-		if err := holdoutWorkflowOrder(pwsh, broken); err == nil {
-			t.Errorf("%s control accepted", name)
-		} else {
-			t.Logf("%s: %v", name, err)
+		if err := holdoutWorkflowOrder(pwsh, broken); err == nil || !strings.Contains(err.Error(), "not present exactly once") && !strings.Contains(err.Error(), "out of order") {
+			t.Errorf("%s control: %v", name, err) // a parse failure is a broken control, not a rejection
 		}
 	}
 }
@@ -311,7 +309,7 @@ func TestReuseHoldoutWorkflow(t *testing.T) {
 func TestReuseHoldoutLogCheck(t *testing.T) {
 	pwsh, err := exec.LookPath("pwsh")
 	if err != nil {
-		t.Skip("pwsh not available: the log check is not executed (TestReuseHoldoutWorkflow still applies)")
+		t.Skip("pwsh not available: the log check is not executed")
 	}
 	for _, tc := range []struct {
 		name, log string
@@ -344,7 +342,7 @@ func TestReuseHoldoutLogCheck(t *testing.T) {
 func TestCheckDispositions(t *testing.T) {
 	pwsh, err := exec.LookPath("pwsh")
 	if err != nil {
-		t.Skip("pwsh not available: check-dispositions.ps1 not executed (TestReuseHoldoutWorkflow still applies)")
+		t.Skip("pwsh not available: check-dispositions.ps1 not executed")
 	}
 	script := filepath.Join(repository(t), "src", "dev", "s05-native", "check-dispositions.ps1")
 	route := func(label string) string {
