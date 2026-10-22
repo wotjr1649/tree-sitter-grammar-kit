@@ -79,6 +79,7 @@ func TestBatchQueryCache(t *testing.T) {
 		if len(frames) != len(reqs) || res.ExitCode != 3 || !res.Cleanup.Verified || !strings.Contains(string(frames[len(frames)-1]), `"code":"ALLOCATION_LIMIT"`) {
 			t.Fatalf("%v: %d frames for %d requests, exit %d, cleanup %v", build.defines, len(frames), len(reqs), res.ExitCode, res.Cleanup.Verified)
 		}
+		completedFrames(t, frames[:len(frames)-1])
 		var differ []int
 		for i, r := range reqs {
 			if !bytes.Equal(normalFrame(frames[i]), singleFrame(t, b, x.Op, r)) {
@@ -106,7 +107,22 @@ func singleFrame(t *testing.T, b *Build, op kit.NativeOperation, r Request) []by
 	if err != nil {
 		t.Fatalf("single %s: %v", r.ID, err)
 	}
+	// the reference answer must be a protocol answer: its status gives the exit code
+	resp, err := DecodeResponse(body)
+	if want := map[string]int{kit.StatusCompleted: 0, "INVALID_REQUEST": 2, kit.StatusResourceLimit: 3, kit.StatusFailed: 4}; err != nil || want[resp.Status] != res.ExitCode {
+		t.Fatalf("single %s: %v status %s exit %d", r.ID, err, resp.Status, res.ExitCode)
+	}
 	return normalFrame(body)
+}
+
+// completedFrames fails unless every frame answers COMPLETED.
+func completedFrames(t *testing.T, frames [][]byte) {
+	t.Helper()
+	for i, f := range frames {
+		if resp, err := DecodeResponse(f); err != nil || resp.Status != kit.StatusCompleted {
+			t.Fatalf("frame %d: %v %.200s", i, err, f)
+		}
+	}
 }
 
 // #266: a request with another query list frees the kept list before its own memory limit
@@ -167,6 +183,7 @@ func TestBatchQueryCacheHistory(t *testing.T) {
 	if len(frames) != len(reqs) || res.ExitCode != 0 || !res.Cleanup.Verified {
 		t.Fatalf("%d frames for %d requests, exit %d, cleanup %v", len(frames), len(reqs), res.ExitCode, res.Cleanup.Verified)
 	}
+	completedFrames(t, frames)
 	for i, r := range reqs {
 		if !bytes.Equal(normalFrame(frames[i]), singleFrame(t, b, x.Op, r)) {
 			t.Errorf("frame %d differs from its single process", i)
