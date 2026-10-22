@@ -141,10 +141,14 @@ func saveMarginConfig(identity, compiler, out string) error {
 // separate configuration by its key (#261).
 const marginGo, marginFormerGo = "go1.27.2", "go1.27.1"
 
+func marginToolchain(v string, historical bool) bool {
+	return v == marginGo || historical && v == marginFormerGo
+}
+
 func checkMarginConfig(c marginConfig, j marginJob, expected kit.RunIdentity, historical bool) error {
 	r := c.Run
 	if c.Schema != "tsgk-ci-config/r1" || !sameRun(&r, expected) || r.Job != j.job || r.GOOS != j.goos || r.GOARCH != j.arch ||
-		r.GoVersion != marginGo && (!historical || r.GoVersion != marginFormerGo) || !hex64.MatchString(c.Source) ||
+		!marginToolchain(r.GoVersion, historical) || !hex64.MatchString(c.Source) ||
 		len(r.Image) > 128 || r.RunnerOS != map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos] ||
 		r.RunnerArch != map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch] ||
 		!strings.Contains(r.Image, "/") || strings.HasPrefix(r.Image, "/") || strings.HasSuffix(r.Image, "/") ||
@@ -359,7 +363,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 }
 
 func validateMarginReport(r marginReport, historical bool) error {
-	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) {
+	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) || !marginToolchain(r.Run.GoVersion, historical) {
 		return errors.New("margin report shape")
 	}
 	expected := map[string]string{}

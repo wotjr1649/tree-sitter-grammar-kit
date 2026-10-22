@@ -23,6 +23,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 	r.RunID = id
 	r.Event = "push"
 	r.HeadSHA = r.SHA
+	r.GoVersion = marginGo
 	report := marginReport{Schema: marginSchema, Run: r, CoreSHA: strings.Repeat("f", 64), Cutoff: "2026-10-16T04:00:00Z"}
 	var jobs []marginAPIJob
 	number, _ := strconv.ParseUint(id, 10, 64)
@@ -620,6 +621,34 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 		_, err := currentMargins(r.Run, r.Configs, encoded(t, map[string]any{"total_count": len(tc.jobs), "jobs": tc.jobs}), core)
 		if (err == nil) != tc.ok {
 			t.Fatalf("%s: %d jobs: %v", name, len(tc.jobs), err)
+		}
+	}
+}
+
+// TestMarginToolchain pins the toolchain each report accepts (#261): the current report only
+// the pinned Go, a historical one also the former pin, both for every measured configuration
+// and for the report's own run.
+func TestMarginToolchain(t *testing.T) {
+	report, _, _ := marginFixture(t, "900")
+	for _, tc := range []struct {
+		version             string
+		current, historical bool
+	}{{marginGo, true, true}, {marginFormerGo, false, true}, {"go1.27.3", false, false}, {"", false, false}} {
+		for _, historical := range []bool{false, true} {
+			want := tc.current
+			if historical {
+				want = tc.historical
+			}
+			c := report.Configs[0]
+			c.Run.GoVersion = tc.version
+			if got := checkMarginConfig(c, marginJobs[0], report.Run, historical) == nil; got != want {
+				t.Fatalf("configuration %q historical %v: accepted %v", tc.version, historical, got)
+			}
+			r := report
+			r.Run.GoVersion = tc.version
+			if got := validateMarginReport(r, historical) == nil; got != want {
+				t.Fatalf("report run %q historical %v: accepted %v", tc.version, historical, got)
+			}
 		}
 	}
 }
