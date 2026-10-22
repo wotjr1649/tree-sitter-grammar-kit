@@ -49,9 +49,8 @@ jobs:
             goos: darwin
             goarch: arm64
     runs-on: ${{ matrix.os }}
-    # #260: every step is bounded and each step outlasts the go test timeouts inside it, so a
-    # hang fails in its own step with its diagnostics; the job only outlasts the step sum of
-    # the slowest host (Linux 53 minutes) plus the runner's own set-up and clean-up
+    # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
+    # the step sum of the slowest host (Linux 54 minutes) plus a runner allowance
     timeout-minutes: 55
     defaults:
       run:
@@ -205,7 +204,7 @@ jobs:
           go test ./src/internal/runner -count=20 -failfast -timeout 200s -run '^(TestTreeTermination|TestPipeHoldingDescendant|TestEscapedDescendant|TestEscapedQuietDescendant|TestFrameCrashWithStdoutHolder|TestCgroupLiveUntilReleased)$'
           if ($LASTEXITCODE -ne 0) { throw 'repeated tree cleanup tests failed' }
       - name: P05 도구 경로 회귀 검사
-        timeout-minutes: 3
+        timeout-minutes: 6
         run: |
           $taskTestRoot = Join-Path $env:RUNNER_TEMP "p05-tool-check-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/prepare-p05/self-test.ps1 -Destination $taskTestRoot
@@ -224,7 +223,7 @@ jobs:
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { throw 'tracked files changed' }
       - name: S04 generator 재현 (owned fixture, tree-sitter 0.27.1)
-        timeout-minutes: 7
+        timeout-minutes: 5
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |

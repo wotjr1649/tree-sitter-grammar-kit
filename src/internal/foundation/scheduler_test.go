@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -363,11 +364,37 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 	}
 }
 
-// foundationBudget is #260: every foundation step carries its own timeout, which outlasts
-// the go test timeouts and timeout(1) wrappers it runs in sequence plus 30 seconds to build
-// each go test; the job outlasts, on every host, the sum of the steps that host runs plus one
-// minute for the runner. A hang then fails in its own step with that step's diagnostics.
-func foundationBudget(text string) error {
+// foundationBudget is #260. It orders the configured limits, not every possible wall time:
+// each foundation step carries its own timeout, which outlasts the nominal deadlines it runs
+// in sequence (each go test -timeout plus 30 seconds to build it, each timeout(1) wrapper and
+// the declared deadlines of the scripts it calls), and the job outlasts, on every host, the
+// sum of the steps that host runs plus one minute of runner allowance. A go test over several
+// packages applies its timeout per package, so its own wall time is not bounded by it, and
+// the runner allowance is operational, not a measured bound. Forms it cannot read fail.
+func foundationBudget(text string, read func(string) (string, error)) error {
+	// scripts maps each script a step may call to its own deadlines in seconds and the literal
+	// witnesses (file, text, count) they are derived from; 0 means no deadline of its own.
+	type witness struct {
+		file, text string
+		count      int
+	}
+	scripts := map[string]struct {
+		seconds   int
+		witnesses []witness
+	}{
+		"src/dev/ci-gate/modules.ps1":            {0, nil},
+		"src/dev/ci-gate/config.ps1":             {0, nil},
+		"src/dev/s05-native/select-compiler.ps1": {0, nil},
+		// -Routes none runs no reproduce; Invoke-WebRequest -TimeoutSec bounds a connection, not the download
+		"src/dev/s05-native/prepare-routes.ps1": {0, nil},
+		// two reproduce workspaces of wall_seconds 120 each
+		"src/dev/s04-reproduce/ci-owned.ps1": {240, []witness{{"src/dev/s04-reproduce/ci-owned.ps1", "wall_seconds = 120;", 1}}},
+		// the owned fixture build (30 s), two 120 s evidence collections off Windows and the
+		// owned process runs of a few seconds each
+		"src/dev/prepare-p05/self-test.ps1": {300, []witness{{"src/dev/prepare-p05/self-test.ps1", "WaitForExit(30000)", 1},
+			{"src/dev/prepare-p05/self-test.ps1", "& (Join-Path $PSScriptRoot 'collect.ps1') -Root", 2},
+			{"src/dev/prepare-p05/collect.ps1", "TotalSeconds -gt 120", 1}}},
+	}
 	body := workflowJobBody(text, "foundation")
 	head, steps, ok := strings.Cut(body, "\n    steps:\n")
 	m := regexp.MustCompile(`(?m)^    timeout-minutes: ([0-9]+)$`).FindStringSubmatch(head)
@@ -375,26 +402,59 @@ func foundationBudget(text string) error {
 		return fmt.Errorf("foundation job limit missing")
 	}
 	job, _ := strconv.Atoi(m[1])
+	steps = "\n" + steps
+	if len(regexp.MustCompile(`\n      -(\s|$)`).FindAllString(steps, -1)) != len(regexp.MustCompile(`\n      - (name|uses): `).FindAllString(steps, -1)) {
+		return fmt.Errorf("unrecognized foundation step form")
+	}
+	goTest := regexp.MustCompile(`go test [^\n]*`)
+	goTimeout := regexp.MustCompile(` -timeout ([0-9]+)s( |\)|$)`)
+	wrapper := regexp.MustCompile(`(^|[ &])timeout --kill-after=([0-9]+)s ([0-9]+)s `)
+	call := regexp.MustCompile(`& (src/[^ \n]+\.ps1)`)
 	sum := map[string]int{"Windows": 1, "Linux": 1, "macOS": 1}
-	for _, step := range strings.Split("\n"+steps, "\n      - ")[1:] {
+	for _, step := range strings.Split(steps, "\n      - ")[1:] {
 		name, _, _ := strings.Cut(step, "\n")
 		m := regexp.MustCompile(`(?m)^        timeout-minutes: ([0-9]+)$`).FindStringSubmatch(step)
 		if m == nil {
 			return fmt.Errorf("unbounded foundation step: %s", name)
 		}
 		minutes, _ := strconv.Atoi(m[1])
-		inner := 30 * strings.Count(step, "go test ")
-		for _, t := range regexp.MustCompile(`go test [^\n]* -timeout ([0-9]+)s`).FindAllStringSubmatch(step, -1) {
-			n, _ := strconv.Atoi(t[1])
+		inner := 0
+		for _, line := range goTest.FindAllString(step, -1) {
+			inner += 30
+			if strings.HasPrefix(line, "go test -c ") {
+				continue // a build only
+			}
+			t := goTimeout.FindAllStringSubmatch(line, -1)
+			if len(t) != 1 || strings.Count(line, "-timeout") != 1 {
+				return fmt.Errorf("step %s: unrecognized go test timeout: %s", name, line)
+			}
+			n, _ := strconv.Atoi(t[0][1])
 			inner += n
 		}
-		for _, t := range regexp.MustCompile(`timeout --kill-after=([0-9]+)s ([0-9]+)s `).FindAllStringSubmatch(step, -1) {
-			k, _ := strconv.Atoi(t[1])
-			n, _ := strconv.Atoi(t[2])
+		wrappers := wrapper.FindAllStringSubmatch(step, -1)
+		if len(wrappers) != len(regexp.MustCompile(`(^|[ &])timeout `).FindAllString(step, -1)) {
+			return fmt.Errorf("step %s: unrecognized timeout wrapper", name)
+		}
+		for _, w := range wrappers {
+			k, _ := strconv.Atoi(w[2])
+			n, _ := strconv.Atoi(w[3])
 			inner += k + n
 		}
+		for _, c := range call.FindAllStringSubmatch(step, -1) {
+			s, ok := scripts[c[1]]
+			if !ok {
+				return fmt.Errorf("step %s: script without a declared deadline: %s", name, c[1])
+			}
+			for _, w := range s.witnesses {
+				data, err := read(w.file)
+				if err != nil || strings.Count(data, w.text) != w.count {
+					return fmt.Errorf("step %s: deadline witness changed: %s %q", name, w.file, w.text)
+				}
+			}
+			inner += s.seconds
+		}
 		if inner > minutes*60 {
-			return fmt.Errorf("step %s: inner timeouts %ds exceed %d minutes", name, inner, minutes)
+			return fmt.Errorf("step %s: inner deadlines %ds exceed %d minutes", name, inner, minutes)
 		}
 		for host := range sum {
 			if c := regexp.MustCompile(`(?m)^        if: runner.os == '([A-Za-z]+)'$`).FindStringSubmatch(step); c == nil || c[1] == host {
@@ -411,8 +471,13 @@ func foundationBudget(text string) error {
 }
 
 func TestWorkflowFoundationBudget(t *testing.T) {
-	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
-	if err := foundationBudget(text); err != nil {
+	root := repository(t)
+	text := string(mustRead(t, filepath.Join(root, ".github/workflows/foundation.yml")))
+	disk := func(p string) (string, error) {
+		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(p)))
+		return string(b), err
+	}
+	if err := foundationBudget(text, disk); err != nil {
 		t.Fatal(err)
 	}
 	for name, broken := range map[string]string{
@@ -422,10 +487,31 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		"frame-outlasts":   strings.Replace(text, "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 6\n", "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 4\n", 1),
 		"wrapper-outlasts": strings.Replace(text, "timeout --kill-after=5s 40s unshare", "timeout --kill-after=5s 100s unshare", 1),
 		"linux-step-grows": strings.Replace(text, "        if: runner.os == 'Linux'\n        timeout-minutes: 4\n", "        if: runner.os == 'Linux'\n        timeout-minutes: 7\n", 1),
+		"p05-short":        strings.Replace(text, "      - name: P05 도구 경로 회귀 검사\n        timeout-minutes: 6\n", "      - name: P05 도구 경로 회귀 검사\n        timeout-minutes: 4\n", 1),
+		"timeout-equals":   strings.Replace(text, "-failfast -timeout 200s", "-failfast -timeout=900s", 1),
+		"timeout-minutes":  strings.Replace(text, "-failfast -timeout 200s", "-failfast -timeout 15m", 1),
+		"no-go-timeout":    strings.Replace(text, " -json -timeout 60s)", " -json)", 1),
+		"other-wrapper":    strings.Replace(text, "& timeout --kill-after=5s 15s env", "& timeout 900s env", 1),
+		"unknown-script":   strings.Replace(text, "          & src/dev/ci-gate/config.ps1\n", "          & src/dev/ci-gate/config.ps1\n          & src/dev/ci-gate/other.ps1\n", 1),
+		"bare-dash-step":   strings.Replace(text, "      - name: Verify clean validation output\n", "      -\n        name: extra\n        run: Start-Sleep 3600\n      - name: Verify clean validation output\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
-			if broken == text || foundationBudget(broken) == nil {
+			if broken == text || foundationBudget(broken, disk) == nil {
 				t.Fatal("foundation budget control not rejected")
+			}
+		})
+	}
+	for name, file := range map[string]string{"collection-grows": "src/dev/prepare-p05/collect.ps1", "reproduce-grows": "src/dev/s04-reproduce/ci-owned.ps1"} {
+		t.Run(name, func(t *testing.T) {
+			changed := func(p string) (string, error) {
+				s, err := disk(p)
+				if p == file {
+					s = strings.NewReplacer("TotalSeconds -gt 120", "TotalSeconds -gt 600", "wall_seconds = 120;", "wall_seconds = 600;").Replace(s)
+				}
+				return s, err
+			}
+			if foundationBudget(text, changed) == nil {
+				t.Fatal("script deadline change not rejected")
 			}
 		})
 	}
