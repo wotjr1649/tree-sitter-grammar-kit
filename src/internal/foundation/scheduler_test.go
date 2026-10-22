@@ -188,7 +188,7 @@ func TestWorkflowRouteSchedulePolicy(t *testing.T) {
 
 func integrationPolicy(text string) error {
 	needs := "    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]\n"
-	eventRule := `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}` + "\n"
+	eventRule := `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}` + "\n"
 	for _, name := range []string{"race", "macos-regenerate"} {
 		body := workflowJobBody(text, name)
 		if !strings.Contains(body, needs) || !strings.Contains(body, eventRule) || !strings.Contains(body, "      - name: 진단 실패 전파\n        if: always()\n") || !strings.Contains(body, "if ($outcome -ne 'success') { throw '") {
@@ -196,7 +196,7 @@ func integrationPolicy(text string) error {
 		}
 	}
 	body := workflowJobBody(text, "integration-gate")
-	for _, required := range []string{needs, "    name: integration gate\n", "    if: ${{ always() }}\n", "    timeout-minutes: 15\n", "      contents: read\n      actions: read\n", "PRODUCER_RESULTS: ${{ toJSON(needs) }}", "GH_TOKEN: ${{ github.token }}", "& src/dev/ci-gate/fetch.ps1 -Gate ", " verify -expected ", "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "if ($LASTEXITCODE -ne 0) { throw 'integration gate failed' }"} {
+	for _, required := range []string{needs, "    name: integration gate\n", "    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}\n", "    timeout-minutes: 15\n", "      contents: read\n      actions: read\n", "PRODUCER_RESULTS: ${{ toJSON(needs) }}", "GH_TOKEN: ${{ github.token }}", "& src/dev/ci-gate/fetch.ps1 -Gate ", " verify -expected ", "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "if ($LASTEXITCODE -ne 0) { throw 'integration gate failed' }"} {
 		if !strings.Contains(body, required) {
 			return fmt.Errorf("integration gate policy missing: %s", required)
 		}
@@ -223,7 +223,9 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 		"PR-target-diagnostic":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
 		"missing-large-dependency": strings.ReplaceAll(text, "native-routes-macos, large-api, qualification]", "native-routes-macos, qualification]"),
 		"missing-Mac-dependency":   strings.ReplaceAll(text, "native-routes, native-routes-macos, large-api", "native-routes, large-api"),
-		"gate-not-always":          strings.Replace(text, "    if: ${{ always() }}\n", "    if: ${{ success() }}\n", 1),
+		"gate-not-always":          strings.Replace(text, "    if: ${{ always() && !(", "    if: ${{ success() && !(", 1),
+		"gate-skips-off-schedule":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
+		"diagnostics-on-duplicate": strings.ReplaceAll(text, " && needs.foundation.result != 'skipped' }}", " }}"),
 		"swallowed-fetch":          strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "Write-Warning 'download failed'", 1),
 		"swallowed-diagnostic":     strings.ReplaceAll(text, "if ($outcome -ne 'success') { throw '", "if ($outcome -ne 'success') { Write-Warning '"),
 		"diagnostics-success-only": strings.ReplaceAll(text, "!cancelled() && contains", "success() && contains"),
@@ -244,7 +246,7 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 // integration gate neither needs mode nor skips, so a light run cannot pass it.
 func lightModePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
-	for _, required := range []string{"    name: CI mode\n", "    runs-on: ubuntu-24.04\n", "    timeout-minutes: 5\n", "    permissions:\n      pull-requests: read\n    outputs:\n",
+	for _, required := range []string{"    name: CI mode\n", "    runs-on: ubuntu-24.04\n", "    timeout-minutes: 5\n", "    permissions:\n      pull-requests: read\n      actions: read\n    outputs:\n",
 		"      heavy: ${{ steps.mode.outputs.heavy }}\n", "          $heavy = 'true'\n", "          if ($env:EVENT -eq 'pull_request') {\n",
 		"            if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }\n", `          "heavy=$heavy" >> $env:GITHUB_OUTPUT` + "\n", "          exit 0 # a failed lookup already chose full"} {
 		if !strings.Contains(mode, required) {
@@ -269,9 +271,9 @@ func lightModePolicy(text string) error {
 	if !strings.Contains(prepare, "    needs: [foundation, mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' }}\n") {
 		return fmt.Errorf("native-prepare must start only on a full mode")
 	}
-	for _, name := range []string{"foundation", "native-routes", "native-routes-macos", "large-api", "qualification", "integration-gate", "race", "macos-regenerate"} {
+	for _, name := range []string{"native-routes", "native-routes-macos", "large-api", "qualification", "integration-gate", "race", "macos-regenerate"} {
 		if strings.Contains(workflowJobBody(text, name), "mode") {
-			return fmt.Errorf("only native-prepare consults the mode: %s", name)
+			return fmt.Errorf("only native-prepare and the foundation consult the mode: %s", name)
 		}
 	}
 	return nil
@@ -297,6 +299,58 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || lightModePolicy(broken) == nil {
 				t.Fatal("light mode control not rejected")
+			}
+		})
+	}
+}
+
+// nightlyDuplicatePolicy is #257: a schedule run skips the foundation, and with it every
+// job, only when a successful push or dispatch run of the same main commit finished in the
+// last 24 hours; a nightly success never counts and a failed lookup runs in full. The gate
+// and the diagnostics skip only on that skipped foundation, and the gate only on a schedule,
+// so a pull_request or push run can never leave its required gate skipped.
+func nightlyDuplicatePolicy(text string) error {
+	mode := workflowJobBody(text, "mode")
+	for _, required := range []string{"      duplicate: ${{ steps.mode.outputs.duplicate }}\n", "          SHA: ${{ github.sha }}\n",
+		"          $duplicate = 'false'\n          if ($env:EVENT -eq 'schedule') {\n            try {\n",
+		`/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100"`,
+		"              if ($LASTEXITCODE -eq 0) {\n                $since = [DateTimeOffset]::UtcNow.AddHours(-24)\n",
+		"                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and\n",
+		"                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n",
+		"            } catch {\n              $duplicate = 'false'\n            }\n", `          "duplicate=$duplicate" >> $env:GITHUB_OUTPUT` + "\n"} {
+		if !strings.Contains(mode, required) {
+			return fmt.Errorf("nightly duplicate policy missing: %q", required)
+		}
+	}
+	if strings.Count(mode, "$duplicate = 'true'") != 1 {
+		return fmt.Errorf("mode has another duplicate path")
+	}
+	foundation := workflowJobBody(text, "foundation")
+	if !strings.Contains(foundation, "    needs: mode\n    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n") {
+		return fmt.Errorf("the foundation must skip only on a duplicate nightly")
+	}
+	return integrationPolicy(text)
+}
+
+func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := nightlyDuplicatePolicy(text); err != nil {
+		t.Fatal(err)
+	}
+	for name, broken := range map[string]string{
+		"any-event":         strings.Replace(text, "          if ($env:EVENT -eq 'schedule') {\n            try {\n", "          if ($true) {\n            try {\n", 1),
+		"nightly-counts":    strings.Replace(text, "@('push', 'workflow_dispatch')", "@('push', 'workflow_dispatch', 'schedule')", 1),
+		"no-window":         strings.Replace(text, " -and $conclusion -eq 'success' -and\n                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n", ") {\n", 1),
+		"any-branch":        strings.Replace(text, " -and $branch -eq 'main'", "", 1),
+		"default-duplicate": strings.Replace(text, "          $duplicate = 'false'\n          if ($env:EVENT", "          $duplicate = 'true'\n          if ($env:EVENT", 1),
+		"failed-lookup":     strings.Replace(text, "              if ($LASTEXITCODE -eq 0) {\n                $since", "              if ($true) {\n                $since", 1),
+		"error-duplicate":   strings.Replace(text, "            } catch {\n              $duplicate = 'false'\n", "            } catch {\n              $duplicate = 'true'\n", 1),
+		"foundation-always": strings.Replace(text, "    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", 1),
+		"gate-skips-on-pr":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || nightlyDuplicatePolicy(broken) == nil {
+				t.Fatal("nightly duplicate control not rejected")
 			}
 		})
 	}

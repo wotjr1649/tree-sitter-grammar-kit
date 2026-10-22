@@ -30,6 +30,10 @@ env:
 jobs:
   foundation:
     name: foundation (${{ matrix.os }})
+    # #257: a nightly run whose commit a recent push run already proved skips every job;
+    # the rest follow from this skip, and the diagnostics and the gate skip only with it.
+    needs: mode
+    if: ${{ needs.mode.outputs.duplicate != 'true' }}
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -245,7 +249,7 @@ jobs:
     # Diagnostics wait for native/large validation and qualification; their width is 3.
     name: race diagnostic (${{ matrix.os }})
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -356,7 +360,7 @@ jobs:
     # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
     name: regenerate diagnostic (macos-15)
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) }}
+    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
     runs-on: macos-15
     timeout-minutes: 30
     defaults:
@@ -462,8 +466,10 @@ jobs:
     timeout-minutes: 5
     permissions:
       pull-requests: read
+      actions: read
     outputs:
       heavy: ${{ steps.mode.outputs.heavy }}
+      duplicate: ${{ steps.mode.outputs.duplicate }}
     defaults:
       run:
         shell: pwsh
@@ -473,6 +479,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
           $heavy = 'true'
@@ -480,8 +487,31 @@ jobs:
             $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')
             if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }
           }
+          # #257: only a successful push or dispatch run of this commit in the last 24 hours makes
+          # a nightly run a duplicate; nightly successes never count, so an unchanged main still
+          # runs in full once a day, and a failed lookup runs in full
+          $duplicate = 'false'
+          if ($env:EVENT -eq 'schedule') {
+            try {
+              $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100" --jq '.workflow_runs[] | [.id, .event, .head_branch, .conclusion, .updated_at] | @tsv')
+              if ($LASTEXITCODE -eq 0) {
+                $since = [DateTimeOffset]::UtcNow.AddHours(-24)
+                foreach ($row in $rows) {
+                  $id, $trigger, $branch, $conclusion, $updated = $row -split "`t"
+                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and
+                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
+                    $duplicate = 'true'
+                    "CI mode: run $id already passed $env:SHA"
+                  }
+                }
+              }
+            } catch {
+              $duplicate = 'false'
+            }
+          }
           "heavy=$heavy" >> $env:GITHUB_OUTPUT
-          "CI mode: heavy=$heavy"
+          "duplicate=$duplicate" >> $env:GITHUB_OUTPUT
+          "CI mode: heavy=$heavy duplicate=$duplicate"
           exit 0 # a failed lookup already chose full; its exit code must not fail the job
 
   native-prepare:
@@ -981,7 +1011,7 @@ jobs:
   integration-gate:
     name: integration gate
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ always() }}
+    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
