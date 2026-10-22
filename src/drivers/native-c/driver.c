@@ -1938,7 +1938,8 @@ static int handle(const uint8_t *data, size_t n) {
   req_free(&r);
   mem_limit = MAX_MEMORY;
 #ifdef TSGK_FAULT_LEAK
-  t_malloc(16); /* owned fault: a frame that leaves an allocation behind */
+  static void *leaked; /* owned fault: a frame leaves an allocation behind, still reachable for LeakSanitizer */
+  leaked = t_malloc(16);
 #endif
   return exit_for(status);
 }
