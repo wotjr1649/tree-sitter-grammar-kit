@@ -731,15 +731,19 @@ jobs:
           # #217: a registered case's error-tree route BLOCKED is undisposed. The remaining
           # originals are dispositioned in reuse-holdouts.json, whose pinned outcome (route
           # BLOCKED with the old tree observed, kit FAIL with it omitted) is checked below.
-          $undisposed = @((Get-Content -Raw -LiteralPath (Join-Path $out 'summary.json') | ConvertFrom-Json).requirement_results | Where-Object { $_.claim -eq 'incremental_route' })
-          if ($undisposed.Count -ne 0) { throw "undisposed route BLOCKED (#217): $(@($undisposed | ForEach-Object { $_.case }) -join ', ')" }
+          & src/dev/s05-native/check-dispositions.ps1 -Summary (Join-Path $out 'summary.json')
           $env:TSGK_NATIVE_REQUIRED = '1'
           $env:TSGK_CGROUP_PARENT = $cgroup
           $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'
           $env:TSGK_NATIVE_RUNTIME = Join-Path $env:TSGK_BENCH_PREPARED 'runtime'
           $env:TSGK_NATIVE_CC = $cc
+          foreach ($route in @('json', 'tsql')) {
+            if (!(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED "routes/$route/src/parser.c") -PathType Leaf)) { throw "reuse holdout prepared closure missing: $route" }
+          }
           go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'reuse holdout disposition or omit-old control failed' }
+          # a skipped run passes go test; the ledger must have run in full
+          if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -SimpleMatch -Quiet -Pattern '--- PASS: TestNativeReuseHoldouts')) { throw 'reuse holdouts did not run' }
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }

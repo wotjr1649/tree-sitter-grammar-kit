@@ -1,12 +1,12 @@
 # #217 오류 tree route BLOCKED 원본 처분
 
-기준 main은 `8578f5351197080e7284629f0f6e7c58f42b910f`이다. #217의 1/3(#249)은 필수 관측과 old tree 확인을, 2/3(#250)은 qualification 소비를 추가했다. 이 3/3은 그 규칙 위에서 역사적 오류 tree route BLOCKED 원본을 사례별로 처분한다. logger accepted에 근거한 새 재사용 증명 claim과 원본의 BLOCKED→PASS 승격은 하지 않는다. 그 claim은 [tree/adapter 계약](../specs/tree-and-adapter-protocol.md)의 `필수 관측 판정`대로 이 revision에 없으며, 후속 Issue로 분리한다.
+기준 main은 `8578f5351197080e7284629f0f6e7c58f42b910f`이다. #217의 1/3(#249)은 필수 관측과 old tree 확인을, 2/3(#250)은 qualification 소비를 추가했다. 이 3/3은 그 규칙 위에서 역사적 오류 tree route BLOCKED 원본을 사례별로 처분한다. logger accepted에 근거한 새 재사용 증명 claim과 원본의 BLOCKED→PASS 승격은 하지 않는다. 그 claim은 [tree/adapter 계약](../specs/tree-and-adapter-protocol.md)의 `필수 관측 판정`대로 이 revision에 없으며, [#264](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/264)로 분리했다.
 
 ## 처분 대상
 
 등록 corpus의 route BLOCKED는 main run [39763842546](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/39763842546)의 세 OS `s05-routes-*` `summary.json`에서 0건이다(`requirement_results` 0). case 3,113개는 PASS이고 BLOCKED는 1건이다. 그 1건은 SVC 등록 사례 `n461-svc-language-vb-n-r1`(`SVC_INLINE_UNSUPPORTED`)이다. 등록 때 BLOCKED를 기대한 사례이며 incremental route BLOCKED가 아니므로 이 처분의 분모에 넣지 않고 따로 센다.
 
-남은 원본 15개는 모두 등록 corpus 밖에 있다. [reuse holdout 원장](../../src/testdata/native/reuse-holdouts.json)이 각 원본의 source, 정확한 byte edit, 출처를 고정한다.
+남은 원본 15개는 모두 등록 corpus 밖에 있다. [reuse holdout 원장](../../src/testdata/native/reuse-holdouts.json)이 각 원본의 source, 정확한 byte edit, 출처를 기록한다. 그 값은 `TestReuseHoldoutRegistry`의 digest로 고정된다.
 
 | 원본 | 수 | 출처 | 등록 corpus와의 관계 |
 |---|---:|---|---|
@@ -16,7 +16,7 @@
 
 ## 사례별 처분
 
-이 원장은 원본을 다시 실행한 결과만 기록한다. 과거 기록의 판정은 바꾸지 않는다. 로컬 Windows/amd64(gcc 15 ucrt64, v0.27.1 prepared closure)에서 15개 모두를 정상 build와 old tree 생략 build(`TSGK_FAULT_OMIT_OLD_TREE`)로 실행했다. 모든 parse는 incremental·fresh 관측이 `COMPLETE`였다.
+이 원장은 원본을 다시 실행한 결과만 기록한다. 과거 기록의 판정은 바꾸지 않는다. 로컬 Windows/amd64(gcc 15 ucrt64, v0.27.1 prepared closure)에서 15개 모두를 정상 build와 old tree 생략 build(`TSGK_FAULT_OMIT_OLD_TREE`)로 실행했다. initial parse와 모든 edit step의 incremental·fresh 관측이 `COMPLETE`였다.
 
 | 원본 | 정상 build의 BLOCKED step | old tree 생략 build의 첫 FAIL step |
 |---|---|---|
@@ -32,20 +32,20 @@
 ## 판정 유지 검사
 
 - `TestReuseHoldoutRegistry`(foundation job)가 다음을 고정한다.
-  - 원본 15개의 순서와 각 history(route·source·byte edit) digest
+  - 원본 15개의 순서와 각 원본의 digest. digest에는 route, source, byte edit, 출처(revision·artifact hash·pointer 등), sibling이 들어간다.
   - 등록 case ID와의 비충돌
   - BLOCKED step과 생략 build 첫 FAIL step의 범위
   - #198 사전 등록 hash
   - #170 sibling의 version 대응
 
-  원본을 빼거나 바꾸거나 edit를 바꾸면 실패한다. 같은 최종 bytes를 만드는 다른 edit 범위로 바꿔도 실패한다.
+  원본을 빼거나 바꾸거나 edit나 출처를 바꾸면 실패한다. 같은 최종 bytes를 만드는 다른 edit 범위로 바꿔도 실패한다.
 - `TestNativeReuseHoldouts`(세 native routes job)가 다음을 다시 확인한다.
   - 정상 build: 고정한 step에서만 route BLOCKED이고, 그 step의 `accepted>0`, `reused_nodes=0`이다.
   - old tree 생략 build: 고정한 첫 step의 kit FAIL이다.
-  - 모든 parse의 관측: `COMPLETE`
+  - initial parse와 모든 edit step의 관측: `COMPLETE`
 
-  OS별 결과가 원장과 다르면 job이 실패한다. 처분을 다시 정해야 한다는 뜻이다.
-- 같은 job이 run-routes `summary.json`의 `requirement_results`에서 등록 사례의 `incremental_route` BLOCKED를 미처분으로 보고 실패한다. route BLOCKED의 판정, E 의무 BLOCKED, kit 축의 의미는 바꾸지 않는다. 새 BLOCKED가 생기면 사례를 corpus에서 빼지 않는다. 원인을 조사하고 처분을 별도 변경으로 검토한다.
+  OS별 결과가 원장과 다르면 job이 실패한다. 처분을 다시 정해야 한다는 뜻이다. job은 실행 전에 JSON·T-SQL prepared parser가 있는지 확인한다. 실행 뒤에는 log에서 시험이 skip 없이 통과했는지 확인한다.
+- 같은 job의 `check-dispositions.ps1`이 run-routes `summary.json`의 `requirement_results`에서 등록 사례·SVC segment의 `incremental_route` BLOCKED를 미처분으로 보고 실패한다. schema가 다르거나 `requirement_results`가 없거나 배열이 아닌 summary도 실패다(`TestCheckDispositions`). route BLOCKED의 판정, E 의무 BLOCKED, kit 축의 의미는 바꾸지 않는다. 새 BLOCKED가 생기면 사례를 corpus에서 빼지 않는다. 원인을 조사하고 처분을 별도 변경으로 검토한다.
 
 ## 집계
 
@@ -63,4 +63,4 @@ S05와 S06 실행, 세 OS, 여러 step은 원본 수가 아니다. 위 수는 �
 
 ## 비용
 
-로컬 Windows에서 `TestNativeReuseHoldouts`는 JSON·T-SQL의 정상과 생략 build 4개를 포함해 64초였다. 이전 JSON 시험은 JSON build 2개였다. workflow의 go test 상한은 180초에서 300초로 올렸다. 증가한 job 시간은 기존 margin 감시가 측정한다. 이 증가는 원장 실행과 T-SQL 컴파일 비용이며 logger 단독 overhead가 아니다.
+로컬 Windows에서 `TestNativeReuseHoldouts`는 JSON·T-SQL의 정상과 생략 build 4개를 포함해 64초였다. 이전 JSON 시험은 JSON build 2개였고, 같은 helper가 JSON benchmark baseline 실행 파일도 세 OS에서 컴파일했다. 새 시험은 native driver만 build한다. baseline control은 기존 Windows 단계(`TestNativeBenchmarkControls`)에 남는다. workflow의 go test 상한은 180초에서 300초로 올렸다. 증가한 job 시간은 기존 margin 감시가 측정한다. 이 증가는 원장 실행과 T-SQL 컴파일 비용이며 logger 단독 overhead가 아니다.

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -45,28 +46,29 @@ type reuseHoldout struct {
 }
 
 // TestReuseHoldoutRegistry pins the reuse holdout ledger (#217). The set of originals and
-// each one's history (route, source and exact byte edits) are fixed here, so dropping,
-// replacing or re-editing an original fails even when the file stays self-consistent. A
+// each one's history (route, source, exact byte edits) and provenance (origin, sibling) are
+// fixed here, so dropping, replacing, re-editing or re-sourcing an original fails even when
+// the file stays self-consistent. A
 // holdout never shares an ID with a registered case, its recorded steps lie in its history,
 // a #198 original matches its preregistered hashes, and every version of a #170 original's
 // protected sibling is the 29-byte prefix followed by the original's version.
 func TestReuseHoldoutRegistry(t *testing.T) {
 	pinned := []struct{ id, history string }{
-		{"tsql-issue137-builtin-default-r1", "d28caf5802caf01a8163233f3012a5e2df753e3bedd552e7b794a5bb1940db08"},
-		{"tsql-issue137-dynamic-payload-r1", "ebe3200d3f2be3834bb1069f9df7a1d43741567fc8ae058d460a28f18c2d82e1"},
-		{"tsql-issue139-procedure-r1", "9afac1e6907742fe02a3738274f3c8d2282a3a05d1414c4371b335e4b2dfe836"},
-		{"tsql-issue139-function-r1", "c8f3c83d79e96dd037df26361ba2466367471efc539cd49d3346da8a96cf6459"},
-		{"tsql-issue139-output-r1", "0cf51c44802ce762c60b2c89afbeec5e7fa024ed29aaa28130c4a0f1f9df1fea"},
-		{"tsql-issue139-clr-r1", "dfad423e945d9ed31d40cc0ca297c79a000b5724885e7e8c31238abbd858965b"},
-		{"tsql-issue138-leading-01473-r1", "c9403507404c2ffecf997d402eb2fce972b020ee1ef994e006c84589156bfe00"},
-		{"tsql-issue138-leading-02133-r1", "729cebcfe10a3ad2168f86bdbebf54b571c24a32db198ac6e461c8011e8b934c"},
-		{"tsql-issue138-leading-02657-r1", "be5598edcd9081fdbc3f9b7648e26fcf7587c0b1c9e954ebfaa65b0f2d717649"},
-		{"tsql-issue148-negative-pair-00-r1", "7cbabba62d4df695b9426f1a62ff56e6137453aa081258a84969c3399b274ad6"},
-		{"tsql-issue148-negative-pair-01-r1", "dde297f65cca5dfd9cc55544c2eef2a3ccdac4ae1f0efaa6b3083cc24a9fed2c"},
-		{"tsql-issue198-unclosed-bracket", "760e7cf137f08ed7fc96393338c78f2dbfec204b656504be9346196e8ee14ffe"},
-		{"json-repair-close", "ef207e069b058e6c66bd8456bfbdf21b7306c54f2ed707d159c4dab91db53414"},
-		{"json-break-close", "0484e09150af8aa30c80a83a64b2a9eff001d83a1739f9384c6c84714949e2aa"},
-		{"json-repair-colon", "f8fd991b5b06019acb9443b48087302710cc15ba0d6984a5eb7b297ec231e4aa"},
+		{"tsql-issue137-builtin-default-r1", "2ad13ee607cee027a37d5befd32cd3b0631e264e3cb457c283ee7b0dddf887be"},
+		{"tsql-issue137-dynamic-payload-r1", "fbf8c284edcaaca71184ceb75136287df918fe65b8c1537b4f57292eacdfea82"},
+		{"tsql-issue139-procedure-r1", "cd04860981964a5c095942af88687380aa5da96b6654207b2598a1d9f94c4b87"},
+		{"tsql-issue139-function-r1", "c2aafc7ed41835a32261e26c0a952704c1f41dd1c9827621e325da94c81b648c"},
+		{"tsql-issue139-output-r1", "5ceeaef45094a32ed425a7bba94a476f4b68aba5699d61b5b2925d88f23cb31e"},
+		{"tsql-issue139-clr-r1", "a6c3ceb770428d44dc9c1591b73c262a1eb8f39b24422d3013241ad4367a8643"},
+		{"tsql-issue138-leading-01473-r1", "4dd79a54f5e7989f630cf7ed0892451bb100746c0466a2772c105c804a5da286"},
+		{"tsql-issue138-leading-02133-r1", "9413f3492cfb52f91cd2389016f9d41ae9731c40cee21e9133f99242e6f27acc"},
+		{"tsql-issue138-leading-02657-r1", "10df1052447ed0bc97f27ade1d96edbe4226a7ce0b23755a96f976e4a779f9a7"},
+		{"tsql-issue148-negative-pair-00-r1", "09bc82f500d6564fb4832a1a274397f477f7c47c21ceb882f931bc8a1d9f1aed"},
+		{"tsql-issue148-negative-pair-01-r1", "99e269d48f44a5cc9688f517d402caf51f2710686a4ae6937ac4fcf3ac862c79"},
+		{"tsql-issue198-unclosed-bracket", "16a81ed40e4047c134c45b30918eae4c31a1cf8e3076af7a8a0a28eadd8e5d3b"},
+		{"json-repair-close", "fa64cce8c757b87ed579cb4b851f4d6e70d808f5fc066b27cbfb545e4d39caa8"},
+		{"json-break-close", "97674f16d0dcc62788bd91b76f24aa4458d4e1c27062c9e3b4201d7758bdb909"},
+		{"json-repair-colon", "5d7ca0aaa6d8b6458b9cc78bbb905d863adc8dd3eb3477c0ae3fa7fd30a36e39"},
 	}
 	root := repository(t)
 	data, err := os.ReadFile(filepath.Join(root, "src", "testdata", "native", "reuse-holdouts.json"))
@@ -110,9 +112,10 @@ func TestReuseHoldoutRegistry(t *testing.T) {
 			edits = append(edits, kit.Edit{StartByte: e.StartByte, OldEndByte: e.OldEndByte, NewEndByte: e.NewEndByte, Old: []byte(e.Old), New: []byte(e.New)})
 		}
 		identity, _ := json.Marshal(struct {
-			Route, Source string
-			Edits         []kit.Edit
-		}{h.Route, h.SourceUTF8, edits})
+			Route, Source, Sibling string
+			Origin                 any
+			Edits                  []kit.Edit
+		}{h.Route, h.SourceUTF8, h.Sibling, h.Origin, edits})
 		sum := sha256.Sum256(identity)
 		if h.ID != pinned[i].id || hex.EncodeToString(sum[:]) != pinned[i].history {
 			t.Errorf("holdout %d: %s history %x, pinned %s %s", i, h.ID, sum, pinned[i].id, pinned[i].history)
@@ -175,18 +178,62 @@ func TestReuseHoldoutRegistry(t *testing.T) {
 	}
 }
 
-// TestReuseHoldoutWorkflow keeps the native routes job checking the ledger (#217): every
-// registered case's error-tree route BLOCKED fails it as undisposed, and the holdouts run
-// with the old tree passed and omitted.
+// TestReuseHoldoutWorkflow keeps the native routes job checking the ledger (#217): the
+// disposition gate reads the route run's summary, and the holdouts must run in full.
 func TestReuseHoldoutWorkflow(t *testing.T) {
 	text := string(mustRead(t, filepath.Join(repository(t), ".github", "workflows", "foundation.yml")))
 	for _, want := range []string{
-		"$undisposed = @((Get-Content -Raw -LiteralPath (Join-Path $out 'summary.json') | ConvertFrom-Json).requirement_results | Where-Object { $_.claim -eq 'incremental_route' })",
-		"if ($undisposed.Count -ne 0) { throw",
-		"go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v",
+		"          if ($routesExit -ne 0) { throw 'route run reported failures' }\n",
+		"          & src/dev/s05-native/check-dispositions.ps1 -Summary (Join-Path $out 'summary.json')\n",
+		"          go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1\n          if ($LASTEXITCODE -ne 0) {",
+		"-SimpleMatch -Quiet -Pattern '--- PASS: TestNativeReuseHoldouts')) { throw",
 	} {
 		if strings.Count(text, want) != 1 {
 			t.Errorf("foundation.yml: %q not present exactly once", want)
 		}
+	}
+	if strings.Index(text, "check-dispositions.ps1") < strings.Index(text, "throw 'route run reported failures'") {
+		t.Error("foundation.yml: the disposition gate runs before the route run's result is checked")
+	}
+}
+
+// TestCheckDispositions runs the disposition gate on route run summaries: a registered
+// case's or SVC segment's incremental route BLOCKED fails, so does a summary that cannot
+// show one; a query expectation result alone passes.
+func TestCheckDispositions(t *testing.T) {
+	pwsh, err := exec.LookPath("pwsh")
+	if err != nil {
+		t.Skip("pwsh not available: check-dispositions.ps1 not executed (TestReuseHoldoutWorkflow still applies)")
+	}
+	script := filepath.Join(repository(t), "src", "dev", "s05-native", "check-dispositions.ps1")
+	route := func(label string) string {
+		return `{"case": "` + label + `", "claim": "incremental_route", "result": "BLOCKED", "code": "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1", "failures": []}`
+	}
+	query := `{"case": "oracle r/q", "claim": "query_expectations", "result": "BLOCKED", "code": "ORACLE_CLAIM_FAILED", "failures": []}`
+	for _, tc := range []struct {
+		name, summary, want string
+	}{
+		{"empty", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": []}`, "undisposed_route_blocked=0"},
+		{"query-only", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [` + query + `]}`, "requirement_results=1 undisposed_route_blocked=0"},
+		{"s05-route", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [` + query + `, ` + route("tsql/a") + `]}`, "!undisposed route BLOCKED (#217): tsql/a"},
+		{"s06-route", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [` + route("oracle tsql/a") + `]}`, "!undisposed route BLOCKED (#217): oracle tsql/a"},
+		{"segment-route", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [` + route("csharp-svc/s segment [0,2)") + `]}`, "!undisposed route BLOCKED (#217): csharp-svc/s segment [0,2)"},
+		{"missing", `{"schema": "tsgk-s05-route-run/r1"}`, "!requirement_results missing or not an array"},
+		{"null", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": null}`, "!requirement_results missing or not an array"},
+		{"object", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": ` + route("tsql/a") + `}`, "!requirement_results missing or not an array"},
+		{"no-claim", `{"schema": "tsgk-s05-route-run/r1", "requirement_results": [{"case": "tsql/a"}]}`, "!requirement result without a claim"},
+		{"schema", `{"schema": "tsgk-s05-route-run/r0", "requirement_results": []}`, "!not a tsgk-s05-route-run/r1 summary"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "summary.json")
+			if err := os.WriteFile(path, []byte(tc.summary), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			out, err := exec.Command(pwsh, "-NoProfile", "-NonInteractive", "-File", script, "-Summary", path).CombinedOutput()
+			fail, want := strings.HasPrefix(tc.want, "!"), strings.TrimPrefix(tc.want, "!")
+			if (err != nil) != fail || !strings.Contains(string(out), want) {
+				t.Fatalf("err=%v, want failure=%t with %q:\n%s", err, fail, want, out)
+			}
+		})
 	}
 }

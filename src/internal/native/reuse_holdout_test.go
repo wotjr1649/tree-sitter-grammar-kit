@@ -22,9 +22,7 @@ import (
 // history is a kit FAIL from its own first step. Any other outcome changes the disposition.
 func TestNativeReuseHoldouts(t *testing.T) {
 	if os.Getenv("TSGK_BENCH_PREPARED") == "" {
-		if os.Getenv("TSGK_NATIVE_REQUIRED") == "1" {
-			t.Fatal("TSGK_BENCH_PREPARED required")
-		}
+		// the owned suite has no registered closure; the native routes job checks this ran
 		t.Skip("registered prepared closure not configured")
 	}
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "native", "reuse-holdouts.json"))
@@ -70,6 +68,14 @@ func TestNativeReuseHoldouts(t *testing.T) {
 			r := registeredBuild(t, h.Route, defines...).RunCase(ctx, x, kit.IncrementalCase{ID: h.ID, Encoding: kit.EncodingUTF8, Edits: edits}, []byte(h.SourceUTF8))
 			if r.ExecutionStatus != "COMPLETED" || r.Claims.IncrementalEquality != ClaimPass || len(r.Steps) != len(edits)+1 {
 				t.Fatalf("%s omit_old=%t: status=%s code=%s claims=%+v", h.ID, omit, r.ExecutionStatus, r.Code, r.Claims)
+			}
+			for _, o := range r.Steps[0].Observations {
+				if o.Status != "COMPLETE" || o.OldTree || o.Counts.NewParse != 1 {
+					t.Fatalf("%s omit_old=%t initial parse collector: %+v", h.ID, omit, o)
+				}
+			}
+			if len(r.Steps[0].Observations) == 0 {
+				t.Fatalf("%s omit_old=%t: initial parse not observed", h.ID, omit)
 			}
 			var blocked []int
 			for k, s := range r.Steps[1:] {
