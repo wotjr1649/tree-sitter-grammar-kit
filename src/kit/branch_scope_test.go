@@ -59,44 +59,66 @@ func TestBranchSelectionUnclaimed(t *testing.T) {
 	}
 }
 
-// #218: the mark is the set's list in set order and changes no verdict; a route outside the
-// C# grammar lists nothing.
+// #218: the mark lists the marked cases in set order, in required cells and in extra role
+// sets alike, and changes nothing else: an all-covered run stays SUPPORTED.
 func TestQualifyBranchSelectionMark(t *testing.T) {
-	marked := ""
-	summaryCase := qfxAll(qfxMut{record: func(s string, recs []map[string]any) {
-		if s == "s06-fxa" {
-			marked = recs[1]["id"].(string)
-			fxSummaryOut(recs[1]["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any))
-			recs[1]["oracle_claims"].(map[string]string)["api"] = claimBlocked
+	cond := "condition"
+	symbolIf := qfxAll(qfxMut{record: func(s string, recs []map[string]any) {
+		if s != "s06-fxa" && s != "s06-fxh" {
+			return
+		}
+		for _, rec := range recs {
+			tr := rec["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)
+			tree := tr["tree"].(map[string]any)
+			nodes := append(tree["nodes"].([]TreeNode), TreeNode{Parent: 0, Type: "preproc_if", Named: true}, TreeNode{Parent: 2, Type: "identifier", Field: &cond, Named: true})
+			tree["nodes"], tr["digest"], tr["descendant_count"] = nodes, TreeDigest(nodes), len(nodes)
 		}
 	}})
-	f := newQfx(t)
-	plain := f.run(t, f.all(t, summaryCase))
+	covered := func() *qfx {
+		f := newQfx(t)
+		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
+		return f
+	}
+	f := covered()
+	plain := f.run(t, f.all(t, symbolIf))
 	prev := branchSelectionRoutes
-	branchSelectionRoutes = map[string]bool{"fxa": true}
+	branchSelectionRoutes = map[string]bool{"fxa": true, "fxh": true}
 	defer func() { branchSelectionRoutes = prev }()
-	f = newQfx(t)
-	r := f.run(t, f.all(t, summaryCase))
+	f = covered()
+	r := f.run(t, f.all(t, symbolIf))
+	if r.SupportClaim != "SUPPORTED" || r.Assessment != AssessPass {
+		t.Fatalf("marked run: %s %s", r.SupportClaim, r.Assessment)
+	}
 	for _, c := range r.Cells {
 		want := []string{}
 		if c.Route == "fxa" {
-			want = []string{marked}
+			want = []string{"c1", "c2", "q1"}
 		}
 		if !slices.Equal(c.Set.BranchSelectionNotClaimed, want) || c.Set.BranchSelectionNotClaimed == nil {
 			t.Fatalf("%s %s: %v, want %v", c.Route, c.Platform, c.Set.BranchSelectionNotClaimed, want)
 		}
 	}
-	// apart from the list the result is the unmarked one
+	role := slices.IndexFunc(r.ExtraRoles, func(x QualRoleRow) bool { return x.ID == "fx-history" && x.Platform == "windows-amd64" })
+	if role < 0 || len(r.ExtraRoles[role].Sets) != 1 || !slices.Equal(r.ExtraRoles[role].Sets[0].BranchSelectionNotClaimed, []string{"d1"}) {
+		t.Fatalf("extra role set: %+v", r.ExtraRoles)
+	}
+	// apart from the lists the result is the unmarked one
 	strip := func(q QualificationResult) []byte {
 		for i := range q.Cells {
 			q.Cells[i].Set.BranchSelectionNotClaimed = nil
 		}
+		for i := range q.ExtraRoles {
+			for j := range q.ExtraRoles[i].Sets {
+				q.ExtraRoles[i].Sets[j].BranchSelectionNotClaimed = nil
+			}
+		}
 		b, _ := json.Marshal(struct {
-			Cells   []QualCell
-			Support string
-			Claims  map[string]string
-			Totals  QualTotals
-		}{q.Cells, q.SupportClaim, q.PlatformClaims, q.Totals})
+			Cells                     []QualCell
+			Roles                     []QualRoleRow
+			Assessment, Gate, Support string
+			Claims                    map[string]string
+			Totals                    QualTotals
+		}{q.Cells, q.ExtraRoles, q.Assessment, q.MechanismGate, q.SupportClaim, q.PlatformClaims, q.Totals})
 		return b
 	}
 	if !reflect.DeepEqual(strip(plain), strip(r)) {
