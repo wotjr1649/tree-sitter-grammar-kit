@@ -432,7 +432,7 @@ func worseMechanism(a, b string) string {
 
 // evalSet verifies and judges one workload's record set on one host.
 func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (*qset, *Error) {
-	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{},
+	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{}, BranchSelectionNotClaimed: []string{},
 		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
 	h := q.hosts[p.ID]
 	if h == nil {
@@ -702,6 +702,9 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			}
 		}
 		q.judgeCase(s, qc, errNodes, &c, &extra, out, x.nativeInputBytes, add, full, w.Format == SvcFormat || w.Format == SvcLegacyFormat, w.API)
+		if branchSelectionRoutes[w.Route] && branchSelectionUnclaimed(&c) {
+			s.BranchSelectionNotClaimed = append(s.BranchSelectionNotClaimed, c.ID)
+		}
 		if extra.Process != nil {
 			maxWall = max(maxWall, extra.Process.WallMS)
 			maxPeak = max(maxPeak, extra.Process.Memory.PeakBytes)
