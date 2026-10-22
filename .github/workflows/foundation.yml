@@ -728,15 +728,22 @@ jobs:
           & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
           if ($LASTEXITCODE -ne 0) { throw 'run identity failed' }
           if ($routesExit -ne 0) { throw 'route run reported failures' }
-          # #217: the route run above requires observation; the three JSON route BLOCKEDs stay
-          # with the old tree observed, and the omit-old control fails the route.
+          # #217: a registered case's error-tree route BLOCKED is undisposed. The remaining
+          # originals are dispositioned in reuse-holdouts.json, whose pinned outcome (route
+          # BLOCKED with the old tree observed, kit FAIL with it omitted) is checked below.
+          & src/dev/s05-native/check-dispositions.ps1 -Summary (Join-Path $out 'summary.json')
           $env:TSGK_NATIVE_REQUIRED = '1'
           $env:TSGK_CGROUP_PARENT = $cgroup
           $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'
           $env:TSGK_NATIVE_RUNTIME = Join-Path $env:TSGK_BENCH_PREPARED 'runtime'
           $env:TSGK_NATIVE_CC = $cc
-          go test ./src/internal/native -run '^TestNativeReuseJSONKeepsBlockedRoutes$' -count=1 -v -timeout=180s > (Join-Path $out 'reuse-observation.log') 2>&1
-          if ($LASTEXITCODE -ne 0) { throw 'JSON reuse observation/control failed' }
+          foreach ($route in @('json', 'tsql')) {
+            if (!(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED "routes/$route/src/parser.c") -PathType Leaf)) { throw "reuse holdout prepared closure missing: $route" }
+          }
+          go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'reuse holdout disposition or omit-old control failed' }
+          # a skipped run passes go test; the ledger must have run in full
+          if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }

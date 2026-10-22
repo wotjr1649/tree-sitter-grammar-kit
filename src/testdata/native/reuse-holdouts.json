@@ -1,0 +1,573 @@
+{
+  "schema": "tsgk-reuse-holdouts/r1",
+  "holdouts": [
+    {
+      "id": "tsql-issue137-builtin-default-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue137-builtin-default-r2",
+      "source_utf8": "SELECT COUNT(a) FROM dbo.t;",
+      "edits": [
+        {
+          "start_byte": 13,
+          "old_end_byte": 14,
+          "new_end_byte": 20,
+          "old_utf8": "a",
+          "new_utf8": "DEFAULT"
+        },
+        {
+          "start_byte": 13,
+          "old_end_byte": 20,
+          "new_end_byte": 14,
+          "old_utf8": "DEFAULT",
+          "new_utf8": "a"
+        },
+        {
+          "start_byte": 26,
+          "old_end_byte": 27,
+          "new_end_byte": 41,
+          "old_utf8": ";",
+          "new_utf8": ";\nGO\nSELECT 0x;"
+        },
+        {
+          "start_byte": 38,
+          "old_end_byte": 40,
+          "new_end_byte": 60,
+          "old_utf8": "0x",
+          "new_utf8": "* FROM t WHERE a IN ()"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue137-dynamic-payload-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue137-dynamic-payload-r2",
+      "source_utf8": "EXEC (N'SELECT 1') AS LOGIN = 'u';",
+      "edits": [
+        {
+          "start_byte": 6,
+          "old_end_byte": 17,
+          "new_end_byte": 7,
+          "old_utf8": "N'SELECT 1'",
+          "new_utf8": "1"
+        },
+        {
+          "start_byte": 6,
+          "old_end_byte": 7,
+          "new_end_byte": 17,
+          "old_utf8": "1",
+          "new_utf8": "N'SELECT 1'"
+        },
+        {
+          "start_byte": 33,
+          "old_end_byte": 34,
+          "new_end_byte": 57,
+          "old_utf8": ";",
+          "new_utf8": ";\nGO\nIF 1 = 1 BEGIN END;"
+        },
+        {
+          "start_byte": 38,
+          "old_end_byte": 56,
+          "new_end_byte": 53,
+          "old_utf8": "IF 1 = 1 BEGIN END",
+          "new_utf8": "SELECT TOP () 1"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue139-procedure-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue139-procedure-r2",
+      "source_utf8": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;",
+      "edits": [
+        {
+          "start_byte": 22,
+          "old_end_byte": 23,
+          "new_end_byte": 22,
+          "old_utf8": "@",
+          "new_utf8": ""
+        },
+        {
+          "start_byte": 20,
+          "old_end_byte": 22,
+          "new_end_byte": 23,
+          "old_utf8": "p ",
+          "new_utf8": "p @"
+        },
+        {
+          "start_byte": 40,
+          "old_end_byte": 41,
+          "new_end_byte": 79,
+          "old_utf8": ";",
+          "new_utf8": ";\nGO\nSELECT 1;\nGO /*comment*/\nSELECT 2;"
+        },
+        {
+          "start_byte": 64,
+          "old_end_byte": 67,
+          "new_end_byte": 68,
+          "old_utf8": "ent",
+          "new_utf8": "ent\n"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue139-function-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue139-function-r2",
+      "source_utf8": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;",
+      "edits": [
+        {
+          "start_byte": 22,
+          "old_end_byte": 23,
+          "new_end_byte": 22,
+          "old_utf8": "@",
+          "new_utf8": ""
+        },
+        {
+          "start_byte": 21,
+          "old_end_byte": 22,
+          "new_end_byte": 23,
+          "old_utf8": "(",
+          "new_utf8": "(@"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue139-output-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue139-output-r2",
+      "source_utf8": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;",
+      "edits": [
+        {
+          "start_byte": 21,
+          "old_end_byte": 24,
+          "new_end_byte": 23,
+          "old_utf8": "p @",
+          "new_utf8": "p "
+        },
+        {
+          "start_byte": 21,
+          "old_end_byte": 23,
+          "new_end_byte": 24,
+          "old_utf8": "p ",
+          "new_utf8": "p @"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue139-clr-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue139-clr-r2",
+      "source_utf8": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;",
+      "edits": [
+        {
+          "start_byte": 22,
+          "old_end_byte": 23,
+          "new_end_byte": 22,
+          "old_utf8": "@",
+          "new_utf8": ""
+        },
+        {
+          "start_byte": 20,
+          "old_end_byte": 22,
+          "new_end_byte": 23,
+          "old_utf8": "g(",
+          "new_utf8": "g(@"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue138-leading-01473-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue138-leading-01473-r2",
+      "source_utf8": "ALTER SECURITY POLICY .p WITH (STATE = OFF);",
+      "edits": [
+        {
+          "start_byte": 23,
+          "old_end_byte": 24,
+          "new_end_byte": 23,
+          "old_utf8": "p",
+          "new_utf8": ""
+        },
+        {
+          "start_byte": 22,
+          "old_end_byte": 23,
+          "new_end_byte": 24,
+          "old_utf8": ".",
+          "new_utf8": ".p"
+        },
+        {
+          "start_byte": 43,
+          "old_end_byte": 44,
+          "new_end_byte": 106,
+          "old_utf8": ";",
+          "new_utf8": ";\nGO\nSELECT * FROM CHANGETABLE(VERSION dbo.t, (id), (1)) AS ct;"
+        },
+        {
+          "start_byte": 74,
+          "old_end_byte": 98,
+          "new_end_byte": 90,
+          "old_utf8": "VERSION dbo.t, (id), (1)",
+          "new_utf8": "CHANGES dbo.t, 0"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue138-leading-02133-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue138-leading-02133-r2",
+      "source_utf8": "CREATE TABLE .t (a int DEFAULT (1));",
+      "edits": [
+        {
+          "start_byte": 13,
+          "old_end_byte": 15,
+          "new_end_byte": 14,
+          "old_utf8": ".t",
+          "new_utf8": "."
+        },
+        {
+          "start_byte": 13,
+          "old_end_byte": 14,
+          "new_end_byte": 15,
+          "old_utf8": ".",
+          "new_utf8": ".t"
+        },
+        {
+          "start_byte": 35,
+          "old_end_byte": 36,
+          "new_end_byte": 62,
+          "old_utf8": ";",
+          "new_utf8": ";\nGO\nSELECT 1;\rGO\rSELECT 2;"
+        },
+        {
+          "start_byte": 50,
+          "old_end_byte": 53,
+          "new_end_byte": 58,
+          "old_utf8": "GO\r",
+          "new_utf8": "\n\tGO 2\r\n"
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue138-leading-02657-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue138-leading-02657-r2",
+      "source_utf8": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;",
+      "edits": [
+        {
+          "start_byte": 17,
+          "old_end_byte": 18,
+          "new_end_byte": 17,
+          "old_utf8": "f",
+          "new_utf8": ""
+        },
+        {
+          "start_byte": 16,
+          "old_end_byte": 17,
+          "new_end_byte": 18,
+          "old_utf8": ".",
+          "new_utf8": ".f"
+        },
+        {
+          "start_byte": 54,
+          "old_end_byte": 56,
+          "new_end_byte": 100,
+          "old_utf8": "D;",
+          "new_utf8": "D;\nGO\nSELECT 1 FROM dbo.t GROUP BY CUBE(a,());"
+        },
+        {
+          "start_byte": 89,
+          "old_end_byte": 98,
+          "new_end_byte": 90,
+          "old_utf8": "CUBE(a,()",
+          "new_utf8": "("
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue148-negative-pair-00-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue148-negative-pair-00-r2",
+      "source_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+      "edits": [
+        {
+          "start_byte": 0,
+          "old_end_byte": 178,
+          "new_end_byte": 177,
+          "old_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "start_byte": 0,
+          "old_end_byte": 177,
+          "new_end_byte": 178,
+          "old_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "start_byte": 178,
+          "old_end_byte": 356,
+          "new_end_byte": 355,
+          "old_utf8": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+        },
+        {
+          "start_byte": 178,
+          "old_end_byte": 355,
+          "new_end_byte": 356,
+          "old_utf8": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+        }
+      ],
+      "blocked_steps": [
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue148-negative-pair-01-r1",
+      "route": "tsql",
+      "origin": {
+        "issue": 170,
+        "file": "src/testdata/native/gaps/tsql.json",
+        "revision": "246f510779aaa8b58afe1b5e42a46e92edfb1a03"
+      },
+      "sibling": "tsql-issue148-negative-pair-01-r2",
+      "source_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+      "edits": [
+        {
+          "start_byte": 0,
+          "old_end_byte": 190,
+          "new_end_byte": 189,
+          "old_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+        },
+        {
+          "start_byte": 0,
+          "old_end_byte": 189,
+          "new_end_byte": 190,
+          "old_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n"
+        },
+        {
+          "start_byte": 190,
+          "old_end_byte": 381,
+          "new_end_byte": 380,
+          "old_utf8": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+        },
+        {
+          "start_byte": 190,
+          "old_end_byte": 380,
+          "new_end_byte": 381,
+          "old_utf8": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER ON; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n",
+          "new_utf8": "-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+        }
+      ],
+      "blocked_steps": [
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "tsql-issue198-unclosed-bracket",
+      "route": "tsql",
+      "origin": {
+        "issue": 198,
+        "artifact": "artifacts/followup-goal-20261014/198-preflight/recovery-edit-preregistration.json",
+        "artifact_sha256": "79a1d86f7fa7d04d02464da0f076fe8c2216459b0352eaee0cb7d28a741dbca7",
+        "pointer": "/pairs/4",
+        "case_id": "unclosed-bracket",
+        "input_file": "tsql-cases.json",
+        "input_file_sha256": "19e46aaf2af9c53ebee5d1a920a278f8aa78fa2315efec4aa142ce2c2492ae0c",
+        "original_sha256": "85705abf8fb4c9f4337c2c17198508c9e4c818653d857db602f2684042b08031",
+        "repaired_sha256": "eb44b7639974913ff3226522d27e692a95286c2293866b09d0f5669916581a43"
+      },
+      "source_utf8": "SELECT [name;",
+      "edits": [
+        {
+          "start_byte": 12,
+          "old_end_byte": 12,
+          "new_end_byte": 13,
+          "old_utf8": "",
+          "new_utf8": "]"
+        },
+        {
+          "start_byte": 12,
+          "old_end_byte": 13,
+          "new_end_byte": 12,
+          "old_utf8": "]",
+          "new_utf8": ""
+        }
+      ],
+      "blocked_steps": [
+        1,
+        2
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "json-repair-close",
+      "route": "json",
+      "origin": {
+        "issue": 197,
+        "file": "src/internal/native/reuse_json_test.go",
+        "revision": "8578f5351197080e7284629f0f6e7c58f42b910f"
+      },
+      "source_utf8": "[1",
+      "edits": [
+        {
+          "start_byte": 2,
+          "old_end_byte": 2,
+          "new_end_byte": 3,
+          "old_utf8": "",
+          "new_utf8": "]"
+        }
+      ],
+      "blocked_steps": [
+        1
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "json-break-close",
+      "route": "json",
+      "origin": {
+        "issue": 197,
+        "file": "src/internal/native/reuse_json_test.go",
+        "revision": "8578f5351197080e7284629f0f6e7c58f42b910f"
+      },
+      "source_utf8": "[1]",
+      "edits": [
+        {
+          "start_byte": 2,
+          "old_end_byte": 3,
+          "new_end_byte": 2,
+          "old_utf8": "]",
+          "new_utf8": ""
+        }
+      ],
+      "blocked_steps": [
+        1
+      ],
+      "omit_old_tree_first_step": 1
+    },
+    {
+      "id": "json-repair-colon",
+      "route": "json",
+      "origin": {
+        "issue": 197,
+        "file": "src/internal/native/reuse_json_test.go",
+        "revision": "8578f5351197080e7284629f0f6e7c58f42b910f"
+      },
+      "source_utf8": "{\"a\" 1}",
+      "edits": [
+        {
+          "start_byte": 4,
+          "old_end_byte": 5,
+          "new_end_byte": 5,
+          "old_utf8": " ",
+          "new_utf8": ":"
+        }
+      ],
+      "blocked_steps": [
+        1
+      ],
+      "omit_old_tree_first_step": 1
+    }
+  ]
+}
