@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMarginFixedMainHistory(t *testing.T) {
@@ -131,5 +132,45 @@ func TestMarginMacHostBinding(t *testing.T) {
 	put("summary.json", map[string]any{"compiler": fileDigest{strings.Repeat("0", 64), c.Compiler.Bytes}})
 	if bindMarginHost(c, root, r.Run) == nil {
 		t.Fatal("wrong Mac compiler accepted")
+	}
+}
+
+// #260: a past report under a former limit is valid history of another configuration; a
+// changed limit still has to carry its own key and stay a positive bounded value.
+func TestMarginFormerLimitHistory(t *testing.T) {
+	current, _, _ := marginFixture(t, "900")
+	former := func(limit int64, rekey bool) marginReport {
+		past, _, _ := marginFixture(t, "1")
+		for i := range past.Metrics {
+			m := &past.Metrics[i]
+			if m.ID != "foundation/windows/job" {
+				continue
+			}
+			m.Limit = limit
+			for _, c := range past.Configs {
+				if rekey && strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+					m.Config = marginKey(c, m.ID, limit)
+				}
+			}
+		}
+		return past
+	}
+	if failed, err := evaluateMargins(&current, []marginReport{former(600000, true)}); err != nil || failed {
+		t.Fatalf("former limit rejected: failed=%v err=%v", failed, err)
+	}
+	for _, m := range current.Metrics {
+		if want := map[bool]int{true: 1, false: 2}[m.ID == "foundation/windows/job"]; m.Samples != want {
+			t.Fatalf("%s samples=%d want %d", m.ID, m.Samples, want)
+		}
+	}
+	for name, past := range map[string]marginReport{"stale-key": former(600000, false), "zero": former(0, true), "unbounded": former(24*time.Hour.Milliseconds()+1, true)} {
+		if _, err := evaluateMargins(&current, []marginReport{past}); err == nil {
+			t.Fatalf("%s history accepted", name)
+		}
+	}
+	changed, _, _ := marginFixture(t, "900")
+	changed.Metrics[0].Limit++
+	if _, err := evaluateMargins(&changed, nil); err == nil {
+		t.Fatal("current report accepted under a former limit")
 	}
 }

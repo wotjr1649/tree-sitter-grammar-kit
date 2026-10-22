@@ -49,7 +49,8 @@ jobs:
             goos: darwin
             goarch: arm64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    # #260: Windows ran at 85-99% of the former 10 minutes; 15 keeps it near 2/3
+    timeout-minutes: 15
     defaults:
       run:
         shell: pwsh
@@ -132,7 +133,7 @@ jobs:
           if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
           go test @otherPackages -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
-          go test $nativePackage -count=1 -v -timeout 300s
+          go test $nativePackage -count=1 -v -timeout 420s
           if ($LASTEXITCODE -ne 0) { throw 'native test failed' }
       - name: isolated bind-mount output boundary (#196)
         if: runner.os == 'Linux'

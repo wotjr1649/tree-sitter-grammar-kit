@@ -53,9 +53,9 @@ type marginJob struct {
 }
 
 var marginJobs = []marginJob{
-	{"foundation (windows-2025)", "foundation", "windows", "amd64", 10, true},
-	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 10, true},
-	{"foundation (macos-15)", "foundation", "darwin", "arm64", 10, true},
+	{"foundation (windows-2025)", "foundation", "windows", "amd64", 15, true},
+	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 15, true},
+	{"foundation (macos-15)", "foundation", "darwin", "arm64", 15, true},
 	{"native prepare (ubuntu-24.04)", "native-prepare", "linux", "amd64", 30, false},
 	{"native routes (windows-2025)", "native-routes", "windows", "amd64", 60, true},
 	{"native routes (ubuntu-24.04)", "native-routes", "linux", "amd64", 60, true},
@@ -360,6 +360,7 @@ func validateMarginReport(r marginReport, historical bool) error {
 	}
 	expected := map[string]string{}
 	limits := map[string]int64{}
+	configs := map[string]marginConfig{}
 	for i, j := range marginJobs {
 		c := r.Configs[i]
 		// Historical r1 reports retain the former Mac matrix job and its exact keys.
@@ -372,15 +373,18 @@ func validateMarginReport(r marginReport, historical bool) error {
 		id := j.job + "/" + j.goos + "/job"
 		limits[id] = j.minutes * 60000
 		expected[id] = marginKey(c, id, limits[id])
+		configs[id] = c
 		for name, minutes := range marginStepLimits(j) {
 			id := j.job + "/" + j.goos + "/step/" + name
 			limits[id] = minutes * 60000
 			expected[id] = marginKey(c, id, limits[id])
+			configs[id] = c
 		}
 		if j.job == "large-api" {
 			id := "large-api/windows/page-max"
 			limits[id] = kit.NativeOperations()["native-query-large"].ParseWall.Milliseconds()
 			expected[id] = marginKey(c, id, limits[id])
+			configs[id] = c
 		}
 	}
 	if len(r.Metrics) != len(expected) {
@@ -388,6 +392,12 @@ func validateMarginReport(r marginReport, historical bool) error {
 	}
 	for _, m := range r.Metrics {
 		key, ok := expected[m.ID]
+		// #260: a past report keeps the limit it ran under; its key binds that limit, so it is
+		// another configuration and never adds a sample to a metric with the current limit
+		if ok && historical && m.Limit != limits[m.ID] && m.Limit > 0 && m.Limit <= 24*time.Hour.Milliseconds() {
+			key = marginKey(configs[m.ID], m.ID, m.Limit)
+			limits[m.ID] = m.Limit
+		}
 		if !ok || m.Config != key || m.Limit != limits[m.ID] || m.Used < 0 || m.Used > 24*time.Hour.Milliseconds() {
 			return errors.New("margin invalid metric or configuration key")
 		}
