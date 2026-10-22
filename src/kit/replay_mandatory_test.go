@@ -2,6 +2,7 @@ package kit
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
@@ -210,6 +211,29 @@ func TestReplayMandatoryRawTreeMembers(t *testing.T) {
 			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
 			if err != nil || r.EvidenceValid || gateOf(r, "reuse-observation").Code != "OBSERVATION_RESPONSE_UNBOUND" {
 				t.Fatalf("r3 tree with %s bound: %v %+v", member, err, r.Gates)
+			}
+		})
+	}
+}
+
+// TestReplayMandatoryRawProducerTypes keeps the typed read of the r3 producer capabilities
+// the replay always made, though r3 has no strict wire decode (Codex A251C).
+func TestReplayMandatoryRawProducerTypes(t *testing.T) {
+	for member, value := range map[string]any{"symbol_count": "x", "field_count": "x", "predicates": 17} {
+		t.Run(member, func(t *testing.T) {
+			f := mandatoryFixture(t, false, false, claimPass, AssessPass)
+			var wire map[string]any
+			if err := json.Unmarshal(f.extra["responses/00001-c2.json"], &wire); err != nil {
+				t.Fatal(err)
+			}
+			wire["producer"].(map[string]any)[member] = value
+			f.extra["responses/00001-c2.json"], _ = json.Marshal(wire)
+			root, reg := writeMandatoryFixture(t, f, "tsgk-incremental-result/r3")
+			r, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: reg})
+			if err != nil || r.EvidenceValid || !slices.ContainsFunc(r.Findings, func(f Finding) bool {
+				return f.Code == "RECORD_INVALID" && f.Path == "responses/00001-c2.json"
+			}) {
+				t.Fatalf("r3 producer %s %v read: %v %+v", member, value, err, r.Findings)
 			}
 		})
 	}

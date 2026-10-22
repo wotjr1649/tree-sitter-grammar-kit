@@ -573,7 +573,9 @@ func TestQualificationRawCountLimit(t *testing.T) {
 			for _, s := range raw["steps"].([]any) {
 				for _, slot := range []string{"incremental", "fresh"} {
 					if tree, ok := s.(map[string]any)[slot].(map[string]any); ok && tree["api"] != nil {
-						tree["api"] = nil
+						// a summary form, whose count no node table repeats (Codex A251C)
+						tree["api"], tree["form"], tree["errors"] = nil, "summary", map[string]any{"limit": 100, "total": 0, "truncated": false, "items": []any{}}
+						delete(tree, "nodes")
 						if over && raw["id"] == "c1" {
 							tree["descendant_count"] = NativeOperations()["native-query"].Nodes + 1
 						}
@@ -603,6 +605,23 @@ func TestQualificationRawPriority(t *testing.T) {
 		if set == "s06-fxa" && raw["id"] == "c2" {
 			raw["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["digest"] = strings.Repeat("0", 64)
 			raw["steps"].([]any)[1].(map[string]any)["route"].(map[string]any)["reused_nodes"] = 99
+		}
+	}}}))
+	cell := cellOf(r, "fxa", "windows-amd64")
+	if !slices.ContainsFunc(cell.Set.Gates, func(g ReplayGate) bool {
+		return g.ID == "reuse-observation" && g.Code == "OBSERVATION_PROJECTION_MISMATCH" && g.Failed > 0
+	}) {
+		t.Fatalf("first failure: %+v", cell.Set.Gates)
+	}
+}
+
+// TestQualificationRawFirstRouteType keeps a present but unreadable route on the first step a
+// projection mismatch first, never an absent route (Codex A251C).
+func TestQualificationRawFirstRouteType(t *testing.T) {
+	f := newQfx(t)
+	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
+		if set == "s06-fxa" && raw["id"] == "c1" {
+			raw["steps"].([]any)[0].(map[string]any)["route"] = "x"
 		}
 	}}}))
 	cell := cellOf(r, "fxa", "windows-amd64")

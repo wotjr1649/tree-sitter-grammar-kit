@@ -434,16 +434,19 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		return e
 	}
 	var wire struct {
-		Status         string  `json:"status"`
-		Code           *string `json:"code"`
-		Protocol       string  `json:"protocol"`
-		ID             string  `json:"id"`
-		Complete       *bool   `json:"complete"`
-		StepsCompleted *uint64 `json:"steps_completed"`
-		SourceBytes    *uint64 `json:"source_bytes"`
-		Producer       struct {
+		Status         string   `json:"status"`
+		Code           *string  `json:"code"`
+		Protocol       string   `json:"protocol"`
+		ID             string   `json:"id"`
+		Complete       *bool    `json:"complete"`
+		StepsCompleted *uint64  `json:"steps_completed"`
+		SourceBytes    *uint64  `json:"source_bytes"`
+		Producer       struct { // typed as the replay always read them, also for r3 (Codex A251C)
 			Query            string         `json:"query"`
 			API              *string        `json:"api"`
+			Predicates       *string        `json:"predicates"`
+			SymbolCount      *uint32        `json:"symbol_count"`
+			FieldCount       *uint32        `json:"field_count"`
 			ReuseObservation jsontext.Value `json:"reuse_observation"`
 		} `json:"producer"`
 	}
@@ -489,12 +492,13 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		var slots struct {
 			Route jsontext.Value `json:"route"`
 		}
-		var rawRoute *wireRoute // the raw route the projection compares; its strict shape is the live rules'
+		// the raw route the projection compares; a present route that does not read as one
+		// never reads as absent (Codex A251C), and its strict shape is the live rules'
+		var rawRoute *wireRoute
+		routeRead := true
 		if jsonv2.Unmarshal(raw, &slots) == nil && len(slots.Route) > 0 && string(slots.Route) != "null" {
 			var route wireRoute
-			if jsonv2.Unmarshal(slots.Route, &route) == nil {
-				rawRoute = &route
-			}
+			rawRoute, routeRead = &route, jsonv2.Unmarshal(slots.Route, &route) == nil
 		}
 		if r4 {
 			for _, t := range []*treeStatus{step.Incremental, step.Fresh} {
@@ -539,7 +543,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 			b.PreviousSourceSHA256 = want[i-1].observations[0].SourceSHA256
 		}
 		// r4: the raw route is the recorded one, which the route claim was judged from (review on #250)
-		routeBound := !r4 || reflect.DeepEqual(rawRoute, want[i].route)
+		routeBound := !r4 || routeRead && reflect.DeepEqual(rawRoute, want[i].route)
 		got, err := decodeObservations(step.Observations, b, true)
 		g.check(err == nil && step.Step == i && reflect.DeepEqual(got, want[i].observations) && reflect.DeepEqual(step.Edit, want[i].edit) && routeBound, id, "OBSERVATION_PROJECTION_MISMATCH", "관측 보고서·edit·route가 원 응답과 다르다")
 		return x.r.check()
