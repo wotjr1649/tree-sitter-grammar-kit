@@ -318,13 +318,13 @@ foreach ($r in $registry.routes) {
       $line = & $cli @cliArgs
       $code = $LASTEXITCODE
       $rep = $line | ConvertFrom-Json
-      $stats.regenerated += [ordered]@{ route = $r.route; exit = $code; assessment = $rep.assessment; claims = $rep.claims; wall_ms = @($rep.runs | ForEach-Object { $_.process.wall_ms }) }
+      $stats.regenerated += [ordered]@{ route = $r.route; exit = $code; assessment = $rep.assessment; claims = $rep.claims; wall_ms = @($rep.runs | ForEach-Object { if ($_.PSObject.Properties['process']) { $_.process.wall_ms } }) } # a NOT_RUN run has no process (#258)
       Write-Output ("regenerate {0}: exit={1} assessment={2} claims={3}" -f $r.route, $code, $rep.assessment, ($rep.claims | ConvertTo-Json -Compress))
       $outDir = Join-Path $rout 'workspace-a/out'
       if ($RecordOutputs) {
         if (-not (Test-RecordedRun $rep)) { throw "recording $($r.route): the run did not complete deterministically with only the reference absent" }
         $stats.recorded += [ordered]@{ route = $r.route; outputs = @($r.regeneration.outputs | ForEach-Object { $o = Join-Path $outDir $_.path; [ordered]@{ path = $_.path; sha256 = (Get-Sha $o); bytes = (Get-Item -LiteralPath $o).Length } }) }
-      } elseif ($code -ne 0 -or $rep.assessment -ne 'PASS') { throw "regeneration of $($r.route) did not reproduce the registered outputs" }
+      } elseif ($code -ne 0 -or $rep.assessment -ne 'PASS') { throw "regeneration of $($r.route) did not reproduce the registered outputs: $($rep.findings | ConvertTo-Json -Compress -Depth 4)" }
     }
     foreach ($o in $r.regeneration.outputs) {
       if ($o.path -in @('grammar.json', 'node-types.json')) { continue }
