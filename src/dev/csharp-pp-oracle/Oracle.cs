@@ -13,6 +13,7 @@ using System.Text.Json;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 public static class Oracle
 {
@@ -37,10 +38,14 @@ public static class Oracle
             if (item.TryGetProperty("features", out var features))
                 options = options.WithFeatures(features.EnumerateArray().Select(f => new KeyValuePair<string, string>(f.GetString()!, "true")));
             var tree = CSharpSyntaxTree.ParseText(text, options);
-            var root = tree.GetRoot();
+            var root = (CompilationUnitSyntax)tree.GetRoot();
             int Byte(int charPos) => utf8.GetByteCount(text.AsSpan(0, charPos));
+            // a diagnostic may point between the halves of a surrogate pair: report the pair's start
+            int DiagByte(int charPos) => Byte(charPos > 0 && char.IsHighSurrogate(text[charPos - 1]) ? charPos - 1 : charPos);
             var directives = new List<object>();
             var disabled = new List<object>();
+            // where Roslyn attaches each error: a directive's kind, EndOfFile, or Other
+            var context = new Dictionary<(string, TextSpan), string>();
             foreach (var trivia in root.DescendantTrivia(descendIntoTrivia: true))
             {
                 if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
@@ -54,20 +59,48 @@ public static class Oracle
                     BranchingDirectiveTriviaSyntax b => b.BranchTaken,
                     _ => null,
                 };
+                string kind = d.Kind().ToString();
+                foreach (var x in d.GetDiagnostics()) context.TryAdd((x.Id, x.Location.SourceSpan), kind[..^"DirectiveTrivia".Length]);
+                // the physical lines of the directive by Roslyn's own line breaks, last line break included
+                // (a directive's token may run over several lines, e.g. a raw string in #pragma)
+                var lines = tree.GetText().Lines;
+                var line = lines.GetLineFromPosition(d.HashToken.Span.Start);
+                var last = lines.GetLineFromPosition(Math.Max(d.FullSpan.End - 1, d.FullSpan.Start));
                 directives.Add(new
                 {
-                    kind = d.Kind().ToString(),
+                    kind,
                     start = Byte(d.HashToken.Span.Start),
                     active = d.IsActive,
                     taken,
+                    line_start = Byte(line.Start),
+                    line_end = Byte(last.EndIncludingLineBreak),
                 });
             }
-            var diagnostics = tree.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).Select(x => x.Id).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
-            results.Add(new { id, features = options.Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray(), directives, disabled, errors = diagnostics });
+            // after the directives: the end-of-file token also carries the errors of directives in its leading trivia
+            foreach (var x in root.EndOfFileToken.GetDiagnostics()) context.TryAdd((x.Id, x.Location.SourceSpan), "EndOfFile");
+            Diagnostic[] errors;
+            try
+            {
+                errors = tree.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).ToArray();
+            }
+            catch (ArgumentOutOfRangeException e) // Roslyn 5.9 fails to enumerate some diagnostics (observed): no observation
+            {
+                results.Add(new { id, oracle_error = "GetDiagnostics " + e.GetType().Name });
+                continue;
+            }
+            var errorIds = errors.Select(x => x.Id).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            var located = errors.Select(x => new
+            {
+                id = x.Id,
+                start = DiagByte(x.Location.SourceSpan.Start),
+                end = DiagByte(x.Location.SourceSpan.End),
+                context = context.GetValueOrDefault((x.Id, x.Location.SourceSpan), "Other"),
+            }).ToArray();
+            results.Add(new { id, features = options.Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray(), directives, disabled, errors = errorIds, diagnostics = located });
         }
         var output = new
         {
-            schema = "tsgk-csharp-pp-roslyn/r1",
+            schema = "tsgk-csharp-pp-roslyn/r2",
             cases_sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).ToLowerInvariant(),
             roslyn = typeof(CSharpSyntaxTree).Assembly.GetName().Version!.ToString(),
             language_version = "Latest",
