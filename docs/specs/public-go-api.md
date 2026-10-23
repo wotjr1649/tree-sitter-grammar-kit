@@ -271,9 +271,28 @@ func ObserveServiceHostWithContext(enc string, src []byte, context *SvcContext) 
 func (o SvcObservation) Syntax(inlineHasError *bool) (hasError, known bool)
 func NativeOperations() map[string]NativeOperation
 func ParseIncrementalProfile(data []byte) (IncrementalProfile, error)
+func ObserveCSharpPreprocess(src []byte, symbols []string) PreprocessStep
+func PreprocessSteps(versions [][]byte, pp *Preprocess) []PreprocessStep
+func PreprocessOutcome(status string) (execution, code string)
+func (p Preprocess) SymbolsDigest() string
+func NativePolicyText(op NativeOperation, output string) string
+func NativePolicy(op NativeOperation, output string, pp *Preprocess) IdentityRef
 ```
 
 모두 offline이며 파일·process·network를 쓰지 않는다. `CompareTrees`는 S05의 하나뿐인 의미 tree 비교 함수로, 공개 `TreeNode`(`tsgk-tree/r1` node) 12개 필드를 preorder 순서대로 정렬·중복 제거 없이 비교하고 첫 차이(`node`, `field`, `left`, `right`; 한쪽이 접두면 `node_count`)를 낸다. `TreeDigest`는 `tsgk-tree-digest/r1`, `ValidateTree`는 완료 tree 구조 규칙(root 하나, 연속 preorder ancestry, 입력 안 범위)을 검사하며 같은 범위의 형제·부모-자식 중복과 zero-width node를 허용한다. `ApplyEdits`는 [tree/protocol](tree-and-adapter-protocol.md)의 edit·encoding 경계 규칙을 적용해 중간 source와 native edit point를 돌려주고, 위반은 `*Error`(`INVALID_INPUT`, code는 같은 절)로 첫 parse 전에 거부한다. cp949 함수는 내장한 WHATWG `index-euc-kr`(identifier·sha256은 `EUCKRIdentifier`·`EUCKRIndexSHA256`, 고지 `src/kit/data/NOTICE-index-euc-kr.md`)를 쓰며, S01 encoding 판정도 같은 표로 AMBIGUOUS(`AMBIGUOUS_ENCODING`)와 표 밖 쌍(`CP949_UNMAPPED`, 선언이면 `DECLARED_ENCODING_INVALID`)을 완성한다. `ParseIncrementalProfile`은 [CLI 계약](cli-and-profile.md) `S05 구현`의 profile `tsgk-incremental/r2`(r1도 읽음)를 해석하고(`IncrementalProfile.Schema`는 선언된 revision, `StepExpectation.Anchors`는 `ExpectAnchor{Type, StartByte, EndByte}` 목록, `MaxExpectAnchors`는 64, `IncrementalSchema`는 `tsgk-incremental/r2`), `NativeOperations`는 그 연산 상한을 돌려준다. driver build·실행은 공개 API가 아니며 CLI `incremental`이 내부 `src/internal/native`와 runner로 한다(`TestOfflineClosure`가 공개 closure에 runner·`os/exec`·network가 없음을 확인).
+
+C# symbol 모드(#218)
+- `ObserveCSharpPreprocess`는 UTF-8 C# 원본 하나를 caller symbols로 평가한다.
+  - 평가기 고정 한도는 32 MiB, 지시문 4096, 깊이 64, 활성 범위 16, symbol 256이다.
+  - 돌려주는 `PreprocessStep`에는 `Status`, 순서 있는 `Directives`(`Kind`, `#` 위치 `Hash`, `Active`, `Taken`), parser가 읽을 `Active`, 건너뛴 `Inactive` 범위가 있다.
+  - 거부는 `Status`로만 알린다(`Preprocess*` 상수).
+  - 입력은 읽기만 하고, 돌려주는 slice는 새로 할당한다.
+- `PreprocessSteps`는 step 원본을 차례로 평가하고, OK가 아닌 첫 step에서 멈춘다.
+- `PreprocessOutcome`은 그 step 상태의 사례 실행 상태와 code다([tree/protocol](tree-and-adapter-protocol.md) `C# symbol 모드`).
+- `Preprocess{Mode, Symbols}`는 profile의 preprocess member다. `SymbolsDigest`는 `tsgk-pp-symbols/r1`이다.
+- `NativePolicyText`·`NativePolicy`는 실행과 replay가 함께 쓰는 native policy identity다.
+  - preprocess가 없으면 `tsgk-native-policy/r1`이고, 기존 bytes·hash와 같다(`TestPolicyRefPreimage`).
+  - preprocess가 있으면 `tsgk-native-policy/r2`다([식별·증거](identity-and-evidence.md)).
 
 ## S06 함수 — capture 비교, oracle profile, 기록 set 검증, 사실 query 세트
 

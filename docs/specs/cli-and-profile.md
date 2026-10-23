@@ -133,6 +133,18 @@ profile `tsgk-incremental/r2`는 S02와 같은 strict decoder로 읽는다. 아�
 
 **기대값 anchor(r2).** `contains`는 그 type의 named node가 tree 어디에든 있으면 통과한다. 그래서 한 사례에 구조 여러 개를 넣으면, 대상 구조를 잘못 parse해도 같은 type이 다른 줄에 있어 통과할 수 있다. 선택 필드 `anchors`(`[{type, start_byte, end_byte}]`, 최대 64개)는 이를 막는다. anchor 하나는 그 step의 기록된 full tree에 정확히 그 type이고 정확히 그 byte 범위 `[start_byte, end_byte)`인 named node가 있을 때만 통과한다. 그런 node가 없으면 그 기대값은 FAIL이고, tree가 full이 아니면(요약·record 형식) BLOCKED다. 검사 순서는 `syntax` → `contains` → `anchors` → `declarations`이며 앞의 검사가 PASS가 아니면 그 결과가 남는다. `anchors`가 없는 기대값은 r1과 같게 판정한다. `type`은 비어 있지 않은 1~128자 출력 가능 ASCII(`"`·`\` 제외)여야 한다. `start_byte ≤ end_byte`여야 하고 `end_byte`는 그 step source 길이(입력 `bytes`에서 앞 edit들의 `old`·`new` 길이로 계산) 이하여야 한다. 어기면 `EXPECT_ANCHOR_INVALID`다. 사례 결과의 기대값(`expectations`)은 등록 기대값을 그대로 담으므로 anchor가 있으면 `anchors`도 담는다. 결과 schema `tsgk-incremental-result/r1`·`tsgk-oracle-record/r1`은 그대로다.
 
+**C# symbol 모드(r3, #218).** profile `tsgk-incremental/r3`는 r2와 같고, 선택 member `preprocess`(`{mode: "csharp-symbols/r1", symbols: [string]}`) 하나를 더한다.
+- 사용 조건
+  - 연산 `native-parse-edit`, symbol `tree_sitter_c_sharp`, `format` 없음, 모든 사례 encoding `UTF-8`일 때만 받는다.
+  - 다른 연산·oracle profile·r2 이하 revision은 `PREPROCESS_OPERATION_UNSUPPORTED`다. 그 밖의 거부는 `PREPROCESS_SVC_UNSUPPORTED`, `PREPROCESS_LANGUAGE_UNSUPPORTED`, `PREPROCESS_ENCODING_UNSUPPORTED`, `PREPROCESS_MODE_UNSUPPORTED`이며 모두 `UNSUPPORTED`다.
+- symbols
+  - caller 문자열 그대로이고, escape 해석·서식 문자 제거를 하지 않는다.
+  - 중복 제거 전 입력을 평가기 규칙으로 검사한다. 이름이 아니거나 `true`/`false`이면 `PREPROCESS_SYMBOL_INVALID`이고, 256개 초과나 원문 128 UTF-16 단위 초과는 `PREPROCESS_SYMBOLS_LIMIT`다. 둘 다 `INVALID_INPUT`이다.
+- 실행 조건
+  - 이 모드는 `--reuse-observation`을 요구한다. 없으면 실행 전에 `PREPROCESS_OBSERVATION_REQUIRED`로 거부하고 `--out`을 만들지 않는다.
+  - 결과는 `tsgk-incremental-result/r4`다.
+- `preprocess`가 없는 r3는 r2와 같은 뜻이다. `run-routes.ps1`·`run-corpus.ps1`은 계속 r2를 쓴다.
+
 r1 profile(`tsgk-incremental/r1`, `anchors` 없음)도 이전 근거를 replay할 수 있게 계속 읽는다. r1 기대값에 `anchors`가 있으면 `JSON_UNKNOWN_FIELD`다. 결과의 profile identity는 문서가 선언한 revision을 적는다. `run-routes.ps1`·`run-corpus.ps1`은 r2를 쓴다.
 
 원본 사례 파일(`src/testdata/native/{routes,gaps,n461}/*.json`)은 anchor를 `{type, text, occurrence}`로 적는다. `type`·`text`는 문자열이고 `text`는 정확한 source 문자열이다. `occurrence`는 선택이며 1부터 센다(없으면 1). 있으면 1 이상의 정수여야 하고 `null`은 받지 않는다. anchor 객체는 정확히 이 세 이름 말고 다른 멤버를 받지 않는다(대소문자도 구분한다). 잘못 쓴 이름이 조용히 기본 출현 1로 바뀌어 기대값이 공허하게 통과하는 일을 막기 위해서다. 변환은 그 step source(앞 edit를 적용한 것)에서 `text`의 UTF-8 bytes가 시작하는 offset 중 `occurrence`번째를 고른다. 모든 offset을 세므로 겹치는 출현도 센다. 결과는 `start_byte`=그 offset, `end_byte`=offset+bytes 길이다. 찾지 못하거나, `type`·`text`가 비었거나, 위 형식을 어기면 두 변환 모두 실패한다. `run-routes.ps1`(`Convert-Cases`, `Resolve-Anchor`)과 inventory 생성기가 같은 방식으로 변환하며 `TestAnchorConversion`·`TestRegisteredAnchors`가 둘을 독립 구현과 대조한다(pwsh가 있으면 `Convert-Cases`를 직접 실행한다).

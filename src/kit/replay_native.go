@@ -1136,17 +1136,20 @@ type nativeBuild struct {
 
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
-	ReuseObservationPolicy string          `json:"reuse_observation_policy"`
-	ObservationRunID       string          `json:"observation_run_id"`
-	Schema                 string          `json:"schema"`
-	ResultSchema           string          `json:"result_schema"`
-	ExecutionStatus        string          `json:"execution_status"`
-	Assessment             string          `json:"assessment"`
-	Identities             []IdentityRef   `json:"identities"`
-	Route                  string          `json:"route"`
-	Operation              NativeOperation `json:"operation"`
-	Build                  *nativeBuild    `json:"build"`
-	Summary                struct {
+	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
+	ObservationRunID       string        `json:"observation_run_id"`
+	Schema                 string        `json:"schema"`
+	ResultSchema           string        `json:"result_schema"`
+	ExecutionStatus        string        `json:"execution_status"`
+	Assessment             string        `json:"assessment"`
+	Identities             []IdentityRef `json:"identities"`
+	Route                  string        `json:"route"`
+	Operation              struct {
+		Name string `json:"name"`
+	} `json:"operation"`
+	operation jsontext.Value // the whole recorded operation (#218 policy recomputation)
+	Build     *nativeBuild   `json:"build"`
+	Summary   struct {
 		Cases       int            `json:"cases"`
 		Statuses    map[string]int `json:"execution_statuses"`
 		Assessments map[string]int `json:"assessments"`
@@ -1209,6 +1212,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		switch name {
 		case "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256", "reuse_observation_policy", "observation_run_id":
 			wrapped := append(append([]byte(`{"`+name+`":`), raw...), '}')
+			if name == "operation" {
+				top.operation = slices.Clone(raw)
+			}
 			return decodeRecord(resultPath, wrapped, &top)
 		}
 		return nil

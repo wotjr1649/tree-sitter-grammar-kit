@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -61,7 +62,12 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 func (x *replayEnv) checkPreprocessPolicy(top nativeResult, prof IncrementalProfile, resultPath string) {
 	g := x.gate("preprocess")
 	reg := NativeOperations()[prof.Operation]
-	op := top.Operation
+	// the recorded operation keeps its walls in nanoseconds, which encoding/json reads
+	var op NativeOperation
+	if err := json.Unmarshal(top.operation, &op); err != nil {
+		g.fail(resultPath, "PREPROCESS_POLICY_MISMATCH", "기록된 operation을 읽을 수 없다")
+		return
+	}
 	narrowed := op
 	narrowed.RunWall = reg.RunWall
 	want := NativePolicy(op, prof.Output, prof.Preprocess)

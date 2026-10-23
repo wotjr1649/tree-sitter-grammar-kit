@@ -116,6 +116,24 @@ reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reduce
 
 `native-result-r4`(#217)는 같은 입력·gate·원 응답 검사로 `tsgk-incremental-result/r3`만 소비한다. 필수 관측 판정([tree/protocol](tree-and-adapter-protocol.md) `필수 관측 판정`)을 live와 같은 `reuseobs.CaseClaim`으로 다시 계산한다. 다시 계산한 claim은 사례 판정 fold에 넣는다. 오류 tree route BLOCKED는 그 step의 관측이 old tree 전달을 확인할 때만 인정하고, 아니면 route FAIL로 다시 계산한다. 따라서 관측 FAIL을 별도 축으로만 둔 판정이나, old tree가 생략된 step의 route BLOCKED 기록은 verdict·claim gate 실패다. r3는 결과 r2만, r4는 결과 r3만 받으며 서로의 판정 규칙으로 replay하지 않는다.
 
+`native-result-r5`(#218)는 r4의 입력·gate·원 응답 검사를 그대로 하면서 C# symbol 모드의 `tsgk-incremental-result/r4`만 받는다. profile에 `preprocess`가 있으면 r5만, r5는 그것만 받는다. 어긋나면 `PREPROCESS_REDUCER_MISMATCH`이고, private corpus reducer도 거부한다. `preprocess` gate는 다음을 검사한다.
+- 원 입력 witness
+  - 사례마다 호출자가 준비한 원 입력 witness `sources/<순번 5자리>-<사례>.bin`(`case-source`)이 필수다. 없으면 `PREPROCESS_SOURCE_MISSING`이다.
+  - 등록 입력의 길이·sha256과 맞아야 한다. 맞는 0-byte witness는 유효하고, 다르면 `PREPROCESS_SOURCE_MISMATCH`다.
+- 관측과 사례 결과
+  - witness와 등록 edit로 step 원본을 다시 만들고 `PreprocessSteps`를 다시 계산한다. 기록된 사례 `preprocess`와 정확히 같아야 한다(`PREPROCESS_MISMATCH`, 없으면 `PREPROCESS_MISSING`).
+  - 멈춘 사례는 고정 상태·code·`BLOCKED`, claim 셋 `NOT_CLAIMED`, native step·원 응답 없음이어야 한다. 모든 step이 OK인 사례는 preprocess code가 없어야 한다(`PREPROCESS_OUTCOME_MISMATCH`).
+- run policy
+  - 기록된 operation이 등록 operation과 같아야 한다. 호출자가 run wall을 좁힌 것만 허용한다.
+  - 그 operation·profile 출력·preprocess로 다시 계산한 `tsgk-native-policy/r2`와 같아야 한다(`PREPROCESS_POLICY_MISMATCH`). 각 tree의 policy가 run policy와 같은지는 기존 검사가 본다.
+- `tsgk-native-policy/r2`의 preimage
+  - 순서: r2 머리줄, r1 preimage 전체, `preprocess_mode`, `symbols=tsgk-pp-symbols/r1 <digest>`, `evaluator=csharp-pp/r1 limits=<평가기 고정 한도>`
+  - r1은 그대로이며, 실행과 replay가 `kit.NativePolicy`를 함께 쓴다.
+- `tsgk-pp-symbols/r1` digest
+  - UTF-8 byte 순으로 정렬하고 중복을 없앤 symbols를 쓴다.
+  - 머리줄 다음에 symbol마다 `<byte 길이>:<bytes>` 한 줄을 잇고 sha256을 취한다. 빈 목록은 머리줄뿐이다.
+- 한계: 저장 증거로는 driver가 실제로 ranges를 받았다는 것을 증명하지 못한다. 지시문이 없는 원본은 범위가 있든 없든 같은 CST가 된다. 이 검출은 native 연결 시험이 맡는다([검증](../validation/validation.md)).
+
 원 응답에서는 관측 projection을 decode하며 native CST의 전체 protocol decoder를 실행하지 않는다. tree 정확성은 기존 기록된 공개 tree의 구조·digest·full CST 비교로 검증한다. JSON member 순서에 의존하지 않도록 metadata를 먼저 bounded streaming으로 읽고 case streaming을 수행한다. 두 pass와 원 응답 읽기에도 기존 file/record/total/wall 상한을 적용한다. 수집 BLOCKED/NOT_CLAIMED를 정확하게 기록한 근거의 무결성 PASS는 logger 경로 PASS나 새로운 실행 성공을 뜻하지 않는다. 기존 subject verdict도 바꾸지 않는다. hash 일치는 저장된 bytes의 무결성 근거이며 독립적인 실행 인증이 아니다.
 
 edit byte 좌표는 등록 workload와 대조하고 raw/projection point 값도 서로 대조한다. point의 실제 row·column은 원 입력 bytes 없이는 hash만으로 다시 계산할 수 없다. 호출자가 선택적으로 `sources/<case-index>-<case-id>.bin` 원 입력 witness를 준비해 `case-source` member로 등록하면 입력 hash·길이를 workload에 결속하고 `ApplyEdits`로 모든 입력 버전 hash·길이와 세 edit point 값을 다시 계산한다. 이미 등록된 SVC `svc_source`도 같은 재계산에 쓴다. 파일 index는 기존 response와 같은 5자리 decimal이다. source witness가 없으면 `edit-points` gate는 `RECORDED_NOT_RECOMPUTED/UNRESOLVED`이고 재계산 verdict도 PASS로 승격하지 않는다. CLI는 opt-in만으로 원 입력을 자동 복사하지 않는다. witness는 호출자가 허용한 원문을 evidence root 안에 명시적으로 준비해야 하며, 기존 file/record/total/wall·경로 제한과 미사용 member 검사를 그대로 적용한다.

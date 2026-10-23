@@ -128,7 +128,7 @@ S05가 구현 전에 고정한 driver protocol·edit·encoding·한도·상태·
 * `id`는 1~128자의 `[A-Za-z0-9._:-]`, `ENC`는 `UTF-8`·`UTF-16LE`·`UTF-16BE`·`CP949`, `OUT`은 `tree`(전체 tree, edit 허용), `auto`(아래 full tree gate), `record`(비공개 corpus 보존 레코드)다. edit는 `tree`에서만, 최대 4개다(`EDITS_NOT_ALLOWED`, `EDIT_COUNT_LIMIT`).
 * driver 고정 상한: `input_bytes` ≤ 33554432, `output_bytes` ≤ 16777216, `nodes` ≤ 25000000, `full_nodes` ≤ `nodes`, `depth` ≤ 100000, `parse_ms` ≤ 60000, `memory_bytes` ≤ 8589934592(S06에서 `real-world-source-r3` 결정으로 4294967296에서 올림), `errors` ≤ 1000, `partial_nodes` ≤ 1000, `declarations` ≤ 64개(각 문자열 1~128 bytes), `points` ≤ 64개. 0이거나 넘으면 `LIMIT_INVALID`다. base64는 패딩 있는 표준 alphabet만 받는다(`BASE64_INVALID`). 길이가 `input_bytes`를 넘으면 `INPUT_TOO_LARGE`다.
 * 선언 `name` locator는 [fact mapping](../../src/contracts/fact-mapping.json)의 `node`, `field:F`, `child:T`, `children:T`를 `/`로 이은 경로다. `field:F`는 그 field의 첫 child, `child:T`는 type T인 첫 named child, `children:T`는 그런 named child 전부이며 경로 중 `children:`이 이름을 여러 개 내면 이름마다 item 하나다(`LOCATOR_INVALID`). `points`의 byte를 덮는 node가 없으면 그 지점의 `nodes`는 빈 배열이다.
-* `ranges`는 비어 있거나(전체 입력) step마다 하나씩(edit 수 + 1) 있는 included range 목록이다. 각 목록은 비어 있지 않고 최대 16개이며, 그 step source 안에서 겹치지 않게 오름차순이고 point는 driver 계산과 같아야 한다(`RANGES_INVALID`). driver는 parse마다 그 step의 목록을 parser A·B에 `ts_parser_set_included_ranges`로 설정하므로 결과 tree는 원본 좌표다. `.svc` inline C#(아래)만 이 필드를 쓴다.
+* `ranges`는 비어 있거나(전체 입력) step마다 하나씩(edit 수 + 1) 있는 included range 목록이다. 각 목록은 비어 있지 않고 최대 16개이며, 그 step source 안에서 겹치지 않게 오름차순이고 point는 driver 계산과 같아야 한다(`RANGES_INVALID`). driver는 parse마다 그 step의 목록을 parser A·B에 `ts_parser_set_included_ranges`로 설정하므로 결과 tree는 원본 좌표다. `.svc` inline C#(아래)과 C# symbol 모드(아래 `C# symbol 모드`)가 이 필드를 쓴다.
 
 **Encoding과 edit 경계.** source는 변환하지 않은 원본 bytes다. `UTF-8`은 어떤 bytes(NUL·BOM·잘못된 sequence 포함)도 받고, `UTF-16LE/BE`는 짝수 길이·짝 맞는 surrogate·U+0000 없음, `CP949`는 ASCII 또는 lead 0x81–0xFE + trail 0x41–0xFE이면서 WHATWG `index-euc-kr`에 code point가 있는 쌍만 받는다(`SOURCE_ENCODING_INVALID`). `CP949`는 runtime의 custom decode callback(표 lookup)으로, 나머지는 runtime 내장 decode로 파싱한다. read callback은 요청 byte부터 남은 buffer 전체를 돌려준다. edit 경계 정책:
 
@@ -207,6 +207,27 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 수집 상한은 callback 16,384개, message bytes 합 1,048,576, 개별 message의 NUL 탐색 1,024 bytes다. Go의 항목 decoder 상한은 4,096 bytes다. 전체 request/response·runner 상한도 그대로 적용한다. counter 합은 수집 event 수를 넘을 수 없다. 첫 수집 중단 이유를 보존하고 이후 callback은 해석하지 않는다. byte 수는 수집 event 수 × 1,023을 넘을 수 없고 BYTE_LIMIT prefix는 다음 message가 들어갈 수 없는 상한 근처여야 한다. 정상 수집은 event cap이 먼저 제한하므로 64-bit counter overflow에 도달하지 않는다. OVERFLOW negative control은 counter 상태를 의도적으로 주입해 방어 경로를 검사한 것이며 정상 도달성·속도 근거가 아니다. public `TSLogger`를 parse 진입 직전에 설치·확인하고 반환 직후 확인·복원한다. payload는 호출별 stack storage이며 다음 parse로 전달하지 않는다. runtime source patch는 추가하지 않는다.
 
 관측은 host가 검증한 입력 버전·edit point와 같은 step 안에서 결속된다. actual old-tree 인자 기록은 고정 driver의 호출 계보에서 얻으며, 외부의 독립적인 tree 소유 증명이나 암호학적 실행 인증은 아니다. `run_id`도 인증 토큰이 아니다. SVC native segment 재시작의 관측은 local step 0/`initial`을 유지하고 `history_start`를 실제 segment 시작 번호에 결속한다. `(run_id, request_id, history_start, step, role)`로 parse 호출을 구분하며 같은 입력으로 재시작해도 segment끼리 바꿔 붙이지 않는다. native parse가 없는 SVC 단계의 `UNAVAILABLE/NO_NATIVE_PARSE`는 host 생성 marker이며 native logger 증거가 아니다.
+
+**C# symbol 모드 (#218).** profile r3의 `preprocess`가 있으면, 사례마다 `kit.ApplyEdits`로 만든 각 step 원본을 `kit.ObserveCSharpPreprocess`로 다시 평가한다(앞 step의 범위를 옮기지 않는다).
+- 모든 step이 `OK`
+  - 각 step의 `Active`를 그 step의 `ranges`로 driver에 준다.
+  - 사례의 판정·claim은 기존 규칙을 따른다.
+  - tree의 policy identity는 `tsgk-native-policy/r2`다.
+- `OK`가 아닌 첫 step이 있으면 그 상태가 사례를 정한다.
+  - driver는 실행하지 않는다. process·원 응답·native step도 없다.
+  - assessment는 `BLOCKED`이고, claim 셋은 모두 `NOT_CLAIMED`다.
+  - 상태 대응
+    - `ZERO_ACTIVE`·`MALFORMED`·`INVALID_INPUT`(원본이나 edit 결과가 UTF-8이 아님): `NOT_RUN`, code는 각각 `PREPROCESS_ZERO_ACTIVE`·`PREPROCESS_MALFORMED`·`PREPROCESS_INVALID_INPUT`
+    - `RANGE_LIMIT`·`LIMIT`: `RESOURCE_LIMIT`, code는 `PREPROCESS_RANGE_LIMIT`·`PREPROCESS_LIMIT`
+  - 빈 `ranges`는 전체 입력을 뜻하므로 `ZERO_ACTIVE`에 쓰지 않는다.
+  - 편집으로 활성 구간이 사라지거나 생기는 사례도 이 규칙을 따르며, 그 사례의 CST·incremental/fresh 비교·old tree 전달·reuse 관측은 없다.
+- 결과 `tsgk-incremental-result/r4`
+  - r3(필수 관측)에 사례별 `preprocess`(평가한 step 목록, OK가 아닌 첫 step까지)를 더한다.
+  - 각 step은 `status`, `directives`(`kind`, `hash`, `active`, `taken`), `active`(byte·point), `inactive`다.
+  - 이 관측은 순서 있는 지시문 위치·선택과 활성/비활성 범위만 주장한다. group 구조와 지시문 span은 주장하지 않는다.
+- 이 결과는 support claim·qualification·query reference 자격을 만들지 않는다.
+  - qualification은 oracle profile만 읽고, oracle profile은 `preprocess`를 받지 않는다.
+  - query witness는 query 응답이 필요한데, 이 모드는 query 없는 `native-parse-edit`만 받는다.
 
 **필수 관측 판정 (#217).** `tsgk-incremental-result/r3`(`incremental --reuse-observation`)는 같은 wire r3에서 모든 native parse의 관측을 필수로 요구한다(`reuseobs.Mandatory`, `reuseobs.CaseClaim`). 결과 r2의 별도 축 의미는 그 기록의 replay(`native-result-r3`)에만 남는다.
 

@@ -474,7 +474,7 @@ func TestReplayUnsupported(t *testing.T) {
 			t.Fatalf("reducer %s must declare its gates and what it does not recompute", ri.ID)
 		}
 	}
-	if !slices.Equal(names, []string{"bs-gate-compare-r1", "native-result-r1", "native-result-r2", "native-result-r3", "native-result-r4", "oracle-set-r1", "oracle-set-r2", "prepare-native-r1", "private-corpus-r1", "private-corpus-r2", "query-reference-connection-r1", "query-witness-r1"}) {
+	if !slices.Equal(names, []string{"bs-gate-compare-r1", "native-result-r1", "native-result-r2", "native-result-r3", "native-result-r4", "native-result-r5", "oracle-set-r1", "oracle-set-r2", "prepare-native-r1", "private-corpus-r1", "private-corpus-r2", "query-reference-connection-r1", "query-witness-r1"}) {
 		t.Fatalf("registry %v", names)
 	}
 	// an r2 revision differs from its r1 only in id, revision and the route rule it adds; r1

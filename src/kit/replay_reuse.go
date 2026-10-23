@@ -32,7 +32,9 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		return e
 	}
 	schema := "tsgk-incremental-result/r2"
-	if x.mandatoryObservation {
+	if x.preprocess {
+		schema = "tsgk-incremental-result/r4" // r3 with the symbol mode (#218)
+	} else if x.mandatoryObservation {
 		schema = "tsgk-incremental-result/r3"
 	}
 	if top.ResultSchema != schema || top.ReuseObservationPolicy != reuseobs.Policy || len(top.ObservationRunID) == 0 || len(top.ObservationRunID) > 128 {
