@@ -84,14 +84,13 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	}
 	defined := map[string]bool{}
 	for _, s := range symbols {
-		name, ok := ppSymbol([]byte(s))
-		if !ok || ppKeyword(s) {
+		if _, ok := ppSymbol([]byte(s)); !ok || ppKeyword(s) {
 			return fail(ppInvalidInput, "symbol "+s)
 		}
 		if ppTooLong(s) {
 			return fail(ppLimit, "symbol length")
 		}
-		defined[name] = true
+		defined[s] = true // Roslyn keeps caller symbols as given; only source names are folded
 	}
 	var res ppResult
 	var groups []ppGroup

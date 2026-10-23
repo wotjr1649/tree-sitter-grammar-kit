@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-csharp-pp-roslyn/r1",
-  "cases_sha256": "f4f91bcc5df2adc9836843059bc3b2f1e80d0e4b9e1f723a89703bd44dcc495b",
+  "cases_sha256": "055a0d709b2a015e5e7caacf6f158ac9ea2d18a910be7cd33964657fd65f5b45",
   "roslyn": "5.9.0.0",
   "language_version": "Latest",
   "cases": [
@@ -2190,6 +2190,68 @@
         {
           "start": 58,
           "end": 73
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "caller-cf-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 45,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 24
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "caller-plain-matches-cf-source",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 30,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 51,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 36,
+          "end": 51
         }
       ],
       "errors": []

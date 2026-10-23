@@ -103,6 +103,8 @@ CASES = [
     ("file-based-in-active-if", "#if true\n#:sdk Microsoft.NET.Sdk\n#endif\nclass C {}\n", [], ["FileBasedProgram"]),
     ("file-based-after-endif", "#if NO\n#endif\n#:sdk Microsoft.NET.Sdk\nclass C {}\n", [], ["FileBasedProgram"]),
     ("long-s-symbol", "#define fal\\u017Fe\n#if fal\\u017Fe\nclass Selected {}\n#else\nclass Other {}\n#endif\n", []),
+    ("caller-cf-symbol", "#if A\nclass Selected {}\n#else\nclass Other {}\n#endif\n", ["A‌"]),
+    ("caller-plain-matches-cf-source", "#if A\\u200C\nclass Selected {}\n#else\nclass Other {}\n#endif\n", ["A"]),
     ("shebang-after-bom", "﻿#!/usr/bin/env dotnet\nclass C {}\n", [], ["FileBasedProgram"]),
     ("shebang-not-first", "class C {}\n#!/usr/bin/env dotnet\n", [], ["FileBasedProgram"]),
     ("feff-before-directive", "\n﻿#if A\nclass C {}\n#endif\n", ["A"]),

@@ -504,6 +504,20 @@
    "symbols": []
   },
   {
+   "id": "caller-cf-symbol",
+   "source": "I2lmIEEKY2xhc3MgU2VsZWN0ZWQge30KI2Vsc2UKY2xhc3MgT3RoZXIge30KI2VuZGlmCg==",
+   "symbols": [
+    "A\u200c"
+   ]
+  },
+  {
+   "id": "caller-plain-matches-cf-source",
+   "source": "I2lmIEFcdTIwMEMKY2xhc3MgU2VsZWN0ZWQge30KI2Vsc2UKY2xhc3MgT3RoZXIge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
    "id": "shebang-after-bom",
    "source": "77u/IyEvdXNyL2Jpbi9lbnYgZG90bmV0CmNsYXNzIEMge30K",
    "symbols": [],
