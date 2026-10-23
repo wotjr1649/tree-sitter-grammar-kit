@@ -79,7 +79,7 @@ func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]
 	}
 	switch control {
 	case "missing":
-		rows = rows[:len(rows)-1]
+		rows = slices.Delete(rows, index, index+1) // a core artifact; config-lag drops a config
 	case "old-attempt":
 		rows[index].Name = strings.TrimSuffix(rows[index].Name, "-2") + "-1"
 	case "rerun", "rerun-lag", "rerun-config-lag":
