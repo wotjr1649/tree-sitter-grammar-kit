@@ -14,6 +14,10 @@ import (
 // building and running the driver belongs to the CLI's runner, never to this package.
 const IncrementalSchema = "tsgk-incremental/r2"
 
+// IncrementalPreprocessSchema is r2 plus the optional C# preprocess member (#218); a
+// profile without the member keeps its r2 meaning.
+const IncrementalPreprocessSchema = "tsgk-incremental/r3"
+
 // incrementalSchemaR1 is still decoded (without anchors) so earlier evidence replays.
 const incrementalSchemaR1 = "tsgk-incremental/r1"
 
@@ -228,6 +232,7 @@ type IncrementalProfile struct {
 	Grammar      []NativeInput     `json:"grammar"`
 	Declarations *Declarations     `json:"declarations"`
 	Cases        []IncrementalCase `json:"cases"`
+	Preprocess   *Preprocess       `json:"preprocess,omitempty"` // r3 only (#218)
 }
 
 var symbolPattern = regexp.MustCompile(`^tree_sitter_[a-z0-9_]{1,64}$`)
@@ -298,7 +303,7 @@ func nativeInput(t typed, v *jv, roles map[string]bool) (NativeInput, *Error) {
 }
 
 func parseIncremental(data []byte) (IncrementalProfile, *Error) {
-	p, _, e := parseNative(data, []string{IncrementalSchema, incrementalSchemaR1}, "incremental", nil, nil)
+	p, _, e := parseNative(data, []string{IncrementalPreprocessSchema, IncrementalSchema, incrementalSchemaR1}, "incremental", nil, nil)
 	return p, e
 }
 
@@ -312,7 +317,7 @@ type nativeExtras struct {
 
 // parseNative decodes the members shared by tsgk-incremental and tsgk-oracle; extra
 // top-level and case-level members are required and returned undecoded. schemas lists the
-// accepted revisions, the current one (which takes expectation anchors) first. A query
+// accepted revisions; every revision but r1 takes expectation anchors. A query
 // operation (S06) is accepted only by the oracle profile, and the other operations only by
 // the incremental one.
 func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra []string) (IncrementalProfile, nativeExtras, *Error) {
@@ -323,7 +328,7 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 	if e != nil {
 		return p, x, e
 	}
-	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format", "svc_context")
+	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format", "svc_context", "preprocess")
 	if e != nil {
 		return p, x, e
 	}
@@ -408,7 +413,7 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 		return p, x, t.bad("CASES_COUNT_INVALID", m["cases"])
 	}
 	seen := map[string]bool{}
-	anchors := p.Schema == schemas[0]
+	anchors := p.Schema != incrementalSchemaR1 && p.Schema != oracleSchemaR1
 	for _, item := range list {
 		c, cm, e := parseCase(t, item, p, op, caseExtra, anchors)
 		if e != nil {
@@ -429,7 +434,58 @@ func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra 
 			return p, x, e
 		}
 	}
+	if v := m["preprocess"]; v != nil {
+		if p.Preprocess, e = parsePreprocess(t, v, p); e != nil {
+			return p, x, e
+		}
+	}
 	return p, x, nil
+}
+
+// parsePreprocess decodes an r3 incremental profile's preprocess member. The first revision
+// serves native-parse-edit on UTF-8 C# without SVC; anything else is unsupported.
+func parsePreprocess(t typed, v *jv, p IncrementalProfile) (*Preprocess, *Error) {
+	unsupported := func(code string) (*Preprocess, *Error) {
+		return nil, fail(KindUnsupported, code, t.doc+"#"+v.cptr(), nil)
+	}
+	switch {
+	case t.doc != "incremental" || p.Schema != IncrementalPreprocessSchema || p.Operation != "native-parse-edit":
+		return unsupported("PREPROCESS_OPERATION_UNSUPPORTED")
+	case p.Format != "":
+		return unsupported("PREPROCESS_SVC_UNSUPPORTED")
+	case p.Symbol != "tree_sitter_c_sharp":
+		return unsupported("PREPROCESS_LANGUAGE_UNSUPPORTED")
+	}
+	for _, c := range p.Cases {
+		if c.Encoding != EncodingUTF8 {
+			return unsupported("PREPROCESS_ENCODING_UNSUPPORTED")
+		}
+	}
+	m, e := t.object(v, []string{"mode", "symbols"})
+	if e != nil {
+		return nil, e
+	}
+	pp := &Preprocess{Symbols: []string{}}
+	if pp.Mode, e = t.str(m["mode"]); e != nil {
+		return nil, e
+	} else if pp.Mode != PreprocessMode {
+		return unsupported("PREPROCESS_MODE_UNSUPPORTED")
+	}
+	list, e := t.array(m["symbols"])
+	if e != nil {
+		return nil, e
+	}
+	for _, item := range list {
+		s, e := t.str(item)
+		if e != nil {
+			return nil, e
+		}
+		pp.Symbols = append(pp.Symbols, s)
+	}
+	if code := preprocessSymbolsValid(pp.Symbols); code != "" {
+		return nil, t.bad(code, m["symbols"])
+	}
+	return pp, nil
 }
 
 func parseGrammarInputs(t typed, v *jv) ([]NativeInput, *Error) {

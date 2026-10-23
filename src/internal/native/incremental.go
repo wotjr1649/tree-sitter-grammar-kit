@@ -27,6 +27,10 @@ const ResultSchema = "tsgk-incremental-result/r1"
 // replayed by native-result-r3 and no longer produced.
 const ObservationResultSchema = "tsgk-incremental-result/r3"
 
+// PreprocessResultSchema is r3 with the C# symbol mode (#218): each case records its
+// evaluated preprocess steps, and the trees carry the tsgk-native-policy/r2 identity.
+const PreprocessResultSchema = "tsgk-incremental-result/r4"
+
 var testHookOutputFinalization func(stage string, output, responses *outputDirectory)
 
 // Capabilities a caller must grant to `tsgk incremental`.
@@ -182,6 +186,13 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 	}
 	op := kit.NativeOperations()[prof.Operation]
 	res.ProfileID, res.Route, res.Operation, res.Output, res.ProfileSHA256 = prof.ID, prof.Route, op, prof.Output, prof.SHA256
+	if prof.Preprocess != nil {
+		// the symbol mode is observed or not run: its result revision is r3 plus preprocess
+		if !req.ReuseObservation {
+			return stop(refuse(kit.KindUnsupported, "PREPROCESS_OBSERVATION_REQUIRED", nil))
+		}
+		res.ResultSchema = PreprocessResultSchema
+	}
 	if f, err := platformScope(op); err != nil {
 		res.Findings = append(res.Findings, f)
 		res.Assessment = kit.AssessBlocked
@@ -241,7 +252,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		Compiler: req.Compiler, CompilerID: prof.Compiler, CgroupParent: req.CgroupParent, CacheDir: req.BuildCache})
 	res.Build = b
 	res.ExecutionStatus, res.EvidenceMode = kit.StatusCompleted, kit.ModeNewRun
-	policy := PolicyRef(op, prof.Output)
+	policy := kit.NativePolicy(op, prof.Output, prof.Preprocess)
 	res.Identities = append(res.Identities, kit.IdentityRef{Role: "profile", Schema: prof.Schema, SHA256: prof.SHA256}, policy)
 	if berr != nil {
 		var ne *Error
@@ -253,7 +264,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
-		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy}
+		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy, Preprocess: prof.Preprocess}
 		if req.ReuseObservation {
 			x.Protocol, x.ObservationRunID, x.ObservationProducerSHA256 = ProtocolR3, res.ObservationRunID, b.Identity
 		}

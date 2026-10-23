@@ -162,8 +162,9 @@ type rcCase struct {
 		FactReproduction  string `json:"fact_reproduction"`
 		DynamicSQL        string `json:"dynamic_sql"`
 	} `json:"oracle_claims"`
-	Steps        []rcStep   `json:"steps"`
-	Expectations []rcExpect `json:"expectations"`
+	Steps        []rcStep          `json:"steps"`
+	Expectations []rcExpect        `json:"expectations"`
+	Preprocess   *[]PreprocessStep `json:"preprocess"`
 	Producer     *struct {
 		Query            string         `json:"query"`
 		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
@@ -1135,19 +1136,17 @@ type nativeBuild struct {
 
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
-	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
-	ObservationRunID       string        `json:"observation_run_id"`
-	Schema                 string        `json:"schema"`
-	ResultSchema           string        `json:"result_schema"`
-	ExecutionStatus        string        `json:"execution_status"`
-	Assessment             string        `json:"assessment"`
-	Identities             []IdentityRef `json:"identities"`
-	Route                  string        `json:"route"`
-	Operation              struct {
-		Name string `json:"name"`
-	} `json:"operation"`
-	Build   *nativeBuild `json:"build"`
-	Summary struct {
+	ReuseObservationPolicy string          `json:"reuse_observation_policy"`
+	ObservationRunID       string          `json:"observation_run_id"`
+	Schema                 string          `json:"schema"`
+	ResultSchema           string          `json:"result_schema"`
+	ExecutionStatus        string          `json:"execution_status"`
+	Assessment             string          `json:"assessment"`
+	Identities             []IdentityRef   `json:"identities"`
+	Route                  string          `json:"route"`
+	Operation              NativeOperation `json:"operation"`
+	Build                  *nativeBuild    `json:"build"`
+	Summary                struct {
 		Cases       int            `json:"cases"`
 		Statuses    map[string]int `json:"execution_statuses"`
 		Assessments map[string]int `json:"assessments"`
@@ -1227,6 +1226,11 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
 				return e
 			}
+			if x.preprocess {
+				if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
+					return e
+				}
+			}
 			if x.gate("edit-points").NotRecomputed > unknownPoints {
 				o.complete = false
 				if o.assess == AssessPass {
@@ -1254,7 +1258,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.mandatoryObservation {
+	if x.preprocess {
+		wantSchema = "tsgk-incremental-result/r4"
+	} else if x.mandatoryObservation {
 		wantSchema = "tsgk-incremental-result/r3"
 	} else if x.reuseObservation {
 		wantSchema = "tsgk-incremental-result/r2"
@@ -1330,6 +1336,10 @@ func replayNativeResult(x *replayEnv) *Error {
 	if e != nil {
 		return e
 	}
+	// the symbol mode (#218) replays with native-result-r5 only, and r5 with it only
+	if (prof.Preprocess != nil) != x.preprocess {
+		return fail(KindUnsupported, "PREPROCESS_REDUCER_MISMATCH", pm.Path, nil)
+	}
 	prof.SHA256 = digestHex(data)
 	if x.prof.Records != nil && !slices.Equal(x.prof.Records, caseIDs(prof.Cases)) {
 		x.finding("RECORDS_WORKLOAD_MISMATCH", "", "등록 record 목록이 workload profile의 case와 다르다")
@@ -1337,6 +1347,9 @@ func replayNativeResult(x *replayEnv) *Error {
 	top, outs, e := x.replayResultFile(rm.Path, prof, "", nil)
 	if e != nil {
 		return e
+	}
+	if x.preprocess {
+		x.checkPreprocessPolicy(top, prof, rm.Path)
 	}
 	x.recorded = Verdict{top.ExecutionStatus, top.Assessment}
 	x.recomp = aggregateCases(outs)

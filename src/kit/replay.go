@@ -368,6 +368,17 @@ func reducerTable() map[string]reducer {
 		return r.run(x)
 	}
 	t[r4.info.ID] = r4
+	r5 := r4
+	r5.info.ID, r5.info.Revision = "native-result-r5", "r5"
+	r5.info.Inputs = []string{"tsgk-incremental-result/r4 result.json", "tsgk-incremental/r3 workload profile with a preprocess member", "tsgk-native/r3 responses", "sources/ original case sources (case-source, required)"}
+	r5.info.Gates = append(slices.Clone(r4.info.Gates), "preprocess")
+	r5.info.Recorded = append(slices.Clone(r4.info.Recorded), "that the driver received the active ranges (a source without directives parses alike with and without them)")
+	r5.info.Description += "; r5 (#218): the C# symbol mode, every case's evaluated preprocess steps and its stopped outcome recomputed from the registered original source and edits, and the run policy recomputed as tsgk-native-policy/r2"
+	r5.run = func(x *replayEnv) *Error {
+		x.preprocess = true
+		return r4.run(x)
+	}
+	t[r5.info.ID] = r5
 	return t
 }
 
@@ -431,6 +442,7 @@ type replayEnv struct {
 	nativeInputBytes     uint64
 	reuseObservation     bool
 	mandatoryObservation bool // r4: the observation claim is mandatory and folds into the verdict
+	preprocess           bool // r5: the C# symbol mode (#218)
 	observationResponses map[string]bool
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
