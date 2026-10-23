@@ -245,6 +245,142 @@
    "symbols": []
   },
   {
+   "id": "interp-format",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTIzOiMsIyMwfSI7IH0KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-format-slashes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTovKngvL30iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-nested-string",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KCJ9IiArICJ7Iil9IjsgfQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-ternary",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KHRydWUgPyAxIDogMik6RDJ9IjsgfQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-global-alias",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7Z2xvYmFsOjpTeXN0ZW0uTWF0aC5QSX0iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-verbatim-hole-multiline",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAiezEgKwoyfQojaWYgQQoiOyB9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "raw-four-quotes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gIiIiIgojaWYgQQoiIiIgc3RpbGwKIiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-interp-two-dollars",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIiIKe3sxOiN9fXt4fQojaWYgQQoiIiI7IH0K",
+   "symbols": []
+  },
+  {
+   "id": "escape-upper",
+   "source": "I2lmIFxVMDAwMDAwNDEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "cf-symbol",
+   "source": "I2RlZmluZSBBXHUyMDBDCiNpZiBBCmNsYXNzIFgge30KI2Vsc2UKY2xhc3MgWSB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "define-undef-define",
+   "source": "I2RlZmluZSBBCiN1bmRlZiBBCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "inactive-define-before-token",
+   "source": "I2lmIE5PCiNkZWZpbmUgQQojZW5kaWYKY2xhc3MgWiB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "inactive-malformed-symbol",
+   "source": "I2lmIE5PCiNkZWZpbmUgMUEKI2VuZGlmCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "inactive-unknown-directive",
+   "source": "I2lmIE5PCiNmb28KI2VuZGlmCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-line-before-define",
+   "source": "wqAKI2RlZmluZSBBCiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-comment-before-define",
+   "source": "wqAvLyBjCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-indented-directive",
+   "source": "wqAjaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "pragma-warning",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgQ1MwMTY4CmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "pragma-warning-nbsp",
+   "source": "I3ByYWdtYSB3YXJuaW5nwqBkaXNhYmxlIENTMDE2OApjbGFzcyBYIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "pragma-checksum",
+   "source": "I3ByYWdtYSBjaGVja3N1bSAiZi5jcyIgIns0MDZFQTY2MC02NENGLTRDODItQjZGMC00MkQ0ODE3MkE3OTl9IiAiYWIiCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "pragma-bare",
+   "source": "I3ByYWdtYQpjbGFzcyBYIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "nel",
+   "source": "I2lmIEHChWNsYXNzIFgge33ChSNlbmRpZsKF",
+   "symbols": []
+  },
+  {
+   "id": "paragraph-separator",
+   "source": "I2lmIEHigKljbGFzcyBYIHt94oCpI2VuZGlm4oCp",
+   "symbols": []
+  },
+  {
+   "id": "bom-non-ascii",
+   "source": "77u/Ly8g7ZWcCiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
    "id": "malformed-expression",
    "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [

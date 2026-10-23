@@ -21,16 +21,19 @@ const (
 	ppInvalidInput        = "INVALID_INPUT"        // invalid UTF-8 or an invalid caller symbol
 )
 
-// ppLimits bounds one evaluation.
+// ppLimits bounds one evaluation. Depth also bounds the nesting of comments, strings and
+// interpolation holes the lexer follows; Symbols bounds the caller symbols, whose bytes
+// count against Bytes too.
 type ppLimits struct {
 	Bytes      int // source bytes
 	Directives int // directive lines
 	Depth      int // open conditional groups
 	ExprDepth  int // nesting of ! and parentheses in one condition
 	Ranges     int // active ranges handed to the parser (the registered range policy)
+	Symbols    int // caller symbols
 }
 
-var ppDefaultLimits = ppLimits{Bytes: 32 << 20, Directives: 4096, Depth: 64, ExprDepth: 64, Ranges: 16}
+var ppDefaultLimits = ppLimits{Bytes: 32 << 20, Directives: 4096, Depth: 64, ExprDepth: 64, Ranges: 16, Symbols: 256}
 
 // ppDirective is one directive line. Kind follows Roslyn's directive trivia names without
 // the "DirectiveTrivia" suffix. Active is false inside a skipped section. Taken is set for
@@ -72,6 +75,13 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	if !utf8.Valid(src) {
 		return fail(ppInvalidInput, "utf-8")
 	}
+	symbolBytes := 0
+	for _, s := range symbols {
+		symbolBytes += len(s)
+	}
+	if len(symbols) > lim.Symbols || len(src)+symbolBytes > lim.Bytes {
+		return fail(ppLimit, "symbols")
+	}
 	defined := map[string]bool{}
 	for _, s := range symbols {
 		name, ok := ppSymbol([]byte(s))
@@ -83,7 +93,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	var res ppResult
 	var groups []ppGroup
 	active := func() bool { return len(groups) == 0 || groups[len(groups)-1].current }
-	lex := &csLexer{}
+	lex := &csLexer{depth: lim.Depth}
 	sawToken := false
 	start := 0
 	if len(src) >= 3 && src[0] == 0xEF && src[1] == 0xBB && src[2] == 0xBF {
@@ -106,8 +116,11 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		if hash < 0 {
 			if !active() {
 				ppAppend(&res.Inactive, line, next)
-				drop = append(drop, Span{StartByte: uint32(line), EndByte: uint32(next)})
-			} else if !lex.scan(src[first:end], &sawToken) {
+				ppAppend(&drop, line, next)
+			} else if ok := lex.scan(src[first:end], &sawToken); !ok {
+				if lex.deep {
+					return fail(ppLimit, "lexer depth")
+				}
 				return fail(ppMalformed, "# in code")
 			}
 			lex.endLine()
@@ -198,7 +211,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		}
 		res.Directives = append(res.Directives, d)
 		if steering {
-			drop = append(drop, Span{StartByte: uint32(line), EndByte: uint32(next)})
+			ppAppend(&drop, line, next)
 		}
 		line = next
 	}
@@ -215,6 +228,8 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		}
 		at = max(at, s.EndByte)
 	}
+	ppPoints(src, res.Active)
+	ppPoints(src, res.Inactive)
 	switch {
 	case len(res.Active) == 0:
 		res.Status = ppZeroActive // a complete observation with nothing for the parser
@@ -227,6 +242,27 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 }
 
 func ppBool(b bool) *bool { return &b }
+
+// ppPoints fills the points of ordered spans in one pass: rows count LF only and columns are
+// bytes, as tree-sitter counts them.
+func ppPoints(src []byte, spans []Span) {
+	var at int
+	var p Point
+	advance := func(to uint32) Point {
+		for ; at < int(to); at++ {
+			if src[at] == '\n' {
+				p = Point{Row: p.Row + 1}
+			} else {
+				p.Column++
+			}
+		}
+		return p
+	}
+	for i := range spans {
+		spans[i].StartPoint = advance(spans[i].StartByte)
+		spans[i].EndPoint = advance(spans[i].EndByte)
+	}
+}
 
 // ppAppend adds [start, end) to ordered spans, merging a span that touches the last.
 func ppAppend(spans *[]Span, start, end int) {
@@ -300,12 +336,9 @@ func ppDirectiveName(src []byte, i, end int) (ppDirective, int) {
 	if r, _ := ppIdentRune(src[j:end]); j < end && ppIdentPart(r) {
 		kind = "" // a longer word such as #ifdef
 	}
-	if kind == "Pragma" {
-		w := ppSkipSpace(src, j, end)
-		switch {
-		case ppHasWord(src[w:end], "warning"):
-			kind = "PragmaWarning"
-		case ppHasWord(src[w:end], "checksum"):
+	if kind == "Pragma" { // Roslyn reads any pragma but checksum as a (possibly bad) warning pragma
+		kind = "PragmaWarning"
+		if w := ppSkipSpace(src, j, end); ppHasWord(src[w:end], "checksum") {
 			kind = "PragmaChecksum"
 		}
 	}
@@ -313,7 +346,11 @@ func ppDirectiveName(src []byte, i, end int) (ppDirective, int) {
 }
 
 func ppHasWord(b []byte, w string) bool {
-	return len(b) >= len(w) && string(b[:len(w)]) == w && (len(b) == len(w) || !ppIdentPart(rune(b[len(w)])))
+	if len(b) < len(w) || string(b[:len(w)]) != w {
+		return false
+	}
+	r, n := ppIdentRune(b[len(w):])
+	return n == 0 || !ppIdentPart(r)
 }
 
 // ppTail returns a conditional or define directive's argument: the rest of the line up to
@@ -342,17 +379,22 @@ func ppIdentPart(r rune) bool {
 }
 
 // ppSymbol decodes a conditional symbol (identifier characters and \u/\U escapes) and
-// reports whether all of b is one; '@' is not part of a symbol.
+// reports whether all of b is one; '@' is not part of a symbol. The returned name compares
+// as C# identifiers do: escapes decoded and formatting characters (Cf) removed.
 func ppSymbol(b []byte) (string, bool) {
 	var out []rune
+	first := true
 	for i := 0; i < len(b); {
 		r, n := ppIdentRune(b[i:])
-		if n == 0 || (len(out) == 0 && !ppIdentStart(r)) || (len(out) > 0 && !ppIdentPart(r)) {
+		if n == 0 || (first && !ppIdentStart(r)) || (!first && !ppIdentPart(r)) {
 			return "", false
 		}
-		out, i = append(out, r), i+n
+		if !unicode.Is(unicode.Cf, r) {
+			out = append(out, r)
+		}
+		first, i = false, i+n
 	}
-	return string(out), len(out) > 0
+	return string(out), !first
 }
 
 // ppIdentRune reads one identifier character, decoding \uXXXX and \UXXXXXXXX.
@@ -497,15 +539,19 @@ func (p *ppParser) unary(d int) (bool, bool) {
 // hole of one) and whether a non-trivia token has occurred.
 type csLexer struct {
 	stack []csFrame
+	depth int  // the most open constructs followed
+	deep  bool // scan stopped at depth
 }
 
 // csFrame is one open construct. kind: 'c' delimited comment, 'v' verbatim string, 'r' raw
-// string (quotes), 'h' interpolation hole (braces counts its own nesting), 'i' regular
-// interpolated string, 'V' interpolated verbatim, 'R' interpolated raw (dollars).
+// string (quotes), 'h' interpolation hole, 'i' regular interpolated string, 'V' interpolated
+// verbatim, 'R' interpolated raw (dollars). A hole counts its own braces and parentheses;
+// a ':' at its top level starts the format clause, which is text up to the closing '}'.
 type csFrame struct {
 	kind            byte
 	quotes, dollars int
-	braces          int
+	braces, parens  int
+	format          bool
 }
 
 func (l *csLexer) atTop() bool { return len(l.stack) == 0 }
@@ -517,11 +563,21 @@ func (l *csLexer) endLine() {
 	}
 }
 
-func (l *csLexer) push(f csFrame) { l.stack = append(l.stack, f) }
+func (l *csLexer) push(f csFrame) {
+	if len(l.stack) >= l.depth {
+		l.deep = true
+		return
+	}
+	l.stack = append(l.stack, f)
+}
 
-// scan lexes one line of active code; it returns false for a '#' token in code (CS1040).
+// scan lexes one line of active code; it returns false for a '#' token in code (CS1040)
+// or at the depth bound (deep).
 func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 	for i := 0; i < len(b); {
+		if l.deep {
+			return false
+		}
 		var top *csFrame
 		if len(l.stack) > 0 {
 			top = &l.stack[len(l.stack)-1]
@@ -531,6 +587,13 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			continue
 		}
 		c := b[i]
+		if top != nil && top.format { // format clause text up to the hole's '}'
+			if c == '}' {
+				l.stack = l.stack[:len(l.stack)-1]
+			}
+			i++
+			continue
+		}
 		switch {
 		case c == '/' && i+1 < len(b) && b[i+1] == '/':
 			return true
@@ -539,7 +602,6 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			i += 2
 		case c == '{' && top != nil:
 			top.braces++
-			*sawToken = true
 			i++
 		case c == '}' && top != nil:
 			if top.braces == 0 {
@@ -547,6 +609,15 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			} else {
 				top.braces--
 			}
+			i++
+		case (c == '(' || c == '[') && top != nil:
+			top.parens++
+			i++
+		case (c == ')' || c == ']') && top != nil:
+			top.parens--
+			i++
+		case c == ':' && top != nil && top.braces == 0 && top.parens <= 0 && !(i+1 < len(b) && b[i+1] == ':') && !(i > 0 && b[i-1] == ':'):
+			top.format = true
 			i++
 		case c == '\'':
 			*sawToken = true
@@ -562,11 +633,11 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			i = n
 		case c == '#':
 			return false
-		case c == ' ' || c == '\t' || c == '\v' || c == '\f':
-			i++
 		default:
-			*sawToken = true
-			_, n := utf8.DecodeRune(b[i:])
+			r, n := utf8.DecodeRune(b[i:])
+			if r != ' ' && r != '\t' && r != '\v' && r != '\f' && !unicode.Is(unicode.Zs, r) {
+				*sawToken = true
+			}
 			i += n
 		}
 	}
