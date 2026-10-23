@@ -601,13 +601,13 @@ func (p *ppParser) unary(d int) (bool, bool) {
 		return false, true
 	}
 	name, ok := ppSymbol(word)
+	p.long = p.long || ppTooLong(string(word)) // before the constants: a long spelling claims nothing
 	switch {
 	case ok && ppASCIIFold(name, "true"): // Roslyn: bool.TryParse on the decoded name
 		return true, true
 	case ok && ppASCIIFold(name, "false"):
 		return false, true
 	}
-	p.long = p.long || ppTooLong(string(word))
 	return p.defined[name], ok
 }
 
