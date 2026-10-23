@@ -24,20 +24,29 @@ $client.Timeout = [TimeSpan]::FromSeconds(120)
 $deadline = [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(365))
 try {
   $endpoint = "https://api.github.com/repos/wotjr1649/tree-sitter-grammar-kit/actions/runs/$env:GITHUB_RUN_ID"
-  Get-CIGateFile -Client $client -Uri $endpoint -Out (Join-Path $metadata 'run.json') -Limit 1048576 -Cancellation $deadline.Token -Token $token
-  for ($page = 1; $page -le 10; $page++) {
-    $listingPath = Join-Path $metadata "listing-$page.json"
-    Get-CIGateFile -Client $client -Uri "$endpoint/artifacts?per_page=100&page=$page" -Out $listingPath -Limit 1048576 -Cancellation $deadline.Token -Token $token
-    # This only bounds pagination; Go validates the original JSON before selecting IDs.
-    try { $listing = [IO.File]::ReadAllText($listingPath) | ConvertFrom-Json -AsHashtable } catch { throw 'artifact pagination JSON invalid' }
-    if ($listing -isnot [Collections.IDictionary]) { throw 'artifact pagination object invalid' }
-    $total = $listing['total_count']
-    if (($total -isnot [long] -and $total -isnot [int]) -or $total -lt 0 -or $total -gt 1000) { throw 'artifact pagination invalid' }
-    if ($page * 100 -ge $total) { break }
+  # #275: the artifact listing can trail the finished producers; when the plan reports only
+  # a missing current-attempt artifact (exit 3), list the run once or twice more inside the
+  # same deadline. An earlier attempt's artifact or any other defect still fails at once.
+  for ($try = 1; ; $try++) {
+    Get-CIGateFile -Client $client -Uri $endpoint -Out (Join-Path $metadata 'run.json') -Limit 1048576 -Cancellation $deadline.Token -Token $token
+    for ($page = 1; $page -le 10; $page++) {
+      $listingPath = Join-Path $metadata "listing-$page.json"
+      Get-CIGateFile -Client $client -Uri "$endpoint/artifacts?per_page=100&page=$page" -Out $listingPath -Limit 1048576 -Cancellation $deadline.Token -Token $token
+      # This only bounds pagination; Go validates the original JSON before selecting IDs.
+      try { $listing = [IO.File]::ReadAllText($listingPath) | ConvertFrom-Json -AsHashtable } catch { throw 'artifact pagination JSON invalid' }
+      if ($listing -isnot [Collections.IDictionary]) { throw 'artifact pagination object invalid' }
+      $total = $listing['total_count']
+      if (($total -isnot [long] -and $total -isnot [int]) -or $total -lt 0 -or $total -gt 1000) { throw 'artifact pagination invalid' }
+      if ($page * 100 -ge $total) { break }
+    }
+    $deadline.Token.ThrowIfCancellationRequested()
+    & $Gate plan -expected $Expected -metadata $metadata -out $planPath
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($LASTEXITCODE -ne 3 -or $try -ge 3) { throw 'artifact plan failed' }
+    # the metadata directory holds only this loop's run and listing files
+    Get-ChildItem -LiteralPath $metadata -File | Remove-Item
+    if ($deadline.Token.WaitHandle.WaitOne([TimeSpan]::FromSeconds(30))) { throw 'artifact listing deadline' }
   }
-  $deadline.Token.ThrowIfCancellationRequested()
-  & $Gate plan -expected $Expected -metadata $metadata -out $planPath
-  if ($LASTEXITCODE -ne 0) { throw 'artifact plan failed' }
   $plan = [IO.File]::ReadAllText($planPath) | ConvertFrom-Json -AsHashtable
   New-Item -ItemType Directory -Path $destination | Out-Null
   foreach ($artifact in $plan['artifacts']) {

@@ -52,6 +52,32 @@ type downloadPlan struct {
 	Artifacts []artifactMetadata `json:"artifacts"`
 }
 
+// #275: a complete listing that lacks a current-attempt artifact is either GitHub's listing
+// lag, which fetch.ps1 may fetch again, or a partial re-run, whose producers kept their
+// earlier-attempt artifacts; the gate never accepts those, so it says what to do instead.
+var (
+	errArtifactLag  = errors.New("required artifact missing for current attempt")
+	errPartialRerun = errors.New("partial re-run: a required artifact exists only for an earlier attempt; re-run all jobs")
+)
+
+// earlierAttempt reports whether a listed name is want (`<prefix>-<run>-<attempt>`) for an
+// earlier attempt of the same run.
+func earlierAttempt(listed []string, want string, r kit.RunIdentity) bool {
+	attempt, err := strconv.ParseUint(r.RunAttempt, 10, 64)
+	prefix, ok := strings.CutSuffix(want, "-"+r.RunAttempt)
+	if err != nil || !ok {
+		return false
+	}
+	for _, name := range listed {
+		if k, ok := strings.CutPrefix(name, prefix+"-"); ok {
+			if n, err := strconv.ParseUint(k, 10, 64); err == nil && n > 0 && n < attempt && strconv.FormatUint(n, 10) == k {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func validArtifact(a artifactMetadata, expected kit.RunIdentity) bool {
 	return a.ID != 0 && a.Expired != nil && !*a.Expired && a.Size > 0 && a.Size <= zipLimit && strings.HasPrefix(a.Digest, "sha256:") && hex64.MatchString(strings.TrimPrefix(a.Digest, "sha256:")) && strconv.FormatUint(a.Run.ID, 10) == expected.RunID && a.Run.Head == expected.HeadSHA
 }
@@ -76,6 +102,7 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 	}
 	selected := map[string]artifactMetadata{}
 	ids := map[uint64]bool{}
+	var names []string
 	var listed uint64
 	var total uint64
 	for i, data := range pages {
@@ -92,6 +119,7 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 		}
 		listed += uint64(len(listing.Artifacts))
 		for _, a := range listing.Artifacts {
+			names = append(names, a.Name)
 			for _, spec := range artifacts(expected) {
 				if a.Name != spec.name {
 					continue
@@ -104,8 +132,16 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 			}
 		}
 	}
-	if listed != total || len(selected) != 5 {
-		return result, errors.New("required artifact missing for current attempt")
+	if listed != total {
+		return result, errors.New("artifact listing incomplete")
+	}
+	if len(selected) != 5 {
+		for _, spec := range artifacts(expected) {
+			if _, ok := selected[spec.name]; !ok && earlierAttempt(names, spec.name, expected) {
+				return result, errPartialRerun
+			}
+		}
+		return result, errArtifactLag
 	}
 	result.Schema = "tsgk-ci-download-plan/r1"
 	result.Run = expected

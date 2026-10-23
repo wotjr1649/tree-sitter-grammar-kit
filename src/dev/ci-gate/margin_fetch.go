@@ -171,6 +171,14 @@ func selectMarginArtifact(rows []artifactMetadata, name string, expected kit.Run
 	return a, true, nil
 }
 
+func rowNames(rows []artifactMetadata) []string {
+	var names []string
+	for _, a := range rows {
+		names = append(names, a.Name)
+	}
+	return names
+}
+
 func makeMarginPlan(expected kit.RunIdentity, metadata, history string) (marginPlan, error) {
 	result := marginPlan{Current: []artifactMetadata{}, History: []marginHistory{}, Excluded: []string{}}
 	// Reuse full current-run listing validation, including all pages and 5 core ZIPs.
@@ -202,6 +210,9 @@ func makeMarginPlan(expected kit.RunIdentity, metadata, history string) (marginP
 	}
 	for _, j := range marginJobs {
 		a, ok, err := selectMarginArtifact(rows, configName(j, expected), expected)
+		if err == nil && !ok && earlierAttempt(rowNames(rows), configName(j, expected), expected) {
+			return result, errPartialRerun
+		}
 		if err != nil || !ok || ids[a.ID] {
 			return result, errors.New("margin producer artifact missing or duplicate")
 		}
