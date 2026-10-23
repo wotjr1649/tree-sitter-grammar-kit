@@ -381,6 +381,62 @@
    ]
   },
   {
+   "id": "inactive-define-after-token",
+   "source": "Y2xhc3MgQyB7fQojaWYgZmFsc2UKI2RlZmluZSBBCiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "region-crosses-endif-inactive",
+   "source": "I2lmIGZhbHNlCiNyZWdpb24gUgojZW5kaWYKY2xhc3MgQyB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "unclosed-region",
+   "source": "I3JlZ2lvbiBSCmNsYXNzIEMge30K",
+   "symbols": []
+  },
+  {
+   "id": "endregion-inside-group",
+   "source": "I3JlZ2lvbiBSCiNpZiBmYWxzZQojZW5kcmVnaW9uCiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "region-crosses-else",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbHNlCiNlbmRyZWdpb24KI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "region-crosses-elif",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbGlmIEIKI2VuZHJlZ2lvbgojZW5kaWYKY2xhc3MgQyB7fQo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "region-in-group",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbmRyZWdpb24KI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "escaped-true",
+   "source": "I2lmIFx1MDA3NHJ1ZQpjbGFzcyBYIHt9CiNlbHNlCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "upper-true",
+   "source": "I2lmIFRSVUUKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "mixed-false",
+   "source": "I2lmIEZhTHNFCmNsYXNzIFgge30KI2Vsc2UKY2xhc3MgWSB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
    "id": "malformed-expression",
    "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [

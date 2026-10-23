@@ -145,7 +145,11 @@ func TestCSharpPreprocessResults(t *testing.T) {
 		want    string
 	}{
 		// the #if/#else/#endif lines and the skipped section leave; #region stays for the grammar
-		"selected":             {"#region r\n#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n", []string{"A"}, nil, "OK 0-10,16-27,51-62"},
+		"selected":             {"#region r\n#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n#endregion\n", []string{"A"}, nil, "OK 0-10,16-27,51-73"},
+		"long-symbol":          {"#if " + strings.Repeat("A", 129) + "\nx\n#endif\n", nil, nil, "LIMIT "},
+		"long-define":          {"#define " + strings.Repeat("A", 129) + "\nx\n", nil, nil, "LIMIT "},
+		"long-caller":          {"x\n", []string{strings.Repeat("A", 129)}, nil, "LIMIT "},
+		"at-128":               {"#if " + strings.Repeat("A", 128) + "\nx\n#endif\n", []string{strings.Repeat("A", 128)}, nil, "OK 133-135"},
 		"define-leaves":        {"#define A\nclass X {}\n", nil, nil, "OK 10-21"},
 		"zero-active":          {"#if A\nclass X {}\n#endif\n", nil, nil, "ZERO_ACTIVE "},
 		"cap":                  {strings.Repeat("#if A\n#endif\nx\n", 3), nil, &ppLimits{Bytes: 1 << 20, Directives: 64, Depth: 8, ExprDepth: 8, Ranges: 2}, "RANGE_LIMIT "},

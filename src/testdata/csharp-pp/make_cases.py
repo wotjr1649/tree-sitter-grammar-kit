@@ -82,6 +82,17 @@ CASES = [
     ("nel", "#if A\u0085class X {}\u0085#endif\u0085", []),
     ("paragraph-separator", "#if A\u2029class X {}\u2029#endif\u2029", []),
     ("bom-non-ascii", "\ufeff// \ud55c\n#if A\nclass X {}\n#endif\n", ["A"]),
+    # PR #270 review: position, region nesting and bool constants
+    ("inactive-define-after-token", "class C {}\n#if false\n#define A\n#endif\n", []),
+    ("region-crosses-endif-inactive", "#if false\n#region R\n#endif\nclass C {}\n", []),
+    ("unclosed-region", "#region R\nclass C {}\n", []),
+    ("endregion-inside-group", "#region R\n#if false\n#endregion\n#endif\n", []),
+    ("region-crosses-else", "#if A\n#region R\n#else\n#endregion\n#endif\nclass C {}\n", ["A"]),
+    ("region-crosses-elif", "#if A\n#region R\n#elif B\n#endregion\n#endif\nclass C {}\n", ["A"]),
+    ("region-in-group","#if A\n#region R\n#endregion\n#endif\nclass C {}\n", ["A"]),
+    ("escaped-true", "#if \\u0074rue\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
+    ("upper-true", "#if TRUE\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
+    ("mixed-false", "#if FaLsE\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
     # malformed
     ("malformed-expression", "#if A &&\nclass X {}\n#endif\n", ["A"]),
     ("unterminated", "#if A\nclass X {}\n", ["A"]),

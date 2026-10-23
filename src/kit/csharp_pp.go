@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -88,10 +89,14 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		if !ok || ppKeyword(s) {
 			return fail(ppInvalidInput, "symbol "+s)
 		}
+		if ppTooLong(name) {
+			return fail(ppLimit, "symbol length")
+		}
 		defined[name] = true
 	}
 	var res ppResult
 	var groups []ppGroup
+	regions, openRegions := []int{0}, 0 // open #region per group level; a group may not cross one
 	active := func() bool { return len(groups) == 0 || groups[len(groups)-1].current }
 	lex := &csLexer{depth: lim.Depth}
 	sawToken := false
@@ -150,6 +155,12 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if deep {
 				return fail(ppLimit, "expression depth")
 			}
+			if p.long {
+				return fail(ppLimit, "symbol length")
+			}
+			if d.Kind == "Elif" && regions[len(regions)-1] > 0 {
+				return fail(ppMalformed, "region crossed")
+			}
 			if !ok {
 				return fail(ppMalformed, "condition")
 			}
@@ -160,7 +171,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 				}
 				g.current = g.parent && value
 				g.taken = g.current
-				groups = append(groups, g)
+				groups, regions = append(groups, g), append(regions, 0)
 				d.Taken = ppBool(g.current)
 				break
 			}
@@ -182,10 +193,13 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if len(groups) == 0 {
 				return fail(ppMalformed, "unmatched "+d.Kind)
 			}
+			if regions[len(regions)-1] > 0 {
+				return fail(ppMalformed, "region crossed")
+			}
 			g := &groups[len(groups)-1]
 			d.Active = g.parent
 			if d.Kind == "EndIf" {
-				groups = groups[:len(groups)-1]
+				groups, regions = groups[:len(groups)-1], regions[:len(regions)-1]
 				break
 			}
 			if g.sawElse {
@@ -200,13 +214,29 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if !ok || !valid || ppKeyword(string(ppTrim(name))) {
 				return fail(ppMalformed, "symbol")
 			}
-			if d.Active {
+			if ppTooLong(sym) {
+				return fail(ppLimit, "symbol length")
+			}
+			if d.Active { // Roslyn 5.9 reports no position error in a skipped section (observed)
 				if sawToken {
 					return fail(ppMalformed, "define after token")
 				}
 				defined[sym] = d.Kind == "Define"
 			}
-		default: // region, pragma, nullable, line, error, warning: text for the grammar
+		case "Region", "EndRegion":
+			lvl := &regions[len(regions)-1]
+			switch {
+			case d.Kind == "Region" && openRegions == lim.Depth:
+				return fail(ppLimit, "depth")
+			case d.Kind == "Region":
+				*lvl, openRegions = *lvl+1, openRegions+1
+			case *lvl == 0:
+				return fail(ppMalformed, "unmatched EndRegion")
+			default:
+				*lvl, openRegions = *lvl-1, openRegions-1
+			}
+			steering = !d.Active // an active region stays for the grammar
+		default: // pragma, nullable, line, error, warning: text for the grammar
 			steering = !d.Active
 		}
 		res.Directives = append(res.Directives, d)
@@ -215,8 +245,8 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		}
 		line = next
 	}
-	if len(groups) > 0 {
-		return fail(ppMalformed, "unterminated #if")
+	if len(groups) > 0 || openRegions > 0 {
+		return fail(ppMalformed, "unterminated #if or #region")
 	}
 	if !lex.atTop() {
 		lex.endLine()
@@ -441,6 +471,7 @@ type ppParser struct {
 	defined map[string]bool
 	depth   int
 	deep    bool
+	long    bool // a symbol longer than Roslyn compares
 }
 
 func (p *ppParser) parse() (value, ok, deep bool) {
@@ -531,7 +562,27 @@ func (p *ppParser) unary(d int) (bool, bool) {
 		return false, true
 	}
 	name, ok := ppSymbol(word)
+	switch {
+	case ok && strings.EqualFold(name, "true"): // Roslyn: bool.TryParse on the decoded name
+		return true, true
+	case ok && strings.EqualFold(name, "false"):
+		return false, true
+	}
+	p.long = p.long || ppTooLong(name)
 	return p.defined[name], ok
+}
+
+// ppTooLong reports a symbol longer than the 128 UTF-16 code units Roslyn compares; Roslyn
+// truncates such names, and the evaluator refuses them instead (LIMIT).
+func ppTooLong(name string) bool {
+	n := 0
+	for _, r := range name {
+		n++
+		if r > 0xFFFF {
+			n++
+		}
+	}
+	return n > 128
 }
 
 // csLexer follows active C# code across lines only far enough to know whether a line starts
