@@ -441,8 +441,9 @@ type replayEnv struct {
 
 	nativeInputBytes     uint64
 	reuseObservation     bool
-	mandatoryObservation bool // r4: the observation claim is mandatory and folds into the verdict
-	preprocess           bool // r5: the C# symbol mode (#218)
+	mandatoryObservation bool             // r4: the observation claim is mandatory and folds into the verdict
+	preprocess           bool             // r5: the C# symbol mode (#218)
+	preprocessTrees      []preprocessTree // r5: every symbol-mode tree, for its policy
 	observationResponses map[string]bool
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)

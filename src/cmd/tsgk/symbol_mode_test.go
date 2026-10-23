@@ -33,11 +33,11 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	base := t.TempDir()
 	root := filepath.Join(base, "root")
 	symbol, grammar := csharpClosure(t, root)
-	one, zero := "#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n", "#if B\nclass Q {}\n#endif\n"
+	one, zero, bad := "#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n", "#if B\nclass Q {}\n#endif\n", "class B {}\n"
 	if err := os.MkdirAll(filepath.Join(root, "cases"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for name, src := range map[string]string{"one": one, "zero": zero} {
+	for name, src := range map[string]string{"one": one, "zero": zero, "bad": bad} {
 		if err := os.WriteFile(filepath.Join(root, "cases", name+".cs"), []byte(src), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -58,6 +58,9 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			map[string]any{"id": "one", "input": fileEntry(t, root, "cases/one.cs", "case"), "points": []any{}, "expect": []any{step(0), step(1)},
 				"edits": []any{map[string]any{"start_byte": 4, "old_end_byte": 5, "new_end_byte": 5, "old": enc([]byte("A")), "new": enc([]byte("B"))}}},
 			map[string]any{"id": "zero", "input": fileEntry(t, root, "cases/zero.cs", "case"), "points": []any{}, "expect": []any{}, "edits": []any{}},
+			// an edit refused before any evaluation (its old bytes are not the source's)
+			map[string]any{"id": "bad", "input": fileEntry(t, root, "cases/bad.cs", "case"), "points": []any{}, "expect": []any{},
+				"edits": []any{map[string]any{"start_byte": 0, "old_end_byte": 1, "new_end_byte": 0, "old": enc([]byte("x")), "new": ""}}},
 		},
 	}
 	pdata, _ := json.Marshal(profile)
@@ -112,12 +115,13 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			} `json:"steps"`
 		} `json:"cases"`
 	}
-	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r4" || len(res.Cases) != 2 {
+	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r4" || len(res.Cases) != 3 {
 		t.Fatalf("result: %v %s", err, published[:min(len(published), 300)])
 	}
-	c0, c1 := res.Cases[0], res.Cases[1]
-	if c0.ExecutionStatus != kit.StatusCompleted || len(c0.Steps) != 2 || len(c0.Preprocess) != 2 || c1.ExecutionStatus != kit.StatusNotRun || c1.Code != "PREPROCESS_ZERO_ACTIVE" || len(c1.Steps) != 0 {
-		t.Fatalf("cases: %+v %+v", c0.ExecutionStatus, c1)
+	c0, c1, c2 := res.Cases[0], res.Cases[1], res.Cases[2]
+	if c0.ExecutionStatus != kit.StatusCompleted || len(c0.Steps) != 2 || len(c0.Preprocess) != 2 || c1.ExecutionStatus != kit.StatusNotRun || c1.Code != "PREPROCESS_ZERO_ACTIVE" || len(c1.Steps) != 0 ||
+		c2.ExecutionStatus != kit.StatusNotRun || c2.Code != "EDIT_OLD_MISMATCH" || c2.Preprocess != nil {
+		t.Fatalf("cases: %+v %+v %+v", c0.ExecutionStatus, c1, c2)
 	}
 	inside := func(nodes []kit.TreeNode, src, word string) bool {
 		at := strings.Index(src, word)
@@ -147,6 +151,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	}
 	witness("00000-one.bin", one)
 	witness("00001-zero.bin", zero)
+	witness("00002-bad.bin", bad)
 	policy := ""
 	for _, id := range res.Identities {
 		if id.Role == "policy" {
@@ -155,7 +160,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	}
 	replay := func(reducer string, skip string) (kit.ReplayResult, error) {
 		t.Helper()
-		items := []struct{ path, role string }{{"workload.json", "workload-profile"}, {"result.json", "result"}, {"sources/00000-one.bin", "case-source"}, {"sources/00001-zero.bin", "case-source"}}
+		items := []struct{ path, role string }{{"workload.json", "workload-profile"}, {"result.json", "result"}, {"sources/00000-one.bin", "case-source"}, {"sources/00001-zero.bin", "case-source"}, {"sources/00002-bad.bin", "case-source"}}
 		entries, err := os.ReadDir(filepath.Join(out, "responses"))
 		if err != nil {
 			t.Fatal(err)
@@ -220,6 +225,16 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 		}
 		change(doc)
 		data, _ := json.Marshal(doc)
+		// keep the recorded operation bytes unless the change is to them: a re-marshalled map
+		// reorders its members, which the canonical operation check alone would reject
+		var orig, top map[string]json.RawMessage
+		if err := json.Unmarshal(published, &orig); err != nil || json.Unmarshal(data, &top) != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasPrefix(name, "operation") {
+			top["operation"] = orig["operation"]
+			data, _ = json.Marshal(top)
+		}
 		if err := os.WriteFile(filepath.Join(out, "result.json"), data, 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -237,6 +252,41 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	})
 	tamper("missing observation", "PREPROCESS_MISSING", func(doc map[string]any) {
 		delete(cases(doc)[1].(map[string]any), "preprocess")
+	})
+	tree := func(doc map[string]any) map[string]any {
+		return cases(doc)[0].(map[string]any)["steps"].([]any)[0].(map[string]any)["incremental"].(map[string]any)["tree"].(map[string]any)
+	}
+	tamper("tree policy removed", "PREPROCESS_POLICY_MISMATCH", func(doc map[string]any) {
+		tr := tree(doc)
+		ids := []any{}
+		for _, id := range tr["identities"].([]any) {
+			if id.(map[string]any)["role"] != "policy" {
+				ids = append(ids, id)
+			}
+		}
+		tr["identities"] = ids
+	})
+	tamper("tree policy schema", "PREPROCESS_POLICY_MISMATCH", func(doc map[string]any) {
+		for _, id := range tree(doc)["identities"].([]any) {
+			if m := id.(map[string]any); m["role"] == "policy" {
+				m["schema"] = "tsgk-native-policy/r1"
+			}
+		}
+	})
+	tamper("edit refusal relabelled", "PREPROCESS_OUTCOME_MISMATCH", func(doc map[string]any) {
+		cases(doc)[2].(map[string]any)["code"] = "EDIT_RANGE_INVALID"
+	})
+	tamper("process on a stopped case", "PREPROCESS_OUTCOME_MISMATCH", func(doc map[string]any) {
+		cases(doc)[1].(map[string]any)["process"] = map[string]any{"status": "COMPLETED", "exit_code": 0}
+	})
+	tamper("operation member case-folded", "PREPROCESS_POLICY_MISMATCH", func(doc map[string]any) {
+		doc["operation"].(map[string]any)["RUN_WALL_NS"] = 1
+	})
+	tamper("leaf in a skipped section", "PREPROCESS_TREE_OUTSIDE_RANGES", func(doc map[string]any) {
+		at := strings.Index(one, "class Y")
+		tr := tree(doc)
+		tr["nodes"] = append(tr["nodes"].([]any), map[string]any{"parent": 0, "type": "identifier", "field": nil, "named": true, "extra": false, "is_error": false, "has_error": false,
+			"is_missing": false, "start_byte": at + 6, "end_byte": at + 7, "start_point": map[string]any{"row": 3, "column": 6}, "end_point": map[string]any{"row": 3, "column": 7}})
 	})
 	tamper("policy", "PREPROCESS_POLICY_MISMATCH", func(doc map[string]any) {
 		op := kit.NativeOperations()["native-parse-edit"]

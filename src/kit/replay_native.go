@@ -165,6 +165,7 @@ type rcCase struct {
 	Steps        []rcStep          `json:"steps"`
 	Expectations []rcExpect        `json:"expectations"`
 	Preprocess   *[]PreprocessStep `json:"preprocess"`
+	Process      jsontext.Value    `json:"process"` // only read for a stopped symbol-mode case (#218)
 	Producer     *struct {
 		Query            string         `json:"query"`
 		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
