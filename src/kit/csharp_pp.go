@@ -641,7 +641,7 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			i += n
 		}
 	}
-	return true
+	return !l.deep // a construct refused at the line's last character
 }
 
 // char skips a character literal.
