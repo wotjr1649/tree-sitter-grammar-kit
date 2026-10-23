@@ -447,6 +447,84 @@
    "symbols": []
   },
   {
+   "id": "shebang",
+   "source": "IyEvdXNyL2Jpbi9lbnYgZG90bmV0CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-sdk",
+   "source": "IzpzZGsgTWljcm9zb2Z0Lk5FVC5TZGsKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-in-inactive",
+   "source": "I2lmIE5PCiM6cGFja2FnZSBGb29AMS4wCiNlbmRpZgpjbGFzcyBYIHt9Cg==",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-after-token",
+   "source": "Y2xhc3MgQyB7fQojOnNkayBNaWNyb3NvZnQuTkVULlNkawo=",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "shebang-after-bom",
+   "source": "77u/IyEvdXNyL2Jpbi9lbnYgZG90bmV0CmNsYXNzIEMge30K",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "shebang-not-first",
+   "source": "Y2xhc3MgQyB7fQojIS91c3IvYmluL2VudiBkb3RuZXQK",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "feff-before-directive",
+   "source": "Cu+7vyNpZiBBCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-in-directive",
+   "source": "I2lm77u/QQpjbGFzcyBDIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-line-before-define",
+   "source": "77u/Cu+7vwojZGVmaW5lIEEKI2lmIEEKY2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "ctrl-z-space",
+   "source": "I2lmGkEKY2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
    "id": "malformed-expression",
    "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [

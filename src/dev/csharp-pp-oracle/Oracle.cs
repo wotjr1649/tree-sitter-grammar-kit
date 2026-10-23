@@ -33,6 +33,9 @@ public static class Oracle
             string text = utf8.GetString(bytes);
             var symbols = item.GetProperty("symbols").EnumerateArray().Select(s => s.GetString()!).ToArray();
             var options = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.Parse, SourceCodeKind.Regular, symbols);
+            // a case may name parser features, e.g. FileBasedProgram for #! and #: directives (C# 14)
+            if (item.TryGetProperty("features", out var features))
+                options = options.WithFeatures(features.EnumerateArray().Select(f => new KeyValuePair<string, string>(f.GetString()!, "true")));
             var tree = CSharpSyntaxTree.ParseText(text, options);
             var root = tree.GetRoot();
             int Byte(int charPos) => utf8.GetByteCount(text.AsSpan(0, charPos));
@@ -60,7 +63,7 @@ public static class Oracle
                 });
             }
             var diagnostics = tree.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).Select(x => x.Id).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
-            results.Add(new { id, directives, disabled, errors = diagnostics });
+            results.Add(new { id, features = options.Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray(), directives, disabled, errors = diagnostics });
         }
         var output = new
         {

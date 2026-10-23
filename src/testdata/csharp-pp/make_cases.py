@@ -95,6 +95,17 @@ CASES = [
     ("mixed-false", "#if FaLsE\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
     ("supplementary-escape-symbol", "#define \\U00010400\n#if \\U00010400\nclass X {}\n#endif\n", []),
     ("supplementary-symbol", "#define \U00010400\n#if \U00010400\nclass X {}\n#endif\n", []),
+    # PR #270 review: C# 14 file-based directives and more whitespace
+    ("shebang", "#!/usr/bin/env dotnet\n#if A\nclass X {}\n#endif\n", ["A"], ["FileBasedProgram"]),
+    ("file-based-sdk", "#:sdk Microsoft.NET.Sdk\n#if A\nclass X {}\n#endif\n", ["A"], ["FileBasedProgram"]),
+    ("file-based-in-inactive", "#if NO\n#:package Foo@1.0\n#endif\nclass X {}\n", [], ["FileBasedProgram"]),
+    ("file-based-after-token", "class C {}\n#:sdk Microsoft.NET.Sdk\n", [], ["FileBasedProgram"]),
+    ("shebang-after-bom", "﻿#!/usr/bin/env dotnet\nclass C {}\n", [], ["FileBasedProgram"]),
+    ("shebang-not-first", "class C {}\n#!/usr/bin/env dotnet\n", [], ["FileBasedProgram"]),
+    ("feff-before-directive", "\n﻿#if A\nclass C {}\n#endif\n", ["A"]),
+    ("feff-in-directive", "#if﻿A\nclass C {}\n#endif\n", ["A"]),
+    ("feff-line-before-define", "﻿\n﻿\n#define A\n#if A\nclass C {}\n#endif\n", []),
+    ("ctrl-z-space", "#if\u001aA\nclass C {}\n#endif\n", ["A"]),
     # malformed
     ("malformed-expression", "#if A &&\nclass X {}\n#endif\n", ["A"]),
     ("unterminated", "#if A\nclass X {}\n", ["A"]),
@@ -102,8 +113,14 @@ CASES = [
     ("endif-without-if", "class C {}\n#endif\n", []),
 ]
 
-out = {"schema": "tsgk-csharp-pp-cases/r1", "cases": [
-    {"id": i, "source": base64.b64encode(s.encode("utf-8")).decode(), "symbols": sym} for i, s, sym in CASES]}
+def case(i, s, sym, features=None):
+    c = {"id": i, "source": base64.b64encode(s.encode("utf-8")).decode(), "symbols": sym}
+    if features:
+        c["features"] = features
+    return c
+
+
+out = {"schema": "tsgk-csharp-pp-cases/r1", "cases": [case(*c) for c in CASES]}
 here = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(here, "cases.json"), "w", encoding="utf-8", newline="\n") as f:
     json.dump(out, f, indent=1)

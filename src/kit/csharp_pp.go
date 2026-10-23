@@ -114,7 +114,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		}
 		hash := -1
 		if lex.atTop() {
-			if i := ppSkipSpace(src, first, end); i < end && src[i] == '#' {
+			if i := ppSkipLead(src, first, end); i < end && src[i] == '#' {
 				hash = i
 			}
 		}
@@ -137,6 +137,20 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		}
 		d, args := ppDirectiveName(src, hash+1, end)
 		d.Hash, d.Active = hash, active()
+		// C# 14 file-based programs (Roslyn's FileBasedProgram feature, which the registered
+		// grammar accepts): #! only at offset 0, #: only before the first token; both stay
+		// for the grammar
+		switch {
+		case hash+1 < end && src[hash+1] == '!' && hash == 0:
+			d.Kind = "Shebang"
+		case hash+1 < end && src[hash+1] == '!':
+			return fail(ppMalformed, "#! not at the start")
+		case hash+1 < end && src[hash+1] == ':':
+			if d.Active && sawToken {
+				return fail(ppMalformed, "#: after token")
+			}
+			d.Kind = "Ignored"
+		}
 		if d.Kind == "" {
 			return fail(ppMalformed, "unknown directive")
 		}
@@ -328,7 +342,28 @@ func ppLineEnd(src []byte, i int) (end, next int, nonLF bool) {
 func ppSkipSpace(src []byte, i, end int) int {
 	for i < end {
 		r, n := utf8.DecodeRune(src[i:end])
-		if r != '\t' && r != '\v' && r != '\f' && !unicode.Is(unicode.Zs, r) {
+		if !ppSpace(r) {
+			break
+		}
+		i += n
+	}
+	return i
+}
+
+// ppSpace is whitespace inside a directive (Roslyn: Zs, tab, vertical tab, form feed and
+// U+001A); ppCodeSpace adds U+FEFF, which Roslyn takes before a directive and between
+// tokens but not inside one (observed).
+func ppSpace(r rune) bool {
+	return r == '\t' || r == '\v' || r == '\f' || r == 0x1A || unicode.Is(unicode.Zs, r)
+}
+
+func ppCodeSpace(r rune) bool { return ppSpace(r) || r == 0xFEFF }
+
+// ppSkipLead skips the whitespace before a directive's '#'.
+func ppSkipLead(src []byte, i, end int) int {
+	for i < end {
+		r, n := utf8.DecodeRune(src[i:end])
+		if !ppCodeSpace(r) {
 			break
 		}
 		i += n
@@ -685,7 +720,7 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			return false
 		default:
 			r, n := utf8.DecodeRune(b[i:])
-			if r != ' ' && r != '\t' && r != '\v' && r != '\f' && !unicode.Is(unicode.Zs, r) {
+			if !ppCodeSpace(r) {
 				*sawToken = true
 			}
 			i += n
