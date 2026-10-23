@@ -16,12 +16,13 @@ public sealed class CIGateTestHandler : HttpMessageHandler {
   public readonly List<string> Credentials = new();
   public readonly List<string> Hosts = new();
   public CancellationTokenSource CancelOnSend;
+  public int CancelDelay;
   protected override HttpResponseMessage Send(HttpRequestMessage r, CancellationToken c) {
     c.ThrowIfCancellationRequested();
     Credentials.Add(r.Headers.Authorization == null ? "" : r.Headers.Authorization.ToString());
     Hosts.Add(r.RequestUri.Host);
     var next = Responses.Dequeue();
-    if (CancelOnSend != null) CancelOnSend.Cancel();
+    if (CancelOnSend != null) CancelOnSend.CancelAfter(CancelDelay);
     if (next == null) throw new HttpRequestException("transport reset UNIT_ONLY");
     return next;
   }
@@ -72,7 +73,8 @@ foreach ($case in $cases) {
       'http-failure' { for ($i=0; $i -lt 3; $i++) { $handler.Responses.Enqueue((Response 503 'private response UNIT_ONLY')) } }
       'client-error' { $handler.Responses.Enqueue((Response 404 'private response UNIT_ONLY')) }
       'output-unwritable' { $out = Join-Path $Destination 'absent-directory/output.json'; $handler.Responses.Enqueue((Response 200 'ok')) }
-      'backoff-cancel' { $delay = [TimeSpan]::FromSeconds(30); $handler.CancelOnSend = $deadline; $handler.Responses.Enqueue((Response 503 '')) }
+      # the deadline ends inside the 30 s back-off (or, on a stalled host, just before it)
+      'backoff-cancel' { $delay = [TimeSpan]::FromSeconds(30); $handler.CancelOnSend = $deadline; $handler.CancelDelay = 100; $handler.Responses.Enqueue((Response 503 '')) }
       'transient-then-ok' { $handler.Responses.Enqueue((Response 502 '')); $handler.Responses.Enqueue((Response 200 'ok')) }
       'transport-then-ok' { $handler.Responses.Enqueue($null); $handler.Responses.Enqueue((Response 200 'ok')) }
       'partial-then-ok' { $handler.Responses.Enqueue((Partial)); $handler.Responses.Enqueue((Response 200 'ok')) }
@@ -85,6 +87,7 @@ foreach ($case in $cases) {
       'overwrite' { [IO.File]::WriteAllText($out, 'preserve'); $handler.Responses.Enqueue((Response 200 'ok')) }
     }
     $caught = $null
+    $started = $clock.ElapsedMilliseconds
     try { Get-CIGateFile -Client $client -Uri 'https://api.github.com/artifact' -Out $out -Limit 4 -Cancellation $deadline.Token -Token 'UNIT_TEST_ONLY' -RetryDelay $delay } catch { $caught = $_.Exception.Message }
     $sent = ($handler.Hosts | ForEach-Object { $_ }) -join ','
     $credentials = ($handler.Credentials | ForEach-Object { if ($_) { 'token' } else { '-' } }) -join ','
@@ -102,6 +105,7 @@ foreach ($case in $cases) {
       # deterministic failures and cancellation are never tried again
       $once = @{ 'oversize' = 1; 'actual-oversize' = 1; 'redirect-limit' = 4; 'cancelled' = 0; 'mid-cancel' = 1; 'output-unwritable' = 1; 'backoff-cancel' = 1 }
       if ($once.ContainsKey($case) -and $handler.Credentials.Count -ne $once[$case]) { throw "non-transient failure retried: $case" }
+      if ($case -eq 'backoff-cancel' -and $clock.ElapsedMilliseconds - $started -gt 10000) { throw 'retry back-off ignored the deadline' }
       if ($case -eq 'overwrite' -and [IO.File]::ReadAllText($out) -ne 'preserve') { throw 'existing output overwritten' }
       if ($case -eq 'mid-cancel' -and (!$deadline.IsCancellationRequested -or (Get-Item -LiteralPath $out).Length -ne 1)) { throw 'copy was not interrupted after its first read' }
       if ($case -eq 'actual-oversize' -and (Get-Item -LiteralPath $out).Length -gt 4) { throw 'received bytes exceeded output bound' }

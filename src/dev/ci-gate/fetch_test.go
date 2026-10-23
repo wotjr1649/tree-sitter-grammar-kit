@@ -65,6 +65,14 @@ func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]
 		a.Run.Head = r.HeadSHA
 		rows = append(rows, a)
 	}
+	// the producer configs the margin plan reads from the same listing (#275)
+	configs := len(rows)
+	for i, j := range marginJobs {
+		a := artifactMetadata{ID: uint64(500 + i), Name: configName(j, r), Size: int64(len(z)), Digest: "sha256:" + digest(z), Expired: new(bool)}
+		a.Run.ID = 123
+		a.Run.Head = r.HeadSHA
+		rows = append(rows, a)
+	}
 	index := 0
 	if paginate {
 		index = 100
@@ -74,9 +82,9 @@ func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]
 		rows = rows[:len(rows)-1]
 	case "old-attempt":
 		rows[index].Name = strings.TrimSuffix(rows[index].Name, "-2") + "-1"
-	case "rerun", "rerun-lag":
+	case "rerun", "rerun-lag", "rerun-config-lag":
 		// a whole-run re-run also lists every artifact of attempt 1
-		for i := index; i < index+5; i++ {
+		for i, n := index, len(rows); i < n; i++ {
 			a := rows[i]
 			a.ID += 1000
 			a.Name = strings.TrimSuffix(a.Name, "-2") + "-1"
@@ -85,6 +93,11 @@ func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]
 		if control == "rerun-lag" {
 			rows = slices.Delete(rows, index, index+1)
 		}
+		if control == "rerun-config-lag" {
+			rows = slices.Delete(rows, configs, configs+1)
+		}
+	case "config-lag":
+		rows = slices.Delete(rows, configs, configs+1)
 	case "duplicate":
 		rows = append(rows, rows[index])
 	case "duplicate-id":
@@ -123,7 +136,7 @@ func TestPlanListingLagExit(t *testing.T) {
 	if e := os.WriteFile(expected, encoded(t, expectation()), 0600); e != nil {
 		t.Fatal(e)
 	}
-	for control, want := range map[string]int{"": 0, "rerun": 0, "missing": 3, "old-attempt": 4, "rerun-lag": 4, "wrong-head": 1} {
+	for control, want := range map[string]int{"": 0, "rerun": 0, "missing": 3, "config-lag": 3, "old-attempt": 4, "rerun-lag": 4, "rerun-config-lag": 4, "wrong-head": 1} {
 		t.Run("control="+control, func(t *testing.T) {
 			runJSON, pages, _ := recordedMetadata(t, control, false)
 			meta := filepath.Join(t.TempDir(), "metadata")

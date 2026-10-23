@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -137,12 +138,25 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 	if listed != total {
 		return result, errors.New("artifact listing incomplete")
 	}
-	if len(selected) != 5 {
-		for _, spec := range artifacts(expected) {
-			if _, ok := selected[spec.name]; !ok && earlierAttempt(names, spec.name, expected) {
-				return result, errPartialRerun
-			}
+	// the margin plan reads this same listing, so its nine producer configs must be listed
+	// before the plan stops listing again; it still selects only the five core artifacts
+	missing := []string{}
+	for _, spec := range artifacts(expected) {
+		if _, ok := selected[spec.name]; !ok {
+			missing = append(missing, spec.name)
 		}
+	}
+	for _, j := range marginJobs {
+		if !slices.Contains(names, configName(j, expected)) {
+			missing = append(missing, configName(j, expected))
+		}
+	}
+	for _, name := range missing {
+		if earlierAttempt(names, name, expected) {
+			return result, errPartialRerun
+		}
+	}
+	if len(missing) > 0 {
 		return result, errArtifactLag
 	}
 	result.Schema = "tsgk-ci-download-plan/r1"
