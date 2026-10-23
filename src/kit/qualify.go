@@ -14,7 +14,7 @@ import (
 // Qualification schemas (Session 08).
 const (
 	QualificationInventorySchema = "tsgk-qualification-inventory/r4"
-	QualificationResultSchema    = "tsgk-qualification-result/r4"
+	QualificationResultSchema    = "tsgk-qualification-result/r5"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
@@ -592,6 +592,12 @@ type QualSet struct {
 	Host       map[string]string `json:"host_observations"`
 	Identities map[string]string `json:"identities"`
 	Findings   []Finding         `json:"findings"`
+	// BranchSelectionNotClaimed lists, in set order, the C# cases whose recorded trees have
+	// an #if/#elif condition naming a symbol, or a tree whose nodes were not recorded (#218).
+	// The default parser does not evaluate such conditions: which section it takes, and
+	// acceptance that depends on that choice, is not claimed. The case's verdicts and
+	// coverage are unchanged; they are the registered structure under that parser policy.
+	BranchSelectionNotClaimed []string `json:"branch_selection_not_claimed"`
 }
 
 // QualCell is one of the mandatory route × platform cells with its two axes and the
@@ -647,7 +653,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r4 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r5 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
@@ -1043,5 +1049,6 @@ func explainQualification(res QualificationResult, platforms []QualPlatform) []s
 		pc = append(pc, p.ID+" "+res.PlatformClaims[p.ID])
 	}
 	out = append(out, "platform별 claim: "+strings.Join(pc, ", ")+". 근거 무결성(완결성 PASS, finding 없음)과 그 platform의 모든 칸 kit 축·요구 축 PASS, 실행된 추가 역할 행 PASS일 때만 SUPPORTED이며 platform 간 비교는 넣지 않는다.")
+	out = append(out, "C# set의 branch_selection_not_claimed 사례는 조건부 컴파일 분기를 compiler symbol 값으로 고르지 않은 기본 parser 정책의 결과다. 그 분기 선택과 선택에 의존하는 구문 수용은 주장하지 않으며, SUPPORTED는 compiler symbol 환경에서의 정확성을 포함하지 않는다(#218).")
 	return out
 }
