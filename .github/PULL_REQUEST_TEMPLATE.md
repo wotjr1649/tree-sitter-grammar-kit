@@ -8,9 +8,9 @@ Executed checks and results / unrun checks and limitations:
 
 Risk class (typo/formatting, ordinary, or high-risk; mixed changes take the higher class), rationale, and the resulting independent-context and second-review requirements:
 
-Reviewed base/head or scoped working-diff identity, review type, reviewer/context, evidence link, and finding disposition (MAJOR counts as MATERIAL; each bot finding evaluated on its evidence; author-review evidence for a typo/formatting exception). For high-risk changes, the second review's perspective and counterexample evidence:
+Reviewed base/head or scoped working-diff identity, review type, reviewer/context, evidence link, and finding disposition (MAJOR counts as MATERIAL; each bot finding evaluated on its evidence; author-review evidence for a typo/formatting exception). Whether the reviewer confirmed the risk class. For high-risk changes, the second reviewer and perspective, and the counterexample evidence:
 
-Bot review: final head, request time T0, re-request time, status at merge, and why waiting ended (completed, T0 + 90 minutes for an ordinary change, or not required):
+Bot review: final head, request time T0, re-request time, status at merge (including any review still incomplete on an earlier head), and the time and reason waiting ended (completed, T0 + 90 minutes for an ordinary change, switch to another second reviewer at T0 + 90 minutes for a high-risk change, or not required):
 
 Final-candidate CI workflow/run URL, attempt, event, base/head, synthetic checkout SHA where applicable, and required job results:
 
