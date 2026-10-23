@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-csharp-pp-roslyn/r1",
-  "cases_sha256": "35584cd9f5354dbe7ce8bcb3d962fb37476ffb283c759886abe322e0aedc6d08",
+  "cases_sha256": "f4f91bcc5df2adc9836843059bc3b2f1e80d0e4b9e1f723a89703bd44dcc495b",
   "roslyn": "5.9.0.0",
   "language_version": "Latest",
   "cases": [
@@ -2096,6 +2096,103 @@
       "errors": [
         "CS9297"
       ]
+    },
+    {
+      "id": "file-based-in-active-if",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 9,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9299"
+      ]
+    },
+    {
+      "id": "file-based-after-endif",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 7,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 14,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9299"
+      ]
+    },
+    {
+      "id": "long-s-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 73,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 58,
+          "end": 73
+        }
+      ],
+      "errors": []
     },
     {
       "id": "shebang-after-bom",

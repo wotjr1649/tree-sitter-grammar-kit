@@ -483,6 +483,27 @@
    ]
   },
   {
+   "id": "file-based-in-active-if",
+   "source": "I2lmIHRydWUKIzpzZGsgTWljcm9zb2Z0Lk5FVC5TZGsKI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-after-endif",
+   "source": "I2lmIE5PCiNlbmRpZgojOnNkayBNaWNyb3NvZnQuTkVULlNkawpjbGFzcyBDIHt9Cg==",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "long-s-symbol",
+   "source": "I2RlZmluZSBmYWxcdTAxN0ZlCiNpZiBmYWxcdTAxN0ZlCmNsYXNzIFNlbGVjdGVkIHt9CiNlbHNlCmNsYXNzIE90aGVyIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
    "id": "shebang-after-bom",
    "source": "77u/IyEvdXNyL2Jpbi9lbnYgZG90bmV0CmNsYXNzIEMge30K",
    "symbols": [],

@@ -1,7 +1,6 @@
 package kit
 
 import (
-	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -89,7 +88,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		if !ok || ppKeyword(s) {
 			return fail(ppInvalidInput, "symbol "+s)
 		}
-		if ppTooLong(name) {
+		if ppTooLong(s) {
 			return fail(ppLimit, "symbol length")
 		}
 		defined[name] = true
@@ -99,7 +98,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	regions, openRegions := []int{0}, 0 // open #region per group level; a group may not cross one
 	active := func() bool { return len(groups) == 0 || groups[len(groups)-1].current }
 	lex := &csLexer{depth: lim.Depth}
-	sawToken := false
+	sawToken, sawIf := false, false
 	start := 0
 	if len(src) >= 3 && src[0] == 0xEF && src[1] == 0xBB && src[2] == 0xBF {
 		start = 3
@@ -146,8 +145,8 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		case hash+1 < end && src[hash+1] == '!':
 			return fail(ppMalformed, "#! not at the start")
 		case hash+1 < end && src[hash+1] == ':':
-			if d.Active && sawToken {
-				return fail(ppMalformed, "#: after token")
+			if d.Active && (sawToken || sawIf) { // CS9297, CS9299 (after any #if, even closed)
+				return fail(ppMalformed, "#: after token or #if")
 			}
 			d.Kind = "Ignored"
 		}
@@ -179,6 +178,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 				return fail(ppMalformed, "condition")
 			}
 			if d.Kind == "If" {
+				sawIf = true
 				g := ppGroup{parent: active()}
 				if g.parent {
 					d.Value = &value
@@ -228,7 +228,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if !ok || !valid || ppKeyword(string(ppTrim(name))) {
 				return fail(ppMalformed, "symbol")
 			}
-			if ppTooLong(sym) {
+			if ppTooLong(string(ppTrim(name))) {
 				return fail(ppLimit, "symbol length")
 			}
 			if d.Active { // Roslyn 5.9 reports no position error in a skipped section (observed)
@@ -602,20 +602,38 @@ func (p *ppParser) unary(d int) (bool, bool) {
 	}
 	name, ok := ppSymbol(word)
 	switch {
-	case ok && strings.EqualFold(name, "true"): // Roslyn: bool.TryParse on the decoded name
+	case ok && ppASCIIFold(name, "true"): // Roslyn: bool.TryParse on the decoded name
 		return true, true
-	case ok && strings.EqualFold(name, "false"):
+	case ok && ppASCIIFold(name, "false"):
 		return false, true
 	}
-	p.long = p.long || ppTooLong(name)
+	p.long = p.long || ppTooLong(string(word))
 	return p.defined[name], ok
 }
 
-// ppTooLong reports a symbol longer than the 128 UTF-16 code units Roslyn compares; Roslyn
-// truncates such names, and the evaluator refuses them instead (LIMIT).
-func ppTooLong(name string) bool {
+// ppASCIIFold compares a name with a lowercase ASCII word, ignoring ASCII case only.
+func ppASCIIFold(name, word string) bool {
+	if len(name) != len(word) {
+		return false
+	}
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if 'A' <= c && c <= 'Z' {
+			c += 'a' - 'A'
+		}
+		if c != word[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// ppTooLong reports a symbol whose raw spelling (escapes as written) is longer than the 128
+// UTF-16 code units Roslyn compares; Roslyn truncates the spelling, the evaluator refuses
+// it instead (LIMIT).
+func ppTooLong(raw string) bool {
 	n := 0
-	for _, r := range name {
+	for _, r := range raw {
 		n++
 		if r > 0xFFFF {
 			n++

@@ -149,6 +149,7 @@ func TestCSharpPreprocessResults(t *testing.T) {
 		"selected":             {"#region r\n#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n#endregion\n", []string{"A"}, nil, "OK 0-10,16-27,51-73"},
 		"long-symbol":          {"#if " + strings.Repeat("A", 129) + "\nx\n#endif\n", nil, nil, "LIMIT "},
 		"long-define":          {"#define " + strings.Repeat("A", 129) + "\nx\n", nil, nil, "LIMIT "},
+		"escaped-long":         {"#if " + strings.Repeat("\\u0041", 22) + "\nx\n#endif\n", []string{strings.Repeat("A", 22)}, nil, "LIMIT "},
 		"long-caller":          {"x\n", []string{strings.Repeat("A", 129)}, nil, "LIMIT "},
 		"at-128":               {"#if " + strings.Repeat("A", 128) + "\nx\n#endif\n", []string{strings.Repeat("A", 128)}, nil, "OK 133-135"},
 		"define-leaves":        {"#define A\nclass X {}\n", nil, nil, "OK 10-21"},
