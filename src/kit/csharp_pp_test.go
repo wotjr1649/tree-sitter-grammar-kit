@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -38,8 +39,18 @@ func TestCSharpPreprocessDifferential(t *testing.T) {
 		n, u := ppCompareBatch(t, b, filepath.Join(dir, "observed-"+strings.TrimPrefix(filepath.Base(b), "batch-")))
 		total, unobserved = total+n, append(unobserved, u...)
 	}
-	// a case Roslyn itself failed on has nothing to compare with: counted and named, never passed
 	t.Logf("%d batches, %d cases with a selection compared, %d without a Roslyn observation %v", len(batches), total, len(unobserved), unobserved)
+	// a case Roslyn itself failed on has nothing to compare with: it passes only when named in
+	// TSGK_PP_DIFF_UNOBSERVED (comma-separated ids), so a lost observation never passes silently
+	allowed := strings.Split(os.Getenv("TSGK_PP_DIFF_UNOBSERVED"), ",")
+	for _, id := range unobserved {
+		if !slices.Contains(allowed, id) {
+			t.Errorf("%s: no Roslyn observation", id)
+		}
+	}
+	if total == 0 {
+		t.Error("no case with a selection compared")
+	}
 }
 
 type ppObservedCase struct {
@@ -110,6 +121,14 @@ func ppCompareBatch(t *testing.T, casesPath, observedPath string) (selected int,
 		if d := ppRoslynDiff(src, r, o, ppDefaultLimits); d != "" {
 			t.Errorf("%s: %s", c.ID, d)
 			continue
+		}
+		if r.Status == ppRangeLimit { // compare the selection the range cap withheld, too
+			lim := ppDefaultLimits
+			lim.Ranges = math.MaxInt
+			if r = csharpPreprocess(src, EncodingUTF8, c.Symbols, lim); ppRoslynDiff(src, r, o, lim) != "" {
+				t.Errorf("%s: without the range cap: %s", c.ID, ppRoslynDiff(src, r, o, lim))
+				continue
+			}
 		}
 		if r.Status == ppOK || r.Status == ppZeroActive {
 			ppCheckPoints(t, c.ID, src, r)
@@ -265,6 +284,40 @@ func TestPPRoslynDiffDetects(t *testing.T) {
 	if d := ppRoslynDiff(src, good, o, ppLimits{Ranges: 1}); d == "" {
 		t.Error("OK over the range cap not noticed")
 	}
+	if ppRoslynDiff(src, ppResult{Status: ppRangeLimit, Active: good.Active}, o, ppLimits{Ranges: 1}) == "" {
+		t.Error("RANGE_LIMIT with a selection not noticed")
+	}
+	// selection errors Roslyn attaches outside a directive, and errors that leave the selection
+	for _, e := range []ppDiagnostic{{ID: "CS1040", Context: "Other"}, {ID: "CS1027", Context: "EndOfFile"}, {ID: "CS1038", Context: "EndOfFile"}} {
+		oe := o
+		oe.Diagnostics = []ppDiagnostic{e}
+		if ppRoslynDiff(src, good, oe, ppDefaultLimits) == "" {
+			t.Errorf("%s in %s not taken as a selection error", e.ID, e.Context)
+		}
+	}
+	for _, e := range []ppDiagnostic{{ID: "CS1576", Context: "Line"}, {ID: "CS1029", Context: "Error"}, {ID: "CS1056", Context: "Other"}, {ID: "CS1513", Context: "EndOfFile"}} {
+		oe := o
+		oe.Diagnostics = []ppDiagnostic{e}
+		if d := ppRoslynDiff(src, good, oe, ppDefaultLimits); d != "" {
+			t.Errorf("%s in %s voided the selection: %s", e.ID, e.Context, d)
+		}
+	}
+	// a skipped directive that steers nothing still leaves the active ranges with its line
+	skipped := []byte("#if B\n#pragma warning disable\nclass Y {}\n#endif\n")
+	var so ppObservedCase
+	if err := json.Unmarshal([]byte(`{"id":"s","directives":[
+		{"kind":"IfDirectiveTrivia","start":0,"active":true,"taken":false,"line_start":0,"line_end":6},
+		{"kind":"PragmaWarningDirectiveTrivia","start":6,"active":false,"taken":null,"line_start":6,"line_end":30},
+		{"kind":"EndIfDirectiveTrivia","start":41,"active":true,"taken":null,"line_start":41,"line_end":48}],
+		"disabled":[{"start":30,"end":41}],"diagnostics":[]}`), &so); err != nil {
+		t.Fatal(err)
+	}
+	if r := csharpPreprocess(skipped, EncodingUTF8, nil, ppDefaultLimits); r.Status != ppZeroActive || ppRoslynDiff(skipped, r, so, ppDefaultLimits) != "" {
+		t.Errorf("skipped #pragma: %s %s", r.Status, ppRoslynDiff(skipped, r, so, ppDefaultLimits))
+	}
+	if ppRoslynDiff(skipped, ppResult{Status: ppOK, Directives: csharpPreprocess(skipped, EncodingUTF8, nil, ppDefaultLimits).Directives, Active: []Span{{StartByte: 6, EndByte: 30}}, Inactive: []Span{{StartByte: 30, EndByte: 41}}}, so, ppDefaultLimits) == "" {
+		t.Error("a skipped #pragma line left active not noticed")
+	}
 	o.Diagnostics = append(o.Diagnostics, ppDiagnostic{ID: "CS1517", Context: "If"})
 	for _, r := range []ppResult{good, {Status: ppInvalidInput}, {Status: ppLimit}, {Status: ppMalformed, Active: good.Active}} {
 		if ppRoslynDiff(src, r, o, ppDefaultLimits) == "" {
@@ -336,6 +389,9 @@ func TestCSharpPreprocessResults(t *testing.T) {
 		"expr-depth":           {"#if " + strings.Repeat("!", 9) + "A\nx\n#endif\n", nil, &ppLimits{Bytes: 1 << 20, Directives: 64, Depth: 8, ExprDepth: 8, Ranges: 16}, "LIMIT "},
 		"directives":           {strings.Repeat("#region\n", 3), nil, &ppLimits{Bytes: 1 << 20, Directives: 2, Depth: 8, ExprDepth: 8, Ranges: 16}, "LIMIT "},
 		"bytes":                {"class X {}\n", nil, &ppLimits{Bytes: 4, Directives: 8, Depth: 8, ExprDepth: 8, Ranges: 16}, "LIMIT "},
+		"define-feff-long":     {"#define A" + strings.Repeat("\uFEFF", 128) + "\n#if A\nx\n#endif\n", nil, nil, "LIMIT "},
+		"define-feff-at-128":   {"#define A" + strings.Repeat("\uFEFF", 127) + "\n#if A\nx\n#endif\n", nil, nil, "OK 397-399"},
+		"feff-long":            {"#if A" + strings.Repeat("\uFEFF", 128) + "\nx\n#endif\n", []string{"A"}, nil, "LIMIT "}, // U+FEFF continues the name
 		"lexer-depth":          {"class X { string s = $\"{$\"{$\"{1}\"}\"}\"; }\n", nil, &ppLimits{Bytes: 1 << 20, Directives: 8, Depth: 3, ExprDepth: 8, Ranges: 16, Symbols: 4}, "LIMIT "},
 		"lexer-at-depth":       {"class X { string s = $\"{$\"{1}\"}\"; }\n", nil, &ppLimits{Bytes: 1 << 20, Directives: 8, Depth: 4, ExprDepth: 8, Ranges: 16, Symbols: 4}, "OK 0-36"},
 		"lexer-depth-eof":      {"$\"{", nil, &ppLimits{Bytes: 1 << 20, Directives: 8, Depth: 1, ExprDepth: 8, Ranges: 16, Symbols: 4}, "LIMIT "},

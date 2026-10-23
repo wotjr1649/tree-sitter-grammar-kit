@@ -712,6 +712,73 @@
    "symbols": []
   },
   {
+   "id": "format-escaped-quote",
+   "source": "dmFyIHMgPSAkInsxOlwiLyp9IjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "body-escaped-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx7ezEiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "body-unicode-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx1MDA3QnsxIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "body-hex-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx4N2J7MSI7CiNpZiBmYWxzZQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "body-short-unicode-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx1N0J7MSI7CiNpZiBmYWxzZQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "body-escape-takes-line-break",
+   "source": "dmFyIHMgPSAkIlwKeDdiezEiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "body-escape-takes-cr-of-crlf",
+   "source": "dmFyIHMgPSAkIlwNCng3YnsxIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "regular-escape-takes-line-break",
+   "source": "dmFyIHMgPSJcCng3YiNlbmRyZWdpb24KezEiOwojaWYgZmFsc2UKY2wgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "regular-escape-line-break-then-close",
+   "source": "dmFyIHMgPSJcCng3YnsxIjsjZW5kcmVnaW9uCgojaWYgZmFsc2UKY2xhc3MgWAojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "body-escaped-quote",
+   "source": "dmFyIHMgPSAkIlwiezF9IjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-raw-reopened",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiIiIKIiIiICIiIgojaWYgQQoiIiIKY2xhc3MgQyB7fQo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "define-feff-tail-127",
+   "source": "I2RlZmluZSBB77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "razor-line-transition",
+   "source": "eCA9IEA6IwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
    "id": "razor-comment-lines",
    "source": "eCA9IEAqIGMKI2lmIEEKKkAKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [

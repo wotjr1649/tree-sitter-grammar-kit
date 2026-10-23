@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-csharp-pp-roslyn/r2",
-  "cases_sha256": "46904fde397fe2d09c3830059bbca01f3a29415d6e8501db3642dc02865de1d9",
+  "cases_sha256": "9f7f81ab77135a07864db240fe2c5c67f6336bdd75fa12f0a7864786bdab51e0",
   "roslyn": "5.9.0.0",
   "language_version": "Latest",
   "cases": [
@@ -4303,6 +4303,585 @@
           "start": 34,
           "end": 39,
           "context": "Undef"
+        }
+      ]
+    },
+    {
+      "id": "format-escaped-quote",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": false,
+          "line_start": 21,
+          "line_end": 31
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 42,
+          "active": true,
+          "taken": null,
+          "line_start": 42,
+          "line_end": 49
+        }
+      ],
+      "disabled": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "errors": [],
+      "diagnostics": []
+    },
+    {
+      "id": "body-escaped-brace-runaway",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": false,
+          "line_start": 17,
+          "line_end": 27
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 38,
+          "active": true,
+          "taken": null,
+          "line_start": 38,
+          "line_end": 45
+        }
+      ],
+      "disabled": [
+        {
+          "start": 27,
+          "end": 38
+        }
+      ],
+      "errors": [
+        "CS1009",
+        "CS8087"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8087",
+          "start": 10,
+          "end": 12,
+          "context": "Other"
+        },
+        {
+          "id": "CS1009",
+          "start": 10,
+          "end": 12,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-unicode-brace-runaway",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": false,
+          "line_start": 21,
+          "line_end": 31
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 42,
+          "active": true,
+          "taken": null,
+          "line_start": 42,
+          "line_end": 49
+        }
+      ],
+      "disabled": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "errors": [
+        "CS8087"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8087",
+          "start": 10,
+          "end": 16,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-hex-brace-runaway",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": false,
+          "line_start": 19,
+          "line_end": 29
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 40,
+          "active": true,
+          "taken": null,
+          "line_start": 40,
+          "line_end": 47
+        }
+      ],
+      "disabled": [
+        {
+          "start": 29,
+          "end": 40
+        }
+      ],
+      "errors": [
+        "CS8087"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8087",
+          "start": 10,
+          "end": 14,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-short-unicode-brace-runaway",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": false,
+          "line_start": 19,
+          "line_end": 29
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 40,
+          "active": true,
+          "taken": null,
+          "line_start": 40,
+          "line_end": 47
+        }
+      ],
+      "disabled": [
+        {
+          "start": 29,
+          "end": 40
+        }
+      ],
+      "errors": [
+        "CS1009",
+        "CS8087"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8087",
+          "start": 10,
+          "end": 14,
+          "context": "Other"
+        },
+        {
+          "id": "CS1009",
+          "start": 10,
+          "end": 14,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-escape-takes-line-break",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": [
+        "CS1002",
+        "CS1003",
+        "CS1009",
+        "CS1010",
+        "CS1056",
+        "CS1073"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1003",
+          "start": 20,
+          "end": 21,
+          "context": "Other"
+        },
+        {
+          "id": "CS1009",
+          "start": 10,
+          "end": 12,
+          "context": "Other"
+        },
+        {
+          "id": "CS1073",
+          "start": 16,
+          "end": 17,
+          "context": "Other"
+        },
+        {
+          "id": "CS1010",
+          "start": 17,
+          "end": 17,
+          "context": "Other"
+        },
+        {
+          "id": "CS1056",
+          "start": 20,
+          "end": 20,
+          "context": "Other"
+        },
+        {
+          "id": "CS1056",
+          "start": 41,
+          "end": 41,
+          "context": "Other"
+        },
+        {
+          "id": "CS1002",
+          "start": 48,
+          "end": 48,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-escape-takes-cr-of-crlf",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": false,
+          "line_start": 21,
+          "line_end": 31
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 42,
+          "active": true,
+          "taken": null,
+          "line_start": 42,
+          "line_end": 49
+        }
+      ],
+      "disabled": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "errors": [
+        "CS1002",
+        "CS1003",
+        "CS1009",
+        "CS1010",
+        "CS1039"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1039",
+          "start": 11,
+          "end": 12,
+          "context": "Other"
+        },
+        {
+          "id": "CS1009",
+          "start": 10,
+          "end": 12,
+          "context": "Other"
+        },
+        {
+          "id": "CS1003",
+          "start": 12,
+          "end": 12,
+          "context": "Other"
+        },
+        {
+          "id": "CS1010",
+          "start": 18,
+          "end": 18,
+          "context": "Other"
+        },
+        {
+          "id": "CS1002",
+          "start": 20,
+          "end": 20,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "regular-escape-takes-line-break",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 29,
+          "active": true,
+          "taken": false,
+          "line_start": 29,
+          "line_end": 39
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 47,
+          "active": true,
+          "taken": null,
+          "line_start": 47,
+          "line_end": 54
+        }
+      ],
+      "disabled": [
+        {
+          "start": 39,
+          "end": 47
+        }
+      ],
+      "errors": [
+        "CS1002",
+        "CS1003",
+        "CS1009",
+        "CS1010"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1009",
+          "start": 8,
+          "end": 10,
+          "context": "Other"
+        },
+        {
+          "id": "CS1010",
+          "start": 7,
+          "end": 7,
+          "context": "Other"
+        },
+        {
+          "id": "CS1003",
+          "start": 23,
+          "end": 23,
+          "context": "Other"
+        },
+        {
+          "id": "CS1010",
+          "start": 26,
+          "end": 26,
+          "context": "Other"
+        },
+        {
+          "id": "CS1002",
+          "start": 28,
+          "end": 28,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "regular-escape-line-break-then-close",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 29,
+          "active": true,
+          "taken": false,
+          "line_start": 29,
+          "line_end": 39
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 47,
+          "active": true,
+          "taken": null,
+          "line_start": 47,
+          "line_end": 54
+        }
+      ],
+      "disabled": [
+        {
+          "start": 39,
+          "end": 47
+        }
+      ],
+      "errors": [
+        "CS1009",
+        "CS1040"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1009",
+          "start": 8,
+          "end": 10,
+          "context": "Other"
+        },
+        {
+          "id": "CS1040",
+          "start": 17,
+          "end": 18,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "body-escaped-quote",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 18,
+          "active": true,
+          "taken": false,
+          "line_start": 18,
+          "line_end": 28
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 39,
+          "active": true,
+          "taken": null,
+          "line_start": 39,
+          "line_end": 46
+        }
+      ],
+      "disabled": [
+        {
+          "start": 28,
+          "end": 39
+        }
+      ],
+      "errors": [],
+      "diagnostics": []
+    },
+    {
+      "id": "directive-raw-reopened",
+      "features": [],
+      "directives": [
+        {
+          "kind": "NullableDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null,
+          "line_start": 0,
+          "line_end": 39
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS8668"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8668",
+          "start": 17,
+          "end": 24,
+          "context": "Nullable"
+        }
+      ]
+    },
+    {
+      "id": "define-feff-tail-127",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null,
+          "line_start": 0,
+          "line_end": 391
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 391,
+          "active": true,
+          "taken": true,
+          "line_start": 391,
+          "line_end": 397
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 408,
+          "active": true,
+          "taken": null,
+          "line_start": 408,
+          "line_end": 415
+        }
+      ],
+      "disabled": [],
+      "errors": [],
+      "diagnostics": []
+    },
+    {
+      "id": "razor-line-transition",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 8,
+          "active": true,
+          "taken": false,
+          "line_start": 8,
+          "line_end": 18
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 29,
+          "active": true,
+          "taken": null,
+          "line_start": 29,
+          "line_end": 36
+        }
+      ],
+      "disabled": [
+        {
+          "start": 18,
+          "end": 29
+        }
+      ],
+      "errors": [
+        "CS1002",
+        "CS1525",
+        "CS1646"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1525",
+          "start": 4,
+          "end": 7,
+          "context": "Other"
+        },
+        {
+          "id": "CS1002",
+          "start": 4,
+          "end": 7,
+          "context": "Other"
+        },
+        {
+          "id": "CS1646",
+          "start": 5,
+          "end": 6,
+          "context": "Other"
         }
       ]
     },

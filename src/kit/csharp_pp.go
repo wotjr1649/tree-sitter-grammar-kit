@@ -38,13 +38,12 @@ var ppDefaultLimits = ppLimits{Bytes: 32 << 20, Directives: 4096, Depth: 64, Exp
 
 // ppDirective is one directive line. Kind follows Roslyn's directive trivia names without
 // the "DirectiveTrivia" suffix. Active is false inside a skipped section. Taken is set for
-// If, Elif and Else; Value only for a condition that was evaluated.
+// If, Elif and Else.
 type ppDirective struct {
 	Kind   string
 	Hash   int // offset of '#'
 	Active bool
 	Taken  *bool
-	Value  *bool
 }
 
 type ppResult struct {
@@ -113,8 +112,8 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		end, next, nonLF := ppLineEnd(src, line)
 		res.NonLF = res.NonLF || nonLF
 		if rawQuotes > 0 { // the line belongs to the directive: neither code, directive nor skipped text
-			if ppQuoteRun(src, line, end) >= rawQuotes {
-				rawQuotes = 0
+			if k := ppQuotesEnd(src, line, end, rawQuotes); k >= 0 {
+				rawQuotes = ppTailRaw(src, k, end) // the directive's tokens go on after the literal
 			}
 			if rawDrop {
 				ppAppend(&drop, line, next)
@@ -142,7 +141,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 				}
 				return fail(ppMalformed, "# in code")
 			}
-			lex.endLine()
+			lex.endLine(end+1 < next && src[end] == 13 && src[end+1] == 10) // CRLF
 			line = next
 			continue
 		}
@@ -201,9 +200,6 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if d.Kind == "If" {
 				sawIf = true
 				g := ppGroup{parent: active()}
-				if g.parent {
-					d.Value = &value
-				}
 				g.current = g.parent && value
 				g.taken = g.current
 				groups, regions = append(groups, g), append(regions, 0)
@@ -215,9 +211,6 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			}
 			g := &groups[len(groups)-1]
 			d.Active = g.parent
-			if g.parent && !g.taken {
-				d.Value = &value
-			}
 			g.current = g.parent && !g.taken && value
 			g.taken = g.taken || g.current
 			g.branch = nil
@@ -293,9 +286,6 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	}
 	if len(groups) > 0 || openRegions > 0 {
 		return fail(ppMalformed, "unterminated #if or #region")
-	}
-	if !lex.atTop() {
-		lex.endLine()
 	}
 	at := uint32(0)
 	for _, s := range append(drop, Span{StartByte: uint32(len(src)), EndByte: uint32(len(src))}) {
@@ -406,14 +396,21 @@ func ppTrim(b []byte) []byte {
 	i := ppSkipSpace(b, 0, len(b))
 	j := len(b)
 	for j > i {
-		k := j - 1
-		for k > i && !utf8.RuneStart(b[k]) {
-			k--
-		}
-		if ppSkipSpace(b, k, j) != j {
+		r, n := utf8.DecodeLastRune(b[i:j])
+		if !ppSpace(r) {
 			break
 		}
-		j = k
+		if r == 0xFEFF { // a U+FEFF run right after a name character continues the name (Cf), observed
+			k := j
+			for k-3 >= i && b[k-3] == 0xEF && b[k-2] == 0xBB && b[k-1] == 0xBF {
+				k -= 3
+			}
+			if p, _ := utf8.DecodeLastRune(b[i:k]); k > i && !ppSpace(p) {
+				break
+			}
+			n = j - k // the whole run is whitespace
+		}
+		j -= n
 	}
 	return b[i:j]
 }
@@ -472,15 +469,8 @@ func ppTailRaw(src []byte, i, end int) int {
 			case q >= 3 && ppSkipLead(src, i+q, end) == end:
 				return q
 			case q >= 3: // a single-line raw literal, to its closing quotes or the line end
-				for i += q; i < end; {
-					n := 0
-					for i+n < end && src[i+n] == '"' {
-						n++
-					}
-					i += max(n, 1)
-					if n >= q {
-						break
-					}
+				if i = ppQuotesEnd(src, i+q, end, q); i < 0 {
+					return 0
 				}
 			case q == 2:
 				i += 2
@@ -497,18 +487,36 @@ func ppTailRaw(src []byte, i, end int) int {
 	return 0
 }
 
-// ppQuoteRun returns the longest run of '"' in src[i:end].
-func ppQuoteRun(src []byte, i, end int) int {
-	most, run := 0, 0
-	for ; i < end; i++ {
-		if src[i] == '"' {
-			run++
-			most = max(most, run)
-		} else {
-			run = 0
+// ppQuotesEnd returns the position after the first run of at least q '"' in src[i:end], or -1.
+func ppQuotesEnd(src []byte, i, end, q int) int {
+	for i < end {
+		n := 0
+		for i+n < end && src[i+n] == '"' {
+			n++
 		}
+		if n >= q {
+			return i + n
+		}
+		i += max(n, 1)
 	}
-	return most
+	return -1
+}
+
+// ppEscapeBrace reports whether the escape sequence at b[0] ('\') makes '{' or '}': \{ and
+// \} themselves, or a \u, \U or \x code of one (Roslyn CS8087, observed).
+func ppEscapeBrace(b []byte) bool {
+	if len(b) < 2 {
+		return false
+	}
+	digits := map[byte]int{'u': 4, 'U': 8, 'x': 4}[b[1]]
+	if digits == 0 {
+		return b[1] == '{' || b[1] == '}'
+	}
+	v, n := 0, 0
+	for ; n < digits && 2+n < len(b) && ppHex(b[2+n]) >= 0; n++ {
+		v = v*16 + ppHex(b[2+n])
+	}
+	return n > 0 && (v == '{' || v == '}') // fewer digits than due still make the char (CS1009), observed
 }
 
 // ppTail returns a conditional or define directive's argument: the rest of the line up to
@@ -744,7 +752,8 @@ type csLexer struct {
 	deep  bool // scan stopped at depth
 }
 
-// csFrame is one open construct. kind: 'c' delimited comment, 'z' Razor comment, 'v' verbatim string, 'r' raw
+// csFrame is one open construct. kind: 'c' delimited comment, 'z' Razor comment, 's' regular string
+// an escape carried over a line break, 'v' verbatim string, 'r' raw
 // string (quotes), 'h' interpolation hole, 'i' regular interpolated string, 'V' interpolated
 // verbatim, 'R' interpolated raw (dollars). A raw string is single-line when text follows
 // its opening quotes on their line. A hole keeps the closers its open brackets expect; a ':'
@@ -760,6 +769,7 @@ type csFrame struct {
 	single          bool
 	closers         []byte
 	format, err     bool
+	escEnd          bool // a regular interpolated string's line ended in '\': the escape takes the line break
 }
 
 // holeErr records an error of the string whose hole is open.
@@ -767,10 +777,17 @@ func (l *csLexer) holeErr() { l.stack[len(l.stack)-2].err = true }
 
 func (l *csLexer) atTop() bool { return len(l.stack) == 0 }
 
-// endLine closes the single-line constructs a line end terminates.
-func (l *csLexer) endLine() {
+// endLine closes the single-line constructs a line end terminates. An escape '\' at the end
+// of a regular interpolated string's line takes the line break, one character (the CR of a
+// CRLF), and the string goes on (CS1009, observed).
+func (l *csLexer) endLine(crlf bool) {
 	for len(l.stack) > 0 {
-		if f := l.stack[len(l.stack)-1]; f.kind != 'i' && !f.single {
+		f := &l.stack[len(l.stack)-1]
+		if f.kind != 'i' && f.kind != 's' && !f.single {
+			return
+		}
+		if f.escEnd && !crlf {
+			f.escEnd = false
 			return
 		}
 		l.stack = l.stack[:len(l.stack)-1]
@@ -807,6 +824,8 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 				l.stack = l.stack[:len(l.stack)-1]
 			case c == '"' && l.stack[len(l.stack)-2].kind == 'V' && i+1 < len(b) && b[i+1] == '"':
 				i++ // an escaped quote of a verbatim string
+			case c == '\\' && l.stack[len(l.stack)-2].kind == 'i':
+				i++ // an escape sequence of a regular string (\" stays in the clause)
 			case c == '"':
 				l.holeErr() // the hole is left open; its string reads the '"'
 				l.stack = l.stack[:len(l.stack)-1]
@@ -816,7 +835,8 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			continue
 		}
 		switch {
-		case c == '/' && i+1 < len(b) && b[i+1] == '/':
+		case c == '/' && i+1 < len(b) && b[i+1] == '/',
+			top == nil && c == '@' && i+1 < len(b) && b[i+1] == ':': // a Razor line transition (CS1646), observed
 			return true
 		case c == '/' && i+1 < len(b) && b[i+1] == '*':
 			l.push(csFrame{kind: 'c'})
@@ -921,29 +941,44 @@ func (l *csLexer) string(b []byte, i int) (int, bool) {
 	case dollars > 0:
 		l.push(csFrame{kind: 'i', dollars: 1})
 	default:
-		return l.regular(b, j+1), true
+		n, _, esc := l.regular(b, j+1)
+		if esc {
+			l.push(csFrame{kind: 's', escEnd: true})
+		}
+		return n, true
 	}
 	return j + 1, true
 }
 
-// regular skips a regular string's content.
-func (l *csLexer) regular(b []byte, i int) int {
+// regular skips a regular string's content; esc reports a '\' at the line end, whose
+// escape takes the line break (CS1009, observed).
+func (l *csLexer) regular(b []byte, i int) (n int, closed, esc bool) {
 	for ; i < len(b); i++ {
 		if b[i] == '\\' {
+			if i+1 == len(b) {
+				return len(b), false, true
+			}
 			i++
 			continue
 		}
 		if b[i] == '"' {
-			return i + 1
+			return i + 1, true, false
 		}
 	}
-	return len(b)
+	return len(b), false, false
 }
 
 // inside advances through the content of the open construct f.
 func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 	pop := func() { l.stack = l.stack[:len(l.stack)-1] }
 	switch f.kind {
+	case 's': // a regular string an escape carried over the line break
+		n, closed, esc := l.regular(b, i)
+		if closed {
+			pop()
+		}
+		f.escEnd = esc
+		return n
 	case 'c', 'z':
 		end := map[byte]byte{'c': '/', 'z': '@'}[f.kind]
 		for ; i+1 < len(b); i++ {
@@ -975,6 +1010,8 @@ func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 		for ; i < len(b); i++ {
 			switch {
 			case b[i] == '\\':
+				f.err = f.err || ppEscapeBrace(b[i:]) // an escape that makes a brace (CS8087)
+				f.escEnd = i+1 == len(b)
 				i++
 			case b[i] == '"':
 				pop()

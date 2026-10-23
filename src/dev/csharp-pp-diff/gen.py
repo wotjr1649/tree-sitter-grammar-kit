@@ -9,7 +9,8 @@ OUT_DIR/batch-<seed>-<k>.json, each under 900 KiB so the oracle's 1 MiB input bo
 Then, per batch, with a 120 s bound:
   timeout 120 dotnet <oracle>/Oracle.dll OUT_DIR/batch-S-K.json OUT_DIR/observed-S-K.json
 and compare:
-  TSGK_PP_DIFF_DIR=OUT_DIR go test ./src/kit -run TestCSharpPreprocessDifferential -count=1
+  TSGK_PP_DIFF_DIR=OUT_DIR go test ./src/kit -run TestCSharpPreprocessDifferential -count=1 -v
+(a case Roslyn fails to observe passes only when named in TSGK_PP_DIFF_UNOBSERVED=id,id)
 Generated sources stay far below the evaluator's byte, directive, depth and symbol bounds.
 """
 import base64
@@ -21,6 +22,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXED = os.path.join(HERE, "..", "..", "testdata", "csharp-pp", "cases.json")
 BATCH_BYTES = 900 * 1024
+LIMIT_BOUNDARY = {"define-feff-tail-127"}
 
 SYMBOLS = ["A", "B", "C", "D", "\\u0041", "\\U00000042", "A\\u200C", "A\u200c", "fal\\u017Fe", "_x1", "\u00e9t\u00e9"]
 CONSTANTS = ["true", "false", "TRUE", "False", "tRuE", "\\u0074rue"]
@@ -40,6 +42,8 @@ CODE = [
     '2}";',
     'string s = $$"""{{1}}{x}""";',
     "char c = '#';",
+    "string s = \"\U0001F600\u00e9\";",
+    "// \U00010400 #if A",
     "// #if A",
     "/*",
     "#endif",
@@ -48,7 +52,7 @@ CODE = [
     "class Z { }}",
     "x = 1 + ;",
 ]
-LEAD = ["", "", "", " ", "\t", "  ", "\u00a0", "\ufeff", "\u001a"]
+LEAD = ["", "", "", " ", "\t", "  ", "\u00a0", "\ufeff", "\u001a", "\u3000", "\u2003"]
 TRAIL = ["", "", "", " ", " // c", " /* c */"]
 OTHER = ["#region r", "#endregion", "#pragma warning disable CS0168", "#nullable enable", "#error e", "#warning w", "#line 5", "#line abc", "#foo", "#if", "#define 1A"]
 TERMS = ["\n", "\n", "\n", "\r\n", "\r", "\u0085", "\u2028", "\u2029"]
@@ -90,7 +94,7 @@ def generated(rng):
             lines.append(rng.choice(LEAD) + "#endif" + rng.choice(TRAIL))
             stack.pop()
         elif r < 0.82:
-            lines.append(rng.choice(["#define ", "#undef "]) + rng.choice(SYMBOLS))
+            lines.append(rng.choice(LEAD) + rng.choice(["#define ", "#undef "]) + rng.choice(SYMBOLS) + rng.choice(TRAIL))
         else:
             lines.append(rng.choice(LEAD) + rng.choice(OTHER))
     if rng.random() < 0.9:
@@ -138,7 +142,9 @@ def main():
     if not seeds or count < 2:
         sys.exit(__doc__)
     with open(FIXED, encoding="utf-8") as f:
-        fixed = json.load(f)["cases"]
+        # a case at a symbol-length bound mutates into intended LIMIT results, which the bound
+        # tests in csharp_pp_test.go own; the case itself stays in the fixed comparison
+        fixed = [c for c in json.load(f)["cases"] if c["id"] not in LIMIT_BOUNDARY]
     os.makedirs(out, exist_ok=True)
     for seed in seeds:
         rng = random.Random(seed)
@@ -147,9 +153,12 @@ def main():
         def flush():
             nonlocal batch, k
             if batch:
-                with open(os.path.join(out, f"batch-{seed}-{k}.json"), "w", encoding="utf-8", newline="\n") as f:
+                path = os.path.join(out, f"batch-{seed}-{k}.json")
+                with open(path, "w", encoding="utf-8", newline="\n") as f:
                     json.dump({"schema": "tsgk-csharp-pp-cases/r1", "cases": batch}, f, indent=1)
                     f.write("\n")
+                if os.path.getsize(path) > BATCH_BYTES:
+                    sys.exit(f"{path}: over {BATCH_BYTES} bytes")
                 batch, k = [], k + 1
 
         size = 0
@@ -158,7 +167,8 @@ def main():
             # the evaluator reads C# 14 file-based directives (#!, #:) as the registered grammar does
             case = {"id": f"s{seed}-{n}", "source": base64.b64encode(src.encode("utf-8")).decode(),
                     "symbols": rng.sample(CALLER, rng.randrange(0, 4)), "features": ["FileBasedProgram"]}
-            n_bytes = len(json.dumps(case, indent=1)) + 8
+            text = json.dumps(case, indent=1)
+            n_bytes = len(text.encode("utf-8")) + 2 * text.count("\n") + 8  # one level deeper in the batch
             if size + n_bytes > BATCH_BYTES:
                 flush()
                 size = 0
