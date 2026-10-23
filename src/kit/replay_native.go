@@ -162,8 +162,10 @@ type rcCase struct {
 		FactReproduction  string `json:"fact_reproduction"`
 		DynamicSQL        string `json:"dynamic_sql"`
 	} `json:"oracle_claims"`
-	Steps        []rcStep   `json:"steps"`
-	Expectations []rcExpect `json:"expectations"`
+	Steps        []rcStep          `json:"steps"`
+	Expectations []rcExpect        `json:"expectations"`
+	Preprocess   *[]PreprocessStep `json:"preprocess"`
+	Process      jsontext.Value    `json:"process"` // only read for a stopped symbol-mode case (#218)
 	Producer     *struct {
 		Query            string         `json:"query"`
 		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
@@ -1146,8 +1148,9 @@ type nativeResult struct {
 	Operation              struct {
 		Name string `json:"name"`
 	} `json:"operation"`
-	Build   *nativeBuild `json:"build"`
-	Summary struct {
+	operation jsontext.Value // the whole recorded operation (#218 policy recomputation)
+	Build     *nativeBuild   `json:"build"`
+	Summary   struct {
 		Cases       int            `json:"cases"`
 		Statuses    map[string]int `json:"execution_statuses"`
 		Assessments map[string]int `json:"assessments"`
@@ -1210,6 +1213,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		switch name {
 		case "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256", "reuse_observation_policy", "observation_run_id":
 			wrapped := append(append([]byte(`{"`+name+`":`), raw...), '}')
+			if name == "operation" {
+				top.operation = slices.Clone(raw)
+			}
 			return decodeRecord(resultPath, wrapped, &top)
 		}
 		return nil
@@ -1226,6 +1232,11 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 			unknownPoints := x.gate("edit-points").NotRecomputed
 			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
 				return e
+			}
+			if x.preprocess {
+				if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
+					return e
+				}
 			}
 			if x.gate("edit-points").NotRecomputed > unknownPoints {
 				o.complete = false
@@ -1254,7 +1265,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.mandatoryObservation {
+	if x.preprocess {
+		wantSchema = "tsgk-incremental-result/r4"
+	} else if x.mandatoryObservation {
 		wantSchema = "tsgk-incremental-result/r3"
 	} else if x.reuseObservation {
 		wantSchema = "tsgk-incremental-result/r2"
@@ -1330,6 +1343,10 @@ func replayNativeResult(x *replayEnv) *Error {
 	if e != nil {
 		return e
 	}
+	// the symbol mode (#218) replays with native-result-r5 only, and r5 with it only
+	if (prof.Preprocess != nil) != x.preprocess {
+		return fail(KindUnsupported, "PREPROCESS_REDUCER_MISMATCH", pm.Path, nil)
+	}
 	prof.SHA256 = digestHex(data)
 	if x.prof.Records != nil && !slices.Equal(x.prof.Records, caseIDs(prof.Cases)) {
 		x.finding("RECORDS_WORKLOAD_MISMATCH", "", "등록 record 목록이 workload profile의 case와 다르다")
@@ -1337,6 +1354,9 @@ func replayNativeResult(x *replayEnv) *Error {
 	top, outs, e := x.replayResultFile(rm.Path, prof, "", nil)
 	if e != nil {
 		return e
+	}
+	if x.preprocess {
+		x.checkPreprocessPolicy(top, prof, rm.Path)
 	}
 	x.recorded = Verdict{top.ExecutionStatus, top.Assessment}
 	x.recomp = aggregateCases(outs)

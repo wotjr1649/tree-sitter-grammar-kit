@@ -1113,6 +1113,8 @@ func captureTexts(want []CaptureExpectation, got []Capture, src []byte) (string,
 func registrationDiff(p OracleProfile, w QualWorkload) string {
 	n := p.Native
 	switch {
+	case n.Preprocess != nil: // the symbol mode (#218) is not qualified; no claim reaches it
+		return "preprocess"
 	case n.Route != w.Route:
 		return "route"
 	case n.Operation != w.Operation:

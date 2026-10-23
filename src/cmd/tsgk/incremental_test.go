@@ -82,44 +82,7 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 		c["edits"], c["expect"] = []any{}, []any{}
 	}
 	if svc {
-		data, err := os.ReadFile(filepath.Join(repoRoot(t), "src", "contracts", "native-routes.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		var registry struct {
-			Routes []struct {
-				Route, Symbol string
-				Files         []kit.NativeInput
-			}
-		}
-		if err := json.Unmarshal(data, &registry); err != nil {
-			t.Fatal(err)
-		}
-		var grammar []any
-		for _, route := range registry.Routes {
-			if route.Route != "csharp" {
-				continue
-			}
-			profile["symbol"] = route.Symbol
-			for _, file := range route.Files {
-				data, err := os.ReadFile(filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", "csharp", filepath.FromSlash(file.Path)))
-				if err != nil || sum(data) != file.SHA256 || uint64(len(data)) != file.Bytes {
-					t.Fatalf("registered C# source mismatch: %s %v", file.Path, err)
-				}
-				path := filepath.Join(root, filepath.FromSlash(file.Path))
-				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.WriteFile(path, data, 0o644); err != nil {
-					t.Fatal(err)
-				}
-				grammar = append(grammar, fileEntry(t, root, file.Path, file.Role))
-			}
-		}
-		if len(grammar) == 0 {
-			t.Fatal("registered C# closure missing")
-		}
-		profile["grammar"] = grammar
+		profile["symbol"], profile["grammar"] = csharpClosure(t, root)
 		profile["declarations"] = nil
 		profile["format"] = kit.SvcFormat
 		c := profile["cases"].([]any)[0].(map[string]any)
@@ -284,6 +247,50 @@ func testIncrementalCLI(t *testing.T, observe bool, mode string) {
 	if code == 0 || !strings.Contains(stdout, `"code":"SOURCE_MISMATCH"`) {
 		t.Fatalf("changed input: %d %s", code, fmt.Sprint(len(stdout)))
 	}
+}
+
+// csharpClosure copies the registered C# grammar closure from the prepared routes
+// (TSGK_BENCH_PREPARED) below root and returns its entry symbol and grammar members.
+func csharpClosure(t *testing.T, root string) (string, []any) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(repoRoot(t), "src", "contracts", "native-routes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var registry struct {
+		Routes []struct {
+			Route, Symbol string
+			Files         []kit.NativeInput
+		}
+	}
+	if err := json.Unmarshal(data, &registry); err != nil {
+		t.Fatal(err)
+	}
+	for _, route := range registry.Routes {
+		if route.Route != "csharp" {
+			continue
+		}
+		var grammar []any
+		for _, file := range route.Files {
+			data, err := os.ReadFile(filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", "csharp", filepath.FromSlash(file.Path)))
+			if err != nil || sum(data) != file.SHA256 || uint64(len(data)) != file.Bytes {
+				t.Fatalf("registered C# source mismatch: %s %v", file.Path, err)
+			}
+			path := filepath.Join(root, filepath.FromSlash(file.Path))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, data, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			grammar = append(grammar, fileEntry(t, root, file.Path, file.Role))
+		}
+		if len(grammar) > 0 {
+			return route.Symbol, grammar
+		}
+	}
+	t.Fatal("registered C# closure missing")
+	return "", nil
 }
 
 func testCLIReuseReplay(t *testing.T, out string, profile, published, source []byte) {

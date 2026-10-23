@@ -229,6 +229,7 @@ type CaseResult struct {
 	Process               *runner.Result       `json:"process"`
 	Steps                 []StepResult         `json:"steps"`
 	Expectations          []ExpectationResult  `json:"expectations"`
+	Preprocess            []kit.PreprocessStep `json:"preprocess,omitempty"` // symbol mode: the evaluated steps (#218)
 	Oracle                *OracleClaims        `json:"oracle_claims,omitempty"`
 	QueryExpect           []QueryExpectResult  `json:"query_expectations,omitempty"`
 	Facts                 *FactsOut            `json:"facts,omitempty"`
@@ -252,18 +253,16 @@ type Context struct {
 	ObservationRunID          string
 	ObservationProducerSHA256 string
 	ObservationHistoryStart   uint64
+	Preprocess                *kit.Preprocess // the C# symbol mode (#218): parse each step's active ranges only
 }
 
 // observes reports whether the context's revision carries the bounded logger observations.
 func (x Context) observes() bool { return Request{Protocol: x.Protocol}.observes() }
 
-// PolicyRef binds the operation limits, output form and encoding into a policy identity.
+// PolicyRef binds the operation limits, output form and encoding into a policy identity
+// (tsgk-native-policy/r1; kit.NativePolicy, which replay shares, also writes r2).
 func PolicyRef(op kit.NativeOperation, output string) kit.IdentityRef {
-	l := LimitsFor(op)
-	text := fmt.Sprintf("tsgk-native-policy/r1\noperation=%s\noutput=%s\nlimits=%+v\nparse_wall=%s\nedit_wall=%s\nmax_edits=%d\nbatch=%t %d %d %s %s\nrun_wall=%s\n",
-		op.Name, output, l, op.ParseWall, op.EditWall, op.MaxEdits, op.Batch, op.BatchFiles, op.BatchBytes, op.FrameWall, op.BatchWall, op.RunWall)
-	s := sha256.Sum256([]byte(text))
-	return kit.IdentityRef{Role: "policy", Schema: "tsgk-native-policy/r1", SHA256: hex.EncodeToString(s[:])}
+	return kit.NativePolicy(op, output, nil)
 }
 
 func (x Context) request(c kit.IncrementalCase, source []byte) Request {
@@ -363,6 +362,18 @@ func (b *Build) prepareCase(ctx context.Context, x Context, c kit.IncrementalCas
 		return notRun(kit.StatusNotRun, kit.AssessNotAssessed, ke.Code)
 	}
 	req := x.request(c, source)
+	if x.Preprocess != nil {
+		// every step is preprocessed anew; the first step that is not OK decides the case,
+		// and no driver runs for it
+		out.Preprocess = kit.PreprocessSteps(versions, x.Preprocess)
+		if last := out.Preprocess[len(out.Preprocess)-1]; last.Status != kit.PreprocessOK {
+			status, code := kit.PreprocessOutcome(last.Status)
+			return notRun(status, kit.AssessBlocked, code)
+		}
+		for _, o := range out.Preprocess {
+			req.Ranges = append(req.Ranges, o.Active)
+		}
+	}
 	var svc []kit.SvcObservation
 	if x.Format == kit.SvcFormat || x.Format == kit.SvcLegacyFormat {
 		for _, v := range versions {

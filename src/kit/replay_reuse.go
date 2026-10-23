@@ -32,7 +32,9 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		return e
 	}
 	schema := "tsgk-incremental-result/r2"
-	if x.mandatoryObservation {
+	if x.preprocess {
+		schema = "tsgk-incremental-result/r4" // r3 with the symbol mode (#218)
+	} else if x.mandatoryObservation {
 		schema = "tsgk-incremental-result/r3"
 	}
 	if top.ResultSchema != schema || top.ReuseObservationPolicy != reuseobs.Policy || len(top.ObservationRunID) == 0 || len(top.ObservationRunID) > 128 {
@@ -155,6 +157,13 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		var err error
 		if digestHex(source) == registered.Input.SHA256 && uint64(len(source)) == registered.Input.Bytes {
 			versions, points, err = ApplyEdits(registered.Encoding, source, registered.Edits, x.nativeInputBytes)
+			// r5 (#218): a case the run stopped on the same edit refusal, or before it could read
+			// its input (the edits were never evaluated), has nothing to observe; r3 and r4 keep
+			// their recorded meaning and reject it
+			var ke *Error
+			if x.preprocess && err != nil && c.ExecutionStatus == StatusNotRun && len(c.Steps) == 0 && (sourceReadCodes[c.Code] || errors.As(err, &ke) && ke.Code == c.Code) {
+				err = nil
+			}
 		} else {
 			err = fmt.Errorf("source witness identity")
 		}

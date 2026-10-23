@@ -747,6 +747,10 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }
+          # #218: the C# symbols run on the registered grammar, replayed with native-result-r5
+          go test ./src/cmd/tsgk -run '^TestIncrementalCLISymbolMode$' -count=1 -v -timeout=180s > (Join-Path $out 'csharp-symbols.log') 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'C# symbols run and replay controls failed' }
+          if (!(Select-String -LiteralPath (Join-Path $out 'csharp-symbols.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestIncrementalCLISymbolMode \(')) { throw 'C# symbols test did not run' }
           if ($IsWindows) {
             # #193: independent JSON syntax labels and recovery/edit classification.
             # Benchmark iterations are local measurements, not a hosted speed gate.
@@ -781,6 +785,7 @@ jobs:
           path: |
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/reuse-observation.log
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/svc-reuse-observation.log
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/csharp-symbols.log
           if-no-files-found: error
           retention-days: 7
           compression-level: 6

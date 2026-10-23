@@ -183,6 +183,9 @@ func replayPrivateCorpus(x *replayEnv) *Error {
 			return e
 		}
 		prof, e := parseIncremental(pdata)
+		if e == nil && prof.Preprocess != nil {
+			e = fail(KindUnsupported, "PREPROCESS_UNSUPPORTED", "", nil) // the private corpus has no symbol mode (#218)
+		}
 		if e != nil {
 			return fail(KindInvalidInput, "MEMBER_INVALID_"+e.Code, pms[0].Path, nil)
 		}
