@@ -31,6 +31,46 @@ function Get-CIGateFile {
   }
 }
 
+# Lists the current run and lets the offline Go helper plan the download (fetch.ps1).
+function Get-CIGatePlan {
+  param(
+    [Parameter(Mandatory)][Net.Http.HttpClient]$Client,
+    [Parameter(Mandatory)][string]$Endpoint,
+    [Parameter(Mandatory)][string]$Gate,
+    [Parameter(Mandatory)][string]$Expected,
+    [Parameter(Mandatory)][string]$Metadata,
+    [Parameter(Mandatory)][string]$PlanPath,
+    [Parameter(Mandatory)][Threading.CancellationToken]$Cancellation,
+    [string]$Token = '',
+    [TimeSpan]$ListingDelay = [TimeSpan]::FromSeconds(30)
+  )
+  # #275: the artifact listing can trail the finished producers; when the plan reports only
+  # a missing current-attempt artifact (exit 3, or 4 when an earlier attempt has it), list
+  # the run once or twice more inside the same deadline. Any other defect fails at once.
+  for ($try = 1; ; $try++) {
+    Get-CIGateFile -Client $Client -Uri $Endpoint -Out (Join-Path $Metadata 'run.json') -Limit 1048576 -Cancellation $Cancellation -Token $Token
+    for ($page = 1; $page -le 10; $page++) {
+      $listingPath = Join-Path $Metadata "listing-$page.json"
+      Get-CIGateFile -Client $Client -Uri "$Endpoint/artifacts?per_page=100&page=$page" -Out $listingPath -Limit 1048576 -Cancellation $Cancellation -Token $Token
+      # This only bounds pagination; Go validates the original JSON before selecting IDs.
+      try { $listing = [IO.File]::ReadAllText($listingPath) | ConvertFrom-Json -AsHashtable } catch { throw 'artifact pagination JSON invalid' }
+      if ($listing -isnot [Collections.IDictionary]) { throw 'artifact pagination object invalid' }
+      $total = $listing['total_count']
+      if (($total -isnot [long] -and $total -isnot [int]) -or $total -lt 0 -or $total -gt 1000) { throw 'artifact pagination invalid' }
+      if ($page * 100 -ge $total) { break }
+    }
+    $Cancellation.ThrowIfCancellationRequested()
+    & $Gate plan -expected $Expected -metadata $Metadata -out $PlanPath
+    $code = $LASTEXITCODE
+    if ($code -eq 0) { break }
+    if ($code -eq 4 -and $try -ge 3) { throw 'partial re-run: a required artifact exists only for an earlier attempt; re-run all jobs' }
+    if ($code -notin @(3, 4) -or $try -ge 3) { throw 'artifact plan failed' }
+    # the metadata directory holds only this loop's run and listing files
+    Get-ChildItem -LiteralPath $Metadata -File | Remove-Item
+    if ($Cancellation.WaitHandle.WaitOne($ListingDelay)) { throw 'artifact listing deadline' }
+  }
+}
+
 function Test-CIGateTransient([Exception]$Exception) {
   for ($e = $Exception; $null -ne $e; $e = $e.InnerException) {
     if ($e -is [Net.Http.HttpRequestException] -or $e -is [IO.IOException] -or $e -is [TimeoutException] -or $e.Message -in @('transient status', 'response incomplete')) { return $true }
@@ -65,7 +105,7 @@ function Receive-CIGateFile($Client, [uri]$Uri, [string]$Out, [long]$Limit, [Thr
       $outputStream = $null
       try {
         $inputStream = $response.Content.ReadAsStream($Cancellation)
-        $outputStream = [IO.File]::Open($Out, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try { $outputStream = [IO.File]::Open($Out, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None) } catch { throw 'output rejected' }
         $Created.Value = $true
         $buffer = [byte[]]::new(65536)
         [long]$total = 0
@@ -75,6 +115,8 @@ function Receive-CIGateFile($Client, [uri]$Uri, [string]$Out, [long]$Limit, [Thr
           if ($read -eq 0) { break }
           $total += $read
           if ($total -gt $Limit) { throw 'response too large' }
+          # shortcut: a local write failure (e.g. a full disk) is tried like a transport one, at most
+          # three times before failing; split it out if a host ever shows it.
           $outputStream.Write($buffer, 0, $read)
         }
         if ($null -ne $response.Content.Headers.ContentLength -and $total -ne $response.Content.Headers.ContentLength) { throw 'response incomplete' }

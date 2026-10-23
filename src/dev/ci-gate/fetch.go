@@ -52,12 +52,14 @@ type downloadPlan struct {
 	Artifacts []artifactMetadata `json:"artifacts"`
 }
 
-// #275: a complete listing that lacks a current-attempt artifact is either GitHub's listing
-// lag, which fetch.ps1 may fetch again, or a partial re-run, whose producers kept their
-// earlier-attempt artifacts; the gate never accepts those, so it says what to do instead.
+// #275: a complete listing that lacks a current-attempt artifact is GitHub's listing lag,
+// which fetch.ps1 may list again, or a partial re-run, whose kept producers have only their
+// earlier-attempt artifacts. A whole-run re-run lists the earlier attempts' artifacts too, so
+// an earlier name alone does not prove a partial re-run: fetch.ps1 lists that case again as
+// well and names the cause only if it persists. The gate never accepts an earlier attempt.
 var (
 	errArtifactLag  = errors.New("required artifact missing for current attempt")
-	errPartialRerun = errors.New("partial re-run: a required artifact exists only for an earlier attempt; re-run all jobs")
+	errPartialRerun = errors.New("a required artifact exists only for an earlier attempt: a partial re-run cannot pass, re-run all jobs (or the listing still lags)")
 )
 
 // earlierAttempt reports whether a listed name is want (`<prefix>-<run>-<attempt>`) for an

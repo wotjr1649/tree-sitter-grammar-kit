@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -73,6 +74,17 @@ func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]
 		rows = rows[:len(rows)-1]
 	case "old-attempt":
 		rows[index].Name = strings.TrimSuffix(rows[index].Name, "-2") + "-1"
+	case "rerun", "rerun-lag":
+		// a whole-run re-run also lists every artifact of attempt 1
+		for i := index; i < index+5; i++ {
+			a := rows[i]
+			a.ID += 1000
+			a.Name = strings.TrimSuffix(a.Name, "-2") + "-1"
+			rows = append(rows, a)
+		}
+		if control == "rerun-lag" {
+			rows = slices.Delete(rows, index, index+1)
+		}
 	case "duplicate":
 		rows = append(rows, rows[index])
 	case "duplicate-id":
@@ -111,7 +123,7 @@ func TestPlanListingLagExit(t *testing.T) {
 	if e := os.WriteFile(expected, encoded(t, expectation()), 0600); e != nil {
 		t.Fatal(e)
 	}
-	for control, want := range map[string]int{"": 0, "missing": 3, "old-attempt": 1, "wrong-head": 1} {
+	for control, want := range map[string]int{"": 0, "rerun": 0, "missing": 3, "old-attempt": 4, "rerun-lag": 4, "wrong-head": 1} {
 		t.Run("control="+control, func(t *testing.T) {
 			runJSON, pages, _ := recordedMetadata(t, control, false)
 			meta := filepath.Join(t.TempDir(), "metadata")

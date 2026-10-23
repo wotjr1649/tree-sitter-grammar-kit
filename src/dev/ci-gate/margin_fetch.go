@@ -210,6 +210,7 @@ func makeMarginPlan(expected kit.RunIdentity, metadata, history string) (marginP
 	}
 	for _, j := range marginJobs {
 		a, ok, err := selectMarginArtifact(rows, configName(j, expected), expected)
+		// the core plan has already listed this attempt again while it lagged
 		if err == nil && !ok && earlierAttempt(rowNames(rows), configName(j, expected), expected) {
 			return result, errPartialRerun
 		}
