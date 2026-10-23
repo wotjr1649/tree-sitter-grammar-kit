@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-csharp-pp-roslyn/r1",
-  "cases_sha256": "72ed8358d42fc5d1c73bd3a8d67443095632d0ad54114675976ba96beff55157",
+  "cases_sha256": "16b8b6cfddf4eb367d201b89493c44a39a8646db1a44754eef5cb4e14a3864ac",
   "roslyn": "5.9.0.0",
   "language_version": "Latest",
   "cases": [
@@ -1860,6 +1860,64 @@
         }
       ],
       "errors": []
+    },
+    {
+      "id": "supplementary-escape-symbol",
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 45,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1001",
+        "CS1025",
+        "CS1517"
+      ]
+    },
+    {
+      "id": "supplementary-symbol",
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 13,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1001",
+        "CS1025",
+        "CS1517"
+      ]
     },
     {
       "id": "malformed-expression",

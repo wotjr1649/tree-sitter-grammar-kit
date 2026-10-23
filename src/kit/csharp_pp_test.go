@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // #218: on every recorded case the evaluator agrees with Roslyn 5.9's own preprocessor:
@@ -176,6 +177,14 @@ func TestCSharpPreprocessResults(t *testing.T) {
 		}
 		if got := ranges(csharpPreprocess([]byte(c.src), EncodingUTF8, c.symbols, lim)); got != c.want {
 			t.Errorf("%s: %q, want %q", name, got, c.want)
+		}
+	}
+	// a long $ or @ run without a quote is read once (it was rescanned per byte: quadratic)
+	for _, c := range []string{"$", "@"} {
+		start := time.Now()
+		r := csharpPreprocess([]byte("x "+strings.Repeat(c, 400000)+"\n"), EncodingUTF8, nil, ppDefaultLimits)
+		if el := time.Since(start); r.Status != ppOK || el > 5*time.Second {
+			t.Errorf("%s run: %s in %v", c, r.Status, el)
 		}
 	}
 	if r := csharpPreprocess([]byte("class X {}\n"), EncodingUTF16LE, nil, ppDefaultLimits); r.Status != ppUnsupportedEncoding || r.Active != nil {

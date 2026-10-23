@@ -93,6 +93,8 @@ CASES = [
     ("escaped-true", "#if \\u0074rue\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
     ("upper-true", "#if TRUE\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
     ("mixed-false", "#if FaLsE\nclass X {}\n#else\nclass Y {}\n#endif\n", []),
+    ("supplementary-escape-symbol", "#define \\U00010400\n#if \\U00010400\nclass X {}\n#endif\n", []),
+    ("supplementary-symbol", "#define \U00010400\n#if \U00010400\nclass X {}\n#endif\n", []),
     # malformed
     ("malformed-expression", "#if A &&\nclass X {}\n#endif\n", ["A"]),
     ("unterminated", "#if A\nclass X {}\n", ["A"]),

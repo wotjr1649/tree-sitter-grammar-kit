@@ -402,10 +402,14 @@ func ppTail(src []byte, i, end int, empty bool) ([]byte, bool) {
 
 func ppKeyword(s string) bool { return s == "true" || s == "false" }
 
-func ppIdentStart(r rune) bool { return r == '_' || unicode.IsLetter(r) || unicode.Is(unicode.Nl, r) }
+// Roslyn classifies directive identifier characters one UTF-16 unit at a time, so a
+// character outside the BMP (a surrogate pair) is never part of a symbol.
+func ppIdentStart(r rune) bool {
+	return r <= 0xFFFF && (r == '_' || unicode.IsLetter(r) || unicode.Is(unicode.Nl, r))
+}
 
 func ppIdentPart(r rune) bool {
-	return ppIdentStart(r) || unicode.IsDigit(r) || unicode.In(r, unicode.Mn, unicode.Mc, unicode.Pc, unicode.Cf)
+	return ppIdentStart(r) || r <= 0xFFFF && (unicode.IsDigit(r) || unicode.In(r, unicode.Mn, unicode.Mc, unicode.Pc, unicode.Cf))
 }
 
 // ppSymbol decodes a conditional symbol (identifier characters and \u/\U escapes) and
@@ -674,12 +678,7 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			*sawToken = true
 			i = l.char(b, i)
 		case c == '"' || c == '@' || c == '$':
-			n, ok := l.string(b, i)
-			if !ok {
-				*sawToken = true
-				i++
-				continue
-			}
+			n, _ := l.string(b, i) // a $/@ run without a quote is consumed whole, never rescanned
 			*sawToken = true
 			i = n
 		case c == '#':
@@ -722,7 +721,7 @@ func (l *csLexer) string(b []byte, i int) (int, bool) {
 		j++
 	}
 	if j >= len(b) || b[j] != '"' {
-		return i, false
+		return j, false
 	}
 	q := 0
 	for j+q < len(b) && b[j+q] == '"' {

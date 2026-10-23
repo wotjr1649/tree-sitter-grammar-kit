@@ -437,6 +437,16 @@
    "symbols": []
   },
   {
+   "id": "supplementary-escape-symbol",
+   "source": "I2RlZmluZSBcVTAwMDEwNDAwCiNpZiBcVTAwMDEwNDAwCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "supplementary-symbol",
+   "source": "I2RlZmluZSDwkJCACiNpZiDwkJCACmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
    "id": "malformed-expression",
    "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [
