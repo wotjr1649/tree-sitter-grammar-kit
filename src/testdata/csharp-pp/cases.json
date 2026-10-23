@@ -560,6 +560,274 @@
    ]
   },
   {
+   "id": "raw-single-line-unterminated",
+   "source": "eCA9ICIiIjsgCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "interp-raw-single-line-unterminated",
+   "source": "eCA9ICQiIiJ7MX07IAojZGVmaW5lIEEK",
+   "symbols": []
+  },
+  {
+   "id": "dollars-two-quotes-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIgp7ezE6I319e3h9CiNpZiBBCiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "dollars-at-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCRAIiIiIgp7ezE6I319e3h9CmYgQQoiIiI7IH0K",
+   "symbols": []
+  },
+  {
+   "id": "at-dollar-at-raw",
+   "source": "eCA9IEAkQCJhCiNpZiBBCmIiOwo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "bad-string-prefix",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAkInsiezF9CiNpZiBBCiI7IH0K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-hash-no-directive",
+   "source": "eCA9ICQiezEgKwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgoyfSI7Cg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-paren-then-brace",
+   "source": "eCA9ICQieyhhfSI7CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-mismatch-runaway",
+   "source": "eCA9ICQieyhhIEAiYn0iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "verbatim-runaway-two-quotes",
+   "source": "eCA9ICRAInsxICsKI3gKIiIKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "verbatim-error-content-quotes",
+   "source": "eCA9ICRAInsxICsKI2EKfSIiOyAKY2xhc3MgQyB7fSAjaWYgQQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "raw-runaway-quote",
+   "source": "eCA9ICQkIiIie3sxICsKI3gKIgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "regular-lone-close-brace-runaway",
+   "source": "eCA9ICQifXsxIiAKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "lone-close-brace-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAifXsxIiAKMn0KI2lmIEEKIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "nested-string-open-no-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KCJ9IiArICJ7I2Vsc2UKIil9IjsgfQojIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "format-clause-quote",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTIzOiMsIyIiIiMwfSI7IH0KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "format-after-global-colon",
+   "source": "eCA9ICQie2dsb2JhbDo6QSAvL30iOwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-after-hash",
+   "source": "I++7v2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-before-condition",
+   "source": "I2lmIO+7v0EKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "reference-directive",
+   "source": "I2lmIE5PCiNyIHgKI2VuZGlmCiNyICJhIgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-name-backslash",
+   "source": "I3JcdTBlZ2lvbn0gUgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-name-then-backslash",
+   "source": "I3JcZ2lvbn0gUgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "dollars-raw-quote-no-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIgp7eyIxOiN9fXt4fQojaT09ZiBBCiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-content-close-braces",
+   "source": "eCA9ICQiIiIifXsxIiAKI2lmIEEKI3JlZ2lvbgpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "multi-line-raw-runaway-quote-content",
+   "source": "eCA9ICQkIiIiCnt7MSArCiN4CiIKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "single-line-raw-runaway-then-comment",
+   "source": "eCA9ICQkIiIie3sxICsKI3gKIi8qCmNsYXNzIFgge30KI3VuZGVmIEIK",
+   "symbols": []
+  },
+  {
+   "id": "razor-comment-lines",
+   "source": "eCA9IEAqIGMKI2lmIEEKKkAKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-comment-unterminated",
+   "source": "eCA9IEAqIGMgKi8KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-comment-not-a-token",
+   "source": "QCogYyAqQAojZGVmaW5lIEIK",
+   "symbols": []
+  },
+  {
+   "id": "raw-too-many-open-braces",
+   "source": "eCA9ICQiIiJ7ezEgKwoiLyoKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-open-braces-within-limit",
+   "source": "eCA9ICQkIiIie3t7MSArCiIvKgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "at-run-verbatim",
+   "source": "eCA9IEBAImEKI2lmIEEKYiAiOwo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "one-quote-raw-hole-quote-closes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiCnt7IjE6IyYmfX17eH0KI2k9PWYgQQoiIiI7IH0K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "few-quotes-single-line-raw-runaway",
+   "source": "eCA9ICQkIiIpInt7MSArCiIvKgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "dollars-at-run-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCRAQCIKIiIiIgp7ezE6I319e3h9CmYgQQoiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "shebang-not-equals",
+   "source": "IyE9PXIvYmluL2VudiBkb3RuZXQKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "elif-sees-skipped-define",
+   "source": "I2lmIE5PCiNkZWZpbmUgQgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "elif-skips-earlier-branch",
+   "source": "I2lmIE5PCiNkZWZpbmUgQgojZWxpZiBOTzIKI2VsaWYgQgpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "elif-sees-skipped-region-define",
+   "source": "I2lmIE5PCiNyZWdpb24gcgojZGVmaW5lIEIKI2VuZHJlZ2lvbgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "elif-skips-nested-group-define",
+   "source": "I2lmIE5PCiNpZiBZRVMKI2RlZmluZSBCCiNlbmRpZgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": [
+    "YES"
+   ]
+  },
+  {
+   "id": "elif-sees-skipped-undef",
+   "source": "I2RlZmluZSBCCiNpZiBOTwojdW5kZWYgQgojZWxpZiBCCmNsYXNzIFkge30KI2Vsc2UKY2xhc3MgWiB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "pragma-raw-takes-lines",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgIiIiCiNpZiBBCiIiIgojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "inactive-pragma-raw-takes-endif",
+   "source": "I2lmIE5PCiNwcmFnbWEgd2FybmluZyBkaXNhYmxlICIiIgojZW5kaWYKIiIiCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "nullable-raw-to-eof",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiIiIKI2lmIEEK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "pragma-single-line-raw",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgIiIieCIiIgojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
    "id": "malformed-expression",
    "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
    "symbols": [

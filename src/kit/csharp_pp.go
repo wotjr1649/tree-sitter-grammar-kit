@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"maps"
 	"unicode"
 	"unicode/utf8"
 )
@@ -55,9 +56,13 @@ type ppResult struct {
 	NonLF      bool   // a lone CR, NEL, LS or PS ends a line (tree-sitter counts rows on LF)
 }
 
-// ppGroup is one open #if group.
+// ppGroup is one open #if group. branch holds the #define and #undef of its current branch
+// while that branch is skipped and the group is evaluated: Roslyn's directive stack lets the
+// next #elif of the group see them (the branches before are skipped, and the group's #endif
+// keeps only the taken branch's, which were active anyway), observed.
 type ppGroup struct {
 	parent, taken, sawElse, current bool
+	branch                          map[string]bool
 }
 
 // csharpPreprocess evaluates the conditional directives of a C# source under the given
@@ -102,10 +107,21 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 	if len(src) >= 3 && src[0] == 0xEF && src[1] == 0xBB && src[2] == 0xBF {
 		start = 3
 	}
-	var drop []Span // directive lines and skipped text, in order
+	var drop []Span                // directive lines and skipped text, in order
+	rawQuotes, rawDrop := 0, false // a raw string literal a directive opened, and whether its lines leave
 	for line := 0; line < len(src); {
 		end, next, nonLF := ppLineEnd(src, line)
 		res.NonLF = res.NonLF || nonLF
+		if rawQuotes > 0 { // the line belongs to the directive: neither code, directive nor skipped text
+			if ppQuoteRun(src, line, end) >= rawQuotes {
+				rawQuotes = 0
+			}
+			if rawDrop {
+				ppAppend(&drop, line, next)
+			}
+			line = next
+			continue
+		}
 		first := line
 		if line == 0 {
 			first = start
@@ -139,10 +155,11 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		// grammar accepts): #! only at offset 0, #: only before the first token; both stay
 		// for the grammar
 		switch {
-		case hash+1 < end && src[hash+1] == '!' && hash == 0:
+		case hash+1 < end && src[hash+1] == '!' && !(hash+2 < end && src[hash+2] == '='): // #!= is no shebang (observed)
+			if hash != 0 {
+				return fail(ppMalformed, "#! not at the start")
+			}
 			d.Kind = "Shebang"
-		case hash+1 < end && src[hash+1] == '!':
-			return fail(ppMalformed, "#! not at the start")
 		case hash+1 < end && src[hash+1] == ':':
 			if d.Active && (sawToken || sawIf) { // CS9297, CS9299 (after any #if, even closed)
 				return fail(ppMalformed, "#: after token or #if")
@@ -162,7 +179,12 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			if !ok {
 				return fail(ppMalformed, "condition tail")
 			}
-			p := &ppParser{src: expr, defined: defined, depth: lim.ExprDepth}
+			defs := defined
+			if n := len(groups); d.Kind == "Elif" && n > 0 && groups[n-1].branch != nil {
+				defs = maps.Clone(defined)
+				maps.Copy(defs, groups[n-1].branch)
+			}
+			p := &ppParser{src: expr, defined: defs, depth: lim.ExprDepth}
 			value, ok, deep := p.parse()
 			if deep {
 				return fail(ppLimit, "expression depth")
@@ -198,6 +220,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			}
 			g.current = g.parent && !g.taken && value
 			g.taken = g.taken || g.current
+			g.branch = nil
 			d.Taken = ppBool(g.current)
 		case "Else", "EndIf":
 			if _, ok := ppTail(src, args, end, true); !ok {
@@ -220,6 +243,7 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 			}
 			g.sawElse, g.current = true, g.parent && !g.taken
 			g.taken = g.taken || g.current
+			g.branch = nil
 			d.Taken = ppBool(g.current)
 		case "Define", "Undef":
 			name, ok := ppTail(src, args, end, false)
@@ -235,6 +259,11 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 					return fail(ppMalformed, "define after token")
 				}
 				defined[sym] = d.Kind == "Define"
+			} else if n := len(groups); groups[n-1].parent { // directly in a skipped branch of an evaluated group
+				if groups[n-1].branch == nil {
+					groups[n-1].branch = map[string]bool{}
+				}
+				groups[n-1].branch[sym] = d.Kind == "Define"
 			}
 		case "Region", "EndRegion":
 			lvl := &regions[len(regions)-1]
@@ -255,6 +284,10 @@ func csharpPreprocess(src []byte, encoding string, symbols []string, lim ppLimit
 		res.Directives = append(res.Directives, d)
 		if steering {
 			ppAppend(&drop, line, next)
+		}
+		switch d.Kind {
+		case "Nullable", "Line", "PragmaWarning", "PragmaChecksum", "Reference", "Load":
+			rawQuotes, rawDrop = ppTailRaw(src, args, end), steering
 		}
 		line = next
 	}
@@ -337,7 +370,7 @@ func ppLineEnd(src []byte, i int) (end, next int, nonLF bool) {
 	return len(src), len(src), false
 }
 
-// ppSkipSpace skips C# horizontal whitespace (Zs, tab, vertical tab, form feed).
+// ppSkipSpace skips C# horizontal whitespace (ppSpace).
 func ppSkipSpace(src []byte, i, end int) int {
 	for i < end {
 		r, n := utf8.DecodeRune(src[i:end])
@@ -349,20 +382,19 @@ func ppSkipSpace(src []byte, i, end int) int {
 	return i
 }
 
-// ppSpace is whitespace inside a directive (Roslyn: Zs, tab, vertical tab, form feed and
-// U+001A); ppCodeSpace adds U+FEFF, which Roslyn takes before a directive and between
-// tokens but not inside one (observed).
+// ppSpace is C# whitespace (Roslyn's SyntaxFacts.IsWhitespace: Zs, tab, vertical tab, form
+// feed, U+001A and U+FEFF), in code and between the tokens of a directive alike. U+FEFF is
+// also a formatting character, so after an identifier's first character it continues the
+// identifier instead (#if<U+FEFF>A is the unknown directive ifA, observed).
 func ppSpace(r rune) bool {
-	return r == '\t' || r == '\v' || r == '\f' || r == 0x1A || unicode.Is(unicode.Zs, r)
+	return r == '\t' || r == '\v' || r == '\f' || r == 0x1A || r == 0xFEFF || unicode.Is(unicode.Zs, r)
 }
-
-func ppCodeSpace(r rune) bool { return ppSpace(r) || r == 0xFEFF }
 
 // ppSkipLead skips the whitespace before a directive's '#'.
 func ppSkipLead(src []byte, i, end int) int {
 	for i < end {
 		r, n := utf8.DecodeRune(src[i:end])
-		if !ppCodeSpace(r) {
+		if !ppSpace(r) {
 			break
 		}
 		i += n
@@ -387,7 +419,8 @@ func ppTrim(b []byte) []byte {
 }
 
 var ppNames = map[string]string{"if": "If", "elif": "Elif", "else": "Else", "endif": "EndIf", "define": "Define", "undef": "Undef",
-	"region": "Region", "endregion": "EndRegion", "nullable": "Nullable", "line": "Line", "error": "Error", "warning": "Warning", "pragma": "Pragma"}
+	"region": "Region", "endregion": "EndRegion", "nullable": "Nullable", "line": "Line", "error": "Error", "warning": "Warning", "pragma": "Pragma",
+	"r": "Reference", "load": "Load"} // #r and #load are script directives Roslyn also reads in regular code
 
 // ppDirectiveName reads the directive name after '#'; Kind is "" for an unknown directive.
 func ppDirectiveName(src []byte, i, end int) (ppDirective, int) {
@@ -397,8 +430,9 @@ func ppDirectiveName(src []byte, i, end int) (ppDirective, int) {
 		j++
 	}
 	kind := ppNames[string(src[i:j])]
-	if r, _ := ppIdentRune(src[j:end]); j < end && ppIdentPart(r) {
-		kind = "" // a longer word such as #ifdef
+	escape := j+1 < end && src[j] == '\\' && (src[j+1] == 'u' || src[j+1] == 'U')
+	if r, _ := ppIdentRune(src[j:end]); j < end && (ppIdentPart(r) || escape) {
+		kind = "" // a longer word such as #ifdef, or a \u or \U Roslyn reads into the name (valid or not)
 	}
 	if kind == "Pragma" { // Roslyn reads any pragma but checksum as a (possibly bad) warning pragma
 		kind = "PragmaWarning"
@@ -415,6 +449,66 @@ func ppHasWord(b []byte, w string) bool {
 	}
 	r, n := ppIdentRune(b[len(w):])
 	return n == 0 || !ppIdentPart(r)
+}
+
+// ppTailRaw returns the opening quote count of a multi-line raw string literal in the rest of
+// a directive line, or 0. Roslyn lexes the tokens of #nullable, #line, #pragma, #r and #load,
+// and such a literal (three or more quotes, then only whitespace) takes the following lines
+// into the directive, active or skipped, up to a run of as many quotes anywhere on a line
+// (observed). A // comment ends the tokens; strings before are skipped.
+func ppTailRaw(src []byte, i, end int) int {
+	for i < end {
+		switch {
+		case src[i] == '/' && i+1 < end && src[i+1] == '/':
+			return 0
+		case src[i] != '"':
+			i++
+		default:
+			q := 0
+			for i+q < end && src[i+q] == '"' {
+				q++
+			}
+			switch {
+			case q >= 3 && ppSkipLead(src, i+q, end) == end:
+				return q
+			case q >= 3: // a single-line raw literal, to its closing quotes or the line end
+				for i += q; i < end; {
+					n := 0
+					for i+n < end && src[i+n] == '"' {
+						n++
+					}
+					i += max(n, 1)
+					if n >= q {
+						break
+					}
+				}
+			case q == 2:
+				i += 2
+			default: // a regular string literal
+				for i++; i < end && src[i] != '"'; i++ {
+					if src[i] == '\\' {
+						i++
+					}
+				}
+				i++
+			}
+		}
+	}
+	return 0
+}
+
+// ppQuoteRun returns the longest run of '"' in src[i:end].
+func ppQuoteRun(src []byte, i, end int) int {
+	most, run := 0, 0
+	for ; i < end; i++ {
+		if src[i] == '"' {
+			run++
+			most = max(most, run)
+		} else {
+			run = 0
+		}
+	}
+	return most
 }
 
 // ppTail returns a conditional or define directive's argument: the rest of the line up to
@@ -650,22 +744,35 @@ type csLexer struct {
 	deep  bool // scan stopped at depth
 }
 
-// csFrame is one open construct. kind: 'c' delimited comment, 'v' verbatim string, 'r' raw
+// csFrame is one open construct. kind: 'c' delimited comment, 'z' Razor comment, 'v' verbatim string, 'r' raw
 // string (quotes), 'h' interpolation hole, 'i' regular interpolated string, 'V' interpolated
-// verbatim, 'R' interpolated raw (dollars). A hole counts its own braces and parentheses;
-// a ':' at its top level starts the format clause, which is text up to the closing '}'.
+// verbatim, 'R' interpolated raw (dollars). A raw string is single-line when text follows
+// its opening quotes on their line. A hole keeps the closers its open brackets expect; a ':'
+// outside them, even the first of '::', starts the format clause, which is text up to the
+// closing '}' or a '"'. As in Roslyn's scan of an interpolated string, a closer in a hole that
+// matches nothing, a '#' in a hole, a format clause ended by '"' and too few quotes after $$
+// are errors of that string (err; a nested interpolated string has its own, and a nested
+// regular string left open at the line end is not one), and after an error the next '"' in a
+// hole closes the string.
 type csFrame struct {
 	kind            byte
 	quotes, dollars int
-	braces, parens  int
-	format          bool
+	single          bool
+	closers         []byte
+	format, err     bool
 }
+
+// holeErr records an error of the string whose hole is open.
+func (l *csLexer) holeErr() { l.stack[len(l.stack)-2].err = true }
 
 func (l *csLexer) atTop() bool { return len(l.stack) == 0 }
 
 // endLine closes the single-line constructs a line end terminates.
 func (l *csLexer) endLine() {
-	for len(l.stack) > 0 && l.stack[len(l.stack)-1].kind == 'i' {
+	for len(l.stack) > 0 {
+		if f := l.stack[len(l.stack)-1]; f.kind != 'i' && !f.single {
+			return
+		}
 		l.stack = l.stack[:len(l.stack)-1]
 	}
 }
@@ -678,8 +785,8 @@ func (l *csLexer) push(f csFrame) {
 	l.stack = append(l.stack, f)
 }
 
-// scan lexes one line of active code; it returns false for a '#' token in code (CS1040)
-// or at the depth bound (deep).
+// scan lexes one line of active code; it returns false for a '#' token in code outside an
+// interpolation hole (CS1040) or at the depth bound (deep).
 func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 	for i := 0; i < len(b); {
 		if l.deep {
@@ -694,9 +801,16 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			continue
 		}
 		c := b[i]
-		if top != nil && top.format { // format clause text up to the hole's '}'
-			if c == '}' {
+		if top != nil && top.format { // format clause text up to the hole's '}' or a '"'
+			switch {
+			case c == '}':
 				l.stack = l.stack[:len(l.stack)-1]
+			case c == '"' && l.stack[len(l.stack)-2].kind == 'V' && i+1 < len(b) && b[i+1] == '"':
+				i++ // an escaped quote of a verbatim string
+			case c == '"':
+				l.holeErr() // the hole is left open; its string reads the '"'
+				l.stack = l.stack[:len(l.stack)-1]
+				continue
 			}
 			i++
 			continue
@@ -707,23 +821,25 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 		case c == '/' && i+1 < len(b) && b[i+1] == '*':
 			l.push(csFrame{kind: 'c'})
 			i += 2
-		case c == '{' && top != nil:
-			top.braces++
+		case c == '@' && i+1 < len(b) && b[i+1] == '*': // a Razor comment up to *@ (CS1056, observed)
+			l.push(csFrame{kind: 'z'})
+			i += 2
+		case top != nil && (c == '{' || c == '(' || c == '['):
+			top.closers = append(top.closers, map[byte]byte{'{': '}', '(': ')', '[': ']'}[c])
 			i++
-		case c == '}' && top != nil:
-			if top.braces == 0 {
+		case top != nil && (c == '}' || c == ')' || c == ']'):
+			switch n := len(top.closers); {
+			case n > 0 && top.closers[n-1] == c:
+				top.closers = top.closers[:n-1]
+			case n == 0 && c == '}':
 				l.stack = l.stack[:len(l.stack)-1] // the hole ends; back in its string
-			} else {
-				top.braces--
+			default:
+				l.holeErr()
 			}
 			i++
-		case (c == '(' || c == '[') && top != nil:
-			top.parens++
-			i++
-		case (c == ')' || c == ']') && top != nil:
-			top.parens--
-			i++
-		case c == ':' && top != nil && top.braces == 0 && top.parens <= 0 && !(i+1 < len(b) && b[i+1] == ':') && !(i > 0 && b[i-1] == ':'):
+		case top != nil && c == '"' && l.stack[len(l.stack)-2].err:
+			l.stack = l.stack[:len(l.stack)-1] // runaway recovery: the hole ends; its string reads the '"'
+		case c == ':' && top != nil && len(top.closers) == 0:
 			top.format = true
 			i++
 		case c == '\'':
@@ -733,11 +849,14 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			n, _ := l.string(b, i) // a $/@ run without a quote is consumed whole, never rescanned
 			*sawToken = true
 			i = n
+		case c == '#' && top != nil:
+			l.holeErr() // Roslyn reads no directive in a hole, even at the start of a line
+			i++
 		case c == '#':
 			return false
 		default:
 			r, n := utf8.DecodeRune(b[i:])
-			if !ppCodeSpace(r) {
+			if !ppSpace(r) {
 				*sawToken = true
 			}
 			i += n
@@ -761,27 +880,33 @@ func (l *csLexer) char(b []byte, i int) int {
 }
 
 // string opens the string starting at b[i] (with its @ and $ prefixes) and returns the
-// position after the opening; ok is false when b[i] does not start a string.
+// position after the opening; ok is false when b[i] does not start a string. As in Roslyn,
+// an interpolated prefix is an @ run, a $ run and an @ run; a prefix not followed by '"' is a
+// token of its own (CS9009 for $@$", observed) and lexing goes on after it.
 func (l *csLexer) string(b []byte, i int) (int, bool) {
-	j, dollars, verbatim := i, 0, false
-	for j < len(b) && (b[j] == '$' || b[j] == '@') {
-		if b[j] == '$' {
-			dollars++
-		} else {
-			verbatim = true
-		}
-		j++
+	j, dollars, ats := i, 0, 0
+	for j < len(b) && b[j] == '@' {
+		j, ats = j+1, ats+1
+	}
+	for j < len(b) && b[j] == '$' {
+		j, dollars = j+1, dollars+1
+	}
+	for dollars > 0 && j < len(b) && b[j] == '@' {
+		j, ats = j+1, ats+1
 	}
 	if j >= len(b) || b[j] != '"' {
 		return j, false
 	}
+	verbatim := ats > 0 // @@" without $ is a verbatim string too (CS9008)
 	q := 0
 	for j+q < len(b) && b[j+q] == '"' {
 		q++
 	}
 	switch {
-	case q >= 3 && !verbatim:
-		f := csFrame{kind: 'r', quotes: q}
+	// $$, or $ with more than one @, starts a raw string even with fewer quotes (CS9004) or an
+	// @ (CS9008); like any error of the string, these start the runaway recovery
+	case q >= 3 && !verbatim, dollars > 1, dollars > 0 && ats > 1:
+		f := csFrame{kind: 'r', quotes: q, single: ppSkipLead(b, j+q, len(b)) < len(b), err: q < 3 || verbatim}
 		if dollars > 0 {
 			f.kind, f.dollars = 'R', dollars
 		}
@@ -819,9 +944,10 @@ func (l *csLexer) regular(b []byte, i int) int {
 func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 	pop := func() { l.stack = l.stack[:len(l.stack)-1] }
 	switch f.kind {
-	case 'c':
+	case 'c', 'z':
+		end := map[byte]byte{'c': '/', 'z': '@'}[f.kind]
 		for ; i+1 < len(b); i++ {
-			if b[i] == '*' && b[i+1] == '/' {
+			if b[i] == '*' && b[i+1] == end {
 				pop()
 				return i + 2
 			}
@@ -830,16 +956,18 @@ func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 	case 'v', 'V':
 		for ; i < len(b); i++ {
 			switch {
-			case b[i] == '"' && i+1 < len(b) && b[i+1] == '"':
+			case b[i] == '"' && i+1 < len(b) && b[i+1] == '"' && !f.err: // after an error a '"' closes (observed)
 				i++
 			case b[i] == '"':
 				pop()
 				return i + 1
-			case f.kind == 'V' && b[i] == '{' && i+1 < len(b) && b[i+1] == '{':
+			case f.kind == 'V' && (b[i] == '{' || b[i] == '}') && i+1 < len(b) && b[i+1] == b[i]:
 				i++
 			case f.kind == 'V' && b[i] == '{':
 				l.push(csFrame{kind: 'h'})
 				return i + 1
+			case f.kind == 'V' && b[i] == '}':
+				f.err = true // a lone } (CS8086)
 			}
 		}
 		return len(b)
@@ -851,11 +979,13 @@ func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 			case b[i] == '"':
 				pop()
 				return i + 1
-			case b[i] == '{' && i+1 < len(b) && b[i+1] == '{':
+			case b[i] == '{' && i+1 < len(b) && b[i+1] == '{', b[i] == '}' && i+1 < len(b) && b[i+1] == '}':
 				i++
 			case b[i] == '{':
 				l.push(csFrame{kind: 'h'})
 				return i + 1
+			case b[i] == '}':
+				f.err = true // a lone } (CS8086)
 			}
 		}
 		return len(b)
@@ -879,9 +1009,18 @@ func (l *csLexer) inside(b []byte, i int, f *csFrame) int {
 					n++
 				}
 				if n >= f.dollars {
+					f.err = f.err || n >= 2*f.dollars // too many opening braces for content (CS9006)
 					l.push(csFrame{kind: 'h'})
 					return i + n
 				}
+				i += n - 1
+			}
+			if f.kind == 'R' && b[i] == '}' {
+				n := 0
+				for i+n < len(b) && b[i+n] == '}' {
+					n++
+				}
+				f.err = f.err || n >= f.dollars // too many closing braces for content (CS9007)
 				i += n - 1
 			}
 		}
