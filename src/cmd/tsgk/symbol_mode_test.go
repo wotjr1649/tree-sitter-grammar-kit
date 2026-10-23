@@ -34,10 +34,11 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	root := filepath.Join(base, "root")
 	symbol, grammar := csharpClosure(t, root)
 	one, zero, bad := "#if A\nclass X {}\n#else\nclass Y {}\n#endif\nclass Z {}\n", "#if B\nclass Q {}\n#endif\n", "class B {}\n"
+	large, gone := "class L {"+strings.Repeat(" int a;", 3000)+" }\n", "class G {}\n"
 	if err := os.MkdirAll(filepath.Join(root, "cases"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for name, src := range map[string]string{"one": one, "zero": zero, "bad": bad} {
+	for name, src := range map[string]string{"one": one, "zero": zero, "bad": bad, "large": large, "gone": gone} {
 		if err := os.WriteFile(filepath.Join(root, "cases", name+".cs"), []byte(src), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -61,9 +62,17 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			// an edit refused before any evaluation (its old bytes are not the source's)
 			map[string]any{"id": "bad", "input": fileEntry(t, root, "cases/bad.cs", "case"), "points": []any{}, "expect": []any{},
 				"edits": []any{map[string]any{"start_byte": 0, "old_end_byte": 1, "new_end_byte": 0, "old": enc([]byte("x")), "new": ""}}},
+			// honest ends the replay must accept: the node limit, and an input gone before the
+			// run (its refused edit is never evaluated)
+			map[string]any{"id": "large", "input": fileEntry(t, root, "cases/large.cs", "case"), "points": []any{}, "expect": []any{}, "edits": []any{}},
+			map[string]any{"id": "gone", "input": fileEntry(t, root, "cases/gone.cs", "case"), "points": []any{}, "expect": []any{},
+				"edits": []any{map[string]any{"start_byte": 0, "old_end_byte": 1, "new_end_byte": 0, "old": enc([]byte("x")), "new": ""}}},
 		},
 	}
 	pdata, _ := json.Marshal(profile)
+	if err := os.Remove(filepath.Join(root, "cases", "gone.cs")); err != nil {
+		t.Fatal(err)
+	}
 	pf := filepath.Join(base, "profile.json")
 	if err := os.WriteFile(pf, pdata, 0o644); err != nil {
 		t.Fatal(err)
@@ -115,13 +124,14 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			} `json:"steps"`
 		} `json:"cases"`
 	}
-	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r4" || len(res.Cases) != 3 {
+	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r4" || len(res.Cases) != 5 {
 		t.Fatalf("result: %v %s", err, published[:min(len(published), 300)])
 	}
 	c0, c1, c2 := res.Cases[0], res.Cases[1], res.Cases[2]
 	if c0.ExecutionStatus != kit.StatusCompleted || len(c0.Steps) != 2 || len(c0.Preprocess) != 2 || c1.ExecutionStatus != kit.StatusNotRun || c1.Code != "PREPROCESS_ZERO_ACTIVE" || len(c1.Steps) != 0 ||
-		c2.ExecutionStatus != kit.StatusNotRun || c2.Code != "EDIT_OLD_MISMATCH" || c2.Preprocess != nil {
-		t.Fatalf("cases: %+v %+v %+v", c0.ExecutionStatus, c1, c2)
+		c2.ExecutionStatus != kit.StatusNotRun || c2.Code != "EDIT_OLD_MISMATCH" || c2.Preprocess != nil ||
+		res.Cases[3].ExecutionStatus != kit.StatusResourceLimit || res.Cases[3].Code != "NODE_LIMIT" || res.Cases[4].Code != "SOURCE_MISSING" {
+		t.Fatalf("cases: %+v %+v %+v %+v %+v", c0.ExecutionStatus, c1, c2, res.Cases[3].Code, res.Cases[4].Code)
 	}
 	inside := func(nodes []kit.TreeNode, src, word string) bool {
 		at := strings.Index(src, word)
@@ -152,6 +162,8 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	witness("00000-one.bin", one)
 	witness("00001-zero.bin", zero)
 	witness("00002-bad.bin", bad)
+	witness("00003-large.bin", large)
+	witness("00004-gone.bin", gone)
 	policy := ""
 	for _, id := range res.Identities {
 		if id.Role == "policy" {
@@ -160,7 +172,8 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	}
 	replay := func(reducer string, skip string) (kit.ReplayResult, error) {
 		t.Helper()
-		items := []struct{ path, role string }{{"workload.json", "workload-profile"}, {"result.json", "result"}, {"sources/00000-one.bin", "case-source"}, {"sources/00001-zero.bin", "case-source"}, {"sources/00002-bad.bin", "case-source"}}
+		items := []struct{ path, role string }{{"workload.json", "workload-profile"}, {"result.json", "result"}, {"sources/00000-one.bin", "case-source"}, {"sources/00001-zero.bin", "case-source"}, {"sources/00002-bad.bin", "case-source"},
+			{"sources/00003-large.bin", "case-source"}, {"sources/00004-gone.bin", "case-source"}}
 		entries, err := os.ReadDir(filepath.Join(out, "responses"))
 		if err != nil {
 			t.Fatal(err)

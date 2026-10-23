@@ -123,11 +123,11 @@ reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reduce
 - 관측과 사례 결과
   - witness와 등록 edit로 step 원본을 다시 만들고 `PreprocessSteps`를 다시 계산한다. 기록된 사례 `preprocess`와 정확히 같아야 한다(`PREPROCESS_MISMATCH`, 없으면 `PREPROCESS_MISSING`).
   - preprocess 전에 멈춘 사례(`NOT_RUN`·`NOT_ASSESSED`, preprocess·native step·process·producer·응답 없음)는 따로 처리한다.
-    - 입력 읽기 실패 code(`SOURCE_*`)면 recorded로 남긴다.
+    - 입력 읽기 실패 code(`SOURCE_*`)면 recorded로 남긴다. witness가 있으면 등록 입력과 같은지만 검사하고, 실행되지 않은 edit는 평가하지 않는다.
     - edit 거부면 witness로 같은 거부 code를 다시 계산한다.
     - 이 사례는 기존 `reuse-observation` gate의 witness 불일치로도 보지 않는다. r3·r4는 기록 당시 의미대로 이를 거부한다.
   - 멈춘 사례는 고정 상태·code·`BLOCKED`, claim 셋 `NOT_CLAIMED`여야 하고, native step·원 응답·process·producer·응답 status/code가 없어야 한다. 모든 step이 OK인 사례는 preprocess code가 없어야 한다(`PREPROCESS_OUTCOME_MISMATCH`).
-  - 실행된 사례는 모든 full tree의 폭이 0이 아닌 leaf가 그 step의 활성 범위 안에서 시작하고 끝나야 한다(`PREPROCESS_TREE_OUTSIDE_RANGES`). 부모 node는 건너뛴 구간을 가로질러도 되고, token은 range 경계를 넘어 이어질 수 있다.
+  - 실행된 사례는 모든 full tree의 폭이 0이 아닌 leaf가 그 step의 활성 범위 안에서 시작하고 끝나야 한다(`PREPROCESS_TREE_OUTSIDE_RANGES`). 부모 node는 건너뛴 구간을 가로질러도 되고, token은 range 경계를 넘어 이어질 수 있다. 자원 한도로 끝나 tree가 없는 미완료 슬롯은 policy·leaf 검사 대상이 아니다. 완료 슬롯은 tree와 policy가 반드시 있어야 한다.
 - run policy
   - 기록된 operation이 등록 operation과 같아야 한다. 호출자가 run wall을 좁힌 것만 허용한다.
   - 기록된 operation bytes는 그 값의 정규 JSON과 같아야 한다. 대소문자만 다른 member나 반복 member는 거부한다.
@@ -139,7 +139,7 @@ reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reduce
   - UTF-8 byte 순으로 정렬하고 중복을 없앤 symbols를 쓴다.
   - 머리줄 다음에 symbol마다 `<byte 길이>:<bytes>` 한 줄을 잇고 sha256을 취한다. 빈 목록은 머리줄뿐이다.
 - 한계
-  - 건너뛴 byte가 있는 원본이라면, 전체 입력으로 parse한 tree에는 그 byte를 읽은 leaf가 남는다. 위 leaf 검사가 이를 잡는다.
+  - 위 leaf 검사는 활성 범위 밖에서 시작하거나 끝나는 leaf를 검출한다. 양 끝이 서로 다른 활성 범위에 있고 그 사이의 건너뛴 byte를 덮는 leaf는 range 경계를 넘는 정상 token과 구별되지 않는다. 그래서 전체 입력 parse를 언제나 검출한다고 보장하지는 않는다.
   - 지시문이 없는 원본은 범위가 있든 없든 같은 CST가 되므로, 저장 증거로는 driver가 ranges를 받았다는 것을 증명하지 못한다. 이 검출은 native 연결 시험이 맡는다([검증](../validation/validation.md)).
 
 원 응답에서는 관측 projection을 decode하며 native CST의 전체 protocol decoder를 실행하지 않는다. tree 정확성은 기존 기록된 공개 tree의 구조·digest·full CST 비교로 검증한다. JSON member 순서에 의존하지 않도록 metadata를 먼저 bounded streaming으로 읽고 case streaming을 수행한다. 두 pass와 원 응답 읽기에도 기존 file/record/total/wall 상한을 적용한다. 수집 BLOCKED/NOT_CLAIMED를 정확하게 기록한 근거의 무결성 PASS는 logger 경로 PASS나 새로운 실행 성공을 뜻하지 않는다. 기존 subject verdict도 바꾸지 않는다. hash 일치는 저장된 bytes의 무결성 근거이며 독립적인 실행 인증이 아니다.

@@ -33,12 +33,22 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 		g.fail(c.ID, "PREPROCESS_MISSING", "사례에 preprocess 관측이 없다")
 		return nil
 	}
+	path := fmt.Sprintf("sources/%05d-%s.bin", index, c.ID)
+	m, witnessed := x.members[path]
 	if early && sourceReadCodes[c.Code] {
-		g.recorded() // the live run could not read its input: stopped before any evaluation
+		// the live run could not read its input: stopped before any evaluation, nothing to
+		// recompute; a witness given anyway must still be the registered input
+		if witnessed && m.Role == "case-source" {
+			source, e := x.member(path)
+			if e != nil {
+				return e
+			}
+			g.check(digestHex(source) == registered.Input.SHA256 && uint64(len(source)) == registered.Input.Bytes, c.ID, "PREPROCESS_SOURCE_MISMATCH", "원 입력 witness가 등록 입력과 다르다")
+		}
+		g.recorded()
 		return nil
 	}
-	path := fmt.Sprintf("sources/%05d-%s.bin", index, c.ID)
-	if m, ok := x.members[path]; !ok || m.Role != "case-source" {
+	if !witnessed || m.Role != "case-source" {
 		g.fail(c.ID, "PREPROCESS_SOURCE_MISSING", "preprocess를 다시 계산할 원 입력 witness가 없다")
 		return nil
 	}
@@ -74,8 +84,8 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 	g.check(!strings.HasPrefix(c.Code, "PREPROCESS_"), c.ID, "PREPROCESS_OUTCOME_MISMATCH", "모든 step이 OK인데 사례가 preprocess로 멈췄다")
 	for _, s := range c.Steps {
 		for _, t := range []*rcTree{s.Incremental, s.Fresh} {
-			if t == nil {
-				continue
+			if t == nil || t.Tree == nil && t.Summary == nil && t.Status != StatusCompleted {
+				continue // a slot a resource limit ended carries no tree and no identity
 			}
 			// every tree's policy is checked against the recomputed r2 once the run is read
 			ids := []IdentityRef{}
