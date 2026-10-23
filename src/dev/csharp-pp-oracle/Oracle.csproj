@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- #218 development oracle: references the Roslyn assemblies of the local .NET SDK (no package). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RoslynDir Condition="'$(RoslynDir)' == ''">$(NetCoreRoot)sdk\$(NETCoreSdkVersion)\Roslyn\bincore\</RoslynDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(RoslynDir)Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(RoslynDir)Microsoft.CodeAnalysis.CSharp.dll" />
+  </ItemGroup>
+</Project>

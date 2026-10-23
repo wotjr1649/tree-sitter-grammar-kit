@@ -1,0 +1,2483 @@
+{
+  "schema": "tsgk-csharp-pp-roslyn/r1",
+  "cases_sha256": "055a0d709b2a015e5e7caacf6f158ac9ea2d18a910be7cd33964657fd65f5b45",
+  "roslyn": "5.9.0.0",
+  "language_version": "Latest",
+  "cases": [
+    {
+      "id": "issue198-inactive-broken",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 47,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 64,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 10,
+          "end": 47
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "issue198-undef-inactive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "UndefDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 15,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 39,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 56,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 27,
+          "end": 39
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "issue198-nested-directives",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 6,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 43,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 60,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 67,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 12,
+          "end": 24
+        },
+        {
+          "start": 49,
+          "end": 60
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "ops-a",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "ops-ab",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "ops-cd",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "ops-c",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 24,
+          "end": 35
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "ops-none",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "equality-false",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 26,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "not-equal",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 22,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "elif-b",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 36,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 55,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 72,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 17
+        },
+        {
+          "start": 44,
+          "end": 55
+        },
+        {
+          "start": 61,
+          "end": 72
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "elif-ab",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 36,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 55,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 72,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 25,
+          "end": 36
+        },
+        {
+          "start": 44,
+          "end": 55
+        },
+        {
+          "start": 61,
+          "end": 72
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "elif-none",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElifDirectiveTrivia",
+          "start": 36,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 55,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 72,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 17
+        },
+        {
+          "start": 25,
+          "end": 36
+        },
+        {
+          "start": 44,
+          "end": 55
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "literal-true",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 20,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 37,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 26,
+          "end": 37
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "literal-paren-false",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 23,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 40,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 12,
+          "end": 23
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "literal-not-true",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 23,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 40,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 12,
+          "end": 23
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "unicode-escape",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 22,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "define-undef-order",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "UndefDirectiveTrivia",
+          "start": 10,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 36,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 53,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 25,
+          "end": 36
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "define-after-token",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 11,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 38,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1032"
+      ]
+    },
+    {
+      "id": "define-inactive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 41,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 30,
+          "end": 41
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "nested-in-inactive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 26,
+          "active": false,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 43,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 50,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 15,
+          "end": 26
+        },
+        {
+          "start": 32,
+          "end": 43
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "verbatim-string",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "raw-string",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interpolated-verbatim",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interpolated-raw",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "block-comment",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "line-comment",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "char-literal",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "directive-after-code",
+      "features": [],
+      "directives": [
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 28,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1028",
+        "CS1040"
+      ]
+    },
+    {
+      "id": "trailing-line-comment",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 25,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "trailing-block-comment",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 25,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1025"
+      ]
+    },
+    {
+      "id": "region-slash-star",
+      "features": [],
+      "directives": [
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 12,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 29,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndRegionDirectiveTrivia",
+          "start": 36,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "nullable-kept",
+      "features": [],
+      "directives": [
+        {
+          "kind": "NullableDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 34,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "indented-directive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 3,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 22,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 9,
+          "end": 20
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "crlf",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 37,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 56,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 44,
+          "end": 56
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "bom",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 3,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 38,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 55,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 44,
+          "end": 55
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "eof-no-newline",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "lone-cr",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 17
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "line-separator",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 8,
+          "end": 21
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "non-ascii",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 50,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 67,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 39,
+          "end": 50
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "interp-format",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 39,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 56,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interp-format-slashes",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 37,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 54,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interp-nested-string",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 41,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 58,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interp-ternary",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 47,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 64,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interp-global-alias",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 69,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "interp-verbatim-hole-multiline",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "raw-four-quotes",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "raw-interp-two-dollars",
+      "features": [],
+      "directives": [],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "escape-upper",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 26,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "cf-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 16,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 50,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 39,
+          "end": 50
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "define-undef-define",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "UndefDirectiveTrivia",
+          "start": 10,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 29,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 46,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "inactive-define-before-token",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "inactive-malformed-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 18,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1001"
+      ]
+    },
+    {
+      "id": "inactive-unknown-directive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 12,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1024"
+      ]
+    },
+    {
+      "id": "nbsp-line-before-define",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 3,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 13,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 30,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "nbsp-comment-before-define",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 7,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 34,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "nbsp-indented-directive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 2,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "pragma-warning",
+      "features": [],
+      "directives": [
+        {
+          "kind": "PragmaWarningDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "pragma-warning-nbsp",
+      "features": [],
+      "directives": [
+        {
+          "kind": "PragmaWarningDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "pragma-checksum",
+      "features": [],
+      "directives": [
+        {
+          "kind": "PragmaChecksumDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "pragma-bare",
+      "features": [],
+      "directives": [
+        {
+          "kind": "PragmaWarningDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "nel",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 7,
+          "end": 19
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "paragraph-separator",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 8,
+          "end": 21
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "bom-non-ascii",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 10,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 27,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "inactive-define-after-token",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 11,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 21,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 31,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "region-crosses-endif-inactive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 10,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 20,
+          "active": false,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 27,
+          "end": 38
+        }
+      ],
+      "errors": [
+        "CS1038"
+      ]
+    },
+    {
+      "id": "unclosed-region",
+      "features": [],
+      "directives": [
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1038"
+      ]
+    },
+    {
+      "id": "endregion-inside-group",
+      "features": [],
+      "directives": [
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 10,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 20,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 31,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1027",
+        "CS1038"
+      ]
+    },
+    {
+      "id": "region-crosses-else",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 6,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 16,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndRegionDirectiveTrivia",
+          "start": 22,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1038"
+      ]
+    },
+    {
+      "id": "region-crosses-elif",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 6,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 16,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndRegionDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 22,
+          "end": 23
+        }
+      ],
+      "errors": [
+        "CS1038"
+      ]
+    },
+    {
+      "id": "region-in-group",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "RegionDirectiveTrivia",
+          "start": 6,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndRegionDirectiveTrivia",
+          "start": 16,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 27,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "escaped-true",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 25,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 42,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "upper-true",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 20,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 37,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 26,
+          "end": 37
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "mixed-false",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 38,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 10,
+          "end": 21
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "supplementary-escape-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 45,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1001",
+        "CS1025",
+        "CS1517"
+      ]
+    },
+    {
+      "id": "supplementary-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 13,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1001",
+        "CS1025",
+        "CS1517"
+      ]
+    },
+    {
+      "id": "shebang",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "ShebangDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 22,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 39,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "file-based-sdk",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 41,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "file-based-in-inactive",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 7,
+          "active": false,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 25,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "file-based-after-token",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 11,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9297"
+      ]
+    },
+    {
+      "id": "file-based-in-active-if",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 9,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 33,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9299"
+      ]
+    },
+    {
+      "id": "file-based-after-endif",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 7,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IgnoredDirectiveTrivia",
+          "start": 14,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9299"
+      ]
+    },
+    {
+      "id": "long-s-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 52,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 73,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 58,
+          "end": 73
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "caller-cf-symbol",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 24,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 45,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 24
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "caller-plain-matches-cf-source",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 30,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 51,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 36,
+          "end": 51
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "shebang-after-bom",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "ShebangDirectiveTrivia",
+          "start": 3,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9378"
+      ]
+    },
+    {
+      "id": "shebang-not-first",
+      "features": [
+        "FileBasedProgram"
+      ],
+      "directives": [
+        {
+          "kind": "ShebangDirectiveTrivia",
+          "start": 11,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS9378"
+      ]
+    },
+    {
+      "id": "feff-before-directive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 4,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "feff-in-directive",
+      "features": [],
+      "directives": [
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 19,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1024",
+        "CS1028"
+      ]
+    },
+    {
+      "id": "feff-line-before-define",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 8,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 18,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 35,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "ctrl-z-space",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": []
+    },
+    {
+      "id": "malformed-expression",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 20,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 9,
+          "end": 20
+        }
+      ],
+      "errors": [
+        "CS1517"
+      ]
+    },
+    {
+      "id": "unterminated",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": true
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1027"
+      ]
+    },
+    {
+      "id": "else-after-else",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": false
+        },
+        {
+          "kind": "ElseDirectiveTrivia",
+          "start": 17,
+          "active": true,
+          "taken": true
+        },
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 34,
+          "active": true,
+          "taken": null
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 51,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [
+        {
+          "start": 6,
+          "end": 17
+        }
+      ],
+      "errors": [
+        "CS1027"
+      ]
+    },
+    {
+      "id": "endif-without-if",
+      "features": [],
+      "directives": [
+        {
+          "kind": "BadDirectiveTrivia",
+          "start": 11,
+          "active": true,
+          "taken": null
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1028"
+      ]
+    }
+  ]
+}
