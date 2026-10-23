@@ -318,6 +318,23 @@ func TestPPRoslynDiffDetects(t *testing.T) {
 	if ppRoslynDiff(skipped, ppResult{Status: ppOK, Directives: csharpPreprocess(skipped, EncodingUTF8, nil, ppDefaultLimits).Directives, Active: []Span{{StartByte: 6, EndByte: 30}}, Inactive: []Span{{StartByte: 30, EndByte: 41}}}, so, ppDefaultLimits) == "" {
 		t.Error("a skipped #pragma line left active not noticed")
 	}
+	// an active directive that steers nothing keeps its line in the active ranges
+	region := []byte("#region r\nclass X {}\n#endregion\n")
+	var ro ppObservedCase
+	if err := json.Unmarshal([]byte(`{"id":"r","directives":[
+		{"kind":"RegionDirectiveTrivia","start":0,"active":true,"taken":null,"line_start":0,"line_end":10},
+		{"kind":"EndRegionDirectiveTrivia","start":21,"active":true,"taken":null,"line_start":21,"line_end":32}],
+		"disabled":[],"diagnostics":[]}`), &ro); err != nil {
+		t.Fatal(err)
+	}
+	kept := csharpPreprocess(region, EncodingUTF8, nil, ppDefaultLimits)
+	if d := ppRoslynDiff(region, kept, ro, ppDefaultLimits); d != "" || kept.Status != ppOK {
+		t.Errorf("active #region: %s %s", kept.Status, d)
+	}
+	kept.Active = []Span{{StartByte: 10, EndByte: 21}}
+	if ppRoslynDiff(region, kept, ro, ppDefaultLimits) == "" {
+		t.Error("active #region lines dropped not noticed")
+	}
 	o.Diagnostics = append(o.Diagnostics, ppDiagnostic{ID: "CS1517", Context: "If"})
 	for _, r := range []ppResult{good, {Status: ppInvalidInput}, {Status: ppLimit}, {Status: ppMalformed, Active: good.Active}} {
 		if ppRoslynDiff(src, r, o, ppDefaultLimits) == "" {

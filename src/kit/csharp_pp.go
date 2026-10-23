@@ -474,11 +474,8 @@ func ppTailRaw(src []byte, i, end int) int {
 				}
 			case q == 2:
 				i += 2
-			default: // a regular string literal
+			default: // a regular string literal, without escapes in a directive (observed)
 				for i++; i < end && src[i] != '"'; i++ {
-					if src[i] == '\\' {
-						i++
-					}
 				}
 				i++
 			}
@@ -825,7 +822,12 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			case c == '"' && l.stack[len(l.stack)-2].kind == 'V' && i+1 < len(b) && b[i+1] == '"':
 				i++ // an escaped quote of a verbatim string
 			case c == '\\' && l.stack[len(l.stack)-2].kind == 'i':
+				if ppEscapeBrace(b[i:]) { // an escape that makes a brace (CS8087)
+					l.holeErr()
+				}
 				i++ // an escape sequence of a regular string (\" stays in the clause)
+			case c == '{':
+				l.holeErr() // an unescaped brace in the clause (CS1056)
 			case c == '"':
 				l.holeErr() // the hole is left open; its string reads the '"'
 				l.stack = l.stack[:len(l.stack)-1]
@@ -835,8 +837,10 @@ func (l *csLexer) scan(b []byte, sawToken *bool) bool {
 			continue
 		}
 		switch {
-		case c == '/' && i+1 < len(b) && b[i+1] == '/',
-			top == nil && c == '@' && i+1 < len(b) && b[i+1] == ':': // a Razor line transition (CS1646), observed
+		case c == '/' && i+1 < len(b) && b[i+1] == '/':
+			return true
+		case top == nil && c == '@' && i+1 < len(b) && b[i+1] == ':': // a Razor line transition, a bad token to the line end (CS1646), observed
+			*sawToken = true
 			return true
 		case c == '/' && i+1 < len(b) && b[i+1] == '*':
 			l.push(csFrame{kind: 'c'})

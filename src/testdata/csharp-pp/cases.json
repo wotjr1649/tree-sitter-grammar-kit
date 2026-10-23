@@ -757,6 +757,28 @@
    "symbols": []
   },
   {
+   "id": "format-escape-brace-then-hole",
+   "source": "dmFyIHMgPSAkInsxOlx7fXsyIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "format-open-brace-then-hole",
+   "source": "dmFyIHMgPSAkInsxOnt9ezIiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "directive-string-no-escape",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiXCIgIiIiCiNpZiBBCiIiIgpjbGFzcyBDIHt9Cg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-transition-is-token",
+   "source": "QDoKI2RlZmluZSBBCiNpZiBBCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
    "id": "body-escaped-quote",
    "source": "dmFyIHMgPSAkIlwiezF9IjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
    "symbols": []

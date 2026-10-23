@@ -1,6 +1,6 @@
 {
   "schema": "tsgk-csharp-pp-roslyn/r2",
-  "cases_sha256": "9f7f81ab77135a07864db240fe2c5c67f6336bdd75fa12f0a7864786bdab51e0",
+  "cases_sha256": "9981758151e43df80cb0aa0479a73ec119d713d7789a2afdb93e406c0eadae5d",
   "roslyn": "5.9.0.0",
   "language_version": "Latest",
   "cases": [
@@ -4740,6 +4740,166 @@
           "start": 17,
           "end": 18,
           "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "format-escape-brace-then-hole",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 21,
+          "active": true,
+          "taken": false,
+          "line_start": 21,
+          "line_end": 31
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 42,
+          "active": true,
+          "taken": null,
+          "line_start": 42,
+          "line_end": 49
+        }
+      ],
+      "disabled": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "errors": [
+        "CS1009",
+        "CS8087"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8087",
+          "start": 13,
+          "end": 14,
+          "context": "Other"
+        },
+        {
+          "id": "CS1009",
+          "start": 13,
+          "end": 15,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "format-open-brace-then-hole",
+      "features": [],
+      "directives": [
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 20,
+          "active": true,
+          "taken": false,
+          "line_start": 20,
+          "line_end": 30
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 41,
+          "active": true,
+          "taken": null,
+          "line_start": 41,
+          "line_end": 48
+        }
+      ],
+      "disabled": [
+        {
+          "start": 30,
+          "end": 41
+        }
+      ],
+      "errors": [
+        "CS1056"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1056",
+          "start": 13,
+          "end": 14,
+          "context": "Other"
+        }
+      ]
+    },
+    {
+      "id": "directive-string-no-escape",
+      "features": [],
+      "directives": [
+        {
+          "kind": "NullableDirectiveTrivia",
+          "start": 0,
+          "active": true,
+          "taken": null,
+          "line_start": 0,
+          "line_end": 35
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS8668"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS8668",
+          "start": 17,
+          "end": 20,
+          "context": "Nullable"
+        }
+      ]
+    },
+    {
+      "id": "razor-transition-is-token",
+      "features": [],
+      "directives": [
+        {
+          "kind": "DefineDirectiveTrivia",
+          "start": 3,
+          "active": true,
+          "taken": null,
+          "line_start": 3,
+          "line_end": 13
+        },
+        {
+          "kind": "IfDirectiveTrivia",
+          "start": 13,
+          "active": true,
+          "taken": true,
+          "line_start": 13,
+          "line_end": 19
+        },
+        {
+          "kind": "EndIfDirectiveTrivia",
+          "start": 30,
+          "active": true,
+          "taken": null,
+          "line_start": 30,
+          "line_end": 37
+        }
+      ],
+      "disabled": [],
+      "errors": [
+        "CS1032",
+        "CS1646"
+      ],
+      "diagnostics": [
+        {
+          "id": "CS1646",
+          "start": 1,
+          "end": 2,
+          "context": "Other"
+        },
+        {
+          "id": "CS1032",
+          "start": 4,
+          "end": 10,
+          "context": "Define"
         }
       ]
     },
