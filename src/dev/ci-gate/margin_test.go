@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -570,6 +571,27 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				put(filepath.Join(hm, fmt.Sprintf("artifacts-%d.json", i)), encoded(t, map[string]any{"total_count": 1, "artifacts": []artifactMetadata{a}}))
 			}
 			put(filepath.Join(hm, "runs-1.json"), encoded(t, map[string]any{"total_count": len(pastAPI), "workflow_runs": pastAPI}))
+			if n == 0 {
+				// #275: a producer the re-run kept keeps its earlier-attempt config artifact
+				listing := func(rows []artifactMetadata) {
+					put(filepath.Join(meta, "listing-1.json"), encoded(t, map[string]any{"total_count": len(rows), "artifacts": rows}))
+				}
+				if _, err := makeMarginPlan(current.Run, meta, hm); err != nil {
+					t.Fatal(err)
+				}
+				kept := slices.Clone(rows)
+				config := slices.IndexFunc(kept, func(a artifactMetadata) bool { return a.Name == configName(marginJobs[2], current.Run) })
+				kept[config].Name = strings.TrimSuffix(kept[config].Name, "-2") + "-1"
+				listing(kept)
+				if _, err := makeMarginPlan(current.Run, meta, hm); !errors.Is(err, errPartialRerun) {
+					t.Fatal("kept producer config not reported as a partial re-run:", err)
+				}
+				listing(slices.Delete(slices.Clone(rows), config, config+1))
+				if _, err := makeMarginPlan(current.Run, meta, hm); err == nil || errors.Is(err, errPartialRerun) {
+					t.Fatal("absent config accepted or reported as a partial re-run:", err)
+				}
+				listing(rows)
+			}
 			corePath := filepath.Join(base, "result.json")
 			put(corePath, core)
 			out := filepath.Join(base, "margin.json")

@@ -6,9 +6,11 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,6 +44,13 @@ func zipBytes(t *testing.T, entries ...zipEntry) []byte {
 
 func recordedPlan(t *testing.T, control string, paginate bool) (downloadPlan, []byte, error) {
 	t.Helper()
+	run, pages, z := recordedMetadata(t, control, paginate)
+	p, e := makePlan(expectation(), run, pages)
+	return p, z, e
+}
+
+func recordedMetadata(t *testing.T, control string, paginate bool) ([]byte, [][]byte, []byte) {
+	t.Helper()
 	r := expectation()
 	z := zipBytes(t, zipEntry{"sample.json", "evidence", 0600})
 	var rows []artifactMetadata
@@ -56,15 +65,39 @@ func recordedPlan(t *testing.T, control string, paginate bool) (downloadPlan, []
 		a.Run.Head = r.HeadSHA
 		rows = append(rows, a)
 	}
+	// the producer configs the margin plan reads from the same listing (#275)
+	configs := len(rows)
+	for i, j := range marginJobs {
+		a := artifactMetadata{ID: uint64(500 + i), Name: configName(j, r), Size: int64(len(z)), Digest: "sha256:" + digest(z), Expired: new(bool)}
+		a.Run.ID = 123
+		a.Run.Head = r.HeadSHA
+		rows = append(rows, a)
+	}
 	index := 0
 	if paginate {
 		index = 100
 	}
 	switch control {
 	case "missing":
-		rows = rows[:len(rows)-1]
+		rows = slices.Delete(rows, index, index+1) // a core artifact; config-lag drops a config
 	case "old-attempt":
 		rows[index].Name = strings.TrimSuffix(rows[index].Name, "-2") + "-1"
+	case "rerun", "rerun-lag", "rerun-config-lag":
+		// a whole-run re-run also lists every artifact of attempt 1
+		for i, n := index, len(rows); i < n; i++ {
+			a := rows[i]
+			a.ID += 1000
+			a.Name = strings.TrimSuffix(a.Name, "-2") + "-1"
+			rows = append(rows, a)
+		}
+		if control == "rerun-lag" {
+			rows = slices.Delete(rows, index, index+1)
+		}
+		if control == "rerun-config-lag" {
+			rows = slices.Delete(rows, configs, configs+1)
+		}
+	case "config-lag":
+		rows = slices.Delete(rows, configs, configs+1)
 	case "duplicate":
 		rows = append(rows, rows[index])
 	case "duplicate-id":
@@ -93,8 +126,41 @@ func recordedPlan(t *testing.T, control string, paginate bool) (downloadPlan, []
 	if control == "duplicate-json" {
 		pages[0] = bytes.Replace(pages[0], []byte(`"total_count":`), []byte(`"total_count":0,"total_count":`), 1)
 	}
-	p, e := makePlan(r, run, pages)
-	return p, z, e
+	return run, pages, z
+}
+
+// TestPlanListingLagExit: only a plain absence asks fetch.ps1 to list again (#275).
+func TestPlanListingLagExit(t *testing.T) {
+	dir := t.TempDir()
+	expected := filepath.Join(dir, "expected.json")
+	if e := os.WriteFile(expected, encoded(t, expectation()), 0600); e != nil {
+		t.Fatal(e)
+	}
+	for control, want := range map[string]int{"": 0, "rerun": 0, "missing": 3, "config-lag": 3, "old-attempt": 4, "rerun-lag": 4, "rerun-config-lag": 4, "wrong-head": 1} {
+		t.Run("control="+control, func(t *testing.T) {
+			runJSON, pages, _ := recordedMetadata(t, control, false)
+			meta := filepath.Join(t.TempDir(), "metadata")
+			if e := os.Mkdir(meta, 0700); e != nil {
+				t.Fatal(e)
+			}
+			if e := os.WriteFile(filepath.Join(meta, "run.json"), runJSON, 0600); e != nil {
+				t.Fatal(e)
+			}
+			for i, page := range pages {
+				if e := os.WriteFile(filepath.Join(meta, "listing-"+strconv.Itoa(i+1)+".json"), page, 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+			var stderr bytes.Buffer
+			out := filepath.Join(t.TempDir(), "plan.json")
+			if got := run([]string{"plan", "-expected", expected, "-metadata", meta, "-out", out}, &stderr); got != want {
+				t.Fatalf("exit %d, want %d: %s", got, want, stderr.String())
+			}
+			if _, e := os.Stat(out); (e == nil) != (want == 0) {
+				t.Fatal("plan written for a failed listing or missing for a valid one")
+			}
+		})
+	}
 }
 func TestDownloadPlanAndUnpack(t *testing.T) {
 	for _, paginate := range []bool{false, true} {
@@ -133,8 +199,14 @@ func TestDownloadPlanAndUnpack(t *testing.T) {
 func TestDownloadPlanFailsClosed(t *testing.T) {
 	for _, control := range []string{"missing", "old-attempt", "wrong-run", "wrong-head", "duplicate", "duplicate-id", "expired", "no-digest", "oversize", "missing-page", "duplicate-json"} {
 		t.Run(control, func(t *testing.T) {
-			if _, _, e := recordedPlan(t, control, true); e == nil {
+			_, _, e := recordedPlan(t, control, true)
+			if e == nil {
 				t.Fatal("invalid metadata accepted")
+			}
+			// only a plain absence may be listed again; an earlier attempt's artifact is a
+			// partial re-run, and anything else stays a hard failure (#275)
+			if errors.Is(e, errArtifactLag) != (control == "missing") || errors.Is(e, errPartialRerun) != (control == "old-attempt") {
+				t.Fatalf("%s: wrong failure kind: %v", control, e)
 			}
 		})
 	}

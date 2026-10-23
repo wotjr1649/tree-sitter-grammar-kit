@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -52,6 +53,34 @@ type downloadPlan struct {
 	Artifacts []artifactMetadata `json:"artifacts"`
 }
 
+// #275: a complete listing that lacks a current-attempt artifact is GitHub's listing lag,
+// which fetch.ps1 may list again, or a partial re-run, whose kept producers have only their
+// earlier-attempt artifacts. A whole-run re-run lists the earlier attempts' artifacts too, so
+// an earlier name alone does not prove a partial re-run: fetch.ps1 lists that case again as
+// well and names the cause only if it persists. The gate never accepts an earlier attempt.
+var (
+	errArtifactLag  = errors.New("required artifact missing for current attempt")
+	errPartialRerun = errors.New("a required artifact exists only for an earlier attempt: a partial re-run cannot pass, re-run all jobs (or the listing still lags)")
+)
+
+// earlierAttempt reports whether a listed name is want (`<prefix>-<run>-<attempt>`) for an
+// earlier attempt of the same run.
+func earlierAttempt(listed []string, want string, r kit.RunIdentity) bool {
+	attempt, err := strconv.ParseUint(r.RunAttempt, 10, 64)
+	prefix, ok := strings.CutSuffix(want, "-"+r.RunAttempt)
+	if err != nil || !ok {
+		return false
+	}
+	for _, name := range listed {
+		if k, ok := strings.CutPrefix(name, prefix+"-"); ok {
+			if n, err := strconv.ParseUint(k, 10, 64); err == nil && n > 0 && n < attempt && strconv.FormatUint(n, 10) == k {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func validArtifact(a artifactMetadata, expected kit.RunIdentity) bool {
 	return a.ID != 0 && a.Expired != nil && !*a.Expired && a.Size > 0 && a.Size <= zipLimit && strings.HasPrefix(a.Digest, "sha256:") && hex64.MatchString(strings.TrimPrefix(a.Digest, "sha256:")) && strconv.FormatUint(a.Run.ID, 10) == expected.RunID && a.Run.Head == expected.HeadSHA
 }
@@ -76,6 +105,7 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 	}
 	selected := map[string]artifactMetadata{}
 	ids := map[uint64]bool{}
+	var names []string
 	var listed uint64
 	var total uint64
 	for i, data := range pages {
@@ -92,6 +122,7 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 		}
 		listed += uint64(len(listing.Artifacts))
 		for _, a := range listing.Artifacts {
+			names = append(names, a.Name)
 			for _, spec := range artifacts(expected) {
 				if a.Name != spec.name {
 					continue
@@ -104,8 +135,29 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 			}
 		}
 	}
-	if listed != total || len(selected) != 5 {
-		return result, errors.New("required artifact missing for current attempt")
+	if listed != total {
+		return result, errors.New("artifact listing incomplete")
+	}
+	// the margin plan reads this same listing, so its nine producer configs must be listed
+	// before the plan stops listing again; it still selects only the five core artifacts
+	missing := []string{}
+	for _, spec := range artifacts(expected) {
+		if _, ok := selected[spec.name]; !ok {
+			missing = append(missing, spec.name)
+		}
+	}
+	for _, j := range marginJobs {
+		if !slices.Contains(names, configName(j, expected)) {
+			missing = append(missing, configName(j, expected))
+		}
+	}
+	for _, name := range missing {
+		if earlierAttempt(names, name, expected) {
+			return result, errPartialRerun
+		}
+	}
+	if len(missing) > 0 {
+		return result, errArtifactLag
 	}
 	result.Schema = "tsgk-ci-download-plan/r1"
 	result.Run = expected

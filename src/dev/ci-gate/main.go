@@ -310,6 +310,13 @@ func run(args []string, stderr io.Writer) int {
 		}
 		var value downloadPlan
 		value, err = planFiles(expected, *metadata)
+		if errors.Is(err, errArtifactLag) || errors.Is(err, errPartialRerun) {
+			fmt.Fprintln(stderr, "ci-gate:", err)
+			if errors.Is(err, errPartialRerun) {
+				return 4
+			}
+			return 3 // fetch.ps1 may list the run's artifacts once more
+		}
 		if err == nil {
 			err = writeNewJSON(*out, value, 65536)
 		}
