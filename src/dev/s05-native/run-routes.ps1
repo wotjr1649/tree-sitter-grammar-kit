@@ -531,8 +531,9 @@ if ($Symbols) {
     $cliArgs = @('incremental', '--root', $root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
       '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache, '--reuse-observation')
     if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
-    # a stopped case ends the run FAILED or BLOCKED (exit 4 or 3) without a diagnostic; any
-    # tsgk error (I/O, publication, cancellation) writes one to stderr and fails the set
+    # a stopped case ends the run FAILED or BLOCKED (exit 4 or 3) without a diagnostic; a tsgk
+    # error (I/O, publication, cancellation) writes one to stderr, and a build cleanup failure
+    # is an error finding of the result: either fails the set
     $errPath = Join-Path $work "$($w.set).stderr"
     $line = & $cli @cliArgs 2> $errPath
     $code = $LASTEXITCODE
@@ -547,6 +548,8 @@ if ($Symbols) {
     $res = Get-Content -LiteralPath $resPath -Raw | ConvertFrom-Json
     Add-BuildObservation $res
     if ($res.result_schema -ne 'tsgk-incremental-result/r4') { $summary.failures += "symbols $($w.set): result $($res.result_schema)" }
+    # a failure the CLI reports only as a result finding (build cleanup) also fails the set
+    foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $summary.failures += "symbols $($w.set): $($f.code)" } }
     if ($reported.execution_status -ne $res.execution_status -or $reported.assessment -ne $res.assessment) { $summary.failures += "symbols $($w.set): reported $($reported.execution_status)/$($reported.assessment), published $($res.execution_status)/$($res.assessment)" }
     $i = 0
     foreach ($c in @($res.cases)) {

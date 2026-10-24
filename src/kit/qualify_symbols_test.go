@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // qfxSymbolRole adds an owned symbol-mode role (#218) executed on windows and deferred
@@ -245,16 +246,15 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	if asError(err).Code != "TOTAL_BYTES_LIMIT" {
 		t.Fatalf("replay beyond the host budget: %v", err)
 	}
-	// the qualification wall expiring while the set replays is the qualification's
-	// WALL_LIMIT (RESOURCE_LIMIT), not a caller cancellation
-	var qualWall context.CancelCauseFunc
+	// the qualification wall's deadline passing while the set replays is the qualification's
+	// WALL_LIMIT (RESOURCE_LIMIT), not a caller cancellation: the replay starts after it
+	var deadline time.Time
 	testHookWall = func() (context.Context, context.CancelFunc) {
-		if qualWall == nil {
-			ctx, cancel := context.WithCancelCause(context.Background())
-			qualWall = cancel
-			return ctx, func() {}
+		if deadline.IsZero() {
+			deadline = time.Now().Add(2 * time.Second)
+			return context.WithDeadline(context.Background(), deadline)
 		}
-		qualWall(errWall) // the replay starts: the qualification wall ends now
+		time.Sleep(time.Until(deadline) + 50*time.Millisecond)
 		return context.WithCancel(context.Background())
 	}
 	_, err = qualify()
