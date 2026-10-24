@@ -560,7 +560,11 @@ func judgeIncremental(out *CaseResult, observed bool) string {
 		if selection {
 			v = ClaimBlocked
 		}
-		if ov := reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: s.Observations}}, true); v == ClaimBlocked && observed && ov != ClaimPass && (selection || ov != ClaimBlocked) {
+		ov := reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: s.Observations}}, true)
+		if selection && reuseobs.Judge(s.Observations) != ClaimPass {
+			ov = ClaimFail // a valid start prefix is insufficient for the selection exception
+		}
+		if v == ClaimBlocked && observed && ov != ClaimPass && (selection || ov != ClaimBlocked) {
 			out.Claims.IncrementalRoute = ClaimFail
 			if out.Code == "" {
 				out.Code = fmt.Sprintf("%s%d", oldTreeUnverifiedPrefix, s.Step)

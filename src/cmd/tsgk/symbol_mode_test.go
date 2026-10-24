@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -244,7 +245,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	r, err = replay("native-result-r6", "")
 	rejected("changed witness", "PREPROCESS_SOURCE_MISMATCH", r, err)
 	witness("00000-one.bin", one)
-	tamper := func(name, code string, change func(doc map[string]any)) {
+	tamper := func(name, code string, change func(doc map[string]any)) kit.ReplayResult {
 		t.Helper()
 		var doc map[string]any
 		if err := json.Unmarshal(published, &doc); err != nil {
@@ -268,8 +269,41 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 		defer os.WriteFile(filepath.Join(out, "result.json"), published, 0o644)
 		r, err := replay("native-result-r6", "")
 		rejected(name, code, r, err)
+		return r
 	}
 	cases := func(doc map[string]any) []any { return doc["cases"].([]any) }
+	for _, role := range []int{0, 1} {
+		truncate := func(doc map[string]any) {
+			o := doc["steps"].([]any)[1].(map[string]any)["observations"].([]any)[role].(map[string]any)
+			o["status"], o["reason"] = "TRUNCATED", "MESSAGE_LIMIT"
+			o["counts"].(map[string]any)["done"] = float64(0)
+		}
+		rawPath := filepath.Join(out, "responses", "00005-switch.json")
+		raw, err := os.ReadFile(rawPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var rawDoc map[string]any
+		if err := json.Unmarshal(raw, &rawDoc); err != nil {
+			t.Fatal(err)
+		}
+		truncate(rawDoc)
+		changed, _ := json.Marshal(rawDoc)
+		if err := os.WriteFile(rawPath, changed, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		r := tamper(fmt.Sprintf("selection capped start role %d", role), "CLAIM_MISMATCH", func(doc map[string]any) {
+			truncate(cases(doc)[5].(map[string]any))
+		})
+		if err := os.WriteFile(rawPath, raw, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		for _, g := range r.Gates {
+			if g.ID == "reuse-observation" && g.Failed != 0 {
+				t.Fatalf("matched raw/projection prefix must pass observation binding: %+v", g)
+			}
+		}
+	}
 	tamper("selection route promoted", "CLAIM_MISMATCH", func(doc map[string]any) {
 		cases(doc)[5].(map[string]any)["claims"].(map[string]any)["incremental_route"] = "PASS"
 	})

@@ -121,6 +121,12 @@ type observationStep struct {
 	route        *wireRoute // the recorded route of an edit step, which r4 qualification binds to the raw step
 }
 
+// Complete collection is stricter than a mandatory parse-start observation (#277).
+func completeSelectionObservation(raw jsontext.Value) bool {
+	var observations []reuseobs.Observation
+	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.Judge(observations) == claimPass
+}
+
 // wireRoute is an edit step's route as live DecodeResponse reads it and the record keeps it.
 type wireRoute struct {
 	EditHasChanges    bool   `json:"edit_has_changes"`

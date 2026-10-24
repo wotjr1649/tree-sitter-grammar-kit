@@ -553,7 +553,14 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if selection {
 				v = claimBlocked
 			}
-			if v == claimBlocked && observed != nil && observed[k+1] != claimPass && (selection || observed[k+1] != claimBlocked) {
+			ov := claimPass
+			if observed != nil {
+				ov = observed[k+1]
+			}
+			if selection && !completeSelectionObservation(s.Observations) {
+				ov = claimFail
+			}
+			if v == claimBlocked && observed != nil && ov != claimPass && (selection || ov != claimBlocked) {
 				v = claimFail // r4: an error-tree BLOCKED needs the old tree observed passed
 			}
 			ir = worseClaim(ir, v)

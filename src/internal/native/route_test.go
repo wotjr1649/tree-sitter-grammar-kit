@@ -19,6 +19,8 @@ func TestIncrementalRouteOnSelectionSwitch(t *testing.T) {
 		{"no-observation", func(c *CaseResult) { c.Steps[1].Observations = nil }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
 		{"omit-old", func(c *CaseResult) { c.Steps[1].Observations = observedPair(1, false, "COMPLETE") }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
 		{"truncated-observation", func(c *CaseResult) { c.Steps[1].Observations = observedPair(1, true, "TRUNCATED") }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
+		{"truncated-start-incremental", func(c *CaseResult) { truncateStart(t, c, 0) }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
+		{"truncated-start-fresh", func(c *CaseResult) { truncateStart(t, c, 1) }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
 		{"same-selection-reuse0", func(c *CaseResult) {
 			c.Preprocess[1] = kit.ObserveCSharpPreprocess([]byte(strings.Replace(source, "true", "(true)", 1)), nil)
 			c.Steps[1].SourceBytes = 46
@@ -63,6 +65,15 @@ func TestIncrementalRouteOnSelectionSwitch(t *testing.T) {
 				t.Fatalf("%+v %s %s", c.Claims, c.Assessment, c.Code)
 			}
 		})
+	}
+}
+
+func truncateStart(t *testing.T, c *CaseResult, role int) {
+	t.Helper()
+	o := &c.Steps[1].Observations[role]
+	o.Status, o.Reason, o.Counts.Done = "TRUNCATED", "MESSAGE_LIMIT", 0
+	if reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: c.Steps[1].Observations}}, true) != ClaimPass {
+		t.Fatal("counterexample must preserve the generic mandatory PASS")
 	}
 }
 
