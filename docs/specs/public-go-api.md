@@ -288,11 +288,12 @@ C# symbol 모드(#218)
   - 거부는 `Status`로만 알린다(`Preprocess*` 상수).
   - 입력은 읽기만 하고, 돌려주는 slice는 새로 할당한다.
 - `PreprocessSteps`는 step 원본을 차례로 평가하고, OK가 아닌 첫 step에서 멈춘다.
+- `PreprocessSelectionDisjoint(old, cur PreprocessStep, edit Edit, oldBytes, newBytes uint64) bool`은 #277 선택 전환의 byte 범위 조건만 검사한다. Caller는 원문에서 두 관측을 재계산하고 edit payload를 검증해야 한다. 이 함수만으로 route·실행·reference 자격을 판정하지 않는다.
 - `PreprocessOutcome`은 그 step 상태의 사례 실행 상태와 code다([tree/protocol](tree-and-adapter-protocol.md) `C# symbol 모드`).
 - `Preprocess{Mode, Symbols}`는 profile의 preprocess member다. `SymbolsDigest`는 `tsgk-pp-symbols/r1`이다.
 - `NativePolicyText`·`NativePolicy`는 실행과 replay가 함께 쓰는 native policy identity다.
   - preprocess가 없으면 `tsgk-native-policy/r1`이고, 기존 bytes·hash와 같다(`TestPolicyRefPreimage`).
-  - preprocess가 있으면 `tsgk-native-policy/r2`다([식별·증거](identity-and-evidence.md)).
+  - preprocess가 있으면 현재 `tsgk-native-policy/r3`다. 역사적 r5 replay의 r2 policy 계산은 보존한다([식별·증거](identity-and-evidence.md)).
 
 ## S06 함수 — capture 비교, oracle profile, 기록 set 검증, 사실 query 세트
 
@@ -393,7 +394,7 @@ func ParseQualificationInventory(data []byte) (QualificationInventory, error)
 func QualificationLimits() ReplayLimits
 ```
 
-offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. 다만 host 디렉터리가 없거나 그 안에 link·special 파일이 있으면 S01 guard가 호출 전체를 `KindInvalidInput`으로 끝낸다. host당 record 수가 한도를 넘으면 `RECORDS_LIMIT`(`RESOURCE_LIMIT`)다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r5`를 strict decode하고 칸 수·identity 중복·coverage 규칙(`tsgk-coverage-rule/r2`)·production 대안·error node·W sample 등록·기대값 anchor 범위, 실행 역할의 platform 분할(`deferred` 포함)과 symbol 모드 역할 workload·사례 규칙(#218)을 검사한다. symbol 모드 set은 host의 `incremental/<set>/`을 `native-result-r5`로 replay해 판정한다([identity/evidence](identity-and-evidence.md)). `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
+offline이며 process·network를 쓰지 않는다. `Qualify`는 `QualifyRequest{Inventory, Candidate, Hosts}`의 host 디렉터리만 S01 guard로 읽고 `ctx` deadline이 필요하다. 연산 wall·한도는 `RESOURCE_LIMIT`, 호출자 취소는 `CANCELLED`, 잘못된 inventory·후보는 `KindInvalidInput`이며 실패 report를 함께 돌려준다. 손상된·섞인·자격 없는 근거는 오류가 아니라 칸의 FAIL과 finding이다. 다만 host 디렉터리가 없거나 그 안에 link·special 파일이 있으면 S01 guard가 호출 전체를 `KindInvalidInput`으로 끝낸다. host당 record 수가 한도를 넘으면 `RECORDS_LIMIT`(`RESOURCE_LIMIT`)다. `ParseQualificationInventory`는 `tsgk-qualification-inventory/r6`(역사적 r5도 수용)를 strict decode하고 칸 수·identity 중복·coverage 규칙(`tsgk-coverage-rule/r2`)·production 대안·error node·W sample 등록·기대값 anchor 범위, 실행 역할의 platform 분할(`deferred` 포함)과 symbol 모드 역할 workload·사례 규칙(#218)을 검사한다. symbol 모드 set은 host의 `incremental/<set>/`을 선택한 inventory revision에 따라 `native-result-r6` 또는 역사적 `native-result-r5`로 replay해 판정한다([identity/evidence](identity-and-evidence.md)). `QualificationLimits`는 `qualification` 연산 한도다. 계약은 [identity/evidence](identity-and-evidence.md) `S08 구현`과 [CLI/profile](cli-and-profile.md) `S08 구현`이다. CLI는 같은 함수를 부르며 같은 bytes를 낸다(`TestQualifyCLI`, `TestModuleProxyConsumer`).
 
 ## 버전과 소비자 채택 경계
 

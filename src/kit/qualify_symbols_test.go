@@ -124,6 +124,57 @@ func TestQualificationInventorySymbolRole(t *testing.T) {
 	}
 }
 
+func TestSelectionOutcomeRegistration(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "contracts", "qualification-c1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name string
+		mut  func(*QualificationInventory, *QualCase)
+		ok   bool
+	}{
+		{"current", func(*QualificationInventory, *QualCase) {}, true},
+		{"historical", func(i *QualificationInventory, _ *QualCase) { i.Schema = qualificationInventoryR5 }, false},
+		{"promoted-pass", func(_ *QualificationInventory, c *QualCase) { c.ExpectAssessment = AssessPass }, false},
+		{"step-zero", func(_ *QualificationInventory, c *QualCase) { c.ExpectCode = SelectionRoutePrefix + "0" }, false},
+		{"noncanonical-step", func(_ *QualificationInventory, c *QualCase) { c.ExpectCode = SelectionRoutePrefix + "01" }, false},
+		{"missing-syntax", func(_ *QualificationInventory, c *QualCase) { c.Expect = nil }, false},
+		{"same-selection", func(_ *QualificationInventory, c *QualCase) {
+			c.PreprocessExpect[1].Active = []ByteRange{{12, 23}}
+			c.PreprocessExpect[1].Inactive = []ByteRange{{29, 40}}
+		}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			inv, err := ParseQualificationInventory(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var c *QualCase
+			for i := range inv.ExtraRoles {
+				for j := range inv.ExtraRoles[i].Workloads {
+					w := &inv.ExtraRoles[i].Workloads[j]
+					if w.Set == "s05-csharp-symbols-switch" {
+						c = &w.Cases[0]
+					}
+				}
+			}
+			if c == nil {
+				t.Fatal("switch registration missing")
+			}
+			tc.mut(&inv, c)
+			encoded, err := json.Marshal(inv)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = ParseQualificationInventory(encoded)
+			if (err == nil) != tc.ok {
+				t.Fatalf("accepted=%t, want %t: %v", err == nil, tc.ok, err)
+			}
+		})
+	}
+}
+
 // #218: a symbol-mode set replays under its host's byte budget: the replay starts from the
 // host's count, stops at the host's limit and leaves its own reads in the count.
 func TestReplaySharedBudget(t *testing.T) {
@@ -155,6 +206,16 @@ func TestReplaySharedBudget(t *testing.T) {
 // (INCOMPLETE, mechanism BLOCKED), never a pass; the replay counts against the host byte
 // budget and the set's cases against the host record limit.
 func TestQualifySymbolSetLimits(t *testing.T) {
+	for _, legacy := range []bool{false, true} {
+		name := "current-r6"
+		if legacy {
+			name = "historical-r5"
+		}
+		t.Run(name, func(t *testing.T) { qualifySymbolSetLimits(t, legacy) })
+	}
+}
+
+func qualifySymbolSetLimits(t *testing.T, legacy bool) {
 	data, err := os.ReadFile(filepath.Join("..", "contracts", "qualification-c1.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -162,6 +223,11 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	inv, err := ParseQualificationInventory(data)
 	if err != nil {
 		t.Fatal(err)
+	}
+	fixture := "qualify-symbols"
+	if legacy {
+		inv.Schema = qualificationInventoryR5
+		fixture = "qualify-symbols-r4"
 	}
 	var w QualWorkload
 	for _, x := range inv.ExtraRoles {
@@ -181,7 +247,7 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	invData, _ := json.Marshal(inv)
 	host := t.TempDir()
 	set := filepath.Join(host, "incremental", w.Set)
-	if err := os.CopyFS(set, os.DirFS(filepath.Join("..", "testdata", "qualify-symbols", w.Set))); err != nil {
+	if err := os.CopyFS(set, os.DirFS(filepath.Join("..", "testdata", fixture, w.Set))); err != nil {
 		t.Fatal(err)
 	}
 	cand := strings.Repeat("c", 40)
@@ -192,6 +258,13 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	}
 	qualify := func() (QualRoleRow, error) {
 		r, err := Qualify(ctxT(t), QualifyRequest{Inventory: invData, Candidate: cand, Hosts: []QualifyHost{{Platform: win.ID, Root: host}}})
+		wantSchema := QualificationResultSchema
+		if legacy {
+			wantSchema = qualificationResultR6
+		}
+		if err == nil && r.ResultSchema != wantSchema {
+			t.Fatalf("result revision %s, want %s", r.ResultSchema, wantSchema)
+		}
 		return roleRow(r, "csharp-symbols", win.ID), err
 	}
 	if r, err := qualify(); err != nil || r.Status != CellPass || r.Mechanism != AssessPass {

@@ -27,9 +27,9 @@ const ResultSchema = "tsgk-incremental-result/r1"
 // replayed by native-result-r3 and no longer produced.
 const ObservationResultSchema = "tsgk-incremental-result/r3"
 
-// PreprocessResultSchema is r3 with the C# symbol mode (#218): each case records its
-// evaluated preprocess steps, and the trees carry the tsgk-native-policy/r2 identity.
-const PreprocessResultSchema = "tsgk-incremental-result/r4"
+// PreprocessResultSchema adds the disjoint selection route rule (#277) to r4's symbol
+// mode; its trees carry the tsgk-native-policy/r3 identity.
+const PreprocessResultSchema = "tsgk-incremental-result/r5"
 
 var testHookOutputFinalization func(stage string, output, responses *outputDirectory)
 

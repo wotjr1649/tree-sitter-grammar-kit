@@ -549,7 +549,11 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
 			rg.check(r == nil || r.Proven == proven, name, "ROUTE_PROOF_MISMATCH", fmt.Sprintf("step %d route 증명을 다시 계산한 값이 기록과 다르다", s.Step))
 			v := routeStepClaim(proven, x.errorTreeRoute && r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k].Incremental, s.Incremental)
-			if v == claimBlocked && observed != nil && observed[k+1] != claimPass && observed[k+1] != claimBlocked {
+			selection := v == claimFail && x.selectionRoute && x.selectionRouteBlocked(c, k+1, want)
+			if selection {
+				v = claimBlocked
+			}
+			if v == claimBlocked && observed != nil && observed[k+1] != claimPass && (selection || observed[k+1] != claimBlocked) {
 				v = claimFail // r4: an error-tree BLOCKED needs the old tree observed passed
 			}
 			ir = worseClaim(ir, v)
@@ -1227,13 +1231,19 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		if !cons.take(c.ID, i) {
 			return nil
 		}
+		if x.selectionRoute {
+			x.selectionSteps, x.selectionBytes = nil, nil
+			if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
+				return e
+			}
+		}
 		o := x.replayCase(&c, i, want[c.ID], false)
 		if x.reuseObservation {
 			unknownPoints := x.gate("edit-points").NotRecomputed
 			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
 				return e
 			}
-			if x.preprocess {
+			if x.preprocess && !x.selectionRoute {
 				if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
 					return e
 				}
@@ -1265,7 +1275,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.preprocess {
+	if x.selectionRoute {
+		wantSchema = "tsgk-incremental-result/r5"
+	} else if x.preprocess {
 		wantSchema = "tsgk-incremental-result/r4"
 	} else if x.mandatoryObservation {
 		wantSchema = "tsgk-incremental-result/r3"
@@ -1343,7 +1355,7 @@ func replayNativeResult(x *replayEnv) *Error {
 	if e != nil {
 		return e
 	}
-	// the symbol mode (#218) replays with native-result-r5 only, and r5 with it only
+	// Symbol reducers require the opt-in profile; structural reducers reject it.
 	if (prof.Preprocess != nil) != x.preprocess {
 		return fail(KindUnsupported, "PREPROCESS_REDUCER_MISMATCH", pm.Path, nil)
 	}

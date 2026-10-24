@@ -13,7 +13,7 @@ import (
 // of such a case is recomputable offline.
 var sourceReadCodes = map[string]bool{"SOURCE_MISSING": true, "SOURCE_LINK_REJECTED": true, "SOURCE_UNREADABLE": true, "SOURCE_MISMATCH": true}
 
-// replayPreprocess checks one symbol-mode case of native-result-r5 (#218) against the
+// replayPreprocess checks one symbol-mode case against the
 // caller-registered original source witness: the evaluated steps are recomputed from the
 // source and the registered edits and must equal the recorded ones; a case the evaluator
 // stopped must be the fixed not-run outcome with no trace of a driver; and in a run case
@@ -72,7 +72,13 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 		return nil
 	}
 	want := PreprocessSteps(versions, pp)
-	g.check(reflect.DeepEqual(*c.Preprocess, want), c.ID, "PREPROCESS_MISMATCH", "기록된 preprocess 관측이 원 입력에서 다시 계산한 값과 다르다")
+	if same := g.check(reflect.DeepEqual(*c.Preprocess, want), c.ID, "PREPROCESS_MISMATCH", "기록된 preprocess 관측이 원 입력에서 다시 계산한 값과 다르다"); same && x.selectionRoute {
+		x.selectionSteps = want
+		x.selectionBytes = make([]uint64, len(versions))
+		for i, v := range versions {
+			x.selectionBytes[i] = uint64(len(v))
+		}
+	}
 	last := want[len(want)-1]
 	if last.Status != PreprocessOK {
 		exec, code := PreprocessOutcome(last.Status)
@@ -154,7 +160,7 @@ func (x *replayEnv) checkPreprocessPolicy(top nativeResult, prof IncrementalProf
 	}
 	narrowed := op
 	narrowed.RunWall = reg.RunWall
-	want := NativePolicy(op, prof.Output, prof.Preprocess)
+	want := nativePolicy(op, prof.Output, prof.Preprocess, x.selectionRoute)
 	got := IdentityRef{}
 	for _, id := range top.Identities {
 		if id.Role == "policy" {

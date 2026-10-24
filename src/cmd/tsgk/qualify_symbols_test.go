@@ -17,7 +17,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-// #218 (218-C): the csharp-symbols qualification role on the registered grammar. Two
+// #218/#277: the csharp-symbols qualification role on the registered grammar. Three
 // registered symbol workloads run on this host as run-routes.ps1 -Symbols runs them; Qualify
 // passes the role row and keeps the other platform DEFERRED. A changed or reordered profile,
 // a consistent forgery of profile and witness, a dropped case, a changed witness or result
@@ -49,16 +49,16 @@ func TestQualifySymbolRole(t *testing.T) {
 	if err := json.Unmarshal(read("src/contracts/qualification-c1.json"), &inv); err != nil {
 		t.Fatal(err)
 	}
-	const none, ac = "s05-csharp-symbols-none", "s05-csharp-symbols-a-c"
+	const none, ac, switched = "s05-csharp-symbols-none", "s05-csharp-symbols-a-c", "s05-csharp-symbols-switch"
 	var ws []kit.QualWorkload
 	for _, x := range inv.ExtraRoles {
 		for _, y := range x.Workloads {
-			if x.ID == "csharp-symbols" && (y.Set == none || y.Set == ac) {
+			if x.ID == "csharp-symbols" && (y.Set == none || y.Set == ac || y.Set == switched) {
 				ws = append(ws, y)
 			}
 		}
 	}
-	if len(ws) != 2 || ws[0].Set != none {
+	if len(ws) != 3 || ws[0].Set != none || ws[2].Set != switched {
 		t.Fatal("registered symbol workloads missing")
 	}
 	// this host executes the role; another registered platform is deferred
@@ -198,7 +198,7 @@ func TestQualifySymbolRole(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 2 || r.Sets[0].Records != len(ws[0].Cases) {
+	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 3 || r.Sets[0].Records != len(ws[0].Cases) || r.Sets[2].Records != 1 {
 		t.Fatalf("host row %s %s %s %v", r.Status, r.Mechanism, r.Checks, codes(r))
 	}
 	if d := row(res, other.ID); d.Status != kit.RoleDeferred || d.Mechanism != "" || d.Checks != "" || len(d.Sets) != 0 {

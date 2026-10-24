@@ -211,8 +211,8 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 **C# symbol 모드 (#218).** profile r3의 `preprocess`가 있으면, 사례마다 `kit.ApplyEdits`로 만든 각 step 원본을 `kit.ObserveCSharpPreprocess`로 다시 평가한다(앞 step의 범위를 옮기지 않는다).
 - 모든 step이 `OK`
   - 각 step의 `Active`를 그 step의 `ranges`로 driver에 준다.
-  - 사례의 판정·claim은 기존 규칙을 따른다.
-  - tree의 policy identity는 `tsgk-native-policy/r2`다.
+  - 사례의 판정·claim은 아래 #277 선택 전환 예외와 기존 규칙을 따른다.
+  - 현재 tree의 policy identity는 `tsgk-native-policy/r3`다. 역사적 결과 r4는 policy/r2로 재생한다.
 - `OK`가 아닌 첫 step이 있으면 그 상태가 사례를 정한다.
   - driver는 실행하지 않는다. process·원 응답·native step도 없다.
   - assessment는 `BLOCKED`이고, claim 셋은 모두 `NOT_CLAIMED`다.
@@ -221,13 +221,15 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
     - `RANGE_LIMIT`·`LIMIT`: `RESOURCE_LIMIT`, code는 `PREPROCESS_RANGE_LIMIT`·`PREPROCESS_LIMIT`
   - 빈 `ranges`는 전체 입력을 뜻하므로 `ZERO_ACTIVE`에 쓰지 않는다.
   - 편집으로 활성 구간이 사라지거나 생기는 사례도 이 규칙을 따르며, 그 사례의 CST·incremental/fresh 비교·old tree 전달·reuse 관측은 없다.
-- 결과 `tsgk-incremental-result/r4`
+- 결과 `tsgk-incremental-result/r5`(역사적 r4의 관측 형식 유지)
   - r3(필수 관측)에 사례별 `preprocess`(평가한 step 목록, OK가 아닌 첫 step까지)를 더한다.
   - 각 step은 `status`, `directives`(`kind`, `hash`, `active`, `taken`), `active`(byte·point), `inactive`다.
   - 이 관측은 순서 있는 지시문 위치·선택과 활성/비활성 범위만 주장한다. group 구조와 지시문 span은 주장하지 않는다.
 - 이 결과 자체는 support claim·query reference 자격을 만들지 않는다.
-  - qualification(218-C)은 inventory `csharp-symbols` 역할에 등록한 workload의 실행만 읽는다. 등록 비교, `native-result-r5` replay, 고정 Roslyn 관측 기대값 비교를 거친 역할 행이다([식별·증거](identity-and-evidence.md) `DEFERRED 역할 platform과 symbol 모드 역할`). oracle profile은 계속 `preprocess`를 받지 않는다.
+  - qualification은 inventory `csharp-symbols` 역할에 등록한 workload의 실행만 읽는다. 현재 inventory/r6는 `native-result-r6`, 역사적 inventory/r5는 `native-result-r5` replay와 고정 Roslyn 관측 기대값 비교를 거친다([식별·증거](identity-and-evidence.md) `DEFERRED 역할 platform과 symbol 모드 역할`). oracle profile은 계속 `preprocess`를 받지 않는다.
   - query witness는 query 응답이 필요한데, 이 모드는 query 없는 `native-parse-edit`만 받는다.
+
+**선택 전환의 route (#277).** 현재 symbol 결과 r5에서 기존 proven PASS·오류-tree BLOCKED 규칙으로 판정되지 않은 edit step은 다음을 모두 만족하면 `incremental_route=BLOCKED`다: 원본과 edit로 재계산한 전후 preprocess가 OK, edit_has_changes=true·reused_nodes=0·fresh_reused_nodes=0·proven=false, old/current incremental 및 current fresh가 완료된 full tree, mandatory observation이 old tree 전달을 포함해 PASS, 그리고 보존된 active byte의 공유가 없고 보존된 byte의 active↔inactive 전환이 있다. Old 범위를 edit 밖 prefix와 suffix로 나누고 suffix를 new_end_byte-old_end_byte만큼 이동해 새 범위와 대조한다. Replacement·지시문 줄·zero-width는 전환 근거로 세지 않는다. 이중 active byte가 하나라도 있으면 예외가 아니며, 전체 코드 replacement나 같은 선택의 좌표 이동도 예외가 아니다. 첫 blocked code는 `INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_<n>`이다. 관측 누락·omit-old·불완전 관측은 이 예외를 통과하지 못하고 `INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_<n>` FAIL이다. Equality·expectation·관측 FAIL과 다른 step route FAIL은 최종 FAIL을 유지한다. 이 BLOCKED는 재사용 성공이 아니며 기본 구조 모드의 route 규칙은 기존과 같다.
 
 **필수 관측 판정 (#217).** `tsgk-incremental-result/r3`(`incremental --reuse-observation`)는 같은 wire r3에서 모든 native parse의 관측을 필수로 요구한다(`reuseobs.Mandatory`, `reuseobs.CaseClaim`). 결과 r2의 별도 축 의미는 그 기록의 replay(`native-result-r3`)에만 남는다.
 

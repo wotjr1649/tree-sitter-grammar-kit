@@ -4,3 +4,4 @@ src/testdata/archives/** -text
 src/testdata/malformed/** -text
 src/kit/data/index-euc-kr.txt -text
 src/testdata/qualify-symbols/** -text
+src/testdata/qualify-symbols-r4/** -text

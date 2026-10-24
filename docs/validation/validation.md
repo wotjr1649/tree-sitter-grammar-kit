@@ -214,13 +214,13 @@ C# symbol 모드(218-B) 연결 시험:
   - 그 결과가 run PASS를 막는지 확인한다.
 - kit `TestPreprocessProfile`·`TestPreprocessSymbolsDigest`·`TestObserveCSharpPreprocess`, native `TestPolicyRefPreimage`
   - profile 수락·거부, r3의 anchor, digest 고정 벡터, 관측 export, 등록되지 않은 preprocess의 qualification 등록 비교 거부를 확인한다.
-  - 기존 policy r1 bytes·hash 보존과 r2의 preprocess 결속을 확인한다.
+  - 기존 policy r1/r2 bytes·hash 보존과 현재 r3의 preprocess·선택 route 결속을 확인한다.
 - `TestIncrementalCLISymbolMode`(native routes job, 등록 C# closure)
-  - CLI가 관측 없는 실행을 거부하는지, 실행 결과가 r4인지, symbols·edit에 따른 parse 구간을 확인한다.
-  - zero-active 사례 정지와 `native-result-r5` replay PASS를 확인한다.
+  - CLI가 관측 없는 실행을 거부하는지, 실행 결과가 r5인지, symbols·edit에 따른 parse 구간을 확인한다.
+  - zero-active 사례 정지와 `native-result-r6` replay PASS를 확인한다.
   - preprocess 전에 edit 거부로 멈춘 정직한 사례의 replay PASS를 확인한다.
   - 다음 변조를 각각 거부하는지 확인한다.
-    - r4 reducer로 replay
+    - r4 및 역사적 r5 reducer로 현재 결과 replay
     - witness 누락·변경
     - 관측 변경·누락
     - 멈춘 사례의 판정 변경과 process 추가
@@ -229,14 +229,16 @@ C# symbol 모드(218-B) 연결 시험:
     - 건너뛴 구간의 leaf
   - job은 log의 PASS 줄로 skip이 아닌 실행을 확인한다.
 
+#277의 `TestPreprocessSelectionDisjoint`·`TestIncrementalRouteOnSelectionSwitch`는 독립 byte 범위 기대값과 caller fold로 완전 분기 전환·같은 선택의 좌표 이동·공통 trailer·전체 replacement·삽입/삭제·잘못된 범위/한도·reuse0 control을 검사한다. Selection BLOCKED와 equality/expectation FAIL, 뒤 step route FAIL의 동시 입력에서도 FAIL·실패 code가 우선해야 한다. 새 예외의 관측은 PASS여야 하므로 omit-old·누락·수집 cap은 FAIL이다. CLI 시험은 실제 branch-only BLOCKED/equality PASS와 common-trailer route PASS를 대조하고, source/edit·route PASS 승격·legacy reducer 변경을 거부한다. `TestQualifySymbolRole`은 현재 역할의 기존 workload와 별도 switch workload를 실제 실행·replay하며, `TestQualifySymbolSetLimits`는 현재 r6와 역사적 r5 경로의 fixture·공유 예산을 각각 검사한다. 현재 fixture를 새 정책으로 재기록하고 역사적 result/r4 fixture는 bytes 그대로 별도 보존한다. 각 새 판정 경계의 mutant 검출과 서로 다른 관점의 독립 리뷰를 최종 head에 결속한다.
+
 C# symbol 모드 qualification(218-C) 시험:
 
 - foundation `TestSymbolRoleRegistration`·`TestQualificationInventory`
-  - `csharp-symbols` 역할(사례 25개, symbols `[]`·`["A"]`·`["ENABLED"]`·`["A","C"]`)을 고정 Roslyn 관측에서만 만드는지 확인한다(`src/internal/ppexpect`, kit 차분 시험과 같은 도출).
+  - `csharp-symbols` 역할(사례 26개, 기존 네 symbols 조합의 25개와 별도 switch set 1개)을 고정 Roslyn 관측에서만 만드는지 확인한다(`src/internal/ppexpect`, kit 차분 시험과 같은 도출).
   - edit 결과가 같은 symbols의 다른 corpus 원본과 byte 단위로 같은지 확인한다.
   - 멈춘 사례에 syntax 기대값이 없는지 확인한다.
   - 생성 inventory가 저장소의 `qualification-c1.json`과 같은지 확인한다.
-  - 분기를 바꾸는 edit는 등록하지 않는다. 바뀐 활성 범위가 text를 공유하지 않아 edit step이 node를 재사용하지 못하고, S05 incremental route claim이 FAIL이 된다(로컬 Windows `literal-true`→`literal-paren-false` 관측). 처분은 [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277)에서 다룬다.
+  - 별도 switch set의 `literal-true`→`literal-paren-false`는 새 selection route BLOCKED와 모든 step의 구문 기대값을 등록한다. 과거 inventory/r5는 기존 25개 등록과 당시 판정을 유지한다.
 - kit `TestQualificationInventorySymbolRole`
   - `deferred`의 platform 분할, symbol workload·사례 규칙의 거부를 확인한다.
   - 근거 없는 실행 행이 MISSING이고 DEFERRED 행에 축이 없는지 확인한다.
@@ -246,7 +248,7 @@ C# symbol 모드 qualification(218-C) 시험:
   - replay member가 한도를 넘으면 행 INCOMPLETE(kit 축 BLOCKED)인지, replay가 host byte 예산과 record 한도 안에서 도는지 확인한다.
   - 이 기록은 등록·고정 runtime commit·native policy에 결속된다. C# grammar, runtime, 연산 한도나 policy 문구가 바뀌면 baseline이 실패하므로 다시 기록한다.
 - `TestQualifySymbolRole`(native routes job, 등록 C# closure, 세 OS에서 실행. qualification 근거가 아니라 시험이다)
-  - 등록 workload `s05-csharp-symbols-none`·`s05-csharp-symbols-a-c`를 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
+  - 등록 workload `s05-csharp-symbols-none`·`s05-csharp-symbols-a-c`·`s05-csharp-symbols-switch`를 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
   - 실행 행 PASS와 다른 platform의 DEFERRED 행을 확인한다.
   - 다음은 행 FAIL이어야 한다.
     - host profile의 symbols 변경·재정렬, preprocess 삭제(기본 모드 재표기), 사례 삭제

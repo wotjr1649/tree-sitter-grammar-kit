@@ -1,11 +1,70 @@
 package native
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
+
+func TestIncrementalRouteOnSelectionSwitch(t *testing.T) {
+	const source = "#if true\nclass X {}\n#else\nclass Y {}\n#endif\n"
+	for _, tc := range []struct {
+		name                    string
+		change                  func(*CaseResult)
+		claim, assessment, code string
+	}{
+		{"switch", func(*CaseResult) {}, ClaimBlocked, kit.AssessBlocked, kit.SelectionRoutePrefix + "1"},
+		{"no-observation", func(c *CaseResult) { c.Steps[1].Observations = nil }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
+		{"omit-old", func(c *CaseResult) { c.Steps[1].Observations = observedPair(1, false, "COMPLETE") }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
+		{"truncated-observation", func(c *CaseResult) { c.Steps[1].Observations = observedPair(1, true, "TRUNCATED") }, ClaimFail, kit.AssessFail, oldTreeUnverifiedPrefix + "1"},
+		{"same-selection-reuse0", func(c *CaseResult) {
+			c.Preprocess[1] = kit.ObserveCSharpPreprocess([]byte(strings.Replace(source, "true", "(true)", 1)), nil)
+			c.Steps[1].SourceBytes = 46
+			c.Steps[1].Edit.NewEndByte = 10
+		}, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+		{"shared-active-reuse0", func(c *CaseResult) {
+			for i := range c.Preprocess {
+				start := uint32(c.Steps[i].SourceBytes)
+				c.Steps[i].SourceBytes += 11
+				c.Preprocess[i].Active = append(c.Preprocess[i].Active, kit.Span{StartByte: start, EndByte: start + 11})
+			}
+		}, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+		{"missing-fresh", func(c *CaseResult) { c.Steps[1].Fresh = nil }, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+		{"structural-mode", func(c *CaseResult) { c.Preprocess = nil }, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+		{"blocked-then-fail", func(c *CaseResult) {
+			next := c.Steps[1]
+			next.Step = 2
+			next.Edit = &StepEdit{StartByte: 4, OldEndByte: 11, NewEndByte: 11}
+			next.Observations = observedPair(2, true, "COMPLETE")
+			c.Steps = append(c.Steps, next)
+			c.Preprocess = append(c.Preprocess, c.Preprocess[1])
+		}, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_2"},
+		{"fresh-reused", func(c *CaseResult) { c.Steps[1].Route.FreshReusedNodes = 1 }, ClaimFail, kit.AssessFail, "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_1"},
+		{"equality-fail", func(c *CaseResult) { c.Steps[1].Comparison.Equal = false }, ClaimBlocked, kit.AssessFail, "INCREMENTAL_FRESH_MISMATCH_STEP_1"},
+		{"expectation-fail", func(c *CaseResult) { c.Claims.Expectations = ClaimFail; c.Code = "EXPECTATION_FAILED" }, ClaimBlocked, kit.AssessFail, "EXPECTATION_FAILED"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := routeCase([3]bool{}, [2]*Route{notReused, reused})
+			c.Steps = c.Steps[:2]
+			c.Preprocess = []kit.PreprocessStep{kit.ObserveCSharpPreprocess([]byte(source), nil), kit.ObserveCSharpPreprocess([]byte(strings.Replace(source, "true", "(false)", 1)), nil)}
+			c.Steps[0].SourceBytes, c.Steps[1].SourceBytes = uint64(len(source)), uint64(len(source)+3)
+			for i := range c.Steps {
+				c.Steps[i].Incremental.Tree = &TreeEnvelope{}
+			}
+			c.Steps[1].Fresh = &TreeOut{Status: kit.StatusCompleted, Form: "full", Tree: &TreeEnvelope{}}
+			c.Steps[1].Edit = &StepEdit{StartByte: 4, OldEndByte: 8, NewEndByte: 11}
+			c.Steps[1].Observations = observedPair(1, true, "COMPLETE")
+			c.Claims.Expectations = ClaimPass
+			tc.change(c)
+			finishCase(c, judgeIncremental(c, true))
+			if c.Claims.IncrementalRoute != tc.claim || c.Assessment != tc.assessment || c.Code != tc.code {
+				t.Fatalf("%+v %s %s", c.Claims, c.Assessment, c.Code)
+			}
+		})
+	}
+}
 
 // routeCase is a completed case with two edit steps whose incremental trees carry the given
 // has_error values (step 0, 1, 2) and whose edit steps carry the given route observations;
