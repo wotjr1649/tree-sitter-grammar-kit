@@ -419,6 +419,19 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 				row.Status = CellIncomplete
 			}
 		}
+		if q.inv.Schema == QualificationInventorySchema && len(row.Sets) > 0 {
+			cases := []QualPreprocessCSTCase{}
+			found := false
+			for _, set := range row.Sets {
+				if set.PreprocessCST != nil {
+					found = true
+					cases = append(cases, set.PreprocessCST.Cases...)
+				}
+			}
+			if found {
+				row.PreprocessCST = qualCSTAxis(cases)
+			}
+		}
 		rows = append(rows, row)
 	}
 	return rows, cmps, nil

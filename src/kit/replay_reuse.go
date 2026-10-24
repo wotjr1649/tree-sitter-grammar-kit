@@ -25,6 +25,10 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		switch name {
 		case "result_schema", "reuse_observation_policy", "observation_run_id", "build":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), top)
+		case "operation":
+			if x.preprocessCST {
+				top.operation = slices.Clone(raw)
+			}
 		}
 		return nil
 	}, func(_ jsontext.Value, _ int) *Error { return x.r.check() })
@@ -32,7 +36,9 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		return e
 	}
 	schema := "tsgk-incremental-result/r2"
-	if x.selectionRoute {
+	if x.preprocessCST {
+		schema = "tsgk-incremental-result/r6"
+	} else if x.selectionRoute {
 		schema = "tsgk-incremental-result/r5"
 	} else if x.preprocess {
 		schema = "tsgk-incremental-result/r4" // r3 with the symbol mode (#218)

@@ -1,5 +1,5 @@
 {
- "schema": "tsgk-qualification-inventory/r6",
+ "schema": "tsgk-qualification-inventory/r7",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,
@@ -354361,6 +354361,27 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "aa9b2ebf1a7ba1a029a5962ebe7503414669ec15f64b1dd12a69ad600449dd14",
+         "source_bytes": 71,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          47,
+          64
+         ],
+         "cst_hashes": [
+          0,
+          47,
+          64
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -354430,6 +354451,27 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "c9306bc3261a30f1ce44526d8530a4b8fa6eb8ed30cfa95f7ad59c7ce3518e5b",
+         "source_bytes": 59,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          35,
+          52
+         ],
+         "cst_hashes": [
+          0,
+          35,
+          52
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -354487,6 +354529,25 @@
           }
          ],
          "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "42dba882021338158d3bf7bc2d30a9798f88d2f818fc859df3c7443b05e5f371",
+         "source_bytes": 33,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          26
+         ],
+         "cst_hashes": [
+          0,
+          26
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -354609,6 +354670,46 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "aa9997ebae2c5d9463f1cb26b420c26c48003a46ebfa58c6ed9e55450287765d",
+         "source_bytes": 44,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          20,
+          37
+         ],
+         "cst_hashes": [
+          0,
+          20,
+          37
+         ],
+         "host_only": [],
+         "cst_only": []
+        },
+        {
+         "step": 1,
+         "source_sha256": "c9306bc3261a30f1ce44526d8530a4b8fa6eb8ed30cfa95f7ad59c7ce3518e5b",
+         "source_bytes": 59,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          35,
+          52
+         ],
+         "cst_hashes": [
+          0,
+          35,
+          52
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -354677,6 +354778,27 @@
            "end": 23
           }
          ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "d602cb2bf7cb6c3798d2f23226fc4f9d5ccab8776cb8d6f7d126578ddc15be25",
+         "source_bytes": 47,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          23,
+          40
+         ],
+         "cst_hashes": [
+          0,
+          23,
+          40
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -354767,6 +354889,31 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "cba208af5b400e4ce309361d65d6e157bbc99763afd52e28a7e5caf26491cbba",
+         "source_bytes": 79,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          17,
+          36,
+          55,
+          72
+         ],
+         "cst_hashes": [
+          0,
+          17,
+          36,
+          55,
+          72
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -354847,6 +354994,31 @@
            "end": 36
           }
          ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "c57b0c045ac0591f6674eee37c236ebd93e5491c9664a4c71edd0503162b65e8",
+         "source_bytes": 60,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          10,
+          19,
+          36,
+          53
+         ],
+         "cst_hashes": [
+          0,
+          10,
+          19,
+          36,
+          53
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -355009,6 +355181,25 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "f12b7b67af54d2ee8243d04180604577669653abdf445f492fe7cc9e6c3f4ebd",
+         "source_bytes": 59,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          35,
+          52
+         ],
+         "cst_hashes": [
+          35,
+          52
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355053,6 +355244,19 @@
           }
          ],
          "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "39da40523e9ceaecf9a35b6f7c7f268f1d981f55cd6f972e116b4dfe51b66850",
+         "source_bytes": 38,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [],
+         "cst_hashes": [],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -355099,6 +355303,19 @@
          ],
          "inactive": []
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "f27b3afebe1f2d429c384475003493a697bee3814b23c4a6e46c803177e850cb",
+         "source_bytes": 23,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [],
+         "cst_hashes": [],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355143,6 +355360,19 @@
           }
          ],
          "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "b1c0e6e0898ea53622d70478a0f3926f10050e8b085b27ea78cc96f18a9f688b",
+         "source_bytes": 20,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [],
+         "cst_hashes": [],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -355216,6 +355446,27 @@
            "end": 50
           }
          ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "469d49d20c590d5678309d7cdee97d9036e9a18d60842a804595ea178f7b9a77",
+         "source_bytes": 74,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          33,
+          50,
+          67
+         ],
+         "cst_hashes": [
+          33,
+          50,
+          67
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       }
@@ -355338,6 +355589,27 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "c9306bc3261a30f1ce44526d8530a4b8fa6eb8ed30cfa95f7ad59c7ce3518e5b",
+         "source_bytes": 59,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          35,
+          52
+         ],
+         "cst_hashes": [
+          0,
+          35,
+          52
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355437,6 +355709,42 @@
          ],
          "inactive": []
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "96935354633503623a42c1595bc2d5962da6fbd1d6217fcf0c1b1cc85f38b41a",
+         "source_bytes": 29,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          22
+         ],
+         "cst_hashes": [
+          0,
+          22
+         ],
+         "host_only": [],
+         "cst_only": []
+        },
+        {
+         "step": 1,
+         "source_sha256": "e61d84e649487503aac57801e94204abab306c044ee77a87af44c1c4e06b892a",
+         "source_bytes": 33,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          26
+         ],
+         "cst_hashes": [
+          0,
+          26
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355506,6 +355814,27 @@
           }
          ]
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "ca82c0beef94fe9675f893d28db6cd521c1b21eaf52e4434a7b550077db5624f",
+         "source_bytes": 64,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          37,
+          56
+         ],
+         "cst_hashes": [
+          0,
+          37,
+          56
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355563,6 +355892,25 @@
           }
          ],
          "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "8efbefc2618d3b34be57c2cb223da0e506cd1c973aae4d22520ab1f6612d1bc0",
+         "source_bytes": 23,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          17
+         ],
+         "cst_hashes": [
+          0,
+          17
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -355626,6 +355974,25 @@
          ],
          "inactive": []
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "5fcdd11d0040538404b21df15202b6ace9b7b85a64c40274b3c95435b53747db",
+         "source_bytes": 34,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          10,
+          27
+         ],
+         "cst_hashes": [
+          10,
+          27
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355683,6 +356050,25 @@
           }
          ],
          "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "3d93ef57472d48bf303696439fdcfa1a5c464d9ca3a6589dd2323efb506f41ac",
+         "source_bytes": 32,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          25
+         ],
+         "cst_hashes": [
+          0,
+          25
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       },
@@ -355758,6 +356144,29 @@
          ],
          "inactive": []
         }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "c7f7b98612478e04ce14dad7c4479f4990ba18c41dc713a168a8c7f308f06c25",
+         "source_bytes": 45,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          6,
+          16,
+          27
+         ],
+         "cst_hashes": [
+          0,
+          6,
+          16,
+          27
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
        ]
       },
       {
@@ -355819,6 +356228,144 @@
          "directives": [],
          "active": [],
          "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "directive-string-no-escape",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "0c1bb85696845af178a412a9fd6eb9e51b3d850ea07845e387ad0e3f9653a79e",
+        "bytes": 46
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "Nullable",
+           "hash": 0,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 0,
+           "end": 46
+          }
+         ],
+         "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "0c1bb85696845af178a412a9fd6eb9e51b3d850ea07845e387ad0e3f9653a79e",
+         "source_bytes": 46,
+         "result": "MISMATCH",
+         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "host_hashes": [
+          0
+         ],
+         "cst_hashes": [
+          0,
+          25
+         ],
+         "host_only": [],
+         "cst_only": [
+          25
+         ]
+        }
+       ]
+      },
+      {
+       "id": "razor-comment-lines",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "15b430848813685572d5af6470100d5a640d33c34b6827924280c2920a970539",
+        "bytes": 42
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 18,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 35,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 0,
+           "end": 18
+          },
+          {
+           "start": 24,
+           "end": 35
+          }
+         ],
+         "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "15b430848813685572d5af6470100d5a640d33c34b6827924280c2920a970539",
+         "source_bytes": 42,
+         "result": "MISMATCH",
+         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "host_hashes": [
+          18,
+          35
+         ],
+         "cst_hashes": [
+          9,
+          18,
+          35
+         ],
+         "host_only": [],
+         "cst_only": [
+          9
+         ]
         }
        ]
       }
@@ -355948,6 +356495,29 @@
            "end": 39
           }
          ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "cb15e3f186b05d47c5e51da62afec68cda28529b6e8e56aaf1640175284a83b2",
+         "source_bytes": 63,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          15,
+          39,
+          56
+         ],
+         "cst_hashes": [
+          0,
+          15,
+          39,
+          56
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       }
@@ -356093,6 +356663,33 @@
            "end": 60
           }
          ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "aa0c80936108908705d36dc193ea59e5047f0178b7387016769f4844e8d2c695",
+         "source_bytes": 74,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          6,
+          24,
+          43,
+          60,
+          67
+         ],
+         "cst_hashes": [
+          0,
+          6,
+          24,
+          43,
+          60,
+          67
+         ],
+         "host_only": [],
+         "cst_only": []
         }
        ]
       }
@@ -356268,6 +356865,204 @@
            "start": 12,
            "end": 23
           }
+         ]
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "aa9997ebae2c5d9463f1cb26b420c26c48003a46ebfa58c6ed9e55450287765d",
+         "source_bytes": 44,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          20,
+          37
+         ],
+         "cst_hashes": [
+          0,
+          20,
+          37
+         ],
+         "host_only": [],
+         "cst_only": []
+        },
+        {
+         "step": 1,
+         "source_sha256": "176b35c02f7a47a3f85febfa6742016cf5641d4a51f573d9ceb78a3f2e320f4c",
+         "source_bytes": 47,
+         "result": "MATCH",
+         "code": "",
+         "host_hashes": [
+          0,
+          23,
+          40
+         ],
+         "cst_hashes": [
+          0,
+          23,
+          40
+         ],
+         "host_only": [],
+         "cst_only": []
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": []
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "set": "s05-csharp-symbols-cst-mismatch",
+     "profile": "s05-csharp-symbols-cst-mismatch",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "dollars-two-quotes-raw",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "c62c61d5b2b6c3b2945f70e6686db49f6c6c9db812b8efd88474fe67e491466e",
+        "bytes": 50
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [],
+         "active": [
+          {
+           "start": 0,
+           "end": 50
+          }
+         ],
+         "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "c62c61d5b2b6c3b2945f70e6686db49f6c6c9db812b8efd88474fe67e491466e",
+         "source_bytes": 50,
+         "result": "MISMATCH",
+         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "host_hashes": [],
+         "cst_hashes": [
+          37
+         ],
+         "host_only": [],
+         "cst_only": [
+          37
+         ]
+        }
+       ]
+      },
+      {
+       "id": "nested-string-open-no-runaway",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "bd952d74494666ba1943c8c0342bc4dffaa804dfb120193450d371cd42bc06b6",
+        "bytes": 69
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [],
+         "active": [
+          {
+           "start": 0,
+           "end": 69
+          }
+         ],
+         "inactive": []
+        }
+       ],
+       "preprocess_cst_expect": [
+        {
+         "step": 0,
+         "source_sha256": "bd952d74494666ba1943c8c0342bc4dffaa804dfb120193450d371cd42bc06b6",
+         "source_bytes": 69,
+         "result": "MISMATCH",
+         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "host_hashes": [],
+         "cst_hashes": [
+          62
+         ],
+         "host_only": [],
+         "cst_only": [
+          62
          ]
         }
        ]

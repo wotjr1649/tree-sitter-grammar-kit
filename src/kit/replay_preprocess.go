@@ -20,8 +20,22 @@ var sourceReadCodes = map[string]bool{"SOURCE_MISSING": true, "SOURCE_LINK_REJEC
 // every non-empty leaf of every full tree starts and ends inside its step's active ranges.
 // A source without directives parses alike with and without ranges, so stored evidence
 // cannot show the driver received them there; the native connection tests own that.
-func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *IncrementalCase, pp *Preprocess) *Error {
+func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *IncrementalCase, pp *Preprocess, top nativeResult) *Error {
 	g := x.gate("preprocess")
+	var cst *PreprocessCSTResult
+	if x.preprocessCST {
+		var err error
+		cst, err = decodePreprocessCST(c.PreprocessCST)
+		if err != nil {
+			x.gate("preprocess-cst").fail(c.ID, "PREPROCESS_CST_INVALID", "primary CST 관측의 strict 형식이 잘못됐다")
+			return nil
+		}
+		x.currentCST = &PreprocessCSTResult{Schema: PreprocessCSTSchema, Result: "NOT_APPLICABLE", Steps: []PreprocessCSTStep{}}
+		defer func() {
+			x.gate("preprocess-cst").check(reflect.DeepEqual(cst, x.currentCST), c.ID, "PREPROCESS_CST_MISMATCH", "primary CST 관측이 원 입력·원 응답에서 다시 계산한 값과 다르다")
+			x.preprocessCSTResults = append(x.preprocessCSTResults, PreprocessCSTCase{ID: c.ID, Result: *x.currentCST})
+		}()
+	}
 	if registered == nil {
 		g.fail(c.ID, "PREPROCESS_CASE_UNBOUND", "preprocess 사례의 workload가 없다")
 		return nil
@@ -36,6 +50,9 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 	path := fmt.Sprintf("sources/%05d-%s.bin", index, c.ID)
 	m, witnessed := x.members[path]
 	if early && sourceReadCodes[c.Code] {
+		if x.currentCST != nil {
+			x.currentCST.Code = c.Code
+		}
 		// the live run could not read its input: stopped before any evaluation, nothing to
 		// recompute; a witness given anyway must still be the registered input
 		if witnessed && m.Role == "case-source" {
@@ -63,6 +80,9 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 	}
 	versions, _, err := ApplyEdits(registered.Encoding, source, registered.Edits, x.nativeInputBytes)
 	if early {
+		if x.currentCST != nil && err != nil {
+			x.currentCST.Code = asError(err).Code
+		}
 		// the edits were refused before any evaluation: the same refusal, recomputed
 		var ke *Error
 		g.check(errors.As(err, &ke) && ke.Code == c.Code, c.ID, "PREPROCESS_OUTCOME_MISMATCH", "preprocess 전에 멈춘 사례가 원 입력·등록 edit의 거부와 다르다")
@@ -82,10 +102,27 @@ func (x *replayEnv) replayPreprocess(c *rcCase, index int, registered *Increment
 	last := want[len(want)-1]
 	if last.Status != PreprocessOK {
 		exec, code := PreprocessOutcome(last.Status)
+		if x.currentCST != nil {
+			x.currentCST.Code = code
+		}
 		g.check(c.ExecutionStatus == exec && c.Assessment == AssessBlocked && c.Code == code && traceless &&
 			c.Claims.IncrementalEquality == claimNotClaimed && c.Claims.IncrementalRoute == claimNotClaimed && c.Claims.Expectations == claimNotClaimed,
 			c.ID, "PREPROCESS_OUTCOME_MISMATCH", "preprocess가 멈춘 사례의 상태·claim이 고정 결과와 다르거나 driver 실행 흔적이 있다")
 		return nil
+	}
+	if x.preprocessCST {
+		if e := x.replayCSTPrimary(c, index, registered, pp, source, top, cst.Primary); e != nil {
+			return e
+		}
+		if x.currentCST.Result != "PASS" {
+			assess := AssessBlocked
+			if x.currentCST.Result == "FAIL" {
+				assess = AssessFail
+			}
+			x.gate("preprocess-cst").check(c.ExecutionStatus == StatusNotRun && c.Assessment == assess && c.Code == x.currentCST.Code && traceless && len(c.Expectations) == 0 && len(c.Segments) == 0 && len(c.References) == 0 && c.Oracle == nil &&
+				c.Claims.IncrementalEquality == claimNotClaimed && c.Claims.IncrementalRoute == claimNotClaimed && c.Claims.Expectations == claimNotClaimed, c.ID, "PREPROCESS_CST_OUTCOME_MISMATCH", "primary 정지 뒤 active 실행 흔적이 있거나 고정 판정과 다르다")
+			return nil
+		}
 	}
 	g.check(!strings.HasPrefix(c.Code, "PREPROCESS_"), c.ID, "PREPROCESS_OUTCOME_MISMATCH", "모든 step이 OK인데 사례가 preprocess로 멈췄다")
 	for _, s := range c.Steps {
@@ -161,6 +198,9 @@ func (x *replayEnv) checkPreprocessPolicy(top nativeResult, prof IncrementalProf
 	narrowed := op
 	narrowed.RunWall = reg.RunWall
 	want := nativePolicy(op, prof.Output, prof.Preprocess, x.selectionRoute)
+	if x.preprocessCST {
+		want = NativePolicy(op, prof.Output, prof.Preprocess)
+	}
 	got := IdentityRef{}
 	for _, id := range top.Identities {
 		if id.Role == "policy" {

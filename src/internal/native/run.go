@@ -213,28 +213,30 @@ type ExpectationResult struct {
 
 // CaseResult is the outcome of one registered case.
 type CaseResult struct {
-	ReuseObservationClaim string               `json:"reuse_observation_claim,omitempty"`
-	References            []SvcReferenceResult `json:"references,omitempty"`
-	Segments              []SvcSegment         `json:"segments,omitempty"`
-	ID                    string               `json:"id"`
-	Input                 kit.NativeInput      `json:"input"`
-	Encoding              string               `json:"encoding"`
-	ExecutionStatus       string               `json:"execution_status"`
-	Assessment            string               `json:"assessment"`
-	Code                  string               `json:"code"`
-	Claims                Claims               `json:"claims"`
-	ResponseStatus        string               `json:"response_status"`
-	ResponseCode          string               `json:"response_code"`
-	Producer              *Producer            `json:"producer"`
-	Process               *runner.Result       `json:"process"`
-	Steps                 []StepResult         `json:"steps"`
-	Expectations          []ExpectationResult  `json:"expectations"`
-	Preprocess            []kit.PreprocessStep `json:"preprocess,omitempty"` // symbol mode: the evaluated steps (#218)
-	Oracle                *OracleClaims        `json:"oracle_claims,omitempty"`
-	QueryExpect           []QueryExpectResult  `json:"query_expectations,omitempty"`
-	Facts                 *FactsOut            `json:"facts,omitempty"`
-	Raw                   []byte               `json:"-"`
-	Transport             *FrameTransport      `json:"-"` // an r2 record's frame (#266)
+	ReuseObservationClaim string                   `json:"reuse_observation_claim,omitempty"`
+	References            []SvcReferenceResult     `json:"references,omitempty"`
+	Segments              []SvcSegment             `json:"segments,omitempty"`
+	ID                    string                   `json:"id"`
+	Input                 kit.NativeInput          `json:"input"`
+	Encoding              string                   `json:"encoding"`
+	ExecutionStatus       string                   `json:"execution_status"`
+	Assessment            string                   `json:"assessment"`
+	Code                  string                   `json:"code"`
+	Claims                Claims                   `json:"claims"`
+	ResponseStatus        string                   `json:"response_status"`
+	ResponseCode          string                   `json:"response_code"`
+	Producer              *Producer                `json:"producer"`
+	Process               *runner.Result           `json:"process"`
+	Steps                 []StepResult             `json:"steps"`
+	Expectations          []ExpectationResult      `json:"expectations"`
+	Preprocess            []kit.PreprocessStep     `json:"preprocess,omitempty"` // symbol mode: the evaluated steps (#218)
+	PreprocessCST         *kit.PreprocessCSTResult `json:"preprocess_cst,omitempty"`
+	Oracle                *OracleClaims            `json:"oracle_claims,omitempty"`
+	QueryExpect           []QueryExpectResult      `json:"query_expectations,omitempty"`
+	Facts                 *FactsOut                `json:"facts,omitempty"`
+	Raw                   []byte                   `json:"-"`
+	PrimaryRaw            []byte                   `json:"-"`
+	Transport             *FrameTransport          `json:"-"` // an r2 record's frame (#266)
 }
 
 // Context is the per-profile information a case run needs.
@@ -309,6 +311,14 @@ func finishEarly(out *CaseResult, status, assess, code string) {
 func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte) (out CaseResult) {
 	x.ObservationProducerSHA256 = b.Identity
 	out = newCaseResult(c)
+	if x.Preprocess != nil {
+		out.PreprocessCST = &kit.PreprocessCSTResult{Schema: kit.PreprocessCSTSchema, Result: "NOT_APPLICABLE", Steps: []kit.PreprocessCSTStep{}}
+		defer func() {
+			if out.PreprocessCST.Result == "NOT_APPLICABLE" {
+				out.PreprocessCST.Code = out.Code
+			}
+		}()
+	}
 	defer func() { x.observeCase(&out) }()
 	notRun := func(status, assess, code string) CaseResult {
 		finishEarly(&out, status, assess, code)
@@ -369,6 +379,9 @@ func (b *Build) prepareCase(ctx context.Context, x Context, c kit.IncrementalCas
 		if last := out.Preprocess[len(out.Preprocess)-1]; last.Status != kit.PreprocessOK {
 			status, code := kit.PreprocessOutcome(last.Status)
 			return notRun(status, kit.AssessBlocked, code)
+		}
+		if !b.runPreprocessPrimary(ctx, x, c, source, out) {
+			return cr, true
 		}
 		for _, o := range out.Preprocess {
 			req.Ranges = append(req.Ranges, o.Active)

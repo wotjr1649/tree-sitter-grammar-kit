@@ -143,6 +143,7 @@ type ReplayResult struct {
 	BytesRead      uint64                          `json:"bytes_read"`
 	Explanation    []string                        `json:"explanation"`
 	QueryReference *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
+	PreprocessCST  []PreprocessCSTCase             `json:"preprocess_cst,omitempty"`
 }
 
 // ReplayRequest names the evidence set root and the replay registration bytes.
@@ -389,6 +390,15 @@ func reducerTable() map[string]reducer {
 		return r5.run(x)
 	}
 	t[r6.info.ID] = r6
+	r7 := r6
+	r7.info.ID, r7.info.Revision = "native-result-r7", "r7"
+	r7.info.Inputs = slices.Clone(r6.info.Inputs)
+	r7.info.Inputs[0] = "tsgk-incremental-result/r6 result.json"
+	r7.info.Roles = append(slices.Clone(r6.info.Roles), "primary-response")
+	r7.info.Gates = append(slices.Clone(r6.info.Gates), "preprocess-cst")
+	r7.info.Description += "; r7 (#279): source-bound primary full-CST directive positions, complete observations and equality, policy/r4, a separate mismatch BLOCKED axis"
+	r7.run = func(x *replayEnv) *Error { x.preprocessCST = true; return r6.run(x) }
+	t[r7.info.ID] = r7
 	return t
 }
 
@@ -457,6 +467,9 @@ type replayEnv struct {
 	selectionRoute       bool             // r6: a disjoint active-selection switch can block reuse
 	selectionSteps       []PreprocessStep // recomputed from the guarded original witness
 	selectionBytes       []uint64         // source version lengths, never recorded projections
+	preprocessCST        bool
+	currentCST           *PreprocessCSTResult
+	preprocessCSTResults []PreprocessCSTCase
 	observationResponses map[string]bool
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
@@ -846,6 +859,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	}
 	reduceErr := red.run(x)
 	res.QueryReference = x.queryReference
+	res.PreprocessCST = x.preprocessCSTResults
 	if res.ResultSchema == ReplayReferenceResultSchema && x.recorded.ExecutionStatus != "" {
 		if x.recorded != res.Recorded {
 			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")

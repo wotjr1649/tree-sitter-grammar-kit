@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,8 +14,10 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r6"
-	QualificationResultSchema    = "tsgk-qualification-result/r7"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r7"
+	QualificationResultSchema    = "tsgk-qualification-result/r8"
+	qualificationInventoryR6     = "tsgk-qualification-inventory/r6"
+	qualificationResultR7        = "tsgk-qualification-result/r7"
 	qualificationInventoryR5     = "tsgk-qualification-inventory/r5"
 	qualificationResultR6        = "tsgk-qualification-result/r6"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
@@ -138,7 +141,8 @@ type QualCase struct {
 	Source           *string                `json:"source"`
 	// PreprocessExpect is the registered selection of every step of a symbol-mode case up
 	// to the first that is not OK (#218); only a symbol-mode workload has it.
-	PreprocessExpect []QualPreprocessStep `json:"preprocess_expect,omitempty"`
+	PreprocessExpect    []QualPreprocessStep `json:"preprocess_expect,omitempty"`
+	PreprocessCSTExpect []PreprocessCSTStep  `json:"preprocess_cst_expect,omitempty"`
 }
 
 // QualPreprocessStep is the registered selection of one symbol-mode step, derived from a
@@ -207,12 +211,13 @@ type QualRole struct {
 	Workloads []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded r6 or historical r5 document: the exact
+// QualificationInventory is a decoded r7 or historical r6/r5 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
 // added the route error node types, the rows' production alternatives and the cases'
 // alternatives and W samples to r1; r3 adds the step expectation anchors; r5 adds deferred
 // role platforms and symbol-mode role workloads (#218). r6 selects the disjoint-selection
-// route rule and admits its explicit BLOCKED outcome (#277).
+// route rule and admits its explicit BLOCKED outcome (#277); r7 registers the separate
+// source-bound primary CST expectations (#279).
 type QualificationInventory struct {
 	SHA256       string         `json:"-"`
 	Schema       string         `json:"schema"`
@@ -286,8 +291,25 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 	if schema == nil || schema.kind != '"' {
 		return inv, fail(KindInvalidInput, "JSON_MISSING_FIELD", doc+"#/schema", nil)
 	}
-	if schema.s != QualificationInventorySchema && schema.s != qualificationInventoryR5 {
+	if schema.s != QualificationInventorySchema && schema.s != qualificationInventoryR6 && schema.s != qualificationInventoryR5 {
 		return inv, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", doc+"#/schema", nil)
+	}
+	var checkCST func(*jv) *Error
+	checkCST = func(node *jv) *Error {
+		if node.name == "preprocess_cst_expect" {
+			if schema.s != QualificationInventorySchema || !preprocessCSTShape(node, reflect.TypeFor[[]PreprocessCSTStep]()) {
+				return fail(KindInvalidInput, "CASE_INVALID", doc+"#"+node.cptr(), nil)
+			}
+		}
+		for _, child := range node.vals {
+			if err := checkCST(child); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := checkCST(v); err != nil {
+		return inv, err
 	}
 	if e := decodeTyped(doc, data, &inv); e != nil {
 		return inv, e
@@ -383,10 +405,10 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 				}
 			}
 			if w.Preprocess != nil {
-				if bad := symbolCase(c, inv.Schema == QualificationInventorySchema); bad != "" {
+				if bad := symbolCase(c, inv.Schema != qualificationInventoryR5, inv.Schema == QualificationInventorySchema); bad != "" {
 					return badW("CASE_INVALID", cp+"/"+bad)
 				}
-			} else if c.PreprocessExpect != nil {
+			} else if c.PreprocessExpect != nil || c.PreprocessCSTExpect != nil {
 				return badW("CASE_INVALID", cp+"/preprocess_expect")
 			}
 			if w.Preprocess == nil && c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
@@ -560,7 +582,7 @@ var preprocessStatuses = map[string]bool{PreprocessOK: true, PreprocessZeroActiv
 // valid): a support case that covers nothing, with the expected selection of every step up
 // to the first that is not OK; an all-OK case expects the syntax of every step, a stopped
 // one the fixed not-run outcome of its last step and no step expectation.
-func symbolCase(c QualCase, selection bool) string {
+func symbolCase(c QualCase, selection, cst bool) string {
 	if c.Role != "support" || len(c.Covers) > 0 || len(c.QueryExpect) > 0 || c.DynamicSQL != nil || c.Sample != nil || c.Source != nil || len(c.Alternatives) > 0 || len(c.Points) > 0 {
 		return "role"
 	}
@@ -572,6 +594,20 @@ func symbolCase(c QualCase, selection bool) string {
 		ok := st.Status == PreprocessOK
 		if st.Step != i || !preprocessStatuses[st.Status] || st.Directives == nil || st.Active == nil || st.Inactive == nil || (!ok && i != len(pe)-1) || (ok && i == len(pe)-1 && len(pe) != len(c.Edits)+1) {
 			return "preprocess_expect"
+		}
+	}
+	if !cst && c.PreprocessCSTExpect != nil {
+		return "preprocess_cst_expect"
+	}
+	if cst {
+		if !validRegisteredCST(c) {
+			return "preprocess_cst_expect"
+		}
+		if len(c.PreprocessCSTExpect) > 0 && c.PreprocessCSTExpect[len(c.PreprocessCSTExpect)-1].Result == "MISMATCH" {
+			if c.ExpectStatus != StatusNotRun || c.ExpectAssessment != AssessBlocked || c.ExpectCode != c.PreprocessCSTExpect[len(c.PreprocessCSTExpect)-1].Code || len(c.Expect) != 0 {
+				return "expect"
+			}
+			return ""
 		}
 	}
 	if last := pe[len(pe)-1]; last.Status != PreprocessOK {
@@ -704,19 +740,20 @@ type QualCounts struct {
 // axis (set integrity, registration, S07 gates, kit claims and expected statuses); host
 // observations are retained apart and never compared.
 type QualSet struct {
-	Set        string            `json:"set"`
-	Platform   string            `json:"platform"`
-	Evidence   string            `json:"evidence"` // NEW_RUN | MISSING | REJECTED
-	Mechanism  string            `json:"mechanism"`
-	Manifest   string            `json:"manifest_sha256"`
-	Profile    string            `json:"profile_sha256"`
-	Records    int               `json:"records"`
-	Gates      []ReplayGate      `json:"gates"`
-	APIFails   int               `json:"api_claim_failures"`
-	Detectors  map[string]string `json:"detectors"`
-	Host       map[string]string `json:"host_observations"`
-	Identities map[string]string `json:"identities"`
-	Findings   []Finding         `json:"findings"`
+	PreprocessCST *QualPreprocessCSTAxis `json:"preprocess_cst,omitempty"`
+	Set           string                 `json:"set"`
+	Platform      string                 `json:"platform"`
+	Evidence      string                 `json:"evidence"` // NEW_RUN | MISSING | REJECTED
+	Mechanism     string                 `json:"mechanism"`
+	Manifest      string                 `json:"manifest_sha256"`
+	Profile       string                 `json:"profile_sha256"`
+	Records       int                    `json:"records"`
+	Gates         []ReplayGate           `json:"gates"`
+	APIFails      int                    `json:"api_claim_failures"`
+	Detectors     map[string]string      `json:"detectors"`
+	Host          map[string]string      `json:"host_observations"`
+	Identities    map[string]string      `json:"identities"`
+	Findings      []Finding              `json:"findings"`
 	// BranchSelectionNotClaimed lists, in set order, the C# cases whose recorded trees have
 	// an #if/#elif condition naming a symbol, or a tree whose nodes were not recorded (#218).
 	// The default parser does not evaluate such conditions: which section it takes, and
@@ -746,11 +783,12 @@ type QualCell struct {
 
 // QualRoleRow is one extra-role row on one platform.
 type QualRoleRow struct {
-	ID       string `json:"id"`
-	Role     string `json:"role"`
-	Platform string `json:"platform"`
-	Status   string `json:"status"` // PASS | FAIL | INCOMPLETE | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE | DEFERRED
-	Reason   string `json:"reason"`
+	PreprocessCST *QualPreprocessCSTAxis `json:"preprocess_cst,omitempty"`
+	ID            string                 `json:"id"`
+	Role          string                 `json:"role"`
+	Platform      string                 `json:"platform"`
+	Status        string                 `json:"status"` // PASS | FAIL | INCOMPLETE | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE | DEFERRED
+	Reason        string                 `json:"reason"`
 	// Mechanism is the worst kit axis of the row's sets; Checks folds their registered
 	// expectations and detector results ("" when the row executes nothing).
 	Mechanism string    `json:"mechanism"`
@@ -778,7 +816,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the r7 (or historical r6) document: the E0 envelope plus
+// QualificationResult is the r8 (or historical r7/r6) document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
@@ -840,6 +878,8 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	if inv.Schema == qualificationInventoryR5 {
 		res.ResultSchema = qualificationResultR6
+	} else if inv.Schema == qualificationInventoryR6 {
+		res.ResultSchema = qualificationResultR7
 	}
 	if !hex40.MatchString(req.Candidate) {
 		return bad(fail(KindInvalidInput, "CANDIDATE_INVALID", "candidate", nil))
@@ -974,6 +1014,10 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	for _, x := range res.ExtraRoles {
 		failed = failed || x.Status == CellFail
+		if x.PreprocessCST != nil {
+			failed = failed || x.PreprocessCST.Result == AssessFail
+			allPass = allPass && x.PreprocessCST.Result == AssessPass
+		}
 		if x.Mechanism != "" {
 			gate = gate && x.Mechanism == AssessPass
 			allPass = allPass && x.Status == CellPass
@@ -1025,6 +1069,9 @@ func platformClaims(inv QualificationInventory, cells []QualCell, roles []QualRo
 		for _, x := range roles {
 			if x.Platform == p.ID && x.Mechanism != "" {
 				ok = ok && x.Mechanism == AssessPass && x.Status == CellPass
+				if x.PreprocessCST != nil {
+					ok = ok && x.PreprocessCST.Result == AssessPass
+				}
 			}
 		}
 		out[p.ID] = map[bool]string{true: "SUPPORTED", false: "BLOCKED"}[ok]

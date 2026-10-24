@@ -1,0 +1,5 @@
+#if true
+class X {}
+#else
+class Y {}
+#endif

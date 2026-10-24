@@ -29,7 +29,7 @@ const ObservationResultSchema = "tsgk-incremental-result/r3"
 
 // PreprocessResultSchema adds the disjoint selection route rule (#277) to r4's symbol
 // mode; its trees carry the tsgk-native-policy/r3 identity.
-const PreprocessResultSchema = "tsgk-incremental-result/r5"
+const PreprocessResultSchema = "tsgk-incremental-result/r6"
 
 var testHookOutputFinalization func(stage string, output, responses *outputDirectory)
 
@@ -236,6 +236,29 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 			closeOutput(responses, &res.Report, &resultErr)
 		}
 	}()
+	var primaryDirectory, primaryResponses *outputDirectory
+	primaryClosed := false
+	defer func() {
+		if !primaryClosed {
+			if primaryResponses != nil {
+				closeOutput(primaryResponses, &res.Report, &resultErr)
+			}
+			if primaryDirectory != nil {
+				closeOutput(primaryDirectory, &res.Report, &resultErr)
+			}
+		}
+	}()
+	if prof.Preprocess != nil {
+		var e error
+		primaryDirectory, e = createOutputDirectory(output.Root, "primary")
+		if e != nil {
+			return stop(refuse(kit.KindIO, "OUTPUT_FAILED", e))
+		}
+		primaryResponses, e = createOutputDirectory(primaryDirectory.Root, "responses")
+		if e != nil {
+			return stop(refuse(kit.KindIO, "OUTPUT_FAILED", e))
+		}
+	}
 	if req.RunWall > 0 && req.RunWall < op.RunWall {
 		op.RunWall = req.RunWall // a caller may only narrow the run wall; recorded in operation and policy
 		res.Operation = op
@@ -275,8 +298,12 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 			for _, c := range prof.Cases {
 				src, err := readCase(req.Root, c.Input, caseHandle)
 				if err != nil {
-					res.Cases = append(res.Cases, CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
-						Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}})
+					failed := CaseResult{ID: c.ID, Input: c.Input, Encoding: c.Encoding, ExecutionStatus: kit.StatusNotRun, Assessment: kit.AssessNotAssessed,
+						Code: err.(*Error).Code, Claims: Claims{ClaimNotClaimed, ClaimNotClaimed, ClaimNotClaimed}, Steps: []StepResult{}, Expectations: []ExpectationResult{}}
+					if prof.Preprocess != nil {
+						failed.PreprocessCST = &kit.PreprocessCSTResult{Schema: kit.PreprocessCSTSchema, Result: "NOT_APPLICABLE", Code: failed.Code, Steps: []kit.PreprocessCSTStep{}}
+					}
+					res.Cases = append(res.Cases, failed)
 					continue
 				}
 				cr, found := refs[c.ID]
@@ -291,6 +318,14 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 						res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "원 응답을 보존하지 못했다"))
 						writeFailed = true
 					}
+				}
+				if cr.PrimaryRaw != nil {
+					name := fmt.Sprintf("%05d-%s.json", len(res.Cases), c.ID)
+					if primaryResponses == nil || createExclusive(primaryResponses.Root, name, cr.PrimaryRaw) != nil {
+						res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "primary 원 응답을 보존하지 못했다"))
+						writeFailed = true
+					}
+					cr.PrimaryRaw = nil
 				}
 				if req.ReuseObservation {
 					for _, segment := range cr.Segments {
@@ -350,6 +385,13 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		testHookOutputFinalization("before-close", output, responses)
 	}
 	responsesClosed, outputClosed = true, true
+	primaryClosed = true
+	if primaryResponses != nil {
+		closeOutput(primaryResponses, &res.Report, &resultErr)
+	}
+	if primaryDirectory != nil {
+		closeOutput(primaryDirectory, &res.Report, &resultErr)
+	}
 	closeOutput(responses, &res.Report, &resultErr)
 	closeOutput(output, &res.Report, &resultErr)
 	if testHookOutputFinalization != nil {

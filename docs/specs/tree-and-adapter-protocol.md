@@ -212,7 +212,7 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 - 모든 step이 `OK`
   - 각 step의 `Active`를 그 step의 `ranges`로 driver에 준다.
   - 사례의 판정·claim은 아래 #277 선택 전환 예외와 기존 규칙을 따른다.
-  - 현재 tree의 policy identity는 `tsgk-native-policy/r3`다. 역사적 결과 r4는 policy/r2로 재생한다.
+  - 현재 tree의 policy identity는 `tsgk-native-policy/r4`다. 역사적 결과 r5는 policy/r3, r4는 policy/r2로 재생한다.
 - `OK`가 아닌 첫 step이 있으면 그 상태가 사례를 정한다.
   - driver는 실행하지 않는다. process·원 응답·native step도 없다.
   - assessment는 `BLOCKED`이고, claim 셋은 모두 `NOT_CLAIMED`다.
@@ -221,12 +221,12 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
     - `RANGE_LIMIT`·`LIMIT`: `RESOURCE_LIMIT`, code는 `PREPROCESS_RANGE_LIMIT`·`PREPROCESS_LIMIT`
   - 빈 `ranges`는 전체 입력을 뜻하므로 `ZERO_ACTIVE`에 쓰지 않는다.
   - 편집으로 활성 구간이 사라지거나 생기는 사례도 이 규칙을 따르며, 그 사례의 CST·incremental/fresh 비교·old tree 전달·reuse 관측은 없다.
-- 결과 `tsgk-incremental-result/r5`(역사적 r4의 관측 형식 유지)
+- 역사적 결과 `tsgk-incremental-result/r5`(r4의 관측 형식 유지)
   - r3(필수 관측)에 사례별 `preprocess`(평가한 step 목록, OK가 아닌 첫 step까지)를 더한다.
   - 각 step은 `status`, `directives`(`kind`, `hash`, `active`, `taken`), `active`(byte·point), `inactive`다.
   - 이 관측은 순서 있는 지시문 위치·선택과 활성/비활성 범위만 주장한다. group 구조와 지시문 span은 주장하지 않는다.
 - 이 결과 자체는 support claim·query reference 자격을 만들지 않는다.
-  - qualification은 inventory `csharp-symbols` 역할에 등록한 workload의 실행만 읽는다. 현재 inventory/r6는 `native-result-r6`, 역사적 inventory/r5는 `native-result-r5` replay와 고정 Roslyn 관측 기대값 비교를 거친다([식별·증거](identity-and-evidence.md) `DEFERRED 역할 platform과 symbol 모드 역할`). oracle profile은 계속 `preprocess`를 받지 않는다.
+  - qualification은 inventory `csharp-symbols` 역할에 등록한 workload의 실행만 읽는다. 역사적 inventory/r6는 `native-result-r6`, 역사적 inventory/r5는 `native-result-r5` replay와 고정 Roslyn 관측 기대값 비교를 거친다([식별·증거](identity-and-evidence.md) `DEFERRED 역할 platform과 symbol 모드 역할`). oracle profile은 계속 `preprocess`를 받지 않는다.
   - query witness는 query 응답이 필요한데, 이 모드는 query 없는 `native-parse-edit`만 받는다.
 
 **선택 전환의 route (#277).** 현재 symbol 결과 r5에서 기존 proven PASS·오류-tree BLOCKED 규칙으로 판정되지 않은 edit step은 다음을 모두 만족하면 `incremental_route=BLOCKED`다: 원본과 edit로 재계산한 전후 preprocess가 OK, edit_has_changes=true·reused_nodes=0·fresh_reused_nodes=0·proven=false, old/current incremental 및 current fresh가 완료된 full tree, mandatory observation이 old tree 전달을 포함해 PASS, 그리고 보존된 active byte의 공유가 없고 보존된 byte의 active↔inactive 전환이 있다. Old 범위를 edit 밖 prefix와 suffix로 나누고 suffix를 new_end_byte-old_end_byte만큼 이동해 새 범위와 대조한다. Replacement·지시문 줄·zero-width는 전환 근거로 세지 않는다. 이중 active byte가 하나라도 있으면 예외가 아니며, 전체 코드 replacement나 같은 선택의 좌표 이동도 예외가 아니다. 첫 blocked code는 `INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_<n>`이다. 관측 누락·omit-old·불완전 관측은 이 예외를 통과하지 못하고 `INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_<n>` FAIL이다. Equality·expectation·관측 FAIL과 다른 step route FAIL은 최종 FAIL을 유지한다. 이 BLOCKED는 재사용 성공이 아니며 기본 구조 모드의 route 규칙은 기존과 같다.
@@ -241,6 +241,18 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
 * host marker는 native 관측이 아니다. native 관측이 없으면 `NOT_CLAIMED`이며, gap 경계의 reuse는 주장하지 않는다.
 
 관측 claim은 완료 사례의 판정에 마지막으로 접는다. case·SVC segment·batch frame의 모든 반환 경로에서 같다. FAIL은 FAIL이 아니던 사례를 FAIL로 바꾸고 code를 `REUSE_OBSERVATION_FAILED`로 둔다. BLOCKED는 PASS 사례만 BLOCKED(`REUSE_OBSERVATION_LIMIT`)로 바꾼다. 이미 FAIL인 사례의 code는 유지한다. 일찍 끝난 사례는 종료 판정을 유지하고 claim만 기록한다. 이 claim은 parse 시작과 old-tree 인자의 축이며 전체 logger 수집 완결성, CST 동치나 node 재사용 증명이 아니다. accepted≥1에 근거한 새 reuse 증명 claim은 이 revision에 없다.
+
+### C# symbol 모드의 primary full CST 대조 (#279)
+
+현재 symbol 결과는 `tsgk-incremental-result/r6`, policy는 `tsgk-native-policy/r4`다. 앞의 result/r5·policy/r3 설명은 #277의 역사적 계약이다. host가 원문과 등록 edit 전체를 재구성하고 모든 전처리 step이 OK이면, 활성 범위를 보내기 **전에** 같은 history로 별도 structural primary 요청을 한 번 실행한다. 이 요청은 원문 전체, `output=tree`, 필수 관측 protocol/r3만 사용한다. active 기대값·point·범위·preprocess·SVC·query·API·declarations를 전달하지 않는다. 기존 non-OK/source/edit 거부에는 primary를 실행하지 않는다.
+
+primary의 모든 source/edit·process·wire 결속과 full incremental/fresh CST, 완전한 logger 관측, incremental/fresh equality를 먼저 검사한다. 이후 step의 검증 실패는 앞의 위치 차이보다 우선한다. 유효한 TRUNCATED start 관측도 완전한 수집이 아니므로 대조 근거가 될 수 없다. ERROR node 자체는 mismatch가 아니다. 초기 full CST와 편집 뒤 fresh full CST에서 비누락·양의 폭인 실제 `#if`, `#elif`, `#else`, `#endif`, `#define`, `#undef`, `#region`, `#endregion`, `#nullable`, `#line`, `#error`, `#warning`, `#pragma`, `#r`, `#load` token 및 `shebang_directive`, `file_based_app_directive` alias의 `#` byte 위치를 읽는다. 원문의 `#`·keyword/prefix와 범위를 확인하고 정렬·중복 제거한다. wrapper·missing·zero-width node는 제외한다. host의 지시문 hash 위치 집합과 같다는 주장만 하며, token kind나 lexer 일반 동등성을 주장하지 않는다.
+
+사례의 필수 `preprocess_cst`는 `schema=tsgk-preprocess-cst/r1`, `result`, `code`, `steps`, `primary`다. result는 PASS/MISMATCH/UNVERIFIED/FAIL/NOT_APPLICABLE이다. 각 step은 `step`, `source_sha256`, `source_bytes`, `result`(MATCH/MISMATCH), `code`, `host_hashes`, `cst_hashes`, `host_only`, `cst_only`를 모두 갖는다. 배열은 빈 경우에도 `[]`다. 같으면 모든 step, 다르면 첫 mismatch까지의 prefix만 남긴다. MISMATCH는 `PREPROCESS_CST_MISMATCH_STEP_n`으로 active 실행을 NOT_RUN/BLOCKED 처리하고 active raw/process/steps와 claim을 만들지 않는다. UNVERIFIED도 active를 멈추고 원인은 primary receipt에 보존한다. 증거 모순·equality/관측 실패는 FAIL이다. NOT_APPLICABLE의 code는 기존 host/source/edit 정지 code이며 해결 PASS로 세지 않는다.
+
+primary receipt는 `schema=tsgk-preprocess-primary/r1`, `role=primary-full-source`, structural r1 `policy`, `execution_status`, `code`, `process`다. raw가 있으면 status/code는 wire 응답 값이고, 없으면 pre-frame 원인이다. process의 필수 필드는 `status`, `reason`, `exit_code`, `cleanup_verified`, `cleanup_scope`, `stdout_bytes`, `stdout_truncated`, `wall_ms`, `wall_budget_ms`, `memory_limit_bytes`, `memory_enforcement`, `peak_bytes`, `peak_known`, `memory_limit_hit`다. primary/process 포인터만 명시적 null을 허용한다. unknown/중복 member·null scalar/array·누락 필드는 거부한다.
+
+raw는 frame header를 제외한 JSON이며 `primary/responses/<nnnnn>-<case>.json`에 저장한다. 정상 full 응답의 `stdout_bytes`는 raw+4이며 output 한도+4 이내여야 한다. process exit/status·정해진 OS cleanup scope·memory backend(Windows JOB_OBJECT/HARD, Linux CGROUP_KILL/HARD, macOS PROCESS_GROUP/SAMPLED)·한도·wall 예산을 검사한다. Linux의 CGROUP 별칭이나 sampled fallback을 허용하지 않는다. wall은 parse/edit와 남은 run wall의 최솟값이며 기존 runner의 cleanup grace 5초와 밀리초 올림 1ms만 허용한다. cleanup 미확인·정상 제한 종료·부분 출력은 PASS나 MISMATCH 근거가 아니다. raw 없는 제한 종료의 stdout_bytes는 저장 길이가 아닌 실제 수신 수이며, stdout_truncated는 수신 수가 output 한도+4를 넘는지와 같아야 한다. runner는 최초 종료 reason을 유지하므로 이후 관측한 memory_limit_hit와 WALL/OUTPUT/CANCELLED reason이 함께 남을 수 있다. 이들은 일관된 UNVERIFIED 근거이며 완전한 raw의 상한·frame-byte·memory-hit 검사를 완화하지 않는다. primary raw 저장 뒤 메모리 버퍼를 비우며 full projection을 결과에 중복하지 않는다. primary와 active는 직렬이고 기존 source64KiB/nodes10,000/output8MiB/memory4GiB/parse·edit10초/edit4개/run3,600초 한도를 공유한다. active는 남은 run 시간 안에서만 실행한다. 이 저장 검사는 실행 진위를 인증하거나 producer가 실제로 범위를 생략했음을 증명하지 않는다.
 
 ### query·API와 필수 관측 — `tsgk-native/r4` (#217)
 

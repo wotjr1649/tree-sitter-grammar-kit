@@ -17,6 +17,7 @@ const (
 	NativePolicySchema      = "tsgk-native-policy/r1"
 	NativePolicySchemaR2    = "tsgk-native-policy/r2" // r1 plus the preprocess binding
 	NativePolicySchemaR3    = "tsgk-native-policy/r3" // r2 plus the selection route rule
+	NativePolicySchemaR4    = "tsgk-native-policy/r4" // r3 plus the full-source CST preflight
 	SelectionRoutePolicy    = "csharp-selection-route/r1"
 	SelectionRoutePrefix    = "INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_"
 )
@@ -149,10 +150,15 @@ func NativePolicyText(op NativeOperation, output string) string {
 		NativePolicySchema, op.Name, output, l, op.ParseWall, op.EditWall, op.MaxEdits, op.Batch, op.BatchFiles, op.BatchBytes, op.FrameWall, op.BatchWall, op.RunWall)
 }
 
-// NativePolicy is the current native policy: r1 without preprocessing, or r3 binding the
+// NativePolicy is the current native policy: r1 without preprocessing, or r4 binding the
 // historical r2 preprocess policy and the selection route rule.
 func NativePolicy(op NativeOperation, output string, pp *Preprocess) IdentityRef {
-	return nativePolicy(op, output, pp, true)
+	prior := nativePolicy(op, output, pp, true)
+	if pp == nil {
+		return prior
+	}
+	text := fmt.Sprintf("%s\nselection_policy=%s %s\npreprocess_cst=%s\n", NativePolicySchemaR4, prior.Schema, prior.SHA256, PreprocessCSTPolicy)
+	return IdentityRef{Role: "policy", Schema: NativePolicySchemaR4, SHA256: digestHex([]byte(text))}
 }
 
 // nativePolicy keeps the historical r2 preimage for native-result-r5 and inventory/r5.

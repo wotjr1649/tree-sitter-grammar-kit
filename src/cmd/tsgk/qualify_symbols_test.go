@@ -53,12 +53,12 @@ func TestQualifySymbolRole(t *testing.T) {
 	var ws []kit.QualWorkload
 	for _, x := range inv.ExtraRoles {
 		for _, y := range x.Workloads {
-			if x.ID == "csharp-symbols" && (y.Set == none || y.Set == ac || y.Set == switched) {
+			if x.ID == "csharp-symbols" {
 				ws = append(ws, y)
 			}
 		}
 	}
-	if len(ws) != 3 || ws[0].Set != none || ws[2].Set != switched {
+	if len(ws) != 6 || ws[0].Set != none || ws[4].Set != switched {
 		t.Fatal("registered symbol workloads missing")
 	}
 	// this host executes the role; another registered platform is deferred
@@ -198,7 +198,7 @@ func TestQualifySymbolRole(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 3 || r.Sets[0].Records != len(ws[0].Cases) || r.Sets[2].Records != 1 {
+	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 6 || r.Sets[0].Records != len(ws[0].Cases) || r.Sets[4].Records != 1 || r.PreprocessCST == nil || r.PreprocessCST.Result != kit.AssessBlocked || r.PreprocessCST.Counts.Mismatch != 4 || r.PreprocessCST.Counts.Pass != 22 || r.PreprocessCST.ComparedSteps != 29 {
 		t.Fatalf("host row %s %s %s %v", r.Status, r.Mechanism, r.Checks, codes(r))
 	}
 	if d := row(res, other.ID); d.Status != kit.RoleDeferred || d.Mechanism != "" || d.Checks != "" || len(d.Sets) != 0 {
@@ -248,7 +248,15 @@ func TestQualifySymbolRole(t *testing.T) {
 			rewrite(t, filepath.Join(dir, "sources", "00000-"+ws[0].Cases[0].ID+".bin"), []byte("class C {}"), []byte("class D {}"))
 		}},
 		{"case outcome", none, "REPLAY_INVALID", func(dir string) {
-			rewrite(t, filepath.Join(dir, "result.json"), []byte(`"code":"PREPROCESS_ZERO_ACTIVE"`), []byte(`"code":"PREPROCESS_MALFORMED"`))
+			path := filepath.Join(dir, "result.json")
+			data, err := os.ReadFile(path)
+			if err != nil || bytes.Count(data, []byte(`"code":"PREPROCESS_ZERO_ACTIVE"`)) != 2 {
+				t.Fatal("outer and CST stopped codes missing", err)
+			}
+			data = bytes.Replace(data, []byte(`"code":"PREPROCESS_ZERO_ACTIVE"`), []byte(`"code":"PREPROCESS_MALFORMED"`), 1)
+			if err := os.WriteFile(path, data, 0o644); err != nil {
+				t.Fatal(err)
+			}
 		}},
 		{"result moved", ac, "REPLAY_INVALID", func(dir string) {
 			data, err := os.ReadFile(filepath.Join(filepath.Dir(dir), none, "result.json"))

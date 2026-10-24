@@ -293,7 +293,13 @@ C# symbol 모드(#218)
 - `Preprocess{Mode, Symbols}`는 profile의 preprocess member다. `SymbolsDigest`는 `tsgk-pp-symbols/r1`이다.
 - `NativePolicyText`·`NativePolicy`는 실행과 replay가 함께 쓰는 native policy identity다.
   - preprocess가 없으면 `tsgk-native-policy/r1`이고, 기존 bytes·hash와 같다(`TestPolicyRefPreimage`).
-  - preprocess가 있으면 현재 `tsgk-native-policy/r3`다. 역사적 r5 replay의 r2 policy 계산은 보존한다([식별·증거](identity-and-evidence.md)).
+  - preprocess가 있으면 현재 `tsgk-native-policy/r4`다. 역사적 r5/r6 replay의 r2/r3 policy 계산은 보존한다([식별·증거](identity-and-evidence.md)).
+
+### primary CST data-only API (#279)
+
+`CheckPreprocessCST(PreprocessCSTRequest) PreprocessCSTResult`는 caller 소유 원문·등록 case/edit·preprocess·고정 operation·platform·run/producer identity와 raw payload·primary process receipt를 검사한다. 파일을 읽거나 실행하지 않는다. 외부 source/history 결속, complete/full CST·완전 관측·equality 검사를 먼저 끝내고 지시문 hash-byte 위치 prefix를 비교한다. 결과는 PASS/MISMATCH/UNVERIFIED/FAIL/NOT_APPLICABLE이며 ERROR 자체를 mismatch로 삼지 않는다. caller 입력은 읽기만 하고 결과 배열은 새로 만든다. `Primary`는 입력 receipt 포인터를 그대로 참조하므로 caller가 소유한다. 실행 진위·실제 ranges 생략·일반 lexer 동등성을 인증하지 않는다. 타입과 필드 계약은 [tree/protocol](tree-and-adapter-protocol.md#c-symbol-모드의-primary-full-cst-대조-279)을 따른다.
+
+`NativePolicy`는 현재 preprocessing에 policy/r4, preprocessing이 없으면 기존 r1을 반환한다. r2/r3 계산은 역사적 reducer 내부에 남는다. `ReplayResult.PreprocessCST`는 현재 r7 reducer의 검증된 case projection이며 이전 revision에서는 없다. `QualCase.PreprocessCSTExpect`는 실행 profile 밖의 기대값, `QualSet.PreprocessCST`·`QualRoleRow.PreprocessCST`는 별도 집계 축이다. 현재 inventory/r7의 결과/r8과 역사적 r6→r7, r5→r6를 구분한다. 상수·공개 구조체 추가는 다음 source 소비 변화이며 배포 완료 주장이 아니다.
 
 ## S06 함수 — capture 비교, oracle profile, 기록 set 검증, 사실 query 세트
 

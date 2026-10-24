@@ -181,6 +181,16 @@ func verify(ctx context.Context, expected kit.RunIdentity, root string) (map[str
 }
 
 func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inventory kit.QualificationInventory) error {
+	cstBlocked, err := checkCSTAxes(q, inventory)
+	if err != nil {
+		return err
+	}
+	assessment, support := kit.AssessPass, "SUPPORTED"
+	for _, blocked := range cstBlocked {
+		if blocked {
+			assessment, support = kit.AssessBlocked, "BLOCKED"
+		}
+	}
 	want := map[string]map[string]bool{}
 	obligationCount := 0
 	for _, r := range inventory.Routes {
@@ -196,7 +206,7 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 		}
 	}
 	if q.ResultSchema != kit.QualificationResultSchema || !sameRun(q.Run, expected) || q.Candidate != expected.Checkout ||
-		q.Assessment != kit.AssessPass || q.Completeness != "PASS" || q.MechanismGate != "PASS" || q.SupportClaim != "SUPPORTED" || len(q.Findings) != 0 ||
+		q.Assessment != assessment || q.Completeness != "PASS" || q.MechanismGate != "PASS" || q.SupportClaim != support || len(q.Findings) != 0 ||
 		len(q.Cells) != 78 || q.Totals.Cells != 78 || len(q.Totals.Status) != 1 || q.Totals.Status["PASS"] != 78 ||
 		len(want) != 78 || obligationCount <= 0 || q.Totals.Obligations.Obligations != obligationCount || q.Totals.Obligations.Pass != q.Totals.Obligations.Obligations ||
 		q.Totals.Obligations.Fail != 0 || q.Totals.Obligations.Blocked != 0 || q.Totals.Obligations.NotCovered != 0 || len(q.PlatformClaims) != 3 {
@@ -221,7 +231,11 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 		}
 	}
 	for _, p := range platforms {
-		if q.PlatformClaims[p.id] != "SUPPORTED" {
+		wantClaim := "SUPPORTED"
+		if cstBlocked[p.id] {
+			wantClaim = "BLOCKED"
+		}
+		if q.PlatformClaims[p.id] != wantClaim {
 			return errors.New("unsupported platform")
 		}
 	}

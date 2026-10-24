@@ -27,6 +27,7 @@ func (f *qfx) qfxSymbolRole() *QualRole {
 		{ID: "zero", Role: "support", Input: NativeInput{SHA256: sum([]byte("beta")), Bytes: 4}, Edits: []Edit{}, Expect: []StepExpectation{}, QueryExpect: []QueryExpectation{},
 			Covers: map[string][]string{}, ExpectStatus: StatusNotRun, ExpectAssessment: AssessBlocked, ExpectCode: "PREPROCESS_ZERO_ACTIVE", PreprocessExpect: sel(PreprocessZeroActive)},
 	}
+	w.Cases[0].PreprocessCSTExpect = []PreprocessCSTStep{{Step: 0, SourceSHA256: w.Cases[0].Input.SHA256, SourceBytes: 5, Result: "MATCH", HostHashes: []uint32{}, CSTHashes: []uint32{}, HostOnly: []uint32{}, CSTOnly: []uint32{}}}
 	f.inv.ExtraRoles = append(f.inv.ExtraRoles, QualRole{ID: "fx-symbols", Role: "owned", Status: RoleExecuted, Reason: "owned symbol-mode fixture", Platforms: []string{"windows-amd64"},
 		NotApplicable: map[string]string{}, Deferred: map[string]string{"linux-amd64": "deferred", "darwin-arm64": "deferred"}, Workloads: []QualWorkload{w}})
 	return &f.inv.ExtraRoles[len(f.inv.ExtraRoles)-1]
@@ -124,6 +125,43 @@ func TestQualificationInventorySymbolRole(t *testing.T) {
 	}
 }
 
+func TestQualificationHistoricalCSTMember(t *testing.T) {
+	for _, schema := range []string{qualificationInventoryR5, qualificationInventoryR6} {
+		f := newQfx(t)
+		role := f.qfxSymbolRole()
+		role.Workloads[0].Cases[0].PreprocessCSTExpect = nil
+		f.inv.Schema = schema
+		base := f.invBytes(t)
+		if _, err := ParseQualificationInventory(base); err != nil {
+			t.Fatal("historical baseline", err)
+		}
+		for _, value := range []string{"null", "[]"} {
+			changed := bytes.Replace(base, []byte(`"id":"ok"`), []byte(`"preprocess_cst_expect":`+value+`,"id":"ok"`), 1)
+			if bytes.Equal(base, changed) {
+				t.Fatal("case anchor missing")
+			}
+			if _, err := ParseQualificationInventory(changed); err == nil {
+				t.Fatalf("%s accepted new member %s", schema, value)
+			}
+		}
+	}
+}
+
+func TestQualificationCSTRequiredMembers(t *testing.T) {
+	f := newQfx(t)
+	f.qfxSymbolRole()
+	base := f.invBytes(t)
+	for _, replacement := range []string{`"result":"MATCH"`, `"result":"MATCH","code":null`} {
+		changed := bytes.Replace(base, []byte(`"result":"MATCH","code":""`), []byte(replacement), 1)
+		if bytes.Equal(base, changed) {
+			t.Fatal("CST step anchor missing")
+		}
+		if _, err := ParseQualificationInventory(changed); err == nil {
+			t.Fatal("missing/null registered code accepted")
+		}
+	}
+}
+
 func TestSelectionOutcomeRegistration(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "contracts", "qualification-c1.json"))
 	if err != nil {
@@ -206,16 +244,12 @@ func TestReplaySharedBudget(t *testing.T) {
 // (INCOMPLETE, mechanism BLOCKED), never a pass; the replay counts against the host byte
 // budget and the set's cases against the host record limit.
 func TestQualifySymbolSetLimits(t *testing.T) {
-	for _, legacy := range []bool{false, true} {
-		name := "current-r6"
-		if legacy {
-			name = "historical-r5"
-		}
-		t.Run(name, func(t *testing.T) { qualifySymbolSetLimits(t, legacy) })
+	for _, schema := range []string{QualificationInventorySchema, qualificationInventoryR6, qualificationInventoryR5} {
+		t.Run(schema, func(t *testing.T) { qualifySymbolSetLimits(t, schema) })
 	}
 }
 
-func qualifySymbolSetLimits(t *testing.T, legacy bool) {
+func qualifySymbolSetLimits(t *testing.T, schema string) {
 	data, err := os.ReadFile(filepath.Join("..", "contracts", "qualification-c1.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -225,9 +259,11 @@ func qualifySymbolSetLimits(t *testing.T, legacy bool) {
 		t.Fatal(err)
 	}
 	fixture := "qualify-symbols"
-	if legacy {
-		inv.Schema = qualificationInventoryR5
+	inv.Schema = schema
+	if schema == qualificationInventoryR5 {
 		fixture = "qualify-symbols-r4"
+	} else if schema == qualificationInventoryR6 {
+		fixture = "qualify-symbols-r5"
 	}
 	var w QualWorkload
 	for _, x := range inv.ExtraRoles {
@@ -235,6 +271,11 @@ func qualifySymbolSetLimits(t *testing.T, legacy bool) {
 			if x.ID == "csharp-symbols" && y.Set == "s05-csharp-symbols-a-c" {
 				w = y
 			}
+		}
+	}
+	if schema != QualificationInventorySchema {
+		for i := range w.Cases {
+			w.Cases[i].PreprocessCSTExpect = nil
 		}
 	}
 	win, lin := inv.Platforms[0], inv.Platforms[1]
@@ -259,8 +300,10 @@ func qualifySymbolSetLimits(t *testing.T, legacy bool) {
 	qualify := func() (QualRoleRow, error) {
 		r, err := Qualify(ctxT(t), QualifyRequest{Inventory: invData, Candidate: cand, Hosts: []QualifyHost{{Platform: win.ID, Root: host}}})
 		wantSchema := QualificationResultSchema
-		if legacy {
+		if schema == qualificationInventoryR5 {
 			wantSchema = qualificationResultR6
+		} else if schema == qualificationInventoryR6 {
+			wantSchema = qualificationResultR7
 		}
 		if err == nil && r.ResultSchema != wantSchema {
 			t.Fatalf("result revision %s, want %s", r.ResultSchema, wantSchema)

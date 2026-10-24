@@ -51,7 +51,8 @@ func TestPreprocessSelectionDisjoint(t *testing.T) {
 		t.Fatalf("legacy policy changed: %+v", legacy)
 	}
 	current := NativePolicy(NativeOperations()["native-parse-edit"], "tree", pp)
-	if current.Schema != NativePolicySchemaR3 || current.SHA256 == legacy.SHA256 {
+	r3 := nativePolicy(NativeOperations()["native-parse-edit"], "tree", pp, true)
+	if r3.Schema != NativePolicySchemaR3 || r3.SHA256 == legacy.SHA256 || current.Schema != NativePolicySchemaR4 || current.SHA256 == legacy.SHA256 || current.SHA256 == r3.SHA256 {
 		t.Fatalf("selection rule unbound: %+v", current)
 	}
 }

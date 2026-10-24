@@ -109,6 +109,17 @@ func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.Qualificat
 			case x.Status != kit.RoleExecuted:
 			case slices.Contains(x.Platforms, p.ID):
 				row.Status, row.Mechanism, row.Checks, row.Sets = "PASS", "PASS", "PASS", []kit.QualSet{{}}
+				if x.ID == "csharp-symbols" {
+					axis := expectedCSTAxis(x.Workloads)
+					row.PreprocessCST = &axis
+					row.Sets = nil
+					for _, w := range x.Workloads {
+						setAxis := expectedCSTAxis([]kit.QualWorkload{w})
+						row.Sets = append(row.Sets, kit.QualSet{Set: w.Set, Platform: p.ID, PreprocessCST: &setAxis})
+					}
+					q.Assessment, q.SupportClaim = kit.AssessBlocked, "BLOCKED"
+					q.PlatformClaims[p.ID] = "BLOCKED"
+				}
 			case x.NotApplicable[p.ID] != "":
 				row.Status = kit.RoleNotApplicable
 			case x.Deferred[p.ID] != "":

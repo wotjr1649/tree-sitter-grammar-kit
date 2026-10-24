@@ -22,7 +22,7 @@
 # csharp-symbols role exactly as registered (src/contracts/qualification-c1.json, sources from
 # src/testdata/csharp-pp/cases.json) and keeps each under incremental/<set>/: profile.json,
 # result.json, responses/ and the case-source witnesses sources/<nnnnn>-<case>.bin; a result
-# that is not tsgk-incremental-result/r5 or a case that does not end as registered fails.
+# that is not tsgk-incremental-result/r6 or a case that does not end as registered fails.
 param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
@@ -547,7 +547,7 @@ if ($Symbols) {
     for ($i = 0; $i -lt $sources.Count; $i++) { [IO.File]::WriteAllBytes((Join-Path $out ('sources/{0:D5}-{1}.bin' -f $i, $w.cases[$i].id)), $sources[$i]) }
     $res = Get-Content -LiteralPath $resPath -Raw | ConvertFrom-Json
     Add-BuildObservation $res
-    if ($res.result_schema -ne 'tsgk-incremental-result/r5') { $summary.failures += "symbols $($w.set): result $($res.result_schema)" }
+    if ($res.result_schema -ne 'tsgk-incremental-result/r6') { $summary.failures += "symbols $($w.set): result $($res.result_schema)" }
     # a failure the CLI reports only as a result finding (build cleanup) also fails the set
     foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $summary.failures += "symbols $($w.set): $($f.code)" } }
     if ($reported.execution_status -ne $res.execution_status -or $reported.assessment -ne $res.assessment) { $summary.failures += "symbols $($w.set): reported $($reported.execution_status)/$($reported.assessment), published $($res.execution_status)/$($res.assessment)" }

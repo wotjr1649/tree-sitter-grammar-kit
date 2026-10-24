@@ -162,11 +162,12 @@ type rcCase struct {
 		FactReproduction  string `json:"fact_reproduction"`
 		DynamicSQL        string `json:"dynamic_sql"`
 	} `json:"oracle_claims"`
-	Steps        []rcStep          `json:"steps"`
-	Expectations []rcExpect        `json:"expectations"`
-	Preprocess   *[]PreprocessStep `json:"preprocess"`
-	Process      jsontext.Value    `json:"process"` // only read for a stopped symbol-mode case (#218)
-	Producer     *struct {
+	Steps         []rcStep          `json:"steps"`
+	Expectations  []rcExpect        `json:"expectations"`
+	Preprocess    *[]PreprocessStep `json:"preprocess"`
+	PreprocessCST jsontext.Value    `json:"preprocess_cst,omitempty"`
+	Process       jsontext.Value    `json:"process"` // only read for a stopped symbol-mode case (#218)
+	Producer      *struct {
 		Query            string         `json:"query"`
 		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
 	} `json:"producer"`
@@ -247,6 +248,9 @@ func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
 func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, queries bool) caseOutcome {
+	if !x.preprocessCST && len(c.PreprocessCST) != 0 {
+		x.gate("preprocess-cst").fail(c.ID, "PREPROCESS_CST_SCHEMA_UNSUPPORTED", "이 revision은 primary CST 증거를 소비하지 않는다")
+	}
 	if !x.reuseObservation {
 		present := len(c.ReuseObservationClaim) != 0 || c.Producer != nil && len(c.Producer.ReuseObservation) != 0
 		for _, s := range c.Steps {
@@ -291,6 +295,9 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	st := x.gate("case-status")
 	if c.ExecutionStatus != StatusCompleted {
 		allowed, known := statusAssessments[c.ExecutionStatus]
+		if x.preprocessCST && x.currentCST != nil && x.currentCST.Result == "FAIL" && c.ExecutionStatus == StatusNotRun {
+			allowed = append(slices.Clone(allowed), AssessFail)
+		}
 		claims := []string{c.Claims.IncrementalEquality, c.Claims.IncrementalRoute, c.Claims.Expectations}
 		if c.Oracle != nil {
 			claims = append(claims, c.Oracle.QueryEquality, c.Oracle.QueryExpectations, c.Oracle.API, c.Oracle.FactReproduction, c.Oracle.DynamicSQL)
@@ -1240,18 +1247,23 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		}
 		if x.selectionRoute {
 			x.selectionSteps, x.selectionBytes = nil, nil
-			if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
+			x.currentCST = nil
+			if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess, top); e != nil {
 				return e
 			}
 		}
 		o := x.replayCase(&c, i, want[c.ID], false)
+		if x.preprocessCST && x.currentCST != nil && x.currentCST.Result == "UNVERIFIED" {
+			o.complete = false
+			o.assess = AssessUnresolved
+		}
 		if x.reuseObservation {
 			unknownPoints := x.gate("edit-points").NotRecomputed
 			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
 				return e
 			}
 			if x.preprocess && !x.selectionRoute {
-				if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess); e != nil {
+				if e := x.replayPreprocess(&c, i, want[c.ID], prof.Preprocess, top); e != nil {
 					return e
 				}
 			}
@@ -1282,7 +1294,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.selectionRoute {
+	if x.preprocessCST {
+		wantSchema = "tsgk-incremental-result/r6"
+	} else if x.selectionRoute {
 		wantSchema = "tsgk-incremental-result/r5"
 	} else if x.preprocess {
 		wantSchema = "tsgk-incremental-result/r4"
@@ -1394,6 +1408,11 @@ func replayNativeResult(x *replayEnv) *Error {
 		}
 		rg.check(ok, m.Path, "RESPONSE_UNBOUND", "response 이름이 workload case 순번·id와 맞지 않는다")
 		x.consumed[m.Path] = ok
+	}
+	if x.preprocessCST {
+		for _, m := range x.membersByRole("primary-response") {
+			x.gate("preprocess-cst").check(x.consumed[m.Path], m.Path, "PRIMARY_RESPONSE_UNBOUND", "primary 원 응답이 등록 사례와 결속되지 않았다")
+		}
 	}
 	return nil
 }

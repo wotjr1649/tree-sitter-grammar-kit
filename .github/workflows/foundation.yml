@@ -752,7 +752,11 @@ jobs:
           # and its qualification role row with the tampering controls
           go test ./src/cmd/tsgk -run '^(TestIncrementalCLISymbolMode|TestQualifySymbolRole)$' -count=1 -v -timeout=300s > (Join-Path $out 'csharp-symbols.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'C# symbols run, replay or qualification controls failed' }
-          foreach ($test in @('TestIncrementalCLISymbolMode', 'TestQualifySymbolRole')) {
+          # #279: primary agreement needs the registered C# grammar; keep the active-range
+          # anchors mandatory here when the owned fixture grammar lacks directives.
+          go test ./src/internal/native -run '^TestNativePreprocess(Ranges|CST)$' -count=1 -v -timeout=180s >> (Join-Path $out 'csharp-symbols.log') 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'C# primary agreement or active-range anchors failed' }
+          foreach ($test in @('TestIncrementalCLISymbolMode', 'TestQualifySymbolRole', 'TestNativePreprocessRanges', 'TestNativePreprocessCST')) {
             if (!(Select-String -LiteralPath (Join-Path $out 'csharp-symbols.log') -CaseSensitive -Quiet -Pattern "^--- PASS: $test \(")) { throw "C# symbols test $test did not run" }
           }
           if ($IsWindows) {
