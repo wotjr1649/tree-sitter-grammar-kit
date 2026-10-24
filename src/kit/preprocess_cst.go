@@ -177,7 +177,7 @@ func CheckPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 				return bad()
 			}
 		case StatusCancelled:
-			if !cleanupStop && (p.ExecutionStatus != StatusCancelled || p.Code != "CANCELLED") || proc.Reason != "CANCELLED" || proc.MemoryLimitHit {
+			if !cleanupStop && (p.ExecutionStatus != StatusCancelled || p.Code != "CANCELLED") || proc.Reason != "CANCELLED" {
 				return bad()
 			}
 		case StatusCompleted, StatusFailed:

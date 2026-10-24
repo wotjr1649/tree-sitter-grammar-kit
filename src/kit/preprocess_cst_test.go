@@ -239,6 +239,12 @@ func TestPreprocessCSTPrimary(t *testing.T) {
 			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "WALL_LIMIT"
 			r.Primary.Process.StdoutBytes, r.Primary.Process.MemoryLimitHit = 0, true
 		}},
+		"cancellation precedes memory flag": {"UNVERIFIED", "PREPROCESS_CST_PRIMARY_UNVERIFIED", func(r *PreprocessCSTRequest) {
+			r.Raw = nil
+			r.Primary.ExecutionStatus, r.Primary.Code = StatusCancelled, "CANCELLED"
+			r.Primary.Process.Status, r.Primary.Process.Reason = StatusCancelled, "CANCELLED"
+			r.Primary.Process.StdoutBytes, r.Primary.Process.MemoryLimitHit = 0, true
+		}},
 		"submillisecond wall receipt": {"UNVERIFIED", "PREPROCESS_CST_PRIMARY_UNVERIFIED", func(r *PreprocessCSTRequest) {
 			r.Operation.RunWall = time.Nanosecond
 			r.Primary.Policy = NativePolicy(r.Operation, OutputTree, nil)
