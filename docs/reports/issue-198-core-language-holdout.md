@@ -70,7 +70,18 @@ C/C++는 `-std=<registered> -pedantic-errors -fsyntax-only -nostdinc -fdiagnosti
 
 `SELECT 1\nWITH c AS (SELECT 2 AS x) SELECT x FROM c;`에서 native는 거부하고 ScriptDOM110·170은 두 quoted 문맥 모두 수용했다. 초기 label은 invalid이며 그대로 보존했다. 구문 표의 FN2개는 true 문맥의 **ScriptDOM 대비 차이**다. false 문맥의 같은 차이2개도 별도 관측에 남겼다.
 
-현재 Microsoft [CTE 문서](https://learn.microsoft.com/en-us/sql/t-sql/queries/with-common-table-expression-transact-sql?view=sql-server-ver17)는 같은 batch의 앞선 문장에 semicolon을 요구한다. 저장소의 과거 [#121 엔진 대조](issue-121-tsql-engine-validation.md)와 [#122](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/122)는 앞선 SELECT 뒤 이 경계를 다뤘다. 이번에 SQL Server를 실행한 것은 아니다. 따라서 ScriptDOM 수용에 맞추려고 기존 grammar guard나 label을 완화하지 않았다. 정확한 새 입력의 엔진 대조 또는 ScriptDOM 내부 원인 규명은 미검증이며, 필요하면 별도 권한의 고정 입력 검사와 실제 package-source 매핑이 필요하다. 서명된 package라는 사실은 parser 정확도나 선언 source commit과의 일치를 증명하지 않는다.
+Microsoft [CTE 문서](https://learn.microsoft.com/en-us/sql/t-sql/queries/with-common-table-expression-transact-sql?view=sql-server-ver17)는 같은 batch의 앞선 문장에 semicolon을 요구한다. 원래 #198 평가에서는 SQL Server를 실행하지 않았으며, 아래 #219 후속 판정은 원래 SDK 관측168개와 구분한다.
+
+2026-10-24 15:14 KST, [#219](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/219)에서 SQL Server2025 Express LocalDB `MSSQLLocalDB`, build **17.0.1000.7**, Express Edition (64-bit), engine edition4로 정확한 입력을 검사했다. UTF-8 **51 bytes**, SHA256 `d5126600c0bdeb9f5bf3ed9533b888a5daf788a892a3c0754d7a7353a68946a3`이며 BOM·CR·마지막 newline은 없고 두 문장 사이 LF 하나를 보존했다. 원문 전체를 하나의 `SqlCommand`로 보내며 GO나 client batch 분할을 넣지 않았다.
+
+| compatibility level | 원문 PARSEONLY | 원문 실제 실행 | 세미콜론 추가 대조군 PARSEONLY / 실제 실행 |
+|---|---|---|---|
+| 110 | REJECT, 오류319 | REJECT, 오류319 | ACCEPT / ACCEPT, 결과 집합 `[[1]]`, `[[2]]` |
+| 170 | REJECT, 오류319 | REJECT, 오류319 | ACCEPT / ACCEPT, 결과 집합 `[[1]]`, `[[2]]` |
+
+원문 거부4건의 오류는 모두 state1·severity15·line2이며 결과 집합은 없었다. 대조군은 `SELECT 1;\nWITH c AS (SELECT 2 AS x) SELECT x FROM c;`다. 별도 연결에서 `SET PARSEONLY ON`을 먼저 설정한 뒤 입력 자체를 한 batch로 보냈고, 실제 실행은 새 연결을 사용했다. 기존 PowerShell7·`System.Data.SqlClient` assembly4.6.1.6, integrated authentication, pooling 없음, 연결5초·명령10초·전체180초 상한을 사용했다. 각 연결의 compatibility level을 읽어 확인했고 `QUOTED_IDENTIFIER ON`, `ANSI_NULLS ON`, collation `SQL_Latin1_General_CP1_CI_AS`였다. 작업 전용 DB에서만110·170을 설정하고 검사 후 해당 DB를 삭제했다. 기존 DB의 설정은 변경하지 않았다. 계정·server name·raw error message는 기록하지 않았다.
+
+총8회 검사는 [#121 오류319 기록](issue-121-tsql-engine-validation.md) 및 [#122 경계](issue-122-123-tsql-boundaries.md)와 일치한다. 따라서 이 입력은 **ScriptDOM 과잉 수용 차이**로 처분하며 기존 native 거부·invalid label·입력·역사적 FN2개 집계를 유지한다. ScriptDOM 내부 원인과 package-source 매핑은 여전히 미검증이다. 서명된 package라는 사실은 parser 정확도나 선언 source commit과의 일치를 증명하지 않는다. 로컬 원문·고정 probe·8개 결과·hash 근거는 #219 task worktree의 untracked `artifacts/219-engine/`에 보존한다. 이 Windows 엔진 판정은 전체 T-SQL 또는 세 플랫폼 grammar qualification을 새로 증명하지 않는다.
 
 ## 회복, CST 무결성, replay
 
@@ -93,6 +104,6 @@ T-SQL `unclosed-bracket`의 `INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1`�
 
 ## 미측정 범위와 release 의미
 
-이 평가는 Windows 고정 소규모 합성 입력이다. 다른21 route의 정확도, 전체 언어 명세, consumer 실제 corpus, Linux/macOS의 같은 holdout, query/API 의미, 장시간 안정성·RSS·처리량·latency를 검증하지 않았다. 수집 시간에는 compile/orchestration이 포함되므로 benchmark로 쓰지 않는다. ScriptDOM source commit 매핑, 새 SQL Server 실행과 소비자 재개도 미수행이다.
+이 평가는 Windows 고정 소규모 합성 입력이다. 다른21 route의 정확도, 전체 언어 명세, consumer 실제 corpus, Linux/macOS의 같은 holdout, query/API 의미, 장시간 안정성·RSS·처리량·latency를 검증하지 않았다. 수집 시간에는 compile/orchestration이 포함되므로 benchmark로 쓰지 않는다. ScriptDOM source commit 매핑과 소비자 재개는 미수행이다. #219의 새 SQL Server 실행은 위 CTE 원문과 세미콜론 대조군에 한정한다.
 
 #199의 source-only 0.x release 준비는 이 관측과 미해결 #205·C# 문맥 경계를 공개해야 한다. 전체 grammar 정확도·세 플랫폼 동일 정확도·경쟁 제품 대비 속도 우위를 주장할 근거는 없다. tag/Release 발행은 별도 권한과 최종 후보 검증을 요구한다. #198의 평가 완료와 개별 제약의 해결 완료는 구분한다.
