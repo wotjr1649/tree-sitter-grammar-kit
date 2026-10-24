@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -144,7 +145,11 @@ func TestReplaySharedBudget(t *testing.T) {
 }
 
 // #218: a recorded symbol-mode set (src/testdata/qualify-symbols: run-routes.ps1 -Symbols on
-// windows/amd64 for s05-csharp-symbols-a-c) under the qualification limits. It passes as
+// windows/amd64 for s05-csharp-symbols-a-c) under the qualification limits. The record binds
+// the current registration, runtime commit and native policy: when the C# grammar, the
+// pinned runtime, the operation limits or the policy text change, the baseline fails and
+// the set is recorded again with run-routes.ps1 -Routes none -Symbols (copy
+// incremental/s05-csharp-symbols-a-c). It passes as
 // registered; a replay member beyond the replay file limit leaves the row unverified
 // (INCOMPLETE, mechanism BLOCKED), never a pass; the replay counts against the host byte
 // budget and the set's cases against the host record limit.
@@ -191,11 +196,36 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	if r, err := qualify(); err != nil || r.Status != CellPass || r.Mechanism != AssessPass {
 		t.Fatalf("recorded set: %v %+v", err, r)
 	}
+	// a recorded code on a case whose steps are all OK is not fixed by its selection: with the
+	// summary kept consistent the replay accepts it, and the registered outcome refuses it
+	resPath := filepath.Join(set, "result.json")
+	recorded, err := os.ReadFile(resPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := bytes.Replace(recorded, []byte(`"assessment":"PASS","code":"",`), []byte(`"assessment":"PASS","code":"CONTROL",`), 1)
+	changed = bytes.Replace(changed, []byte(`"codes":{}`), []byte(`"codes":{"CONTROL":1}`), 1)
+	if bytes.Equal(changed, recorded) || os.WriteFile(resPath, changed, 0o644) != nil {
+		t.Fatal("recorded code not changed")
+	}
+	if r, err := qualify(); err != nil || r.Status != CellFail || r.Mechanism != AssessPass || r.Checks != claimFail {
+		t.Fatalf("recorded code: %v %+v", err, r)
+	}
+	if err := os.WriteFile(resPath, recorded, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 1024; return l }
 	r, err := qualify()
 	testHookReplayLimits = nil
 	if err != nil || r.Status != CellIncomplete || r.Mechanism != AssessBlocked {
 		t.Fatalf("replay member over its limit: %v %+v", err, r)
+	}
+	// a set file beyond the host file limit is not read either: unverified, not failed
+	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 4096; return l }
+	r, err = qualify()
+	testHookQualifyLimits = nil
+	if err != nil || r.Status != CellIncomplete || r.Mechanism != AssessBlocked {
+		t.Fatalf("host file over its limit: %v %+v", err, r)
 	}
 	// the host reads every set file before the replay: a budget just above that ends inside it
 	size := func(p string) uint64 {

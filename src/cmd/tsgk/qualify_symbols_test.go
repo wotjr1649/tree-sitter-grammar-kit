@@ -277,8 +277,8 @@ func TestQualifySymbolRole(t *testing.T) {
 		st.Active = []kit.ByteRange{{Start: st.Active[0].Start, End: st.Active[0].End - 1}}
 		c.PreprocessExpect[0] = st
 	}), host)
-	if r := row(res, hp.ID); err != nil || r.Status != kit.CellFail || !slices.Contains(codes(r), "PREPROCESS_EXPECT_MISMATCH") {
-		t.Errorf("registered selection: %v %s %v", err, r.Status, codes(r))
+	if r := row(res, hp.ID); err != nil || r.Status != kit.CellFail || r.Mechanism != kit.AssessPass || r.Checks != "FAIL" {
+		t.Errorf("registered selection: %v %s %s %s %v", err, r.Status, r.Mechanism, r.Checks, codes(r))
 	}
 	// a set the inventory does not register fails completeness
 	extra := copyHost("extra set")

@@ -64,7 +64,7 @@ release의 범위는 [제품 범위](scope.md)가 정한다. 아래 한계는 so
   - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
   - BrightScript·cooklang 역할 NOT_RUN
   - `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
-  - `csharp-symbols` 역할의 macOS 행 DEFERRED(#243). 분기를 바꾸는 edit 사례는 등록하지 않았다(바뀐 활성 범위가 text를 공유하지 않아 S05 incremental route claim이 FAIL이 되는 것을 관측함)
+  - `csharp-symbols` 역할의 macOS 행 DEFERRED(#243). 분기를 바꾸는 edit 사례는 등록하지 않았다(바뀐 활성 범위가 text를 공유하지 않아 S05 incremental route claim이 FAIL이 되는 것을 관측함, [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277))
   - 26 route의 macOS 재생성과 macOS race 진단은 NOT_RUN
   - [#65](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/65)의 시험 시간 여유
 - v0.1.0(2026-10-04)의 claim은 offline core VERIFIED였고 26 route 지원은 주장하지 않았다(당시 판정 BLOCKED). 당시 claim과 한계는 [변경 기록](../../CHANGELOG.md)의 v0.1.0 절에 있다.

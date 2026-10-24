@@ -236,19 +236,25 @@ C# symbol 모드 qualification(218-C) 시험:
   - edit 결과가 같은 symbols의 다른 corpus 원본과 byte 단위로 같은지 확인한다.
   - 멈춘 사례에 syntax 기대값이 없는지 확인한다.
   - 생성 inventory가 저장소의 `qualification-c1.json`과 같은지 확인한다.
-  - 분기를 바꾸는 edit는 등록하지 않는다. 바뀐 활성 범위가 text를 공유하지 않아 edit step이 node를 재사용하지 못하고, S05 incremental route claim이 FAIL이 된다(로컬 Windows `literal-true`→`literal-paren-false` 관측). 이 처분은 별도 Issue로 다룬다.
+  - 분기를 바꾸는 edit는 등록하지 않는다. 바뀐 활성 범위가 text를 공유하지 않아 edit step이 node를 재사용하지 못하고, S05 incremental route claim이 FAIL이 된다(로컬 Windows `literal-true`→`literal-paren-false` 관측). 처분은 [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277)에서 다룬다.
 - kit `TestQualificationInventorySymbolRole`
   - `deferred`의 platform 분할, symbol workload·사례 규칙의 거부를 확인한다.
   - 근거 없는 실행 행이 MISSING이고 DEFERRED 행에 축이 없는지 확인한다.
+- kit `TestQualifySymbolSetLimits`·`TestReplaySharedBudget`(offline)
+  - 기록된 set `src/testdata/qualify-symbols`(windows/amd64에서 `run-routes.ps1 -Symbols`로 만든 `s05-csharp-symbols-a-c`)가 등록대로 PASS인지 확인한다.
+  - 모든 step이 OK인 사례의 code를 summary와 함께 바꾸면 replay는 받지만 등록 결과 비교로 행 FAIL인지 확인한다.
+  - replay member가 한도를 넘으면 행 INCOMPLETE(kit 축 BLOCKED)인지, replay가 host byte 예산과 record 한도 안에서 도는지 확인한다.
+  - 이 기록은 등록·고정 runtime commit·native policy에 결속된다. C# grammar, runtime, 연산 한도나 policy 문구가 바뀌면 baseline이 실패하므로 다시 기록한다.
 - `TestQualifySymbolRole`(native routes job, 등록 C# closure, 세 OS에서 실행. qualification 근거가 아니라 시험이다)
-  - 등록 workload `s05-csharp-symbols-none`을 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
+  - 등록 workload `s05-csharp-symbols-none`·`s05-csharp-symbols-a-c`를 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
   - 실행 행 PASS와 다른 platform의 DEFERRED 행을 확인한다.
   - 다음은 행 FAIL이어야 한다.
-    - host profile의 symbols 변경, preprocess 삭제(기본 모드 재표기)
-    - witness 변경, result 사례 결과 변경
+    - host profile의 symbols 변경·재정렬, preprocess 삭제(기본 모드 재표기), 사례 삭제
+    - set 안에서 일관된 위조(다른 원본, 그 witness와 profile digest)
+    - witness 변경, result 사례 결과 변경, 다른 workload result 이식
     - set 안의 등록되지 않은 파일
     - 기록과 다른 등록 선택
-  - 등록되지 않은 set은 완결성 FAIL(`HOST_FILE_UNREGISTERED`)이어야 한다.
+  - 등록되지 않은 set, deferred platform host가 낸 역할 근거는 완결성 FAIL(`HOST_FILE_UNREGISTERED`)이어야 한다.
   - deferred 삭제, 실행 platform의 deferred 등록, 멈춘 사례의 다른 결과 등록, 선택 없는 사례는 inventory 거부여야 한다.
 - ci-gate `TestQualificationRejectsIncompleteAndForeignEvidence`
   - 역할 행 누락·중복, 실행 행 FAIL·축 BLOCKED, deferred 행의 실행 표시나 축을 거부하는지 확인한다.

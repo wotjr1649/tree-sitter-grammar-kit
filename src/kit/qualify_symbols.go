@@ -67,10 +67,17 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	stop := func(e *Error) bool {
 		return e != nil && (e.Kind == KindCancelled || e.Code == "WALL_LIMIT" || e.Code == "TOTAL_BYTES_LIMIT" || e.Kind == KindIO)
 	}
+	// a file beyond the host file limit is not read: the set stays unverified, as a route
+	// set's member over the limits does (BLOCKED, never a pass or a failure)
+	tooLarge := func(e *Error) bool { return e != nil && e.Code == "FILE_BYTES_LIMIT" }
 	// the registration: the host profile is the registered workload, field by field
 	pdata, e := h.readWalked(profPath)
 	if stop(e) {
 		return nil, e
+	}
+	if tooLarge(e) {
+		over = true
+		return done()
 	}
 	if e != nil {
 		add("PROFILE_MISSING", profPath, "set의 workload profile을 읽지 못했다")
@@ -96,6 +103,10 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		Build           *nativeBuild `json:"build"`
 		Cases           []rcCase     `json:"cases"`
 	}
+	if tooLarge(e) {
+		over = true
+		return done()
+	}
 	if e != nil || jsonv2.Unmarshal(rdata, &res) != nil || res.Build == nil {
 		add("RESULT_INVALID", resPath, "S05 result를 읽지 못했다")
 		return done()
@@ -120,6 +131,10 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		data, e := h.readWalked(f)
 		if stop(e) {
 			return nil, e
+		}
+		if tooLarge(e) {
+			over = true
+			return done()
 		}
 		if e != nil {
 			add(e.Code, f, "symbol set 파일을 읽지 못했다")
@@ -190,8 +205,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			v = claimFail
 		}
 		if c.Preprocess == nil || !reflect.DeepEqual(registeredSelection(*c.Preprocess), qc.PreprocessExpect) {
-			v = claimFail
-			add("PREPROCESS_EXPECT_MISMATCH", resPath+"#"+c.ID, "기록된 분기 선택이 고정 Roslyn 관측의 기대값과 다르다")
+			v = claimFail // a registered check: it fails the row's checks, not the kit axis
 		}
 		s.checks[qc.ID] = v
 		var digests []string

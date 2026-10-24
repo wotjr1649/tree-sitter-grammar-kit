@@ -39,7 +39,7 @@ var class = []string{"class_declaration"}
 // active strings, comments, raw and verbatim literals, CRLF, BOM, EOF, a zero-active and a
 // malformed selection, and edits whose step selection is recomputed from a new condition).
 // An edit that turns the branch is not registered: the active ranges then share no text, the
-// edit step reuses no node and the S05 incremental route claim fails (see the PR's note).
+// edit step reuses no node and the S05 incremental route claim fails (#277).
 var symbolSets = []struct {
 	set     string
 	symbols []string
