@@ -13,8 +13,10 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r5"
-	QualificationResultSchema    = "tsgk-qualification-result/r6"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r6"
+	QualificationResultSchema    = "tsgk-qualification-result/r7"
+	qualificationInventoryR5     = "tsgk-qualification-inventory/r5"
+	qualificationResultR6        = "tsgk-qualification-result/r6"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
@@ -205,11 +207,12 @@ type QualRole struct {
 	Workloads []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r5 document: the exact
+// QualificationInventory is a decoded r6 or historical r5 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
 // added the route error node types, the rows' production alternatives and the cases'
 // alternatives and W samples to r1; r3 adds the step expectation anchors; r5 adds deferred
-// role platforms and symbol-mode role workloads (#218).
+// role platforms and symbol-mode role workloads (#218). r6 selects the disjoint-selection
+// route rule and admits its explicit BLOCKED outcome (#277).
 type QualificationInventory struct {
 	SHA256       string         `json:"-"`
 	Schema       string         `json:"schema"`
@@ -275,8 +278,16 @@ func ParseQualificationInventory(data []byte) (QualificationInventory, error) {
 func parseInventory(data []byte) (QualificationInventory, *Error) {
 	var inv QualificationInventory
 	const doc = "inventory"
-	if e := strictDoc(doc, data, QualificationInventorySchema); e != nil {
+	v, e := decodeStrict(doc, data, MaxDocumentBytes)
+	if e != nil {
 		return inv, e
+	}
+	schema := jvMember(v, "schema")
+	if schema == nil || schema.kind != '"' {
+		return inv, fail(KindInvalidInput, "JSON_MISSING_FIELD", doc+"#/schema", nil)
+	}
+	if schema.s != QualificationInventorySchema && schema.s != qualificationInventoryR5 {
+		return inv, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", doc+"#/schema", nil)
 	}
 	if e := decodeTyped(doc, data, &inv); e != nil {
 		return inv, e
@@ -372,7 +383,7 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 				}
 			}
 			if w.Preprocess != nil {
-				if bad := symbolCase(c); bad != "" {
+				if bad := symbolCase(c, inv.Schema == QualificationInventorySchema); bad != "" {
 					return badW("CASE_INVALID", cp+"/"+bad)
 				}
 			} else if c.PreprocessExpect != nil {
@@ -549,7 +560,7 @@ var preprocessStatuses = map[string]bool{PreprocessOK: true, PreprocessZeroActiv
 // valid): a support case that covers nothing, with the expected selection of every step up
 // to the first that is not OK; an all-OK case expects the syntax of every step, a stopped
 // one the fixed not-run outcome of its last step and no step expectation.
-func symbolCase(c QualCase) string {
+func symbolCase(c QualCase, selection bool) string {
 	if c.Role != "support" || len(c.Covers) > 0 || len(c.QueryExpect) > 0 || c.DynamicSQL != nil || c.Sample != nil || c.Source != nil || len(c.Alternatives) > 0 || len(c.Points) > 0 {
 		return "role"
 	}
@@ -570,7 +581,12 @@ func symbolCase(c QualCase) string {
 		}
 		return ""
 	}
-	if c.ExpectStatus != "" || c.ExpectAssessment != "" || c.ExpectCode != "" || len(c.Expect) != len(c.Edits)+1 {
+	if c.ExpectStatus != "" || c.ExpectAssessment != "" || c.ExpectCode != "" {
+		if !selection || c.ExpectStatus != StatusCompleted || c.ExpectAssessment != AssessBlocked || !registeredSelectionBlock(c) {
+			return "expect"
+		}
+	}
+	if len(c.Expect) != len(c.Edits)+1 {
 		return "expect"
 	}
 	for i, e := range c.Expect {
@@ -762,7 +778,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r6 document: the E0 envelope plus
+// QualificationResult is the r7 (or historical r6) document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
@@ -822,6 +838,9 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	if e != nil {
 		return bad(e)
 	}
+	if inv.Schema == qualificationInventoryR5 {
+		res.ResultSchema = qualificationResultR6
+	}
 	if !hex40.MatchString(req.Candidate) {
 		return bad(fail(KindInvalidInput, "CANDIDATE_INVALID", "candidate", nil))
 	}
@@ -831,7 +850,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 		lim = testHookQualifyLimits(lim)
 	}
 	res.Limits = lim
-	res.Identities = append(res.Identities, IdentityRef{Role: "inventory", Schema: QualificationInventorySchema, SHA256: inv.SHA256},
+	res.Identities = append(res.Identities, IdentityRef{Role: "inventory", Schema: inv.Schema, SHA256: inv.SHA256},
 		IdentityRef{Role: "policy", Schema: "tsgk-qualification-policy/r1", SHA256: digestHex([]byte(replayPolicyText("qualification", lim)))})
 	res.Coverage.Requested = []string{"completeness", "run-cohort", "eligibility", "set-integrity", "registration", "record-gates", "mechanism", "requirements", "comparison"}
 	r, e := startRun(ctx, lim.Wall)

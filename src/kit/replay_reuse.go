@@ -32,7 +32,9 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		return e
 	}
 	schema := "tsgk-incremental-result/r2"
-	if x.preprocess {
+	if x.selectionRoute {
+		schema = "tsgk-incremental-result/r5"
+	} else if x.preprocess {
 		schema = "tsgk-incremental-result/r4" // r3 with the symbol mode (#218)
 	} else if x.mandatoryObservation {
 		schema = "tsgk-incremental-result/r3"
@@ -117,6 +119,12 @@ type observationStep struct {
 	observations []reuseobs.Observation
 	edit         *rcEdit
 	route        *wireRoute // the recorded route of an edit step, which r4 qualification binds to the raw step
+}
+
+// Complete collection is stricter than a mandatory parse-start observation (#277).
+func completeSelectionObservation(raw jsontext.Value) bool {
+	var observations []reuseobs.Observation
+	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.Judge(observations) == claimPass
 }
 
 // wireRoute is an edit step's route as live DecodeResponse reads it and the record keeps it.

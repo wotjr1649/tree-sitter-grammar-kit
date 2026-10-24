@@ -16,6 +16,9 @@ const (
 	PreprocessEvaluator     = "csharp-pp/r1" // csharpPreprocess with ppDefaultLimits
 	NativePolicySchema      = "tsgk-native-policy/r1"
 	NativePolicySchemaR2    = "tsgk-native-policy/r2" // r1 plus the preprocess binding
+	NativePolicySchemaR3    = "tsgk-native-policy/r3" // r2 plus the selection route rule
+	SelectionRoutePolicy    = "csharp-selection-route/r1"
+	SelectionRoutePrefix    = "INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_"
 )
 
 // Preprocess is a profile's preprocess member: the caller symbols exactly as given.
@@ -146,14 +149,22 @@ func NativePolicyText(op NativeOperation, output string) string {
 		NativePolicySchema, op.Name, output, l, op.ParseWall, op.EditWall, op.MaxEdits, op.Batch, op.BatchFiles, op.BatchBytes, op.FrameWall, op.BatchWall, op.RunWall)
 }
 
-// NativePolicy is the policy identity of a native run: tsgk-native-policy/r1, or with a
-// preprocess member r2, which binds the r1 preimage, the mode, the symbols digest and the
-// evaluator revision with its fixed limits.
+// NativePolicy is the current native policy: r1 without preprocessing, or r3 binding the
+// historical r2 preprocess policy and the selection route rule.
 func NativePolicy(op NativeOperation, output string, pp *Preprocess) IdentityRef {
+	return nativePolicy(op, output, pp, true)
+}
+
+// nativePolicy keeps the historical r2 preimage for native-result-r5 and inventory/r5.
+func nativePolicy(op NativeOperation, output string, pp *Preprocess, selection bool) IdentityRef {
 	text := NativePolicyText(op, output)
 	if pp == nil {
 		return IdentityRef{Role: "policy", Schema: NativePolicySchema, SHA256: digestHex([]byte(text))}
 	}
 	text = fmt.Sprintf("%s\n%spreprocess_mode=%s\nsymbols=%s %s\nevaluator=%s limits=%+v\n", NativePolicySchemaR2, text, pp.Mode, PreprocessSymbolsSchema, pp.SymbolsDigest(), PreprocessEvaluator, ppDefaultLimits)
+	if selection {
+		text = fmt.Sprintf("%s\n%sselection_route=%s\n", NativePolicySchemaR3, text, SelectionRoutePolicy)
+		return IdentityRef{Role: "policy", Schema: NativePolicySchemaR3, SHA256: digestHex([]byte(text))}
+	}
 	return IdentityRef{Role: "policy", Schema: NativePolicySchemaR2, SHA256: digestHex([]byte(text))}
 }

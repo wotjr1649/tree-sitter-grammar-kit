@@ -56,7 +56,7 @@ func TestNativePreprocessRanges(t *testing.T) {
 		if !parsed(t, r, 0, src, want[0]) || parsed(t, r, 0, src, want[1]) || !parsed(t, r, 0, src, "gamma") {
 			t.Fatalf("symbols %q: the parser did not read %s alone", symbols, want[0])
 		}
-		if ids := r.Steps[0].Incremental.Tree.Identities; ids[len(ids)-1] != x.PolicyRef || x.PolicyRef.Schema != kit.NativePolicySchemaR2 {
+		if ids := r.Steps[0].Incremental.Tree.Identities; ids[len(ids)-1] != x.PolicyRef || x.PolicyRef.Schema != kit.NativePolicySchemaR3 {
 			t.Fatalf("tree identities %+v", ids)
 		}
 	}

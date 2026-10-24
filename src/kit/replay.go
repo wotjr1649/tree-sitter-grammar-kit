@@ -379,6 +379,16 @@ func reducerTable() map[string]reducer {
 		return r4.run(x)
 	}
 	t[r5.info.ID] = r5
+	r6 := r5
+	r6.info.ID, r6.info.Revision = "native-result-r6", "r6"
+	r6.info.Inputs = slices.Clone(r5.info.Inputs)
+	r6.info.Inputs[0] = "tsgk-incremental-result/r5 result.json"
+	r6.info.Description += "; r6 (#277): a disjoint active-selection switch without reuse is BLOCKED only with complete old-tree observation; policy/r3 binds this rule"
+	r6.run = func(x *replayEnv) *Error {
+		x.selectionRoute = true
+		return r5.run(x)
+	}
+	t[r6.info.ID] = r6
 	return t
 }
 
@@ -444,6 +454,9 @@ type replayEnv struct {
 	mandatoryObservation bool             // r4: the observation claim is mandatory and folds into the verdict
 	preprocess           bool             // r5: the C# symbol mode (#218)
 	preprocessTrees      []preprocessTree // r5: every symbol-mode tree, for its policy
+	selectionRoute       bool             // r6: a disjoint active-selection switch can block reuse
+	selectionSteps       []PreprocessStep // recomputed from the guarded original witness
+	selectionBytes       []uint64         // source version lengths, never recorded projections
 	observationResponses map[string]bool
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)

@@ -116,7 +116,7 @@ reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reduce
 
 `native-result-r4`(#217)는 같은 입력·gate·원 응답 검사로 `tsgk-incremental-result/r3`만 소비한다. 필수 관측 판정([tree/protocol](tree-and-adapter-protocol.md) `필수 관측 판정`)을 live와 같은 `reuseobs.CaseClaim`으로 다시 계산한다. 다시 계산한 claim은 사례 판정 fold에 넣는다. 오류 tree route BLOCKED는 그 step의 관측이 old tree 전달을 확인할 때만 인정하고, 아니면 route FAIL로 다시 계산한다. 따라서 관측 FAIL을 별도 축으로만 둔 판정이나, old tree가 생략된 step의 route BLOCKED 기록은 verdict·claim gate 실패다. r3는 결과 r2만, r4는 결과 r3만 받으며 서로의 판정 규칙으로 replay하지 않는다.
 
-`native-result-r5`(#218)는 r4의 입력·gate·원 응답 검사를 그대로 하면서 C# symbol 모드의 `tsgk-incremental-result/r4`만 받는다. profile에 `preprocess`가 있으면 r5만, r5는 그것만 받는다. 어긋나면 `PREPROCESS_REDUCER_MISMATCH`이고, private corpus reducer도 거부한다. `preprocess` gate는 다음을 검사한다.
+`native-result-r5`(#218)는 r4의 입력·gate·원 응답 검사를 그대로 하면서 역사적 C# symbol 모드의 `tsgk-incremental-result/r4`만 받는다. R5는 preprocess profile만 받으며 preprocess profile은 r5 또는 아래 r6로 재생한다. 어긋나면 `PREPROCESS_REDUCER_MISMATCH`이고, private corpus reducer도 거부한다. `preprocess` gate는 다음을 검사한다.
 - 원 입력 witness
   - 사례마다 호출자가 준비한 원 입력 witness `sources/<순번 5자리>-<사례>.bin`(`case-source`)이 필수다. 없으면 `PREPROCESS_SOURCE_MISSING`이다.
   - 등록 입력의 길이·sha256과 맞아야 한다. 맞는 0-byte witness는 유효하고, 다르면 `PREPROCESS_SOURCE_MISMATCH`다.
@@ -134,13 +134,15 @@ reducer는 code의 작은 등록부이며 plugin 언어가 아니다(`kit.Reduce
   - 그 operation·profile 출력·preprocess로 다시 계산한 `tsgk-native-policy/r2`와 run policy가 같아야 한다. 모든 incremental/fresh tree에도 policy가 정확히 하나 있고, schema까지 그 identity와 같아야 한다(`PREPROCESS_POLICY_MISMATCH`).
 - `tsgk-native-policy/r2`의 preimage
   - 순서: r2 머리줄, r1 preimage 전체, `preprocess_mode`, `symbols=tsgk-pp-symbols/r1 <digest>`, `evaluator=csharp-pp/r1 limits=<평가기 고정 한도>`
-  - r1은 그대로이며, 실행과 replay가 `kit.NativePolicy`를 함께 쓴다.
+  - r1은 그대로이며, 역사적 r5 replay는 이 r2 계산을 보존한다. 현재 `kit.NativePolicy`는 아래 r3를 계산한다.
 - `tsgk-pp-symbols/r1` digest
   - UTF-8 byte 순으로 정렬하고 중복을 없앤 symbols를 쓴다.
   - 머리줄 다음에 symbol마다 `<byte 길이>:<bytes>` 한 줄을 잇고 sha256을 취한다. 빈 목록은 머리줄뿐이다.
 - 한계
   - 위 leaf 검사는 활성 범위 밖에서 시작하거나 끝나는 leaf를 검출한다. 양 끝이 서로 다른 활성 범위에 있고 그 사이의 건너뛴 byte를 덮는 leaf는 range 경계를 넘는 정상 token과 구별되지 않는다. 그래서 전체 입력 parse를 언제나 검출한다고 보장하지는 않는다.
   - 지시문이 없는 원본은 범위가 있든 없든 같은 CST가 되므로, 저장 증거로는 driver가 ranges를 받았다는 것을 증명하지 못한다. 이 검출은 native 연결 시험이 맡는다([검증](../validation/validation.md)).
+
+`native-result-r6`(#277)는 결과 `tsgk-incremental-result/r5`와 policy/r3만 받는다. R5의 gate를 유지하며 route 계산 전에 guarded 원본 witness·등록 edit로 preprocess와 source 길이를 다시 계산한다. 기록된 preprocess나 step edit를 예외 근거로 직접 신뢰하지 않는다. [선택 전환 규칙](tree-and-adapter-protocol.md)에 해당하는 reuse0 step만 BLOCKED이며 old-tree 관측은 PASS여야 한다. r5의 과거 clean reuse0 FAIL은 바꾸지 않는다. 현재 policy/r3 preimage는 `tsgk-native-policy/r3` 머리줄, 역사적 r2 preimage 전체, `selection_route=csharp-selection-route/r1` 줄이다. 기본 policy/r1 bytes는 불변이다. Revision 선택은 caller의 reducer/inventory로 결정하고 제출된 header나 검증 실패 뒤 fallback으로 바꾸지 않는다.
 
 원 응답에서는 관측 projection을 decode하며 native CST의 전체 protocol decoder를 실행하지 않는다. tree 정확성은 기존 기록된 공개 tree의 구조·digest·full CST 비교로 검증한다. JSON member 순서에 의존하지 않도록 metadata를 먼저 bounded streaming으로 읽고 case streaming을 수행한다. 두 pass와 원 응답 읽기에도 기존 file/record/total/wall 상한을 적용한다. 수집 BLOCKED/NOT_CLAIMED를 정확하게 기록한 근거의 무결성 PASS는 logger 경로 PASS나 새로운 실행 성공을 뜻하지 않는다. 기존 subject verdict도 바꾸지 않는다. hash 일치는 저장된 bytes의 무결성 근거이며 독립적인 실행 인증이 아니다.
 
@@ -200,7 +202,11 @@ detector 사례(역사 결함 검출기)는 추가 역할 workload에만 둘 수
 
 route마다 판정된 host가 둘 이상이면 사례별 의미 요약을 platform끼리 정확히 비교한다. 요약은 사례의 상태·판정·code·claim, 등록 기대값 결과, 다시 계산한 query 기대값과 step마다 incremental·fresh tree의 상태·code·형식·node 수·`has_error`·digest(`tsgk-tree-digest/r1`, 순서·type·field·flag·byte/point 범위 전체), query별 상태·code·평가·capture stream 전체의 hash, API 관측 문서, 비교 결과, route 증명 여부, SVC 관측이다. 정렬·중복 제거·ERROR/MISSING 제거·범위 보정을 하지 않는다. set identity 중 runtime·protocol·comparator·policy·query·fact pack·route·연산도 같아야 한다. 차이는 첫 차이 위치와 함께 `differences`에 남고 그 route의 모든 칸이 FAIL이다. host 관측(process wall·peak memory, parse 시간, build·executable·compiler identity·version)은 비교하지 않고 칸의 `host_observations`에 원값으로 남는다. SVC 관측은 composite 전체를 비교하되 그 안의 producer identity(platform의 native build)만 빼며, 그 값은 host마다 run의 build와 대조된다.
 
-### 결과 `tsgk-qualification-result/r6`
+**선택 전환 qualification (#277).** 현재 inventory `tsgk-qualification-inventory/r6`는 기존 r5 형식과78칸을 유지하고 symbol set의 결과/r5·reducer/r6·policy/r3를 요구한다. 모든 step이 OK인 support 사례에도 등록 active/inactive byte 범위와 edit에서 선택 전환 예외를 확인할 수 있을 때만 정확한 COMPLETED/BLOCKED/`INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_<n>` outcome을 허용하며 각 step의 syntax 기대값은 필수다. 기존25사례와 두 유지 편집을 보존하고 별도 `s05-csharp-symbols-switch`에 literal-true→literal-paren-false를 추가한다. 이 사례의 등록 검사 PASS는 분기 선택·활성 CST 구문·정직한 BLOCKED outcome의 일치이며 route reuse PASS가 아니다. 현재 역할은26사례/5set, Windows·Linux 실행과 macOS #243 DEFERRED다. 역사적 inventory/r5→result/r6·producer result/r4·reducer/r5·policy/r2 경로도 보존한다. 이 선택표는 replay 내부뿐 아니라 qualification이 기대 policy digest를 만드는 단계에도 적용한다.
+
+### 결과 `tsgk-qualification-result/r7`(역사적 r6 포함)
+
+현재 inventory/r6의 결과는 r7이며 위 선택 전환 역할을 포함한다. 역사적 inventory/r5는 결과/r6로 판정한다. 두 결과의 기존78칸·support/mechanism·platform claim 형식과 의미는 같다.
 
 E0 `Report`에 `inventory_id`, `candidate`, `limits`, `run`(공통 cohort), `hosts`(platform → run identity sha256), `completeness`, `cells`(route·platform·`status`·`mechanism`·`requirement`·`comparison`·`counts`·`obligations`·`registered_checks`·`check_failures`·set 판정), `extra_roles`(id·role·platform·`status`·`reason`·`mechanism`·`registered_checks`·set 판정; MISSING 행은 `mechanism=NOT_ASSESSED`이고 `registered_checks`가 빈 값이며, 실행하지 않는 `NOT_RUN`·`EXTERNAL`·`NOT_APPLICABLE`·`DEFERRED` 행은 둘 다 빈 값이다. gate는 `mechanism`이 빈 값인 행만 건너뛴다), `comparisons`, `totals`, `mechanism_gate`, `support_claim`, `platform_claims`, `bytes_read`, 한국어 `explanation`을 더한다. r2는 v0.1.0의 r1에 `platform_claims`를 더한 revision이다. r3은 r2에 kind P 의무의 `alternatives`(행에 등록된 production 대안 수)와 `alternatives_uncovered`(그 행을 P로 덮으며 그 대안을 적은 `requirement` 사례가 없는 대안 수)를 더한 revision이다. 다른 kind의 의무에는 두 필드가 없다. P 의무 결과는 `tsgk-coverage-rule/r2`([CLI/profile](cli-and-profile.md) `S08 구현`)를 따른다. 행이 `PENDING`이거나 `alternatives_uncovered`가 0보다 크면 `NOT_COVERED`다. 나머지 필드와 의미는 r2와 같다. r4는 r3에 필수 관측(#217)을 더한 revision이다. r5(#218)는 r4의 모든 set 판정(`cells[].set`, `extra_roles[].sets[]`)에 `branch_selection_not_claimed`를 더한다. C# route set에서 기록된 tree(모든 step의 incremental·fresh·SVC inline)의 `preproc_if`·`preproc_elif`·`preproc_if_in_attribute_list` `condition` subtree에 `identifier`가 있거나, 있어야 할 tree의 node가 기록되지 않은 사례의 ID를 set 순서로 담는다(없으면 `[]`, 사례에 원래 없는 tree는 건너뛴다). 이 표시는 기본 parser가 symbol 값을 평가하지 않고 고른 분기와, 그 선택에 의존하는 구문 수용을 주장하지 않는다는 뜻이다. 사례 판정·의무·coverage·`support_claim`은 바뀌지 않으며, 그 PASS는 그 parser 정책 아래의 등록 구조 검사 결과다. 표시가 없다는 것은 literal 조건(`(false)`, `!(true)` 등 포함)이 올바르게 평가됐다는 증명이 아니다. ERROR recovery로 conditional node나 `condition` 관계가 tree에 남지 않은 symbol 조건도 표시되지 않으므로, 빈 목록은 source에 symbol 조건이 없다는 증명도 아니다. 한국어 `explanation`에도 같은 범위를 적는다. r6(#218, 218-C)는 r5에 `DEFERRED` 역할 행과 symbol 모드 역할 set(위 DEFERRED 역할 platform과 symbol 모드 역할 문단)을 더한다. symbol 모드 set의 `branch_selection_not_claimed`는 언제나 빈 목록이다. 그 set은 symbol 값을 평가한 분기를 판정하기 때문이다. `explanation`은 symbol 모드 행의 claim 범위와 DEFERRED 행마다 그 platform의 claim에 역할이 들어가지 않음을 적는다.
 

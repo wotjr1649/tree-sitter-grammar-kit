@@ -23,10 +23,10 @@ func TestPolicyRefPreimage(t *testing.T) {
 				t.Errorf("%s %s: %+v, want %+v", name, output, got, want)
 			}
 			pp := &kit.Preprocess{Mode: kit.PreprocessMode, Symbols: []string{"A"}}
-			r2 := kit.NativePolicy(op, output, pp)
+			r3 := kit.NativePolicy(op, output, pp)
 			other := kit.NativePolicy(op, output, &kit.Preprocess{Mode: kit.PreprocessMode, Symbols: []string{"B"}})
-			if r2.Schema != kit.NativePolicySchemaR2 || r2.SHA256 == want.SHA256 || r2 == other {
-				t.Errorf("%s %s: r2 %+v does not bind the preprocess member", name, output, r2)
+			if r3.Schema != kit.NativePolicySchemaR3 || r3.SHA256 == want.SHA256 || r3 == other {
+				t.Errorf("%s %s: r3 %+v does not bind the preprocess member", name, output, r3)
 			}
 		}
 	}

@@ -15,7 +15,7 @@ import (
 // evalSymbolSet verifies and judges one symbol-mode workload (#218) on one host: the S05 run
 // the host's producer wrote under incremental/<set>/ (profile.json, result.json, responses/
 // and the case-source witnesses under sources/). The host profile must be the registered
-// workload; the run is replayed with native-result-r5 under the identities the registration
+// workload; the inventory revision selects its replay reducer under the identities it
 // fixes (workload, operation, platform, the policy recomputed with the operation's own walls,
 // the pinned runtime); and every case must end with its registered outcome and the selection
 // derived from the pinned Roslyn observation alone. Like the route cells it trusts the
@@ -150,8 +150,13 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		add("RUN_IDENTITY_INVALID", "run-identity.json", "run attempt가 수가 아니다")
 		return done()
 	}
-	policy := NativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess).SHA256
-	reg, _ := json.Marshal(map[string]any{"schema": ReplaySchema, "id": "qualification-" + w.Set, "reducer": "native-result-r5", "operation": "evidence-replay",
+	selection := q.inv.Schema == QualificationInventorySchema
+	reducer := "native-result-r5"
+	if selection {
+		reducer = "native-result-r6"
+	}
+	policy := nativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess, selection).SHA256
+	reg, _ := json.Marshal(map[string]any{"schema": ReplaySchema, "id": "qualification-" + w.Set, "reducer": reducer, "operation": "evidence-replay",
 		"subject": map[string]any{"run": h.id.RunID, "attempt": attempt, "platform": p.pair(), "commit": q.candidate, "evidence_mode": ModeNewRun,
 			"execution_status": res.ExecutionStatus, "assessment": res.Assessment},
 		"identities": map[string]string{"workload": s.Profile, "policy": policy, "operation": w.Operation, "platform": p.pair(), "runtime": w.RuntimeCommit,
@@ -182,7 +187,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	s.Host = map[string]string{"build_identity": res.Build.Identity, "executable_sha256": res.Build.ExecutableSHA256, "compiler_sha256": res.Build.Compiler.SHA256, "platform": p.pair()}
 	switch {
 	case rerr != nil:
-		add("REPLAY_FAILED", dir, "native-result-r5 replay가 끝나지 않았다: "+rerr.Error())
+		add("REPLAY_FAILED", dir, reducer+" replay가 끝나지 않았다: "+rerr.Error())
 		return done()
 	case !rr.EvidenceValid:
 		for _, f := range rr.Findings {
@@ -190,7 +195,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 				add(f.Code, dir+f.Path, f.Message)
 			}
 		}
-		add("REPLAY_INVALID", dir, "native-result-r5 replay가 근거를 받지 않았다")
+		add("REPLAY_INVALID", dir, reducer+" replay가 근거를 받지 않았다")
 		return done()
 	case rr.EvidenceMode != ModeReplayedRaw || rr.Recomputed != rr.Recorded || rr.Recomputed.Assessment == AssessUnresolved:
 		over = true // valid, but not every case was recomputed
@@ -242,4 +247,36 @@ func registeredSelection(steps []PreprocessStep) []QualPreprocessStep {
 		out = append(out, QualPreprocessStep{Step: i, Status: st.Status, Directives: d, Active: bytes(st.Active), Inactive: bytes(st.Inactive)})
 	}
 	return out
+}
+
+// registeredSelectionBlock admits only the explicit disjoint-selection outcome of r6;
+// historical inventories keep their all-OK syntax-only registration rule.
+func registeredSelectionBlock(c QualCase) bool {
+	suffix, ok := strings.CutPrefix(c.ExpectCode, SelectionRoutePrefix)
+	step, err := strconv.Atoi(suffix)
+	if !ok || err != nil || step < 1 || step > len(c.Edits) || suffix != strconv.Itoa(step) {
+		return false
+	}
+	observation := func(s QualPreprocessStep) PreprocessStep {
+		o := PreprocessStep{Status: s.Status}
+		for _, r := range s.Active {
+			o.Active = append(o.Active, Span{StartByte: r.Start, EndByte: r.End})
+		}
+		for _, r := range s.Inactive {
+			o.Inactive = append(o.Inactive, Span{StartByte: r.Start, EndByte: r.End})
+		}
+		return o
+	}
+	size := int64(c.Input.Bytes)
+	for i, e := range c.Edits {
+		next := size + int64(e.NewEndByte) - int64(e.OldEndByte)
+		if next < 0 {
+			return false
+		}
+		if i+1 == step {
+			return PreprocessSelectionDisjoint(observation(c.PreprocessExpect[i]), observation(c.PreprocessExpect[i+1]), e, uint64(size), uint64(next))
+		}
+		size = next
+	}
+	return false
 }

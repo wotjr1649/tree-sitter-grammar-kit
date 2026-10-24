@@ -556,7 +556,15 @@ func judgeIncremental(out *CaseResult, observed bool) string {
 			}
 		}
 		v := stepRoute(out.Steps[k], s)
-		if ov := reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: s.Observations}}, true); v == ClaimBlocked && observed && ov != ClaimPass && ov != ClaimBlocked {
+		selection := v == ClaimFail && observed && selectionRouteBlocked(out, k+1)
+		if selection {
+			v = ClaimBlocked
+		}
+		ov := reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: s.Observations}}, true)
+		if selection && reuseobs.Judge(s.Observations) != ClaimPass {
+			ov = ClaimFail // a valid start prefix is insufficient for the selection exception
+		}
+		if v == ClaimBlocked && observed && ov != ClaimPass && (selection || ov != ClaimBlocked) {
 			out.Claims.IncrementalRoute = ClaimFail
 			if out.Code == "" {
 				out.Code = fmt.Sprintf("%s%d", oldTreeUnverifiedPrefix, s.Step)
@@ -572,11 +580,33 @@ func judgeIncremental(out *CaseResult, observed bool) string {
 		case ClaimBlocked:
 			out.Claims.IncrementalRoute = worse(out.Claims.IncrementalRoute, ClaimBlocked)
 			if blocked == "" {
-				blocked = fmt.Sprintf("%s%d", routeUnobservablePrefix, s.Step)
+				prefix := routeUnobservablePrefix
+				if selection {
+					prefix = kit.SelectionRoutePrefix
+				}
+				blocked = fmt.Sprintf("%s%d", prefix, s.Step)
 			}
 		}
 	}
 	return blocked
+}
+
+// selectionRouteBlocked consumes the live evaluator's steps, never source coordinates
+// compared without the edit's shift. The ordinary/error-tree route rules run first.
+func selectionRouteBlocked(out *CaseResult, step int) bool {
+	if step < 1 || step >= len(out.Steps) || len(out.Preprocess) != len(out.Steps) {
+		return false
+	}
+	old, cur := out.Steps[step-1], out.Steps[step]
+	r := cur.Route
+	full := func(t *TreeOut) bool {
+		return t != nil && t.Status == kit.StatusCompleted && t.Form == "full" && t.Tree != nil
+	}
+	if cur.Edit == nil || r == nil || !r.EditHasChanges || r.Proven || r.ReusedNodes != 0 || r.FreshReusedNodes != 0 || !full(old.Incremental) || !full(cur.Incremental) || !full(cur.Fresh) {
+		return false
+	}
+	e := kit.Edit{StartByte: cur.Edit.StartByte, OldEndByte: cur.Edit.OldEndByte, NewEndByte: cur.Edit.NewEndByte}
+	return kit.PreprocessSelectionDisjoint(out.Preprocess[step-1], out.Preprocess[step], e, old.SourceBytes, cur.SourceBytes)
 }
 
 // routeUnobservablePrefix starts the code of a case whose first blocked route step is the

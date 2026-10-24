@@ -23,12 +23,13 @@ const symbolRanges = 16
 // case edit (same symbols), and the syntax expectation of every step of an all-OK case,
 // registered by hand: the selection comes from Roslyn alone, never from the evaluator.
 type symbolCase struct {
-	id       string
-	find     string // the edit's old text, at its first occurrence
-	replace  string
-	edit     string // the corpus case the edited source must equal
-	syntax   []string
-	contains [][]string
+	id           string
+	find         string // the edit's old text, at its first occurrence
+	replace      string
+	edit         string // the corpus case the edited source must equal
+	syntax       []string
+	contains     [][]string
+	routeBlocked bool
 }
 
 var class = []string{"class_declaration"}
@@ -38,8 +39,8 @@ var class = []string{"class_declaration"}
 // ! == != && || parentheses true/false, define/undef order, nesting, #if-like lines inside
 // active strings, comments, raw and verbatim literals, CRLF, BOM, EOF, a zero-active and a
 // malformed selection, and edits whose step selection is recomputed from a new condition).
-// An edit that turns the branch is not registered: the active ranges then share no text, the
-// edit step reuses no node and the S05 incremental route claim fails (#277).
+// #277 adds a separate branch-switch workload whose expected route is BLOCKED; its
+// selection/syntax checks do not claim a successful reuse observation.
 var symbolSets = []struct {
 	set     string
 	symbols []string
@@ -77,6 +78,9 @@ var symbolSets = []struct {
 	}},
 	{"s05-csharp-symbols-a-c", []string{"A", "C"}, []symbolCase{
 		{id: "issue198-nested-directives", syntax: []string{"NO_ERROR"}, contains: [][]string{class}},
+	}},
+	{"s05-csharp-symbols-switch", []string{}, []symbolCase{
+		{id: "literal-true", find: "true", replace: "(false)", edit: "literal-paren-false", syntax: []string{"NO_ERROR", "NO_ERROR"}, contains: [][]string{class, class}, routeBlocked: true},
 	}},
 }
 
@@ -189,6 +193,9 @@ func symbolRole(t *testing.T, root, symbol string, grammar []kit.NativeInput) ki
 				for k := range steps {
 					c.Expect = append(c.Expect, kit.StepExpectation{Step: k, Syntax: sc.syntax[k], Contains: sc.contains[k]})
 				}
+				if sc.routeBlocked {
+					c.ExpectStatus, c.ExpectAssessment, c.ExpectCode = kit.StatusCompleted, kit.AssessBlocked, kit.SelectionRoutePrefix+"1"
+				}
 			}
 			w.Cases = append(w.Cases, c)
 		}
@@ -213,7 +220,7 @@ func TestSymbolRoleRegistration(t *testing.T) {
 	for _, w := range r.Workloads {
 		for _, c := range w.Cases {
 			n++
-			if c.ExpectStatus != "" {
+			if c.ExpectStatus != "" && c.ExpectStatus != kit.StatusCompleted {
 				stopped++
 			}
 			if len(c.Edits) > 0 {
@@ -221,7 +228,7 @@ func TestSymbolRoleRegistration(t *testing.T) {
 			}
 		}
 	}
-	if len(r.Workloads) != 4 || n != 25 || stopped != 4 || edited != 2 {
+	if len(r.Workloads) != 5 || n != 26 || stopped != 4 || edited != 3 {
 		t.Fatalf("workloads %d cases %d stopped %d edited %d", len(r.Workloads), n, stopped, edited)
 	}
 	// literal-true's edit replaces the condition: both steps are selected from Roslyn's own

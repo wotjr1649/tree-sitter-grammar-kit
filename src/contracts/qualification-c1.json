@@ -1,5 +1,5 @@
 {
- "schema": "tsgk-qualification-inventory/r5",
+ "schema": "tsgk-qualification-inventory/r6",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,
@@ -356103,6 +356103,179 @@
        "A",
        "C"
       ]
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "set": "s05-csharp-symbols-switch",
+     "profile": "s05-csharp-symbols-switch",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "literal-true",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "aa9997ebae2c5d9463f1cb26b420c26c48003a46ebfa58c6ed9e55450287765d",
+        "bytes": 44
+       },
+       "edits": [
+        {
+         "start_byte": 4,
+         "old_end_byte": 8,
+         "new_end_byte": 11,
+         "old": "dHJ1ZQ==",
+         "new": "KGZhbHNlKQ=="
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "COMPLETED",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "INCREMENTAL_ROUTE_UNOBSERVABLE_SELECTION_STEP_1",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 20,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 37,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 9,
+           "end": 20
+          }
+         ],
+         "inactive": [
+          {
+           "start": 26,
+           "end": 37
+          }
+         ]
+        },
+        {
+         "step": 1,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 23,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 40,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 29,
+           "end": 40
+          }
+         ],
+         "inactive": [
+          {
+           "start": 12,
+           "end": 23
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": []
      },
      "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
     }
