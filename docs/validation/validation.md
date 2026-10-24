@@ -231,6 +231,10 @@ C# symbol 모드(218-B) 연결 시험:
 
 #277의 `TestPreprocessSelectionDisjoint`·`TestIncrementalRouteOnSelectionSwitch`는 독립 byte 범위 기대값과 caller fold로 완전 분기 전환·같은 선택의 좌표 이동·공통 trailer·전체 replacement·삽입/삭제·잘못된 범위/한도·reuse0 control을 검사한다. Selection BLOCKED와 equality/expectation FAIL, 뒤 step route FAIL의 동시 입력에서도 FAIL·실패 code가 우선해야 한다. 새 예외의 관측은 PASS여야 하므로 omit-old·누락·수집 cap은 FAIL이다. CLI 시험은 실제 branch-only BLOCKED/equality PASS와 common-trailer route PASS를 대조하고, source/edit·route PASS 승격·legacy reducer 변경을 거부한다. `TestQualifySymbolRole`은 현재 역할의 기존 workload와 별도 switch workload를 실제 실행·replay하며, `TestQualifySymbolSetLimits`는 현재 r6와 역사적 r5 경로의 fixture·공유 예산을 각각 검사한다. 현재 fixture를 새 정책으로 재기록하고 역사적 result/r4 fixture는 bytes 그대로 별도 보존한다. 각 새 판정 경계의 mutant 검출과 서로 다른 관점의 독립 리뷰를 최종 head에 결속한다.
 
+C# primary CST 검사 (#279)는 고위험 변경이다. `TestPreprocessCSTPrimary`는 실제 등록 C# grammar의 저장 raw를 정상 대조로 삼고 source/run/build/history/policy/role/process+4 결속, full/summary·fresh·완전 관측, 유효한 TRUNCATED start, 앞 mismatch 뒤 source/equality FAIL 우선, cleanup·memory·wall·부분 timeout 출력을 검사한다. `TestNativePreprocessCST`는 네 detector가 active를 실행하지 않는지와 primary ERROR만 있는 정상 대조가 active PASS인지 확인한다. 기존 `TestNativePreprocessRanges`를 실제 등록 grammar로 옮기고, prepared closure를 갖춘 필수 native-routes step에서 두 native 시험을 강제한다. 기존 foundation의 도구 없는 skip은 이 필수 route 검증을 대신하지 않는다. `TestIncrementalCLISymbolMode`·`TestQualifySymbolRole`은 현재 6set/30사례와 role/member 변조, `TestQualifySymbolSetLimits`는 현재 r7·역사적 r6/r5 inventory와 각각의 fixture를 검사한다. `qualify-symbols-r5`는 #277 result/r5 원본을 byte 그대로 보존한다.
+
+`TestQualificationCSTBlockedIsExact`와 필수 Go integration gate는 trusted inventory로 별도 CST 축을 독립 계산한다. 기대값은 PASS22/MISMATCH4/NOT_APPLICABLE4·29비교step이며, 축 누락·분모 축소·중복·다른 set·prefix 축소·UNVERIFIED 대체·PASS 승격·DEFERRED 축 위조를 거부한다. 정확한 사전등록 detector 때문에 생긴 BLOCKED만 수용하고 기존78칸/2,478개 의무·mechanism·checks 조건은 유지한다. 두 독립 관점의 최종 구현 리뷰와 mutant 검출, 모든 필수 PR CI 및 병합 후 main artifact 검증을 기록한다. macOS symbol qualification은 #243 DEFERRED다.
+
 C# symbol 모드 qualification(218-C) 시험:
 
 - foundation `TestSymbolRoleRegistration`·`TestQualificationInventory`

@@ -30,6 +30,7 @@ type symbolCase struct {
 	syntax       []string
 	contains     [][]string
 	routeBlocked bool
+	cstOnly      []uint32 // independent primary token anchors, registered from the #279 survey
 }
 
 var class = []string{"class_declaration"}
@@ -72,6 +73,8 @@ var symbolSets = []struct {
 		{id: "region-in-group", syntax: []string{"NO_ERROR"}, contains: [][]string{class}},
 		{id: "malformed-expression"},
 		{id: "unterminated"},
+		{id: "directive-string-no-escape", cstOnly: []uint32{25}},
+		{id: "razor-comment-lines", cstOnly: []uint32{9}},
 	}},
 	{"s05-csharp-symbols-enabled", []string{"ENABLED"}, []symbolCase{
 		{id: "issue198-undef-inactive", syntax: []string{"NO_ERROR"}, contains: [][]string{class}},
@@ -81,6 +84,10 @@ var symbolSets = []struct {
 	}},
 	{"s05-csharp-symbols-switch", []string{}, []symbolCase{
 		{id: "literal-true", find: "true", replace: "(false)", edit: "literal-paren-false", syntax: []string{"NO_ERROR", "NO_ERROR"}, contains: [][]string{class, class}, routeBlocked: true},
+	}},
+	{"s05-csharp-symbols-cst-mismatch", []string{}, []symbolCase{
+		{id: "dollars-two-quotes-raw", cstOnly: []uint32{37}},
+		{id: "nested-string-open-no-runaway", cstOnly: []uint32{62}},
 	}},
 }
 
@@ -187,6 +194,41 @@ func symbolRole(t *testing.T, root, symbol string, grammar []kit.NativeInput) ki
 					t.Fatalf("%s: a stopped case registers no syntax", sc.id)
 				}
 			} else {
+				for k, id := range steps {
+					version := byID[id].src
+					host := []uint32{}
+					for _, d := range c.PreprocessExpect[k].Directives {
+						host = append(host, uint32(d.Hash))
+					}
+					positions := slices.Clone(host)
+					if positions == nil {
+						positions = []uint32{}
+					}
+					for _, at := range sc.cstOnly {
+						if k != 0 || int(at) >= len(version) || version[at] != '#' {
+							t.Fatalf("%s: invalid manual CST anchor %d", id, at)
+						}
+						positions = append(positions, at)
+					}
+					slices.Sort(positions)
+					st := kit.PreprocessCSTStep{Step: k, SourceSHA256: shaHex(version), SourceBytes: uint64(len(version)), Result: "MATCH", HostHashes: host, CSTHashes: positions, HostOnly: []uint32{}, CSTOnly: []uint32{}}
+					if len(sc.cstOnly) > 0 {
+						st.Result, st.Code = "MISMATCH", fmt.Sprintf("%s%d", kit.PreprocessCSTPrefix, k)
+						st.CSTOnly = slices.Clone(sc.cstOnly)
+					}
+					c.PreprocessCSTExpect = append(c.PreprocessCSTExpect, st)
+					if st.Result == "MISMATCH" {
+						break
+					}
+				}
+				if len(sc.cstOnly) > 0 {
+					if len(sc.syntax) > 0 || len(sc.contains) > 0 {
+						t.Fatalf("%s: CST-stopped case registers no active syntax", sc.id)
+					}
+					c.ExpectStatus, c.ExpectAssessment, c.ExpectCode = kit.StatusNotRun, kit.AssessBlocked, kit.PreprocessCSTPrefix+"0"
+					w.Cases = append(w.Cases, c)
+					continue
+				}
 				if len(sc.syntax) != len(steps) || len(sc.contains) != len(steps) {
 					t.Fatalf("%s: register the syntax of each of its %d steps", sc.id, len(steps))
 				}
@@ -228,7 +270,7 @@ func TestSymbolRoleRegistration(t *testing.T) {
 			}
 		}
 	}
-	if len(r.Workloads) != 5 || n != 26 || stopped != 4 || edited != 3 {
+	if len(r.Workloads) != 6 || n != 30 || stopped != 8 || edited != 3 {
 		t.Fatalf("workloads %d cases %d stopped %d edited %d", len(r.Workloads), n, stopped, edited)
 	}
 	// literal-true's edit replaces the condition: both steps are selected from Roslyn's own

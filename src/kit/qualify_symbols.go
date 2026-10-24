@@ -24,6 +24,13 @@ import (
 // is not recomputed from stored evidence.
 func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 	s := newQSet(w, p)
+	if q.inv.Schema == QualificationInventorySchema {
+		cases := []QualPreprocessCSTCase{}
+		for _, c := range w.Cases {
+			cases = append(cases, QualPreprocessCSTCase{Set: w.Set, Case: c.ID, Result: "UNVERIFIED", Code: "PREPROCESS_CST_EVIDENCE_MISSING", Steps: []PreprocessCSTStep{}})
+		}
+		s.PreprocessCST = qualCSTAxis(cases)
+	}
 	h := q.hosts[p.ID]
 	if h == nil {
 		return s, nil
@@ -125,6 +132,8 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			role = "response"
 		case strings.HasPrefix(rel, "sources/"):
 			role = "case-source"
+		case strings.HasPrefix(rel, "primary/responses/") && q.inv.Schema == QualificationInventorySchema:
+			role = "primary-response"
 		default:
 			continue // not a member: the replay rejects it (MEMBER_UNLISTED)
 		}
@@ -150,12 +159,16 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		add("RUN_IDENTITY_INVALID", "run-identity.json", "run attempt가 수가 아니다")
 		return done()
 	}
-	selection := q.inv.Schema == QualificationInventorySchema
+	selection := q.inv.Schema != qualificationInventoryR5
 	reducer := "native-result-r5"
 	if selection {
 		reducer = "native-result-r6"
 	}
 	policy := nativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess, selection).SHA256
+	if q.inv.Schema == QualificationInventorySchema {
+		reducer = "native-result-r7"
+		policy = NativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess).SHA256
+	}
 	reg, _ := json.Marshal(map[string]any{"schema": ReplaySchema, "id": "qualification-" + w.Set, "reducer": reducer, "operation": "evidence-replay",
 		"subject": map[string]any{"run": h.id.RunID, "attempt": attempt, "platform": p.pair(), "commit": q.candidate, "evidence_mode": ModeNewRun,
 			"execution_status": res.ExecutionStatus, "assessment": res.Assessment},
@@ -205,6 +218,14 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		add("CASE_SET_MISMATCH", resPath, "result 사례 수가 등록 workload와 다르다")
 		return done()
 	}
+	if q.inv.Schema == QualificationInventorySchema && len(rr.PreprocessCST) != len(w.Cases) {
+		if over {
+			return done()
+		}
+		add("PREPROCESS_CST_CASE_SET_MISMATCH", resPath, "검증된 CST 관측의 사례 수가 등록과 다르다")
+		return done()
+	}
+	cstCases := []QualPreprocessCSTCase{}
 	for i, c := range res.Cases {
 		qc := w.Cases[i]
 		v := claimPass
@@ -215,6 +236,20 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			v = claimFail // a registered check: it fails the row's checks, not the kit axis
 		}
 		s.checks[qc.ID] = v
+		if q.inv.Schema == QualificationInventorySchema {
+			observed := rr.PreprocessCST[i]
+			if observed.ID != qc.ID {
+				add("PREPROCESS_CST_CASE_SET_MISMATCH", resPath, "검증된 CST 관측의 순서·ID가 다르다")
+				return done()
+			}
+			checked := registeredCSTCase(w, qc, observed.Result)
+			if checked.Result == "FAIL" {
+				s.checks[qc.ID] = claimFail
+			} else if checked.Result == "UNVERIFIED" {
+				s.checks[qc.ID] = claimBlocked
+			}
+			cstCases = append(cstCases, checked)
+		}
 		var digests []string
 		for _, st := range c.Steps {
 			if st.Incremental != nil {
@@ -224,6 +259,9 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		sum, _ := json.Marshal(map[string]any{"status": c.ExecutionStatus, "assessment": c.Assessment, "code": c.Code, "preprocess": c.Preprocess, "steps": digests})
 		s.summaries[qc.ID] = string(sum)
 		s.Records++
+	}
+	if q.inv.Schema == QualificationInventorySchema {
+		s.PreprocessCST = qualCSTAxis(cstCases)
 	}
 	return done()
 }

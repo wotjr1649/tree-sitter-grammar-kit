@@ -2,6 +2,9 @@ package native
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -38,11 +41,14 @@ func parsed(t *testing.T, r CaseResult, step int, src, word string) bool {
 // ranges would keep the old section), and a full-input parse of the same source reads both
 // sections, so the anchor check has the power to see a run without ranges.
 func TestNativePreprocessRanges(t *testing.T) {
-	b := fixtureBuild(t, "plain")
+	if os.Getenv("TSGK_BENCH_PREPARED") == "" {
+		t.Skip("registered C# closure not configured; mandatory native routes own this check")
+	}
+	b := registeredBuild(t, "csharp")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	src := "#if A\nalpha = 1;\n#else\nbeta = 2;\n#endif\ngamma = 3;\n"
-	c := kit.IncrementalCase{ID: "branch", Encoding: kit.EncodingUTF8}
+	c := kit.IncrementalCase{ID: "branch", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{SHA256: sha([]byte(src)), Bytes: uint64(len(src))}}
 	for symbol, want := range map[string][2]string{"A": {"alpha", "beta"}, "": {"beta", "alpha"}} {
 		var symbols []string
 		if symbol != "" {
@@ -56,16 +62,22 @@ func TestNativePreprocessRanges(t *testing.T) {
 		if !parsed(t, r, 0, src, want[0]) || parsed(t, r, 0, src, want[1]) || !parsed(t, r, 0, src, "gamma") {
 			t.Fatalf("symbols %q: the parser did not read %s alone", symbols, want[0])
 		}
-		if ids := r.Steps[0].Incremental.Tree.Identities; ids[len(ids)-1] != x.PolicyRef || x.PolicyRef.Schema != kit.NativePolicySchemaR3 {
+		if ids := r.Steps[0].Incremental.Tree.Identities; ids[len(ids)-1] != x.PolicyRef || x.PolicyRef.Schema != kit.NativePolicySchemaR4 {
 			t.Fatalf("tree identities %+v", ids)
 		}
 	}
 	full := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(src))
-	if !parsed(t, full, 0, src, "alpha") || !parsed(t, full, 0, src, "beta") {
-		t.Fatal("a full-input parse must read both sections (the anchor check would not see a run without ranges)")
+	foundDirective := false
+	for _, n := range full.Steps[0].Incremental.Tree.Nodes {
+		if n.Type == "#if" && n.EndByte > n.StartByte {
+			foundDirective = true
+		}
+	}
+	if !foundDirective {
+		t.Fatal("a full-input parse must read directive bytes excluded from every active selection")
 	}
 	// the edit turns #if A into #if B: step 1 reads the #else section
-	edited := kit.IncrementalCase{ID: "edit", Encoding: kit.EncodingUTF8, Edits: editsBy(src, edit{"#if A", "#if B"})}
+	edited := kit.IncrementalCase{ID: "edit", Encoding: kit.EncodingUTF8, Input: c.Input, Edits: editsBy(src, edit{"#if A", "#if B"})}
 	r := b.RunCase(ctx, symbolContext("A"), edited, []byte(src))
 	if r.ExecutionStatus != kit.StatusCompleted || len(r.Steps) != 2 || len(r.Preprocess) != 2 {
 		t.Fatalf("edit: %s %s %+v", r.ExecutionStatus, r.Code, r.Preprocess)
@@ -76,6 +88,60 @@ func TestNativePreprocessRanges(t *testing.T) {
 	after := strings.Replace(src, "#if A", "#if B", 1)
 	if !parsed(t, r, 1, after, "beta") || parsed(t, r, 1, after, "alpha") {
 		t.Fatal("step 1 kept the ranges of step 0")
+	}
+}
+
+// The primary must see full source, without inheriting the active NO_ERROR expectation.
+func TestNativePreprocessCST(t *testing.T) {
+	if os.Getenv("TSGK_BENCH_PREPARED") == "" {
+		t.Skip("registered C# closure not configured; mandatory native routes own this check")
+	}
+	b := registeredBuild(t, "csharp")
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "csharp-pp", "cases.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var corpus struct {
+		Cases []struct {
+			ID      string   `json:"id"`
+			Source  []byte   `json:"source"`
+			Symbols []string `json:"symbols"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &corpus); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]int{"dollars-two-quotes-raw": 37, "nested-string-open-no-runaway": 62, "directive-string-no-escape": 25, "razor-comment-lines": 9, "issue198-inactive-broken": -1}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	for _, source := range corpus.Cases {
+		at, selected := want[source.ID]
+		if !selected {
+			continue
+		}
+		delete(want, source.ID)
+		t.Run(source.ID, func(t *testing.T) {
+			c := kit.IncrementalCase{ID: source.ID, Input: kit.NativeInput{SHA256: sha(source.Source), Bytes: uint64(len(source.Source))}, Encoding: kit.EncodingUTF8,
+				Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
+			r := b.RunCase(ctx, symbolContext(source.Symbols...), c, source.Source)
+			if r.PreprocessCST == nil {
+				t.Fatal("missing CST receipt")
+			}
+			if at >= 0 {
+				if r.PreprocessCST.Result != "MISMATCH" || r.ExecutionStatus != kit.StatusNotRun || r.Assessment != kit.AssessBlocked || r.Code != kit.PreprocessCSTPrefix+"0" || r.Process != nil || r.Raw != nil || len(r.Steps) != 0 || len(r.PrimaryRaw) == 0 {
+					t.Fatalf("unsafe mismatch outcome: %+v / %s %s active_steps=%d raw_bytes=%d primary_bytes=%d", r.PreprocessCST, r.ExecutionStatus, r.Code, len(r.Steps), len(r.Raw), len(r.PrimaryRaw))
+				}
+				positions := r.PreprocessCST.Steps[0].CSTOnly
+				if len(positions) != 1 || positions[0] != uint32(at) {
+					t.Fatalf("extra positions %v; expected manual anchor %d", positions, at)
+				}
+			} else if r.PreprocessCST.Result != "PASS" || r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass {
+				t.Fatalf("primary ERROR inherited active expectation: %+v / %s %s", r.PreprocessCST, r.Assessment, r.Code)
+			}
+		})
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing corpus controls: %v", want)
 	}
 }
 

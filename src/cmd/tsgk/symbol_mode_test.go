@@ -18,7 +18,7 @@ import (
 // #218 (218-B): the C# symbol mode end to end on the registered grammar. The CLI refuses the
 // mode without the logger observation, runs it with the parse of the selected section only
 // (an edit that turns the branch is recomputed), stops a zero-active case before any driver
-// runs, and native-result-r6 replays the result from the original source witnesses; a
+// runs, and native-result-r7 replays the result from the original source witnesses; a
 // changed witness, observation, policy, stopped outcome or reducer is rejected.
 func TestIncrementalCLISymbolMode(t *testing.T) {
 	rt, cc := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC")
@@ -122,9 +122,10 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 				Equality string `json:"incremental_equality"`
 				Route    string `json:"incremental_route"`
 			} `json:"claims"`
-			Code       string               `json:"code"`
-			Preprocess []kit.PreprocessStep `json:"preprocess"`
-			Steps      []struct {
+			Code          string                   `json:"code"`
+			Preprocess    []kit.PreprocessStep     `json:"preprocess"`
+			PreprocessCST *kit.PreprocessCSTResult `json:"preprocess_cst"`
+			Steps         []struct {
 				Incremental struct {
 					Tree struct {
 						Nodes []kit.TreeNode `json:"nodes"`
@@ -133,7 +134,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			} `json:"steps"`
 		} `json:"cases"`
 	}
-	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r5" || len(res.Cases) != 6 {
+	if err := json.Unmarshal(published, &res); err != nil || res.ResultSchema != "tsgk-incremental-result/r6" || len(res.Cases) != 6 {
 		t.Fatalf("result: %v %s", err, published[:min(len(published), 300)])
 	}
 	c0, c1, c2 := res.Cases[0], res.Cases[1], res.Cases[2]
@@ -142,7 +143,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	}
 	if c0.ExecutionStatus != kit.StatusCompleted || len(c0.Steps) != 2 || len(c0.Preprocess) != 2 || c1.ExecutionStatus != kit.StatusNotRun || c1.Code != "PREPROCESS_ZERO_ACTIVE" || len(c1.Steps) != 0 ||
 		c2.ExecutionStatus != kit.StatusNotRun || c2.Code != "EDIT_OLD_MISMATCH" || c2.Preprocess != nil ||
-		res.Cases[3].ExecutionStatus != kit.StatusResourceLimit || res.Cases[3].Code != "NODE_LIMIT" || res.Cases[4].Code != "SOURCE_MISSING" {
+		res.Cases[3].ExecutionStatus != kit.StatusNotRun || res.Cases[3].Code != "PREPROCESS_CST_PRIMARY_UNVERIFIED" || res.Cases[3].PreprocessCST == nil || res.Cases[3].PreprocessCST.Result != "UNVERIFIED" || res.Cases[4].Code != "SOURCE_MISSING" {
 		t.Fatalf("cases: %+v %+v %+v %+v %+v", c0.ExecutionStatus, c1, c2, res.Cases[3].Code, res.Cases[4].Code)
 	}
 	inside := func(nodes []kit.TreeNode, src, word string) bool {
@@ -194,6 +195,13 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 		for _, entry := range entries {
 			items = append(items, struct{ path, role string }{"responses/" + entry.Name(), "response"})
 		}
+		primaryEntries, err := os.ReadDir(filepath.Join(out, "primary", "responses"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, entry := range primaryEntries {
+			items = append(items, struct{ path, role string }{"primary/responses/" + entry.Name(), "primary-response"})
+		}
 		var members []any
 		for _, item := range items {
 			if item.path != skip {
@@ -208,7 +216,7 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 		defer cancel()
 		return kit.Replay(rctx, kit.ReplayRequest{Root: out, Profile: reg})
 	}
-	r, err := replay("native-result-r6", "")
+	r, err := replay("native-result-r7", "")
 	if err != nil || !r.EvidenceValid {
 		t.Fatalf("replay: %v valid=%v %+v findings=%+v %v", err, r.EvidenceValid, r.Gates, r.Findings, r.Explanation)
 	}
@@ -239,10 +247,14 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 	rejected("r4 reducer", "PREPROCESS_REDUCER_MISMATCH", r, err)
 	r, err = replay("native-result-r5", "")
 	rejected("historical r5 reducer", "OBSERVATION_SCHEMA_UNSUPPORTED", r, err)
-	r, err = replay("native-result-r6", "sources/00000-one.bin")
-	rejected("missing witness", "PREPROCESS_SOURCE_MISSING", r, err)
-	witness("00000-one.bin", strings.Replace(one, "X", "W", 1))
 	r, err = replay("native-result-r6", "")
+	rejected("historical r6 reducer", "OBSERVATION_SCHEMA_UNSUPPORTED", r, err)
+	r, err = replay("native-result-r7", "sources/00000-one.bin")
+	rejected("missing witness", "PREPROCESS_SOURCE_MISSING", r, err)
+	r, err = replay("native-result-r7", "primary/responses/00000-one.json")
+	rejected("missing primary", "PREPROCESS_CST_PRIMARY_INVALID", r, err)
+	witness("00000-one.bin", strings.Replace(one, "X", "W", 1))
+	r, err = replay("native-result-r7", "")
 	rejected("changed witness", "PREPROCESS_SOURCE_MISMATCH", r, err)
 	witness("00000-one.bin", one)
 	tamper := func(name, code string, change func(doc map[string]any)) kit.ReplayResult {
@@ -267,11 +279,26 @@ func TestIncrementalCLISymbolMode(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer os.WriteFile(filepath.Join(out, "result.json"), published, 0o644)
-		r, err := replay("native-result-r6", "")
+		r, err := replay("native-result-r7", "")
 		rejected(name, code, r, err)
 		return r
 	}
 	cases := func(doc map[string]any) []any { return doc["cases"].([]any) }
+	for name, mutate := range map[string]func(map[string]any){
+		"primary wrong role":    func(c map[string]any) { c["primary"].(map[string]any)["role"] = "active" },
+		"primary absent member": func(c map[string]any) { delete(c, "code") },
+		"primary null array":    func(c map[string]any) { c["steps"] = nil },
+		"primary promotion":     func(c map[string]any) { c["result"] = "MISMATCH" },
+	} {
+		code := "PREPROCESS_CST_MISMATCH"
+		if name == "primary wrong role" {
+			code = "PREPROCESS_CST_PRIMARY_INVALID"
+		}
+		if name == "primary absent member" || name == "primary null array" {
+			code = "PREPROCESS_CST_INVALID"
+		}
+		tamper(name, code, func(doc map[string]any) { mutate(cases(doc)[0].(map[string]any)["preprocess_cst"].(map[string]any)) })
+	}
 	for _, role := range []int{0, 1} {
 		truncate := func(doc map[string]any) {
 			o := doc["steps"].([]any)[1].(map[string]any)["observations"].([]any)[role].(map[string]any)

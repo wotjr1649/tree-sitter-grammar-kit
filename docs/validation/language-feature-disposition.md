@@ -2,6 +2,10 @@
 
 기준일 `2026-09-29`, 추적 [#20](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/20). [채택된 version/mode](language-feature-scope.md)의 구문 요구를 아래에서 처분한다. 후보는 [고정 source 등록부](../../src/contracts/language-sources.json)의 동일 route를 사용한다. **목록 채택은 candidate 지원·실행 성공·S01 착수 승인이 아니다.** 채택 상태와 그때의 파일 hash는 준비 receipt와 Issue #20에서 확인한다.
 
+## C# symbol CST 처분 (#279)
+
+기본 구조 모드와 caller symbols를 평가하는 모드는 별도다. symbol 모드의 host 선택과 primary full CST에서 관측한 지시문 `#` byte 위치가 다르면 활성 CST 실행을 멈추고 별도 CST 축에 MISMATCH/BLOCKED를 남긴다. 등록한 네 detector는 `dollars-two-quotes-raw`(extra37), `nested-string-open-no-runaway`(extra62), `directive-string-no-escape`(A, extra25), `razor-comment-lines`(A, extra9)다. 이들은 위치 차이의 검출 근거이며 grammar lexer 전체의 근본 원인을 확정한 목록이 아니다. ERROR tree만으로 mismatch를 만들지 않는다. detector 등록 검사 PASS는 문제 해결을 뜻하지 않으며 Windows·Linux/global support의 BLOCKED를 유지한다. query/reference 의미는 #216, macOS symbol 실행은 #243의 별도 미완료 범위다. 세부 등록·집계는 [identity/evidence](../specs/identity-and-evidence.md#primary-cst-replay와-별도-qualification-축-279)를 따른다.
+
 ## 읽는 법과 완료 경계
 
 표의 한 행은 사양의 이름 있는 production 계열이다. `구문 사실`에 나열한 항목 각각과 `근거 장`의 해당 production 대안 전부가 범위다. 예시 하나만 통과해 계열 전체를 완료 처리하지 않는다. "production 대안 전부"의 기계적 경계는 [production 대안 등록부](../../src/contracts/feature-alternatives.json)다. 행마다 대안 id(`<행>.aNN`)와 `COMPLETE`·`PENDING` 상태를 둔다. qualification(`tsgk-coverage-rule/r2`)은 `COMPLETE`이고 대안마다 그 대안을 적은 사례가 있는 행만 P로 인정한다. 기본 계열과 version delta의 합집합으로 하한에서 유효했던 구문도 보존한다. delta는 기본 계열에 더해지는 명시적 추적 항목이며 중복 fixture를 강제하지 않는다. 문법상 허용 여부와 binding/type checking/실행 결과는 별도로 다룬다.

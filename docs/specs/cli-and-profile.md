@@ -241,9 +241,15 @@ registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema
 
 policy `tsgk-evidence-policy/r1`(strict, 모르는 필드 거부): `schema`, `id`, `evidence_sha256`(입력 root의 `evidence.json` bytes에 대한 caller 신뢰 anchor), `required`(`node`, `kind`, `identities`), `carry_forward`(`node`, `origin`, `relation`, `authorized_by`), `eligibility`(`null` 또는 `{nodes, modes}`)다. 예시는 `src/contracts/examples/evidence-policy-r1.json`, 거부 예시는 `invalid/evidence-*.json`이다. graph 문서 `tsgk-evidence/r1`은 입력 root의 `evidence.json`이며 node(`id`, `kind`, 세 축, `recorded_assessment`, `identities`, `files`, `refs`)를 담는다. 검사는 `evidence-replay` 한도로 한다.
 
-## S08 구현 — qualify, qualification inventory r6
+## C# symbol primary CST 검사 (#279)
 
-현재 inventory/r6는 symbol 결과/r5·reducer `native-result-r6`·policy/r3를 선택하고 qualification 결과/r7을 낸다. 역사적 inventory/r5는 symbol 결과/r4·reducer/r5·policy/r2와 qualification 결과/r6를 유지한다. 선택 전환의 정확한 COMPLETED/BLOCKED outcome 등록과 등록 검사 PASS의 범위는 [식별·증거](identity-and-evidence.md)의 `선택 전환 qualification`을 따른다. 제출된 결과 revision이나 policy header에 따라 legacy로 재시도하지 않는다.
+현재 `incremental` symbol 모드의 profile/r3와 caller 입력 형식은 같고 결과는 r6다. 모든 전처리 step이 OK이면 full-source structural primary를 먼저 실행하고, directive hash-byte 위치가 모두 일치해야 active 요청을 실행한다. 불일치는 `PREPROCESS_CST_MISMATCH_STEP_n`, 미완전 근거는 `PREPROCESS_CST_PRIMARY_UNVERIFIED`로 active를 멈추며 BLOCKED/exit3이다. 검증 실패는 FAIL이다. 원 process/response 원인은 필수 `preprocess_cst.primary` receipt에 남는다. non-OK/source/edit 거부는 기존 code를 유지하며 `NOT_APPLICABLE`이다. 옵션·설치·연산 상한은 추가하지 않는다. 상세 필드와 token 규칙은 [tree/protocol](tree-and-adapter-protocol.md#c-symbol-모드의-primary-full-cst-대조-279)이 소유한다.
+
+offline replay는 `native-result-r7`과 `primary-response` role을 사용한다. 현재 qualify inventory/r7 → result/r8은 별도 CST 축을 출력한다. 등록 detector를 정확히 검출해도 그 축과 Windows·Linux/global support는 BLOCKED다. CLI의 성공적인 등록 검사와 CST 해결 claim을 구분한다. 기존 r5/r6 inventory·reducer의 역사적 판정은 보존한다([identity/evidence](identity-and-evidence.md#primary-cst-replay와-별도-qualification-축-279)).
+
+## S08 구현 — qualify, qualification inventory r7
+
+현재 inventory/r7는 symbol 결과/r6·reducer `native-result-r7`·policy/r4를 선택하고 qualification 결과/r8을 낸다. 역사적 inventory/r6는 symbol 결과/r5·reducer/r6·policy/r3와 qualification 결과/r7, inventory/r5는 symbol 결과/r4·reducer/r5·policy/r2와 qualification 결과/r6를 유지한다. 선택 전환과 별도 CST 축의 등록 검사 PASS 범위는 [식별·증거](identity-and-evidence.md)를 따른다. 제출된 결과 revision이나 policy header에 따라 legacy로 재시도하지 않는다.
 
 ```text
 tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--out PATH]

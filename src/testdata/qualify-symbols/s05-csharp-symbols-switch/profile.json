@@ -1,0 +1,91 @@
+{
+  "schema": "tsgk-incremental/r3",
+  "id": "s05-csharp-symbols-switch",
+  "route": "csharp",
+  "operation": "native-parse-edit",
+  "symbol": "tree_sitter_c_sharp",
+  "encoding": "UTF-8",
+  "output": "tree",
+  "compiler": {
+    "name": "cc",
+    "version": "host",
+    "sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+    "bytes": 3299024
+  },
+  "grammar": [
+    {
+      "path": "src/parser.c",
+      "role": "parser",
+      "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+      "bytes": 51465791
+    },
+    {
+      "path": "src/scanner.c",
+      "role": "scanner",
+      "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+      "bytes": 33334
+    },
+    {
+      "path": "src/tree_sitter/alloc.h",
+      "role": "header",
+      "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+      "bytes": 985
+    },
+    {
+      "path": "src/tree_sitter/array.h",
+      "role": "header",
+      "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+      "bytes": 13453
+    },
+    {
+      "path": "src/tree_sitter/parser.h",
+      "role": "header",
+      "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+      "bytes": 7624
+    }
+  ],
+  "declarations": null,
+  "preprocess": {
+    "mode": "csharp-symbols/r1",
+    "symbols": []
+  },
+  "cases": [
+    {
+      "id": "literal-true",
+      "input": {
+        "path": "cases/literal-true.cs",
+        "role": "case",
+        "sha256": "aa9997ebae2c5d9463f1cb26b420c26c48003a46ebfa58c6ed9e55450287765d",
+        "bytes": 44
+      },
+      "edits": [
+        {
+          "start_byte": 4,
+          "old_end_byte": 8,
+          "new_end_byte": 11,
+          "old": "dHJ1ZQ==",
+          "new": "KGZhbHNlKQ=="
+        }
+      ],
+      "points": [],
+      "expect": [
+        {
+          "step": 0,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        },
+        {
+          "step": 1,
+          "syntax": "NO_ERROR",
+          "contains": [
+            "class_declaration"
+          ],
+          "declarations": ""
+        }
+      ]
+    }
+  ]
+}

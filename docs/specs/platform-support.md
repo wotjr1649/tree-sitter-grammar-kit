@@ -28,6 +28,10 @@ native 준비와 build는 기반 runtime commit에 [현재 local field patch](..
 
 2026-10-07 #118의 Windows 로컬 후보는 #113 actual main과 동일 tree의 기준 입력에서 준비한 26 route·SVC·large를 같은 host/compiler/policy로 비교했다. 5,109개 S05/S06 사례의 tree·incremental·query·사실·요구 결과 변경과 누락은 0, helper 실패 0이며 API 차이는 69→0이다. 원래 9개 조사 중 #105의 TS/TSX 2개는 유지되고 C#·SVC 4개와 Swift 3개가 개별 PASS다. owned 정상/부정 대조 20개 PASS, #105 runtime으로 복원한 유효 mutant는 새 API/query 4개·by-name 4개에서 실패하고 나머지 12개는 유지됐다. large 정상 실행과 선언 사실 재현, 의도된 overcapture의 RESOURCE_LIMIT/OUTPUT_LIMIT을 유지한다. 이는 large API 전수 성능이나 등록 밖 navigation API의 완전 적합성을 뜻하지 않으며 세 OS·actual main 값은 #118의 실행 근거로 따로 확인한다.
 
+## C# symbol primary CST의 지원 경계 (#279)
+
+현재 inventory/r7·qualification/r8은 symbol 모드에 별도 primary CST 위치 대조 축을 둔다. Windows·Linux에서 6set/30사례를 실행하며 등록 기대값은 PASS22/MISMATCH4/NOT_APPLICABLE4, 비교 prefix29step이다. 네 detector의 정확한 정지는 등록 검사 PASS이지만 이 CST 축은 BLOCKED이고 두 platform 및 global support도 BLOCKED다. 기존78칸·2,478개 의무의 PASS와 별개다. macOS symbol 역할은 #243 DEFERRED이며 축·count·사례를 만들지 않고, 해당 platform의 기존26route 지원 scope를 바꾸지 않는다. 과거 main/PR의 SUPPORTED 결과는 당시 inventory revision의 관측으로 보존한다. 이 절의 수는 trusted 등록 기대값이며 실제 실행 완료는 해당 PR/main CI receipt로 확인한다.
+
 ## 개발 main의 T-SQL 한계 (#109)
 
 [#109의 Windows 합성 입력 23개 관측](../reports/issue-109-tsql-reclassification.md)은 당시 남아 있던 다섯 과잉 수용 종류의 역사적 기록이다. [#113의 경계 수정](../reports/issue-113-tsql-boundaries.md)은 PERCENT의 regular identifier 수용, Unicode 3.2 BMP 밖 regular identifier 문자, master/service-key PASSWORD 문맥의 CERTIFICATE, 빈 BEGIN END, BEGIN 직후 세미콜론 없는 CTE를 제한한다. 구분 식별자·Unicode 3.2 문자·PASSWORD·비어 있지 않은 block·BEGIN; WITH 및 CERTIFICATE가 유효한 다른 문맥의 대조군을 유지한다. 등록 대조군 20개와 기존 사례가 검증 범위이며, 모든 예약어·CTE 위치나 SQL Server 엔진의 완전 적합성을 뜻하지 않는다. 등록 source/생성물 identity와 실제 candidate의 CI/qualification 근거를 함께 확인한다.
