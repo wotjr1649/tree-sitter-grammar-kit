@@ -292,7 +292,7 @@ func preprocessCSTHashes(source []byte, nodes []TreeNode) ([]uint32, error) {
 		}
 		tail := string(source[n.StartByte+1 : n.EndByte])
 		if prefix != "!" && prefix != ":" {
-			tail = strings.TrimLeftFunc(tail, unicode.IsSpace)
+			tail = strings.TrimLeftFunc(tail, ppSpace)
 		}
 		if !strings.HasPrefix(tail, prefix) {
 			return nil, fmt.Errorf("directive prefix")

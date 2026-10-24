@@ -111,7 +111,7 @@ func TestNativePreprocessCST(t *testing.T) {
 	if err := json.Unmarshal(data, &corpus); err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]int{"dollars-two-quotes-raw": 37, "nested-string-open-no-runaway": 62, "directive-string-no-escape": 25, "razor-comment-lines": 9, "issue198-inactive-broken": -1}
+	want := map[string]int{"dollars-two-quotes-raw": 37, "nested-string-open-no-runaway": 62, "directive-string-no-escape": 25, "razor-comment-lines": 9, "issue198-inactive-broken": -1, "feff-after-hash": -1}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	for _, source := range corpus.Cases {

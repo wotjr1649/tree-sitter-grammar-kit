@@ -15,6 +15,13 @@ import (
 )
 
 func TestPreprocessCSTHashes(t *testing.T) {
+	feff := []byte("#\uFEFFif A\nclass X {}\n#endif\n")
+	if got, err := preprocessCSTHashes(feff, []TreeNode{{Type: "#if", StartByte: 0, EndByte: 6}, {Type: "#endif", StartByte: 20, EndByte: 26}}); err != nil || !reflect.DeepEqual(got, []uint32{0, 20}) {
+		t.Fatalf("pinned feff-after-hash positions: %v %v", got, err)
+	}
+	if _, err := preprocessCSTHashes([]byte("#\nif"), []TreeNode{{Type: "#if", StartByte: 0, EndByte: 4}}); err == nil {
+		t.Fatal("newline inside directive keyword prefix accepted")
+	}
 	source := []byte("\xef\xbb\xbf\r\n#\u2003if true\r\n#!x\n#:sdk x\n#endif")
 	start := uint32(strings.Index(string(source), "#"))
 	alias1 := uint32(strings.Index(string(source), "#!"))
