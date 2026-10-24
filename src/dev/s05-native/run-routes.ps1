@@ -531,15 +531,23 @@ if ($Symbols) {
     $cliArgs = @('incremental', '--root', $root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
       '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache, '--reuse-observation')
     if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
-    $null = & $cli @cliArgs # a stopped case blocks the run; the result is judged below
+    # a stopped case ends the run FAILED or BLOCKED (exit 4 or 3) without a diagnostic; any
+    # tsgk error (I/O, publication, cancellation) writes one to stderr and fails the set
+    $errPath = Join-Path $work "$($w.set).stderr"
+    $line = & $cli @cliArgs 2> $errPath
+    $code = $LASTEXITCODE
+    $diag = (Get-Content -LiteralPath $errPath -Raw)
     $resPath = Join-Path $out 'result.json'
-    if (-not (Test-Path -LiteralPath $resPath)) { $summary.failures += "symbols $($w.set): no result"; continue }
+    if (-not (Test-Path -LiteralPath $resPath)) { $summary.failures += "symbols $($w.set): no result (exit $code) $diag"; continue }
+    $reported = $line | ConvertFrom-Json
+    if ($code -notin @(0, 1, 3, 4) -or $diag) { $summary.failures += "symbols $($w.set): tsgk exit $code $diag" }
     Copy-Item -LiteralPath $pf -Destination (Join-Path $out 'profile.json')
     New-Item -ItemType Directory -Path (Join-Path $out 'sources') | Out-Null
     for ($i = 0; $i -lt $sources.Count; $i++) { [IO.File]::WriteAllBytes((Join-Path $out ('sources/{0:D5}-{1}.bin' -f $i, $w.cases[$i].id)), $sources[$i]) }
     $res = Get-Content -LiteralPath $resPath -Raw | ConvertFrom-Json
     Add-BuildObservation $res
     if ($res.result_schema -ne 'tsgk-incremental-result/r4') { $summary.failures += "symbols $($w.set): result $($res.result_schema)" }
+    if ($reported.execution_status -ne $res.execution_status -or $reported.assessment -ne $res.assessment) { $summary.failures += "symbols $($w.set): reported $($reported.execution_status)/$($reported.assessment), published $($res.execution_status)/$($res.assessment)" }
     $i = 0
     foreach ($c in @($res.cases)) {
       $want = $w.cases[$i]

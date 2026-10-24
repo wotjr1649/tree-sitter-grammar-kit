@@ -157,19 +157,21 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		"identities": map[string]string{"workload": s.Profile, "policy": policy, "operation": w.Operation, "platform": p.pair(), "runtime": w.RuntimeCommit,
 			"producer": res.Build.Identity, "executable": res.Build.ExecutableSHA256, "compiler": prof.Compiler.SHA256},
 		"records": nil, "members": members})
-	// the replay shares the qualification's caller, wall and the host's byte budget
-	ctx, cancel := context.WithCancel(q.r.caller)
-	if dl, ok := q.r.wall.Deadline(); ok {
-		cancel()
-		ctx, cancel = context.WithDeadline(q.r.caller, dl)
-	}
 	if h.records += uint64(len(res.Cases)); h.records > uint64(q.lim.Records) {
-		cancel()
 		return nil, fail(KindResourceLimit, "RECORDS_LIMIT", resPath, nil)
 	}
+	// the replay shares the qualification's caller, wall and the host's byte budget: the
+	// qualification wall ends the replay, and a stopped replay reports the qualification's
+	// own cause (the caller, or its wall as WALL_LIMIT), not the replay's view of it
+	ctx, cancel := context.WithCancel(q.r.caller)
+	stopWall := context.AfterFunc(q.r.wall, cancel)
 	rr, rerr := replayShared(ctx, ReplayRequest{Root: filepath.Join(h.root, "incremental", w.Set), Profile: reg}, &replayBudget{r: h.x.r, total: q.lim.TotalBytes})
+	stopWall()
 	cancel()
 	if rerr != nil && stop(asError(rerr)) {
+		if e := q.r.check(); e != nil {
+			return nil, e
+		}
 		return nil, asError(rerr)
 	}
 	if e := q.r.check(); e != nil {

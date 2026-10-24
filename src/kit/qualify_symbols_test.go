@@ -245,6 +245,23 @@ func TestQualifySymbolSetLimits(t *testing.T) {
 	if asError(err).Code != "TOTAL_BYTES_LIMIT" {
 		t.Fatalf("replay beyond the host budget: %v", err)
 	}
+	// the qualification wall expiring while the set replays is the qualification's
+	// WALL_LIMIT (RESOURCE_LIMIT), not a caller cancellation
+	var qualWall context.CancelCauseFunc
+	testHookWall = func() (context.Context, context.CancelFunc) {
+		if qualWall == nil {
+			ctx, cancel := context.WithCancelCause(context.Background())
+			qualWall = cancel
+			return ctx, func() {}
+		}
+		qualWall(errWall) // the replay starts: the qualification wall ends now
+		return context.WithCancel(context.Background())
+	}
+	_, err = qualify()
+	testHookWall = nil
+	if e := asError(err); e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" {
+		t.Fatalf("wall during the replay: %v", err)
+	}
 	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.Records = 0; return l }
 	_, err = qualify()
 	testHookQualifyLimits = nil
