@@ -161,19 +161,19 @@ func CheckPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 	default:
 		return bad()
 	}
-	if proc.CleanupScope != scope || proc.StdoutBytes < 0 || proc.StdoutBytes > int64(r.Operation.OutputBytes)+4 ||
+	if proc.CleanupScope != scope || proc.StdoutBytes < 0 ||
 		proc.WallMillis < 0 || proc.WallBudgetMillis <= 0 || proc.WallBudgetMillis > max(int64(1), (wall+time.Millisecond-1).Milliseconds()) || proc.WallMillis > proc.WallBudgetMillis+5001 ||
 		proc.MemoryLimitBytes != r.Operation.MemoryBytes || proc.MemoryEnforcement != memory || !proc.PeakKnown && proc.PeakBytes != 0 || proc.PeakKnown && proc.PeakBytes > proc.MemoryLimitBytes && !proc.MemoryLimitHit {
 		return bad()
 	}
 	if len(r.Raw) == 0 {
-		if p.Code == "" || p.ExecutionStatus == StatusCompleted {
+		if p.Code == "" || p.ExecutionStatus == StatusCompleted || proc.StdoutTruncated != (proc.StdoutBytes > int64(r.Operation.OutputBytes)+4) {
 			return bad()
 		}
 		cleanupStop := !proc.CleanupVerified && p.ExecutionStatus == StatusFailed && p.Code == "PROCESS_CLEANUP_UNVERIFIED"
 		switch proc.Status {
 		case StatusResourceLimit:
-			if !cleanupStop && (p.ExecutionStatus != StatusResourceLimit || p.Code != proc.Reason) || proc.Reason != "WALL_LIMIT" && proc.Reason != "OUTPUT_LIMIT" && proc.Reason != "MEMORY_LIMIT" || proc.MemoryLimitHit != (proc.Reason == "MEMORY_LIMIT") {
+			if !cleanupStop && (p.ExecutionStatus != StatusResourceLimit || p.Code != proc.Reason) || proc.Reason != "WALL_LIMIT" && proc.Reason != "OUTPUT_LIMIT" && proc.Reason != "MEMORY_LIMIT" || proc.Reason == "MEMORY_LIMIT" && !proc.MemoryLimitHit {
 				return bad()
 			}
 		case StatusCancelled:

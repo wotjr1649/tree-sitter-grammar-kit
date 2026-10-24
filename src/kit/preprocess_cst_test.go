@@ -215,6 +215,30 @@ func TestPreprocessCSTPrimary(t *testing.T) {
 			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "WALL_LIMIT"
 			r.Primary.Process.StdoutBytes = 17
 		}},
+		"output cap counts received bytes": {"UNVERIFIED", "PREPROCESS_CST_PRIMARY_UNVERIFIED", func(r *PreprocessCSTRequest) {
+			r.Raw = nil
+			r.Primary.ExecutionStatus, r.Primary.Code = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.StdoutBytes, r.Primary.Process.StdoutTruncated = int64(r.Operation.OutputBytes)+5, true
+		}},
+		"output count flag contradiction": {"FAIL", "PREPROCESS_CST_PRIMARY_INVALID", func(r *PreprocessCSTRequest) {
+			r.Raw = nil
+			r.Primary.ExecutionStatus, r.Primary.Code = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.StdoutBytes = int64(r.Operation.OutputBytes) + 5
+		}},
+		"output truncated below cap": {"FAIL", "PREPROCESS_CST_PRIMARY_INVALID", func(r *PreprocessCSTRequest) {
+			r.Raw = nil
+			r.Primary.ExecutionStatus, r.Primary.Code = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "OUTPUT_LIMIT"
+			r.Primary.Process.StdoutBytes, r.Primary.Process.StdoutTruncated = 17, true
+		}},
+		"first terminal precedes memory flag": {"UNVERIFIED", "PREPROCESS_CST_PRIMARY_UNVERIFIED", func(r *PreprocessCSTRequest) {
+			r.Raw = nil
+			r.Primary.ExecutionStatus, r.Primary.Code = StatusResourceLimit, "WALL_LIMIT"
+			r.Primary.Process.Status, r.Primary.Process.Reason = StatusResourceLimit, "WALL_LIMIT"
+			r.Primary.Process.StdoutBytes, r.Primary.Process.MemoryLimitHit = 0, true
+		}},
 		"submillisecond wall receipt": {"UNVERIFIED", "PREPROCESS_CST_PRIMARY_UNVERIFIED", func(r *PreprocessCSTRequest) {
 			r.Operation.RunWall = time.Nanosecond
 			r.Primary.Policy = NativePolicy(r.Operation, OutputTree, nil)
