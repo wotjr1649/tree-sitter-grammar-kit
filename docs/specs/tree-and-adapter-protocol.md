@@ -225,8 +225,8 @@ response status는 처음으로 완료되지 않은 tree의 status·code이며 �
   - r3(필수 관측)에 사례별 `preprocess`(평가한 step 목록, OK가 아닌 첫 step까지)를 더한다.
   - 각 step은 `status`, `directives`(`kind`, `hash`, `active`, `taken`), `active`(byte·point), `inactive`다.
   - 이 관측은 순서 있는 지시문 위치·선택과 활성/비활성 범위만 주장한다. group 구조와 지시문 span은 주장하지 않는다.
-- 이 결과는 support claim·qualification·query reference 자격을 만들지 않는다.
-  - qualification은 oracle profile만 읽고, oracle profile은 `preprocess`를 받지 않는다.
+- 이 결과 자체는 support claim·query reference 자격을 만들지 않는다.
+  - qualification(218-C)은 inventory `csharp-symbols` 역할에 등록한 workload의 실행만 읽는다. 등록 비교, `native-result-r5` replay, 고정 Roslyn 관측 기대값 비교를 거친 역할 행이다([식별·증거](identity-and-evidence.md) `DEFERRED 역할 platform과 symbol 모드 역할`). oracle profile은 계속 `preprocess`를 받지 않는다.
   - query witness는 query 응답이 필요한데, 이 모드는 query 없는 `native-parse-edit`만 받는다.
 
 **필수 관측 판정 (#217).** `tsgk-incremental-result/r3`(`incremental --reuse-observation`)는 같은 wire r3에서 모든 native parse의 관측을 필수로 요구한다(`reuseobs.Mandatory`, `reuseobs.CaseClaim`). 결과 r2의 별도 축 의미는 그 기록의 replay(`native-result-r3`)에만 남는다.

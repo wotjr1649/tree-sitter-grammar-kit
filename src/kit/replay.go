@@ -734,6 +734,18 @@ func (x *replayEnv) walk(dir string, count *uint64) *Error {
 // the root, starts no process and imports no code from the evidence; an unknown reducer or
 // schema is UNSUPPORTED, never a replayed success.
 func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
+	return replayShared(ctx, req, nil)
+}
+
+// replayBudget is a caller's byte budget a replay reads under (a qualification host's
+// symbol-mode set, #218): the replay starts from its count, stops at its limit and leaves
+// its own reads in it.
+type replayBudget struct {
+	r     *run
+	total uint64
+}
+
+func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) (ReplayResult, error) {
 	res := ReplayResult{Report: newReport("replay"), ResultSchema: ReplayResultSchema, Gates: []ReplayGate{}, Observed: map[string]string{}, Explanation: []string{}}
 	res.EvidenceMode = ModeReplayedRaw
 	res.Assessment = AssessNotAssessed
@@ -800,6 +812,10 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 		return bad(e)
 	}
 	defer r.cancel()
+	if budget != nil {
+		r.totalRead, lim.TotalBytes = budget.r.totalRead, budget.total
+		defer func() { budget.r.totalRead = r.totalRead }()
+	}
 	root, _, e := openRoot(req.Root)
 	if e != nil {
 		return bad(e)

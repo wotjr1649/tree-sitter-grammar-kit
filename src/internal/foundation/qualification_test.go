@@ -496,19 +496,21 @@ func buildInventory(t *testing.T, root string) []byte {
 		}
 	}
 	r3 := "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
+	csSymbol, csGrammar := grammarOf("csharp")
 	inv.ExtraRoles = []kit.QualRole{
 		{ID: "n461-svc", Role: "owned", Status: kit.RoleExecuted, Reason: "SVC-SERVICEHOST-r2 directive, C# inline, recovery and explicitly registered C# reference fixtures (OWNED_FIXTURE, three hosts; syntax only)",
-			Platforms: []string{"windows-amd64", "linux-amd64", "darwin-arm64"}, NotApplicable: map[string]string{}, Workloads: []kit.QualWorkload{svc}},
+			Platforms: []string{"windows-amd64", "linux-amd64", "darwin-arm64"}, NotApplicable: map[string]string{}, Deferred: map[string]string{}, Workloads: []kit.QualWorkload{svc}},
 		{ID: "n461-large", Role: "owned", Status: kit.RoleExecuted, Reason: "real-world-source-r3 / native-query-large synthetic large C# fixtures (OWNED_FIXTURE)",
-			Platforms: []string{"windows-amd64"}, NotApplicable: map[string]string{"linux-amd64": r3, "darwin-arm64": r3}, Workloads: []kit.QualWorkload{lw, over}},
+			Platforms: []string{"windows-amd64"}, NotApplicable: map[string]string{"linux-amd64": r3, "darwin-arm64": r3}, Deferred: map[string]string{}, Workloads: []kit.QualWorkload{lw, over}},
+		symbolRole(t, root, csSymbol, csGrammar),
 		{ID: "owned-native-fixtures", Role: "owned", Status: kit.RoleExternal, Reason: "owned scannerless and stateful-scanner fixtures: the foundation job's native tests on each host (src/internal/native), not this aggregation",
-			Platforms: []string{}, NotApplicable: map[string]string{}},
+			Platforms: []string{}, NotApplicable: map[string]string{}, Deferred: map[string]string{}},
 		{ID: "brightscript-maintained", Role: "maintained", Status: kit.RoleNotRun, Reason: "BrightScript v0.1.4 maintained reference: no native route or workload is registered in this campaign",
-			Platforms: []string{}, NotApplicable: map[string]string{}},
+			Platforms: []string{}, NotApplicable: map[string]string{}, Deferred: map[string]string{}},
 		{ID: "brightscript-historical", Role: "historical", Status: kit.RoleNotRun, Reason: "BrightScript v0.1.2 historical replay (S07-REPLAY-2ULP-r1): the verification bundle is not prepared; never a NEW_RUN",
-			Platforms: []string{}, NotApplicable: map[string]string{}},
+			Platforms: []string{}, NotApplicable: map[string]string{}, Deferred: map[string]string{}},
 		{ID: "cooklang-audit", Role: "historical", Status: kit.RoleNotRun, Reason: "Cooklang legacy metadata audit: static S00 observation only, not executed",
-			Platforms: []string{}, NotApplicable: map[string]string{}},
+			Platforms: []string{}, NotApplicable: map[string]string{}, Deferred: map[string]string{}},
 	}
 	data, err := json.MarshalIndent(inv, "", " ")
 	if err != nil {

@@ -153,7 +153,7 @@ S06부터 `native routes (<os>)`는 `run-routes.ps1 -Large -Oracle`로 실행한
 `-session-evaluate` r3는 같은 run의 모든 legacy payload와 session 내부 receipt bytes를 대조하는 회귀 경로로 유지한다. 전환 전 최종 평가 PR 및 actual main의 세 fixture·35개 payload 일치 증거가 필요하며 과거 소스 관측으로 대신하지 않는다. r4는 반복 legacy parse와 fresh-process-per-page 성질을 제거하며 같은 run legacy byte 비교 성공을 주장하지 않는다. native/runtime/grammar/audit 의미 변경에는 전체 평가를 재수행한다. 전체 45분·page90초·HARD8GiB 수치는 유지하되 legacy process wall과 session frame wall은 경계가 다르다. r4의 `max_page_wall_ms`는 parse를 포함한 실제 frame 최댓값이고 전체 process wall/peak는 session당 한 번 집계한다. workload/source/workflow key가 바뀌므로 n≥20 표본은 최종 r4 구성에서 새로 모은다. 세부 wire·bytes/storage 상한과 offline 증명 한계는 [audit 계약](../specs/tree-and-adapter-protocol.md#대용량-전체-api-개발-audit-126)에 따른다.
 
 
-S08부터 `native routes (<os>)`는 route 실행 뒤 `src/dev/s08-qualify/run-identity.ps1`로 host 실행 identity(`tsgk-run-identity/r1`: 지정한 run 변수, `go env`, checkout만)를 쓰고, `summary.json`과 함께 실행 identity, S06 기록 set(`records/`), 그 workload profile(`profiles/s06-*.json`)을 artifact로 올린다. 이어 `qualification (ubuntu-24.04)` job(`needs: [native-routes, native-routes-macos]`, 취소되지 않았고 두 producer가 skipped가 아니면 route job이 실패해도 실행)이 같은 run·attempt의 세 artifact를 받아(두 route producer가 success인데 artifact 목록이 늦게 반영돼 host가 빠지면 60초 뒤 별도 위치에 한 번 더 받아 빠진 host만 옮기고, 이미 받은 host는 바꾸지 않으며, 그래도 없으면 기존처럼 MISSING 칸으로 실패한다) `tsgk qualify --inventory src/contracts/qualification-c1.json --candidate <github.sha>`로 78칸과 추가 역할 행을 만들고 결과를 `s08-qualification-<run>-<attempt>` artifact로 남긴다. `src/dev/s08-qualify/gate.ps1`이 행렬을 출력하고 `mechanism_gate`(완결성, cohort·자격, 칸별 kit 축과 세 host 의미 비교, 실행된 추가 역할 행)가 PASS가 아니면 job을 실패시킨다. 필수 문법 요구의 FAIL과 사례가 없는 의무는 job 실패가 아니라 행렬의 결과이며 지원 claim을 `BLOCKED`로 둔다. job은 heavy job이 아니며(native 실행 없음) route job 세 개가 끝난 뒤에 돈다. 실패한 job만 다시 실행하면(`gh run rerun --failed`, `--job`) 다시 실행하지 않은 producer의 artifact가 이전 attempt 이름으로 남는다. 그래서 qualification cohort·완결성이나 integration gate가 실패한다. 필수 CI를 통과해야 하는 재실행은 run 전체를 다시 실행한다(#275).
+S08부터 `native routes (<os>)`는 route 실행 뒤 `src/dev/s08-qualify/run-identity.ps1`로 host 실행 identity(`tsgk-run-identity/r1`: 지정한 run 변수, `go env`, checkout만)를 쓰고, `summary.json`과 함께 실행 identity, S06 기록 set(`records/`), 그 workload profile(`profiles/s06-*.json`)을 artifact로 올린다. Windows·Linux host는 `-Symbols`로 C# symbol 모드 역할의 실행(`incremental/`, #218)도 올린다. 등록 결과대로 끝나지 않은 사례가 있으면 route job이 실패한다. 이어 `qualification (ubuntu-24.04)` job(`needs: [native-routes, native-routes-macos]`, 취소되지 않았고 두 producer가 skipped가 아니면 route job이 실패해도 실행)이 같은 run·attempt의 세 artifact를 받아(두 route producer가 success인데 artifact 목록이 늦게 반영돼 host가 빠지면 60초 뒤 별도 위치에 한 번 더 받아 빠진 host만 옮기고, 이미 받은 host는 바꾸지 않으며, 그래도 없으면 기존처럼 MISSING 칸으로 실패한다) `tsgk qualify --inventory src/contracts/qualification-c1.json --candidate <github.sha>`로 78칸과 추가 역할 행을 만들고 결과를 `s08-qualification-<run>-<attempt>` artifact로 남긴다. `src/dev/s08-qualify/gate.ps1`이 행렬을 출력하고 `mechanism_gate`(완결성, cohort·자격, 칸별 kit 축과 세 host 의미 비교, 실행된 추가 역할 행)가 PASS가 아니면 job을 실패시킨다. 필수 문법 요구의 FAIL과 사례가 없는 의무는 job 실패가 아니라 행렬의 결과이며 지원 claim을 `BLOCKED`로 둔다. job은 heavy job이 아니며(native 실행 없음) route job 세 개가 끝난 뒤에 돈다. 실패한 job만 다시 실행하면(`gh run rerun --failed`, `--job`) 다시 실행하지 않은 producer의 artifact가 이전 attempt 이름으로 남는다. 그래서 qualification cohort·완결성이나 integration gate가 실패한다. 필수 CI를 통과해야 하는 재실행은 run 전체를 다시 실행한다(#275).
 
 race 진단은 Linux·macOS의 `race diagnostic (<os>)` matrix로 `CGO_ENABLED=1`, `go test -race -count=1 -timeout 600s ./src/...`를 실행한다(job 15분). `regenerate diagnostic (macos-15)`는 고정 generator·Node로 26 route를 새로 재생성하고 두 작업 공간과 route별 등록 출력 여섯 개를 비교한다(job 30분). 둘은 필수 check에 포함하지 않는 진단이며 native route·qualification 입력을 대신하지 않는다. race의 native 도구 미설정 시험은 skip이며, Linux cgroup v2와 macOS process group·sampled memory의 기존 경계를 유지한다.
 
@@ -213,7 +213,7 @@ C# symbol 모드(218-B) 연결 시험:
   - zero-active(처음부터·edit로), MALFORMED, RANGE_LIMIT, 잘못된 UTF-8 edit 각각이 driver 없는 고정 결과인지 확인한다.
   - 그 결과가 run PASS를 막는지 확인한다.
 - kit `TestPreprocessProfile`·`TestPreprocessSymbolsDigest`·`TestObserveCSharpPreprocess`, native `TestPolicyRefPreimage`
-  - profile 수락·거부, r3의 anchor, digest 고정 벡터, 관측 export, qualification 등록 비교의 preprocess 거부를 확인한다.
+  - profile 수락·거부, r3의 anchor, digest 고정 벡터, 관측 export, 등록되지 않은 preprocess의 qualification 등록 비교 거부를 확인한다.
   - 기존 policy r1 bytes·hash 보존과 r2의 preprocess 결속을 확인한다.
 - `TestIncrementalCLISymbolMode`(native routes job, 등록 C# closure)
   - CLI가 관측 없는 실행을 거부하는지, 실행 결과가 r4인지, symbols·edit에 따른 parse 구간을 확인한다.
@@ -228,6 +228,39 @@ C# symbol 모드(218-B) 연결 시험:
     - operation의 대소문자만 다른 member
     - 건너뛴 구간의 leaf
   - job은 log의 PASS 줄로 skip이 아닌 실행을 확인한다.
+
+C# symbol 모드 qualification(218-C) 시험:
+
+- foundation `TestSymbolRoleRegistration`·`TestQualificationInventory`
+  - `csharp-symbols` 역할(사례 25개, symbols `[]`·`["A"]`·`["ENABLED"]`·`["A","C"]`)을 고정 Roslyn 관측에서만 만드는지 확인한다(`src/internal/ppexpect`, kit 차분 시험과 같은 도출).
+  - edit 결과가 같은 symbols의 다른 corpus 원본과 byte 단위로 같은지 확인한다.
+  - 멈춘 사례에 syntax 기대값이 없는지 확인한다.
+  - 생성 inventory가 저장소의 `qualification-c1.json`과 같은지 확인한다.
+  - 분기를 바꾸는 edit는 등록하지 않는다. 바뀐 활성 범위가 text를 공유하지 않아 edit step이 node를 재사용하지 못하고, S05 incremental route claim이 FAIL이 된다(로컬 Windows `literal-true`→`literal-paren-false` 관측). 처분은 [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277)에서 다룬다.
+- kit `TestQualificationInventorySymbolRole`
+  - `deferred`의 platform 분할, symbol workload·사례 규칙의 거부를 확인한다.
+  - 근거 없는 실행 행이 MISSING이고 DEFERRED 행에 축이 없는지 확인한다.
+- kit `TestQualifySymbolSetLimits`·`TestReplaySharedBudget`(offline)
+  - 기록된 set `src/testdata/qualify-symbols`(windows/amd64에서 `run-routes.ps1 -Symbols`로 만든 `s05-csharp-symbols-a-c`)가 등록대로 PASS인지 확인한다.
+  - 모든 step이 OK인 사례의 code를 summary와 함께 바꾸면 replay는 받지만 등록 결과 비교로 행 FAIL인지 확인한다.
+  - replay member가 한도를 넘으면 행 INCOMPLETE(kit 축 BLOCKED)인지, replay가 host byte 예산과 record 한도 안에서 도는지 확인한다.
+  - 이 기록은 등록·고정 runtime commit·native policy에 결속된다. C# grammar, runtime, 연산 한도나 policy 문구가 바뀌면 baseline이 실패하므로 다시 기록한다.
+- `TestQualifySymbolRole`(native routes job, 등록 C# closure, 세 OS에서 실행. qualification 근거가 아니라 시험이다)
+  - 등록 workload `s05-csharp-symbols-none`·`s05-csharp-symbols-a-c`를 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
+  - 실행 행 PASS와 다른 platform의 DEFERRED 행을 확인한다.
+  - 다음은 행 FAIL이어야 한다.
+    - host profile의 symbols 변경·재정렬, preprocess 삭제(기본 모드 재표기), 사례 삭제
+    - set 안에서 일관된 위조(다른 원본, 그 witness와 profile digest)
+    - witness 변경, result 사례 결과 변경, 다른 workload result 이식
+    - set 안의 등록되지 않은 파일
+    - 기록과 다른 등록 선택
+  - 등록되지 않은 set, deferred platform host가 낸 역할 근거는 완결성 FAIL(`HOST_FILE_UNREGISTERED`)이어야 한다.
+  - deferred 삭제, 실행 platform의 deferred 등록, 멈춘 사례의 다른 결과 등록, 선택 없는 사례는 inventory 거부여야 한다.
+- ci-gate `TestQualificationRejectsIncompleteAndForeignEvidence`
+  - 역할 행 누락·중복, 실행 행 FAIL·축 BLOCKED, deferred 행의 실행 표시나 축을 거부하는지 확인한다.
+- `run-routes.ps1 -Symbols`
+  - Windows·Linux native routes에서 등록 결과와 다른 사례를 실패로 센다.
+  - 로컬 Windows(gcc 15, prepared closure `verify-v0271`)에서 25 사례가 모두 등록 결과로 끝났다.
 
 Roslyn 자체가 사례를 관측하지 못하면(Roslyn 5.9의 진단 열거 예외) oracle은 그 사례에 `oracle_error`를 남긴다. 차분 시험은 이런 사례를 비교 없이 수와 id로 따로 보고하고, `TSGK_PP_DIFF_UNOBSERVED`에 id를 명시한 사례만 허용한다. 선택을 비교한 사례가 없으면 실패하고, 고정 사례에서는 미관측이 하나라도 있으면 실패한다. `RANGE_LIMIT`인 사례는 범위 상한을 풀고 다시 평가해 전체 선택도 비교한다. 2026-10-23–24 차분 시험에서 찾은 불일치는 사후 제외 없이 평가기를 고쳐 처분했고, 결함마다 최소 사례를 `make_cases.py`에 넣었다(62개). 그중 43개는 수정 전 평가기에서 실패하고, 19개는 새 규칙이 넘치게 적용되지 않는지 보는 대조 사례다. 새 규칙을 하나씩 깨뜨린 mutant 39개는 모두 고정 사례에서 실패했다. 기호 길이 한도 경계 사례(`define-feff-tail-127`)는 변이하면 의도된 `LIMIT`가 되므로 생성기의 변이 바탕에서 빼고, 한도는 `TestCSharpPreprocessResults`가 다룬다. 최종 평가기와 157 사례에서 seed 1–3000(150만 사례, 선택을 비교한 사례 450,497개)의 불일치는 0이다. 마지막 수정 뒤 처음 쓴 seed 2501–3000도 0이다. Roslyn이 관측하지 못한 사례는 1개(`s1289-331`, 보간 hole 안의 `#if`에서 Roslyn 5.9의 진단 열거 예외)이고, `TSGK_PP_DIFF_UNOBSERVED`로 명시해 처분했다. 새 seed 묶음마다 결함이 줄었지만, 결함이 더 없다는 것을 증명한 것은 아니다. 관측은 개발 helper `src/dev/csharp-pp-oracle`(로컬 .NET SDK의 Roslyn assembly 참조, package·network 없음)로 다시 만든다: `dotnet build src/dev/csharp-pp-oracle/Oracle.csproj --artifacts-path <tmp>` 뒤 `dotnet <tmp>/bin/Oracle/debug/Oracle.dll src/testdata/csharp-pp/cases.json src/testdata/csharp-pp/roslyn-observed.json`. Roslyn은 runtime 의존성이 아니다. `TestCSharpPreprocessResults`는 활성 범위, 범위 상한 경계, `ZERO_ACTIVE`, 크기·지시문 수·중첩·조건식·lexer 깊이·caller symbol 한도, Roslyn이 잘라 비교하는 원문 철자 128 UTF-16 단위 초과 symbol의 `LIMIT`(escape로 늘어난 철자 포함), 따옴표 없는 긴 `$`·`@` 연속의 선형 시간, 잘못된 입력, UTF-16 미지원, tree-sitter 행과 다른 줄 종료 표시를 검사한다. #218 분기 선택 표시는 kit `TestBranchSelectionUnclaimed`(조건 subtree의 identifier, 중첩 elif, attribute 목록, 본문·다른 node의 identifier 제외, edit 뒤·fresh에만 있는 경우, node 없는 tree, SVC inline)와 `TestQualifyBranchSelectionMark`(모든 의무를 덮은 run에서 필수 칸과 추가 역할 set의 표시가 set 순서이고 나머지 결과·SUPPORTED가 표시하지 않은 run과 같음)가 검사한다. main `8578f53` Windows 기록에 판별기를 적용하면 C# 390건 중 44건, SVC 69건 중 14건이 표시된다. source 문자열 검색(`#if`/`#elif` 줄의 `true`·`false` 밖 문자)과의 차이는 다음과 같다. 문자 검색에만 있는 C# 10건 중 `csharp-issue157-review-interpolated-raw-directive-r1`(문자열 내용)과 `csharp-issue157-review-pp-inline-block-comment-r1`(주석)은 전처리 조건이 아니고, `csharp-issue157-pp-if-bad-5/6/8/9-r1`·`csharp-issue182-argument-missing-endif`·`csharp-issue184-endif-active-block`·`-block-eof`·`-multiline`과 SVC `svc-issue184-endif-active-block`·`-multiline`은 ERROR recovery로 조건 구조가 tree에 남지 않는다. 판별기에만 있는 `csharp-issue157-missing-body-elif-empty-r1`·`-if-empty-r1`·`-if-space-r1`은 조건이 빈 `#if`/`#elif`를 recovery가 다음 줄의 identifier를 조건으로 읽은 tree이며, 보수적인 추가 표시다. batch query cache(#266)는 `TestBatchQueryCache`가 같은 목록·한 byte·id·개수·오류 query·query 없음·cache 보관 중 `ALLOCATION_LIMIT` frame의 응답이 각자의 single process 응답과 같음(시간 필드 제외)을, `TSGK_FAULT_CACHE_ANY`가 다른 목록에 cache를 쓰면 그 frame이 달라짐을 검사한다. `TestBatchQueryCacheMissFreesFirst`는 큰 목록 뒤 다른 목록의 frame이 자기 single process가 통과하는 `memory_bytes`에서 그대로 통과함을, `TestBatchQueryCacheHistory`는 같은 목록의 r4 요청이 서로 다른 source·edit 이력·API·관측 run에서 각자의 single 응답과 같고 batch가 exit 0으로 끝남을 검사한다. `TestBatchStateLeak`은 `TSGK_FAULT_LEAK`의 exit 5·추가 frame 없음과, 그 batch의 응답 완료 frame이 `BATCH_EXIT_NONZERO`로 거부됨을 검사한다. 등록 oracle batch(#266)는 `TestOracleBatchSet`이 같은 사례의 `native-query`·`native-query-batch` record가 process·frame·시간·policy identity 외에 같고 각 tree가 set의 policy에 결속됨을, `TestOracleBatchSetControls`가 다른 사례 frame·raw 누락·정상 종료하지 않은 batch의 완료 사례·끝나지 않은 process·r3 set의 r1 record·`batches` 없는 r3 manifest의 거부를, `TestOracleBatchFailures`가 치명 자원 응답 뒤 frame의 새 process 이동과 그 batch의 앞선 응답 불인정, 누수 driver의 응답 불인정과 응답 없는 frame의 재전송 없음을, `TSGK_FAULT_LINGER`로 마지막 frame 뒤 끝나지 않는 driver를 oracle batch와 비공개 corpus batch가 모두 거부함(`BATCH_EXIT_TIMEOUT`)을, `TestUnansweredFrame`이 응답 없는 frame의 원인 보존을 검사한다. `TestOracleBatchSetControls`는 다른 사례 raw로 바꾼 set도 거부하고, `TestOracleBatchSet`은 입력이 모두 없어 process가 없는 set의 `batches: []`를, `TestOracleBatchFailures/split`은 65건의 64·1 분할을 검사한다. kit `TestOracleBatchAccepted`·`TestCheckBatches`는 signal 종료·한도 종료·끝나지 않은 process의 불인정, 응답 없는 보낸 frame, 다른 사례 raw, FAIL 유지 규칙을 검사한다.
 

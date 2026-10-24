@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/ppexpect"
 )
 
 // #218: on every recorded case the evaluator agrees with Roslyn 5.9's own preprocessor by
@@ -53,31 +55,11 @@ func TestCSharpPreprocessDifferential(t *testing.T) {
 	}
 }
 
-type ppObservedCase struct {
-	ID         string `json:"id"`
-	Directives []struct {
-		Kind      string `json:"kind"`
-		Start     int    `json:"start"`
-		Active    bool   `json:"active"`
-		Taken     *bool  `json:"taken"`
-		LineStart int    `json:"line_start"`
-		LineEnd   int    `json:"line_end"`
-	} `json:"directives"`
-	Disabled []struct {
-		Start int `json:"start"`
-		End   int `json:"end"`
-	} `json:"disabled"`
-	Diagnostics []ppDiagnostic `json:"diagnostics"`
-	OracleError string         `json:"oracle_error"` // Roslyn failed: no observation
-}
-
-// ppDiagnostic is one Roslyn error: where it starts and what Roslyn attached it to (a directive
-// kind without the DirectiveTrivia suffix, EndOfFile, or Other).
-type ppDiagnostic struct {
-	ID      string `json:"id"`
-	Start   int    `json:"start"`
-	Context string `json:"context"`
-}
+// ppObservedCase and ppDiagnostic are the pinned Roslyn observation (src/internal/ppexpect).
+type (
+	ppObservedCase = ppexpect.Observation
+	ppDiagnostic   = ppexpect.Diagnostic
+)
 
 // ppCompareBatch checks one cases file against its Roslyn observation and returns how many
 // cases Roslyn gives a selection for (the rest must be MALFORMED) and the cases Roslyn failed on.
@@ -138,78 +120,19 @@ func ppCompareBatch(t *testing.T, casesPath, observedPath string) (selected int,
 	return selected, unobserved
 }
 
-// ppSelectionError names a Roslyn error that voids the section selection: an error in a
-// directive that steers or brackets selection (or an unknown directive), a group left open at
-// the end of the file, and a directive after code on its line (CS1040). Errors elsewhere
-// (ordinary C# syntax, including a '#' in an interpolation hole, where Roslyn reads no
-// directive; #error, #line, #pragma, #nullable) leave the selection standing.
-func ppSelectionError(o ppObservedCase) string {
-	for _, d := range o.Diagnostics {
-		switch {
-		case d.ID == "CS1040",
-			d.Context == "EndOfFile" && (d.ID == "CS1027" || d.ID == "CS1038"):
-			return d.ID
-		}
-		switch d.Context {
-		case "If", "Elif", "Else", "EndIf", "Define", "Undef", "Region", "EndRegion", "Bad", "Shebang", "Ignored":
-			return d.ID + " in " + d.Context
-		}
-	}
-	return ""
-}
-
-// ppRoslynDiff describes how the evaluator result r for src differs from the Roslyn
-// observation o, or returns "". The expectation comes from Roslyn alone plus the evaluator's
-// contract: with a selection error the result is MALFORMED and claims nothing; otherwise the
-// directives (kind, '#' offset, active, branch taken) and the inactive ranges (Roslyn's
-// disabled text) match, and the active ranges are the source minus the disabled text and the
-// physical lines (Roslyn's line breaks) of every steering (#if, #elif, #else, #endif, #define,
-// #undef) or inactive directive; no active range is ZERO_ACTIVE and more than lim.Ranges is
-// RANGE_LIMIT.
+// ppRoslynDiff describes how the evaluator result r for src differs from the expectation
+// ppexpect derives from the Roslyn observation o alone under the range cap of lim, or returns
+// "". MALFORMED and RANGE_LIMIT claim no selection; otherwise the directives (kind, '#' offset,
+// active, branch taken), the inactive and the active ranges must match.
 func ppRoslynDiff(src []byte, r ppResult, o ppObservedCase, lim ppLimits) string {
+	want := ppexpect.Expect(src, o, lim.Ranges)
 	none := r.Directives == nil && r.Active == nil && r.Inactive == nil
-	if e := ppSelectionError(o); e != "" {
-		if r.Status != ppMalformed || !none {
-			return fmt.Sprintf("%s (%s) where Roslyn reports %s", r.Status, r.Reason, e)
-		}
-		return ""
+	if r.Status != want.Status {
+		return fmt.Sprintf("%s (%s), want %s %s", r.Status, r.Reason, want.Status, ppexpect.SelectionError(o))
 	}
-	var drop [][2]int
-	for _, s := range o.Disabled {
-		drop = append(drop, [2]int{s.Start, s.End})
-	}
-	for _, d := range o.Directives {
-		switch strings.TrimSuffix(d.Kind, "DirectiveTrivia") {
-		case "If", "Elif", "Else", "EndIf", "Define", "Undef":
-		default:
-			if d.Active {
-				continue
-			}
-		}
-		drop = append(drop, [2]int{d.LineStart, d.LineEnd})
-	}
-	slices.SortFunc(drop, func(a, b [2]int) int { return a[0] - b[0] })
-	var wantActive []string
-	at := 0
-	for _, s := range append(drop, [2]int{len(src), len(src)}) {
-		if s[0] > at {
-			wantActive = append(wantActive, fmt.Sprintf("%d-%d", at, s[0]))
-		}
-		at = max(at, s[1])
-	}
-	want := ppOK
-	switch {
-	case len(wantActive) == 0:
-		want = ppZeroActive
-	case len(wantActive) > lim.Ranges:
-		want = ppRangeLimit
-	}
-	if r.Status != want {
-		return fmt.Sprintf("%s (%s), want %s", r.Status, r.Reason, want)
-	}
-	if want == ppRangeLimit {
+	if want.Status == ppMalformed || want.Status == ppRangeLimit {
 		if !none {
-			return "RANGE_LIMIT with a selection"
+			return r.Status + " with a selection"
 		}
 		return ""
 	}
@@ -219,23 +142,26 @@ func ppRoslynDiff(src []byte, r ppResult, o ppObservedCase, lim ppLimits) string
 		}
 		return out
 	}
-	var got, wantDirectives, wantInactive []string
+	ranges := func(rs []ppexpect.Range) (out []string) {
+		for _, s := range rs {
+			out = append(out, fmt.Sprintf("%d-%d", s.Start, s.End))
+		}
+		return out
+	}
+	var got, wantDirectives []string
 	for _, d := range r.Directives {
 		got = append(got, fmt.Sprintf("%s@%d active=%v taken=%s", d.Kind, d.Hash, d.Active, ppShow(d.Taken)))
 	}
-	for _, d := range o.Directives {
-		wantDirectives = append(wantDirectives, fmt.Sprintf("%s@%d active=%v taken=%s", strings.TrimSuffix(d.Kind, "DirectiveTrivia"), d.Start, d.Active, ppShow(d.Taken)))
-	}
-	for _, s := range o.Disabled {
-		wantInactive = append(wantInactive, fmt.Sprintf("%d-%d", s.Start, s.End))
+	for _, d := range want.Directives {
+		wantDirectives = append(wantDirectives, fmt.Sprintf("%s@%d active=%v taken=%s", d.Kind, d.Start, d.Active, ppShow(d.Taken)))
 	}
 	switch {
 	case !slices.Equal(got, wantDirectives):
 		return fmt.Sprintf("directives\n got %v\nwant %v", got, wantDirectives)
-	case !slices.Equal(show(r.Inactive), wantInactive):
-		return fmt.Sprintf("inactive %v, Roslyn disabled text %v", show(r.Inactive), wantInactive)
-	case !slices.Equal(show(r.Active), wantActive):
-		return fmt.Sprintf("active %v, want %v", show(r.Active), wantActive)
+	case !slices.Equal(show(r.Inactive), ranges(want.Inactive)):
+		return fmt.Sprintf("inactive %v, Roslyn disabled text %v", show(r.Inactive), ranges(want.Inactive))
+	case !slices.Equal(show(r.Active), ranges(want.Active)):
+		return fmt.Sprintf("active %v, want %v", show(r.Active), ranges(want.Active))
 	}
 	return ""
 }

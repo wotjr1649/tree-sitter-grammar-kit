@@ -13,8 +13,8 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r4"
-	QualificationResultSchema    = "tsgk-qualification-result/r5"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r5"
+	QualificationResultSchema    = "tsgk-qualification-result/r6"
 	RunIdentitySchema            = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
@@ -58,6 +58,10 @@ const (
 	RoleNotRun        = "NOT_RUN"
 	RoleExternal      = "EXTERNAL" // checked by another gate (named in the reason), not by this aggregation
 	RoleNotApplicable = "NOT_APPLICABLE"
+	// RoleDeferred is a row of an executed role whose platform verification is deferred
+	// (named in the reason): visible, never executed or judged, and outside the platform's
+	// claim (#218, #243).
+	RoleDeferred = "DEFERRED"
 )
 
 var caseKinds = []string{"P", "N", "R", "E", "Q", "W"}
@@ -130,11 +134,33 @@ type QualCase struct {
 	Alternatives     []string               `json:"alternatives"`
 	Sample           *QualSample            `json:"sample"`
 	Source           *string                `json:"source"`
+	// PreprocessExpect is the registered selection of every step of a symbol-mode case up
+	// to the first that is not OK (#218); only a symbol-mode workload has it.
+	PreprocessExpect []QualPreprocessStep `json:"preprocess_expect,omitempty"`
+}
+
+// QualPreprocessStep is the registered selection of one symbol-mode step, derived from a
+// pinned Roslyn observation alone and never from the evaluator under test: the evaluator
+// status and, for OK and ZERO_ACTIVE, the directives and the active and inactive byte ranges.
+type QualPreprocessStep struct {
+	Step       int                   `json:"step"`
+	Status     string                `json:"status"`
+	Directives []PreprocessDirective `json:"directives"`
+	Active     []ByteRange           `json:"active"`
+	Inactive   []ByteRange           `json:"inactive"`
+}
+
+// ByteRange is a half-open byte range.
+type ByteRange struct {
+	Start uint32 `json:"start"`
+	End   uint32 `json:"end"`
 }
 
 // QualWorkload is the registered workload a host runs for one cell or role: the record set
 // directory under records/, the workload profile under profiles/ and the semantic profile
-// fields the host profile must match exactly (host compiler and profile id excluded).
+// fields the host profile must match exactly (host compiler and profile id excluded). A
+// symbol-mode workload (Preprocess, #218) is an S05 incremental run under incremental/<set>/
+// instead, replayed with the registered runtime commit.
 type QualWorkload struct {
 	SvcContext   *SvcContext   `json:"svc_context,omitempty"`
 	Set          string        `json:"set"`
@@ -150,6 +176,10 @@ type QualWorkload struct {
 	FactPack     *FactPackRef  `json:"fact_pack"`
 	API          bool          `json:"api"`
 	Cases        []QualCase    `json:"cases"`
+	Preprocess   *Preprocess   `json:"preprocess,omitempty"`
+	// RuntimeCommit is the pinned native runtime of a symbol-mode workload
+	// (src/drivers/native-c/runtime-manifest.json).
+	RuntimeCommit string `json:"runtime_commit,omitempty"`
 }
 
 // QualRoute is one mandatory syntax route: its workload, required feature rows and the
@@ -169,13 +199,17 @@ type QualRole struct {
 	Reason        string            `json:"reason"`
 	Platforms     []string          `json:"platforms"`
 	NotApplicable map[string]string `json:"not_applicable"`
-	Workloads     []QualWorkload    `json:"workloads"`
+	// Deferred names the platforms of an executed role whose verification is deferred, with
+	// the reason; Platforms, NotApplicable and Deferred partition the registered platforms.
+	Deferred  map[string]string `json:"deferred"`
+	Workloads []QualWorkload    `json:"workloads"`
 }
 
-// QualificationInventory is a decoded tsgk-qualification-inventory/r4 document: the exact
+// QualificationInventory is a decoded tsgk-qualification-inventory/r5 document: the exact
 // route × platform cell set and the registered workloads, from the adopted registries. r2
 // added the route error node types, the rows' production alternatives and the cases'
-// alternatives and W samples to r1; r3 adds the step expectation anchors.
+// alternatives and W samples to r1; r3 adds the step expectation anchors; r5 adds deferred
+// role platforms and symbol-mode role workloads (#218).
 type QualificationInventory struct {
 	SHA256       string         `json:"-"`
 	Schema       string         `json:"schema"`
@@ -274,6 +308,16 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		if len(w.Grammar) == 0 {
 			return badW("WORKLOAD_INVALID", "/grammar")
 		}
+		if w.Preprocess != nil {
+			// the symbol mode: an S05 parse-edit run of the C# route in an extra role, syntax only
+			pp := w.Preprocess
+			if !role || w.Route != "csharp" || w.Operation != "native-parse-edit" || w.Output != "tree" || w.Format != "" || w.SvcContext != nil || len(w.Queries) > 0 ||
+				w.FactPack != nil || w.API || w.Declarations != nil || pp.Mode != PreprocessMode || pp.Symbols == nil || preprocessSymbolsValid(pp.Symbols) != "" || !hex40.MatchString(w.RuntimeCommit) {
+				return badW("WORKLOAD_INVALID", "/preprocess")
+			}
+		} else if w.RuntimeCommit != "" {
+			return badW("WORKLOAD_INVALID", "/runtime_commit")
+		}
 		for _, g := range w.Grammar {
 			if !hex64.MatchString(g.SHA256) || g.Path == "" {
 				return badW("WORKLOAD_INVALID", "/grammar")
@@ -327,10 +371,17 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 					return badW("CASE_STEP_INVALID", cp)
 				}
 			}
-			if c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
+			if w.Preprocess != nil {
+				if bad := symbolCase(c); bad != "" {
+					return badW("CASE_INVALID", cp+"/"+bad)
+				}
+			} else if c.PreprocessExpect != nil {
+				return badW("CASE_INVALID", cp+"/preprocess_expect")
+			}
+			if w.Preprocess == nil && c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
 				return badW("CASE_INVALID", cp+"/expect_status") // an over-limit case judges no row
 			}
-			if c.ExpectAssessment != "" || c.ExpectCode != "" {
+			if w.Preprocess == nil && (c.ExpectAssessment != "" || c.ExpectCode != "") {
 				// a registered SVC observation-only verdict: a composite-format case that covers
 				// no row and needs no tree, PASS without a code or BLOCKED with one
 				observed := (w.Format == SvcFormat || w.Format == SvcLegacyFormat) && len(c.Covers) == 0 && c.Role != "detector" && len(c.Expect) == 0 && len(c.QueryExpect) == 0 &&
@@ -441,8 +492,19 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			return bad("ROLE_INVALID", p)
 		}
 		roleIDs[x.ID] = true
-		for _, pl := range x.Platforms {
-			if !plat[pl] {
+		for j, pl := range x.Platforms {
+			if !plat[pl] || slices.Contains(x.Platforms[:j], pl) {
+				return bad("ROLE_INVALID", p+"/platforms")
+			}
+		}
+		for pl, why := range x.Deferred {
+			if !plat[pl] || why == "" || x.Status != RoleExecuted || slices.Contains(x.Platforms, pl) || x.NotApplicable[pl] != "" {
+				return bad("ROLE_INVALID", p+"/deferred")
+			}
+		}
+		// an executed role names every platform once: executed, not applicable or deferred
+		for _, pl := range inv.Platforms {
+			if n := btoi(slices.Contains(x.Platforms, pl.ID)) + btoi(x.NotApplicable[pl.ID] != "") + btoi(x.Deferred[pl.ID] != ""); x.Status == RoleExecuted && n != 1 {
 				return bad("ROLE_INVALID", p+"/platforms")
 			}
 		}
@@ -470,6 +532,53 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		}
 	}
 	return inv, nil
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// preprocessStatuses are the evaluator statuses a registered step may expect.
+var preprocessStatuses = map[string]bool{PreprocessOK: true, PreprocessZeroActive: true, PreprocessRangeLimit: true, PreprocessLimit: true, PreprocessMalformed: true,
+	PreprocessUnsupportedEncoding: true, PreprocessInvalidInput: true}
+
+// symbolCase checks one registered symbol-mode case (#218) and names what is wrong ("" when
+// valid): a support case that covers nothing, with the expected selection of every step up
+// to the first that is not OK; an all-OK case expects the syntax of every step, a stopped
+// one the fixed not-run outcome of its last step and no step expectation.
+func symbolCase(c QualCase) string {
+	if c.Role != "support" || len(c.Covers) > 0 || len(c.QueryExpect) > 0 || c.DynamicSQL != nil || c.Sample != nil || c.Source != nil || len(c.Alternatives) > 0 || len(c.Points) > 0 {
+		return "role"
+	}
+	pe := c.PreprocessExpect
+	if len(pe) == 0 || len(pe) > len(c.Edits)+1 {
+		return "preprocess_expect"
+	}
+	for i, st := range pe {
+		ok := st.Status == PreprocessOK
+		if st.Step != i || !preprocessStatuses[st.Status] || st.Directives == nil || st.Active == nil || st.Inactive == nil || (!ok && i != len(pe)-1) || (ok && i == len(pe)-1 && len(pe) != len(c.Edits)+1) {
+			return "preprocess_expect"
+		}
+	}
+	if last := pe[len(pe)-1]; last.Status != PreprocessOK {
+		exec, code := PreprocessOutcome(last.Status)
+		if c.ExpectStatus != exec || c.ExpectAssessment != AssessBlocked || c.ExpectCode != code || len(c.Expect) != 0 {
+			return "expect_status"
+		}
+		return ""
+	}
+	if c.ExpectStatus != "" || c.ExpectAssessment != "" || c.ExpectCode != "" || len(c.Expect) != len(c.Edits)+1 {
+		return "expect"
+	}
+	for i, e := range c.Expect {
+		if e.Step != i || (e.Syntax != "NO_ERROR" && e.Syntax != "ERROR") {
+			return "expect"
+		}
+	}
+	return ""
 }
 
 // coverageHolds applies CoverageRule to one registered case and kind; errNodes are the
@@ -624,7 +733,7 @@ type QualRoleRow struct {
 	ID       string `json:"id"`
 	Role     string `json:"role"`
 	Platform string `json:"platform"`
-	Status   string `json:"status"` // PASS | FAIL | INCOMPLETE | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE
+	Status   string `json:"status"` // PASS | FAIL | INCOMPLETE | MISSING | NOT_RUN | EXTERNAL | NOT_APPLICABLE | DEFERRED
 	Reason   string `json:"reason"`
 	// Mechanism is the worst kit axis of the row's sets; Checks folds their registered
 	// expectations and detector results ("" when the row executes nothing).
@@ -653,11 +762,11 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the tsgk-qualification-result/r5 document: the E0 envelope plus
+// QualificationResult is the tsgk-qualification-result/r6 document: the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
-// obligations to r2).
+// obligations to r2; r6 adds DEFERRED role rows and symbol-mode role sets, #218).
 type QualificationResult struct {
 	Report
 	ResultSchema string            `json:"result_schema"`
@@ -864,7 +973,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res.Findings = append(res.Findings, q.findings...)
 	res.Coverage.Observed = slices.Clone(res.Coverage.Requested)
 	res.BytesRead = q.bytesRead()
-	res.Explanation = explainQualification(res, inv.Platforms)
+	res.Explanation = explainQualification(res, inv)
 	if e := sealOutput(res, lim.OutputBytes); e != nil {
 		return bad(e)
 	}
@@ -1033,7 +1142,8 @@ func totals(cells []QualCell) QualTotals {
 	return t
 }
 
-func explainQualification(res QualificationResult, platforms []QualPlatform) []string {
+func explainQualification(res QualificationResult, inv QualificationInventory) []string {
+	platforms := inv.Platforms
 	t := res.Totals
 	out := []string{
 		fmt.Sprintf("필수 칸 %d개: PASS %d, FAIL %d, INCOMPLETE %d, MISSING %d. 완결성 %s.", t.Cells, t.Status[CellPass], t.Status[CellFail], t.Status[CellIncomplete], t.Status[CellMissing], res.Completeness),
@@ -1049,6 +1159,18 @@ func explainQualification(res QualificationResult, platforms []QualPlatform) []s
 		pc = append(pc, p.ID+" "+res.PlatformClaims[p.ID])
 	}
 	out = append(out, "platform별 claim: "+strings.Join(pc, ", ")+". 근거 무결성(완결성 PASS, finding 없음)과 그 platform의 모든 칸 kit 축·요구 축 PASS, 실행된 추가 역할 행 PASS일 때만 SUPPORTED이며 platform 간 비교는 넣지 않는다.")
-	out = append(out, "C# set의 branch_selection_not_claimed 사례는 조건부 컴파일 분기를 compiler symbol 값으로 고르지 않은 기본 parser 정책의 결과다. 그 분기 선택과 선택에 의존하는 구문 수용은 주장하지 않으며, SUPPORTED는 compiler symbol 환경에서의 정확성을 포함하지 않는다(#218).")
+	out = append(out, "기본 구조 모드 C# set의 branch_selection_not_claimed 사례는 조건부 컴파일 분기를 compiler symbol 값으로 고르지 않은 기본 parser 정책의 결과다. 그 분기 선택과 선택에 의존하는 구문 수용은 주장하지 않으며, SUPPORTED는 compiler symbol 환경에서의 정확성을 포함하지 않는다(#218).")
+	for _, x := range inv.ExtraRoles {
+		for _, w := range x.Workloads {
+			if w.Preprocess != nil {
+				out = append(out, fmt.Sprintf("symbol 모드 행 %s(set %s, %s, symbols %q)은 등록 grammar·입력·caller symbols·edit step에서 분기 선택(고정 Roslyn 관측에서 만든 기대값)과 활성 CST 구문만 판정한다. query·fact·#216 reference 의미와 일반 C# 전처리 동등성은 주장하지 않는다. driver가 활성 범위를 받았다는 사실은 저장 증거로 다시 계산하지 않는다.", x.ID, w.Set, w.Preprocess.Mode, w.Preprocess.Symbols))
+			}
+		}
+		for _, p := range platforms {
+			if why := x.Deferred[p.ID]; why != "" {
+				out = append(out, fmt.Sprintf("%s의 %s 행은 DEFERRED다(%s). 실행하지 않았으며 %s의 platform claim은 이 역할을 포함하지 않는다.", x.ID, p.ID, why, p.ID))
+			}
+		}
+	}
 	return out
 }

@@ -3,3 +3,4 @@ src/testdata/bytes/** -text
 src/testdata/archives/** -text
 src/testdata/malformed/** -text
 src/kit/data/index-euc-kr.txt -text
+src/testdata/qualify-symbols/** -text

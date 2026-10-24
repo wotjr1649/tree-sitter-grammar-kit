@@ -17,7 +17,12 @@
 # query equality, fact reproduction or dynamic SQL claim is FAIL or BLOCKED. Requirement-axis results do not fail the run: language
 # expectation failures, query expectation claims (judged by `tsgk qualify` as Q) and a
 # route BLOCKED on an error tree are recorded in requirement_results, API claims (the
-# runtime node API disagreeing with its cursor) in api_findings, for disposition.
+# runtime node API disagreeing with its cursor) in api_findings, for disposition. With
+# -Symbols (#218, Windows and Linux) it runs every symbol-mode workload of the inventory's
+# csharp-symbols role exactly as registered (src/contracts/qualification-c1.json, sources from
+# src/testdata/csharp-pp/cases.json) and keeps each under incremental/<set>/: profile.json,
+# result.json, responses/ and the case-source witnesses sources/<nnnnn>-<case>.bin; a result
+# that is not tsgk-incremental-result/r4 or a case that does not end as registered fails.
 param(
   [Parameter(Mandatory)][string]$Prepared,
   [Parameter(Mandatory)][string]$Destination,
@@ -26,7 +31,8 @@ param(
   [string]$CgroupParent = '',
   [string[]]$Routes = @(),
   [switch]$Large,
-  [switch]$Oracle
+  [switch]$Oracle,
+  [switch]$Symbols
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -99,7 +105,7 @@ $buildCache = Join-Path $work 'build-cache'
 New-Item -ItemType Directory -Path $buildCache | Out-Null
 $summary = [ordered]@{ schema = 'tsgk-s05-route-run/r1'; platform = $Platform; compiler = [ordered]@{ path = $Compiler; version_line = $ccVersion; sha256 = $compilerId.sha256; bytes = $compilerId.bytes }
   build_reuse = [ordered]@{ requests = 0; hits = 0; compiler_processes = 0; compiler_wall_ms = 0 }
-  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); api_findings = @(); requirement_results = @(); failures = @() }
+  started_at = (Get-Date).ToUniversalTime().ToString('o'); routes = @(); large = @(); oracle = @(); oracle_large = @(); symbols = @(); api_findings = @(); requirement_results = @(); failures = @() }
 
 function Add-BuildObservation($Result) {
   if (-not $Result.build) { return }
@@ -491,6 +497,73 @@ if ($Large -and -not $IsWindows) {
         Write-Output ("oracle large {0}: {1} {2} {3} reproduces={4}" -f $c.id, $c.execution_status, $c.assessment, $c.code, $repro)
       }
     }
+  }
+}
+if ($Symbols) {
+  $inventory = Get-Content -LiteralPath (Join-Path $repo 'src/contracts/qualification-c1.json') -Raw | ConvertFrom-Json
+  $role = @($inventory.extra_roles | Where-Object { $_.id -eq 'csharp-symbols' })
+  if ($role.Count -ne 1) { throw 'inventory has no csharp-symbols role' }
+  $corpus = @{}
+  foreach ($c in (Get-Content -LiteralPath (Join-Path $repo 'src/testdata/csharp-pp/cases.json') -Raw | ConvertFrom-Json).cases) { $corpus[$c.id] = [Convert]::FromBase64String($c.source) }
+  $r = $registry.routes | Where-Object { $_.route -eq 'csharp' }
+  $root = New-Root $r
+  New-Item -ItemType Directory -Force -Path (Join-Path $root 'cases') | Out-Null
+  $sorted = [Collections.Generic.List[object]]::new()
+  foreach ($f in $r.files) { $sorted.Add([ordered]@{ path = $f.path; role = $f.role; sha256 = $f.sha256; bytes = $f.bytes }) }
+  $sorted.Sort([Comparison[object]] { param($a, $b) [string]::CompareOrdinal($a.path, $b.path) })
+  foreach ($w in @($role[0].workloads)) {
+    $cases = @()
+    $sources = @()
+    foreach ($c in @($w.cases)) {
+      $bytes = $corpus[$c.id]
+      if ($null -eq $bytes -or (Get-ShaBytes $bytes) -ne $c.input.sha256 -or $bytes.Length -ne $c.input.bytes) { throw "symbol case $($c.id): corpus source is not the registered input" }
+      $rel = "cases/$($c.id).cs"
+      [IO.File]::WriteAllBytes((Join-Path $root $rel), $bytes)
+      $sources += , $bytes
+      $cases += [ordered]@{ id = $c.id; input = [ordered]@{ path = $rel; role = 'case'; sha256 = $c.input.sha256; bytes = $c.input.bytes }; edits = @($c.edits); points = @(); expect = @($c.expect) }
+    }
+    $profile = [ordered]@{ schema = 'tsgk-incremental/r3'; id = $w.profile; route = $w.route; operation = $w.operation; symbol = $w.symbol; encoding = 'UTF-8'; output = $w.output
+      compiler = $compilerId; grammar = @($sorted); declarations = $null; preprocess = [ordered]@{ mode = $w.preprocess.mode; symbols = @($w.preprocess.symbols) }; cases = @($cases) }
+    $pf = Join-Path $work "$($w.set).profile.json"
+    $profile | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $pf -Encoding utf8NoBOM
+    $out = Join-Path $Destination "incremental/$($w.set)"
+    New-Item -ItemType Directory -Force -Path (Join-Path $Destination 'incremental') | Out-Null
+    $cliArgs = @('incremental', '--root', $root, '--profile', $pf, '--runtime', (Join-Path $Prepared 'runtime'), '--tool', "cc=$Compiler", '--work', $work, '--out', $out,
+      '--allow', 'BUILD_NATIVE', '--allow', 'EXEC_NATIVE', '--build-cache', $buildCache, '--reuse-observation')
+    if ($CgroupParent) { $cliArgs += @('--cgroup-parent', $CgroupParent) }
+    # a stopped case ends the run FAILED or BLOCKED (exit 4 or 3) without a diagnostic; a tsgk
+    # error (I/O, publication, cancellation) writes one to stderr, and a build cleanup failure
+    # is an error finding of the result: either fails the set
+    $errPath = Join-Path $work "$($w.set).stderr"
+    $line = & $cli @cliArgs 2> $errPath
+    $code = $LASTEXITCODE
+    $diag = (Get-Content -LiteralPath $errPath -Raw)
+    $resPath = Join-Path $out 'result.json'
+    if (-not (Test-Path -LiteralPath $resPath)) { $summary.failures += "symbols $($w.set): no result (exit $code) $diag"; continue }
+    $reported = $line | ConvertFrom-Json
+    if ($code -notin @(0, 1, 3, 4) -or $diag) { $summary.failures += "symbols $($w.set): tsgk exit $code $diag" }
+    Copy-Item -LiteralPath $pf -Destination (Join-Path $out 'profile.json')
+    New-Item -ItemType Directory -Path (Join-Path $out 'sources') | Out-Null
+    for ($i = 0; $i -lt $sources.Count; $i++) { [IO.File]::WriteAllBytes((Join-Path $out ('sources/{0:D5}-{1}.bin' -f $i, $w.cases[$i].id)), $sources[$i]) }
+    $res = Get-Content -LiteralPath $resPath -Raw | ConvertFrom-Json
+    Add-BuildObservation $res
+    if ($res.result_schema -ne 'tsgk-incremental-result/r4') { $summary.failures += "symbols $($w.set): result $($res.result_schema)" }
+    # a failure the CLI reports only as a result finding (build cleanup) also fails the set
+    foreach ($f in @($res.findings)) { if ($f -and $f.severity -eq 'error') { $summary.failures += "symbols $($w.set): $($f.code)" } }
+    if ($reported.execution_status -ne $res.execution_status -or $reported.assessment -ne $res.assessment) { $summary.failures += "symbols $($w.set): reported $($reported.execution_status)/$($reported.assessment), published $($res.execution_status)/$($res.assessment)" }
+    $i = 0
+    foreach ($c in @($res.cases)) {
+      $want = $w.cases[$i]
+      $i++
+      $status = if ($want.expect_status) { $want.expect_status } else { 'COMPLETED' }
+      $assess = if ($want.expect_assessment) { $want.expect_assessment } else { 'PASS' }
+      $summary.symbols += [ordered]@{ set = $w.set; id = $c.id; execution_status = $c.execution_status; assessment = $c.assessment; code = $c.code }
+      if ($c.id -ne $want.id -or $c.execution_status -ne $status -or $c.assessment -ne $assess -or [string]$c.code -ne [string]$want.expect_code) {
+        $summary.failures += "symbols $($w.set) $($c.id): $($c.execution_status) $($c.assessment) $($c.code), registered $status $assess $($want.expect_code)"
+      }
+      Write-Output ("symbols {0} {1}: {2} {3} {4}" -f $w.set, $c.id, $c.execution_status, $c.assessment, $c.code)
+    }
+    if ($i -ne @($w.cases).Count) { $summary.failures += "symbols $($w.set): $i cases, registered $(@($w.cases).Count)" }
   }
 }
 $summary.finished_at = (Get-Date).ToUniversalTime().ToString('o')
