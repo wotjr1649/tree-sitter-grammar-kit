@@ -225,6 +225,44 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 			return errors.New("unsupported platform")
 		}
 	}
+	return checkRoles(q.ExtraRoles, inventory)
+}
+
+// checkRoles requires exactly the inventory's extra-role rows: an executed platform PASS on
+// both axes, a not applicable or deferred one (#218) with that status and no axis, and a role
+// that executes nothing with its registered status.
+func checkRoles(rows []kit.QualRoleRow, inventory kit.QualificationInventory) error {
+	want := map[string]string{}
+	for _, x := range inventory.ExtraRoles {
+		for _, p := range inventory.Platforms {
+			status := x.Status
+			switch {
+			case x.Status != kit.RoleExecuted:
+			case slices.Contains(x.Platforms, p.ID):
+				status = "PASS"
+			case x.NotApplicable[p.ID] != "":
+				status = kit.RoleNotApplicable
+			case x.Deferred[p.ID] != "":
+				status = kit.RoleDeferred
+			default:
+				continue
+			}
+			want[x.ID+"/"+p.ID] = status
+		}
+	}
+	seen := map[string]bool{}
+	for _, r := range rows {
+		key := r.ID + "/" + r.Platform
+		status, ok := want[key]
+		executed := status == "PASS"
+		if !ok || seen[key] || r.Status != status || (executed && (r.Mechanism != "PASS" || r.Checks != "PASS")) || (!executed && (r.Mechanism != "" || r.Checks != "" || len(r.Sets) != 0)) {
+			return errors.New("invalid qualification extra-role row")
+		}
+		seen[key] = true
+	}
+	if len(seen) != len(want) {
+		return errors.New("qualification extra-role rows incomplete")
+	}
 	return nil
 }
 

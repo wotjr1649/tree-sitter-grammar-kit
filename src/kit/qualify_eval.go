@@ -39,6 +39,7 @@ func (q *qualifier) close() {
 // workloads used; a rejected host contributes no cell.
 type qhost struct {
 	platform QualPlatform
+	root     string // the host directory, for a symbol-mode set's replay
 	x        *replayEnv
 	files    map[string]fs.FileInfo
 	used     map[string]bool
@@ -65,7 +66,7 @@ func (q *qualifier) openHost(p QualPlatform, dir string) (*qhost, *Error) {
 	// the records are new CI evidence: they are judged with the oracle-set-r2 S05 route rule
 	x := &replayEnv{r: hr, g: newGuard(root), lim: q.lim, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{}, verified: map[string]bool{},
 		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}, errorTreeRoute: true}
-	h := &qhost{platform: p, x: x, files: x.files, used: map[string]bool{}}
+	h := &qhost{platform: p, root: dir, x: x, files: x.files, used: map[string]bool{}}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
 		root.Close()
@@ -382,6 +383,8 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 		switch {
 		case x.NotApplicable[p.ID] != "":
 			row.Status, row.Reason = RoleNotApplicable, x.NotApplicable[p.ID]
+		case x.Deferred[p.ID] != "":
+			row.Status, row.Reason = RoleDeferred, x.Deferred[p.ID]
 		case !slices.Contains(x.Platforms, p.ID) && x.Status == RoleExecuted:
 			continue // the role does not name this platform
 		case x.Status != RoleExecuted:
@@ -432,8 +435,10 @@ func worseMechanism(a, b string) string {
 
 // evalSet verifies and judges one workload's record set on one host.
 func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (*qset, *Error) {
-	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{}, BranchSelectionNotClaimed: []string{},
-		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
+	if w.Preprocess != nil {
+		return q.evalSymbolSet(w, p)
+	}
+	s := newQSet(w, p)
 	h := q.hosts[p.ID]
 	if h == nil {
 		return s, nil
@@ -745,6 +750,12 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	s.Host["process_wall_ms_max"] = strconv.FormatInt(maxWall, 10)
 	s.Host["memory_peak_bytes_max"] = strconv.FormatUint(maxPeak, 10)
 	return done()
+}
+
+// newQSet is a set evaluation without evidence yet.
+func newQSet(w QualWorkload, p QualPlatform) *qset {
+	return &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{}, BranchSelectionNotClaimed: []string{},
+		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
 }
 
 // markUsed marks a set's files and profile as consumed by its (rejected) cell.
@@ -1113,7 +1124,7 @@ func captureTexts(want []CaptureExpectation, got []Capture, src []byte) (string,
 func registrationDiff(p OracleProfile, w QualWorkload) string {
 	n := p.Native
 	switch {
-	case n.Preprocess != nil: // the symbol mode (#218) is not qualified; no claim reaches it
+	case !jsonEqual(n.Preprocess, w.Preprocess): // the symbol mode (#218): mode and symbols exactly as registered
 		return "preprocess"
 	case n.Route != w.Route:
 		return "route"

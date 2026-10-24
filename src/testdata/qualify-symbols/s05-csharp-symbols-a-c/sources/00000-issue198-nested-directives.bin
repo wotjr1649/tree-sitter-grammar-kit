@@ -1,0 +1,9 @@
+#if A
+#if B
+invalid + ;
+#elif C
+class C {}
+#else
+class D {}
+#endif
+#endif

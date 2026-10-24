@@ -1,5 +1,5 @@
 {
- "schema": "tsgk-qualification-inventory/r4",
+ "schema": "tsgk-qualification-inventory/r5",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,
@@ -350770,6 +350770,7 @@
     "darwin-arm64"
    ],
    "not_applicable": {},
+   "deferred": {},
    "workloads": [
     {
      "svc_context": {
@@ -353750,6 +353751,7 @@
     "darwin-arm64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)",
     "linux-amd64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
    },
+   "deferred": {},
    "workloads": [
     {
      "set": "s06-large",
@@ -354234,12 +354236,1886 @@
    ]
   },
   {
+   "id": "csharp-symbols",
+   "role": "owned",
+   "status": "EXECUTED",
+   "reason": "C# symbol mode (csharp-symbols/r1, #218): selections derived from tsgk-csharp-pp-roslyn/r2 observation sha256 261213a109904e7572f7b7e229fe399e417025b7306e171959c51f40a4fd3ab6 by Roslyn 5.9.0.0 of src/testdata/csharp-pp/cases.json sha256 9981758151e43df80cb0aa0479a73ec119d713d7789a2afdb93e406c0eadae5d, with hand-registered syntax; syntax only",
+   "platforms": [
+    "windows-amd64",
+    "linux-amd64"
+   ],
+   "not_applicable": {},
+   "deferred": {
+    "darwin-arm64": "#243: the macOS symbol-mode host result is deferred (Windows amd64 and Linux amd64 are the completion criteria)"
+   },
+   "workloads": [
+    {
+     "set": "s05-csharp-symbols-none",
+     "profile": "s05-csharp-symbols-none",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "issue198-inactive-broken",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "aa9b2ebf1a7ba1a029a5962ebe7503414669ec15f64b1dd12a69ad600449dd14",
+        "bytes": 71
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 47,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 64,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 53,
+           "end": 64
+          }
+         ],
+         "inactive": [
+          {
+           "start": 10,
+           "end": 47
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "ops-none",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "c9306bc3261a30f1ce44526d8530a4b8fa6eb8ed30cfa95f7ad59c7ce3518e5b",
+        "bytes": 59
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 35,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 52,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 24,
+           "end": 35
+          }
+         ],
+         "inactive": [
+          {
+           "start": 41,
+           "end": 52
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "equality-false",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "42dba882021338158d3bf7bc2d30a9798f88d2f818fc859df3c7443b05e5f371",
+        "bytes": 33
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 26,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 15,
+           "end": 26
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "literal-true",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "aa9997ebae2c5d9463f1cb26b420c26c48003a46ebfa58c6ed9e55450287765d",
+        "bytes": 44
+       },
+       "edits": [
+        {
+         "start_byte": 4,
+         "old_end_byte": 8,
+         "new_end_byte": 23,
+         "old": "dHJ1ZQ==",
+         "new": "QSAmJiAhQiB8fCAoQyA9PSBEKQ=="
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 20,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 37,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 9,
+           "end": 20
+          }
+         ],
+         "inactive": [
+          {
+           "start": 26,
+           "end": 37
+          }
+         ]
+        },
+        {
+         "step": 1,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 35,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 52,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 24,
+           "end": 35
+          }
+         ],
+         "inactive": [
+          {
+           "start": 41,
+           "end": 52
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "literal-not-true",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "d602cb2bf7cb6c3798d2f23226fc4f9d5ccab8776cb8d6f7d126578ddc15be25",
+        "bytes": 47
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 23,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 40,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 29,
+           "end": 40
+          }
+         ],
+         "inactive": [
+          {
+           "start": 12,
+           "end": 23
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "elif-none",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "cba208af5b400e4ce309361d65d6e157bbc99763afd52e28a7e5caf26491cbba",
+        "bytes": 79
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Elif",
+           "hash": 17,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Elif",
+           "hash": 36,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 55,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 72,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 61,
+           "end": 72
+          }
+         ],
+         "inactive": [
+          {
+           "start": 6,
+           "end": 17
+          },
+          {
+           "start": 25,
+           "end": 36
+          },
+          {
+           "start": 44,
+           "end": 55
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "define-undef-order",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "c57b0c045ac0591f6674eee37c236ebd93e5491c9664a4c71edd0503162b65e8",
+        "bytes": 60
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "Define",
+           "hash": 0,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "Undef",
+           "hash": 10,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "If",
+           "hash": 19,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 36,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 53,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 42,
+           "end": 53
+          }
+         ],
+         "inactive": [
+          {
+           "start": 25,
+           "end": 36
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "define-inactive",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "2cde2f988869217bf98bfb216bdfa568b319fda81bc970b7cdfb3b203908e523",
+        "bytes": 48
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_ZERO_ACTIVE",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "ZERO_ACTIVE",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Define",
+           "hash": 7,
+           "active": false,
+           "taken": null
+          },
+          {
+           "kind": "EndIf",
+           "hash": 17,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "If",
+           "hash": 24,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 41,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [],
+         "inactive": [
+          {
+           "start": 30,
+           "end": 41
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "define-after-token",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "e775a69a6bf804da4e3d7d20d4d079434ca2e79c918d85ea9a2743c458119923",
+        "bytes": 45
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_MALFORMED",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "MALFORMED",
+         "directives": [],
+         "active": [],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "verbatim-string",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "f12b7b67af54d2ee8243d04180604577669653abdf445f492fe7cc9e6c3f4ebd",
+        "bytes": 59
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 35,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 52,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 0,
+           "end": 35
+          }
+         ],
+         "inactive": [
+          {
+           "start": 41,
+           "end": 52
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "raw-string",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "39da40523e9ceaecf9a35b6f7c7f268f1d981f55cd6f972e116b4dfe51b66850",
+        "bytes": 38
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [],
+         "active": [
+          {
+           "start": 0,
+           "end": 38
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "block-comment",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "f27b3afebe1f2d429c384475003493a697bee3814b23c4a6e46c803177e850cb",
+        "bytes": 23
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [],
+         "active": [
+          {
+           "start": 0,
+           "end": 23
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "line-comment",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "b1c0e6e0898ea53622d70478a0f3926f10050e8b085b27ea78cc96f18a9f688b",
+        "bytes": 20
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [],
+         "active": [
+          {
+           "start": 0,
+           "end": 20
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "non-ascii",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "469d49d20c590d5678309d7cdee97d9036e9a18d60842a804595ea178f7b9a77",
+        "bytes": 74
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 33,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 50,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 67,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 0,
+           "end": 33
+          },
+          {
+           "start": 56,
+           "end": 67
+          }
+         ],
+         "inactive": [
+          {
+           "start": 39,
+           "end": 50
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": []
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "set": "s05-csharp-symbols-a",
+     "profile": "s05-csharp-symbols-a",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "ops-a",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "c9306bc3261a30f1ce44526d8530a4b8fa6eb8ed30cfa95f7ad59c7ce3518e5b",
+        "bytes": 59
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 35,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 52,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 24,
+           "end": 35
+          }
+         ],
+         "inactive": [
+          {
+           "start": 41,
+           "end": 52
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "unicode-escape",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "96935354633503623a42c1595bc2d5962da6fbd1d6217fcf0c1b1cc85f38b41a",
+        "bytes": 29
+       },
+       "edits": [
+        {
+         "start_byte": 4,
+         "old_end_byte": 10,
+         "new_end_byte": 14,
+         "old": "XHUwMDQx",
+         "new": "XFUwMDAwMDA0MQ=="
+        }
+       ],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        },
+        {
+         "step": 1,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 22,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 11,
+           "end": 22
+          }
+         ],
+         "inactive": []
+        },
+        {
+         "step": 1,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 26,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 15,
+           "end": 26
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "crlf",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "ca82c0beef94fe9675f893d28db6cd521c1b21eaf52e4434a7b550077db5624f",
+        "bytes": 64
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 37,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 56,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 25,
+           "end": 37
+          }
+         ],
+         "inactive": [
+          {
+           "start": 44,
+           "end": 56
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "eof-no-newline",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "8efbefc2618d3b34be57c2cb223da0e506cd1c973aae4d22520ab1f6612d1bc0",
+        "bytes": 23
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 17,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 6,
+           "end": 17
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "bom-non-ascii",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "5fcdd11d0040538404b21df15202b6ace9b7b85a64c40274b3c95435b53747db",
+        "bytes": 34
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 10,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 27,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 0,
+           "end": 10
+          },
+          {
+           "start": 16,
+           "end": 27
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "trailing-line-comment",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "3d93ef57472d48bf303696439fdcfa1a5c464d9ca3a6589dd2323efb506f41ac",
+        "bytes": 32
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 25,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 14,
+           "end": 25
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "region-in-group",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "c7f7b98612478e04ce14dad7c4479f4990ba18c41dc713a168a8c7f308f06c25",
+        "bytes": 45
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Region",
+           "hash": 6,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "EndRegion",
+           "hash": 16,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "EndIf",
+           "hash": 27,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 6,
+           "end": 27
+          },
+          {
+           "start": 34,
+           "end": 45
+          }
+         ],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "malformed-expression",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "cddd122b04d6500ba12cc46ec776843dea91bc9b2196c382b47e32fcd2b43fc1",
+        "bytes": 27
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_MALFORMED",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "MALFORMED",
+         "directives": [],
+         "active": [],
+         "inactive": []
+        }
+       ]
+      },
+      {
+       "id": "unterminated",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "d7f8d27017f7df99097b2c4a4fdc5ee3f4c24f088672b59b85d48ede574cf883",
+        "bytes": 17
+       },
+       "edits": [],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "NOT_RUN",
+       "expect_assessment": "BLOCKED",
+       "expect_code": "PREPROCESS_MALFORMED",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "MALFORMED",
+         "directives": [],
+         "active": [],
+         "inactive": []
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": [
+       "A"
+      ]
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "set": "s05-csharp-symbols-enabled",
+     "profile": "s05-csharp-symbols-enabled",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "issue198-undef-inactive",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "cb15e3f186b05d47c5e51da62afec68cda28529b6e8e56aaf1640175284a83b2",
+        "bytes": 63
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "Undef",
+           "hash": 0,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "If",
+           "hash": 15,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Else",
+           "hash": 39,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "EndIf",
+           "hash": 56,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 45,
+           "end": 56
+          }
+         ],
+         "inactive": [
+          {
+           "start": 27,
+           "end": 39
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": [
+       "ENABLED"
+      ]
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "set": "s05-csharp-symbols-a-c",
+     "profile": "s05-csharp-symbols-a-c",
+     "route": "csharp",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_c_sharp",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
+       "bytes": 51465791
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
+       "bytes": 33334
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "issue198-nested-directives",
+       "role": "support",
+       "input": {
+        "path": "",
+        "role": "",
+        "sha256": "aa0c80936108908705d36dc193ea59e5047f0178b7387016769f4844e8d2c695",
+        "bytes": 74
+       },
+       "edits": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "NO_ERROR",
+         "contains": [
+          "class_declaration"
+         ],
+         "declarations": ""
+        }
+       ],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": null,
+       "preprocess_expect": [
+        {
+         "step": 0,
+         "status": "OK",
+         "directives": [
+          {
+           "kind": "If",
+           "hash": 0,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "If",
+           "hash": 6,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "Elif",
+           "hash": 24,
+           "active": true,
+           "taken": true
+          },
+          {
+           "kind": "Else",
+           "hash": 43,
+           "active": true,
+           "taken": false
+          },
+          {
+           "kind": "EndIf",
+           "hash": 60,
+           "active": true,
+           "taken": null
+          },
+          {
+           "kind": "EndIf",
+           "hash": 67,
+           "active": true,
+           "taken": null
+          }
+         ],
+         "active": [
+          {
+           "start": 32,
+           "end": 43
+          }
+         ],
+         "inactive": [
+          {
+           "start": 12,
+           "end": 24
+          },
+          {
+           "start": 49,
+           "end": 60
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "preprocess": {
+      "mode": "csharp-symbols/r1",
+      "symbols": [
+       "A",
+       "C"
+      ]
+     },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    }
+   ]
+  },
+  {
    "id": "owned-native-fixtures",
    "role": "owned",
    "status": "EXTERNAL",
    "reason": "owned scannerless and stateful-scanner fixtures: the foundation job's native tests on each host (src/internal/native), not this aggregation",
    "platforms": [],
    "not_applicable": {},
+   "deferred": {},
    "workloads": null
   },
   {
@@ -354249,6 +356125,7 @@
    "reason": "BrightScript v0.1.4 maintained reference: no native route or workload is registered in this campaign",
    "platforms": [],
    "not_applicable": {},
+   "deferred": {},
    "workloads": null
   },
   {
@@ -354258,6 +356135,7 @@
    "reason": "BrightScript v0.1.2 historical replay (S07-REPLAY-2ULP-r1): the verification bundle is not prepared; never a NEW_RUN",
    "platforms": [],
    "not_applicable": {},
+   "deferred": {},
    "workloads": null
   },
   {
@@ -354267,6 +356145,7 @@
    "reason": "Cooklang legacy metadata audit: static S00 observation only, not executed",
    "platforms": [],
    "not_applicable": {},
+   "deferred": {},
    "workloads": null
   }
  ]

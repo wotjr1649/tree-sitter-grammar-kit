@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -101,7 +102,27 @@ func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.Qualificat
 		}
 	}
 	q.Totals.Obligations.Pass = q.Totals.Obligations.Obligations
+	for _, x := range inv.ExtraRoles {
+		for _, p := range inv.Platforms {
+			row := kit.QualRoleRow{ID: x.ID, Role: x.Role, Platform: p.ID, Status: x.Status}
+			switch {
+			case x.Status != kit.RoleExecuted:
+			case slices.Contains(x.Platforms, p.ID):
+				row.Status, row.Mechanism, row.Checks, row.Sets = "PASS", "PASS", "PASS", []kit.QualSet{{}}
+			case x.NotApplicable[p.ID] != "":
+				row.Status = kit.RoleNotApplicable
+			case x.Deferred[p.ID] != "":
+				row.Status = kit.RoleDeferred
+			}
+			q.ExtraRoles = append(q.ExtraRoles, row)
+		}
+	}
 	return q, inv
+}
+
+// roleRow is the index of one extra-role row of the fixture.
+func roleRow(q *kit.QualificationResult, id, platform string) int {
+	return slices.IndexFunc(q.ExtraRoles, func(r kit.QualRoleRow) bool { return r.ID == id && r.Platform == platform })
 }
 
 func TestQualificationRejectsIncompleteAndForeignEvidence(t *testing.T) {
@@ -122,6 +143,21 @@ func TestQualificationRejectsIncompleteAndForeignEvidence(t *testing.T) {
 		"empty_case":           func(q *kit.QualificationResult) { q.Cells[0].Obligations[0].Cases = nil },
 		"zero_obligations":     func(q *kit.QualificationResult) { q.Totals.Obligations.Obligations = 0; q.Totals.Obligations.Pass = 0 },
 		"finding":              func(q *kit.QualificationResult) { q.Findings = append(q.Findings, kit.Finding{Code: "CONTROL"}) },
+		// #218: the symbol role rows, executed on Windows and Linux and deferred on darwin
+		"role_row_missing": func(q *kit.QualificationResult) { q.ExtraRoles = slices.Delete(q.ExtraRoles, 0, 1) },
+		"role_row_failed": func(q *kit.QualificationResult) {
+			q.ExtraRoles[roleRow(q, "csharp-symbols", "linux-amd64")].Status = "FAIL"
+		},
+		"role_row_axis": func(q *kit.QualificationResult) {
+			q.ExtraRoles[roleRow(q, "csharp-symbols", "windows-amd64")].Checks = "BLOCKED"
+		},
+		"deferred_executed": func(q *kit.QualificationResult) {
+			q.ExtraRoles[roleRow(q, "csharp-symbols", "darwin-arm64")].Status = "PASS"
+		},
+		"deferred_axis": func(q *kit.QualificationResult) {
+			q.ExtraRoles[roleRow(q, "csharp-symbols", "darwin-arm64")].Mechanism = "PASS"
+		},
+		"role_row_twice": func(q *kit.QualificationResult) { q.ExtraRoles = append(q.ExtraRoles, q.ExtraRoles[0]) },
 	}
 	for name, mutate := range mutations {
 		t.Run(name, func(t *testing.T) {
