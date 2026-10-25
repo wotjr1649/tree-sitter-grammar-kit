@@ -33,15 +33,6 @@ func (s *eligibilitySession) verifyNative() *Error {
 		}
 		s.failItem = func() { s.failInvocation(inv) }
 		nativeReady = s.ready[inv.ID] && eligibilityAllVerified(s.build, 9) && eligibilityAllVerified(s.units, 4) && eligibilityAllVerified(s.control, 53) && eligibilityAllVerified(s.assertions, 36)
-		_, executableReady, e := s.member(inv.Executable)
-		if e != nil {
-			return e
-		}
-		nativeReady = nativeReady && executableReady
-		if inv.Executable == nil || inv.Executable.Member.SHA256 != w.Native.ExecutableSHA256 || !hex64.MatchString(w.Native.ExecutableSHA256) {
-			s.finding("ELIGIBILITY_NATIVE_EXECUTABLE", inv.ID, true)
-			nativeReady = false
-		}
 
 		source, haveSource, e := s.member(&n.Source)
 
@@ -94,85 +85,37 @@ func (s *eligibilitySession) verifyNative() *Error {
 	if e := s.currentReferences(versions); e != nil {
 		return e
 	}
-	// Validate supplied raw even when its native semantic group is absent.
+	var selected eligibilityNativeRecord
 	for _, declared := range s.reg.Invocations {
-		if declared.Kind != "NATIVE_DRIVER" || inv != nil && declared.ID == inv.ID {
+		if declared.Kind != "NATIVE_DRIVER" {
 			continue
 		}
-		s.failItem = func() { s.failInvocation(&declared) }
-		if _, _, e := s.nativeResponse(&declared, nil); e != nil {
+		var sourceVersions [][]byte
+		if inv != nil && declared.ID == inv.ID {
+			sourceVersions = versions
+		}
+		record, e := s.nativeInvocation(&declared, sourceVersions)
+		if e != nil {
 			return e
 		}
+		if inv != nil && declared.ID == inv.ID {
+			selected = record
+		}
 	}
-	s.failItem = nil
 	var checked []nativewire.CheckedStep
 	if inv != nil {
 		s.failItem = func() { s.failInvocation(inv) }
-		requestBytes, requestReady, e := s.member(inv.Request)
-		if e != nil {
-			return e
-		}
-		var approved eligibilityNativeExpected
-		if e := s.b.decode(inv.ID+"/approved-request", inv.ApprovedRequest, &approved, true); e != nil {
-			return e
-		}
-		if requestReady {
-			var stored eligibilityNativeExpected
-			if e := s.b.decode(inv.ID+"/request", requestBytes, &stored, true); e != nil {
-				return e
-			}
-			if !reflect.DeepEqual(stored, approved) || !reflect.DeepEqual(approved, w.Native) {
-				s.finding("ELIGIBILITY_NATIVE_REQUEST", inv.ID, true)
-				nativeReady = false
-			}
-		} else {
+		nativeReady = nativeReady && selected.ready
+		if !reflect.DeepEqual(selected.approved, w.Native) {
+			s.finding("ELIGIBILITY_NATIVE_REQUEST", inv.ID, true)
 			nativeReady = false
 		}
-		if e := eligibilityValidateRequest(w.Native.Process, inv.ID); e != nil {
-			return e
-		}
-		if w.Native.Process.Path != inv.ExecutablePath {
-			s.finding("ELIGIBILITY_NATIVE_EXECUTABLE_PATH", inv.ID, true)
-			nativeReady = false
-		}
-		if w.Native.Protocol != nativewire.ProtocolR4 || !validID(w.Native.RequestID) || w.Native.RequestID != w.Case || w.Native.NodeLimit == 0 || w.Native.NodeLimit > 1000000 || !hex64.MatchString(w.Native.ProducerSHA256) || !reuseobs.VerifiedRuntimeManifest(w.Native.RuntimeManifestSHA256) || !validID(w.Native.ObservationRunID) || w.Native.HistoryStart > 4 || w.Native.HistoryStart+uint64(len(w.Edits)) > 4 {
+		if w.Native.RequestID != w.Case || w.Native.HistoryStart+uint64(len(w.Edits)) > 4 {
 			s.finding("ELIGIBILITY_R4_EXPECTATION", inv.ID, true)
 			nativeReady = false
 		}
-		processBytes, haveProcess, e := s.member(inv.Process)
-		if e != nil {
-			return e
-		}
-		var process eligibilityExecution
-		if haveProcess {
-			if e := s.b.decode(inv.ID+"/process", processBytes, &process, true); e != nil {
-				return e
-			}
-			if !s.execution(inv.ID, process, w.Native.Process, w.Platform, 0, false) {
-				nativeReady = false
-			}
-		} else {
-			nativeReady = false
-		}
-		raw, haveRaw, e := s.nativeResponse(inv, versions)
-		if e != nil {
-			return e
-		}
-		if haveRaw && len(versions) > 0 {
-			abi, p := w.Native.ProducerABI, raw.Producer
-			// The approved current runtime manifest pins ABI compatibility to 13..15.
-			if w.Native.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256 && (abi.RuntimeLanguageVersion != 15 || abi.RuntimeMinCompatible != 13) {
-				s.finding("ELIGIBILITY_NATIVE_RUNTIME_ABI", inv.ID, true)
-				nativeReady = false
-			}
-			if abi.LanguageVersion == 0 || abi.RuntimeMinCompatible == 0 || abi.RuntimeMinCompatible > abi.LanguageVersion || abi.LanguageVersion > abi.RuntimeLanguageVersion || abi.SymbolCount == 0 || p.LanguageVersion != abi.LanguageVersion || p.RuntimeLanguageVersion != abi.RuntimeLanguageVersion || p.RuntimeMinCompatible != abi.RuntimeMinCompatible || p.SymbolCount == nil || *p.SymbolCount != abi.SymbolCount || p.FieldCount == nil || *p.FieldCount != abi.FieldCount || p.Query != "tsgk-query/r1" || p.API == nil || *p.API != "tsgk-api/r1" {
-				s.finding("ELIGIBILITY_NATIVE_PRODUCER_ABI", inv.ID, true)
-				nativeReady = false
-			}
-			if haveProcess && (process.StdoutBytes != inv.Response.Member.Bytes+4 || process.StdoutBytes > w.Native.Process.StdoutBytes || process.StderrBytes > w.Native.Process.StderrBytes) {
-				s.finding("ELIGIBILITY_NATIVE_PROCESS_STREAM", inv.ID, true)
-				nativeReady = false
-			}
+		raw, process := selected.raw, selected.process
+		if selected.haveRaw && len(versions) > 0 {
 			expect := nativewire.Expect{Check: func() error {
 				if e := s.r.check(); e != nil {
 					return e

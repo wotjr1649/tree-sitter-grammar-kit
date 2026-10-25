@@ -2209,3 +2209,300 @@ func TestQueryReferenceEligibilityReview39(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryReferenceEligibilityReview42(t *testing.T) {
+	for _, extra := range []bool{false, true} {
+		for _, bad := range []string{"valid", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
+			for _, prior := range []bool{false, true} {
+				if !extra && bad == "valid-reordered" {
+					continue
+				}
+				if prior && bad != "request-id" && bad != "request-shape" {
+					continue
+				}
+				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
+					f := newEligibilityFixture(t)
+					index := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == "native-current" })
+					if extra {
+						inv := f.reg.Invocations[index]
+						inv.Inputs = maps.Clone(inv.Inputs)
+						inv.ID, inv.CatalogueID = "native-extra", "native-extra"
+						node := f.node(inv.ID, strings.Repeat("a", 40))
+						inv.Node = QueryReferenceNode{ID: node.ID, Identities: node.Identities}
+						for _, pair := range []struct {
+							pin  **eligibilityMember
+							name string
+						}{{&inv.Request, "request"}, {&inv.Response, "response"}, {&inv.Process, "process"}} {
+							old := **pair.pin
+							replacement := f.member(inv.ID, "native-extra/"+pair.name+".json", old.Member.Role, slices.Clone(f.files[old.Member.Path]))
+							*pair.pin = &replacement
+						}
+						f.reg.Invocations = append(f.reg.Invocations, inv)
+						index = len(f.reg.Invocations) - 1
+					} else {
+						f.reg.Native = nil
+					}
+					inv := &f.reg.Invocations[index]
+					malformed := false
+					switch bad {
+					case "request-id", "request-path", "request-limit":
+						var request eligibilityNativeExpected
+						if e := jsonv2.Unmarshal(f.files[inv.Request.Member.Path], &request); e != nil {
+							t.Fatal(e)
+						}
+						switch bad {
+						case "request-id":
+							request.RequestID = "other-request"
+						case "request-path":
+							request.Process.Path = "/other/native"
+						case "request-limit":
+							request.Process.Wall = 0
+							malformed = true
+						}
+						f.replace(inv.Request.Member.Path, eligibilityJSON(t, request))
+						if bad != "request-id" {
+							inv.ApprovedRequest = eligibilityJSON(t, request)
+						}
+					case "request-shape":
+						f.replace(inv.Request.Member.Path, []byte("{"))
+						malformed = true
+					case "approved-shape":
+						inv.ApprovedRequest = []byte(`{"unknown":true}`)
+						malformed = true
+					case "process-shape":
+						f.replace(inv.Process.Member.Path, []byte("{"))
+						malformed = true
+					case "process-stdout", "process-cleanup", "process-limit":
+						var process eligibilityExecution
+						if e := jsonv2.Unmarshal(f.files[inv.Process.Member.Path], &process); e != nil {
+							t.Fatal(e)
+						}
+						switch bad {
+						case "process-stdout":
+							process.StdoutBytes++
+						case "process-cleanup":
+							process.Cleanup.Verified = false
+						default:
+							process.Memory.Limit++
+						}
+						f.replace(inv.Process.Member.Path, eligibilityJSON(t, process))
+					case "executable-pin":
+						pin := *inv.Executable
+						pin.Member.SHA256 = strings.Repeat("0", 64)
+						inv.Executable = &pin
+					default:
+						f.nativeIndependentMutation(inv, bad)
+					}
+					if prior {
+						for i := range f.reg.Invocations {
+							if f.reg.Invocations[i].ID == "current-ref-0" {
+								f.reg.Invocations[i].Node.Identities["run"] = "wrong-run"
+							}
+						}
+					}
+					got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+					if (err != nil) != malformed || malformed && asError(err).Kind != KindInvalidInput || got.Complete == malformed {
+						t.Fatalf("unselected validation err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+					}
+					if prior {
+						if got.Assessment != AssessFail || got.Tuple.Failed != 1 || !eligibilityFinding(got, "ELIGIBILITY_NODE_BINDING") {
+							t.Fatalf("prior failure lost: assessment%s counts%+v", got.Assessment, got.Tuple)
+						}
+					} else if !malformed {
+						want := AssessFail
+						if strings.HasPrefix(bad, "valid") {
+							want = AssessBlocked
+							if extra {
+								want = AssessPass
+							}
+						}
+						if got.Assessment != want || got.Tuple.Failed != 0 {
+							t.Fatalf("unselected assessment%s want%s counts%+v", got.Assessment, want, got.Tuple)
+						}
+					}
+					if bad == "request-id" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_REQUEST") {
+						t.Fatal("stored-approved request contradiction was not checked")
+					}
+					eligibilityAssertCounts(t, got)
+				})
+			}
+		}
+	}
+}
+
+func (f *eligibilityFixture) nativeIndependentMutation(inv *eligibilityInvocation, bad string) {
+	if bad == "valid" {
+		return
+	}
+	t := f.t
+	var raw nativewire.Response
+	if e := jsonv2.Unmarshal(f.files[inv.Response.Member.Path], &raw); e != nil {
+		t.Fatal(e)
+	}
+	switch bad {
+	case "valid-own":
+		var own eligibilityNativeExpected
+		if e := jsonv2.Unmarshal(inv.ApprovedRequest, &own); e != nil {
+			t.Fatal(e)
+		}
+		own.RequestID, own.ObservationRunID, own.ProducerSHA256, own.Process.Path = "own-request", "own-run", strings.Repeat("e", 64), "/own/native"
+		pin := f.member("native-static", "native/other-executable.bin", "native-executable", []byte("other synthetic executable"))
+		own.ExecutableSHA256 = pin.Member.SHA256
+		own.ProducerABI.SymbolCount++
+		source := f.member("native-static", "native/other-source.bin", "source", []byte("z;\n1;\n"))
+		inv.Inputs["source"] = eligibilityInput{Kind: "PINNED", MemberPin: &source, ContentBasis: "PRESERVED_ORIGINAL"}
+		inv.Executable, inv.ExecutablePath, inv.ApprovedRequest = &pin, own.Process.Path, eligibilityJSON(t, own)
+		f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+		raw.ID, raw.Producer.SymbolCount = own.RequestID, &own.ProducerABI.SymbolCount
+		raw.Steps[0].SourceSHA256 = source.Member.SHA256
+		for k := range raw.Steps {
+			var obs []reuseobs.Observation
+			if e := jsonv2.Unmarshal(raw.Steps[k].Observations, &obs); e != nil {
+				t.Fatal(e)
+			}
+			for j := range obs {
+				obs[j].RequestID, obs[j].RunID, obs[j].ProducerSHA256 = own.RequestID, own.ObservationRunID, own.ProducerSHA256
+				if k == 0 {
+					obs[j].SourceSHA256 = source.Member.SHA256
+				} else if k == 1 && obs[j].OldTree {
+					sha := source.Member.SHA256
+					obs[j].OldSourceSHA256 = &sha
+				}
+			}
+			raw.Steps[k].Observations = eligibilityJSON(t, obs)
+		}
+	case "valid-reordered":
+		inv.Inputs["query-q1"] = inv.Inputs["query-q0"]
+		for k := range raw.Steps {
+			for _, tree := range []*nativewire.WireTree{&raw.Steps[k].Incremental, raw.Steps[k].Fresh} {
+				if tree == nil {
+					continue
+				}
+				var queries []querywire.Query
+				if e := jsonv2.Unmarshal(tree.Queries, &queries); e != nil {
+					t.Fatal(e)
+				}
+				second := queries[0]
+				second.ID = "q1"
+				tree.Queries = eligibilityJSON(t, []querywire.Query{second, queries[0]})
+			}
+		}
+	case "raw-id":
+		raw.ID = "wrong-request"
+	case "raw-abi":
+		*raw.Producer.SymbolCount++
+	case "raw-capability":
+		raw.Producer.ReuseObservation = eligibilityJSON(t, map[string]string{"policy": "wrong", "runtime_manifest_sha256": reuseobs.RuntimeManifestSHA256})
+	case "raw-complete":
+		raw.Complete = false
+	case "raw-status":
+		raw.Status, raw.Code = StatusResourceLimit, "ALLOCATION_LIMIT"
+	case "raw-steps-completed":
+		raw.StepsCompleted--
+	case "raw-step-index":
+		raw.Steps[0].Step++
+	case "raw-initial-shape":
+		raw.Steps[0].Edit = raw.Steps[1].Edit
+	case "raw-source-hash":
+		raw.Steps[0].SourceSHA256 = strings.Repeat("0", 64)
+	case "raw-source-bytes":
+		raw.SourceBytes++
+	case "raw-point", "raw-eof":
+		tree := &raw.Steps[0].Incremental
+		if bad == "raw-point" {
+			tree.Nodes[0][9] = 77
+		} else {
+			tree.Nodes[0][5]--
+		}
+		nodes, e := nativewire.Nodes(tree.Nodes, tree.Types, tree.Fields)
+		if e != nil {
+			t.Fatal(e)
+		}
+		tree.Digest = TreeDigest(nodes)
+	case "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source":
+		k := 0
+		if bad == "logger-old-source" {
+			k = 1
+		}
+		var obs []reuseobs.Observation
+		if e := jsonv2.Unmarshal(raw.Steps[k].Observations, &obs); e != nil {
+			t.Fatal(e)
+		}
+		switch bad {
+		case "logger-run":
+			obs[0].RunID = "wrong-run"
+		case "logger-role":
+			obs[0].Role = "fresh"
+		case "logger-initial-accepted":
+			obs[0].Counts.Accepted = 1
+			obs[0].Events++
+		default:
+			sha := strings.Repeat("0", 64)
+			obs[0].OldSourceSHA256 = &sha
+		}
+		raw.Steps[k].Observations = eligibilityJSON(t, obs)
+	default:
+		t.Fatalf("unknown native mutation %s", bad)
+	}
+	data := eligibilityJSON(t, raw)
+	f.replace(inv.Response.Member.Path, data)
+	var process eligibilityExecution
+	if e := jsonv2.Unmarshal(f.files[inv.Process.Member.Path], &process); e != nil {
+		t.Fatal(e)
+	}
+	process.StdoutBytes = uint64(len(data)) + 4
+	f.replace(inv.Process.Member.Path, eligibilityJSON(t, process))
+}
+
+func TestQueryReferenceEligibilityIndependentBudget(t *testing.T) {
+	for _, mode := range []string{"full", "partial", "fields", "query-source", "cancel"} {
+		t.Run(mode, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(ctxT(t))
+			defer cancel()
+			r, e := startRun(ctx, 30*time.Second)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			b := &eligibilityBudget{r: r}
+			r.eligibility = b
+			s := &eligibilitySession{r: r, b: b}
+			tree := nativewire.WireTree{}
+			switch mode {
+			case "full", "partial":
+				tree.Types = []string{strings.Repeat("x", 1<<20)}
+				rows := make([][]int64, 10000)
+				for i := range rows {
+					rows[i] = []int64{0, 0, -1, 1, 0, 1, 0, 0, 0, 1}
+				}
+				if mode == "full" {
+					tree.Nodes = rows
+				} else {
+					tree.PartialTrees = []nativewire.WirePartial{{Nodes: rows}}
+				}
+			case "fields":
+				tree.Fields = make([]string, 65536)
+				tree.PartialTrees = make([]nativewire.WirePartial, 1024)
+			case "query-source":
+				b.work = eligibilityWorkLimit - 1<<20
+				q := querywire.Query{ID: "q", Status: "INVALID_QUERY", Code: "QUERY_SYNTAX", Error: &querywire.CompileError{Type: "SYNTAX", Offset: 8 << 20, Point: [2]uint32{0, 8 << 20}}}
+				checked := nativewire.Tree{Wire: nativewire.WireTree{Queries: eligibilityJSON(t, []querywire.Query{q})}}
+				e = s.nativeIndependentQueries(&eligibilityInvocation{ID: "extra"}, &checked, map[string][]byte{"q": make([]byte, 8<<20)}, map[string]bool{"q": true}, 0, nil)
+				if e == nil || e.Kind != KindResourceLimit || e.Path != "native-independent-query-source" {
+					t.Fatalf("query source scan unreserved: %v", e)
+				}
+				return
+			case "cancel":
+				cancel()
+			}
+			e = s.nativeIndependentTreeBudget(tree, nil, false)
+			kind := KindResourceLimit
+			if mode == "cancel" {
+				kind = KindCancelled
+			}
+			if e == nil || e.Kind != kind {
+				t.Fatalf("independent traversal guard: %v", e)
+			}
+		})
+	}
+}
