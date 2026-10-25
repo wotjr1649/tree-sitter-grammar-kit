@@ -6,6 +6,8 @@ import (
 	jsonv2 "encoding/json/v2"
 	"reflect"
 	"strings"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 const eligibilityWorkLimit uint64 = 32000000
@@ -67,7 +69,7 @@ func (b *eligibilityBudget) decode(doc string, data []byte, target any, exact bo
 	return nil
 }
 
-// Optional fields are explicit omitempty fields; null never substitutes for an absent arm.
+// Registration optionals use omitempty; native wire nullable arms are explicit.
 func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valueBudget) *Error {
 	if e := budget.take(t.doc, v); e != nil {
 		return e
@@ -124,12 +126,15 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 				}
 				continue
 			}
+			if v.vals[i].kind == 'n' && eligibilityNativeNullable(typ, name) {
+				continue
+			}
 			if e := eligibilityShape(t, v.vals[i], f.Type, exact, budget); e != nil {
 				return e
 			}
 		}
 		for name, f := range fields {
-			if jvMember(v, name) == nil && !strings.Contains(f.Tag.Get("json"), ",omitempty") {
+			if jvMember(v, name) == nil && (!strings.Contains(f.Tag.Get("json"), ",omitempty") || typ == reflect.TypeFor[nativewire.Producer]() || typ == reflect.TypeFor[nativewire.Step]()) {
 				return fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.cptr()+"/"+name, nil)
 			}
 		}
@@ -161,6 +166,19 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 		return witnessShape(t, v, typ, exact, false, budget)
 	}
 	return nil
+}
+
+// Nullable wire arms do not permit null primitives or null compact-array elements.
+func eligibilityNativeNullable(typ reflect.Type, name string) bool {
+	switch typ {
+	case reflect.TypeFor[nativewire.Step]():
+		return name == "edit" || name == "route" || name == "fresh"
+	case reflect.TypeFor[nativewire.WireTree]():
+		return name == "form" || name == "types" || name == "fields" || name == "nodes" || name == "errors" || name == "declarations" || name == "partial_trees"
+	case reflect.TypeFor[nativewire.DeclItem]():
+		return name == "name"
+	}
+	return false
 }
 
 // The existing graph/policy decoders run only after this bounded strict pass and reservation.

@@ -1909,3 +1909,238 @@ func TestQueryReferenceEligibilityMissingSourceMalformedNative(t *testing.T) {
 		})
 	}
 }
+
+func (f *eligibilityFixture) nativeMutation(change func([]byte) []byte) {
+	data := change(slices.Clone(f.files["native/response.json"]))
+	f.replace("native/response.json", data)
+	var process eligibilityExecution
+	if e := jsonv2.Unmarshal(f.files["native/process.json"], &process); e != nil {
+		f.t.Fatal(e)
+	}
+	process.StdoutBytes = uint64(len(data)) + 4
+	f.replace("native/process.json", eligibilityJSON(f.t, process))
+}
+
+func TestQueryReferenceEligibilityReview38(t *testing.T) {
+	for _, bad := range []string{"missing-step", "null-has-error", "null-node-integer"} {
+		for _, missing := range []bool{false, true} {
+			for _, prior := range []bool{false, true} {
+				t.Run(fmt.Sprintf("outer-%s-source-missing-%v-prior-%v", bad, missing, prior), func(t *testing.T) {
+					f := newEligibilityFixture(t)
+					f.nativeMutation(func(data []byte) []byte {
+						var raw map[string]any
+						if e := jsonv2.Unmarshal(data, &raw); e != nil {
+							t.Fatal(e)
+						}
+						step := raw["steps"].([]any)[0].(map[string]any)
+						tree := step["incremental"].(map[string]any)
+						switch bad {
+						case "missing-step":
+							delete(step, "step")
+						case "null-has-error":
+							tree["has_error"] = nil
+						default:
+							tree["nodes"].([]any)[0].([]any)[0] = nil
+						}
+						return eligibilityJSON(t, raw)
+					})
+					if missing {
+						delete(f.files, "native/source.bin")
+					}
+					req := f.request()
+					if prior {
+						a := f.approval
+						a.RegistrationSHA256 = strings.Repeat("0", 64)
+						req.Approval = eligibilityJSON(t, a)
+					}
+					got, err := VerifyQueryReferenceEligibility(ctxT(t), req)
+					if err == nil || asError(err).Kind != KindInvalidInput || got.Complete || (prior || missing) && got.Assessment != AssessFail || !prior && !missing && got.Assessment == AssessFail {
+						t.Fatalf("outer shape err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+					}
+					eligibilityAssertCounts(t, got)
+				})
+			}
+		}
+	}
+	for _, anchor := range []bool{false, true} {
+		for _, bad := range []string{"index-only", "metadata", "identity"} {
+			t.Run(fmt.Sprintf("cst-%s-anchor-%v", bad, anchor), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				if !anchor {
+					f.witness.Required[0].Structural = nil
+					f.witness.Required[0].Expected = nil
+				}
+				f.stdoutMutation("current-ref-0", func(data []byte) []byte {
+					var ref instrumentedReference
+					if e := jsonv2.Unmarshal(data, &ref); e != nil {
+						t.Fatal(e)
+					}
+					old := ref.Tree.Nodes
+					wrapper := old[1]
+					wrapper.Type = "uncaptured-wrapper"
+					wrapper.Parent = 0
+					nodes := append(slices.Clone(old[:1]), wrapper)
+					nodes = append(nodes, old[1:]...)
+					for i := 2; i < len(nodes); i++ {
+						if nodes[i].Parent > 0 {
+							nodes[i].Parent++
+						}
+					}
+					nodes[2].Parent = 1
+					ref.Tree.Nodes = nodes
+					for i := range ref.Query.Structural {
+						ref.Query.Structural[i].Node++
+					}
+					for i := range ref.Query.Evaluated {
+						ref.Query.Evaluated[i].Node++
+					}
+					if bad == "metadata" {
+						ref.Query.Patterns = 2
+					}
+					if bad == "identity" {
+						ref.Query.Matches = 0
+						ref.Query.MatchMapping = ref.Query.MatchMapping[:0]
+						ref.Query.Structural = []Capture{}
+						ref.Query.Evaluated = []Capture{}
+					}
+					changed := eligibilityJSON(t, ref)
+					for i := range f.reg.Observations {
+						o := &f.reg.Observations[i]
+						if o.InvocationID == "current-ref-0" {
+							o.ByteLength = uint64(len(changed))
+							o.SHA256 = digestHex(changed)
+						}
+					}
+					return changed
+				})
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				want := AssessFail
+				if bad == "index-only" {
+					want = AssessBlocked
+				}
+				if err != nil || !got.Complete || got.Assessment != want || bad == "index-only" && got.Tuple.Failed != 0 {
+					t.Fatalf("CST distinction err%v assessment%s tuple%+v", err, got.Assessment, got.Tuple)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+	for _, required := range []bool{false, true} {
+		for _, kind := range []string{"point", "eof"} {
+			t.Run(fmt.Sprintf("native-%s-required-%v", kind, required), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				if !required {
+					f.witness.Required = f.witness.Required[:1]
+					f.reg.Observations = slices.DeleteFunc(f.reg.Observations, func(o eligibilityObservation) bool { return o.Step > 0 })
+					f.reg.Invocations = slices.DeleteFunc(f.reg.Invocations, func(i eligibilityInvocation) bool { return i.ID == "current-ref-1" })
+				}
+				f.nativeMutation(func(data []byte) []byte {
+					var raw nativewire.Response
+					if e := jsonv2.Unmarshal(data, &raw); e != nil {
+						t.Fatal(e)
+					}
+					tree := &raw.Steps[1].Incremental
+					if kind == "point" {
+						tree.Nodes[3][7] = 0
+					} else {
+						tree.Nodes[0][5] = 5
+						tree.Nodes[0][8] = 1
+						tree.Nodes[0][9] = 2
+					}
+					ns, e := nativewire.Nodes(tree.Nodes, tree.Types, tree.Fields)
+					if e != nil {
+						t.Fatal(e)
+					}
+					tree.Digest = TreeDigest(ns)
+					return eligibilityJSON(t, raw)
+				})
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				code := "ELIGIBILITY_NATIVE_TREE_POINTS"
+				if kind == "eof" {
+					code = "ELIGIBILITY_NATIVE_TREE_EOF"
+				}
+				if err != nil || !got.Complete || got.Assessment != AssessFail || !eligibilityFinding(got, code) {
+					t.Fatalf("native source contradiction err%v assessment%s finding%v", err, got.Assessment, eligibilityFinding(got, code))
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
+	f := newEligibilityFixture(t)
+	var raw nativewire.Response
+	if e := jsonv2.Unmarshal(f.files["native/response.json"], &raw); e != nil {
+		t.Fatal(e)
+	}
+	raw.Steps[1].Route = &nativewire.Route{}
+	raw.Steps[0].Incremental.Errors = &nativewire.WireErrors{Items: []nativewire.WireError{{}}}
+	declarations := []nativewire.DeclItem{{Name: &nativewire.NameSpan{}}}
+	raw.Steps[0].Incremental.Declarations = &declarations
+	raw.Steps[0].Incremental.PartialTrees = []nativewire.WirePartial{{Nodes: [][]int64{}}}
+	original := eligibilityJSON(t, raw)
+	// These objects exercise encoding only; their synthetic values make no semantic claim.
+	subjects := [][]any{{}, {"producer"}, {"steps", 1}, {"steps", 0, "incremental"}, {"steps", 1, "edit"}, {"steps", 1, "route"}, {"steps", 0, "incremental", "errors"}, {"steps", 0, "incremental", "errors", "items", 0}, {"steps", 0, "incremental", "declarations", 0}, {"steps", 0, "incremental", "declarations", 0, "name"}, {"steps", 0, "incremental", "partial_trees", 0}}
+	at := func(root any, path []any) map[string]any {
+		for _, part := range path {
+			switch p := part.(type) {
+			case string:
+				root = root.(map[string]any)[p]
+			case int:
+				root = root.([]any)[p]
+			}
+		}
+		return root.(map[string]any)
+	}
+	for index, path := range subjects {
+		var root any
+		if e := jsonv2.Unmarshal(original, &root); e != nil {
+			t.Fatal(e)
+		}
+		for field, value := range at(root, path) {
+			for _, bad := range []string{"missing", "null", "type"} {
+				opaque := field == "queries" || field == "api" && index == 3 || field == "reuse_observation" || field == "observations"
+				if opaque && bad != "missing" {
+					continue
+				}
+				nullable := index == 2 && (field == "edit" || field == "route" || field == "fresh") || index == 3 && (field == "form" || field == "types" || field == "fields" || field == "nodes" || field == "errors" || field == "declarations" || field == "partial_trees") || index == 8 && field == "name"
+				t.Run(fmt.Sprintf("object-%d-%s-%s", index, field, bad), func(t *testing.T) {
+					var changed any
+					if e := jsonv2.Unmarshal(original, &changed); e != nil {
+						t.Fatal(e)
+					}
+					obj := at(changed, path)
+					switch bad {
+					case "missing":
+						delete(obj, field)
+					case "null":
+						obj[field] = nil
+					default:
+						if _, ok := value.(string); ok {
+							obj[field] = true
+						} else {
+							obj[field] = "wrong type"
+						}
+					}
+					r, e := startRun(ctxT(t), 30*time.Second)
+					if e != nil {
+						t.Fatal(e)
+					}
+					defer r.cancel()
+					b := &eligibilityBudget{r: r}
+					r.eligibility = b
+					var decoded nativewire.Response
+					e = b.decode("native-shape", eligibilityJSON(t, changed), &decoded, true)
+					if bad == "null" && nullable {
+						if e != nil {
+							t.Fatalf("nullable wire arm rejected: %v", e)
+						}
+					} else if e == nil || e.Kind != KindInvalidInput {
+						t.Fatalf("malformed wire accepted: %v", e)
+					}
+				})
+			}
+		}
+	}
+}

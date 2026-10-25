@@ -152,8 +152,8 @@ func (s *eligibilitySession) verifyNative() *Error {
 			if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
 				return e
 			}
-			if err := jsonv2.Unmarshal(data, &raw, jsonv2.RejectUnknownMembers(true)); err != nil {
-				return fail(KindInvalidInput, "JSON_SHAPE", inv.ID, err)
+			if e := s.b.decode(inv.ID+"/native-response-shape", data, &raw, true); e != nil {
+				return e
 			}
 
 			var capability struct {
@@ -215,6 +215,30 @@ func (s *eligibilitySession) verifyNative() *Error {
 						s.finding("ELIGIBILITY_R4_STEP", fmt.Sprintf("%s/%d", inv.ID, i), true)
 						nativeReady = false
 						break
+					}
+					if i < len(versions) {
+						for _, tree := range []*nativewire.Tree{&cs.Incremental, cs.Fresh} {
+							if tree == nil || tree.Form != "full" {
+								continue
+							}
+							code := ""
+							if !utf8.Valid(versions[i]) {
+								code = "ELIGIBILITY_NATIVE_SOURCE_ENCODING"
+							} else if len(tree.Nodes) == 0 || uint64(tree.Nodes[0].EndByte) != uint64(len(versions[i])) {
+								code = "ELIGIBILITY_NATIVE_TREE_EOF"
+							} else if !witnessCST(tree.Nodes) {
+								code = "ELIGIBILITY_NATIVE_TREE_CST"
+							} else if witnessPoints(tree.Nodes, EncodingUTF8, versions[i], s.r) != "" {
+								code = "ELIGIBILITY_NATIVE_TREE_POINTS"
+							}
+							if e := s.r.check(); e != nil {
+								return e
+							}
+							if code != "" {
+								s.finding(code, fmt.Sprintf("%s/%d", inv.ID, i), true)
+								nativeReady = false
+							}
+						}
 					}
 					done := cs.Done(i)
 					if err := nativewire.CheckOpen(i, len(raw.Steps), raw.Status, done); err != nil {
@@ -297,7 +321,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 					s.finding("ELIGIBILITY_NATIVE_ANCHOR", tuple.Query, true)
 					ready = false
 				}
-				if value.status != StatusCompleted || nativeQuery.Partial || tree.Form != "full" || !witnessCST(tree.Nodes) || witnessPoints(tree.Nodes, EncodingUTF8, versions[tuple.Step], s.r) != "" {
+				if value.status != StatusCompleted || nativeQuery.Partial || tree.Form != "full" {
 					s.finding("ELIGIBILITY_NATIVE_CST_INELIGIBLE", tuple.Query, false)
 					ready = false
 				}
@@ -334,16 +358,21 @@ func (s *eligibilitySession) verifyNative() *Error {
 					s.finding("ELIGIBILITY_REFERENCE_METADATA", tuple.Query, true)
 					ready = false
 				}
-				if tuple.Structural != nil && CompareCaptures(ref.Query.Structural, tuple.Structural) != nil || tuple.Expected != nil && CompareCaptures(ref.Query.Evaluated, tuple.Expected) != nil {
+				sameCST := tree != nil && CompareTrees(tree.Nodes, ref.Tree.Nodes) == nil
+				anchorMismatch := tuple.Structural != nil && referenceAnchorIdentityMismatch(tuple.Structural, ref.Query.Structural) || tuple.Expected != nil && referenceAnchorIdentityMismatch(tuple.Expected, ref.Query.Evaluated)
+				if tree == nil || sameCST {
+					anchorMismatch = anchorMismatch || tuple.Structural != nil && CompareCaptures(ref.Query.Structural, tuple.Structural) != nil || tuple.Expected != nil && CompareCaptures(ref.Query.Evaluated, tuple.Expected) != nil
+				}
+				if anchorMismatch {
 					s.finding("ELIGIBILITY_REFERENCE_ANCHOR", tuple.Query, true)
 					ready = false
 				}
 				if tree != nil {
-					if CompareTrees(tree.Nodes, ref.Tree.Nodes) != nil {
+					if !sameCST {
 						s.finding("ELIGIBILITY_CST_MISMATCH", tuple.Query, false)
 						ready = false
 					}
-					if nativeQuery != nil && CompareCaptures(evaluated, ref.Query.Evaluated) != nil {
+					if nativeQuery != nil && (referenceAnchorIdentityMismatch(evaluated, ref.Query.Evaluated) || sameCST && CompareCaptures(evaluated, ref.Query.Evaluated) != nil) {
 						s.finding("ELIGIBILITY_EVALUATED_MISMATCH", tuple.Query, true)
 						ready = false
 					}
