@@ -95,6 +95,17 @@ func publicationWrite(n int, err error) *outcome {
 	return nil
 }
 
+func publicationNoClobber(err error) *outcome {
+	if errors.Is(err, unix.EEXIST) {
+		return nil
+	}
+	r := outcome{"FAILED", "NO_CLOBBER"}
+	if err != nil {
+		r = refused(err, "LINKAT")
+	}
+	return &r
+}
+
 type fid struct {
 	FSID   [8]byte
 	Type   uint32
@@ -336,8 +347,8 @@ func publicationProbe(root string) (result outcome) {
 	if err := unix.Linkat(proc, name, parent, "final", unix.AT_SYMLINK_FOLLOW); err != nil {
 		return refused(err, "LINKAT")
 	}
-	if err := unix.Linkat(proc, name, parent, "final", unix.AT_SYMLINK_FOLLOW); !errors.Is(err, unix.EEXIST) {
-		return outcome{"FAILED", "NO_CLOBBER"}
+	if failure := publicationNoClobber(unix.Linkat(proc, name, parent, "final", unix.AT_SYMLINK_FOLLOW)); failure != nil {
+		return *failure
 	}
 	check, err := unix.Openat(parent, "final", unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
 	if err != nil {

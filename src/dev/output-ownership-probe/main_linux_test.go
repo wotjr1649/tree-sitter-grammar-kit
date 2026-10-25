@@ -162,6 +162,26 @@ func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
 	}
 }
 
+func TestPublicationNoClobberOutcome(t *testing.T) {
+	if r := publicationNoClobber(unix.EEXIST); r != nil {
+		t.Fatalf("expected collision: %+v", r)
+	}
+	if r := publicationNoClobber(nil); r == nil || *r != (outcome{"FAILED", "NO_CLOBBER"}) {
+		t.Fatalf("unexpected link success: %+v", r)
+	}
+	for _, tc := range []struct {
+		errno  unix.Errno
+		status string
+	}{{unix.ENOSPC, "UNVERIFIED"}, {unix.EINTR, "UNVERIFIED"}, {unix.ENOENT, "UNSUPPORTED"}, {unix.EIO, "FAILED"}} {
+		if r := publicationNoClobber(tc.errno); r == nil || r.Status != tc.status || r.Code != fmt.Sprintf("LINKAT:errno=%d", tc.errno) {
+			t.Fatalf("link error %d: %+v", tc.errno, r)
+		}
+	}
+	if r := publicationNoClobber(unix.Linkat(-1, "source", -1, "target", 0)); r == nil || *r != (outcome{"FAILED", fmt.Sprintf("LINKAT:errno=%d", unix.EBADF)}) {
+		t.Fatalf("actual EBADF link: %+v", r)
+	}
+}
+
 func TestPublicationWriteOutcome(t *testing.T) {
 	for _, errno := range []unix.Errno{unix.ENOSPC, unix.EDQUOT, unix.ENOMEM} {
 		if r := publicationWrite(0, errno); r == nil || r.Status != "UNVERIFIED" || r.Code != fmt.Sprintf("WRITE:errno=%d", errno) {
