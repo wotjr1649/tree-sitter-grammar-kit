@@ -10,6 +10,8 @@ Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f
 
 `tsgk-instrumented-reference-build/r1`의 `complete`는 빌드 절차 완료다. Caller가 독립적으로 선택한 upstream·도구 취득 근거 및 등록 hash와 연결해야 한다. Evidence가 자체 제출한 identity/hash만으로 reference 자격을 만들지 않는다. 공개 source, compiler/standard-library provenance, 실제 feature closure와 실행 문맥의 신뢰 검토는 자격 검증에 계속 필요하다.
 
+Build와 owned controls는 기존 wire encoder로 요청 bytes를 한 번 만들고 supervisor stdin에 전달하는 동일 bytes를 실행 전에 `*-request.json`으로 저장한다. `batch-truncated-request.json`은 `StdoutBytes=1024`로 바꾼 요청을 보존하며 원래 `batch-sixteen-request.json`은 변경하지 않는다. 요청 저장이 실패하면 그 실행을 시작하지 않는다. 이 보존은 producer의 송신 bytes와 저장 bytes의 일치이며 실행 진위·후속 변조 방지나 reference 자격을 인증하지 않는다. 과거 누락 요청을 재생성해 원자료로 승격하지 않으며 `build.py` 변경 뒤에는 새 입력 hash에 맞는 build identity가 필요하다.
+
 ## 결과와 완료 조건
 
 Emitter 인자는 절대 library path, symbol, source path, query path, query ID, 사전 등록 library SHA-256이다. Source는 UTF-8 32 MiB 이하, query는 UTF-8 64 KiB 이하, library는 64 MiB 이하의 regular file이다. Source·query는 읽은 bytes에서 hash와 결과를 계산한다. Library는 실행 전 예상 hash와 비교하고 실행 후 다시 비교한다. 이 검사는 악의적인 동시 파일 교체나 native code 자체를 격리한다는 보장이 아니다. Build archive는 128 MiB 상한의 단일 buffer로 읽어 pinned SHA-256을 확인하고 동일 bytes에서만 tar를 해석한다. 완료 identity 직전 원 archive 경로도 다시 hash하여 남아 있는 변경을 거부한다. 검토·고정한 생성 grammar만 별도 process에서 실행한다. 출력 소유권의 #215 미완료 보장을 이 경로의 hash 검사로 대체하지 않는다.
@@ -59,13 +61,13 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 
 `python src/dev/query-reference/acquire.py --upstream <pinned-checkout> --git <git> --out <new-directory>`는 build·실행 없이 입력만 준비한다. 고정 commit과 pristine checkout을 확인하고 `git archive --format=tar` bytes가 위 archive SHA-256과 같은지 먼저 검사한다. upstream `Cargo.lock`의 registry package만 `static.crates.io`에서 받아 lock checksum과 대조하고, 크기·개수·시간·경로를 제한해 `vendor/`와 `.cargo-checksum.json`, `acquisition.json`을 쓴다. 같은 입력에서 이 결과의 vendor snapshot은 Windows build9–build12 입력과 같다(13,738 file, `8fec9dcc2dc84590867a7add1b33ad36be98c0a1b58634f228a5ce3a2632171c`).
 
-수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, Rust 1.97.1 toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. build identity의 vendor snapshot이 위 값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. macOS(`aarch64-apple-darwin`) 실행은 #243에서 나중에 검증한다.
+수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, Rust 1.97.1 toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. build identity의 vendor snapshot이 위 값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. 2026-10-25 사용자 결정으로 macOS(`aarch64-apple-darwin`) 신규 검증은 수행하지 않으며 #243은 NOT_PLANNED로 종료했다. 기존 macOS CI와 과거 근거는 유지하고 신규 claim은 macOS SUPPORTED로 승격하지 않는다.
 
 ## 전체 지원 대상 연결의 자격 기준
 
 새 qualification은 등록된 필수 `(route, platform, role, case, query, step, tree_role)`를 결과 전에 고정해야 한다. 필수 tuple 0개·claim 누락·미실행·partial·reference 부적격·source witness 누락은 BLOCKED다. Raw/projection/reference·identity 모순이나 변조는 FAIL이다. Predicate 의미 PASS는 완료된 EVALUATED 결과, 독립 full CST·structural stream·metadata 일치, 수작업 anchor와 전체 evaluated capture 기대값, 저장 witness의 재계산을 모두 요구한다.
 
-Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지면 **INELIGIBLE/BLOCKED**로 별도 집계한다. Kit 값으로 reference의 필드를 채우거나 stock CLI와 같다는 이유로 kit 계약을 완화하지 않는다. 전체 26 route × 3 host와 등록된 추가 role, producer의 opt-in source 보관, 새 claim/reducer/inventory/fan-in 연결 및 실제 main 검증은 후속 완료 조건이다. 이 도구나 owned 대조 하나로 해당 조건을 충족한 것으로 처리하지 않는다.
+Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지면 **INELIGIBLE/BLOCKED**로 별도 집계한다. Kit 값으로 reference의 필드를 채우거나 stock CLI와 같다는 이유로 kit 계약을 완화하지 않는다. 신규 semantic 완료 대상인 전체 26 route의 Windows/Linux와 등록된 추가 role, producer의 opt-in source 보관, 새 claim/reducer/inventory/fan-in 연결 및 실제 main 검증은 후속 완료 조건이다. 이 도구나 owned 대조 하나로 해당 조건을 충족한 것으로 처리하지 않는다.
 
 연결 검증은 기존 `VerifyEvidence`가 해석한 graph와 동일 guard 읽기에서 hash가 확인된 요청 member bytes만 사용한다. 보관 대상을 골라도 다른 member·graph·policy·한도·취소 검사는 그대로 실행하며, 일반 member에 replay-result용 record 한도를 추가하지 않는다. 빈 member는 누락과 구분하고 실패한 member의 bytes나 이전 호출의 snapshot을 재사용하지 않는다.
 

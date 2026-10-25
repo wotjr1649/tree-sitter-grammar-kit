@@ -62,9 +62,10 @@ def main():
         spec = {"Path": str(program), "Args": list(map(str, argv)), "Dir": str(cwd), "Env": [key + "=" + value for key, value in sorted(environment.items())],
             "StdoutBytes": 16 * 1024**2, "StderrBytes": 4 * 1024**2, "Wall": wall * 10**9, "Grace": 5 * 10**9,
             "Memory": {"Bytes": 4 * 1024**3, "Hard": sys.platform != "darwin"}, "CgroupParent": args.cgroup_parent}
-        (args.work / (name + "-request.json")).write_text(json.dumps(spec, indent=2), encoding="utf-8")
+        request = json.dumps(spec).encode()
+        (args.work / (name + "-request.json")).write_bytes(request)
         with (args.work / (name + ".json")).open("xb") as out, (args.work / (name + ".stderr")).open("xb") as err:
-            result = subprocess.run([str(args.supervisor)], input=json.dumps(spec).encode(), env=environment, stdout=out, stderr=err, timeout=wall + 20)
+            result = subprocess.run([str(args.supervisor)], input=request, env=environment, stdout=out, stderr=err, timeout=wall + 20)
         saved = (args.work / (name + ".json")).read_bytes()
         assert saved, (name, (args.work / (name + ".stderr")).read_text(encoding="utf-8")[-4000:])
         receipt = json.loads(saved)
