@@ -69,6 +69,21 @@ def streams(receipt):
         raise RuntimeError('REFERENCE_STREAM_INVALID') from error
 
 
+def process_receipt(data):
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise RuntimeError('REFERENCE_RECEIPT_INVALID')
+            value[key] = item
+        return value
+
+    try:
+        return json.loads(data.decode('utf-8'), object_pairs_hook=unique)
+    except (ValueError, RecursionError) as error:
+        raise RuntimeError('REFERENCE_RECEIPT_INVALID') from error
+
+
 def stream_text(receipt, name='stdout'):
     try:
         return streams(receipt)[('stdout', 'stderr').index(name)].decode('utf-8')

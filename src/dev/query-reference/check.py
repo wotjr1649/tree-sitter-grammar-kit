@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, json, os, subprocess
 import argparse
 import sys
-from checks import streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
 if sys.flags.optimize:
     raise RuntimeError('assertions must be enabled')
 parser = argparse.ArgumentParser(description=__doc__)
@@ -46,7 +46,7 @@ def execute(name, path, argv, wall=10, memory=1024 ** 3, expected_exit=0):
     (dest / (name + '-request.json')).write_bytes(request)
     with (dest / (name + '.json')).open('xb') as out, (dest / (name + '.stderr')).open('xb') as err:
         p = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=wall + 15)
-    receipt = json.loads((dest / (name + '.json')).read_text(encoding='utf-8'))
+    receipt = process_receipt((dest / (name + '.json')).read_bytes())
     execution(receipt, expected_exit)
     assert p.returncode == (0 if expected_exit == 0 else 1)
     return (p.returncode, receipt)
@@ -223,7 +223,7 @@ request = json.dumps(spec).encode()
 (dest/'batch-truncated-request.json').write_bytes(request)
 with (dest/'batch-truncated.json').open('xb') as out, (dest/'batch-truncated.stderr').open('xb') as err:
     process = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=65)
-receipt = json.loads((dest/'batch-truncated.json').read_text(encoding='utf-8'))
+receipt = process_receipt((dest/'batch-truncated.json').read_bytes())
 assert process.returncode == 1 and receipt['execution']['stdout_truncated']
 assert receipt['execution']['cleanup']['verified'] and receipt['execution']['cleanup']['residual_after_exit'] == 0
 for check in (lambda: execution(receipt, 0), lambda: batch(stream_text(receipt), ids)):

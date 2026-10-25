@@ -14,7 +14,7 @@ import ast
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from checks import streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
 
 
 class IntegrityTests(unittest.TestCase):
@@ -24,6 +24,13 @@ class IntegrityTests(unittest.TestCase):
                                  'stdout_truncated': False, 'stderr_truncated': False}}
         self.assertEqual(streams(receipt), ('é\0'.encode(), b''))
         self.assertEqual(stream_text(receipt), 'é\0')
+        raw = json.dumps(receipt).encode()
+        self.assertEqual(process_receipt(raw), receipt)
+        for changed in (raw.replace(b'"stdout_base64": "w6kA"', b'"stdout_base64": null, "stdout_base64": "w6kA"'),
+                        raw.replace(b'"stdout_bytes": 3', b'"stdout_bytes": 9, "stdout_bytes": 3'),
+                        raw.decode().encode('utf-16'), raw.decode().encode('utf-32'), raw + b'\xff'):
+            with self.assertRaisesRegex(RuntimeError, 'RECEIPT_INVALID'):
+                process_receipt(changed)
         for field, value in (('schema', 'legacy'), ('stdout_base64', None), ('stdout_base64', '!!'),
                              ('stdout_base64', 'w6kA\n'), ('stdout_base64', 'Zh==')):
             changed = copy.deepcopy(receipt)
@@ -83,7 +90,7 @@ class IntegrityTests(unittest.TestCase):
                         return SimpleNamespace(returncode=0)
 
                     run = Mock(side_effect=dispatch)
-                    namespace = {'json': json, 'sys': sys, 'execution': execution, 'streams': streams, 'stream_text': stream_text, 'source': root, 'dest': root,
+                    namespace = {'json': json, 'sys': sys, 'execution': execution, 'process_receipt': process_receipt, 'streams': streams, 'stream_text': stream_text, 'source': root, 'dest': root,
                                  'args': SimpleNamespace(work=root, supervisor=root/'supervisor', cgroup_parent=''),
                                  'runner': root/'supervisor', 'environment': {'X': 'back\\slash\n끝'},
                                  'env': {'X': 'back\\slash\n끝'}, 'subprocess': SimpleNamespace(run=run)}
@@ -168,7 +175,7 @@ int main(int argc, char **argv) {
                 'CgroupParent': os.environ.get('TSGK_REFERENCE_CGROUP_PARENT', '')}
         process = subprocess.run([os.environ['TSGK_REFERENCE_SUPERVISOR']], input=json.dumps(spec).encode(), env=env, capture_output=True, timeout=40)
         self.assertEqual(process.returncode, 0, process.stderr)
-        execution(json.loads(process.stdout.decode('utf-8')), 0)
+        execution(process_receipt(process.stdout), 0)
         return binary, env
 
     @unittest.skipUnless(all(os.environ.get('TSGK_REFERENCE_'+name) for name in ('SUPERVISOR','CC','AR','GIT','ARCHIVE')), 'orchestration tools not supplied')
@@ -408,7 +415,7 @@ runpy.run_path(entry, run_name='__main__')
                 process = subprocess.run([os.environ['TSGK_REFERENCE_SUPERVISOR']], input=json.dumps(spec).encode(),
                                          env=env, capture_output=True, timeout=10)
                 self.assertEqual(process.returncode, 0, process.stderr)
-                receipt = json.loads(process.stdout.decode('utf-8'))
+                receipt = process_receipt(process.stdout)
                 execution(receipt, 0)
                 self.assertEqual(streams(receipt), (stdout, stderr))
                 if stdout.startswith(b'\xff'):
@@ -425,7 +432,7 @@ runpy.run_path(entry, run_name='__main__')
             for label, tail, wall in (("exit", "raise SystemExit(1)", 3), ("hang", "import time; time.sleep(30)", 1), ("truncate", "import sys; sys.stderr.write('x'*8192); sys.stderr.flush(); raise SystemExit(1)", 3)):
                 spec = {"Path": sys.executable, "Args": ["-I", "-c", 'print(\'{"status":"FAILED","complete":false}\', flush=True); ' + tail], "Dir": directory, "Env": [k + "=" + v for k, v in env.items()], "StdoutBytes": 1024, "StderrBytes": 1024, "Wall": wall * 10**9, "Grace": 10**9, "Memory": {"Bytes": 1024**3, "Hard": sys.platform != "darwin"}, "CgroupParent": os.environ.get("TSGK_REFERENCE_CGROUP_PARENT", "")}
                 result = subprocess.run([str(supervisor)], input=json.dumps(spec).encode(), env=env, capture_output=True, timeout=10)
-                receipt = json.loads(result.stdout.decode('utf-8'))
+                receipt = process_receipt(result.stdout)
                 self.assertEqual(result.returncode, 1)
                 self.assertTrue(receipt["execution"]["cleanup"]["verified"])
                 if label == "exit":
