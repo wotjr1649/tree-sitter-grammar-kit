@@ -1,4 +1,6 @@
 """Fail-closed checks shared by reference preparation and owned controls."""
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -44,7 +46,53 @@ def build_identity(data):
     return value
 
 
+def streams(receipt):
+    try:
+        if (set(receipt) != {'schema', 'execution', 'stdout_base64', 'stderr_base64'}
+                or receipt['schema'] != 'tsgk-reference-process/r1'):
+            raise ValueError('schema')
+        result = []
+        for name in ('stdout', 'stderr'):
+            encoded = receipt[name + '_base64']
+            if not isinstance(encoded, str):
+                raise ValueError('base64 type')
+            raw = base64.b64decode(encoded, validate=True)
+            count = receipt['execution'][name + '_bytes']
+            truncated = receipt['execution'][name + '_truncated']
+            if (base64.b64encode(raw).decode('ascii') != encoded
+                    or type(count) is not int or count < len(raw)
+                    or type(truncated) is not bool or (not truncated and count != len(raw))):
+                raise ValueError('stream identity')
+            result.append(raw)
+        return tuple(result)
+    except (ValueError, binascii.Error, KeyError, TypeError) as error:
+        raise RuntimeError('REFERENCE_STREAM_INVALID') from error
+
+
+def process_receipt(data):
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise RuntimeError('REFERENCE_RECEIPT_INVALID')
+            value[key] = item
+        return value
+
+    try:
+        return json.loads(data.decode('utf-8'), object_pairs_hook=unique)
+    except (ValueError, RecursionError) as error:
+        raise RuntimeError('REFERENCE_RECEIPT_INVALID') from error
+
+
+def stream_text(receipt, name='stdout'):
+    try:
+        return streams(receipt)[('stdout', 'stderr').index(name)].decode('utf-8')
+    except UnicodeDecodeError as error:
+        raise RuntimeError('REFERENCE_STREAM_UTF8') from error
+
+
 def execution(receipt, expected_exit):
+    streams(receipt)
     result = receipt["execution"]
     if (not result["cleanup"]["verified"] or result["cleanup"]["residual_after_exit"] != 0
             or result["stdout_truncated"] or result["stderr_truncated"]

@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -32,10 +33,11 @@ func run(in io.Reader, out io.Writer) error {
 		return err
 	}
 	if err := json.NewEncoder(out).Encode(struct {
+		Schema    string        `json:"schema"`
 		Execution runner.Result `json:"execution"`
-		Stdout    string        `json:"stdout"`
-		Stderr    string        `json:"stderr"`
-	}{result, string(result.Stdout), string(result.Stderr)}); err != nil {
+		Stdout    string        `json:"stdout_base64"`
+		Stderr    string        `json:"stderr_base64"`
+	}{"tsgk-reference-process/r1", result, base64.StdEncoding.EncodeToString(result.Stdout), base64.StdEncoding.EncodeToString(result.Stderr)}); err != nil {
 		return err
 	}
 	if !result.Succeeded() {

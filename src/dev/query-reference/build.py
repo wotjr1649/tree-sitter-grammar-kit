@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tarfile
 import tomllib
-from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha as sha
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha as sha
 
 UPSTREAM = "10eb5ac119eec9cb4267a8e035066473983f5f3a"
 ARCHIVE = "6025ffd838c63bb011eeec9b259891ae0e051a3db9aa24c8812679f7462a50a9"
@@ -68,11 +68,11 @@ def main():
             result = subprocess.run([str(args.supervisor)], input=request, env=environment, stdout=out, stderr=err, timeout=wall + 20)
         saved = (args.work / (name + ".json")).read_bytes()
         assert saved, (name, (args.work / (name + ".stderr")).read_text(encoding="utf-8")[-4000:])
-        receipt = json.loads(saved)
+        receipt = process_receipt(saved)
         execution(receipt, 0)
-        assert result.returncode == 0 and receipt["execution"]["cleanup"]["verified"], (name, receipt["stderr"][-4000:])
+        assert result.returncode == 0 and receipt["execution"]["cleanup"]["verified"], (name, streams(receipt)[1][-4000:])
         assert not receipt["execution"]["stdout_truncated"] and not receipt["execution"]["stderr_truncated"]
-        return receipt["stdout"]
+        return stream_text(receipt)
 
     total = count = 0
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:") as archive:
