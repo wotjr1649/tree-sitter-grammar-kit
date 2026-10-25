@@ -2212,12 +2212,12 @@ func TestQueryReferenceEligibilityReview39(t *testing.T) {
 
 func TestQueryReferenceEligibilityReview42(t *testing.T) {
 	for _, extra := range []bool{false, true} {
-		for _, bad := range []string{"valid", "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
+		for _, bad := range []string{"valid", "valid-no-source", "raw-no-source-length", "raw-edit-old-order", "raw-edit-new-order", "raw-edit-old-bound", "raw-edit-new-bound", "raw-edit-length", "raw-edit-empty", "raw-edit-new-point", "raw-edit-old-points", "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
 			for _, prior := range []bool{false, true} {
 				if !extra && bad == "valid-reordered" {
 					continue
 				}
-				if prior && !strings.Contains(bad, "rejected-query") && !strings.Contains(bad, "query-rejected") && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
+				if prior && !strings.HasPrefix(bad, "raw-edit-") && bad != "raw-no-source-length" && bad != "valid-no-source" && !strings.Contains(bad, "rejected-query") && !strings.Contains(bad, "query-rejected") && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
 					continue
 				}
 				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
@@ -2310,10 +2310,10 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 						}
 					} else if !malformed {
 						want := AssessFail
-						if bad == "missing-query-valid" || bad == "missing-query-rejected-valid" {
+						if bad == "missing-query-valid" || bad == "missing-query-rejected-valid" || bad == "valid-no-source" {
 							want = AssessBlocked
 						}
-						if strings.HasPrefix(bad, "valid") {
+						if strings.HasPrefix(bad, "valid") && bad != "valid-no-source" {
 							want = AssessBlocked
 							if extra {
 								want = AssessPass
@@ -2331,6 +2331,15 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 					}
 					if strings.Contains(bad, "rejected") && bad != "valid-rejected-query" && bad != "missing-query-rejected-valid" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY") {
 						t.Fatal("invalid-query execution contradiction was not checked")
+					}
+					if strings.HasPrefix(bad, "raw-edit-") && bad != "raw-edit-old-points" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_EDIT_RANGE") {
+						t.Fatal("intrinsic edit contradiction skipped")
+					}
+					if bad == "raw-edit-old-points" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_EDIT_POINTS") {
+						t.Fatal("actual first-edit points unchecked")
+					}
+					if bad == "raw-no-source-length" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_SOURCE_TRANSPORT") {
+						t.Fatal("initial raw length contradiction skipped")
 					}
 					if bad == "pinned-null" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY_MISSING") {
 						t.Fatal("missing pinned query was not checked")
@@ -2352,6 +2361,30 @@ func (f *eligibilityFixture) nativeIndependentMutation(inv *eligibilityInvocatio
 		t.Fatal(e)
 	}
 	switch bad {
+	case "valid-no-source", "raw-no-source-length":
+		delete(inv.Inputs, "source")
+		if bad == "raw-no-source-length" {
+			raw.SourceBytes++
+		}
+	case "raw-edit-old-order":
+		raw.Steps[1].Edit.StartByte = 2
+	case "raw-edit-new-order":
+		raw.Steps[1].Edit.StartByte = 1
+		raw.Steps[1].Edit.NewEndByte = 0
+	case "raw-edit-old-bound":
+		raw.Steps[1].Edit.OldEndByte = 7
+	case "raw-edit-new-bound":
+		raw.Steps[1].Edit.NewEndByte = 7
+	case "raw-edit-length":
+		raw.Steps[1].Edit.OldEndByte = 2
+	case "raw-edit-empty":
+		raw.Steps[1].Edit.OldEndByte = 0
+		raw.Steps[1].Edit.NewEndByte = 0
+	case "raw-edit-new-point":
+		raw.Steps[1].Edit.NewEndPoint = [2]uint32{2, 0}
+	case "raw-edit-old-points":
+		raw.Steps[1].Edit = &nativewire.StepEdit{StartByte: 3, OldEndByte: 4, NewEndByte: 4, StartPoint: [2]uint32{0, 3}, OldEndPoint: [2]uint32{0, 4}, NewEndPoint: [2]uint32{0, 4}}
+
 	case "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time":
 		if strings.HasPrefix(bad, "missing-query-") {
 			delete(inv.Inputs, "query-q0")
@@ -2610,5 +2643,112 @@ func TestQueryReferenceEligibilityIndependentFailureBeforeCancellation(t *testin
 				t.Fatalf("known contradiction retention: semantic=%v failed=%v assessment=%s failures=%d", semantic, failed, result.Assessment, s.failures)
 			}
 		})
+	}
+}
+
+func TestQueryReferenceEligibilityIndependentEdit(t *testing.T) {
+	base := nativewire.StepEdit{StartByte: 1, OldEndByte: 3, NewEndByte: 2, StartPoint: [2]uint32{0, 1}, OldEndPoint: [2]uint32{1, 1}, NewEndPoint: [2]uint32{1, 0}}
+	for _, mode := range []string{"valid", "deletion", "insertion", "old-order", "new-order", "old-bound", "new-bound", "length", "empty", "point-row", "point-column", "point-gap"} {
+		t.Run(mode, func(t *testing.T) {
+			ed, oldBytes, newBytes := base, uint64(4), uint64(3)
+			switch mode {
+			case "deletion":
+				ed.NewEndByte = 1
+				ed.NewEndPoint = ed.StartPoint
+				newBytes = 2
+			case "insertion":
+				ed.OldEndByte = 1
+				ed.OldEndPoint = ed.StartPoint
+				oldBytes = 2
+			case "old-order":
+				ed.OldEndByte = 0
+			case "new-order":
+				ed.NewEndByte = 0
+			case "old-bound":
+				oldBytes = 2
+			case "new-bound":
+				newBytes = 1
+			case "length":
+				newBytes = 4
+			case "empty":
+				ed.OldEndByte = ed.StartByte
+				ed.NewEndByte = ed.StartByte
+				oldBytes = 3
+			case "point-row":
+				ed.OldEndPoint = [2]uint32{0, 0}
+			case "point-column":
+				ed.StartPoint = [2]uint32{1, 1}
+			case "point-gap":
+				ed.OldEndPoint = [2]uint32{3, 0}
+			}
+			want := mode == "valid" || mode == "deletion" || mode == "insertion"
+			if got := nativeIndependentEdit(ed, oldBytes, newBytes); got != want {
+				t.Fatalf("edit %s: got%v want%v", mode, got, want)
+			}
+		})
+	}
+}
+
+type eligibilitySourceCancelContext struct {
+	context.Context
+	cancel    context.CancelFunc
+	at, calls int
+}
+
+func (c *eligibilitySourceCancelContext) Err() error {
+	c.calls++
+	if c.calls == c.at {
+		c.cancel()
+	}
+	return c.Context.Err()
+}
+
+func TestQueryReferenceEligibilitySourceFailureBeforeCancellation(t *testing.T) {
+	for _, linked := range []bool{false, true} {
+		for _, mode := range []string{"eof", "cst", "points", "encoding", "interruption-only", "points-interrupted"} {
+			t.Run(fmt.Sprintf("linked-%v-%s", linked, mode), func(t *testing.T) {
+				parent, cancel := context.WithCancel(ctxT(t))
+				defer cancel()
+				ctx := &eligibilitySourceCancelContext{Context: parent, cancel: cancel, at: 2}
+				if mode == "points" {
+					ctx.at = 3
+				}
+				r, e := startRun(ctx, 30*time.Second)
+				if e != nil {
+					t.Fatal(e)
+				}
+				defer r.cancel()
+				result := QueryReferenceEligibilityResult{Report: newReport("test")}
+				s := &eligibilitySession{r: r, res: &result, tuples: map[int]string{0: "pending"}, failedInvocations: map[string]bool{}, invocationTuples: map[string][]int{}}
+				inv := &eligibilityInvocation{ID: "extra"}
+				if linked {
+					inv.ID = "selected"
+					s.invocationTuples[inv.ID] = []int{0}
+				}
+				s.failItem = func() { s.failInvocation(inv) }
+				source := []byte("x")
+				nodes := []TreeNode{{Parent: -1, EndByte: 1, EndPoint: Point{Column: 1}}}
+				code := "ELIGIBILITY_NATIVE_TREE_" + strings.ToUpper(mode)
+				switch mode {
+				case "eof":
+					nodes[0].EndByte = 0
+				case "cst":
+					nodes = append(nodes, TreeNode{Parent: 0, EndByte: 1, EndPoint: Point{Row: 1}})
+				case "points", "points-interrupted":
+					nodes[0].EndPoint.Column = 9
+				case "encoding":
+					source = []byte{0xff}
+					code = "ELIGIBILITY_NATIVE_SOURCE_ENCODING"
+				}
+				known := mode != "interruption-only" && mode != "points-interrupted"
+				_, got := s.nativeTreeSource(inv.ID, nodes, source)
+				if got == nil || got.Kind != KindCancelled {
+					t.Fatalf("cancellation lost: %v", got)
+				}
+				if (result.Assessment == AssessFail) != known || s.failedInvocations[inv.ID] != known || (s.tuples[0] == "failed") != (known && linked) || known && !eligibilityFinding(result, code) {
+					t.Fatalf("source failure retention mode%s linked%v assessment%s failures%d tuple%s", mode, linked, result.Assessment, s.failures, s.tuples[0])
+				}
+			})
+		}
 	}
 }

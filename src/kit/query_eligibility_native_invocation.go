@@ -194,6 +194,29 @@ func (s *eligibilitySession) nativeIndependent(inv *eligibilityInvocation, recor
 		if k == 0 && haveInitial && (step.SourceBytes != uint64(len(initial)) || step.SourceSHA256 != initialSHA) {
 			s.finding("ELIGIBILITY_NATIVE_SOURCE_TRANSPORT", path, true)
 		}
+		if k == 0 && step.SourceBytes != raw.SourceBytes {
+			s.finding("ELIGIBILITY_NATIVE_SOURCE_TRANSPORT", path, true)
+		}
+		if k > 0 && step.Edit != nil {
+			valid := nativeIndependentEdit(*step.Edit, raw.Steps[k-1].SourceBytes, step.SourceBytes)
+			if !valid {
+				s.finding("ELIGIBILITY_NATIVE_EDIT_RANGE", path, true)
+			}
+			if valid && k == 1 && haveInitial {
+				ed := step.Edit
+				if uint64(ed.OldEndByte) > uint64(len(initial)) {
+					s.finding("ELIGIBILITY_NATIVE_EDIT_RANGE", path, true)
+				} else {
+					if e := s.b.charge(2*uint64(len(initial))+1, 0, "native-independent-edit-points"); e != nil {
+						return false, e
+					}
+					start, oldEnd := PointAt(EncodingUTF8, initial, int(ed.StartByte)), PointAt(EncodingUTF8, initial, int(ed.OldEndByte))
+					if ed.StartPoint != [2]uint32{start.Row, start.Column} || ed.OldEndPoint != [2]uint32{oldEnd.Row, oldEnd.Column} {
+						s.finding("ELIGIBILITY_NATIVE_EDIT_POINTS", path, true)
+					}
+				}
+			}
+		}
 		cs := nativewire.CheckedStep{Step: step}
 		for j, wire := range []*nativewire.WireTree{&step.Incremental, step.Fresh} {
 			if wire == nil {
@@ -215,19 +238,8 @@ func (s *eligibilitySession) nativeIndependent(inv *eligibilityInvocation, recor
 					return false, e
 				}
 				if k == 0 && haveInitial && tree.Form == "full" {
-					code := ""
-					if len(tree.Nodes) == 0 || uint64(tree.Nodes[0].EndByte) != uint64(len(initial)) {
-						code = "ELIGIBILITY_NATIVE_TREE_EOF"
-					} else if !witnessCST(tree.Nodes) {
-						code = "ELIGIBILITY_NATIVE_TREE_CST"
-					} else if witnessPoints(tree.Nodes, EncodingUTF8, initial, s.r) != "" {
-						code = "ELIGIBILITY_NATIVE_TREE_POINTS"
-					}
-					if e := s.r.check(); e != nil {
+					if _, e := s.nativeTreeSource(path, tree.Nodes, initial); e != nil {
 						return false, e
-					}
-					if code != "" {
-						s.finding(code, path, true)
 					}
 				}
 			}
@@ -400,7 +412,46 @@ func (s *eligibilitySession) nativeIndependentTreeBudget(tree nativewire.WireTre
 		}
 	}
 	if actualSource {
-		return s.b.charge(4*uint64(len(source))+1, 16*uint64(len(source)), "native-independent-points")
+		return s.b.charge(5*uint64(len(source))+1, 16*uint64(len(source)), "native-independent-points")
 	}
 	return nil
+}
+
+// The byte and point relations do not establish the edited source's identity.
+func nativeIndependentEdit(ed nativewire.StepEdit, oldBytes, newBytes uint64) bool {
+	if ed.StartByte > ed.OldEndByte || ed.StartByte > ed.NewEndByte || uint64(ed.OldEndByte) > oldBytes || uint64(ed.NewEndByte) > newBytes ||
+		oldBytes-uint64(ed.OldEndByte) != newBytes-uint64(ed.NewEndByte) || ed.OldEndByte == ed.StartByte && ed.NewEndByte == ed.StartByte {
+		return false
+	}
+	validPoint := func(b uint32, p [2]uint32) bool {
+		return uint64(p[0])+uint64(p[1]) <= uint64(b) && (p[0] != 0 || p[1] == b)
+	}
+	after := func(b uint32, p [2]uint32) bool {
+		if !validPoint(b, p) || p[0] < ed.StartPoint[0] {
+			return false
+		}
+		if p[0] == ed.StartPoint[0] {
+			return p[1] >= ed.StartPoint[1] && b-ed.StartByte == p[1]-ed.StartPoint[1]
+		}
+		return uint64(p[0]-ed.StartPoint[0])+uint64(p[1]) <= uint64(b-ed.StartByte)
+	}
+	return validPoint(ed.StartByte, ed.StartPoint) && after(ed.OldEndByte, ed.OldEndPoint) && after(ed.NewEndByte, ed.NewEndPoint)
+}
+
+// Record a definite source contradiction before returning an interruption.
+func (s *eligibilitySession) nativeTreeSource(path string, nodes []TreeNode, source []byte) (bool, *Error) {
+	code := ""
+	if !utf8.Valid(source) {
+		code = "ELIGIBILITY_NATIVE_SOURCE_ENCODING"
+	} else if len(nodes) == 0 || uint64(nodes[0].EndByte) != uint64(len(source)) {
+		code = "ELIGIBILITY_NATIVE_TREE_EOF"
+	} else if !witnessCST(nodes) {
+		code = "ELIGIBILITY_NATIVE_TREE_CST"
+	} else if witnessPoints(nodes, EncodingUTF8, source, s.r) != "" {
+		code = "ELIGIBILITY_NATIVE_TREE_POINTS"
+	}
+	if code != "" {
+		s.finding(code, path, true)
+	}
+	return code == "", s.r.check()
 }

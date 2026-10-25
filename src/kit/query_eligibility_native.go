@@ -155,22 +155,10 @@ func (s *eligibilitySession) verifyNative() *Error {
 							if tree == nil || tree.Form != "full" {
 								continue
 							}
-							code := ""
-							if !utf8.Valid(versions[i]) {
-								code = "ELIGIBILITY_NATIVE_SOURCE_ENCODING"
-							} else if len(tree.Nodes) == 0 || uint64(tree.Nodes[0].EndByte) != uint64(len(versions[i])) {
-								code = "ELIGIBILITY_NATIVE_TREE_EOF"
-							} else if !witnessCST(tree.Nodes) {
-								code = "ELIGIBILITY_NATIVE_TREE_CST"
-							} else if witnessPoints(tree.Nodes, EncodingUTF8, versions[i], s.r) != "" {
-								code = "ELIGIBILITY_NATIVE_TREE_POINTS"
-							}
-							if e := s.r.check(); e != nil {
+							valid, e := s.nativeTreeSource(fmt.Sprintf("%s/%d", inv.ID, i), tree.Nodes, versions[i])
+							nativeReady = nativeReady && valid
+							if e != nil {
 								return e
-							}
-							if code != "" {
-								s.finding(code, fmt.Sprintf("%s/%d", inv.ID, i), true)
-								nativeReady = false
 							}
 						}
 					}
