@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 	"slices"
 	"testing"
@@ -108,16 +109,48 @@ func TestLinuxCapabilityProbe(t *testing.T) {
 }
 
 func TestCloseFailureIsNotSuccess(t *testing.T) {
-	fd, err := unix.Open("/dev/null", unix.O_RDONLY|unix.O_CLOEXEC, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := unix.Close(fd); err != nil {
-		t.Fatal(err)
-	}
 	r := outcome{"CANDIDATE_MATCH", "test"}
-	closeFD(fd, &r)
+	closeFD(-1, &r)
 	if r != (outcome{"FAILED", "CLOSE_FAILED"}) {
 		t.Fatalf("close failure lost: %+v", r)
+	}
+}
+
+func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
+	for _, tc := range []struct {
+		operation string
+		errno     unix.Errno
+		status    string
+	}{
+		{"FANOTIFY_MARK", unix.ENODEV, "UNSUPPORTED"},
+		{"FANOTIFY_MARK", unix.EXDEV, "UNSUPPORTED"},
+		{"FANOTIFY_INIT", unix.EPERM, "UNSUPPORTED"},
+		{"FANOTIFY_INIT", unix.EINVAL, "FAILED"},
+		{"FANOTIFY_MARK", unix.EINVAL, "FAILED"},
+		{"PARENT_HANDLE", unix.EOVERFLOW, "UNSUPPORTED"},
+		{"CHILD_HANDLE", unix.ENOSYS, "UNSUPPORTED"},
+		{"O_TMPFILE", unix.EOPNOTSUPP, "UNSUPPORTED"},
+		{"O_TMPFILE", unix.EISDIR, "UNSUPPORTED"},
+		{"O_TMPFILE", unix.EINVAL, "FAILED"},
+		{"O_TMPFILE", unix.EACCES, "UNSUPPORTED"},
+		{"PARENT_OPEN", unix.EACCES, "FAILED"},
+		{"PROCFS_OPEN", unix.ENOENT, "UNSUPPORTED"},
+		{"LINKAT", unix.EXDEV, "UNSUPPORTED"},
+		{"LINKAT", unix.ENOENT, "UNSUPPORTED"},
+		{"LINKAT", unix.EINVAL, "FAILED"},
+		{"FSYNC", unix.EINVAL, "FAILED"},
+		{"FSYNC", unix.EIO, "FAILED"},
+		{"FSYNC", unix.EOPNOTSUPP, "UNSUPPORTED"},
+		{"FANOTIFY_INIT", unix.EMFILE, "UNVERIFIED"},
+		{"FANOTIFY_INIT", unix.ENOMEM, "UNVERIFIED"},
+		{"O_TMPFILE", unix.ENOSPC, "UNVERIFIED"},
+	} {
+		r := refused(tc.errno, tc.operation)
+		if r.Status != tc.status || r.Code != fmt.Sprintf("%s:errno=%d", tc.operation, tc.errno) {
+			t.Fatalf("refusal %s/%d: %+v", tc.operation, tc.errno, r)
+		}
+	}
+	if r := refused(zeroFSID, "PARENT_HANDLE"); r.Status != "UNSUPPORTED" || r.Code != "PARENT_HANDLE:ZERO_FSID" {
+		t.Fatalf("zero fsid: %+v", r)
 	}
 }

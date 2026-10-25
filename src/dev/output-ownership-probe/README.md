@@ -18,3 +18,5 @@ Linux 전용이다. shell에서 환경변수 지정 구문은 실행 shell에 �
 FID buffer는128 bytes로 고정한다. queue는 event64개·총256 KiB·2초를 동시에 제한하며 nonblocking read에서 EAGAIN이면 종료한다. 기다리면서 새 예산을 부여하지 않는다. 지원 부재·권한 부족은 `UNSUPPORTED`, 누락·overflow·잘못된 event·예산 초과는 `UNVERIFIED`, 모호하거나 다른 생성은 `REJECTED`, 좁은 정상 대조는 `CANDIDATE_MATCH`다. 관측 또는 Close 오류는 `FAILED`다. JSON의 kernel/filesystem/privilege context가 다른 결과를 같은 근거로 합산하지 않는다.
 
 Exit0는 도구가 실패 없이 관측을 기록했다는 뜻이다. `UNSUPPORTED`·`UNVERIFIED`도 exit0일 수 있으며 #215 또는 지원 판정의 PASS가 아니다. 잘못된 설정·실패는 nonzero다. CI의 `TestLinuxCapabilityProbe`는 JSON을 test log에 남기고 skip하지 않는다. 그 test의 PASS는 도구의 결과 분류 검사이며 API 가용성·소유권 해결 PASS가 아니다. 원래 runtime·CLI·qualification 필수 검사는 그대로 유지한다.
+
+syscall 오류는 operation과 원 errno 정수(`OPERATION:errno=N`)를 함께 보존한다. fanotify mark의 zero-fsid `ENODEV`·subvolume `EXDEV`, FID 미지원·고정 buffer 초과, O_TMPFILE/procfs/linkat의 문서화된 지원·권한 제한을 호출 맥락별 `UNSUPPORTED`로 나눈다. 파일·메모리·저장공간 등의 resource 부족은 `UNVERIFIED`다. `EINVAL`은 잘못된 호출과 기능 부재를 구분할 수 없으므로 `FAILED`/nonzero로 보존하고 성공으로 숨기지 않는다. errno가 아닌 실제 zero-fsid 검사 실패는 별도 `ZERO_FSID` code다. 이 분류도 지원 claim을 만들지 않는다.

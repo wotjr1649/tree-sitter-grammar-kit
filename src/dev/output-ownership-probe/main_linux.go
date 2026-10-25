@@ -20,6 +20,8 @@ import (
 
 const maxHandle = 128
 
+var zeroFSID = errors.New("zero filesystem identity")
+
 type outcome struct {
 	Status string `json:"status"`
 	Code   string `json:"code"`
@@ -39,10 +41,40 @@ type report struct {
 
 func refused(err error, code string) outcome {
 	status := "FAILED"
-	if errors.Is(err, unix.ENOSYS) || errors.Is(err, unix.EOPNOTSUPP) || errors.Is(err, unix.EPERM) || errors.Is(err, unix.EACCES) || errors.Is(err, unix.EINVAL) || errors.Is(err, unix.EOVERFLOW) {
+	if errors.Is(err, zeroFSID) {
+		return outcome{"UNSUPPORTED", code + ":ZERO_FSID"}
+	}
+	var errno unix.Errno
+	if !errors.As(err, &errno) {
+		return outcome{status, code + ":INVALID_HANDLE_SHAPE"}
+	}
+	unsupported := false
+	switch code {
+	case "FANOTIFY_INIT", "FSYNC":
+		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP
+		if code == "FANOTIFY_INIT" {
+			unsupported = unsupported || errno == unix.EPERM || errno == unix.EACCES
+		}
+	case "FANOTIFY_MARK":
+		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP || errno == unix.EPERM || errno == unix.EACCES || errno == unix.ENODEV || errno == unix.EXDEV
+	case "PARENT_HANDLE", "CHILD_HANDLE":
+		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP || errno == unix.EPERM || errno == unix.EACCES || errno == unix.EOVERFLOW
+	case "O_TMPFILE":
+		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP || errno == unix.EPERM || errno == unix.EACCES || errno == unix.EROFS || errno == unix.EISDIR || errno == unix.ENOENT
+	case "PROCFS_OPEN":
+		unsupported = errno == unix.ENOENT || errno == unix.ENOTDIR || errno == unix.EPERM || errno == unix.EACCES
+	case "LINKAT":
+		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP || errno == unix.EPERM || errno == unix.EACCES || errno == unix.ENOENT || errno == unix.EXDEV || errno == unix.EROFS
+	}
+	if unsupported {
 		status = "UNSUPPORTED"
 	}
-	return outcome{status, code}
+	switch errno {
+	case unix.EMFILE, unix.ENFILE, unix.ENOMEM, unix.ENOSPC, unix.EDQUOT, unix.EAGAIN, unix.ENOBUFS:
+		status = "UNVERIFIED"
+	}
+	// EINVAL is ambiguous between missing features and invalid invocation; never hide it.
+	return outcome{status, fmt.Sprintf("%s:errno=%d", code, errno)}
 }
 
 func closeFD(fd int, result *outcome) {
@@ -79,7 +111,7 @@ func descriptorFID(fd int) (fid, error) {
 	binary.NativeEndian.PutUint32(f.FSID[:4], uint32(st.Fsid.Val[0]))
 	binary.NativeEndian.PutUint32(f.FSID[4:], uint32(st.Fsid.Val[1]))
 	if f.FSID == [8]byte{} {
-		return fid{}, unix.EOPNOTSUPP
+		return fid{}, zeroFSID
 	}
 	return f, nil
 }
