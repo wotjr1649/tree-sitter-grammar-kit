@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	jsonv2 "encoding/json/v2"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -387,7 +388,13 @@ func (f *eligibilityFixture) addNative(reference, library eligibilityMember, gra
 		row := closure[key]
 		manifest += fmt.Sprintf("file=%s %s %d\n", key, row.SHA256, row.Bytes)
 	}
-	manifest += "step=version [\"--version\"]\nstep=link [\"approved synthetic build\"]\n"
+	for _, name := range []string{"version", "runtime", "parser", "driver", "shim", "link"} {
+		args := []string{"approved synthetic build"}
+		if name == "version" {
+			args = []string{"--version"}
+		}
+		manifest += fmt.Sprintf("step=%s %q\n", name, args)
+	}
 	build := f.member("native-static", "native/build-closure.txt", "native-build", []byte(manifest))
 	w := eligibilityWitness{QueryWitnessRegistration: QueryWitnessRegistration{Schema: queryEligibilityWitnessSchema, Policy: "tsgk-predicates/r1", Case: "eligibility-case", Route: "owned-plain", Platform: "linux/amd64", Role: "owned", Encoding: EncodingUTF8, Input: NativeInput{Path: "native/source.bin", Role: "source", Bytes: uint64(len(initial)), SHA256: digestHex(initial)}, Edits: []Edit{{StartByte: 0, OldEndByte: 1, NewEndByte: 1, Old: []byte("x"), New: []byte("y")}}, Queries: []QueryWitnessQuery{}, Required: []QueryWitnessTuple{}}}
 	expected := f.cat.Responses["response-2"] // eq-0, independently source-reviewed fixed catalogue.
@@ -399,11 +406,11 @@ func (f *eligibilityFixture) addNative(reference, library eligibilityMember, gra
 	w.Required = []QueryWitnessTuple{{Query: "q0", Step: 0, TreeRole: "incremental", Structural: []Capture{anchor}, Expected: []Capture{anchor}}, {Query: "q0", Step: 1, TreeRole: "incremental", Structural: []Capture{anchor}, Expected: []Capture{}}, {Query: "q0", Step: 1, TreeRole: "fresh", Structural: []Capture{anchor}, Expected: []Capture{}}}
 	nativeSpec := eligibilityProcessRequest{Path: "/current/native", Args: []string{}, Dir: "/current", Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 50000000000, Grace: 2000000000, CgroupParent: "/delegated"}
 	nativeSpec.Memory.Bytes, nativeSpec.Memory.Hard = 1<<30, true
-	w.Native = eligibilityNativeExpected{Protocol: nativewire.ProtocolR4, RequestID: w.Case, NodeLimit: 100000, API: false, Points: []uint32{}, RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256, ProducerSHA256: build.Member.SHA256, ExecutableSHA256: executable.Member.SHA256, ProducerABI: eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 8}, ObservationRunID: "synthetic-current", Process: nativeSpec}
+	w.Native = eligibilityNativeExpected{Protocol: nativewire.ProtocolR4, RequestID: w.Case, NodeLimit: 100000, API: false, Points: []uint32{}, RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256, ProducerSHA256: build.Member.SHA256, ExecutableSHA256: executable.Member.SHA256, ProducerABI: eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 25, FieldCount: 3}, ObservationRunID: "synthetic-current", Process: nativeSpec}
 	f.witness = w
 	full := "full"
 	api, predicates := "tsgk-api/r1", "NOT_EVALUATED"
-	symbols, fields := uint32(8), uint32(0)
+	symbols, fields := uint32(25), uint32(3)
 	raw := nativewire.Response{Protocol: nativewire.ProtocolR4, ID: w.Case, Status: StatusCompleted, SourceBytes: 6, StepsCompleted: 2, Complete: true, Producer: nativewire.Producer{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, Query: "tsgk-query/r1", API: &api, Predicates: &predicates, SymbolCount: &symbols, FieldCount: &fields, ReuseObservation: eligibilityJSON(t, map[string]string{"policy": reuseobs.Policy, "runtime_manifest_sha256": reuseobs.RuntimeManifestSHA256})}, Steps: []nativewire.Step{}}
 	for k, sourceBytes := range [][]byte{initial, later} {
 		ns := f.cat.Trees["tree-0"]
@@ -446,7 +453,7 @@ func (f *eligibilityFixture) addNative(reference, library eligibilityMember, gra
 	processPin := f.member("native-current", "native/process.json", "process", eligibilityJSON(t, process))
 	inv := eligibilityInvocation{ID: "native-current", Kind: "NATIVE_DRIVER", CohortID: "current", CatalogueID: "native-current", Node: QueryReferenceNode{ID: node.ID, Identities: node.Identities}, Request: &request, Response: &response, Process: &processPin, ApprovedRequest: eligibilityJSON(t, w.Native), Executable: &executable, ExecutablePath: nativeSpec.Path, Inputs: map[string]eligibilityInput{"source": {Kind: "PINNED", MemberPin: &source, ContentBasis: "PRESERVED_ORIGINAL"}, "library": {Kind: "NOT_APPLICABLE"}, "query-q0": {Kind: "PINNED", MemberPin: &queryPin, ContentBasis: "APPROVED_EXPECTED_BYTES"}}}
 	f.reg.Invocations = append(f.reg.Invocations, inv)
-	f.reg.Native = &eligibilityNative{InvocationID: inv.ID, Source: source, BuildManifest: build, ReferenceLibrary: &library, Symbol: "tree_sitter_tsgk_plain", Grammar: grammar}
+	f.reg.Native = &eligibilityNative{InvocationID: inv.ID, Source: source, BuildManifest: build, ReferenceLibrary: &library, Symbol: "tree_sitter_tsgk_plain", Grammar: maps.Clone(grammar)}
 	for k, sourcePin := range []eligibilityMember{source, inputPins["eq-1.txt"]} {
 		id := fmt.Sprintf("current-ref-%d", k)
 		req := eligibilityProcessRequest{Path: "/current/reference", Args: []string{"/current/library", "tree_sitter_tsgk_plain", fmt.Sprintf("/current/source-%d", k), "/current/query", "q0", library.Member.SHA256}, Dir: "/current", Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 10000000000, Grace: 2000000000, CgroupParent: "/delegated"}
@@ -952,7 +959,7 @@ func TestQueryReferenceEligibilityBudgetReservations(t *testing.T) {
 				f := newEligibilityFixture(t)
 				pin := f.reg.Native.BuildManifest
 				s := &eligibilitySession{r: r, b: b, res: &QueryReferenceEligibilityResult{}, witness: f.witness, owned: map[string]eligibilityMember{pin.Member.Path: pin}, owners: map[string]string{pin.Member.Path: pin.NodeID}, snapshot: &evidenceSnapshot{files: f.files, verifiedMembers: map[string]ReplayMember{pin.Member.Path: pin.Member}}}
-				b.logical = eligibilityLogicalLimit - 3*pin.Member.Bytes - uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256))
+				b.logical = eligibilityLogicalLimit - 40*pin.Member.Bytes - uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256))
 				_, e = s.nativeBuild(f.reg.Native, f.witness.Native)
 				if s.failures != 0 || len(s.res.Findings) != 0 {
 					t.Fatalf("resource turned into contradiction %+v", s.res)
@@ -983,6 +990,155 @@ func TestQueryReferenceEligibilityInvalidParent(t *testing.T) {
 			if err != nil || got.Assessment != AssessFail {
 				t.Fatalf("invalid parent accepted %v %+v", err, got)
 			}
+		})
+	}
+}
+
+func (f *eligibilityFixture) nativeManifestMutation(change func(string) string) {
+	path := f.reg.Native.BuildManifest.Member.Path
+	old := f.reg.Native.BuildManifest.Member.SHA256
+	f.replace(path, []byte(change(string(f.files[path]))))
+	next := f.reg.Native.BuildManifest.Member.SHA256
+	f.witness.Native.ProducerSHA256 = next
+	f.replace("native/response.json", []byte(strings.ReplaceAll(string(f.files["native/response.json"]), old, next)))
+	f.replace("native/request.json", eligibilityJSON(f.t, f.witness.Native))
+	for i := range f.reg.Invocations {
+		if f.reg.Invocations[i].ID == "native-current" {
+			f.reg.Invocations[i].ApprovedRequest = eligibilityJSON(f.t, f.witness.Native)
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityReview33(t *testing.T) {
+	cases := []struct {
+		name                       string
+		change                     func(*eligibilityFixture)
+		incomplete                 bool
+		buildFailed, controlFailed uint64
+	}{
+		{name: "empty-step", change: func(f *eligibilityFixture) {
+			f.nativeManifestMutation(func(s string) string { at := strings.Index(s, "step="); return s[:at] + "step=\n" })
+		}},
+		{name: "missing-link", change: func(f *eligibilityFixture) {
+			f.nativeManifestMutation(func(s string) string {
+				lines := strings.Split(s, "\n")
+				lines = slices.DeleteFunc(lines, func(l string) bool { return strings.HasPrefix(l, "step=link ") })
+				return strings.Join(lines, "\n")
+			})
+		}},
+		{name: "duplicate-link", change: func(f *eligibilityFixture) {
+			f.nativeManifestMutation(func(s string) string { return s + "step=link [\"duplicate\"]\n" })
+		}},
+		{name: "unknown-step", change: func(f *eligibilityFixture) {
+			f.nativeManifestMutation(func(s string) string { return strings.Replace(s, "step=link ", "step=unknown ", 1) })
+		}},
+		{name: "header-only", change: func(f *eligibilityFixture) {
+			f.nativeManifestMutation(func(s string) string {
+				lines := strings.Split(s, "\n")
+				lines = slices.DeleteFunc(lines, func(l string) bool { return strings.HasPrefix(l, "file=grammar-parser ") })
+				return strings.Join(lines, "\n")
+			})
+			delete(f.reg.Native.Grammar, "parser.c")
+		}},
+		{name: "control-path", controlFailed: 1, change: func(f *eligibilityFixture) {
+			for i := range f.reg.Invocations {
+				if f.reg.Invocations[i].ID == "control-structural-0" {
+					f.reg.Invocations[i].ExecutablePath = "/different/reference"
+				}
+			}
+		}},
+		{name: "build-fail-before-malformed-receipt", incomplete: true, buildFailed: 1, change: func(f *eligibilityFixture) {
+			for i := range f.reg.Invocations {
+				inv := &f.reg.Invocations[i]
+				if inv.ID != "build-patch-check" {
+					continue
+				}
+				var spec eligibilityProcessRequest
+				if e := jsonv2.Unmarshal(inv.ApprovedRequest, &spec); e != nil {
+					f.t.Fatal(e)
+				}
+				spec.Dir = "/different"
+				inv.ApprovedRequest = eligibilityJSON(f.t, spec)
+				f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+				f.replace(inv.Receipt.Member.Path, []byte("{"))
+			}
+		}},
+		{name: "control-fail-before-malformed-receipt", incomplete: true, controlFailed: 1, change: func(f *eligibilityFixture) {
+			for i := range f.reg.Invocations {
+				inv := &f.reg.Invocations[i]
+				if inv.ID != "control-structural-0" {
+					continue
+				}
+				inv.ExecutablePath = "/different/reference"
+				f.replace(inv.Receipt.Member.Path, []byte("{"))
+			}
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			tc.change(f)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			got, err := VerifyQueryReferenceEligibility(ctx, f.request())
+			if (err != nil) != tc.incomplete || got.Complete == tc.incomplete || got.Assessment != AssessFail || got.Build.Failed < tc.buildFailed || got.Control.Failed < tc.controlFailed {
+				t.Fatalf("review33 err%v complete%v assessment%s build%+v control%+v findings%+v", err, got.Complete, got.Assessment, got.Build, got.Control, got.Findings)
+			}
+			if tc.incomplete && tc.buildFailed == 1 && (got.Build.Failed != 1 || got.Build.Unprocessed != 8 || got.Build.Verified != 0) {
+				t.Fatalf("build failure counter lost %+v", got.Build)
+			}
+			if tc.incomplete && tc.controlFailed == 1 && (got.Build.Verified != 9 || got.Control.Failed != 1 || got.Control.Verified != 1 || got.Control.Unprocessed != 51) {
+				t.Fatalf("previous completion/failure lost build%+v control%+v", got.Build, got.Control)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+}
+
+func TestQueryReferenceEligibilityManifestAndABI(t *testing.T) {
+	for _, kind := range []string{"space-path", "missing-parser-step", "unknown-grammar-role", "runtime-abi"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			want := AssessFail
+			switch kind {
+			case "space-path":
+				want = AssessPass
+				pin := f.reg.Native.Grammar["parser.c"]
+				delete(f.reg.Native.Grammar, "parser.c")
+				f.reg.Native.Grammar["dir with space/parser.c"] = pin
+				f.nativeManifestMutation(func(s string) string {
+					return strings.Replace(s, "file=grammar-parser parser.c ", "file=grammar-parser dir with space/parser.c ", 1)
+				})
+			case "missing-parser-step":
+				f.nativeManifestMutation(func(s string) string {
+					lines := strings.Split(s, "\n")
+					lines = slices.DeleteFunc(lines, func(l string) bool { return strings.HasPrefix(l, "step=parser ") })
+					return strings.Join(lines, "\n")
+				})
+			case "unknown-grammar-role":
+				f.nativeManifestMutation(func(s string) string { return strings.Replace(s, "file=grammar-header ", "file=grammar-unknown ", 1) })
+			case "runtime-abi":
+				f.witness.Native.ProducerABI.RuntimeLanguageVersion = 30
+				f.replace("native/request.json", eligibilityJSON(t, f.witness.Native))
+				for i := range f.reg.Invocations {
+					if f.reg.Invocations[i].ID == "native-current" {
+						f.reg.Invocations[i].ApprovedRequest = eligibilityJSON(t, f.witness.Native)
+					}
+				}
+				var raw nativewire.Response
+				if e := jsonv2.Unmarshal(f.files["native/response.json"], &raw); e != nil {
+					t.Fatal(e)
+				}
+				raw.Producer.RuntimeLanguageVersion = 30
+				f.replace("native/response.json", eligibilityJSON(t, raw))
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			got, err := VerifyQueryReferenceEligibility(ctx, f.request())
+			if err != nil || got.Assessment != want || !got.Complete {
+				t.Fatalf("manifest/ABI %v %+v", err, got)
+			}
+			eligibilityAssertCounts(t, got)
 		})
 	}
 }

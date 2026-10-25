@@ -33,6 +33,7 @@ type eligibilityFailureResponse struct {
 }
 
 func (s *eligibilitySession) verifyControls() *Error {
+	defer func() { s.failItem = nil }()
 	group := s.reg.Control
 	summary := eligibilityControlSummary{}
 	groupReady := false
@@ -116,6 +117,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 			s.control[rule.ID] = "blocked"
 			continue
 		}
+		s.failItem = func() { s.control[rule.ID] = "failed" }
 		before := s.failures
 		req, requestOK, e := s.request(inv)
 		if e != nil {
@@ -153,7 +155,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 				if !executableReady {
 					ready = false
 				}
-				if inv.ToolID != "" || req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256 {
+				if inv.ToolID != "" || inv.ExecutablePath != req.Path || req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256 {
 					s.finding("ELIGIBILITY_REFERENCE_EXECUTABLE", inv.ID, true)
 					ready = false
 				}

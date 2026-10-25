@@ -72,6 +72,7 @@ func (s *eligibilitySession) tool(id, cohort, name string, identity eligibilityM
 }
 
 func (s *eligibilitySession) verifyBuild() *Error {
+	defer func() { s.failItem = nil }()
 	group := s.reg.Build
 	paths := map[string]string{}
 	identity := eligibilityBuildIdentity{}
@@ -148,7 +149,9 @@ func (s *eligibilitySession) verifyBuild() *Error {
 				}
 			}
 			for _, name := range []string{"rustc", "cargo"} {
-				if !eligibilityPinnedRelease(identity.Versions[name]) {
+				if pinned, e := s.pinnedRelease(identity.Versions[name]); e != nil {
+					return e
+				} else if !pinned {
 					s.finding("ELIGIBILITY_TOOL_VERSION", name, true)
 					groupReady = false
 				}
@@ -185,6 +188,7 @@ func (s *eligibilitySession) verifyBuild() *Error {
 			s.build[rule.ID] = "blocked"
 			continue
 		}
+		s.failItem = func() { s.build[rule.ID] = "failed" }
 		before := s.failures
 		req, requestOK, e := s.request(inv)
 		if e != nil {
@@ -291,15 +295,25 @@ func (s *eligibilitySession) verifyBuild() *Error {
 	return nil
 }
 
-func eligibilityPinnedRelease(text string) bool {
+func (s *eligibilitySession) pinnedRelease(text string) (bool, *Error) {
+	if e := s.b.charge(uint64(len(text))+1, 8*uint64(len(text)), "pinned-version-scan"); e != nil {
+		return false, e
+	}
 	releases := []string{}
-	for _, line := range strings.Split(text, "\n") {
-		k, v, ok := strings.Cut(line, ":")
+	rows := 0
+	for line := range strings.Lines(text) {
+		if rows%1024 == 0 {
+			if e := s.r.check(); e != nil {
+				return false, e
+			}
+		}
+		rows++
+		k, v, ok := strings.Cut(strings.TrimSuffix(line, "\n"), ":")
 		if ok && strings.TrimSpace(k) == "release" {
 			releases = append(releases, strings.TrimSpace(v))
 		}
 	}
-	return slices.Equal(releases, []string{"1.97.1"})
+	return slices.Equal(releases, []string{"1.97.1"}), nil
 }
 
 func (s *eligibilitySession) unitSet(stdout []byte) (bool, *Error) {

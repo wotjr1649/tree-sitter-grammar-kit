@@ -31,7 +31,7 @@ type eligibilitySession struct {
 	build, units, control, assertions map[string]string
 	tuples                            map[int]string
 	outputs                           map[string]*eligibilityOutput
-	activeTuple                       *int
+	failItem                          func()
 	failures                          uint64
 	buildIdentity                     *eligibilityBuildIdentity
 	bound                             bool
@@ -41,8 +41,8 @@ func (s *eligibilitySession) finding(code, at string, bad bool) {
 	severity := "warning"
 	if bad {
 		s.failures++
-		if s.activeTuple != nil {
-			s.tuples[*s.activeTuple] = "failed"
+		if s.failItem != nil {
+			s.failItem()
 		}
 		s.res.Assessment = AssessFail
 		severity = "error"

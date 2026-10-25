@@ -18,7 +18,7 @@ import (
 )
 
 func (s *eligibilitySession) verifyNative() *Error {
-	defer func() { s.activeTuple = nil }()
+	defer func() { s.failItem = nil }()
 	w := s.witness
 	n := s.reg.Native
 	var versions [][]byte
@@ -136,6 +136,11 @@ func (s *eligibilitySession) verifyNative() *Error {
 			}
 
 			abi, p := w.Native.ProducerABI, raw.Producer
+			// The approved current runtime manifest pins ABI compatibility to 13..15.
+			if w.Native.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256 && (abi.RuntimeLanguageVersion != 15 || abi.RuntimeMinCompatible != 13) {
+				s.finding("ELIGIBILITY_NATIVE_RUNTIME_ABI", inv.ID, true)
+				nativeReady = false
+			}
 			if abi.LanguageVersion == 0 || abi.RuntimeMinCompatible == 0 || abi.RuntimeMinCompatible > abi.LanguageVersion || abi.LanguageVersion > abi.RuntimeLanguageVersion || abi.SymbolCount == 0 || p.LanguageVersion != abi.LanguageVersion || p.RuntimeLanguageVersion != abi.RuntimeLanguageVersion || p.RuntimeMinCompatible != abi.RuntimeMinCompatible || p.SymbolCount == nil || *p.SymbolCount != abi.SymbolCount || p.FieldCount == nil || *p.FieldCount != abi.FieldCount || p.Query != "tsgk-query/r1" || p.API == nil || *p.API != "tsgk-api/r1" {
 				s.finding("ELIGIBILITY_NATIVE_PRODUCER_ABI", inv.ID, true)
 				nativeReady = false
@@ -205,7 +210,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 		}
 	}
 	for i, tuple := range w.Required {
-		s.activeTuple = &i
+		s.failItem = func() { s.tuples[i] = "failed" }
 		before := s.failures
 		ready := nativeReady
 		queryIndex := slices.IndexFunc(w.Queries, func(q QueryWitnessQuery) bool { return q.ID == tuple.Query })
@@ -361,7 +366,7 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	if !ok {
 		return false, nil
 	}
-	if e := s.b.charge(uint64(len(n.Grammar)+1), 3*uint64(len(data)), "native-build-manifest"); e != nil {
+	if e := s.b.charge(8*(uint64(len(data))+1)+uint64(len(n.Grammar)), 40*uint64(len(data)), "native-build-manifest"); e != nil {
 		return false, nil
 	}
 	if digestHex(data) != w.ProducerSHA256 || !utf8.Valid(data) || len(data) == 0 || data[len(data)-1] != '\n' {
@@ -393,13 +398,20 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	good := true
 	seen := map[string]bool{}
 	grammar := map[string]bool{}
-	steps := 0
+	steps := []string{}
+	parsers, scanners := 0, 0
+	previousFile := ""
 	for _, line := range lines[5:] {
 		if e := s.b.charge(1, uint64(len(line)), "native-build-manifest"); e != nil {
 			return false, nil
 		}
 		if strings.HasPrefix(line, "step=") {
-			steps++
+			name, args, valid := eligibilityBuildStep(strings.TrimPrefix(line, "step="))
+			if !valid || name == "version" && !slices.Equal(args, []string{"--version"}) {
+				s.finding("ELIGIBILITY_NATIVE_BUILD_STEP", "native", true)
+				good = false
+			}
+			steps = append(steps, name)
 			continue
 		}
 		if !strings.HasPrefix(line, "file=") {
@@ -426,6 +438,23 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 		}
 		size, err := strconv.ParseUint(fields[3], 10, 53)
 		key := fields[0] + " " + fields[1]
+		if len(steps) != 0 || previousFile != "" && key <= previousFile {
+			s.finding("ELIGIBILITY_NATIVE_BUILD_ORDER", "native", true)
+			good = false
+		}
+		previousFile = key
+		if strings.HasPrefix(fields[0], "grammar-") {
+			switch fields[0] {
+			case "grammar-parser":
+				parsers++
+			case "grammar-scanner":
+				scanners++
+			case "grammar-header":
+			default:
+				s.finding("ELIGIBILITY_NATIVE_GRAMMAR_ROLE", fields[1], true)
+				good = false
+			}
+		}
 		if err != nil || seen[key] {
 			s.finding("ELIGIBILITY_NATIVE_BUILD_FILE", "native", true)
 			good = false
@@ -462,7 +491,12 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 			good = false
 		}
 	}
-	if len(grammar) == 0 || len(grammar) != len(n.Grammar) || steps == 0 {
+	expectedSteps := []string{"version", "runtime", "parser"}
+	for i := 0; i < scanners; i++ {
+		expectedSteps = append(expectedSteps, "scanner")
+	}
+	expectedSteps = append(expectedSteps, "driver", "shim", "link")
+	if parsers != 1 || len(grammar) != len(n.Grammar) || !slices.Equal(steps, expectedSteps) {
 		s.finding("ELIGIBILITY_NATIVE_BUILD_CLOSURE", "native", true)
 		good = false
 	}
@@ -783,4 +817,33 @@ func (s *eligibilitySession) nativeStaticClosure(symbol string) (map[string]elig
 	}
 	files["driver driver/shim.c"] = eligibilitySnapshotRow{Bytes: uint64(len(shim)), SHA256: digestHex(shim)}
 	return files, runtime.Commit, nil
+}
+
+// Native build identities use fmt's canonical quoted argv list, not shell syntax.
+func eligibilityBuildStep(text string) (string, []string, bool) {
+	name, list, found := strings.Cut(text, " ")
+	if !found || !validID(name) || len(list) < 2 || list[0] != '[' || list[len(list)-1] != ']' {
+		return "", nil, false
+	}
+	rest := list[1 : len(list)-1]
+	args := []string{}
+	for rest != "" {
+		quoted, err := strconv.QuotedPrefix(rest)
+		if err != nil {
+			return "", nil, false
+		}
+		arg, err := strconv.Unquote(quoted)
+		if err != nil || !utf8.ValidString(arg) || strings.ContainsRune(arg, 0) {
+			return "", nil, false
+		}
+		args = append(args, arg)
+		rest = rest[len(quoted):]
+		if rest != "" {
+			if rest[0] != ' ' {
+				return "", nil, false
+			}
+			rest = rest[1:]
+		}
+	}
+	return name, args, len(args) > 0 && fmt.Sprintf("%q", args) == list
 }
