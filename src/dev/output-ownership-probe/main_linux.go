@@ -37,6 +37,7 @@ type report struct {
 	Directory    outcome `json:"directory"`
 	Replacement  outcome `json:"replacement"`
 	Publication  outcome `json:"publication"`
+	Direct       outcome `json:"publication_direct"`
 }
 
 func refused(err error, code string) outcome {
@@ -313,24 +314,28 @@ func directoryProbe(root string, replace bool) (result outcome) {
 	}
 }
 
-func publicationProbe(root string) (result outcome) {
+func publicationProbe(root string, direct bool) (result outcome) {
 	result = outcome{"UNVERIFIED", "PROCFS_TRUST_NOT_PROVEN"}
 	parent, err := unix.Open(root, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return refused(err, "PARENT_OPEN")
 	}
 	defer closeFD(parent, &result)
-	proc, err := unix.Open("/proc/self/fd", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
-	if err != nil {
-		return refused(err, "PROCFS_OPEN")
-	}
-	defer closeFD(proc, &result)
-	var st unix.Statfs_t
-	if err := unix.Fstatfs(proc, &st); err != nil {
-		return refused(err, "PROCFS_STATFS")
-	}
-	if st.Type != unix.PROC_SUPER_MAGIC {
-		return outcome{"UNVERIFIED", "PROCFS_TYPE"}
+	source, name, flags := -1, "", unix.AT_EMPTY_PATH
+	if !direct {
+		proc, err := unix.Open("/proc/self/fd", unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return refused(err, "PROCFS_OPEN")
+		}
+		defer closeFD(proc, &result)
+		var st unix.Statfs_t
+		if err := unix.Fstatfs(proc, &st); err != nil {
+			return refused(err, "PROCFS_STATFS")
+		}
+		if st.Type != unix.PROC_SUPER_MAGIC {
+			return outcome{"UNVERIFIED", "PROCFS_TYPE"}
+		}
+		source, flags = proc, unix.AT_SYMLINK_FOLLOW
 	}
 	fd, err := unix.Openat(parent, ".", unix.O_TMPFILE|unix.O_RDWR|unix.O_CLOEXEC, 0o600)
 	if err != nil {
@@ -343,11 +348,15 @@ func publicationProbe(root string) (result outcome) {
 	if err := unix.Fsync(fd); err != nil {
 		return refused(err, "FSYNC")
 	}
-	name := strconv.Itoa(fd)
-	if err := unix.Linkat(proc, name, parent, "final", unix.AT_SYMLINK_FOLLOW); err != nil {
+	if direct {
+		source = fd
+	} else {
+		name = strconv.Itoa(fd)
+	}
+	if err := unix.Linkat(source, name, parent, "final", flags); err != nil {
 		return refused(err, "LINKAT")
 	}
-	if failure := publicationNoClobber(unix.Linkat(proc, name, parent, "final", unix.AT_SYMLINK_FOLLOW)); failure != nil {
+	if failure := publicationNoClobber(unix.Linkat(source, name, parent, "final", flags)); failure != nil {
 		return *failure
 	}
 	check, err := unix.Openat(parent, "final", unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
@@ -355,6 +364,11 @@ func publicationProbe(root string) (result outcome) {
 		return refused(err, "FINAL_OPEN")
 	}
 	f := os.NewFile(uintptr(check), "probe-final")
+	var original, published unix.Stat_t
+	var statErr error
+	if direct {
+		statErr = errors.Join(unix.Fstat(fd, &original), unix.Fstat(check, &published))
+	}
 	data, readErr := io.ReadAll(io.LimitReader(f, 9))
 	closeErr := f.Close()
 	if closeErr != nil {
@@ -365,15 +379,24 @@ func publicationProbe(root string) (result outcome) {
 	if readErr != nil {
 		return refused(readErr, "FINAL_READ")
 	}
+	if statErr != nil {
+		return refused(statErr, "FINAL_STAT")
+	}
+	if direct && (original.Dev != published.Dev || original.Ino != published.Ino) {
+		return outcome{"FAILED", "FINAL_IDENTITY"}
+	}
 	if string(data) != "original" {
 		return outcome{"FAILED", "FINAL_BYTES"}
+	}
+	if direct {
+		return outcome{"CANDIDATE_MATCH", "DIRECT_FD_LINK_EEXIST_IDENTITY_OBSERVED"}
 	}
 	// shortcut: procfs type is only a capability check; prove process binding before adoption.
 	return outcome{"UNVERIFIED", "LINK_AND_EEXIST_OBSERVED_PROCFS_TRUST_NOT_PROVEN"}
 }
 
 func probe(parent string) (report, error) {
-	r := report{Schema: "tsgk-output-ownership-probe/r1", Support: "BLOCKED"}
+	r := report{Schema: "tsgk-output-ownership-probe/r2", Support: "BLOCKED"}
 	if !filepath.IsAbs(parent) || len(parent) > 4096 {
 		return r, fmt.Errorf("absolute task parent required")
 	}
@@ -401,14 +424,15 @@ func probe(parent string) (report, error) {
 		}
 	}
 	// Preserve all task-created entries. Unproven ownership never causes pathname cleanup.
-	for _, name := range []string{"directory", "replacement", "publication"} {
+	for _, name := range []string{"directory", "replacement", "publication", "publication-direct"} {
 		if err := os.Mkdir(filepath.Join(root, name), 0o700); err != nil {
 			return r, err
 		}
 	}
 	r.Directory = directoryProbe(filepath.Join(root, "directory"), false)
 	r.Replacement = directoryProbe(filepath.Join(root, "replacement"), true)
-	r.Publication = publicationProbe(filepath.Join(root, "publication"))
+	r.Publication = publicationProbe(filepath.Join(root, "publication"), false)
+	r.Direct = publicationProbe(filepath.Join(root, "publication-direct"), true)
 	return r, nil
 }
 
@@ -428,7 +452,7 @@ func main() {
 	if err := json.NewEncoder(os.Stdout).Encode(r); err != nil {
 		os.Exit(1)
 	}
-	for _, result := range []outcome{r.Directory, r.Replacement, r.Publication} {
+	for _, result := range []outcome{r.Directory, r.Replacement, r.Publication, r.Direct} {
 		if result.Status == "FAILED" {
 			os.Exit(1)
 		}
