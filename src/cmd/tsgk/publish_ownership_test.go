@@ -23,10 +23,17 @@ func TestPublishKeepsParentIdentity(t *testing.T) {
 	blocked := false
 	testHookBeforeLink = func() {
 		entries, err := os.ReadDir(parent)
-		if err != nil || len(entries) != 1 || entries[0].IsDir() {
-			t.Fatalf("temporary publication fixture: %v %v", entries, err)
+		if runtime.GOOS == "linux" {
+			if err != nil || len(entries) != 0 {
+				t.Fatalf("unnamed publication fixture: %v %v", entries, err)
+			}
+			tempName = ".tsgk-out-foreign.tmp"
+		} else {
+			if err != nil || len(entries) != 1 || entries[0].IsDir() {
+				t.Fatalf("temporary publication fixture: %v %v", entries, err)
+			}
+			tempName = entries[0].Name()
 		}
-		tempName = entries[0].Name()
 		err = os.Rename(parent, moved)
 		if runtime.GOOS == "windows" && errors.Is(err, syscall.Errno(32)) {
 			blocked = true // the retained Windows handle prevents directory replacement
@@ -120,7 +127,7 @@ func TestPublishReportsFinalizationFailureAfterPublication(t *testing.T) {
 	defer func() { testHookAfterLink = nil }()
 	code, err := publish(filepath.Join(parent, "result.json"), t.TempDir(), []byte("complete"))
 	want := "OUTPUT_CLEANUP_FAILED"
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || runtime.GOOS == "linux" {
 		want = "OUTPUT_CLOSE_FAILED"
 	}
 	if code != want || err == nil || !strings.Contains(err.Error(), "output was published") {
