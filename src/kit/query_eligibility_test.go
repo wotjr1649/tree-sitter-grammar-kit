@@ -678,6 +678,19 @@ func TestQueryReferenceEligibilityAdversarial(t *testing.T) {
 			}
 		}, assessment: AssessBlocked, code: "ELIGIBILITY_INPUT_MISSING"},
 		{name: "missing-binary-is-not-a-descriptor", mutate: func(f *eligibilityFixture) { f.reg.Build.ReferenceBinary = nil }, assessment: AssessBlocked, code: "ELIGIBILITY_BUILD_BINARY_MISSING"},
+		{name: "missing-control-executable", mutate: func(f *eligibilityFixture) {
+			for i := range f.reg.Invocations {
+				inv := &f.reg.Invocations[i]
+				if inv.ID == "control-structural-0" {
+					inv.Executable = nil
+					inv.ExecutablePath = ""
+				}
+			}
+		}, assessment: AssessBlocked, code: "ELIGIBILITY_INCOMPLETE", check: func(t *testing.T, g QueryReferenceEligibilityResult) {
+			if g.Control.Verified != 52 || g.Control.Blocked != 1 || g.Control.Failed != 0 {
+				t.Fatalf("missing descriptor became contradiction %+v", g.Control)
+			}
+		}},
 		{name: "missing-library", mutate: func(f *eligibilityFixture) { f.reg.Control.Library = nil }, assessment: AssessBlocked, code: "ELIGIBILITY_CONTROL_LIBRARY_MISSING"},
 		{name: "53-cannot-be-replaced-by-36", mutate: func(f *eligibilityFixture) {
 			seen := 0

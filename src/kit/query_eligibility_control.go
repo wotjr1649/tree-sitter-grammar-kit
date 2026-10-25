@@ -155,7 +155,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 				if !executableReady {
 					ready = false
 				}
-				if inv.ToolID != "" || inv.ExecutablePath != req.Path || req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256 {
+				if inv.ToolID != "" || inv.Executable != nil && inv.ExecutablePath != req.Path || req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256 {
 					s.finding("ELIGIBILITY_REFERENCE_EXECUTABLE", inv.ID, true)
 					ready = false
 				}
