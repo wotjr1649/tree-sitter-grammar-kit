@@ -213,6 +213,7 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 1, Point: [2]uint32{0, 1}}
 			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
+			q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
 		}, true},
 		{"invalid-offset", func(q *Query) {
 			q.Status = "INVALID_QUERY"
@@ -220,6 +221,7 @@ func TestStatusAndStreamContracts(t *testing.T) {
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 999}
 			q.Patterns, q.CaptureNames = 0, []string{}
 			q.Captures = nil
+			q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
 		}, false},
 		{"pattern-of-match", func(q *Query) { q.Captures = append(q.Captures, []int64{0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}) }, false},
 		{"interleaved-and-duplicate", func(q *Query) {
@@ -265,6 +267,7 @@ func TestCompileErrorSourceBinding(t *testing.T) {
 			q := fixture()
 			q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_"+kind, 0, nil, []string{}
 			q.Error = &CompileError{Type: kind, Offset: 2, Point: point}
+			q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
 			_, err := DecodeSummary(encode(t, q), []Source{{ID: "q", Source: []byte("\n(x)")}}, 1, 1)
 			valid := kind != "NONE" && kind != "FORGED" && point == [2]uint32{1, 1}
 			if (err == nil) != valid {
@@ -321,11 +324,12 @@ func TestFilteredMatchAccounting(t *testing.T) {
 }
 
 func TestIntrinsicCompileErrorWithoutSource(t *testing.T) {
-	for _, bad := range []string{"valid-unbound-point", "nil", "class", "code", "captures", "patterns", "partial"} {
+	for _, bad := range []string{"valid-unbound-point", "nil", "class", "code", "captures", "patterns", "partial", "matches", "types", "time"} {
 		t.Run(bad, func(t *testing.T) {
 			q := fixture()
 			q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_SYNTAX", 0, nil, []string{}
 			q.Error = &CompileError{Type: "SYNTAX", Offset: 999, Point: [2]uint32{999, 999}}
+			q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
 			switch bad {
 			case "nil":
 				q.Error = nil
@@ -340,6 +344,12 @@ func TestIntrinsicCompileErrorWithoutSource(t *testing.T) {
 				q.Patterns = 1
 			case "partial":
 				q.Partial = true
+			case "matches":
+				q.Matches = 1
+			case "types":
+				q.Types = []string{"identifier"}
+			case "time":
+				q.QueryMillis = 1
 			}
 			raw := encode(t, q)
 			got, err := DecodeIntrinsic(raw, 1, 1, nil)

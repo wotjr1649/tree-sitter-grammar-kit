@@ -217,7 +217,7 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			}
 			continue
 		case "INVALID_QUERY":
-			if !validCompileErrorClass(q.Error) || sourceKnown && !ValidCompileError(q.Error, sources[i].Source) || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial {
+			if !validCompileErrorClass(q.Error) || sourceKnown && !ValidCompileError(q.Error, sources[i].Source) || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial || q.QueryMillis != 0 || q.Matches != 0 || len(q.Types) != 0 {
 				return nil, bad(i, "invalid shape")
 			}
 			continue

@@ -2212,12 +2212,12 @@ func TestQueryReferenceEligibilityReview39(t *testing.T) {
 
 func TestQueryReferenceEligibilityReview42(t *testing.T) {
 	for _, extra := range []bool{false, true} {
-		for _, bad := range []string{"valid", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
+		for _, bad := range []string{"valid", "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
 			for _, prior := range []bool{false, true} {
 				if !extra && bad == "valid-reordered" {
 					continue
 				}
-				if prior && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
+				if prior && !strings.Contains(bad, "rejected-query") && !strings.Contains(bad, "query-rejected") && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
 					continue
 				}
 				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
@@ -2310,7 +2310,7 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 						}
 					} else if !malformed {
 						want := AssessFail
-						if bad == "missing-query-valid" {
+						if bad == "missing-query-valid" || bad == "missing-query-rejected-valid" {
 							want = AssessBlocked
 						}
 						if strings.HasPrefix(bad, "valid") {
@@ -2328,6 +2328,9 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 					}
 					if (bad == "missing-query-code" || bad == "missing-query-link") && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY") {
 						t.Fatal("source-independent query contradiction was not checked")
+					}
+					if strings.Contains(bad, "rejected") && bad != "valid-rejected-query" && bad != "missing-query-rejected-valid" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY") {
+						t.Fatal("invalid-query execution contradiction was not checked")
 					}
 					if bad == "pinned-null" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY_MISSING") {
 						t.Fatal("missing pinned query was not checked")
@@ -2349,6 +2352,40 @@ func (f *eligibilityFixture) nativeIndependentMutation(inv *eligibilityInvocatio
 		t.Fatal(e)
 	}
 	switch bad {
+	case "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time":
+		if strings.HasPrefix(bad, "missing-query-") {
+			delete(inv.Inputs, "query-q0")
+		} else {
+			slot := inv.Inputs["query-q0"]
+			pin := f.member(inv.ID, inv.ID+"/rejected.scm", slot.MemberPin.Member.Role, []byte("("))
+			slot.MemberPin = &pin
+			inv.Inputs["query-q0"] = slot
+		}
+		for k := range raw.Steps {
+			for _, tree := range []*nativewire.WireTree{&raw.Steps[k].Incremental, raw.Steps[k].Fresh} {
+				if tree == nil {
+					continue
+				}
+				var queries []querywire.Query
+				if e := jsonv2.Unmarshal(tree.Queries, &queries); e != nil {
+					t.Fatal(e)
+				}
+				q := &queries[0]
+				q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_SYNTAX", 0, nil, []string{}
+				q.Error = &querywire.CompileError{Type: "SYNTAX", Offset: 1, Point: [2]uint32{0, 1}}
+				q.Predicates = q.Predicates[:0]
+				q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
+				switch {
+				case strings.HasSuffix(bad, "matches"):
+					q.Matches = 1
+				case strings.HasSuffix(bad, "types"):
+					q.Types = []string{"identifier"}
+				case strings.HasSuffix(bad, "time"):
+					q.QueryMillis = 1
+				}
+				tree.Queries = eligibilityJSON(t, queries)
+			}
+		}
 	case "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null":
 		if bad != "pinned-null" {
 			delete(inv.Inputs, "query-q0")
