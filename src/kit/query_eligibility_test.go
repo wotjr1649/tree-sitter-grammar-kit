@@ -2212,12 +2212,12 @@ func TestQueryReferenceEligibilityReview39(t *testing.T) {
 
 func TestQueryReferenceEligibilityReview42(t *testing.T) {
 	for _, extra := range []bool{false, true} {
-		for _, bad := range []string{"valid", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
+		for _, bad := range []string{"valid", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
 			for _, prior := range []bool{false, true} {
 				if !extra && bad == "valid-reordered" {
 					continue
 				}
-				if prior && bad != "request-id" && bad != "request-shape" {
+				if prior && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
 					continue
 				}
 				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
@@ -2310,6 +2310,9 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 						}
 					} else if !malformed {
 						want := AssessFail
+						if bad == "missing-query-valid" {
+							want = AssessBlocked
+						}
 						if strings.HasPrefix(bad, "valid") {
 							want = AssessBlocked
 							if extra {
@@ -2322,6 +2325,12 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 					}
 					if bad == "request-id" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_REQUEST") {
 						t.Fatal("stored-approved request contradiction was not checked")
+					}
+					if (bad == "missing-query-code" || bad == "missing-query-link") && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY") {
+						t.Fatal("source-independent query contradiction was not checked")
+					}
+					if bad == "pinned-null" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY_MISSING") {
+						t.Fatal("missing pinned query was not checked")
 					}
 					eligibilityAssertCounts(t, got)
 				})
@@ -2340,6 +2349,34 @@ func (f *eligibilityFixture) nativeIndependentMutation(inv *eligibilityInvocatio
 		t.Fatal(e)
 	}
 	switch bad {
+	case "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null":
+		if bad != "pinned-null" {
+			delete(inv.Inputs, "query-q0")
+		}
+		for k := range raw.Steps {
+			for _, tree := range []*nativewire.WireTree{&raw.Steps[k].Incremental, raw.Steps[k].Fresh} {
+				if tree == nil {
+					continue
+				}
+				switch bad {
+				case "valid-zero-null", "pinned-null":
+					tree.Queries = []byte("null")
+				case "valid-zero-array":
+					tree.Queries = []byte("[]")
+				case "missing-query-code", "missing-query-link":
+					var queries []querywire.Query
+					if e := jsonv2.Unmarshal(tree.Queries, &queries); e != nil {
+						t.Fatal(e)
+					}
+					if bad == "missing-query-code" {
+						queries[0].Code = "FORGED"
+					} else {
+						queries[0].Captures[0][3] = 1
+					}
+					tree.Queries = eligibilityJSON(t, queries)
+				}
+			}
+		}
 	case "valid-own":
 		var own eligibilityNativeExpected
 		if e := jsonv2.Unmarshal(inv.ApprovedRequest, &own); e != nil {
@@ -2502,6 +2539,38 @@ func TestQueryReferenceEligibilityIndependentBudget(t *testing.T) {
 			}
 			if e == nil || e.Kind != kind {
 				t.Fatalf("independent traversal guard: %v", e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceEligibilityIndependentFailureBeforeCancellation(t *testing.T) {
+	for _, semantic := range []bool{false, true} {
+		t.Run(fmt.Sprint(semantic), func(t *testing.T) {
+			ctx, cancel := context.WithCancel(ctxT(t))
+			defer cancel()
+			r, e := startRun(ctx, 30*time.Second)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			result := QueryReferenceEligibilityResult{Report: newReport("test")}
+			failed := false
+			s := &eligibilitySession{r: r, res: &result, failItem: func() { failed = true }}
+			_, contradiction := nativewire.CheckTreeStructure(nativewire.WireTree{Status: "FORGED"}, 0, nativewire.Expect{})
+			if contradiction == nil {
+				t.Fatal("fixture must contradict tree status")
+			}
+			cancel()
+			if !semantic {
+				contradiction = r.check()
+			}
+			got := s.nativeIndependentError("extra", "ELIGIBILITY_NATIVE_TREE", contradiction)
+			if got == nil || got.Kind != KindCancelled {
+				t.Fatalf("cancellation lost: %v", got)
+			}
+			if failed != semantic || (result.Assessment == AssessFail) != semantic || (s.failures == 1) != semantic {
+				t.Fatalf("known contradiction retention: semantic=%v failed=%v assessment=%s failures=%d", semantic, failed, result.Assessment, s.failures)
 			}
 		})
 	}

@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"encoding/json/jsontext"
 	"fmt"
 	"reflect"
@@ -298,13 +299,10 @@ func (s *eligibilitySession) nativeIndependentError(path, code string, err error
 	if e, ok := err.(*Error); ok {
 		return e
 	}
-	if e := s.r.check(); e != nil {
-		return e
-	}
 	if err != nil {
 		s.finding(code, path, true)
 	}
-	return nil
+	return s.r.check()
 }
 
 func (s *eligibilitySession) nativeIndependentQueries(inv *eligibilityInvocation, tree *nativewire.Tree, sources map[string][]byte, known map[string]bool, sourceBytes uint64, check func() error) *Error {
@@ -312,8 +310,10 @@ func (s *eligibilitySession) nativeIndependentQueries(inv *eligibilityInvocation
 		return e
 	}
 	var values []jsontext.Value
-	if e := s.b.decode("native-independent-queries", tree.Wire.Queries, &values, true); e != nil {
-		return e
+	if !bytes.Equal(bytes.Trim(tree.Wire.Queries, " \t\r\n"), []byte("null")) {
+		if e := s.b.decode("native-independent-queries", tree.Wire.Queries, &values, true); e != nil {
+			return e
+		}
 	}
 	seen := map[string]bool{}
 	for _, value := range values {
@@ -333,17 +333,19 @@ func (s *eligibilitySession) nativeIndependentQueries(inv *eligibilityInvocation
 		}
 		seen[q.ID] = true
 		source, have := sources[q.ID]
-		if !have {
-			s.finding("ELIGIBILITY_INPUT_MISSING", inv.ID+"/query-"+q.ID, false)
-			tree.Queries = append(tree.Queries, q)
-			continue
-		}
-		if e := s.b.charge(2*uint64(len(source))+1, 0, "native-independent-query-source"); e != nil {
-			return e
-		}
 		one := *tree
 		one.Wire.Queries = data
-		if e := s.nativeIndependentError(inv.ID+"/"+q.ID, "ELIGIBILITY_NATIVE_QUERY", one.CheckQueries([]querywire.Source{{ID: q.ID, Source: source}}, sourceBytes, check)); e != nil {
+		var queryError error
+		if !have {
+			s.finding("ELIGIBILITY_INPUT_MISSING", inv.ID+"/query-"+q.ID, false)
+			queryError = one.CheckQueryStructure(sourceBytes, check)
+		} else {
+			if e := s.b.charge(2*uint64(len(source))+1, 0, "native-independent-query-source"); e != nil {
+				return e
+			}
+			queryError = one.CheckQueries([]querywire.Source{{ID: q.ID, Source: source}}, sourceBytes, check)
+		}
+		if e := s.nativeIndependentError(inv.ID+"/"+q.ID, "ELIGIBILITY_NATIVE_QUERY", queryError); e != nil {
 			return e
 		}
 		tree.Queries = append(tree.Queries, one.Queries...)

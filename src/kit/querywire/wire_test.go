@@ -319,3 +319,37 @@ func TestFilteredMatchAccounting(t *testing.T) {
 		t.Fatal("invalid callback/count accepted")
 	}
 }
+
+func TestIntrinsicCompileErrorWithoutSource(t *testing.T) {
+	for _, bad := range []string{"valid-unbound-point", "nil", "class", "code", "captures", "patterns", "partial"} {
+		t.Run(bad, func(t *testing.T) {
+			q := fixture()
+			q.Status, q.Code, q.Patterns, q.Captures, q.CaptureNames = "INVALID_QUERY", "QUERY_SYNTAX", 0, nil, []string{}
+			q.Error = &CompileError{Type: "SYNTAX", Offset: 999, Point: [2]uint32{999, 999}}
+			switch bad {
+			case "nil":
+				q.Error = nil
+			case "class":
+				q.Error.Type = "FORGED"
+				q.Code = "QUERY_FORGED"
+			case "code":
+				q.Code = "FORGED"
+			case "captures":
+				q.Captures = [][]int64{}
+			case "patterns":
+				q.Patterns = 1
+			case "partial":
+				q.Partial = true
+			}
+			raw := encode(t, q)
+			got, err := DecodeIntrinsic(raw, 1, 1, nil)
+			valid := bad == "valid-unbound-point"
+			if (err == nil) != valid || valid && len(got) != 1 {
+				t.Fatalf("intrinsic %s: %+v %v", bad, got, err)
+			}
+			if _, err := DecodeSummary(raw, []Source{{ID: q.ID, Source: []byte{}}}, 1, 1); err == nil {
+				t.Fatal("actual empty source must still reject unknown point")
+			}
+		})
+	}
+}

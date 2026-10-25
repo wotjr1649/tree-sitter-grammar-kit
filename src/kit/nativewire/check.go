@@ -215,12 +215,22 @@ func CheckTreeStructure(w WireTree, sourceBytes uint64, e Expect) (Tree, error) 
 
 // CheckQueries retains the full-node link check while sharing strict wire validation.
 func (t *Tree) CheckQueries(sources []querywire.Source, sourceBytes uint64, check func() error) error {
+	return t.checkQueries(sources, sourceBytes, check, false)
+}
+
+// CheckQueryStructure validates source-independent query invariants and full-node
+// links when available; it does not establish query identity or compile-error points.
+func (t *Tree) CheckQueryStructure(sourceBytes uint64, check func() error) error {
+	return t.checkQueries(nil, sourceBytes, check, true)
+}
+
+func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64, check func() error, intrinsic bool) error {
 	t.Queries = nil
 	var queries []WireQuery
 	var err *querywire.Error
 	var stopped error
 	if t.Nodes != nil {
-		queries, err = querywire.DecodeFull(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount, func(q WireQuery, row []int64) bool {
+		link := func(q WireQuery, row []int64) bool {
 			if check != nil {
 				if stopped = check(); stopped != nil {
 					return false
@@ -233,7 +243,14 @@ func (t *Tree) CheckQueries(sources []querywire.Source, sourceBytes uint64, chec
 			n, f := t.Nodes[row[3]], row[5]
 			return n.Type == q.Types[row[4]] && n.Named == (f&1 != 0) && n.Extra == (f&2 != 0) && n.IsError == (f&4 != 0) && n.HasError == (f&8 != 0) && n.IsMissing == (f&16 != 0) &&
 				n.StartByte == uint32(row[6]) && n.EndByte == uint32(row[7]) && n.StartPoint == (Point{Row: uint32(row[8]), Column: uint32(row[9])}) && n.EndPoint == (Point{Row: uint32(row[10]), Column: uint32(row[11])})
-		})
+		}
+		if intrinsic {
+			queries, err = querywire.DecodeIntrinsic(t.Wire.Queries, sourceBytes, t.Wire.DescendantCount, link)
+		} else {
+			queries, err = querywire.DecodeFull(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount, link)
+		}
+	} else if intrinsic {
+		queries, err = querywire.DecodeIntrinsic(t.Wire.Queries, sourceBytes, t.Wire.DescendantCount, nil)
 	} else {
 		queries, err = querywire.DecodeSummary(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount)
 	}

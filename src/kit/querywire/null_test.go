@@ -116,6 +116,9 @@ func TestNullNestedPrimitiveIsNotZeroValue(t *testing.T) {
 
 func TestPaddedNullQueryList(t *testing.T) {
 	for _, raw := range []jsontext.Value{[]byte("null"), []byte(" \nnull\t\r")} {
+		if got, err := DecodeIntrinsic(raw, 1, 1, nil); err != nil || len(got) != 0 {
+			t.Fatalf("intrinsic nullable list: %+v %v", got, err)
+		}
 		if got, err := DecodeSummary(raw, nil, 1, 1); err != nil || len(got) != 0 {
 			t.Fatalf("empty request lost nullable list: %+v %v", got, err)
 		}
