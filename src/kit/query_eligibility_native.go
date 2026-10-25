@@ -360,7 +360,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 				}
 				sameCST := tree != nil && CompareTrees(tree.Nodes, ref.Tree.Nodes) == nil
 				anchorMismatch := tuple.Structural != nil && referenceAnchorIdentityMismatch(tuple.Structural, ref.Query.Structural) || tuple.Expected != nil && referenceAnchorIdentityMismatch(tuple.Expected, ref.Query.Evaluated)
-				if tree == nil || sameCST {
+				if tree == nil || tree.Form != "full" || sameCST {
 					anchorMismatch = anchorMismatch || tuple.Structural != nil && CompareCaptures(ref.Query.Structural, tuple.Structural) != nil || tuple.Expected != nil && CompareCaptures(ref.Query.Evaluated, tuple.Expected) != nil
 				}
 				if anchorMismatch {

@@ -1963,13 +1963,28 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 		}
 	}
 	for _, anchor := range []bool{false, true} {
-		for _, bad := range []string{"index-only", "metadata", "identity"} {
+		for _, bad := range []string{"index-only", "metadata", "identity", "summary-index"} {
 			t.Run(fmt.Sprintf("cst-%s-anchor-%v", bad, anchor), func(t *testing.T) {
 				f := newEligibilityFixture(t)
 				if !anchor {
 					f.witness.Required[0].Structural = nil
 					f.witness.Required[0].Expected = nil
 				}
+				if bad == "summary-index" {
+					f.nativeMutation(func(data []byte) []byte {
+						var raw nativewire.Response
+						if e := jsonv2.Unmarshal(data, &raw); e != nil {
+							t.Fatal(e)
+						}
+						summary := "summary"
+						tree := &raw.Steps[0].Incremental
+						tree.Form = &summary
+						tree.Nodes = nil
+						tree.Errors = &nativewire.WireErrors{Items: []nativewire.WireError{}}
+						return eligibilityJSON(t, raw)
+					})
+				}
+
 				f.stdoutMutation("current-ref-0", func(data []byte) []byte {
 					var ref instrumentedReference
 					if e := jsonv2.Unmarshal(data, &ref); e != nil {
@@ -2015,7 +2030,7 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 				})
 				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
 				want := AssessFail
-				if bad == "index-only" {
+				if bad == "index-only" || bad == "summary-index" && !anchor {
 					want = AssessBlocked
 				}
 				if err != nil || !got.Complete || got.Assessment != want || bad == "index-only" && got.Tuple.Failed != 0 {
