@@ -94,6 +94,17 @@ func (s *eligibilitySession) verifyNative() *Error {
 	if e := s.currentReferences(versions); e != nil {
 		return e
 	}
+	// Validate supplied raw even when its native semantic group is absent.
+	for _, declared := range s.reg.Invocations {
+		if declared.Kind != "NATIVE_DRIVER" || inv != nil && declared.ID == inv.ID {
+			continue
+		}
+		s.failItem = func() { s.failInvocation(&declared) }
+		if _, _, e := s.nativeResponse(&declared, nil); e != nil {
+			return e
+		}
+	}
+	s.failItem = nil
 	var checked []nativewire.CheckedStep
 	if inv != nil {
 		s.failItem = func() { s.failInvocation(inv) }
@@ -143,29 +154,9 @@ func (s *eligibilitySession) verifyNative() *Error {
 		} else {
 			nativeReady = false
 		}
-		data, haveRaw, e := s.member(inv.Response)
+		raw, haveRaw, e := s.nativeResponse(inv, versions)
 		if e != nil {
 			return e
-		}
-		var raw nativewire.Response
-		if haveRaw {
-			if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
-				return e
-			}
-			if e := s.b.decode(inv.ID+"/native-response-shape", data, &raw, true); e != nil {
-				return e
-			}
-
-			var capability struct {
-				Policy                string `json:"policy"`
-				RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
-			}
-			if e := s.b.decode("native-observation-capability", raw.Producer.ReuseObservation, &capability, true); e != nil {
-				return e
-			}
-			if e := s.nativeReservation(raw, versions); e != nil {
-				return e
-			}
 		}
 		if haveRaw && len(versions) > 0 {
 			abi, p := w.Native.ProducerABI, raw.Producer
@@ -178,7 +169,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 				s.finding("ELIGIBILITY_NATIVE_PRODUCER_ABI", inv.ID, true)
 				nativeReady = false
 			}
-			if haveProcess && (process.StdoutBytes != uint64(len(data))+4 || process.StdoutBytes > w.Native.Process.StdoutBytes || process.StderrBytes > w.Native.Process.StderrBytes) {
+			if haveProcess && (process.StdoutBytes != inv.Response.Member.Bytes+4 || process.StdoutBytes > w.Native.Process.StdoutBytes || process.StderrBytes > w.Native.Process.StderrBytes) {
 				s.finding("ELIGIBILITY_NATIVE_PROCESS_STREAM", inv.ID, true)
 				nativeReady = false
 			}
@@ -582,6 +573,31 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 		good = false
 	}
 	return good, nil
+}
+
+func (s *eligibilitySession) nativeResponse(inv *eligibilityInvocation, versions [][]byte) (nativewire.Response, bool, *Error) {
+	var raw nativewire.Response
+	data, haveRaw, e := s.member(inv.Response)
+	if e != nil || !haveRaw {
+		return raw, false, e
+	}
+	if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
+		return raw, false, e
+	}
+	if e := s.b.decode(inv.ID+"/native-response-shape", data, &raw, true); e != nil {
+		return raw, false, e
+	}
+	var capability struct {
+		Policy                string `json:"policy"`
+		RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
+	}
+	if e := s.b.decode("native-observation-capability", raw.Producer.ReuseObservation, &capability, true); e != nil {
+		return raw, false, e
+	}
+	if e := s.nativeReservation(raw, versions); e != nil {
+		return raw, false, e
+	}
+	return raw, true, nil
 }
 
 func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions [][]byte) *Error {

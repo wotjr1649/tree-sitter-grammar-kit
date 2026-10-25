@@ -2159,3 +2159,53 @@ func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryReferenceEligibilityReview39(t *testing.T) {
+	for _, bad := range []string{"valid", "missing-step", "null-has-error", "nested-unknown"} {
+		for _, prior := range []bool{false, true} {
+			t.Run(fmt.Sprintf("missing-native-%s-prior-%v", bad, prior), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				f.reg.Native = nil
+				if bad != "valid" {
+					f.nativeMutation(func(data []byte) []byte {
+						var raw map[string]any
+						if e := jsonv2.Unmarshal(data, &raw); e != nil {
+							t.Fatal(e)
+						}
+						step := raw["steps"].([]any)[0].(map[string]any)
+						tree := step["incremental"].(map[string]any)
+						switch bad {
+						case "missing-step":
+							delete(step, "step")
+						case "null-has-error":
+							tree["has_error"] = nil
+						default:
+							tree["queries"] = []any{map[string]any{"unknown": true}}
+						}
+						return eligibilityJSON(t, raw)
+					})
+				}
+				if prior {
+					for i := range f.reg.Invocations {
+						if f.reg.Invocations[i].ID == "current-ref-0" {
+							f.reg.Invocations[i].Node.Identities["run"] = "wrong-run"
+						}
+					}
+				}
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				malformed := bad != "valid"
+				if (err != nil) != malformed || malformed && asError(err).Kind != KindInvalidInput || got.Complete == malformed {
+					t.Fatalf("raw shape hidden: err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+				}
+				if prior {
+					if got.Assessment != AssessFail || got.Tuple.Failed != 1 || !eligibilityFinding(got, "ELIGIBILITY_NODE_BINDING") {
+						t.Fatalf("known failure lost: assessment%s counts%+v", got.Assessment, got.Tuple)
+					}
+				} else if got.Tuple.Failed != 0 || !malformed && got.Assessment != AssessBlocked || malformed && got.Assessment != AssessNotAssessed {
+					t.Fatalf("missing group assessment%s counts%+v", got.Assessment, got.Tuple)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+}
