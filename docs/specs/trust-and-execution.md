@@ -48,6 +48,8 @@ native `incremental`·`oracle record`는 output과 고정 child directory를 배
 
 **#215는 이 부분 구현만으로 완료되지 않는다.** Linux·macOS의 `Mkdir` 성공부터 첫 `OpenRoot`까지 원래 생성한 directory임을 증명하는 공백은 남는다. random staging·추가 stat·협조하지 않는 process에 대한 lockfile을 해결 근거로 삼지 않는다. namespace 전체의 원자적 snapshot과 Linux·macOS의 임시 file basename 자체 교체에 대한 객체 지정 cleanup은 아직 증명하지 않는다. native CLI의 output parent 및 case·grammar root pathname 재개방은 위 handle 전달로 대체하지만, input 내부의 모든 동시 교체를 원자적으로 거부한다고 주장하지 않는다. 기존 보장 기준을 유지하며 이 경계는 미완료로 남긴다. `os.Root`는 bind mount 자체를 차단하지 않고, 열린 directory의 input 아래 이동·쓰기 뒤 이동·동일 UID 적대자나 mount 권한자를 격리하지 않는다. 이 한계를 넓은 동시 변경 안전성 주장으로 대체하지 않는다.
 
+Linux의 별도 [출력 소유권 API probe](../../src/dev/output-ownership-probe/README.md)는 새 task directory에서 fanotify FID와 O_TMPFILE/linkat의 제한된 관측만 남긴다. 모든 결과는 support `BLOCKED`이며 기존 CLI/native 출력 경로·qualification에 연결하지 않는다. 교체 대조는 같은 process의 결정적 namespace 연산이고 다른 UID 공격이나 생성객체 획득의 일반 증명을 대신하지 않는다. procfs 종류 확인만으로 fd table 결속을 증명하지 않아 publication의 성공 primitive도 `UNVERIFIED`다. 새 권한·설치·fallback·이름 기반 cleanup은 사용하지 않는다.
+
 ### S02 구현 — archive profile `zip-r1`과 이름 정책 `portable-names-r1`
 
 `kit.Verify`/`tsgk verify --archive`는 ZIP을 풀지 않고 직접 읽는다. 지원 범위(`zip-r1`)는 단일 디스크, 압축 방식 0(stored)·8(deflate), data descriptor(general purpose bit 3)다. ZIP64, 다중 디스크, 암호화·strong encryption·masked header, 다른 압축 방식은 `UNSUPPORTED`(`ZIP64_UNSUPPORTED`, `ZIP_MULTIDISK_UNSUPPORTED`, `ZIP_ENCRYPTED_UNSUPPORTED`, `ZIP_METHOD_UNSUPPORTED`)로 끝나며 건너뛰지 않는다. tar·gzip 같은 다른 형식은 EOCD가 없어 `ZIP_EOCD_MISSING`이다.
