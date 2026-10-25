@@ -1,5 +1,7 @@
 """Focused integrity regressions; fault processes use the real reference supervisor."""
 import json
+import base64
+import copy
 import hashlib
 import os
 from pathlib import Path
@@ -12,10 +14,43 @@ import ast
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
+from checks import streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
 
 
 class IntegrityTests(unittest.TestCase):
+    def test_raw_stream_schema_base64_counts_and_utf8(self):
+        receipt = {'schema': 'tsgk-reference-process/r1', 'stdout_base64': 'w6kA', 'stderr_base64': '',
+                   'execution': {'stdout_bytes': 3, 'stderr_bytes': 0,
+                                 'stdout_truncated': False, 'stderr_truncated': False}}
+        self.assertEqual(streams(receipt), ('é\0'.encode(), b''))
+        self.assertEqual(stream_text(receipt), 'é\0')
+        for field, value in (('schema', 'legacy'), ('stdout_base64', None), ('stdout_base64', '!!'),
+                             ('stdout_base64', 'w6kA\n'), ('stdout_base64', 'Zh==')):
+            changed = copy.deepcopy(receipt)
+            changed[field] = value
+            if value == 'Zh==':
+                changed['execution']['stdout_bytes'] = 1
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(RuntimeError, 'STREAM_INVALID'):
+                streams(changed)
+        for field, value in (('stdout_bytes', True), ('stdout_bytes', 2), ('stdout_bytes', 4),
+                             ('stderr_bytes', 1), ('stdout_truncated', 0)):
+            changed = copy.deepcopy(receipt)
+            changed['execution'][field] = value
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(RuntimeError, 'STREAM_INVALID'):
+                streams(changed)
+        changed = copy.deepcopy(receipt)
+        changed['stdout_base64'] = '/wBB'
+        self.assertEqual(streams(changed)[0], b'\xff\0A')
+        with self.assertRaisesRegex(RuntimeError, 'STREAM_UTF8'):
+            stream_text(changed)
+        changed = copy.deepcopy(receipt)
+        changed['execution'].update(stdout_bytes=4, stdout_truncated=True)
+        self.assertEqual(streams(changed)[0], 'é\0'.encode())
+        for changed in ({'stdout': 'é\0', 'stderr': '', 'execution': receipt['execution']},
+                        dict(receipt, stdout='extra')):
+            with self.assertRaisesRegex(RuntimeError, 'STREAM_INVALID'):
+                streams(changed)
+
     def test_producers_save_exact_request_before_dispatch(self):
         here = Path(__file__).resolve().parent
         for script, operation in (('build.py', 'execute'), ('check.py', 'execute'), ('check.py', 'truncated')):
@@ -39,7 +74,8 @@ class IntegrityTests(unittest.TestCase):
                         if operation == 'truncated':
                             self.assertEqual(spec['StdoutBytes'], 1024)
                             self.assertEqual(batch_path.read_bytes(), batch_bytes)
-                        receipt = {'stdout': 'ok', 'stderr': '', 'execution': {
+                        receipt = {'schema': 'tsgk-reference-process/r1', 'stdout_base64': 'b2s=', 'stderr_base64': '', 'execution': {
+                            'stdout_bytes': 2, 'stderr_bytes': 0,
                             'status': 'COMPLETED', 'reason': 'EXITED', 'exit_code': 0,
                             'stdout_truncated': False, 'stderr_truncated': False,
                             'cleanup': {'verified': True, 'residual_after_exit': 0}}}
@@ -47,7 +83,7 @@ class IntegrityTests(unittest.TestCase):
                         return SimpleNamespace(returncode=0)
 
                     run = Mock(side_effect=dispatch)
-                    namespace = {'json': json, 'sys': sys, 'execution': execution, 'source': root, 'dest': root,
+                    namespace = {'json': json, 'sys': sys, 'execution': execution, 'streams': streams, 'stream_text': stream_text, 'source': root, 'dest': root,
                                  'args': SimpleNamespace(work=root, supervisor=root/'supervisor', cgroup_parent=''),
                                  'runner': root/'supervisor', 'environment': {'X': 'back\\slash\n끝'},
                                  'env': {'X': 'back\\slash\n끝'}, 'subprocess': SimpleNamespace(run=run)}
@@ -132,7 +168,7 @@ int main(int argc, char **argv) {
                 'CgroupParent': os.environ.get('TSGK_REFERENCE_CGROUP_PARENT', '')}
         process = subprocess.run([os.environ['TSGK_REFERENCE_SUPERVISOR']], input=json.dumps(spec).encode(), env=env, capture_output=True, timeout=40)
         self.assertEqual(process.returncode, 0, process.stderr)
-        execution(json.loads(process.stdout), 0)
+        execution(json.loads(process.stdout.decode('utf-8')), 0)
         return binary, env
 
     @unittest.skipUnless(all(os.environ.get('TSGK_REFERENCE_'+name) for name in ('SUPERVISOR','CC','AR','GIT','ARCHIVE')), 'orchestration tools not supplied')
@@ -359,6 +395,27 @@ runpy.run_path(entry, run_name='__main__')
                     unchanged_bytes(path, original)
 
     @unittest.skipUnless(os.environ.get("TSGK_REFERENCE_SUPERVISOR"), "real supervisor not supplied")
+    def test_real_raw_stream_roundtrip(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env = {key: os.environ[key] for key in ("SystemRoot", "WINDIR", "COMSPEC", "PATHEXT") if key in os.environ}
+            env.update(TEMP=directory, TMP=directory, TMPDIR=directory)
+            for stdout, stderr in ((b'', b''), ('é\0끝\n'.encode(), b'\0'), (b'\xff\0A\n', b'\xfe')):
+                script = 'import sys; sys.stdout.buffer.write(' + repr(stdout) + '); sys.stderr.buffer.write(' + repr(stderr) + ')'
+                spec = {'Path': sys.executable, 'Args': ['-I', '-c', script], 'Dir': directory,
+                        'Env': [k + '=' + v for k, v in env.items()], 'StdoutBytes': 1024, 'StderrBytes': 1024,
+                        'Wall': 3 * 10**9, 'Grace': 10**9, 'Memory': {'Bytes': 1024**3, 'Hard': sys.platform != 'darwin'},
+                        'CgroupParent': os.environ.get('TSGK_REFERENCE_CGROUP_PARENT', '')}
+                process = subprocess.run([os.environ['TSGK_REFERENCE_SUPERVISOR']], input=json.dumps(spec).encode(),
+                                         env=env, capture_output=True, timeout=10)
+                self.assertEqual(process.returncode, 0, process.stderr)
+                receipt = json.loads(process.stdout.decode('utf-8'))
+                execution(receipt, 0)
+                self.assertEqual(streams(receipt), (stdout, stderr))
+                if stdout.startswith(b'\xff'):
+                    with self.assertRaisesRegex(RuntimeError, 'STREAM_UTF8'):
+                        stream_text(receipt)
+
+    @unittest.skipUnless(os.environ.get("TSGK_REFERENCE_SUPERVISOR"), "real supervisor not supplied")
     def test_real_negative_exit_timeout_and_output_limit(self):
         supervisor = Path(os.environ["TSGK_REFERENCE_SUPERVISOR"])
         self.assertTrue(supervisor.is_absolute() and supervisor.is_file())
@@ -368,7 +425,7 @@ runpy.run_path(entry, run_name='__main__')
             for label, tail, wall in (("exit", "raise SystemExit(1)", 3), ("hang", "import time; time.sleep(30)", 1), ("truncate", "import sys; sys.stderr.write('x'*8192); sys.stderr.flush(); raise SystemExit(1)", 3)):
                 spec = {"Path": sys.executable, "Args": ["-I", "-c", 'print(\'{"status":"FAILED","complete":false}\', flush=True); ' + tail], "Dir": directory, "Env": [k + "=" + v for k, v in env.items()], "StdoutBytes": 1024, "StderrBytes": 1024, "Wall": wall * 10**9, "Grace": 10**9, "Memory": {"Bytes": 1024**3, "Hard": sys.platform != "darwin"}, "CgroupParent": os.environ.get("TSGK_REFERENCE_CGROUP_PARENT", "")}
                 result = subprocess.run([str(supervisor)], input=json.dumps(spec).encode(), env=env, capture_output=True, timeout=10)
-                receipt = json.loads(result.stdout)
+                receipt = json.loads(result.stdout.decode('utf-8'))
                 self.assertEqual(result.returncode, 1)
                 self.assertTrue(receipt["execution"]["cleanup"]["verified"])
                 if label == "exit":

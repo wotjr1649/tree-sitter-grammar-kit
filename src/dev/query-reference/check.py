@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, json, os, subprocess
 import argparse
 import sys
-from checks import execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
+from checks import streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
 if sys.flags.optimize:
     raise RuntimeError('assertions must be enabled')
 parser = argparse.ArgumentParser(description=__doc__)
@@ -46,7 +46,7 @@ def execute(name, path, argv, wall=10, memory=1024 ** 3, expected_exit=0):
     (dest / (name + '-request.json')).write_bytes(request)
     with (dest / (name + '.json')).open('xb') as out, (dest / (name + '.stderr')).open('xb') as err:
         p = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=wall + 15)
-    receipt = json.loads((dest / (name + '.json')).read_bytes())
+    receipt = json.loads((dest / (name + '.json')).read_text(encoding='utf-8'))
     execution(receipt, expected_exit)
     assert p.returncode == (0 if expected_exit == 0 else 1)
     return (p.returncode, receipt)
@@ -90,7 +90,7 @@ for name, clause, keep in cases:
         s.write_bytes(source)
         code, receipt = execute(label, binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
         assert code == 0, (label, receipt)
-        r = json.loads(receipt['stdout'])
+        r = json.loads(stream_text(receipt))
         assert r['schema'] == 'tsgk-instrumented-query-reference/r1' and r['status'] == 'COMPLETED' and r['complete'] and r['cursor_exhausted'] and (not r['did_exceed_match_limit'])
         assert r['input'] == {'encoding': 'UTF-8', 'bytes': len(source), 'sha256': sha(source)} and r['grammar']['library_sha256'] == library_sha
         assert r['tree']['nodes'] == nodes, (label, 'manual CST mismatch', r['tree'])
@@ -104,7 +104,7 @@ for label, source in [('two-captures-kept', b'x;\n1;\n'), ('two-captures-rejecte
     s = dest / (label + '.txt')
     s.write_bytes(source)
     code, receipt = execute(label, binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
-    r = json.loads(receipt['stdout'])
+    r = json.loads(stream_text(receipt))
     second = dict(anchor, capture=1, name='y')
     assert code == 0 and r['complete'] and (r['tree']['nodes'] == nodes)
     assert r['query']['predicates'] == metadata['eq'] and r['query']['capture_names'] == ['x', 'y']
@@ -118,7 +118,7 @@ for op in ['eq?', 'not-eq?']:
         s = dest / (label + '.txt')
         s.write_bytes(b'x;\nx;\n' if equal else b'x;\ny;\n')
         code, receipt = execute(label, binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
-        r = json.loads(receipt['stdout'])
+        r = json.loads(stream_text(receipt))
         expected_nodes = [dict(n) for n in nodes]
         expected_nodes[5]['type'] = 'identifier'
         second = dict(anchor, capture=1, name='y', node=5, start_byte=3, end_byte=4, start_point={'row': 1, 'column': 0}, end_point={'row': 1, 'column': 1})
@@ -133,7 +133,7 @@ q.write_bytes(b'(identifier) @x @x')
 s = dest / 'duplicate-captures.txt'
 s.write_bytes(b'x;\n1;\n')
 code, receipt = execute('duplicate-captures', binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
-r = json.loads(receipt['stdout'])
+r = json.loads(stream_text(receipt))
 assert code == 0 and r['complete'] and (r['query']['structural'] == r['query']['evaluated'] == [anchor, anchor])
 passed.append('duplicate-captures-preserved')
 q = dest / 'empty.scm'
@@ -141,17 +141,17 @@ q.write_bytes(b'(source_file) @x')
 s = dest / 'empty.txt'
 s.write_bytes(b'')
 code, receipt = execute('empty', binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha])
-r = json.loads(receipt['stdout'])
+r = json.loads(stream_text(receipt))
 assert code == 0 and r['tree']['nodes'] == [node('source_file', -1, 0, 0, (0, 0), (0, 0))] and (r['query']['structural'] == r['query']['evaluated'] == [])
 passed.append('empty')
 q = dest / 'unsupported.scm'
 q.write_bytes(b'((identifier) @x (#match? @x "x"))')
 code, receipt = execute('unsupported', binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', library_sha], expected_exit=1)
-r = json.loads(receipt['stdout'])
+r = json.loads(stream_text(receipt))
 assert code != 0 and r['status'] == 'FAILED' and (not r['complete']) and (r['code'] == 'PREDICATE_OUTSIDE_REFERENCE_SUBSET')
 passed.append('unsupported-rejected')
 code, receipt = execute('wrong-library-sha', binary, [library, 'tree_sitter_tsgk_plain', s, q, 'q0', '0' * 64], expected_exit=1)
-r = json.loads(receipt['stdout'])
+r = json.loads(stream_text(receipt))
 assert code != 0 and r['code'] == 'LIBRARY_SHA256_MISMATCH' and (not r['complete'])
 passed.append('wrong-library-sha-rejected')
 batch_source = dest / 'batch.txt'
@@ -165,25 +165,25 @@ for i in range(16):
     ids.append(query_id)
     pairs.extend([query_id, query_path])
     _, receipt = execute(f'batch-single-{i}', binary, [library, 'tree_sitter_tsgk_plain', batch_source, query_path, query_id, library_sha])
-    result = json.loads(receipt['stdout'])
+    result = json.loads(stream_text(receipt))
     assert result['tree']['nodes'] == nodes and result['complete'] is True
     singles.append(result)
 prefix = ['--batch', library, 'tree_sitter_tsgk_plain', batch_source, library_sha]
 _, receipt = execute('batch-sixteen', binary, prefix+pairs, wall=50)
-assert batch(receipt['stdout'], ids) == singles
+assert batch(stream_text(receipt), ids) == singles
 passed.append('batch-sixteen-full-field-single-parity')
 _, receipt = execute('batch-one', binary, prefix+pairs[:2])
-assert batch(receipt['stdout'], ids[:1]) == singles[:1]
+assert batch(stream_text(receipt), ids[:1]) == singles[:1]
 passed.append('batch-one-full-field-single-parity')
 invalid = dest / 'invalid.scm'
 invalid.write_bytes(b'(')
 _, receipt = execute('batch-middle-failure', binary, prefix+['first',query_paths[0],'bad',invalid,'later',query_paths[1]], expected_exit=1)
-rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+rows = [json.loads(line) for line in stream_text(receipt).split('\n') if line]
 assert len(rows) == 3 and rows[0]['complete'] is True and rows[0]['query']['id'] == 'first'
 assert rows[1] == {'schema':'tsgk-instrumented-query-reference/r1','status':'FAILED','code':'QUERY_COMPILE','complete':False}
 assert rows[2] == {'schema':'tsgk-instrumented-query-reference-batch/r1','status':'FAILED','complete':False,'queries':['first','bad','later'],'responses_completed':1}
 try:
-    batch(receipt['stdout'], ['first','bad','later'])
+    batch(stream_text(receipt), ['first','bad','later'])
 except RuntimeError:
     pass
 else:
@@ -198,7 +198,7 @@ for label, arguments, expected_code in [
         ('duplicate', prefix+['same',query_paths[0],'same',query_paths[1]], 'IDENTIFIER_INVALID'),
         ('oversized-query', prefix+['q',oversized], 'INPUT_LIMIT')]:
     _, receipt = execute('batch-reject-'+label, binary, arguments, expected_exit=1)
-    rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+    rows = [json.loads(line) for line in stream_text(receipt).split('\n') if line]
     assert len(rows) == 2 and rows[0]['code'] == expected_code and rows[0]['complete'] is False
     assert rows[-1]['complete'] is False and rows[-1]['responses_completed'] == 0
     passed.append('batch-reject-'+label)
@@ -206,12 +206,12 @@ invalid_utf8 = dest / 'invalid-utf8.scm'
 invalid_utf8.write_bytes(b'(identifier) @\xff')
 for label, bad_path, expected_code in [('missing', dest/'missing.scm', 'INPUT_STAT'), ('oversized', oversized, 'INPUT_LIMIT'), ('utf8', invalid_utf8, 'QUERY_UTF8')]:
     _, receipt = execute('batch-later-input-'+label, binary, prefix+['first',query_paths[0],'bad',bad_path,'later',query_paths[1]], expected_exit=1)
-    rows = [json.loads(line) for line in receipt['stdout'].split('\n') if line]
+    rows = [json.loads(line) for line in stream_text(receipt).split('\n') if line]
     assert len(rows) == 3 and rows[0]['query']['id'] == 'first' and dict(rows[0], query=dict(rows[0]['query'], id='b0')) == singles[0]
     assert rows[1] == {'schema':'tsgk-instrumented-query-reference/r1','status':'FAILED','code':expected_code,'complete':False}
     assert rows[2] == {'schema':'tsgk-instrumented-query-reference-batch/r1','status':'FAILED','complete':False,'queries':['first','bad','later'],'responses_completed':1}
     try:
-        batch(receipt['stdout'], ['first','bad','later'])
+        batch(stream_text(receipt), ['first','bad','later'])
     except RuntimeError:
         pass
     else:
@@ -223,10 +223,10 @@ request = json.dumps(spec).encode()
 (dest/'batch-truncated-request.json').write_bytes(request)
 with (dest/'batch-truncated.json').open('xb') as out, (dest/'batch-truncated.stderr').open('xb') as err:
     process = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=65)
-receipt = json.loads((dest/'batch-truncated.json').read_bytes())
+receipt = json.loads((dest/'batch-truncated.json').read_text(encoding='utf-8'))
 assert process.returncode == 1 and receipt['execution']['stdout_truncated']
 assert receipt['execution']['cleanup']['verified'] and receipt['execution']['cleanup']['residual_after_exit'] == 0
-for check in (lambda: execution(receipt, 0), lambda: batch(receipt['stdout'], ids)):
+for check in (lambda: execution(receipt, 0), lambda: batch(stream_text(receipt), ids)):
     try:
         check()
     except RuntimeError:
