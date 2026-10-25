@@ -81,7 +81,10 @@ func (s *eligibilitySession) request(inv *eligibilityInvocation) (eligibilityPro
 	if e := s.b.decode(inv.ID+"/approved-request", inv.ApprovedRequest, &expected, true); e != nil {
 		return actual, false, e
 	}
-	data, ok := s.member(inv.Request)
+	data, ok, e := s.member(inv.Request)
+	if e != nil {
+		return actual, false, e
+	}
 	if !ok {
 		return actual, false, nil
 	}
@@ -126,7 +129,10 @@ func eligibilityValidateRequest(request eligibilityProcessRequest, id string) *E
 }
 
 func (s *eligibilitySession) receipt(inv *eligibilityInvocation, request eligibilityProcessRequest, expectedExit int, truncated bool) (*eligibilityOutput, bool, *Error) {
-	data, ok := s.member(inv.Receipt)
+	data, ok, e := s.member(inv.Receipt)
+	if e != nil {
+		return nil, false, e
+	}
 	if !ok {
 		return nil, false, nil
 	}

@@ -27,7 +27,10 @@ type eligibilityBuildIdentity struct {
 }
 
 func (s *eligibilitySession) snapshotRows(pin *eligibilityMember) (map[string]eligibilitySnapshotRow, bool, *Error) {
-	data, ok := s.member(pin)
+	data, ok, e := s.member(pin)
+	if e != nil {
+		return nil, false, e
+	}
 	if !ok {
 		return nil, false, nil
 	}
@@ -57,18 +60,21 @@ func (s *eligibilitySession) snapshotRows(pin *eligibilityMember) (map[string]el
 	return rows, good, nil
 }
 
-func (s *eligibilitySession) tool(id, cohort, name string, identity eligibilityMember, hashes, paths map[string]string) bool {
+func (s *eligibilitySession) tool(id, cohort, name string, identity eligibilityMember, hashes, paths map[string]string) (bool, *Error) {
 	t, ok := s.tools[id]
 	if !ok {
 		s.finding("ELIGIBILITY_TOOL_MISSING", id, false)
-		return false
+		return false, nil
 	}
-	_, memberOK := s.member(&t.IdentityMember)
+	_, memberOK, e := s.member(&t.IdentityMember)
+	if e != nil {
+		return false, e
+	}
 	if t.CohortID != cohort || t.ToolName != name || t.IdentityMember != identity || t.SubjectSHA256 != hashes[name] || t.PathLiteral != paths[name] || !hex64.MatchString(hashes[name]) || !memberOK {
 		s.finding("ELIGIBILITY_TOOL_BINDING", id, true)
-		return false
+		return false, nil
 	}
-	return s.provenance[t.ProvenanceID].ID != ""
+	return s.provenance[t.ProvenanceID].ID != "", nil
 }
 
 func (s *eligibilitySession) verifyBuild() *Error {
@@ -83,7 +89,10 @@ func (s *eligibilitySession) verifyBuild() *Error {
 		if !ok || c.Purpose != "build" {
 			return fail(KindInvalidInput, "ELIGIBILITY_BUILD_COHORT", "build", nil)
 		}
-		data, ok := s.member(&group.Identity)
+		data, ok, e := s.member(&group.Identity)
+		if e != nil {
+			return e
+		}
 		if ok {
 			if len(data) > 1<<20 {
 				return fail(KindResourceLimit, "ELIGIBILITY_IDENTITY_BYTES", group.Identity.Member.Path, nil)
@@ -103,7 +112,10 @@ func (s *eligibilitySession) verifyBuild() *Error {
 		if len(source)+len(vendor) > 60000 {
 			return fail(KindResourceLimit, "ELIGIBILITY_SNAPSHOT_ROWS", "build", nil)
 		}
-		binary, binaryReady := s.member(group.ReferenceBinary)
+		binary, binaryReady, e := s.member(group.ReferenceBinary)
+		if e != nil {
+			return e
+		}
 		_ = binary
 		if group.ReferenceBinary == nil {
 			s.finding("ELIGIBILITY_BUILD_BINARY_MISSING", "build", false)
@@ -138,7 +150,9 @@ func (s *eligibilitySession) verifyBuild() *Error {
 				for id, t := range s.tools {
 					if t.CohortID == group.CohortID && t.ToolName == name {
 						matches++
-						if !s.tool(id, group.CohortID, name, group.Identity, identity.Tools, identity.ToolPaths) {
+						if ok, e := s.tool(id, group.CohortID, name, group.Identity, identity.Tools, identity.ToolPaths); e != nil {
+							return e
+						} else if !ok {
 							groupReady = false
 						}
 					}
@@ -199,8 +213,15 @@ func (s *eligibilitySession) verifyBuild() *Error {
 			if group != nil && !s.processEnv(inv, req, paths, identity.ToolPaths, true) {
 				ready = false
 			}
-			inputReady := s.input(inv, "source", "NOT_APPLICABLE", nil, "", "", nil)
-			inputReady = s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil) && inputReady
+			inputReady, e := s.input(inv, "source", "NOT_APPLICABLE", nil, "", "", nil)
+			if e != nil {
+				return e
+			}
+			if ok, e := s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil); e != nil {
+				return e
+			} else {
+				inputReady = inputReady && ok
+			}
 			allowed := map[string]bool{"source": true, "library": true}
 			if rule.ID == "patch-check" || rule.ID == "patch" {
 				allowed["patch"] = true
@@ -210,7 +231,11 @@ func (s *eligibilitySession) verifyBuild() *Error {
 				}
 				path, found := s.expand(rule.Args[k], paths, s.cohorts[inv.CohortID].Platform)
 				if found {
-					inputReady = s.input(inv, "patch", "PINNED", eligibilityIndex(k), path, s.catalogue.ReferenceInputs["instrumentation.patch"], nil) && inputReady
+					if ok, e := s.input(inv, "patch", "PINNED", eligibilityIndex(k), path, s.catalogue.ReferenceInputs["instrumentation.patch"], nil); e != nil {
+						return e
+					} else {
+						inputReady = inputReady && ok
+					}
 				} else {
 					inputReady = false
 				}
@@ -226,7 +251,11 @@ func (s *eligibilitySession) verifyBuild() *Error {
 			if !s.fixedRequest(inv, req, rule, paths) {
 				ready = false
 			}
-			if group == nil || inv.CohortID != group.CohortID || !s.tool(inv.ToolID, inv.CohortID, rule.Tool, group.Identity, identity.Tools, identity.ToolPaths) {
+			if group == nil || inv.CohortID != group.CohortID {
+				ready = false
+			} else if ok, e := s.tool(inv.ToolID, inv.CohortID, rule.Tool, group.Identity, identity.Tools, identity.ToolPaths); e != nil {
+				return e
+			} else if !ok {
 				ready = false
 			}
 			if tool, found := s.tools[inv.ToolID]; found && req.Path != tool.PathLiteral {

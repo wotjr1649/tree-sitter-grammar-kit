@@ -425,7 +425,9 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 						nodeBad("REPLAY_SUBJECT_MISMATCH", id, "replay와 subject의 identity가 다르다: "+role)
 					}
 				}
-				x.checkReplayFile(n, t, kept, add)
+				if e := x.checkReplayFile(n, t, kept, add); e != nil {
+					return bad(e)
+				}
 			case "carries":
 				x.checkCarry(n, t, pol, nodeBad)
 			}
@@ -529,7 +531,7 @@ func (x *replayEnv) checkCarry(n, origin *EvidenceNode, pol evidencePolicy, add 
 
 // checkReplayFile reads a replay node's replay-result file, when it lists one, and binds
 // its evidence mode, assessment and subject run to the graph.
-func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]byte, add func(code, path, msg string)) {
+func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]byte, add func(code, path, msg string)) *Error {
 	for _, f := range n.Files {
 		if f.Role != "replay-result" {
 			continue
@@ -554,8 +556,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 		}
 		if x.r != nil {
 			if e := x.r.eligibility.reserveJSON("replay-result", data, 4); e != nil {
-				x.finding(e.Code, f.Path, "stored replay JSON exceeds eligibility budget")
-				continue
+				return e
 			}
 		}
 		if err := jsonv2.Unmarshal(data, &rr); err != nil {
@@ -578,6 +579,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			add("REPLAY_RESULT_MISMATCH", n.ID, "replay 결과의 subject run·attempt·platform이 graph의 subject와 다르다")
 		}
 	}
+	return nil
 }
 
 // findCycle returns a node on a reference cycle, or "".

@@ -16,6 +16,7 @@ import (
 // the documented absent form and only the rule that needs it is skipped. A caller must not
 // fill a value from the response itself.
 type Expect struct {
+	Check       func() error       // Optional cancellation checkpoint for repeated tree hashing.
 	Revision    string             // the request revision ("" is r1)
 	ID          string             // the request id
 	Nodes       uint64             // the node limit of a completed tree
@@ -142,7 +143,11 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 		if uint64(len(ns)) != w.DescendantCount || ns[0].HasError != w.HasError {
 			return t, invalid("RESPONSE_INVALID", errors.New("count or root flags"))
 		}
-		if TreeDigest(ns) != w.Digest {
+		digest, err := treeDigest(ns, e.Check)
+		if err != nil {
+			return t, err
+		}
+		if digest != w.Digest {
 			return t, invalid("TREE_DIGEST_MISMATCH", nil)
 		}
 		t.Nodes = ns

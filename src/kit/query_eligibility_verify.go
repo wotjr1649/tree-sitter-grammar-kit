@@ -163,7 +163,9 @@ func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceElig
 		}
 	}
 	for _, inv := range s.reg.Invocations {
-		s.bindInvocation(inv)
+		if e := s.bindInvocation(inv); e != nil {
+			return res, e
+		}
 	}
 	if e := s.verifyBuild(); e != nil {
 		return res, e
@@ -476,32 +478,32 @@ func (s *eligibilitySession) validateInput(x eligibilityInput) *Error {
 	return nil
 }
 
-func (s *eligibilitySession) member(pin *eligibilityMember) ([]byte, bool) {
+func (s *eligibilitySession) member(pin *eligibilityMember) ([]byte, bool, *Error) {
 	if pin == nil {
-		return nil, false
+		return nil, false, nil
 	}
 	if e := s.b.charge(1, uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256)), pin.Member.Path); e != nil {
-		return nil, false
+		return nil, false, e
 	}
 	expected, ok := s.owned[pin.Member.Path]
 	if !ok || expected != *pin || s.owners[pin.Member.Path] != pin.NodeID {
 		s.finding("ELIGIBILITY_MEMBER_OWNER", pin.Member.Path, true)
-		return nil, false
+		return nil, false, nil
 	}
 	actual, ok := s.snapshot.verifiedMembers[pin.Member.Path]
 	if !ok || actual != pin.Member {
 		s.finding("ELIGIBILITY_MEMBER_UNVERIFIED", pin.Member.Path, true)
-		return nil, false
+		return nil, false, nil
 	}
 	data, ok := s.snapshot.files[pin.Member.Path]
 	if !ok {
 		s.finding("ELIGIBILITY_MEMBER_MISSING", pin.Member.Path, true)
-		return nil, false
+		return nil, false, nil
 	}
-	return data, true
+	return data, true, nil
 }
 
-func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) {
+func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) *Error {
 	c := s.cohorts[inv.CohortID]
 	node, ok := s.nodes[inv.Node.ID]
 	p, approved := s.provenance[c.ProvenanceID]
@@ -534,7 +536,9 @@ func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) {
 	}
 	for _, pin := range []*eligibilityMember{inv.Request, inv.Receipt, inv.Response, inv.Process} {
 		if pin != nil {
-			if _, ok := s.member(pin); !ok {
+			if _, ok, e := s.member(pin); e != nil {
+				return e
+			} else if !ok {
 				ready = false
 			}
 		}
@@ -545,12 +549,15 @@ func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) {
 	}
 	for _, input := range inv.Inputs {
 		if input.MemberPin != nil {
-			if _, ok := s.member(input.MemberPin); !ok {
+			if _, ok, e := s.member(input.MemberPin); e != nil {
+				return e
+			} else if !ok {
 				ready = false
 			}
 		}
 	}
 	s.ready[inv.ID] = ready
+	return nil
 }
 
 func (s *eligibilitySession) verifyAssertions() {

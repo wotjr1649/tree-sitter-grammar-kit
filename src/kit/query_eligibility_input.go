@@ -5,24 +5,27 @@ import (
 	"strings"
 )
 
-func (s *eligibilitySession) input(inv *eligibilityInvocation, name, kind string, index *uint64, literal, sha string, bytes *uint64) bool {
+func (s *eligibilitySession) input(inv *eligibilityInvocation, name, kind string, index *uint64, literal, sha string, bytes *uint64) (bool, *Error) {
 	x, ok := inv.Inputs[name]
 	if !ok {
 		s.finding("ELIGIBILITY_INPUT_MISSING", inv.ID+"/"+name, false)
-		return false
+		return false, nil
 	}
 	good := x.Kind == kind
 	if kind == "NOT_APPLICABLE" {
 		if !good {
 			s.finding("ELIGIBILITY_INPUT_APPLICABILITY", inv.ID+"/"+name, true)
 		}
-		return good
+		return good, nil
 	}
 	if x.ArgvIndex == nil || index == nil || *x.ArgvIndex != *index || x.PathLiteral != literal {
 		good = false
 	}
 	if kind == "PINNED" {
-		_, present := s.member(x.MemberPin)
+		_, present, e := s.member(x.MemberPin)
+		if e != nil {
+			return false, e
+		}
 		good = good && present
 		if x.MemberPin == nil || sha != "" && x.MemberPin.Member.SHA256 != sha || bytes != nil && x.MemberPin.Member.Bytes != *bytes {
 			good = false
@@ -31,7 +34,7 @@ func (s *eligibilitySession) input(inv *eligibilityInvocation, name, kind string
 	if !good {
 		s.finding("ELIGIBILITY_INPUT_BINDING", inv.ID+"/"+name, true)
 	}
-	return good
+	return good, nil
 }
 
 func (s *eligibilitySession) inputSlots(inv *eligibilityInvocation, allowed map[string]bool) bool {
@@ -47,19 +50,35 @@ func (s *eligibilitySession) inputSlots(inv *eligibilityInvocation, allowed map[
 
 func eligibilityIndex(i int) *uint64 { n := uint64(i); return &n }
 
-func (s *eligibilitySession) fixedInputs(inv *eligibilityInvocation, args []string, paths map[string]string) bool {
+func (s *eligibilitySession) fixedInputs(inv *eligibilityInvocation, args []string, paths map[string]string) (bool, *Error) {
 	allowed := map[string]bool{"source": true, "library": true}
 	good := true
 	if len(args) == 0 {
-		return false
+		return false, nil
 	}
 	if inv.CatalogueID == "compile" {
-		good = s.input(inv, "source", "NOT_APPLICABLE", nil, "", "", nil) && good
-		good = s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil) && good
+		if ok, e := s.input(inv, "source", "NOT_APPLICABLE", nil, "", "", nil); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
+		if ok, e := s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
 		allowed["grammar-parser"], allowed["output-library"] = true, true
 		parser := s.catalogue.GrammarInputs["parser.c"]
-		good = s.input(inv, "grammar-parser", "PINNED", eligibilityIndex(5), args[5], parser.SHA256, &parser.Bytes) && good
-		good = s.input(inv, "output-library", "PINNED", eligibilityIndex(7), args[7], paths["LH"], nil) && good
+		if ok, e := s.input(inv, "grammar-parser", "PINNED", eligibilityIndex(5), args[5], parser.SHA256, &parser.Bytes); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
+		if ok, e := s.input(inv, "output-library", "PINNED", eligibilityIndex(7), args[7], paths["LH"], nil); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
 	} else {
 		batch := args[0] == "--batch"
 		sourceIndex, libraryIndex := 2, 0
@@ -74,10 +93,18 @@ func (s *eligibilitySession) fixedInputs(inv *eligibilityInvocation, args []stri
 		sourceName := strings.TrimPrefix(args[sourceIndex], base+sep)
 		source, found := s.catalogue.Inputs[sourceName]
 		if !found {
-			return false
+			return false, nil
 		}
-		good = s.input(inv, "source", "PINNED", eligibilityIndex(sourceIndex), args[sourceIndex], source.SHA256, &source.Bytes) && good
-		good = s.input(inv, "library", "PINNED", eligibilityIndex(libraryIndex), args[libraryIndex], paths["LH"], nil) && good
+		if ok, e := s.input(inv, "source", "PINNED", eligibilityIndex(sourceIndex), args[sourceIndex], source.SHA256, &source.Bytes); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
+		if ok, e := s.input(inv, "library", "PINNED", eligibilityIndex(libraryIndex), args[libraryIndex], paths["LH"], nil); e != nil {
+			return false, e
+		} else {
+			good = good && ok
+		}
 		queryIndices := []int{3}
 		if batch {
 			queryIndices = nil
@@ -91,15 +118,23 @@ func (s *eligibilitySession) fixedInputs(inv *eligibilityInvocation, args []stri
 			path := args[k]
 			queryName := strings.TrimPrefix(path, base+sep)
 			if queryName == "missing.scm" {
-				good = s.input(inv, name, "EXPECTED_ABSENT", eligibilityIndex(k), path, "", nil) && good
+				if ok, e := s.input(inv, name, "EXPECTED_ABSENT", eligibilityIndex(k), path, "", nil); e != nil {
+					return false, e
+				} else {
+					good = good && ok
+				}
 				continue
 			}
 			row, found := s.catalogue.Inputs[queryName]
 			if !found {
-				return false
+				return false, nil
 			}
-			good = s.input(inv, name, "PINNED", eligibilityIndex(k), path, row.SHA256, &row.Bytes) && good
+			if ok, e := s.input(inv, name, "PINNED", eligibilityIndex(k), path, row.SHA256, &row.Bytes); e != nil {
+				return false, e
+			} else {
+				good = good && ok
+			}
 		}
 	}
-	return s.inputSlots(inv, allowed) && good
+	return s.inputSlots(inv, allowed) && good, nil
 }

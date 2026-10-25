@@ -31,14 +31,21 @@ func (s *eligibilitySession) verifyNative() *Error {
 			return fail(KindInvalidInput, "ELIGIBILITY_NATIVE_INVOCATION", "native", nil)
 		}
 		nativeReady = s.ready[inv.ID] && eligibilityAllVerified(s.build, 9) && eligibilityAllVerified(s.units, 4) && eligibilityAllVerified(s.control, 53) && eligibilityAllVerified(s.assertions, 36)
-		_, executableReady := s.member(inv.Executable)
+		_, executableReady, e := s.member(inv.Executable)
+		if e != nil {
+			return e
+		}
 		nativeReady = nativeReady && executableReady
 		if inv.Executable == nil || inv.Executable.Member.SHA256 != w.Native.ExecutableSHA256 || !hex64.MatchString(w.Native.ExecutableSHA256) {
 			s.finding("ELIGIBILITY_NATIVE_EXECUTABLE", inv.ID, true)
 			nativeReady = false
 		}
 
-		source, haveSource := s.member(&n.Source)
+		source, haveSource, e := s.member(&n.Source)
+
+		if e != nil {
+			return e
+		}
 		if haveSource {
 			if n.Source.Member.Bytes != w.Input.Bytes || n.Source.Member.SHA256 != w.Input.SHA256 || !utf8.Valid(source) {
 				s.finding("ELIGIBILITY_NATIVE_SOURCE", "native", true)
@@ -76,7 +83,9 @@ func (s *eligibilitySession) verifyNative() *Error {
 		if e := s.r.check(); e != nil {
 			return e
 		}
-		if !s.nativeInputs(inv, n, w) {
+		if ok, e := s.nativeInputs(inv, n, w); e != nil {
+			return e
+		} else if !ok {
 			nativeReady = false
 		}
 	}
@@ -85,7 +94,10 @@ func (s *eligibilitySession) verifyNative() *Error {
 	}
 	var checked []nativewire.CheckedStep
 	if inv != nil {
-		requestBytes, requestReady := s.member(inv.Request)
+		requestBytes, requestReady, e := s.member(inv.Request)
+		if e != nil {
+			return e
+		}
 		var approved eligibilityNativeExpected
 		if e := s.b.decode(inv.ID+"/approved-request", inv.ApprovedRequest, &approved, true); e != nil {
 			return e
@@ -113,7 +125,10 @@ func (s *eligibilitySession) verifyNative() *Error {
 			s.finding("ELIGIBILITY_R4_EXPECTATION", inv.ID, true)
 			nativeReady = false
 		}
-		processBytes, haveProcess := s.member(inv.Process)
+		processBytes, haveProcess, e := s.member(inv.Process)
+		if e != nil {
+			return e
+		}
 		var process eligibilityExecution
 		if haveProcess {
 			if e := s.b.decode(inv.ID+"/process", processBytes, &process, true); e != nil {
@@ -125,7 +140,10 @@ func (s *eligibilitySession) verifyNative() *Error {
 		} else {
 			nativeReady = false
 		}
-		data, haveRaw := s.member(inv.Response)
+		data, haveRaw, e := s.member(inv.Response)
+		if e != nil {
+			return e
+		}
 		if haveRaw && len(versions) > 0 {
 			if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
 				return e
@@ -149,7 +167,12 @@ func (s *eligibilitySession) verifyNative() *Error {
 				s.finding("ELIGIBILITY_NATIVE_PROCESS_STREAM", inv.ID, true)
 				nativeReady = false
 			}
-			expect := nativewire.Expect{Revision: nativewire.ProtocolR4, ID: w.Native.RequestID, Nodes: w.Native.NodeLimit, API: w.Native.API, Points: w.Native.Points, SourceBytes: w.Input.Bytes, Exit: &process.ExitCode, Observation: &nativewire.Binding{Manifest: w.Native.RuntimeManifestSHA256, RunID: w.Native.ObservationRunID, ProducerSHA256: w.Native.ProducerSHA256, HistoryStart: w.Native.HistoryStart}}
+			expect := nativewire.Expect{Check: func() error {
+				if e := s.r.check(); e != nil {
+					return e
+				}
+				return nil
+			}, Revision: nativewire.ProtocolR4, ID: w.Native.RequestID, Nodes: w.Native.NodeLimit, API: w.Native.API, Points: w.Native.Points, SourceBytes: w.Input.Bytes, Exit: &process.ExitCode, Observation: &nativewire.Binding{Manifest: w.Native.RuntimeManifestSHA256, RunID: w.Native.ObservationRunID, ProducerSHA256: w.Native.ProducerSHA256, HistoryStart: w.Native.HistoryStart}}
 			for _, q := range w.Queries {
 				expect.Queries = append(expect.Queries, querywire.Source{ID: q.ID, Source: []byte(q.Source)})
 			}
@@ -173,6 +196,9 @@ func (s *eligibilitySession) verifyNative() *Error {
 				all := []reuseobs.Observation{}
 				for i, step := range raw.Steps {
 					cs, err := nativewire.CheckStep(i, step, expect)
+					if e, ok := err.(*Error); ok {
+						return e
+					}
 					if err != nil {
 						s.finding("ELIGIBILITY_R4_STEP", fmt.Sprintf("%s/%d", inv.ID, i), true)
 						nativeReady = false
@@ -330,7 +356,7 @@ func (s *eligibilitySession) observation(tuple QueryWitnessTuple) (eligibilityOb
 	return eligibilityObservation{}, false
 }
 
-func (s *eligibilitySession) nativeInputs(inv *eligibilityInvocation, n *eligibilityNative, w eligibilityWitness) bool {
+func (s *eligibilitySession) nativeInputs(inv *eligibilityInvocation, n *eligibilityNative, w eligibilityWitness) (bool, *Error) {
 	good := true
 	allowed := map[string]bool{"source": true, "library": true}
 	source, ok := inv.Inputs["source"]
@@ -341,7 +367,9 @@ func (s *eligibilitySession) nativeInputs(inv *eligibilityInvocation, n *eligibi
 		s.finding("ELIGIBILITY_NATIVE_SOURCE_INPUT", inv.ID, true)
 		good = false
 	}
-	if !s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil) {
+	if ok, e := s.input(inv, "library", "NOT_APPLICABLE", nil, "", "", nil); e != nil {
+		return false, e
+	} else if !ok {
 		good = false
 	}
 	for _, q := range w.Queries {
@@ -358,11 +386,14 @@ func (s *eligibilitySession) nativeInputs(inv *eligibilityInvocation, n *eligibi
 			good = false
 		}
 	}
-	return s.inputSlots(inv, allowed) && good
+	return s.inputSlots(inv, allowed) && good, nil
 }
 
 func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNativeExpected) (bool, *Error) {
-	data, ok := s.member(&n.BuildManifest)
+	data, ok, e := s.member(&n.BuildManifest)
+	if e != nil {
+		return false, e
+	}
 	if !ok {
 		return false, nil
 	}
@@ -403,7 +434,7 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	previousFile := ""
 	for _, line := range lines[5:] {
 		if e := s.b.charge(1, uint64(len(line)), "native-build-manifest"); e != nil {
-			return false, nil
+			return false, e
 		}
 		if strings.HasPrefix(line, "step=") {
 			name, args, valid := eligibilityBuildStep(strings.TrimPrefix(line, "step="))
@@ -477,7 +508,10 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 				grammar[fields[1]] = true
 				continue
 			}
-			_, verified := s.member(&pin)
+			_, verified, e := s.member(&pin)
+			if e != nil {
+				return false, e
+			}
 			if !found || !verified || pin.Member.Role != fields[0] || pin.Member.SHA256 != fields[2] || pin.Member.Bytes != size {
 				s.finding("ELIGIBILITY_NATIVE_GRAMMAR", fields[1], true)
 				good = false
@@ -521,6 +555,34 @@ func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions
 			for _, name := range tree.Fields {
 				logical += 4 * uint64(len(name))
 			}
+			reserveRows := func(rows [][]int64) *Error {
+				for _, row := range rows {
+					repeated := uint64(256)
+					if len(row) == 10 {
+						if row[1] >= 0 && row[1] < int64(len(tree.Types)) {
+							repeated += 4 * uint64(len(tree.Types[row[1]]))
+						}
+						if row[2] >= 0 && row[2] < int64(len(tree.Fields)) {
+							repeated += 4 * uint64(len(tree.Fields[row[2]]))
+						}
+					}
+					if e := s.b.charge(256, repeated, "native-node-strings"); e != nil {
+						return e
+					}
+				}
+				return nil
+			}
+			if e := reserveRows(tree.Nodes); e != nil {
+				return e
+			}
+			for _, partial := range tree.PartialTrees {
+				if e := s.b.charge(1, 0, "native-partial"); e != nil {
+					return e
+				}
+				if e := reserveRows(partial.Nodes); e != nil {
+					return e
+				}
+			}
 			if e := s.b.reserveJSON("native-query-bound", tree.Queries, 12); e != nil {
 				return e
 			}
@@ -550,11 +612,14 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			s.ready[inv.ID] = false
 			continue
 		}
-		if req.Path != inv.ExecutablePath || inv.ToolID != "" || inv.Executable == nil {
+		if inv.ToolID != "" || inv.Executable != nil && req.Path != inv.ExecutablePath {
 			s.finding("ELIGIBILITY_CURRENT_EXECUTABLE", inv.ID, true)
 			ready = false
 		}
-		_, exeOK := s.member(inv.Executable)
+		_, exeOK, e := s.member(inv.Executable)
+		if e != nil {
+			return e
+		}
 		ready = ready && exeOK
 		if s.reg.Build == nil || s.reg.Build.ReferenceBinary == nil {
 			ready = false
@@ -614,7 +679,10 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				s.finding("ELIGIBILITY_CURRENT_SOURCE_INPUT", inv.ID, true)
 				ready = false
 			} else {
-				sourceBytes, _ = s.member(source.MemberPin)
+				sourceBytes, _, e = s.member(source.MemberPin)
+				if e != nil {
+					return e
+				}
 			}
 		}
 		ids := make([]string, pairs)
@@ -663,7 +731,9 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			steps[i] = selected.Step
 			sha := digestHex([]byte(queries[i].Source))
 			size := uint64(len(queries[i].Source))
-			if !s.input(inv, queryKey, "PINNED", eligibilityIndex(qi), req.Args[qi], sha, &size) {
+			if ok, e := s.input(inv, queryKey, "PINNED", eligibilityIndex(qi), req.Args[qi], sha, &size); e != nil {
+				return e
+			} else if !ok {
 				ready = false
 			}
 			if source.MemberPin != nil && (selected.SourceSHA256 != source.MemberPin.Member.SHA256 || selected.SourceBytes != source.MemberPin.Member.Bytes) {
@@ -696,7 +766,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				s.ready[inv.ID] = false
 				continue
 			}
-			out.rows = bytes.Split(out.stdout[:len(out.stdout)-1], []byte{'\n'})
+			out.rows = bytes.SplitN(out.stdout[:len(out.stdout)-1], []byte{'\n'}, pairs+2)
 			if len(out.rows) != pairs+1 {
 				s.finding("ELIGIBILITY_CURRENT_BATCH_COUNT", inv.ID, true)
 				s.ready[inv.ID] = false

@@ -135,3 +135,17 @@ func TestCheckStepIndex(t *testing.T) {
 		t.Fatalf("negative step index: %v", err)
 	}
 }
+
+func TestTreeDigestCancellation(t *testing.T) {
+	tree := oneNodeTree(1, StatusCompleted, "")
+	stop := errors.New("cancelled hashing")
+	calls := 0
+	_, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error { calls++; return stop }})
+	if !errors.Is(err, stop) || calls != 1 {
+		t.Fatalf("digest checkpoint calls%d err%v", calls, err)
+	}
+	checked, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error { return nil }})
+	if err != nil || TreeDigest(checked.Nodes) != tree.Digest {
+		t.Fatalf("normal digest changed: %v", err)
+	}
+}

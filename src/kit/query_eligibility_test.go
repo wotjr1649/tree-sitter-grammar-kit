@@ -737,7 +737,11 @@ func TestQueryReferenceEligibilityAdversarial(t *testing.T) {
 				lines[0] = string(eligibilityJSON(f.t, r))
 				return []byte(strings.Join(lines, "\n"))
 			})
-		}, assessment: AssessFail, code: "ELIGIBILITY_BATCH_FULL_PARITY"},
+		}, assessment: AssessFail, code: "ELIGIBILITY_BATCH_FULL_PARITY", check: func(t *testing.T, g QueryReferenceEligibilityResult) {
+			if g.Control.Failed != 1 || g.Control.Verified != 52 || g.Assertion.Failed != 1 {
+				t.Fatalf("unrelated control/assertion contaminated control%+v assertion%+v", g.Control, g.Assertion)
+			}
+		}},
 		{name: "batch-footer-order", mutate: func(f *eligibilityFixture) {
 			f.stdoutMutation("control-batch-sixteen", func(data []byte) []byte {
 				lines := strings.Split(string(data), "\n")
@@ -1153,5 +1157,155 @@ func TestQueryReferenceEligibilityManifestAndABI(t *testing.T) {
 			}
 			eligibilityAssertCounts(t, got)
 		})
+	}
+}
+
+func TestQueryReferenceEligibilityReview34(t *testing.T) {
+	for _, kind := range []string{"current-missing-executable", "current-wrong-executable-path"} {
+		t.Run(kind, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			for i := range f.reg.Invocations {
+				inv := &f.reg.Invocations[i]
+				if inv.ID != "current-ref-1" {
+					continue
+				}
+				if kind == "current-missing-executable" {
+					inv.Executable, inv.ExecutablePath = nil, ""
+				} else {
+					inv.ExecutablePath = "/different/reference"
+				}
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			want := AssessFail
+			if kind == "current-missing-executable" {
+				want = AssessBlocked
+			}
+			if err != nil || !got.Complete || got.Assessment != want {
+				t.Fatalf("current descriptor %v assessment%s", err, got.Assessment)
+			}
+			if want == AssessBlocked && (got.Tuple.Verified != 1 || got.Tuple.Blocked != 2 || got.Tuple.Failed != 0) {
+				t.Fatalf("missing descriptor %+v", got.Tuple)
+			}
+		})
+	}
+	for _, partial := range []bool{false, true} {
+		t.Run(fmt.Sprintf("compact-strings-partial-%v", partial), func(t *testing.T) {
+			r, e := startRun(ctxT(t), 30*time.Second)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			b := &eligibilityBudget{r: r}
+			r.eligibility = b
+			s := &eligibilitySession{r: r, b: b}
+			tree := nativewire.WireTree{Queries: []byte(`[]`), Types: []string{strings.Repeat("x", 1<<20)}, Fields: []string{strings.Repeat("y", 1<<20)}}
+			rows := make([][]int64, 10000)
+			for i := range rows {
+				rows[i] = []int64{0, 0, 0, 1, 0, 1, 0, 0, 0, 1}
+			}
+			rows[0][0], rows[0][2] = -1, -1
+			if partial {
+				tree.PartialTrees = []nativewire.WirePartial{{Nodes: rows}}
+			} else {
+				tree.Nodes = rows
+			}
+			e = s.nativeReservation(nativewire.Response{Steps: []nativewire.Step{{Incremental: tree}}}, nil)
+			if e == nil || e.Kind != KindResourceLimit {
+				t.Fatalf("compact string amplification unreserved: %v", e)
+			}
+		})
+	}
+	t.Run("batch-rows", func(t *testing.T) {
+		f := newEligibilityFixture(t)
+		r, e := startRun(ctxT(t), 30*time.Second)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer r.cancel()
+		b := &eligibilityBudget{r: r}
+		r.eligibility = b
+		s := &eligibilitySession{r: r, b: b, res: &QueryReferenceEligibilityResult{}}
+		rule := f.cat.Controls[slices.IndexFunc(f.cat.Controls, func(r eligibilityControlRule) bool { return r.ID == "batch-sixteen" })]
+		for range 4 {
+			out := &eligibilityOutput{stdout: []byte(strings.Repeat("\n", 120000))}
+			good, e := s.controlResponses(rule, out, nil)
+			if good || e != nil || len(out.rows) > 18 {
+				t.Fatalf("batch split unbounded: good%v err%v rows%d", good, e, len(out.rows))
+			}
+		}
+	})
+}
+
+func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
+	for _, where := range []string{"tool", "input", "replay"} {
+		for _, kind := range []string{"cancel", "wall", "work", "values"} {
+			if kind == "values" && where != "replay" {
+				continue
+			}
+			for _, prior := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s-%s-prior-%v", where, kind, prior), func(t *testing.T) {
+					caller, cancel := context.WithCancel(ctxT(t))
+					defer cancel()
+					r, e := startRun(caller, 30*time.Second)
+					if e != nil {
+						t.Fatal(e)
+					}
+					defer r.cancel()
+					wall, expire := context.WithCancel(context.Background())
+					defer expire()
+					r.wall = wall
+					b := &eligibilityBudget{r: r}
+					r.eligibility = b
+					s := &eligibilitySession{r: r, b: b, res: &QueryReferenceEligibilityResult{}, tools: map[string]eligibilityTool{}}
+					x := &replayEnv{r: r}
+					if prior {
+						s.finding("PRIOR", "known", true)
+						x.finding("PRIOR", "known", "known")
+					}
+					f := newEligibilityFixture(t)
+					tool := f.reg.Tools[0]
+					s.tools[tool.ID] = tool
+					switch kind {
+					case "cancel":
+						cancel()
+					case "wall":
+						expire()
+					case "work":
+						b.work = eligibilityWorkLimit
+					}
+					want := "ELIGIBILITY_WORK_LIMIT"
+					if kind == "cancel" {
+						want = "CANCELLED"
+					}
+					if kind == "wall" {
+						want = "WALL_LIMIT"
+					}
+					if kind == "values" {
+						want = "JSON_VALUE_LIMIT"
+					}
+					switch where {
+					case "tool":
+						_, e = s.tool(tool.ID, tool.CohortID, tool.ToolName, tool.IdentityMember, map[string]string{tool.ToolName: tool.SubjectSHA256}, map[string]string{tool.ToolName: tool.PathLiteral})
+					case "input":
+						inv := &eligibilityInvocation{ID: "test", Inputs: map[string]eligibilityInput{"source": {Kind: "PINNED", MemberPin: &tool.IdentityMember, ArgvIndex: eligibilityIndex(0), PathLiteral: "source"}}}
+						_, e = s.input(inv, "source", "PINNED", eligibilityIndex(0), "source", "", nil)
+					case "replay":
+						data := []byte(`{}`)
+						if kind == "values" {
+							data = []byte(`{"padding":[` + strings.Repeat("0,", 2000000) + `0]}`)
+						}
+						node := &EvidenceNode{Files: []ReplayMember{{Path: "result.json", Role: "replay-result"}}}
+						e = x.checkReplayFile(node, &EvidenceNode{}, map[string][]byte{"result.json": data}, x.finding)
+					}
+					n := 0
+					if prior {
+						n = 1
+					}
+					if e == nil || e.Code != want || int(s.failures) != n || len(s.res.Findings) != n || len(x.findings) != n {
+						t.Fatalf("interruption %v failures%d/%d/%d", e, s.failures, len(s.res.Findings), len(x.findings))
+					}
+				})
+			}
+		}
 	}
 }

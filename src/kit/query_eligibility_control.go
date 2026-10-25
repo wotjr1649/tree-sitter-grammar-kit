@@ -46,14 +46,20 @@ func (s *eligibilitySession) verifyControls() *Error {
 		if !found || c.Purpose != "control" {
 			return fail(KindInvalidInput, "ELIGIBILITY_CONTROL_COHORT", "control", nil)
 		}
-		data, ok := s.member(&group.Summary)
+		data, ok, e := s.member(&group.Summary)
+		if e != nil {
+			return e
+		}
 		groupReady = ok
 		if ok {
 			if e := s.b.decode("control-summary", data, &summary, true); e != nil {
 				return e
 			}
 		}
-		_, libraryReady := s.member(group.Library)
+		_, libraryReady, e := s.member(group.Library)
+		if e != nil {
+			return e
+		}
 		if group.Library == nil {
 			s.finding("ELIGIBILITY_CONTROL_LIBRARY_MISSING", "control", false)
 		}
@@ -89,7 +95,10 @@ func (s *eligibilitySession) verifyControls() *Error {
 				groupReady = false
 				continue
 			}
-			_, verified := s.member(&pin)
+			_, verified, e := s.member(&pin)
+			if e != nil {
+				return e
+			}
 			if !found || !verified || pin.Member.Bytes != row.Bytes || pin.Member.SHA256 != row.SHA256 {
 				s.finding("ELIGIBILITY_GRAMMAR_INPUT", name, true)
 				groupReady = false
@@ -100,7 +109,9 @@ func (s *eligibilitySession) verifyControls() *Error {
 			for id, t := range s.tools {
 				if t.CohortID == cohort && t.ToolName == name {
 					matches++
-					if !s.tool(id, cohort, name, group.Summary, summary.ControlInputs, map[string]string{name: t.PathLiteral}) {
+					if ok, e := s.tool(id, cohort, name, group.Summary, summary.ControlInputs, map[string]string{name: t.PathLiteral}); e != nil {
+						return e
+					} else if !ok {
 						groupReady = false
 					}
 				}
@@ -136,14 +147,20 @@ func (s *eligibilitySession) verifyControls() *Error {
 			}
 			fixed := eligibilityBuildRule{ID: rule.ID, Tool: rule.Tool, Args: rule.Args, Dir: rule.Dir, WallSeconds: rule.WallSeconds, GraceSeconds: rule.GraceSeconds, MemoryBytes: rule.MemoryBytes, StdoutBytes: rule.StdoutBytes, StderrBytes: rule.StderrBytes}
 			if s.fixedRequest(inv, req, fixed, paths) {
-				if !s.fixedInputs(inv, req.Args, paths) {
+				if ok, e := s.fixedInputs(inv, req.Args, paths); e != nil {
+					return e
+				} else if !ok {
 					ready = false
 				}
 			} else {
 				ready = false
 			}
 			if rule.ID == "compile" {
-				if group == nil || !s.tool(inv.ToolID, cohort, "cc", group.Summary, summary.ControlInputs, map[string]string{"cc": req.Path}) {
+				if group == nil {
+					ready = false
+				} else if ok, e := s.tool(inv.ToolID, cohort, "cc", group.Summary, summary.ControlInputs, map[string]string{"cc": req.Path}); e != nil {
+					return e
+				} else if !ok {
 					ready = false
 				}
 				if inv.Executable != nil {
@@ -151,7 +168,10 @@ func (s *eligibilitySession) verifyControls() *Error {
 					ready = false
 				}
 			} else {
-				_, executableReady := s.member(inv.Executable)
+				_, executableReady, e := s.member(inv.Executable)
+				if e != nil {
+					return e
+				}
 				if !executableReady {
 					ready = false
 				}
@@ -187,6 +207,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 			return e
 		}
 	}
+	s.failItem = nil
 	// Full parsed response parity retains opaque runtime IDs and all producer fields.
 	for _, pair := range []struct {
 		batch string
@@ -258,7 +279,7 @@ func (s *eligibilitySession) controlResponses(rule eligibilityControlRule, out *
 			s.finding("ELIGIBILITY_BATCH_EOF", rule.ID, true)
 			return false, nil
 		}
-		out.rows = bytes.Split(out.stdout[:len(out.stdout)-1], []byte{'\n'})
+		out.rows = bytes.SplitN(out.stdout[:len(out.stdout)-1], []byte{'\n'}, expectedRows+1)
 	} else {
 		out.rows = [][]byte{out.stdout}
 	}
