@@ -46,7 +46,7 @@ func refused(err error, code string) outcome {
 	}
 	var errno unix.Errno
 	if !errors.As(err, &errno) {
-		return outcome{status, code + ":INVALID_HANDLE_SHAPE"}
+		return outcome{status, code + ":NON_ERRNO_FAILURE"}
 	}
 	unsupported := false
 	switch code {
@@ -219,6 +219,17 @@ func queueRemaining(deadline time.Time, total int) int {
 	return 64 << 10
 }
 
+func queueReadFailure(deadline time.Time, total int, err error) *outcome {
+	if err != nil && !errors.Is(err, unix.EAGAIN) {
+		r := refused(err, "QUEUE_READ")
+		return &r
+	}
+	if queueRemaining(deadline, total) == 0 {
+		return &outcome{"UNVERIFIED", "QUEUE_BUDGET"}
+	}
+	return nil
+}
+
 func directoryProbe(root string, replace bool) (result outcome) {
 	result = outcome{"UNVERIFIED", "NO_COMPLETE_WITNESS"}
 	parent, err := unix.Open(root, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0)
@@ -270,8 +281,8 @@ func directoryProbe(root string, replace bool) (result outcome) {
 		if n > 0 {
 			total += n
 		}
-		if queueRemaining(deadline, total) == 0 {
-			return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
+		if failure := queueReadFailure(deadline, total, err); failure != nil {
+			return *failure
 		}
 		if errors.Is(err, unix.EAGAIN) {
 			candidate := witness(events, pin, identity, int32(os.Getpid()), "child")
@@ -279,9 +290,6 @@ func directoryProbe(root string, replace bool) (result outcome) {
 				return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
 			}
 			return candidate
-		}
-		if err != nil {
-			return refused(err, "QUEUE_READ")
 		}
 		if n == 0 {
 			return outcome{"UNVERIFIED", "QUEUE_EOF"}

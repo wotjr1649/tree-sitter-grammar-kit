@@ -209,3 +209,18 @@ func TestQueueBudgetIncludesReadAndWitness(t *testing.T) {
 		}
 	}
 }
+
+func TestQueueErrorSurvivesExpiredBudget(t *testing.T) {
+	expired := time.Now().Add(-time.Second)
+	if r := queueReadFailure(expired, 256<<10, unix.EIO); r == nil || *r != (outcome{"FAILED", fmt.Sprintf("QUEUE_READ:errno=%d", unix.EIO)}) {
+		t.Fatalf("I/O failure hidden by budget: %+v", r)
+	}
+	for _, err := range []error{nil, unix.EAGAIN} {
+		if r := queueReadFailure(expired, 0, err); r == nil || *r != (outcome{"UNVERIFIED", "QUEUE_BUDGET"}) {
+			t.Fatalf("expired observation accepted: %+v", r)
+		}
+	}
+	if r := queueReadFailure(time.Now().Add(time.Hour), 0, unix.EAGAIN); r != nil {
+		t.Fatalf("in-budget EAGAIN not available for witness: %+v", r)
+	}
+}
