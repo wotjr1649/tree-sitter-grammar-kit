@@ -42,9 +42,10 @@ def sha(data):
 
 def execute(name, path, argv, wall=10, memory=1024 ** 3, expected_exit=0):
     spec = {'Path': str(path), 'Args': list(map(str, argv)), 'Dir': str(dest), 'Env': [k + '=' + v for k, v in sorted(env.items())], 'StdoutBytes': 64 * 1024 ** 2, 'StderrBytes': 1024 ** 2, 'Wall': wall * 10 ** 9, 'Grace': 2 * 10 ** 9, 'Memory': {'Bytes': memory, 'Hard': sys.platform != 'darwin'}, 'CgroupParent': args.cgroup_parent}
-    (dest / (name + '-request.json')).write_text(json.dumps(spec), encoding='utf-8', newline='\n')
+    request = json.dumps(spec).encode()
+    (dest / (name + '-request.json')).write_bytes(request)
     with (dest / (name + '.json')).open('xb') as out, (dest / (name + '.stderr')).open('xb') as err:
-        p = subprocess.run([str(runner)], input=json.dumps(spec).encode(), env=env, stdout=out, stderr=err, timeout=wall + 15)
+        p = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=wall + 15)
     receipt = json.loads((dest / (name + '.json')).read_bytes())
     execution(receipt, expected_exit)
     assert p.returncode == (0 if expected_exit == 0 else 1)
@@ -218,8 +219,10 @@ for label, bad_path, expected_code in [('missing', dest/'missing.scm', 'INPUT_ST
     passed.append('batch-later-input-'+label+'-keeps-prefix')
 spec = json.loads((dest/'batch-sixteen-request.json').read_bytes())
 spec['StdoutBytes'] = 1024
+request = json.dumps(spec).encode()
+(dest/'batch-truncated-request.json').write_bytes(request)
 with (dest/'batch-truncated.json').open('xb') as out, (dest/'batch-truncated.stderr').open('xb') as err:
-    process = subprocess.run([str(runner)], input=json.dumps(spec).encode(), env=env, stdout=out, stderr=err, timeout=65)
+    process = subprocess.run([str(runner)], input=request, env=env, stdout=out, stderr=err, timeout=65)
 receipt = json.loads((dest/'batch-truncated.json').read_bytes())
 assert process.returncode == 1 and receipt['execution']['stdout_truncated']
 assert receipt['execution']['cleanup']['verified'] and receipt['execution']['cleanup']['residual_after_exit'] == 0
