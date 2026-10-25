@@ -50,8 +50,8 @@ jobs:
             goarch: arm64
     runs-on: ${{ matrix.os }}
     # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
-    # the step sum of the slowest host (Linux 54 minutes) plus a runner allowance
-    timeout-minutes: 55
+    # the step sum of the slowest host (Linux 56 minutes) plus a runner allowance
+    timeout-minutes: 57
     defaults:
       run:
         shell: pwsh
@@ -159,6 +159,25 @@ jobs:
           # Private propagation confines mount changes to this finite child namespace.
           sudo -n timeout --kill-after=5s 40s unshare --mount --propagation private -- env -i PATH=/usr/bin:/bin TSGK_PRIVATE_MOUNT_TEST=1 $testBinary '-test.run' '^TestBindMountMembership$' '-test.v' '-test.timeout' 30s
           if ($LASTEXITCODE -ne 0) { throw 'isolated bind-mount boundary failed' }
+      - name: isolated Linux directory DAC boundary (#215)
+        if: runner.os == 'Linux'
+        timeout-minutes: 2
+        run: |
+          $dacBinary = Join-Path $env:RUNNER_TEMP "tsgk-dac-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.test"
+          go test -c -o $dacBinary ./src/internal/native
+          if ($LASTEXITCODE -ne 0) { throw 'DAC test build failed' }
+          $negative = & timeout --kill-after=5s 15s env -i PATH=/usr/bin:/bin TSGK_PRIVATE_DAC_TEST=1 $dacBinary '-test.run' '^TestLinuxOutputDACIsolation$' '-test.v' '-test.timeout' 10s 2>&1
+          $negativeCode = $LASTEXITCODE
+          if ($negativeCode -ne 1 -or ($negative -join "`n") -notmatch 'private mount namespace not established') { throw 'unisolated DAC fixture was not refused' }
+          $negative | Write-Output
+          # No account is created: credentials change only in finite fixture children, inside private mount/network namespaces.
+          $positive = & sudo -n timeout --kill-after=5s 40s unshare --mount --net --propagation private -- env -i PATH=/usr/bin:/bin TSGK_PRIVATE_DAC_TEST=1 $dacBinary '-test.run' '^TestLinuxOutputDACIsolation$' '-test.v' '-test.timeout' 30s 2>&1
+          $positiveCode = $LASTEXITCODE
+          $positive | Write-Output
+          if ($positiveCode -ne 0 -or ($positive -join "`n") -match '--- (SKIP|FAIL):') { throw 'isolated DAC fixture failed or skipped' }
+          foreach ($marker in @('DAC_SHARED_REPLACEMENT_OBSERVED_AND_ACQUISITION_REFUSED', 'DAC_NONOWNER_REPLACEMENT_REFUSED_WINNER_PRESERVED', 'DAC_EFFECTIVE_OVERRIDE_CALLER_REFUSED')) {
+            if ([regex]::Matches(($positive -join "`n"), $marker).Count -ne 1) { throw 'DAC fixture witness missing' }
+          }
       - name: hosted Windows subst output boundary (#215)
         if: runner.os == 'Windows'
         timeout-minutes: 2

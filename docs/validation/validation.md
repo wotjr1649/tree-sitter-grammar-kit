@@ -28,6 +28,10 @@
 
 ## #215 출력 소유권 검증
 
+Linux native의 `TestLinuxOutputParentPolicy`는 shared/sticky parent의 생성 전 거부, 단일 basename, 이미 열린 parent mode0300에서 O_PATH gate의 추가 read 요구 부재를 검사한다. `TestLinuxOutputACLAndNested`는 실제 ACL xattr의 write mask 거부·읽기 mask 허용과 default ACL/setgid에 따른 child mode·nested 생성 전 거부를 검사한다. 기존 target/nil·닫힌 target·충돌·member bytes·두 process 선점 검사를 유지한다. `TestLinuxOutputSyscallFailure`는 정상 양성대조 뒤 별도 finite child의 현재 thread에만 syscall filter를 설치하여 fstatfs/capget/faccessat2의 실제 EIO를 주고 output 부재를 확인한다. filter를 host나 후속 시험 thread에 전파하지 않는다.
+
+필수 Linux CI의 별도 2분 DAC step은 테스트 binary를 만든 뒤 namespace 없이 flag만 준 실행의 명시적 거부를 먼저 확인한다. 이어 기존 sudo/unshare 도구로 private mount/network namespace의 40초 child에서만 root fixture를 실행한다. 계정 생성이나 host 권한/ACL 설정은 없으며 task 임시 tree의 두 child credential(65534/65533)만 사용한다. 정상 owner 생성 후 비owner rename 거부와 승자 bytes 보존, shared parent에서는 실제 비owner 교체 성공 양성대조와 제품 gate의 생성 전 거부, effective CAP_DAC_OVERRIDE caller의 생성 전 거부를 확인한다. workflow는 실제 pass·세 개 witness를 요구하며 skip/timeout/미선택을 PASS로 세지 않는다. 새 2분 step 때문에 foundation job의 step 합계만 54→56분, job bound는 55→57분으로 조정한다. 기존 step·Go test·process timeout 및 제품 한도는 유지하며 기존 실패를 통과시키기 위한 확대가 아니다. 개발 Windows host에서 UID·namespace·privilege fixture를 실행하지 않는다.
+
 `TestPublishKeepsParentIdentity`는 검사 후 최종 게시 전 output parent pathname을 다른 directory로 교체하는 결정적 barrier를 사용한다. 보관한 parent에만 게시·정리하고 대체 directory의 기존 bytes를 보존해야 한다. Windows에서 열린 handle이 rename을 거부한 경우에도 그 실제 거부를 확인한다. `TestDirectoryReplacementDuringScan`은 child lookup 사이의 보통 directory·내부 alias·외부 alias 교체를 거부한다. `TestQualifyRechecksEveryHostBeforePublish`는 분석 후 2·3번째 host pathname을 바꾸어 최종 검사가 모든 host에 적용되는지 확인한다. cleanup 실패는 성공한 publication 사실을 보존하면서 오류로 보고해야 한다.
 
 native의 두 process가 같은 output을 동시에 선점하는 시험은 하나만 directory와 member를 만들고 다른 하나는 `OUTPUT_EXISTS`에 해당하는 충돌로 종료해야 한다. 기존 output·member bytes와 배타 child 생성을 검사하고, 획득한 output handle 뒤의 pathname 교체가 member 쓰기를 대체 directory로 돌리지 못하는지 확인한다. Windows 생성 handle은 native 생성과 Go root 연결 구간에 유지하며, reserved/ADS 이름·기존 alias와의 충돌을 거부한다. `Mkdir`와 첫 handle 획득 사이의 Linux·macOS 공백은 별도 미완료 항목이며 이 시험의 PASS로 해결했다고 기록하지 않는다.

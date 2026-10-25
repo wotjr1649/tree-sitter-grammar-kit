@@ -517,7 +517,7 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		t.Fatal("comment rejected: ", err)
 	}
 	for name, broken := range map[string]string{
-		"job-below-sum":     strings.Replace(text, "    timeout-minutes: 55\n", "    timeout-minutes: 15\n", 1),
+		"job-below-sum":     strings.Replace(text, "    timeout-minutes: 57\n", "    timeout-minutes: 15\n", 1),
 		"unbounded-step":    strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n", 1),
 		"native-outlasts":   strings.Replace(text, "go test $nativePackage -count=1 -v -timeout 420s", "go test $nativePackage -count=1 -v -timeout 480s", 1),
 		"frame-outlasts":    strings.Replace(text, "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 6\n", "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 4\n", 1),
