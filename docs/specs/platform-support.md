@@ -30,7 +30,7 @@ native 준비와 build는 기반 runtime commit에 [현재 local field patch](..
 
 ## C# symbol primary CST의 지원 경계 (#279)
 
-현재 inventory/r7·qualification/r8은 symbol 모드에 별도 primary CST 위치 대조 축을 둔다. Windows·Linux에서 6set/30사례를 실행하며 등록 기대값은 PASS22/MISMATCH4/NOT_APPLICABLE4, 비교 prefix29step이다. 네 detector의 정확한 정지는 등록 검사 PASS이지만 이 CST 축은 BLOCKED이고 두 platform 및 global support도 BLOCKED다. 기존78칸·2,478개 의무의 PASS와 별개다. macOS symbol 역할은 #243 DEFERRED이며 축·count·사례를 만들지 않고, 해당 platform의 기존26route 지원 scope를 바꾸지 않는다. 과거 main/PR의 SUPPORTED 결과는 당시 inventory revision의 관측으로 보존한다. 이 절의 수는 trusted 등록 기대값이며 실제 실행 완료는 해당 PR/main CI receipt로 확인한다.
+현재 inventory/r7·qualification/r8은 symbol 모드에 별도 primary CST 위치 대조 축을 둔다. Windows·Linux에서 6set/30사례를 실행하며 등록 기대값은 PASS22/MISMATCH4/NOT_APPLICABLE4, 비교 prefix29step이다. 네 detector의 정확한 정지는 등록 검사 PASS이지만 이 CST 축은 BLOCKED이고 두 platform 및 global support도 BLOCKED다. 기존78칸·2,478개 의무의 PASS와 별개다. macOS symbol 역할은 `DEFERRED`를 유지한다. 2026-10-25 사용자 결정으로 신규 macOS 검증을 제외하고 #243을 NOT_PLANNED로 종료했으며, 미검증을 PASS로 세지 않는다. 해당 역할은 축·count·사례를 만들지 않고, 해당 platform의 기존26route 지원 scope를 바꾸지 않는다. 과거 main/PR의 SUPPORTED 결과는 당시 inventory revision의 관측으로 보존한다. 이 절의 수는 trusted 등록 기대값이며 실제 실행 완료는 해당 PR/main CI receipt로 확인한다.
 
 ## 개발 main의 T-SQL 한계 (#109)
 
@@ -42,7 +42,7 @@ native 준비와 build는 기반 runtime commit에 [현재 local field patch](..
 
 [#196](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/196) 이후 개발 main의 경로 검사는 출력·trust document·실행 workspace가 입력 root나 그 하위 디렉터리의 별칭인지 handle-derived directory identity로 대조한다. bind mount 별칭은 Linux CI의 private mount namespace에서 검증하지만, Windows `subst` 별칭의 실제 mapping 시험은 실행하지 않았다([#215](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/215)). 이 검사는 검사·사용 중 namespace가 바뀌지 않는다는 전제의 정적 검사이며, 검사와 쓰기 사이의 동시 경로 교체는 보장하지 않는다. 아래 v0.2.0 한계 목록의 미검출 문구는 그 tag의 역사적 상태다.
 
-C# 기본 parser에서 비리터럴 조건의 compiler symbol 분기 선택은 [disposition](../validation/language-feature-disposition.md#csharp)에 따라 `NOT_CLAIMED`다. opt-in symbol 모드(`csharp-symbols/r1`, #218)는 qualification 추가 역할 `csharp-symbols`로 Windows·Linux에서 판정한다. 범위는 등록 symbols·입력·edit step의 분기 선택(고정 Roslyn 관측 기대값)과 활성 CST 구문이다. macOS 행은 [#243](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/243)까지 `DEFERRED`이며, macOS의 platform claim은 이 역할을 포함하지 않는다.
+C# 기본 parser에서 비리터럴 조건의 compiler symbol 분기 선택은 [disposition](../validation/language-feature-disposition.md#csharp)에 따라 `NOT_CLAIMED`다. opt-in symbol 모드(`csharp-symbols/r1`, #218)는 qualification 추가 역할 `csharp-symbols`로 Windows·Linux에서 판정한다. 범위는 등록 symbols·입력·edit step의 분기 선택(고정 Roslyn 관측 기대값)과 활성 CST 구문이다. macOS 신규 검증은 사용자 결정으로 수행하지 않는다([#243 NOT_PLANNED](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/243)). 행은 `DEFERRED`를 유지하며, macOS의 platform claim은 이 역할을 포함하지 않는다.
 
 ## Experimental 기능의 소비·유지보수 경계
 
@@ -68,7 +68,7 @@ release의 범위는 [제품 범위](scope.md)가 정한다. 아래 한계는 so
   - `--out`이 `subst`·bind mount 별칭을 검출하지 못함
   - BrightScript·cooklang 역할 NOT_RUN
   - `n461-large` 대형 실사용 profile은 Windows에서만 실행(Linux·macOS NOT_APPLICABLE)
-  - `csharp-symbols` 역할의 macOS 행 DEFERRED(#243). 분기를 바꾸는 edit 사례는 등록하지 않았다(바뀐 활성 범위가 text를 공유하지 않아 S05 incremental route claim이 FAIL이 되는 것을 관측함, [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277))
+  - `csharp-symbols` 역할의 macOS 행 DEFERRED(신규 검증 제외, #243 NOT_PLANNED). 분기를 바꾸는 edit 사례는 등록하지 않았다(바뀐 활성 범위가 text를 공유하지 않아 S05 incremental route claim이 FAIL이 되는 것을 관측함, [#277](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/277))
   - 26 route의 macOS 재생성과 macOS race 진단은 NOT_RUN
   - [#65](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/65)의 시험 시간 여유
 - v0.1.0(2026-10-04)의 claim은 offline core VERIFIED였고 26 route 지원은 주장하지 않았다(당시 판정 BLOCKED). 당시 claim과 한계는 [변경 기록](../../CHANGELOG.md)의 v0.1.0 절에 있다.

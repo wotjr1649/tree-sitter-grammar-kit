@@ -8,11 +8,74 @@ import sys
 import tempfile
 import unittest
 import shutil
+import ast
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 from checks import execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
 
 
 class IntegrityTests(unittest.TestCase):
+    def test_producers_save_exact_request_before_dispatch(self):
+        here = Path(__file__).resolve().parent
+        for script, operation in (('build.py', 'execute'), ('check.py', 'execute'), ('check.py', 'truncated')):
+            for storage_fails in (False, True):
+                with self.subTest(script=script, operation=operation, storage_fails=storage_fails), tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    label = 'batch-truncated' if operation == 'truncated' else 'probe'
+                    saved = root / (label + '-request.json')
+                    original = {'Path': str(root/'tool'), 'Args': ['back\\slash', 'line\n끝'], 'StdoutBytes': 64 * 1024**2}
+                    batch_path = root/'batch-sixteen-request.json'
+                    batch_bytes = json.dumps(original).encode()
+                    batch_path.write_bytes(batch_bytes)
+                    if storage_fails:
+                        saved.mkdir()
+
+                    def dispatch(argv, *, input, **kwargs):
+                        self.assertEqual(saved.read_bytes(), input)
+                        spec = json.loads(input)
+                        self.assertEqual(input, json.dumps(spec).encode())
+                        self.assertEqual(spec['Args'], original['Args'])
+                        if operation == 'truncated':
+                            self.assertEqual(spec['StdoutBytes'], 1024)
+                            self.assertEqual(batch_path.read_bytes(), batch_bytes)
+                        receipt = {'stdout': 'ok', 'stderr': '', 'execution': {
+                            'status': 'COMPLETED', 'reason': 'EXITED', 'exit_code': 0,
+                            'stdout_truncated': False, 'stderr_truncated': False,
+                            'cleanup': {'verified': True, 'residual_after_exit': 0}}}
+                        kwargs['stdout'].write(json.dumps(receipt).encode())
+                        return SimpleNamespace(returncode=0)
+
+                    run = Mock(side_effect=dispatch)
+                    namespace = {'json': json, 'sys': sys, 'execution': execution, 'source': root, 'dest': root,
+                                 'args': SimpleNamespace(work=root, supervisor=root/'supervisor', cgroup_parent=''),
+                                 'runner': root/'supervisor', 'environment': {'X': 'back\\slash\n끝'},
+                                 'env': {'X': 'back\\slash\n끝'}, 'subprocess': SimpleNamespace(run=run)}
+                    module = ast.parse((here/script).read_text(encoding='utf-8'), filename=script)
+                    if operation == 'execute':
+                        function = next(node for node in ast.walk(module) if isinstance(node, ast.FunctionDef) and node.name == 'execute')
+                        body = [function]
+                    else:
+                        start = next(i for i, node in enumerate(module.body) if isinstance(node, ast.Assign)
+                                     and any(isinstance(target, ast.Name) and target.id == 'spec' for target in node.targets))
+                        end = next(i for i in range(start+1, len(module.body)) if isinstance(module.body[i], ast.Assign)
+                                   and any(isinstance(target, ast.Name) and target.id == 'receipt' for target in module.body[i].targets))
+                        body = module.body[start:end]
+
+                    def invoke():
+                        # Exercise the scripts' dispatch code without building Rust or running the full controls here.
+                        exec(compile(ast.Module(body=body, type_ignores=[]), script, 'exec'), namespace)
+                        if operation == 'execute':
+                            namespace['execute'](label, root/'tool', original['Args'])
+
+                    if storage_fails:
+                        with self.assertRaises(OSError):
+                            invoke()
+                        run.assert_not_called()
+                    else:
+                        invoke()
+                        run.assert_called_once()
+
     def fault_tool(self, directory):
         root = Path(directory)
         source = root / 'tool.c'
