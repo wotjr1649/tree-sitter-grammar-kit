@@ -120,6 +120,40 @@ func testNativeSession(t *testing.T, ctx context.Context, b *native.Build, cc st
 			}
 		})
 	}
+	t.Run("session/late-cursor-fault", func(t *testing.T) {
+		fault, _, err := compile(ctx, b, cc, filepath.Join(b.Dir, "session-audit.c"), "CURSOR")
+		if err != nil {
+			t.Fatal(err)
+		}
+		binaryBytes, err := os.ReadFile(fault)
+		if err != nil {
+			t.Fatal(err)
+		}
+		failed, err := runSession(ctx, fault, digest(binaryBytes), b.Dir, req, nodes, 1, firstReceipt.Fields)
+		p := failed.Batch.Process
+		if err == nil || len(failed.RawPages) != int(nodes) || p.ExitCode != 1 || p.Reason != runner.ReasonExited || !p.Cleanup.Verified || p.Cleanup.ResidualAfterExit != 0 || p.StdoutTruncated || p.StderrTruncated || p.Memory.Enforcement != runner.MemoryHard || p.Memory.LimitHit {
+			t.Fatalf("later-page API fault accepted or unsafe: err=%v pages=%d process=%+v", err, len(failed.RawPages), p)
+		}
+		for i, raw := range failed.RawPages {
+			if i >= 2 {
+				if len(raw) != 0 || failed.Batch.Frames[i].Status == runner.FrameCompleted {
+					t.Fatalf("page %d completed after actual API fault", i)
+				}
+				continue
+			}
+			if failed.Batch.Frames[i].Status != runner.FrameCompleted {
+				t.Fatalf("actual response %d was not complete", i)
+			}
+			var page largeaudit.SessionPage
+			if err := json.Unmarshal(raw, &page); err != nil {
+				t.Fatal(err)
+			}
+			r, err := largeaudit.Decode(page.Receipt, req, uint64(i), uint64(i+1), nodes)
+			if err != nil || r.Differences != uint64(i) || (i == 1 && (r.First[0] != 1 || r.First[1] != 11 || r.First[2] != 1 || r.First[3] != 2)) {
+				t.Fatalf("cached model hid actual API fault on page %d: %v %+v", i, err, r)
+			}
+		}
+	})
 }
 
 func TestSessionFramePlanBounded(t *testing.T) {

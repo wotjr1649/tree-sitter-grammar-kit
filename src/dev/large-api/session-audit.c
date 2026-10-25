@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
   TSTree *tree = parse(parser,NULL,NULL,&source,r.enc,r.parse_ms,&error,&millis,NULL);
   if (!tree) return 3;
   if (ts_node_descendant_count(ts_tree_root_node(tree)) != expected_nodes) return 2;
+  /* The expected model belongs to this immutable tree; every page still calls the APIs. */
+  Audit audit = {0};
   uint32_t start = 0, index = 0;
   while (start < expected_nodes) {
     uint32_t end = start + page_size;
@@ -62,7 +64,7 @@ int main(int argc, char **argv) {
       if (got_start != start || got_end != end) return 2;
     }
     uint64_t differences;
-    Buf receipt = render_audit(&r,tree,start,end,&differences);
+    Buf receipt = render_audit(&r,tree,start,end,&differences,&audit);
     Buf out = {0}; out.limit = 4096;
     puts_(&out,"{\"schema\":\"tsgk-large-api-session-page/r1\",\"session\":"); putstr(&out,argv[1]);
     puts_(&out,",\"index\":"); putu(&out,index);
@@ -77,6 +79,7 @@ int main(int argc, char **argv) {
     start = end; index++;
   }
   if (fgetc(stdin) != EOF || ferror(stdin)) return 2;
+  idmap_free(&audit.map); t_free(audit.nodes);
   ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input);
   return 0;
 }
