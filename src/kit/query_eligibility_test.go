@@ -1309,3 +1309,229 @@ func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryReferenceEligibilityReview35(t *testing.T) {
+	for _, kind := range []string{"source", "library", "source-metadata", "source-present-mismatch"} {
+		t.Run("current-"+kind, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			for i := range f.reg.Invocations {
+				inv := &f.reg.Invocations[i]
+				if inv.ID != "current-ref-1" {
+					continue
+				}
+				if kind == "source-present-mismatch" {
+					x := inv.Inputs["source"]
+					x.MemberPin = inv.Inputs["query-0"].MemberPin
+					inv.Inputs["source"] = x
+				} else {
+					delete(inv.Inputs, strings.Split(kind, "-")[0])
+				}
+			}
+			if kind == "source-metadata" {
+				f.stdoutMutation("current-ref-1", func(data []byte) []byte {
+					var ref instrumentedReference
+					if e := jsonv2.Unmarshal(data, &ref); e != nil {
+						t.Fatal(e)
+					}
+					ref.Query.Patterns = 2
+					return append(eligibilityJSON(t, ref), '\n')
+				})
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			want := AssessBlocked
+			if strings.Contains(kind, "-") {
+				want = AssessFail
+			}
+			if err != nil || !got.Complete || got.Assessment != want {
+				t.Fatalf("missing/mismatched %v assessment%s", err, got.Assessment)
+			}
+			if want == AssessBlocked && (got.Tuple.Verified != 1 || got.Tuple.Blocked != 2 || got.Tuple.Failed != 0) {
+				t.Fatalf("missing counter %+v", got.Tuple)
+			}
+		})
+	}
+	for _, id := range []string{"control-structural-0", "current-ref-1"} {
+		for _, bad := range []string{"truncated", "duplicate", "unknown", "type"} {
+			for _, prior := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s-%s-prior-%v", id, bad, prior), func(t *testing.T) {
+					f := newEligibilityFixture(t)
+					f.stdoutMutation(id, func(data []byte) []byte {
+						switch bad {
+						case "truncated":
+							return []byte("{")
+						case "duplicate":
+							return append([]byte(`{"schema":"duplicate",`), data[1:]...)
+						case "unknown":
+							return append([]byte(`{"unknown":true,`), data[1:]...)
+						default:
+							return []byte(strings.Replace(string(data), `"complete":true`, `"complete":"wrong"`, 1))
+						}
+					})
+					req := f.request()
+					if prior {
+						a := f.approval
+						a.RegistrationSHA256 = strings.Repeat("0", 64)
+						req.Approval = eligibilityJSON(t, a)
+					}
+					got, err := VerifyQueryReferenceEligibility(ctxT(t), req)
+					if err == nil || asError(err).Kind != KindInvalidInput || got.Complete || prior && got.Assessment != AssessFail || !prior && got.Assessment == AssessFail {
+						t.Fatalf("malformed err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+					}
+					eligibilityAssertCounts(t, got)
+				})
+			}
+		}
+	}
+	for _, id := range []string{"build-patch-check", "control-structural-0"} {
+		for _, malformed := range []bool{false, true} {
+			t.Run(fmt.Sprintf("binding-%s-malformed-%v", id, malformed), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				for i := range f.reg.Invocations {
+					inv := &f.reg.Invocations[i]
+					if inv.ID != id {
+						continue
+					}
+					inv.Node.Identities = maps.Clone(inv.Node.Identities)
+					inv.Node.Identities["tool"] = "different-valid-tool"
+					if malformed {
+						f.replace(inv.Receipt.Member.Path, []byte("{"))
+					}
+				}
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				counts := got.Control
+				required := uint64(53)
+				verified := uint64(52)
+				if strings.HasPrefix(id, "build-") {
+					counts = got.Build
+					required = 9
+					verified = 8
+				}
+				if (err != nil) != malformed || got.Complete == malformed || got.Assessment != AssessFail || counts.Failed != 1 {
+					t.Fatalf("binding %v complete%v assessment%s counter%+v", err, got.Complete, got.Assessment, counts)
+				}
+				if !malformed && counts.Verified != verified {
+					t.Fatalf("completion %+v", counts)
+				}
+				if malformed {
+					v := uint64(0)
+					if required == 53 {
+						v = 1
+					}
+					if counts.Verified != v || counts.Unprocessed != required-v-1 {
+						t.Fatalf("interruption %+v", counts)
+					}
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityBindingInterruption(t *testing.T) {
+	for _, id := range []string{"build-patch-check", "control-structural-0"} {
+		for _, kind := range []string{"cancel", "wall", "work"} {
+			t.Run(id+"-"+kind, func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				f.request()
+				caller, cancel := context.WithCancel(ctxT(t))
+				defer cancel()
+				r, e := startRun(caller, 30*time.Second)
+				if e != nil {
+					t.Fatal(e)
+				}
+				defer r.cancel()
+				wall, expire := context.WithCancel(context.Background())
+				defer expire()
+				r.wall = wall
+				b := &eligibilityBudget{r: r}
+				r.eligibility = b
+				s := &eligibilitySession{r: r, b: b, res: &QueryReferenceEligibilityResult{}, reg: f.reg, witness: f.witness, catalogue: f.cat, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, owned: map[string]eligibilityMember{}, owners: map[string]string{}, nodes: f.nodes, ready: map[string]bool{}, build: map[string]string{}, control: map[string]string{}, units: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, failedInvocations: map[string]bool{}, snapshot: &evidenceSnapshot{files: f.files, verifiedMembers: map[string]ReplayMember{}, invalidNodes: map[string]bool{}}}
+				for _, c := range f.approval.Cohorts {
+					s.cohorts[c.ID] = c
+				}
+				for _, p := range f.approval.Provenance {
+					s.provenance[p.ID] = p
+				}
+				for _, p := range f.reg.OwnedMembers {
+					s.owned[p.Member.Path] = p
+					s.owners[p.Member.Path] = p.NodeID
+					s.snapshot.verifiedMembers[p.Member.Path] = p.Member
+				}
+				for _, inv := range f.reg.Invocations {
+					if inv.ID != id {
+						continue
+					}
+					inv.Node.Identities = maps.Clone(inv.Node.Identities)
+					inv.Node.Identities["tool"] = "different-valid-tool"
+					if e := s.bindInvocation(inv); e != nil {
+						t.Fatal(e)
+					}
+				}
+				switch kind {
+				case "cancel":
+					cancel()
+				case "wall":
+					expire()
+				case "work":
+					b.work = eligibilityWorkLimit
+				}
+				if strings.HasPrefix(id, "build-") {
+					e = s.verifyBuild()
+				} else {
+					e = s.verifyControls()
+				}
+				if e == nil || s.failures != 1 {
+					t.Fatalf("lost binding failure err%v count%d", e, s.failures)
+				}
+				s.counts(false)
+				counts := s.res.Control
+				if strings.HasPrefix(id, "build-") {
+					counts = s.res.Build
+				}
+				if counts.Failed != 1 || counts.Unprocessed != counts.Required-1 {
+					t.Fatalf("counter %+v", counts)
+				}
+			})
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityTupleBindingFailure(t *testing.T) {
+	for _, id := range []string{"current-ref-1", "native-current"} {
+		for _, malformed := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s-malformed-%v", id, malformed), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				for i := range f.reg.Invocations {
+					inv := &f.reg.Invocations[i]
+					if inv.ID != id {
+						continue
+					}
+					inv.Node.Identities = maps.Clone(inv.Node.Identities)
+					inv.Node.Identities["tool"] = "different-valid-tool"
+					if malformed {
+						p := inv.Response
+						if inv.Kind == "REFERENCE_PROCESS" {
+							p = inv.Receipt
+						}
+						f.replace(p.Member.Path, []byte("{"))
+					}
+				}
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				n := uint64(2)
+				if id == "native-current" {
+					n = 3
+				}
+				if (err != nil) != malformed || got.Complete == malformed || got.Assessment != AssessFail || got.Tuple.Failed != n {
+					t.Fatalf("tuple binding %v assessment%s complete%v counts%+v", err, got.Assessment, got.Complete, got.Tuple)
+				}
+				if !malformed && got.Tuple.Verified != 3-n {
+					t.Fatalf("tuple completion %+v", got.Tuple)
+				}
+				if malformed && (got.Tuple.Verified != 0 || got.Tuple.Unprocessed != 3-n) {
+					t.Fatalf("tuple interruption %+v", got.Tuple)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+}

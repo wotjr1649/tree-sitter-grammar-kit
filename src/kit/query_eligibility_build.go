@@ -290,7 +290,7 @@ func (s *eligibilitySession) verifyBuild() *Error {
 			}
 		}
 		state := "blocked"
-		if s.failures > before {
+		if s.failures > before || s.build[rule.ID] == "failed" {
 			state = "failed"
 		} else if ready {
 			state = "verified"

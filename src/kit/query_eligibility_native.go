@@ -30,6 +30,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 		if inv == nil || inv.Kind != "NATIVE_DRIVER" || s.cohorts[inv.CohortID].Purpose != "current" {
 			return fail(KindInvalidInput, "ELIGIBILITY_NATIVE_INVOCATION", "native", nil)
 		}
+		s.failItem = func() { s.failInvocation(inv) }
 		nativeReady = s.ready[inv.ID] && eligibilityAllVerified(s.build, 9) && eligibilityAllVerified(s.units, 4) && eligibilityAllVerified(s.control, 53) && eligibilityAllVerified(s.assertions, 36)
 		_, executableReady, e := s.member(inv.Executable)
 		if e != nil {
@@ -94,6 +95,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 	}
 	var checked []nativewire.CheckedStep
 	if inv != nil {
+		s.failItem = func() { s.failInvocation(inv) }
 		requestBytes, requestReady, e := s.member(inv.Request)
 		if e != nil {
 			return e
@@ -334,7 +336,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 			}
 		}
 		state := "blocked"
-		if s.failures > before {
+		if s.failures > before || s.tuples[i] == "failed" {
 			state = "failed"
 		} else if ready {
 			state = "verified"
@@ -598,10 +600,20 @@ func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions
 }
 
 func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
+	defer func() { s.failItem = nil }()
+	sourceIDs := make([]nativewire.SourceID, len(versions))
+	for i, version := range versions {
+		if e := s.b.charge(1, uint64(len(version)), "reference-source-identity"); e != nil {
+			return e
+		}
+		sourceIDs[i] = nativewire.SourceID{Bytes: uint64(len(version)), SHA256: digestHex(version)}
+	}
 	for _, inv := range s.invocations {
+		s.failItem = nil
 		if inv.Kind != "REFERENCE_PROCESS" || s.cohorts[inv.CohortID].Purpose != "current" {
 			continue
 		}
+		s.failItem = func() { s.failInvocation(inv) }
 		before := s.failures
 		ready := s.ready[inv.ID]
 		req, ok, e := s.request(inv)
@@ -671,6 +683,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		}
 		source, sourceFound := inv.Inputs["source"]
 		var sourceBytes []byte
+		haveSource := false
 		if !sourceFound {
 			s.finding("ELIGIBILITY_INPUT_MISSING", inv.ID+"/source", false)
 			ready = false
@@ -679,7 +692,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				s.finding("ELIGIBILITY_CURRENT_SOURCE_INPUT", inv.ID, true)
 				ready = false
 			} else {
-				sourceBytes, _, e = s.member(source.MemberPin)
+				sourceBytes, haveSource, e = s.member(source.MemberPin)
 				if e != nil {
 					return e
 				}
@@ -689,7 +702,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		seen := map[string]bool{}
 		allowed := map[string]bool{"library": true, "source": true}
 		queries := make([]QueryWitnessQuery, pairs)
-		steps := make([]uint32, pairs)
+		observations := make([]QueryReferenceObservation, pairs)
 		for i := 0; i < pairs; i++ {
 			qi, ii := queryStart, queryIDIndex
 			if batch {
@@ -728,7 +741,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			}
 			queries[i] = s.witness.Queries[index]
 			queries[i].ID = ids[i]
-			steps[i] = selected.Step
+			observations[i] = QueryReferenceObservation{Query: ids[i], Step: selected.Step, SourceBytes: selected.SourceBytes, SourceSHA256: selected.SourceSHA256}
 			sha := digestHex([]byte(queries[i].Source))
 			size := uint64(len(queries[i].Source))
 			if ok, e := s.input(inv, queryKey, "PINNED", eligibilityIndex(qi), req.Args[qi], sha, &size); e != nil {
@@ -742,7 +755,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			}
 			if int(selected.Step) >= len(versions) {
 				ready = false
-			} else if !bytes.Equal(sourceBytes, versions[selected.Step]) {
+			} else if selected.SourceSHA256 != sourceIDs[selected.Step].SHA256 || selected.SourceBytes != sourceIDs[selected.Step].Bytes || haveSource && !bytes.Equal(sourceBytes, versions[selected.Step]) {
 				s.finding("ELIGIBILITY_REFERENCE_SOURCE_VERSION", inv.ID, true)
 				ready = false
 			}
@@ -787,20 +800,17 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		for i := 0; i < pairs; i++ {
 			out.offsets = append(out.offsets, offset)
 			offset += uint64(len(out.rows[i]) + 1)
-			librarySHA := ""
-			if library.MemberPin != nil {
-				librarySHA = library.MemberPin.Member.SHA256
-			}
 			hashArg := 5
 			if batch {
 				hashArg = 4
 			}
-			if req.Args[hashArg] != librarySHA {
+			librarySHA := req.Args[hashArg]
+			if !hex64.MatchString(librarySHA) || library.MemberPin != nil && librarySHA != library.MemberPin.Member.SHA256 || s.reg.Native != nil && s.reg.Native.ReferenceLibrary != nil && librarySHA != s.reg.Native.ReferenceLibrary.Member.SHA256 {
 				s.finding("ELIGIBILITY_CURRENT_LIBRARY_ARGV", inv.ID, true)
 				ready = false
 			}
 			symbol := req.Args[symbolIndex]
-			obs := QueryReferenceObservation{Query: ids[i], Step: steps[i], SourceBytes: uint64(len(sourceBytes)), SourceSHA256: digestHex(sourceBytes)}
+			obs := observations[i]
 			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queries[i].Source != "", versions, s.r)
 			if e != nil {
 				return e

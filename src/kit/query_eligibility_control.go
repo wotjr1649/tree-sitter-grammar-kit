@@ -197,7 +197,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 			}
 		}
 		state := "blocked"
-		if s.failures > before {
+		if s.failures > before || s.control[rule.ID] == "failed" {
 			state = "failed"
 		} else if ready {
 			state = "verified"

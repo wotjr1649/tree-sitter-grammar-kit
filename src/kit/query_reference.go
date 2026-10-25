@@ -620,7 +620,7 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 		Complete bool   `json:"complete"`
 	}
 	invalid := func(e *Error) (*instrumentedReference, string, bool, *Error) {
-		if e.Kind != KindInvalidInput {
+		if e.Kind != KindInvalidInput || r.eligibility != nil {
 			return nil, "", false, e
 		}
 		return nil, "REFERENCE_RESPONSE_INVALID", false, nil

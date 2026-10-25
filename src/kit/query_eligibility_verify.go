@@ -33,6 +33,8 @@ type eligibilitySession struct {
 	outputs                           map[string]*eligibilityOutput
 	failItem                          func()
 	failures                          uint64
+	invocationTuples                  map[string][]int
+	failedInvocations                 map[string]bool
 	buildIdentity                     *eligibilityBuildIdentity
 	bound                             bool
 }
@@ -78,7 +80,7 @@ func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceElig
 	defer r.cancel()
 	b := &eligibilityBudget{r: r}
 	r.eligibility = b
-	s := &eligibilitySession{r: r, b: b, res: &res, bound: true, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, invocations: map[string]*eligibilityInvocation{}, catalogueInvocations: map[string]*eligibilityInvocation{}, tools: map[string]eligibilityTool{}, owned: map[string]eligibilityMember{}, nodes: map[string]EvidenceNode{}, owners: map[string]string{}, ready: map[string]bool{}, build: map[string]string{}, units: map[string]string{}, control: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, outputs: map[string]*eligibilityOutput{}}
+	s := &eligibilitySession{r: r, b: b, res: &res, bound: true, invocationTuples: map[string][]int{}, failedInvocations: map[string]bool{}, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, invocations: map[string]*eligibilityInvocation{}, catalogueInvocations: map[string]*eligibilityInvocation{}, tools: map[string]eligibilityTool{}, owned: map[string]eligibilityMember{}, nodes: map[string]EvidenceNode{}, owners: map[string]string{}, ready: map[string]bool{}, build: map[string]string{}, units: map[string]string{}, control: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, outputs: map[string]*eligibilityOutput{}}
 	res.ExecutionStatus, res.EvidenceMode, res.Assessment = StatusCompleted, ModeReplayedRaw, AssessPass
 	defer func() {
 		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead, b.work, b.logical
@@ -423,9 +425,12 @@ func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Err
 		}
 		s.tools[tool.ID] = tool
 	}
-	requiredTuples := map[string]bool{}
-	for _, t := range s.witness.Required {
-		requiredTuples[fmt.Sprintf("%s/%d/%s", t.Query, t.Step, t.TreeRole)] = true
+	requiredTuples := map[string]int{}
+	for i, t := range s.witness.Required {
+		requiredTuples[fmt.Sprintf("%s/%d/%s", t.Query, t.Step, t.TreeRole)] = i + 1
+		if g.Native != nil {
+			s.invocationTuples[g.Native.InvocationID] = append(s.invocationTuples[g.Native.InvocationID], i)
+		}
 	}
 	seen := map[string]bool{}
 	for _, o := range g.Observations {
@@ -433,9 +438,10 @@ func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Err
 		if !validID(o.Query) || !validID(o.QueryID) || !validID(o.InvocationID) || !hex64.MatchString(o.SourceSHA256) || !hex64.MatchString(o.SHA256) || !slices.Contains([]string{"incremental", "fresh"}, o.TreeRole) || seen[key] || o.Step > 4 || o.Step == 0 && o.TreeRole == "fresh" {
 			return bad("observation")
 		}
-		if !requiredTuples[key] {
+		if requiredTuples[key] == 0 {
 			return bad("observation-unreferenced")
 		}
+		s.invocationTuples[o.InvocationID] = append(s.invocationTuples[o.InvocationID], requiredTuples[key]-1)
 		seen[key] = true
 	}
 	if s.witness.Encoding != EncodingUTF8 || s.witness.Platform != a.Candidate.Platform {
@@ -503,7 +509,25 @@ func (s *eligibilitySession) member(pin *eligibilityMember) ([]byte, bool, *Erro
 	return data, true, nil
 }
 
+func (s *eligibilitySession) failInvocation(inv *eligibilityInvocation) {
+	if s.failedInvocations[inv.ID] {
+		return
+	}
+	s.failedInvocations[inv.ID] = true
+	switch s.cohorts[inv.CohortID].Purpose {
+	case "build":
+		s.build[inv.CatalogueID] = "failed"
+	case "control":
+		s.control[inv.CatalogueID] = "failed"
+	}
+	for _, i := range s.invocationTuples[inv.ID] {
+		s.tuples[i] = "failed"
+	}
+}
+
 func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) *Error {
+	s.failItem = func() { s.failInvocation(&inv) }
+	defer func() { s.failItem = nil }()
 	c := s.cohorts[inv.CohortID]
 	node, ok := s.nodes[inv.Node.ID]
 	p, approved := s.provenance[c.ProvenanceID]
