@@ -571,34 +571,45 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 	}
 }
 
-// concurrencyPolicy is #252: one workflow-level lane that never cancels a running run and
+// concurrencyPolicy is #252/#290: one workflow-level lane that never cancels a running run and
 // keeps the queue instead of replacing the pending run; no job may set its own concurrency.
 func concurrencyPolicy(text string) error {
-	if strings.Count(text, "concurrency:") != 1 || !strings.Contains(text, "\nconcurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n\nenv:\n") {
+	policy := `(?m)^concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n\n(?:env|jobs):\n`
+	keys := regexp.MustCompile(`(?m)^[\t ]*(?:concurrency|'concurrency'|"concurrency")[\t ]*:`).FindAllStringIndex(text, -1)
+	if strings.Count(text, "concurrency:") != 1 || len(keys) != 1 || !regexp.MustCompile(policy).MatchString(text) {
 		return fmt.Errorf("the workflow must hold exactly one shared lane with a kept queue")
 	}
 	return nil
 }
 
 func TestWorkflowConcurrencyPolicy(t *testing.T) {
-	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
-	if err := concurrencyPolicy(text); err != nil {
-		t.Fatal(err)
-	}
-	block := "concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n"
-	for name, broken := range map[string]string{
-		"single-queue":       strings.Replace(text, "  queue: max\n", "  queue: single\n", 1),
-		"default-queue":      strings.Replace(text, "  queue: max\n", "", 1),
-		"cancel-in-progress": strings.Replace(text, "  cancel-in-progress: false\n", "  cancel-in-progress: true\n", 1),
-		"per-pr-group":       strings.Replace(text, "  group: tsgk-campaign-heavy\n", "  group: tsgk-${{ github.event.pull_request.number || github.ref }}\n", 1),
-		"no-lane":            strings.Replace(text, block, "", 1),
-		"job-level-lane": strings.Replace(strings.Replace(text, block, "", 1), "    name: CI mode\n",
-			"    name: CI mode\n    concurrency:\n      group: tsgk-campaign-heavy\n      cancel-in-progress: false\n      queue: max\n", 1),
-		"extra-job-lane": strings.Replace(text, "    name: CI mode\n", "    name: CI mode\n    concurrency:\n      group: other\n", 1),
-	} {
-		t.Run(name, func(t *testing.T) {
-			if broken == text || concurrencyPolicy(broken) == nil {
-				t.Fatal("concurrency control not rejected")
+	for _, workflow := range []string{"foundation.yml", "reference-linux.yml", "prepare-p05.yml", "prepare-p05-remedy.yml"} {
+		t.Run(workflow, func(t *testing.T) {
+			text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows", workflow)))
+			if err := concurrencyPolicy(text); err != nil {
+				t.Fatal(err)
+			}
+			block := "concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n"
+			jobLane := "\njobs:\n  queue-policy-control:\n    concurrency:\n      group: tsgk-campaign-heavy\n      cancel-in-progress: false\n      queue: max\n"
+			for name, broken := range map[string]string{
+				"single-queue":           strings.Replace(text, "  queue: max\n", "  queue: single\n", 1),
+				"default-queue":          strings.Replace(text, "  queue: max\n", "", 1),
+				"cancel-in-progress":     strings.Replace(text, "  cancel-in-progress: false\n", "  cancel-in-progress: true\n", 1),
+				"per-pr-group":           strings.Replace(text, "  group: tsgk-campaign-heavy\n", "  group: tsgk-${{ github.event.pull_request.number || github.ref }}\n", 1),
+				"no-lane":                strings.Replace(text, block, "", 1),
+				"job-level-lane":         strings.Replace(strings.Replace(text, block, "", 1), "\njobs:\n", jobLane, 1),
+				"extra-job-lane":         strings.Replace(text, "\njobs:\n", jobLane, 1),
+				"spaced-job-lane":        strings.Replace(text, "\njobs:\n", strings.Replace(jobLane, "concurrency:", "concurrency :", 1), 1),
+				"single-quoted-job-lane": strings.Replace(text, "\njobs:\n", strings.Replace(jobLane, "concurrency:", "'concurrency':", 1), 1),
+				"double-quoted-job-lane": strings.Replace(text, "\njobs:\n", strings.Replace(jobLane, "concurrency:", "\"concurrency\":", 1), 1),
+				"flow-job-lane":          strings.Replace(text, "\njobs:\n", "\njobs:\n  queue-policy-control: {runs-on: ubuntu-24.04, concurrency: other, steps: [{run: echo control}]}\n", 1),
+				"duplicate-queue":        strings.Replace(text, "  queue: max\n", "  queue: max\n  queue: single\n", 1),
+			} {
+				t.Run(name, func(t *testing.T) {
+					if broken == text || concurrencyPolicy(broken) == nil {
+						t.Fatal("concurrency control not rejected")
+					}
+				})
 			}
 		})
 	}

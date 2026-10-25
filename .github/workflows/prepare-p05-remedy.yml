@@ -49,6 +49,7 @@ permissions:
 concurrency:
   group: tsgk-campaign-heavy
   cancel-in-progress: false
+  queue: max
 
 jobs:
   prepare:
