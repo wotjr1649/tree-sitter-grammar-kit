@@ -1817,3 +1817,95 @@ func TestQueryReferenceEligibilityMissingObservationKnownInputs(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryReferenceEligibilityReview37(t *testing.T) {
+	t.Run("partial-field-product", func(t *testing.T) {
+		r, e := startRun(ctxT(t), 30*time.Second)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer r.cancel()
+		b := &eligibilityBudget{r: r}
+		r.eligibility = b
+		s := &eligibilitySession{r: r, b: b}
+		fields := make([]string, 131072)
+		for i := range fields {
+			fields[i] = "f"
+		}
+		tree := nativewire.WireTree{Fields: fields, PartialTrees: make([]nativewire.WirePartial, 32768), Queries: []byte("[]"), API: []byte("null")}
+		e = s.nativeReservation(nativewire.Response{Steps: []nativewire.Step{{Incremental: tree}}}, nil)
+		if e == nil || e.Kind != KindResourceLimit {
+			t.Fatalf("partial field product unreserved: %v", e)
+		}
+	})
+	t.Run("source-points-without-native", func(t *testing.T) {
+		f := newEligibilityFixture(t)
+		f.reg.Native = nil
+		f.stdoutMutation("current-ref-0", func(data []byte) []byte {
+			var ref instrumentedReference
+			if e := jsonv2.Unmarshal(data, &ref); e != nil {
+				t.Fatal(e)
+			}
+			ref.Tree.Nodes[3].StartPoint.Column = 0
+			changed := eligibilityJSON(t, ref)
+			for i := range f.reg.Observations {
+				o := &f.reg.Observations[i]
+				if o.InvocationID == "current-ref-0" {
+					o.ByteLength = uint64(len(changed))
+					o.SHA256 = digestHex(changed)
+				}
+			}
+			return changed
+		})
+		got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+		found := false
+		for _, f := range got.Findings {
+			if f.Code == "ELIGIBILITY_CURRENT_RESPONSE" && strings.HasSuffix(f.Path, "/REFERENCE_TREE_POINTS") {
+				found = true
+			}
+		}
+		if err != nil || !got.Complete || got.Assessment != AssessFail || !found {
+			t.Fatalf("point contradiction hidden: err%v assessment%s finding%v", err, got.Assessment, found)
+		}
+	})
+	t.Run("known-empty-query", func(t *testing.T) {
+		f := newEligibilityFixture(t)
+		pin := f.member("current-ref-0", "current-ref-0/empty-query.bin", "query", []byte{})
+		f.reg.Observations = slices.DeleteFunc(f.reg.Observations, func(o eligibilityObservation) bool { return o.InvocationID == "current-ref-0" })
+		for i := range f.reg.Invocations {
+			if f.reg.Invocations[i].ID == "current-ref-0" {
+				x := f.reg.Invocations[i].Inputs["query-0"]
+				x.MemberPin = &pin
+				f.reg.Invocations[i].Inputs["query-0"] = x
+			}
+		}
+		got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+		if err != nil || !got.Complete || got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_CURRENT_RESPONSE") {
+			t.Fatalf("empty query hash hidden: err%v assessment%s", err, got.Assessment)
+		}
+	})
+}
+
+func TestQueryReferenceEligibilityMissingSourceMalformedNative(t *testing.T) {
+	for _, nested := range []bool{false, true} {
+		t.Run(fmt.Sprint(nested), func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			delete(f.files, "native/source.bin")
+			data := []byte(`{"unknown":true}`)
+			if nested {
+				var raw nativewire.Response
+				if e := jsonv2.Unmarshal(f.files["native/response.json"], &raw); e != nil {
+					t.Fatal(e)
+				}
+				raw.Steps[0].Incremental.Queries = []byte(`[{"unknown":true}]`)
+				data = eligibilityJSON(t, raw)
+			}
+			f.replace("native/response.json", data)
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if err == nil || asError(err).Kind != KindInvalidInput || got.Complete || got.Assessment != AssessFail {
+				t.Fatalf("shape hidden by source absence: err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+}

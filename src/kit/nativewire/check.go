@@ -133,7 +133,7 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 	}
 	switch t.Form {
 	case "full":
-		ns, err := Nodes(w.Nodes, w.Types, w.Fields)
+		ns, err := nodes(w.Nodes, w.Types, w.Fields, e.Check)
 		if err != nil {
 			return t, err
 		}
@@ -161,7 +161,12 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 			}
 		}
 		for _, p := range w.PartialTrees {
-			ns, err := Nodes(p.Nodes, w.Types, w.Fields)
+			if e.Check != nil {
+				if err := e.Check(); err != nil {
+					return t, err
+				}
+			}
+			ns, err := nodes(p.Nodes, w.Types, w.Fields, e.Check)
 			if err != nil {
 				return t, err
 			}

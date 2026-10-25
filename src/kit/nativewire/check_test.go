@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -140,12 +141,49 @@ func TestTreeDigestCancellation(t *testing.T) {
 	tree := oneNodeTree(1, StatusCompleted, "")
 	stop := errors.New("cancelled hashing")
 	calls := 0
-	_, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error { calls++; return stop }})
-	if !errors.Is(err, stop) || calls != 1 {
+	beforeDigest := len(tree.Nodes) + len(tree.Fields)
+	_, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error {
+		calls++
+		if calls > beforeDigest {
+			return stop
+		}
+		return nil
+	}})
+	if !errors.Is(err, stop) || calls != beforeDigest+1 {
 		t.Fatalf("digest checkpoint calls%d err%v", calls, err)
 	}
 	checked, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error { return nil }})
 	if err != nil || TreeDigest(checked.Nodes) != tree.Digest {
 		t.Fatalf("normal digest changed: %v", err)
+	}
+}
+
+func TestPartialTableCancellation(t *testing.T) {
+	for _, at := range []int{2, 4} {
+		t.Run(fmt.Sprint(at), func(t *testing.T) {
+			tree := oneNodeTree(1, StatusCompleted, "")
+			summary := "summary"
+			tree.Form = &summary
+			tree.Nodes = nil
+			tree.Errors = &WireErrors{}
+			tree.Fields = []string{"a", "b"}
+			tree.PartialTrees = make([]WirePartial, 3)
+			stopped := errors.New("cancel partial table")
+			calls := 0
+			got, err := CheckTree(tree, 1, Expect{Nodes: 10, Check: func() error {
+				calls++
+				if calls == at {
+					return stopped
+				}
+				return nil
+			}})
+			wantPartials := 0
+			if at == 4 {
+				wantPartials = 1
+			}
+			if err != stopped || calls != at || len(got.Partials) != wantPartials {
+				t.Fatalf("partial cancellation err%v calls%d partials%d", err, calls, len(got.Partials))
+			}
+		})
 	}
 }

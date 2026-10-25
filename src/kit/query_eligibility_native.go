@@ -147,11 +147,11 @@ func (s *eligibilitySession) verifyNative() *Error {
 		if e != nil {
 			return e
 		}
-		if haveRaw && len(versions) > 0 {
+		var raw nativewire.Response
+		if haveRaw {
 			if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
 				return e
 			}
-			var raw nativewire.Response
 			if err := jsonv2.Unmarshal(data, &raw, jsonv2.RejectUnknownMembers(true)); err != nil {
 				return fail(KindInvalidInput, "JSON_SHAPE", inv.ID, err)
 			}
@@ -166,6 +166,8 @@ func (s *eligibilitySession) verifyNative() *Error {
 			if e := s.nativeReservation(raw, versions); e != nil {
 				return e
 			}
+		}
+		if haveRaw && len(versions) > 0 {
 			abi, p := w.Native.ProducerABI, raw.Producer
 			// The approved current runtime manifest pins ABI compatibility to 13..15.
 			if w.Native.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256 && (abi.RuntimeLanguageVersion != 15 || abi.RuntimeMinCompatible != 13) {
@@ -578,6 +580,14 @@ func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions
 			if tree == nil {
 				continue
 			}
+			// Nodes validates the shared field table once per full/partial conversion.
+			tableWork, e := eligibilityProduct("native-field-table", uint64(len(tree.Fields)), uint64(len(tree.PartialTrees))+1)
+			if e != nil {
+				return e
+			}
+			if e := s.b.charge(tableWork, 0, "native-field-table"); e != nil {
+				return e
+			}
 			work += 256 * uint64(len(tree.Nodes)+len(tree.PartialTrees)+1)
 			for _, name := range tree.Types {
 				logical += 4 * uint64(len(name))
@@ -762,6 +772,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		queries := make([]QueryWitnessQuery, pairs)
 		observations := make([]QueryReferenceObservation, pairs)
 		knownStep := make([]bool, pairs)
+		queryKnown := make([]bool, pairs)
 		for i := 0; i < pairs; i++ {
 			qi, ii := queryStart, queryIDIndex
 			if batch {
@@ -820,6 +831,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 							s.finding("ELIGIBILITY_CURRENT_QUERY_ENCODING", inv.ID, true)
 						} else {
 							queries[i].Source = string(data)
+							queryKnown[i] = true
 						}
 					}
 				}
@@ -833,6 +845,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				continue
 			}
 			queries[i] = s.witness.Queries[index]
+			queryKnown[i] = true
 			queries[i].ID = ids[i]
 			observations[i] = QueryReferenceObservation{Query: ids[i], Step: selected.Step, SourceBytes: selected.SourceBytes, SourceSHA256: selected.SourceSHA256}
 			sha := digestHex([]byte(queries[i].Source))
@@ -905,14 +918,13 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			symbol := req.Args[symbolIndex]
 			obs := observations[i]
 			responseVersions := versions
-			if !knownStep[i] {
+			if haveSource {
+				responseVersions = [][]byte{sourceBytes}
+				obs.Step = 0
+			} else if !knownStep[i] {
 				responseVersions = nil
-				if haveSource {
-					responseVersions = [][]byte{sourceBytes}
-					obs.Step = 0
-				}
 			}
-			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queries[i].Source != "", responseVersions, s.r)
+			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queryKnown[i], responseVersions, s.r)
 			if e != nil {
 				return e
 			}

@@ -177,13 +177,27 @@ func DecodeResponse(payload []byte) (Response, error) {
 
 // Nodes converts compact node arrays to public nodes and checks the name-table indices.
 func Nodes(rows [][]int64, types, fields []string) ([]TreeNode, error) {
+	return nodes(rows, types, fields, nil)
+}
+
+func nodes(rows [][]int64, types, fields []string, check func() error) ([]TreeNode, error) {
 	for _, field := range fields {
+		if check != nil {
+			if err := check(); err != nil {
+				return nil, err
+			}
+		}
 		if field == "" {
 			return nil, invalid("RESPONSE_INVALID", errors.New("empty field name"))
 		}
 	}
 	out := make([]TreeNode, 0, len(rows))
 	for i, r := range rows {
+		if check != nil {
+			if err := check(); err != nil {
+				return nil, err
+			}
+		}
 		bad := func(what string) error {
 			return invalid("RESPONSE_INVALID", fmt.Errorf("node %d: %s", i, what))
 		}
