@@ -15,7 +15,7 @@ Linux 전용이다. shell에서 환경변수 지정 구문은 실행 shell에 �
 - `replacement`: 같은 process에서 child를 생성·rename하고 다른 child를 만들어 결정적으로 교체한다. 두 생성의 모호함 또는 identity 차이를 거부하는 좁은 대조다. 서로 다른 UID·병렬 process·모든 event 병합·FID 재사용 검증을 대신하지 않는다.
 - `publication`: 열린 parent 상대 O_TMPFILE, 같은 file descriptor의 write/fsync, 열린 proc fd directory 상대 linkat와 두 번째 EEXIST, final bytes를 관측한다. procfs filesystem 종류 확인은 현재 process fd table에 대한 완전한 신뢰 증명이 아니므로 성공한 primitive 관측도 `UNVERIFIED`다. fallback이나 이름 기반 임시 cleanup을 사용하지 않는다.
 
-FID buffer는128 bytes로 고정한다. queue는 event64개·총256 KiB·2초를 동시에 제한하며 nonblocking read에서 EAGAIN이면 종료한다. 기다리면서 새 예산을 부여하지 않는다. 지원 부재·권한 부족은 `UNSUPPORTED`, 누락·overflow·잘못된 event·예산 초과는 `UNVERIFIED`, 모호하거나 다른 생성은 `REJECTED`, 좁은 정상 대조는 `CANDIDATE_MATCH`다. 관측 또는 Close 오류는 `FAILED`다. JSON의 kernel/filesystem/privilege context가 다른 결과를 같은 근거로 합산하지 않는다.
+FID buffer는128 bytes로 고정한다. queue는 event64개·총256 KiB·2초를 동시에 제한하며 nonblocking read에서 EAGAIN이면 종료한다. 남은 예산이 전체64 KiB read buffer보다 작으면 syscall 전에 `QUEUE_BUDGET`으로 끝내며, read 후와 witness 채택 직전에도 예산을 재확인한다. 기다리면서 새 예산을 부여하지 않는다. 지원 부재·권한 부족은 `UNSUPPORTED`, 누락·overflow·잘못된 event·예산 초과는 `UNVERIFIED`, 모호하거나 다른 생성은 `REJECTED`, 좁은 정상 대조는 `CANDIDATE_MATCH`다. Close 오류는 `FAILED`이고 그 밖의 syscall 오류는 아래 호출별 분류를 따른다. JSON의 kernel/filesystem/privilege context가 다른 결과를 같은 근거로 합산하지 않는다.
 
 Exit0는 도구가 실패 없이 관측을 기록했다는 뜻이다. `UNSUPPORTED`·`UNVERIFIED`도 exit0일 수 있으며 #215 또는 지원 판정의 PASS가 아니다. 잘못된 설정·실패는 nonzero다. CI의 `TestLinuxCapabilityProbe`는 JSON을 test log에 남기고 skip하지 않는다. 그 test의 PASS는 도구의 결과 분류 검사이며 API 가용성·소유권 해결 PASS가 아니다. 원래 runtime·CLI·qualification 필수 검사는 그대로 유지한다.
 

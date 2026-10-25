@@ -194,7 +194,11 @@ func TestQueueBudgetIncludesReadAndWitness(t *testing.T) {
 		total, remaining int
 	}{
 		{time.Now().Add(time.Hour), 0, 64 << 10},
-		{time.Now().Add(time.Hour), (256 << 10) - 17, 17},
+		{time.Now().Add(time.Hour), (256 << 10) - (64 << 10), 64 << 10},
+		{time.Now().Add(time.Hour), (256 << 10) - (64 << 10) + 1, 0},
+		{time.Now().Add(time.Hour), (256 << 10) - 17, 0},
+		{time.Now().Add(time.Hour), (256 << 10) - 1, 0},
+		{time.Now().Add(time.Hour), (256 << 10) - len(eventBytes()) + 1, 0},
 		{time.Now().Add(time.Hour), 256 << 10, 0},
 		{time.Now().Add(time.Hour), (256 << 10) + 1, 0},
 		{time.Now().Add(-time.Second), 0, 0},

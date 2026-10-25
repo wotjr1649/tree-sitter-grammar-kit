@@ -212,10 +212,11 @@ func witness(events []creation, parent, child fid, pid int32, name string) outco
 }
 
 func queueRemaining(deadline time.Time, total int) int {
-	if !time.Now().Before(deadline) || total < 0 || total >= 256<<10 {
+	if !time.Now().Before(deadline) || total < 0 || total > (256<<10)-(64<<10) {
 		return 0
 	}
-	return min(64<<10, (256<<10)-total)
+	// A partial buffer can make fanotify return EINVAL before consuming the next event.
+	return 64 << 10
 }
 
 func directoryProbe(root string, replace bool) (result outcome) {
