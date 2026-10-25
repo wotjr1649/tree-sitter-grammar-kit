@@ -50,7 +50,7 @@ func refused(err error, code string) outcome {
 	}
 	unsupported := false
 	switch code {
-	case "FANOTIFY_INIT", "FSYNC":
+	case "FANOTIFY_INIT", "FSYNC", "PROCFS_STATFS":
 		unsupported = errno == unix.ENOSYS || errno == unix.EOPNOTSUPP
 		if code == "FANOTIFY_INIT" {
 			unsupported = unsupported || errno == unix.EPERM || errno == unix.EACCES
@@ -70,7 +70,7 @@ func refused(err error, code string) outcome {
 		status = "UNSUPPORTED"
 	}
 	switch errno {
-	case unix.EMFILE, unix.ENFILE, unix.ENOMEM, unix.ENOSPC, unix.EDQUOT, unix.EAGAIN, unix.ENOBUFS:
+	case unix.EMFILE, unix.ENFILE, unix.ENOMEM, unix.ENOSPC, unix.EDQUOT, unix.EAGAIN, unix.ENOBUFS, unix.EINTR:
 		status = "UNVERIFIED"
 	}
 	// EINVAL is ambiguous between missing features and invalid invocation; never hide it.
@@ -79,8 +79,20 @@ func refused(err error, code string) outcome {
 
 func closeFD(fd int, result *outcome) {
 	if err := unix.Close(fd); err != nil {
-		*result = outcome{"FAILED", "CLOSE_FAILED"}
+		*result = refused(err, "CLOSE")
+		result.Status = "FAILED"
 	}
+}
+
+func publicationWrite(n int, err error) *outcome {
+	if err != nil {
+		r := refused(err, "WRITE")
+		return &r
+	}
+	if n != len("original") {
+		return &outcome{"UNVERIFIED", "WRITE_SHORT"}
+	}
+	return nil
 }
 
 type fid struct {
@@ -267,8 +279,11 @@ func directoryProbe(root string, replace bool) (result outcome) {
 			}
 			return candidate
 		}
-		if err != nil || n == 0 {
-			return outcome{"UNVERIFIED", "QUEUE_READ"}
+		if err != nil {
+			return refused(err, "QUEUE_READ")
+		}
+		if n == 0 {
+			return outcome{"UNVERIFIED", "QUEUE_EOF"}
 		}
 		part, err := creations(buf[:n])
 		if err != nil || len(events)+len(part) > 64 {
@@ -291,7 +306,10 @@ func publicationProbe(root string) (result outcome) {
 	}
 	defer closeFD(proc, &result)
 	var st unix.Statfs_t
-	if err := unix.Fstatfs(proc, &st); err != nil || st.Type != unix.PROC_SUPER_MAGIC {
+	if err := unix.Fstatfs(proc, &st); err != nil {
+		return refused(err, "PROCFS_STATFS")
+	}
+	if st.Type != unix.PROC_SUPER_MAGIC {
 		return outcome{"UNVERIFIED", "PROCFS_TYPE"}
 	}
 	fd, err := unix.Openat(parent, ".", unix.O_TMPFILE|unix.O_RDWR|unix.O_CLOEXEC, 0o600)
@@ -299,8 +317,8 @@ func publicationProbe(root string) (result outcome) {
 		return refused(err, "O_TMPFILE")
 	}
 	defer closeFD(fd, &result)
-	if n, err := unix.Write(fd, []byte("original")); err != nil || n != len("original") {
-		return outcome{"FAILED", "WRITE"}
+	if failure := publicationWrite(unix.Write(fd, []byte("original"))); failure != nil {
+		return *failure
 	}
 	if err := unix.Fsync(fd); err != nil {
 		return refused(err, "FSYNC")
@@ -319,8 +337,16 @@ func publicationProbe(root string) (result outcome) {
 	f := os.NewFile(uintptr(check), "probe-final")
 	data, readErr := io.ReadAll(io.LimitReader(f, 9))
 	closeErr := f.Close()
-	if readErr != nil || closeErr != nil || string(data) != "original" {
-		return outcome{"FAILED", "FINAL_BYTES_OR_CLOSE"}
+	if closeErr != nil {
+		r := refused(closeErr, "FINAL_CLOSE")
+		r.Status = "FAILED"
+		return r
+	}
+	if readErr != nil {
+		return refused(readErr, "FINAL_READ")
+	}
+	if string(data) != "original" {
+		return outcome{"FAILED", "FINAL_BYTES"}
 	}
 	// shortcut: procfs type is only a capability check; prove process binding before adoption.
 	return outcome{"UNVERIFIED", "LINK_AND_EEXIST_OBSERVED_PROCFS_TRUST_NOT_PROVEN"}

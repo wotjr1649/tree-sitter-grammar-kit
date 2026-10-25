@@ -112,7 +112,7 @@ func TestLinuxCapabilityProbe(t *testing.T) {
 func TestCloseFailureIsNotSuccess(t *testing.T) {
 	r := outcome{"CANDIDATE_MATCH", "test"}
 	closeFD(-1, &r)
-	if r != (outcome{"FAILED", "CLOSE_FAILED"}) {
+	if r != (outcome{"FAILED", fmt.Sprintf("CLOSE:errno=%d", unix.EBADF)}) {
 		t.Fatalf("close failure lost: %+v", r)
 	}
 }
@@ -145,6 +145,12 @@ func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
 		{"FANOTIFY_INIT", unix.EMFILE, "UNVERIFIED"},
 		{"FANOTIFY_INIT", unix.ENOMEM, "UNVERIFIED"},
 		{"O_TMPFILE", unix.ENOSPC, "UNVERIFIED"},
+		{"WRITE", unix.ENOSPC, "UNVERIFIED"},
+		{"WRITE", unix.EDQUOT, "UNVERIFIED"},
+		{"WRITE", unix.ENOMEM, "UNVERIFIED"},
+		{"WRITE", unix.EIO, "FAILED"},
+		{"WRITE", unix.EBADF, "FAILED"},
+		{"QUEUE_READ", unix.EINTR, "UNVERIFIED"},
 	} {
 		r := refused(tc.errno, tc.operation)
 		if r.Status != tc.status || r.Code != fmt.Sprintf("%s:errno=%d", tc.operation, tc.errno) {
@@ -153,6 +159,32 @@ func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
 	}
 	if r := refused(zeroFSID, "PARENT_HANDLE"); r.Status != "UNSUPPORTED" || r.Code != "PARENT_HANDLE:ZERO_FSID" {
 		t.Fatalf("zero fsid: %+v", r)
+	}
+}
+
+func TestPublicationWriteOutcome(t *testing.T) {
+	for _, errno := range []unix.Errno{unix.ENOSPC, unix.EDQUOT, unix.ENOMEM} {
+		if r := publicationWrite(0, errno); r == nil || r.Status != "UNVERIFIED" || r.Code != fmt.Sprintf("WRITE:errno=%d", errno) {
+			t.Fatalf("write resource %d: %+v", errno, r)
+		}
+	}
+	if r := publicationWrite(4, nil); r == nil || *r != (outcome{"UNVERIFIED", "WRITE_SHORT"}) {
+		t.Fatalf("short write: %+v", r)
+	}
+	if r := publicationWrite(8, nil); r != nil {
+		t.Fatalf("complete write: %+v", r)
+	}
+	fd, err := unix.Open("/dev/full", unix.O_WRONLY|unix.O_CLOEXEC|unix.O_NOFOLLOW|unix.O_NONBLOCK, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fd)
+	var st unix.Stat_t
+	if err := unix.Fstat(fd, &st); err != nil || st.Mode&unix.S_IFMT != unix.S_IFCHR || st.Rdev != unix.Mkdev(1, 7) {
+		t.Fatal("verified /dev/full character device required before write")
+	}
+	if r := publicationWrite(unix.Write(fd, []byte("original"))); r == nil || r.Status != "UNVERIFIED" || r.Code != fmt.Sprintf("WRITE:errno=%d", unix.ENOSPC) {
+		t.Fatalf("actual ENOSPC write: %+v", r)
 	}
 }
 
