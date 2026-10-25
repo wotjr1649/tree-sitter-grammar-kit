@@ -12,7 +12,7 @@ typedef struct {
   TSFieldId field;
   bool named;
 } AuditNode;
-typedef struct { AuditNode *nodes; IdMap map; const TSLanguage *lang; } Audit;
+typedef struct { AuditNode *nodes; IdMap map; const TSLanguage *lang; uint32_t count, depth; } Audit;
 
 #ifdef TSGK_CORPUS_CST
 /* Pages retain every public CST value; the Go consumer rehashes the complete stream. */
@@ -95,29 +95,38 @@ static void check(Checks *c, uint32_t node, uint32_t column, int64_t expected, i
   }
 }
 
-static void audit_tree(Req *r, TSTree *tree, Checks *checks, uint32_t *count, uint32_t *depth, uint32_t start, uint32_t *end) {
+static void audit_tree(Req *r, TSTree *tree, Checks *checks, uint32_t *count, uint32_t *depth, uint32_t start, uint32_t *end, Audit *cache) {
   const TSLanguage *lang = ts_tree_language(tree);
   TSNode root = ts_tree_root_node(tree);
   /* This count sizes storage; the independent cursor walk must visit exactly it. */
   uint32_t n = ts_node_descendant_count(root);
   if (!n || n > r->nodes) fatal_limit("NODE_LIMIT");
-  Audit a = {0}; a.lang = lang;
-  a.nodes = t_calloc(n, sizeof *a.nodes); idmap_init(&a.map, n);
-  Walk w = {n, r->depth, collect, &a, 0, 0};
-  const char *error = walk(root, &w);
-  if (error) fatal_limit(error);
-  if (w.count != n) fatal_limit("CURSOR_COUNT_MISMATCH");
-  *count = n; *depth = w.max_seen;
+  Audit a = cache ? *cache : (Audit){0};
+  bool prepare = !a.nodes;
+  if (!prepare && a.count != n) fatal_limit("CURSOR_COUNT_MISMATCH");
+  if (prepare) {
+    a.lang = lang;
+    a.nodes = t_calloc(n, sizeof *a.nodes); idmap_init(&a.map, n);
+    Walk w = {n, r->depth, collect, &a, 0, 0};
+    const char *error = walk(root, &w);
+    if (error) fatal_limit(error);
+    if (w.count != n) fatal_limit("CURSOR_COUNT_MISMATCH");
+    a.count = n; a.depth = w.max_seen;
+  }
+  *count = n; *depth = a.depth;
   if (start >= n || *end <= start) fatal_limit("AUDIT_RANGE_INVALID");
   if (*end > n) *end = n;
-  for (uint32_t j = n; j-- > 0;) {
-    AuditNode *x = &a.nodes[j];
-    if (x->v[0] >= 0) a.nodes[x->v[0]].v[9] += x->v[9];
-    int32_t next_named = -1;
-    for (int32_t k = x->last; k >= 0; k = a.nodes[k].v[1]) {
-      a.nodes[k].v[4] = next_named;
-      if (a.nodes[k].named) next_named = k;
+  if (prepare) {
+    for (uint32_t j = n; j-- > 0;) {
+      AuditNode *x = &a.nodes[j];
+      if (x->v[0] >= 0) a.nodes[x->v[0]].v[9] += x->v[9];
+      int32_t next_named = -1;
+      for (int32_t k = x->last; k >= 0; k = a.nodes[k].v[1]) {
+        a.nodes[k].v[4] = next_named;
+        if (a.nodes[k].named) next_named = k;
+      }
     }
+    if (cache) *cache = a;
   }
   uint32_t nf = ts_language_field_count(lang);
   int32_t *first = t_calloc(nf + 1, sizeof *first);
@@ -213,12 +222,13 @@ static void audit_tree(Req *r, TSTree *tree, Checks *checks, uint32_t *count, ui
     }
     check(checks, k, 2000002, first_child, idx_of(&a.map, ts_node_first_child_for_byte(root,b))); checks->points++;
   }
-  t_free(first); idmap_free(&a.map); t_free(a.nodes);
+  t_free(first);
+  if (!cache) { idmap_free(&a.map); t_free(a.nodes); }
 }
 
-static Buf render_audit(Req *r, TSTree *tree, uint32_t start, uint32_t end, uint64_t *differences) {
+static Buf render_audit(Req *r, TSTree *tree, uint32_t start, uint32_t end, uint64_t *differences, Audit *cache) {
   Checks checks = {0}; sha_init(&checks.expected.sha); sha_init(&checks.observed.sha);
-  uint32_t count, depth; audit_tree(r,tree,&checks,&count,&depth,start,&end);
+  uint32_t count, depth; audit_tree(r,tree,&checks,&count,&depth,start,&end,cache);
   char expected[65], observed[65], source_sha[65];
   flush_stream(&checks.expected); flush_stream(&checks.observed);
   sha_hex(&checks.expected.sha,expected); sha_hex(&checks.observed.sha,observed);
@@ -295,7 +305,7 @@ int main(int argc, char **argv) {
   uint64_t millis; TSTree *tree = parse(parser,NULL,NULL,&source,r.enc,r.parse_ms,&error,&millis,NULL);
   if (!tree) return 3;
   uint64_t differences;
-  Buf out = render_audit(&r,tree,start,end,&differences);
+  Buf out = render_audit(&r,tree,start,end,&differences,NULL);
   if (out.over) return 3;
   write_frame(out.data,out.len);
   ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input); buf_free(&out);
