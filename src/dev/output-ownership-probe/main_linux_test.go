@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 	"testing"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -152,5 +153,23 @@ func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
 	}
 	if r := refused(zeroFSID, "PARENT_HANDLE"); r.Status != "UNSUPPORTED" || r.Code != "PARENT_HANDLE:ZERO_FSID" {
 		t.Fatalf("zero fsid: %+v", r)
+	}
+}
+
+func TestQueueBudgetIncludesReadAndWitness(t *testing.T) {
+	for _, tc := range []struct {
+		deadline         time.Time
+		total, remaining int
+	}{
+		{time.Now().Add(time.Hour), 0, 64 << 10},
+		{time.Now().Add(time.Hour), (256 << 10) - 17, 17},
+		{time.Now().Add(time.Hour), 256 << 10, 0},
+		{time.Now().Add(time.Hour), (256 << 10) + 1, 0},
+		{time.Now().Add(-time.Second), 0, 0},
+		{time.Now().Add(-time.Second), (256 << 10) - 17, 0},
+	} {
+		if got := queueRemaining(tc.deadline, tc.total); got != tc.remaining {
+			t.Fatalf("queue allowance after read/witness: got %d want %d", got, tc.remaining)
+		}
 	}
 }

@@ -199,6 +199,13 @@ func witness(events []creation, parent, child fid, pid int32, name string) outco
 	return outcome{"UNVERIFIED", "NO_COMPLETE_WITNESS"}
 }
 
+func queueRemaining(deadline time.Time, total int) int {
+	if !time.Now().Before(deadline) || total < 0 || total >= 256<<10 {
+		return 0
+	}
+	return min(64<<10, (256<<10)-total)
+}
+
 func directoryProbe(root string, replace bool) (result outcome) {
 	result = outcome{"UNVERIFIED", "NO_COMPLETE_WITNESS"}
 	parent, err := unix.Open(root, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0)
@@ -241,22 +248,34 @@ func directoryProbe(root string, replace bool) (result outcome) {
 	var events []creation
 	buf := make([]byte, 64<<10)
 	deadline, total := time.Now().Add(2*time.Second), 0
-	for total < 256<<10 && time.Now().Before(deadline) {
-		n, err := unix.Read(queue, buf)
+	for {
+		remaining := queueRemaining(deadline, total)
+		if remaining == 0 {
+			return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
+		}
+		n, err := unix.Read(queue, buf[:remaining])
+		if n > 0 {
+			total += n
+		}
+		if queueRemaining(deadline, total) == 0 {
+			return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
+		}
 		if errors.Is(err, unix.EAGAIN) {
-			return witness(events, pin, identity, int32(os.Getpid()), "child")
+			candidate := witness(events, pin, identity, int32(os.Getpid()), "child")
+			if queueRemaining(deadline, total) == 0 {
+				return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
+			}
+			return candidate
 		}
 		if err != nil || n == 0 {
 			return outcome{"UNVERIFIED", "QUEUE_READ"}
 		}
-		total += n
 		part, err := creations(buf[:n])
 		if err != nil || len(events)+len(part) > 64 {
 			return outcome{"UNVERIFIED", "EVENT_INVALID_OR_LIMIT"}
 		}
 		events = append(events, part...)
 	}
-	return outcome{"UNVERIFIED", "QUEUE_BUDGET"}
 }
 
 func publicationProbe(root string) (result outcome) {
