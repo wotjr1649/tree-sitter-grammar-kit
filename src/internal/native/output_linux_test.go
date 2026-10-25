@@ -19,6 +19,14 @@ import (
 )
 
 func TestLinuxOutputParentPolicy(t *testing.T) {
+	unsupported, err := os.OpenFile("/proc", unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = checkOutputParent(int(unsupported.Fd())) // inspect only; never attempt creation in procfs
+	if closeErr := unsupported.Close(); !errors.Is(err, unix.EOPNOTSUPP) || closeErr != nil {
+		t.Fatalf("unsupported filesystem gate: %v %v", err, closeErr)
+	}
 	for _, mode := range []os.FileMode{0o770, 0o777, 0o777 | os.ModeSticky} {
 		t.Run(mode.String(), func(t *testing.T) {
 			path := t.TempDir()
@@ -159,8 +167,9 @@ func TestLinuxOutputSyscallFailure(t *testing.T) {
 		if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
 			t.Fatal(err)
 		}
-		if err := unix.Prctl(unix.PR_SET_SECCOMP, unix.SECCOMP_MODE_FILTER, uintptr(unsafe.Pointer(&prog)), 0, 0); err != nil {
-			t.Fatal(err)
+		// Pass the program pointer directly to the syscall so Go keeps it valid across the call.
+		if _, _, errno := syscall.Syscall6(unix.SYS_PRCTL, unix.PR_SET_SECCOMP, unix.SECCOMP_MODE_FILTER, uintptr(unsafe.Pointer(&prog)), 0, 0, 0); errno != 0 {
+			t.Fatal(errno)
 		}
 		runtime.KeepAlive(filter)
 		if d, err := createOutputDirectory(p, "refused"); d != nil || !errors.Is(err, unix.EIO) {
