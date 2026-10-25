@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 	"time"
@@ -91,16 +93,19 @@ func TestLinuxCapabilityProbe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Support != "BLOCKED" || r.Schema != "tsgk-output-ownership-probe/r1" {
+	if r.Support != "BLOCKED" || r.Schema != "tsgk-output-ownership-probe/r2" {
 		t.Fatal("probe promoted to support evidence")
 	}
-	for _, o := range []outcome{r.Directory, r.Replacement, r.Publication} {
+	for _, o := range []outcome{r.Directory, r.Replacement, r.Publication, r.Direct} {
 		if o.Status == "FAILED" || o.Code == "" || !slices.Contains([]string{"CANDIDATE_MATCH", "REJECTED", "UNVERIFIED", "UNSUPPORTED"}, o.Status) {
 			t.Fatalf("probe failed: %+v", r)
 		}
 	}
 	if r.Replacement.Status == "CANDIDATE_MATCH" || r.Publication.Status == "CANDIDATE_MATCH" {
 		t.Fatal("replacement or unproven procfs promoted")
+	}
+	if r.Direct.Status == "CANDIDATE_MATCH" && r.Direct.Code != "DIRECT_FD_LINK_EEXIST_IDENTITY_OBSERVED" {
+		t.Fatal("direct publication lost its narrow observation scope")
 	}
 	b, err := json.Marshal(r)
 	if err != nil {
@@ -115,6 +120,52 @@ func TestCloseFailureIsNotSuccess(t *testing.T) {
 	if r != (outcome{"FAILED", fmt.Sprintf("CLOSE:errno=%d", unix.EBADF)}) {
 		t.Fatalf("close failure lost: %+v", r)
 	}
+}
+
+func TestDirectUnlinkableTempCannotBePublished(t *testing.T) {
+	root := t.TempDir()
+	positive := publicationProbe(root, true)
+	if positive.Status != "CANDIDATE_MATCH" {
+		if positive.Status != "UNSUPPORTED" && positive.Status != "UNVERIFIED" {
+			t.Fatalf("direct publication positive control: %+v", positive)
+		}
+		t.Logf("O_EXCL effect not observed; direct publication positive control: %+v", positive)
+		return
+	}
+	parent, err := unix.Open(root, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := unix.Close(parent); err != nil {
+			t.Error(err)
+		}
+	}()
+	fd, err := unix.Openat(parent, ".", unix.O_TMPFILE|unix.O_EXCL|unix.O_RDWR|unix.O_CLOEXEC, 0o600)
+	if err != nil {
+		r := refused(err, "O_TMPFILE")
+		if r.Status != "UNSUPPORTED" {
+			t.Fatalf("unlinkable temp: %+v", r)
+		}
+		t.Logf("negative control not observed: %+v", r)
+		return
+	}
+	defer func() {
+		if err := unix.Close(fd); err != nil {
+			t.Error(err)
+		}
+	}()
+	if err := unix.Linkat(fd, "", parent, "forbidden", unix.AT_EMPTY_PATH); !errors.Is(err, unix.ENOENT) {
+		t.Fatalf("unlinkable file publication: %v", err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "forbidden")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("negative control created a destination: %v", err)
+	}
+	var st unix.Stat_t
+	if err := unix.Fstat(fd, &st); err != nil || st.Nlink != 0 {
+		t.Fatalf("unpublished object gained a name: links=%d err=%v", st.Nlink, err)
+	}
+	t.Log("direct fd negative control: unlinkable temp rejected; destination absent; nlink=0")
 }
 
 func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
@@ -134,6 +185,8 @@ func TestSyscallRefusalKeepsContextAndErrno(t *testing.T) {
 		{"O_TMPFILE", unix.EISDIR, "UNSUPPORTED"},
 		{"O_TMPFILE", unix.EINVAL, "FAILED"},
 		{"O_TMPFILE", unix.EACCES, "UNSUPPORTED"},
+		{"LINKAT", unix.EPERM, "UNSUPPORTED"},
+		{"LINKAT", unix.EACCES, "UNSUPPORTED"},
 		{"PARENT_OPEN", unix.EACCES, "FAILED"},
 		{"PROCFS_OPEN", unix.ENOENT, "UNSUPPORTED"},
 		{"LINKAT", unix.EXDEV, "UNSUPPORTED"},

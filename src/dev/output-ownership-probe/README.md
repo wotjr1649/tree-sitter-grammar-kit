@@ -2,7 +2,7 @@
 
 이 개발 도구는 Linux API의 제한된 관측을 남긴다. **현재 제품의 출력 경로를 바꾸지 않으며 모든 결과의 `support_claim`은 `BLOCKED`다.** #215 해결·namespace snapshot·권한 격리·현재/다른 kernel의 일반 보장을 증명하지 않는다. macOS용 해법이나 Go `os.Root` 내부 descriptor의 Close 오류 관측도 제공하지 않는다.
 
-기존 Go 1.27.2와 고정 `golang.org/x/sys`만 사용한다. native library·compiler·network·새 capability·설치가 필요 없다. 기존 parent 아래 새 `probe-215-*` directory 하나와 세 하위 실험 directory만 만들고 보존한다. 기존 directory를 결과로 수용하거나 기존 entry를 삭제하지 않는다. task 전용 parent에서 다른 process가 건드리지 않는 조건으로 실행한다. 실제 다른 UID 공격을 수행하는 시험은 아니다.
+기존 Go 1.27.2와 고정 `golang.org/x/sys`만 사용한다. native library·compiler·network·새 capability·설치가 필요 없다. 기존 parent 아래 새 `probe-215-*` directory 하나와 네 하위 실험 directory만 만들고 보존한다. 기존 directory를 결과로 수용하거나 기존 entry를 삭제하지 않는다. task 전용 parent에서 다른 process가 건드리지 않는 조건으로 실행한다. 실제 다른 UID 공격을 수행하는 시험은 아니다.
 
 ```text
 CGO_ENABLED=0 go build -o <task-directory>/probe ./src/dev/output-ownership-probe
@@ -14,6 +14,9 @@ Linux 전용이다. shell에서 환경변수 지정 구문은 실행 shell에 �
 - `directory`: 새 parent inode에 `FAN_CREATE|FAN_ONDIR|FAN_EVENT_ON_CHILD`를 mark한다. fresh FID queue, self PID/name/parent·child FID, filesystem fsid·handle type/length/bytes를 대조한다. 첫 mkdir 뒤 descriptor를 얻는 창에 대한 일반 증명은 아직 아니다.
 - `replacement`: 같은 process에서 child를 생성·rename하고 다른 child를 만들어 결정적으로 교체한다. 두 생성의 모호함 또는 identity 차이를 거부하는 좁은 대조다. 서로 다른 UID·병렬 process·모든 event 병합·FID 재사용 검증을 대신하지 않는다.
 - `publication`: 열린 parent 상대 O_TMPFILE, 같은 file descriptor의 write/fsync, 열린 proc fd directory 상대 linkat와 두 번째 EEXIST, final bytes를 관측한다. procfs filesystem 종류 확인은 현재 process fd table에 대한 완전한 신뢰 증명이 아니므로 성공한 primitive 관측도 `UNVERIFIED`다. fallback이나 이름 기반 임시 cleanup을 사용하지 않는다.
+- `publication_direct`(report/r2): 별도 directory에서 O_TMPFILE의 fd를 `linkat(fd, "", parent, "final", AT_EMPTY_PATH)`에 직접 넘긴다. procfs·source basename·추가 권한·fallback을 쓰지 않는다. write/fsync·두 번째 EEXIST·final bytes·열린 원파일과 final의 device/inode를 확인한 경우만 `CANDIDATE_MATCH`다. 이 좁은 관측은 kernel·FS·현재 credential 문맥에 한정되고 product backend 채택이나 directory 생성 소유권을 증명하지 않는다. 이전 report/r1의 `publication` 의미와 과거 관측은 유지한다.
+
+직접 경로를 추가한 이유는 upstream [Linux v6.17의 credential 검사](https://github.com/torvalds/linux/blob/v6.17/fs/namei.c#L2433)가 open 시 credential과 현재 credential이 같은 fd의 무권한 empty-path lookup을 허용하기 때문이다. [v6.8의 capability 요구](https://github.com/torvalds/linux/blob/v6.8/fs/namei.c#L4374)와 다르므로 정확한 대상 kernel에서 확인하며, vendor kernel·LSM·FS 가용성은 version 문자열만으로 추론하지 않는다. `TestDirectUnlinkableTempCannotBePublished`는 같은 parent·credential 문맥에서 O_EXCL 없는 직접 게시 양성대조가 성공한 뒤 실제 O_TMPFILE|O_EXCL fd의 게시 ENOENT·destination 부재·nlink=0을 확인한다. 양성대조가 지원·권한 제한이나 resource 문제로 거부되면 원 operation/errno와 함께 O_EXCL 효과를 미관측으로 남기며 음성대조 성공으로 세지 않는다. 같은 UID의 credential 변경이나 다른 UID 공격 검증은 별도 미확보다.
 
 FID buffer는128 bytes로 고정한다. queue는 event64개·총256 KiB·2초를 동시에 제한하며 nonblocking read에서 EAGAIN이면 종료한다. 남은 예산이 전체64 KiB read buffer보다 작으면 syscall 전에 `QUEUE_BUDGET`으로 끝내며, read 후와 witness 채택 직전에도 예산을 재확인한다. 기다리면서 새 예산을 부여하지 않는다. 지원 부재·권한 부족은 `UNSUPPORTED`, 누락·overflow·잘못된 event·예산 초과는 `UNVERIFIED`, 모호하거나 다른 생성은 `REJECTED`, 좁은 정상 대조는 `CANDIDATE_MATCH`다. Close 오류는 `FAILED`이고 그 밖의 syscall 오류는 아래 호출별 분류를 따른다. JSON의 kernel/filesystem/privilege context가 다른 결과를 같은 근거로 합산하지 않는다.
 
