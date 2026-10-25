@@ -1535,3 +1535,285 @@ func TestQueryReferenceEligibilityTupleBindingFailure(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryReferenceEligibilityReview36(t *testing.T) {
+	for mask := 1; mask < 8; mask++ {
+		t.Run(fmt.Sprintf("missing-groups-%d", mask), func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			if mask&1 != 0 {
+				f.reg.Build = nil
+			}
+			if mask&2 != 0 {
+				f.reg.Control = nil
+			}
+			if mask&4 != 0 {
+				f.reg.Native = nil
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if err != nil || !got.Complete || got.Assessment != AssessBlocked || got.Build.Failed+got.Unit.Failed+got.Control.Failed+got.Assertion.Failed+got.Tuple.Failed != 0 {
+				t.Fatalf("absent groups err%v complete%v assessment%s counts%+v/%+v/%+v", err, got.Complete, got.Assessment, got.Build, got.Control, got.Tuple)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+	for _, id := range []string{"current-ref-0", "current-ref-1"} {
+		t.Run("missing-observation-"+id, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			f.reg.Observations = slices.DeleteFunc(f.reg.Observations, func(o eligibilityObservation) bool { return o.InvocationID == id })
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			wantBlocked := uint64(1)
+			if id == "current-ref-1" {
+				wantBlocked = 2
+			}
+			if err != nil || !got.Complete || got.Assessment != AssessBlocked || got.Tuple.Failed != 0 || got.Tuple.Blocked != wantBlocked || got.Tuple.Verified != 3-wantBlocked {
+				t.Fatalf("missing observation err%v assessment%s counts%+v", err, got.Assessment, got.Tuple)
+			}
+		})
+	}
+	for _, part := range []string{"queries", "api", "producer-observation", "observation"} {
+		for _, bad := range []string{"unknown", "type", "null", "missing"} {
+			for _, prior := range []bool{false, true} {
+				t.Run(fmt.Sprintf("nested-%s-%s-prior-%v", part, bad, prior), func(t *testing.T) {
+					f := newEligibilityFixture(t)
+					var raw nativewire.Response
+					if err := jsonv2.Unmarshal(f.files["native/response.json"], &raw); err != nil {
+						t.Fatal(err)
+					}
+					var target map[string]any
+					switch part {
+					case "queries":
+						var qs []map[string]any
+						if err := jsonv2.Unmarshal(raw.Steps[0].Incremental.Queries, &qs); err != nil {
+							t.Fatal(err)
+						}
+						target = qs[0]
+					case "api":
+						target = map[string]any{"revision": "tsgk-api/r1", "nodes": [][]int64{}, "child_fields": [][]int64{}, "field_lookups": [][]int64{}, "points": [][]int64{}, "names": []string{}}
+					case "producer-observation":
+						if err := jsonv2.Unmarshal(raw.Producer.ReuseObservation, &target); err != nil {
+							t.Fatal(err)
+						}
+					default:
+						var os []map[string]any
+						if err := jsonv2.Unmarshal(raw.Steps[0].Observations, &os); err != nil {
+							t.Fatal(err)
+						}
+						target = os[0]
+					}
+					field := "status"
+					if part == "api" {
+						field = "revision"
+					}
+					if part == "producer-observation" {
+						field = "policy"
+					}
+					switch bad {
+					case "unknown":
+						target["unknown"] = true
+					case "type":
+						target[field] = 42
+					case "null":
+						target[field] = nil
+					case "missing":
+						delete(target, field)
+					}
+					switch part {
+					case "queries":
+						raw.Steps[0].Incremental.Queries = eligibilityJSON(t, []map[string]any{target})
+					case "api":
+						raw.Steps[0].Incremental.API = eligibilityJSON(t, target)
+					case "producer-observation":
+						raw.Producer.ReuseObservation = eligibilityJSON(t, target)
+					default:
+						raw.Steps[0].Observations = eligibilityJSON(t, []map[string]any{target})
+					}
+					data := eligibilityJSON(t, raw)
+					f.replace("native/response.json", data)
+					var process eligibilityExecution
+					if err := jsonv2.Unmarshal(f.files["native/process.json"], &process); err != nil {
+						t.Fatal(err)
+					}
+					process.StdoutBytes = uint64(len(data)) + 4
+					f.replace("native/process.json", eligibilityJSON(t, process))
+					req := f.request()
+					if prior {
+						a := f.approval
+						a.RegistrationSHA256 = strings.Repeat("0", 64)
+						req.Approval = eligibilityJSON(t, a)
+					}
+					got, err := VerifyQueryReferenceEligibility(ctxT(t), req)
+					if err == nil || asError(err).Kind != KindInvalidInput || got.Complete || prior && got.Assessment != AssessFail || !prior && got.Assessment == AssessFail {
+						t.Fatalf("nested err%v complete%v assessment%s", err, got.Complete, got.Assessment)
+					}
+					eligibilityAssertCounts(t, got)
+				})
+			}
+		}
+	}
+	t.Run("capture-type-amplification", func(t *testing.T) {
+		r, e := startRun(ctxT(t), 30*time.Second)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer r.cancel()
+		b := &eligibilityBudget{r: r}
+		r.eligibility = b
+		s := &eligibilitySession{r: r, b: b}
+		name := strings.Repeat("x", 64<<10)
+		rows := make([][]int64, 20000)
+		for i := range rows {
+			rows[i] = []int64{0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}
+		}
+		q := querywire.Query{ID: "q", Status: StatusCompleted, Patterns: 1, Matches: 1, CaptureNames: []string{"x"}, Predicates: []QueryPredicate{}, Types: []string{name}, Captures: rows}
+		tree := nativewire.WireTree{Types: []string{name}, Nodes: [][]int64{{-1, 0, -1, 1, 0, 1, 0, 0, 0, 1}}, Queries: eligibilityJSON(t, []querywire.Query{q}), API: []byte("null")}
+		e = s.nativeReservation(nativewire.Response{Steps: []nativewire.Step{{Incremental: tree}}}, nil)
+		if e == nil || e.Kind != KindResourceLimit {
+			t.Fatalf("capture amplification unreserved: %v", e)
+		}
+	})
+}
+
+func TestQueryReferenceEligibilityMissingBatchObservation(t *testing.T) {
+	f := newEligibilityFixture(t)
+	q := f.witness.Queries[0]
+	q.ID = "q1"
+	f.witness.Queries = append(f.witness.Queries, q)
+	tuple := f.witness.Required[0]
+	tuple.Query = "q1"
+	f.witness.Required = append(f.witness.Required, tuple)
+	var raw nativewire.Response
+	if e := jsonv2.Unmarshal(f.files["native/response.json"], &raw); e != nil {
+		t.Fatal(e)
+	}
+	for i := range raw.Steps {
+		for _, tree := range []*nativewire.WireTree{&raw.Steps[i].Incremental, raw.Steps[i].Fresh} {
+			if tree == nil {
+				continue
+			}
+			var qs []querywire.Query
+			if e := jsonv2.Unmarshal(tree.Queries, &qs); e != nil {
+				t.Fatal(e)
+			}
+			q := qs[0]
+			q.ID = "q1"
+			tree.Queries = eligibilityJSON(t, append(qs, q))
+		}
+	}
+	data := eligibilityJSON(t, raw)
+	f.replace("native/response.json", data)
+	var process eligibilityExecution
+	if e := jsonv2.Unmarshal(f.files["native/process.json"], &process); e != nil {
+		t.Fatal(e)
+	}
+	process.StdoutBytes = uint64(len(data)) + 4
+	f.replace("native/process.json", eligibilityJSON(t, process))
+	for i := range f.reg.Invocations {
+		inv := &f.reg.Invocations[i]
+		if inv.ID == "native-current" {
+			inv.Inputs["query-q1"] = inv.Inputs["query-q0"]
+		}
+		if inv.ID != "current-ref-0" {
+			continue
+		}
+		var req eligibilityProcessRequest
+		if e := jsonv2.Unmarshal(inv.ApprovedRequest, &req); e != nil {
+			t.Fatal(e)
+		}
+		old := req.Args
+		req.Args = []string{"--batch", old[0], old[1], old[2], old[5], "q0", old[3], "q1", old[3]}
+		inv.ApprovedRequest = eligibilityJSON(t, req)
+		f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+		for name, index := range map[string]uint64{"library": 1, "source": 3, "query-0": 6} {
+			x := inv.Inputs[name]
+			x.ArgvIndex = eligibilityIndex(int(index))
+			inv.Inputs[name] = x
+		}
+		x := inv.Inputs["query-0"]
+		x.ArgvIndex = eligibilityIndex(8)
+		inv.Inputs["query-1"] = x
+		var receipt eligibilityReceipt
+		if e := jsonv2.Unmarshal(f.files[inv.Receipt.Member.Path], &receipt); e != nil {
+			t.Fatal(e)
+		}
+		original, e := base64.StdEncoding.DecodeString(receipt.StdoutBase64)
+		if e != nil {
+			t.Fatal(e)
+		}
+		row := []byte(strings.TrimSpace(string(original)))
+		var ref instrumentedReference
+		if e := jsonv2.Unmarshal(row, &ref); e != nil {
+			t.Fatal(e)
+		}
+		ref.Query.ID = "q1"
+		stdout := append(slices.Clone(row), '\n')
+		stdout = append(stdout, eligibilityJSON(t, ref)...)
+		stdout = append(stdout, '\n')
+		footer := eligibilityBatchFooter{Schema: "tsgk-instrumented-query-reference-batch/r1", Status: StatusCompleted, Complete: true, Queries: []string{"q0", "q1"}, ResponsesCompleted: 2}
+		stdout = append(stdout, eligibilityJSON(t, footer)...)
+		stdout = append(stdout, '\n')
+		f.stdoutMutation(inv.ID, func([]byte) []byte { return stdout })
+		for j := range f.reg.Observations {
+			o := &f.reg.Observations[j]
+			if o.InvocationID == inv.ID {
+				o.ByteLength = uint64(len(row))
+				o.SHA256 = digestHex(row)
+			}
+		}
+	}
+	got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+	if err != nil || !got.Complete || got.Assessment != AssessBlocked || got.Tuple.Failed != 0 || got.Tuple.Blocked != 1 || got.Tuple.Verified != 3 {
+		t.Fatalf("missing batch observation err%v assessment%s counts%+v", err, got.Assessment, got.Tuple)
+	}
+	eligibilityAssertCounts(t, got)
+}
+
+func TestQueryReferenceEligibilityMissingObservationKnownInputs(t *testing.T) {
+	for _, bad := range []string{"missing-source", "missing-query", "query-hash", "library-hash", "malformed"} {
+		t.Run(bad, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			f.reg.Observations = slices.DeleteFunc(f.reg.Observations, func(o eligibilityObservation) bool { return o.InvocationID == "current-ref-0" })
+			if strings.HasPrefix(bad, "missing-") {
+				for i := range f.reg.Invocations {
+					if f.reg.Invocations[i].ID == "current-ref-0" {
+						key := "source"
+						if bad == "missing-query" {
+							key = "query-0"
+						}
+						delete(f.reg.Invocations[i].Inputs, key)
+					}
+				}
+			} else {
+				f.stdoutMutation("current-ref-0", func(data []byte) []byte {
+					if bad == "malformed" {
+						return append([]byte(`{"unknown":true,`), data[1:]...)
+					}
+					var ref instrumentedReference
+					if e := jsonv2.Unmarshal(data, &ref); e != nil {
+						t.Fatal(e)
+					}
+					if bad == "query-hash" {
+						ref.Query.SHA256 = strings.Repeat("0", 64)
+					} else {
+						ref.Grammar.LibrarySHA256 = strings.Repeat("0", 64)
+					}
+					return eligibilityJSON(t, ref)
+				})
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if bad == "malformed" {
+				if err == nil || asError(err).Kind != KindInvalidInput || got.Complete {
+					t.Fatalf("malformed err%v complete%v", err, got.Complete)
+				}
+			} else {
+				want := AssessFail
+				if strings.HasPrefix(bad, "missing-") {
+					want = AssessBlocked
+				}
+				if err != nil || !got.Complete || got.Assessment != want {
+					t.Fatalf("known input err%v assessment%s", err, got.Assessment)
+				}
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+}

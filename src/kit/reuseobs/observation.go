@@ -106,6 +106,15 @@ func unsigned(v jsontext.Value) bool {
 // Decode rejects omitted zero-valued fields, unknown/duplicate members, noncanonical
 // integers and provenance drift before any status or count can support a claim.
 func Decode(raw []byte, b Binding) (Observation, error) {
+	o, err := Parse(raw)
+	if err != nil {
+		return o, err
+	}
+	return validate(o, b)
+}
+
+// Parse checks the record encoding without accepting its binding or claim.
+func Parse(raw []byte) (Observation, error) {
 	var o Observation
 	if len(raw) > MaxRecordBytes {
 		return o, errors.New("observation bytes limit")
@@ -145,7 +154,7 @@ func Decode(raw []byte, b Binding) (Observation, error) {
 	if err := jsonv2.Unmarshal(raw, &o, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return o, errors.New("observation encoding")
 	}
-	return validate(o, b)
+	return o, nil
 }
 
 func validate(o Observation, b Binding) (Observation, error) {

@@ -175,7 +175,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 				if !executableReady {
 					ready = false
 				}
-				if inv.ToolID != "" || inv.Executable != nil && inv.ExecutablePath != req.Path || req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256 {
+				if inv.ToolID != "" || inv.Executable != nil && inv.ExecutablePath != req.Path || group != nil && (req.Path != paths["R"] || inv.Executable != nil && inv.Executable.Member.SHA256 != summary.BinarySHA256) {
 					s.finding("ELIGIBILITY_REFERENCE_EXECUTABLE", inv.ID, true)
 					ready = false
 				}
@@ -188,7 +188,24 @@ func (s *eligibilitySession) verifyControls() *Error {
 			if out != nil {
 				s.outputs[inv.ID] = out
 				if rule.ID != "compile" && rule.ID != "batch-truncated" {
-					semanticReady, e := s.controlResponses(rule, out, paths)
+					responsePaths := paths
+					if group == nil {
+						hashArg := 5
+						if len(req.Args) > 0 && req.Args[0] == "--batch" {
+							hashArg = 4
+						}
+						if hashArg >= len(req.Args) {
+							s.finding("ELIGIBILITY_CONTROL_ARGV", inv.ID, true)
+							s.control[rule.ID] = "failed"
+							continue
+						}
+						responsePaths = map[string]string{"LH": req.Args[hashArg]}
+						if library, ok := inv.Inputs["library"]; len(rule.Responses) > 0 && ok && library.MemberPin != nil && library.MemberPin.Member.SHA256 != req.Args[hashArg] {
+							s.finding("ELIGIBILITY_CONTROL_LIBRARY_ARGV", inv.ID, true)
+							ready = false
+						}
+					}
+					semanticReady, e := s.controlResponses(rule, out, responsePaths)
 					if e != nil {
 						return e
 					}

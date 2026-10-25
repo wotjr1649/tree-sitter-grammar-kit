@@ -105,16 +105,12 @@ func DecodeSummary(raw jsontext.Value, sources []Source, sourceBytes, descendant
 
 var queryLimitCodes = map[string]bool{"QUERY_TIME_LIMIT": true, "MATCH_LIMIT": true, "CAPTURE_LIMIT": true, "QUERY_MATCH_OVERFLOW": true}
 
-func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount uint64, link func(Query, []int64) bool) ([]Query, *Error) {
+// ParseQueries checks only the JSON shape, before semantic validation or capture linking.
+// Callers bound input and repeated work before calling DecodeFull or DecodeSummary.
+func ParseQueries(raw jsontext.Value) ([]Query, *Error) {
 	var queries []Query
-	bad := func(i int, what string) *Error {
-		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
-	}
 	if isNull(raw) {
-		if len(sources) != 0 {
-			return nil, bad(0, "missing")
-		}
-		return queries, nil
+		return nil, nil
 	}
 	if err := RequireMembers(raw, true, "id", "status", "code", "query_ms", "error", "patterns", "capture_names", "predicates", "matches", "partial", "types", "captures"); err != nil {
 		return nil, err
@@ -157,6 +153,25 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 	}
 	if err := rejectNullPrimitives(raw); err != nil {
 		return nil, invalid("RESPONSE_MALFORMED", err)
+	}
+	return queries, nil
+}
+
+func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount uint64, link func(Query, []int64) bool) ([]Query, *Error) {
+	var queries []Query
+	bad := func(i int, what string) *Error {
+		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
+	}
+	if isNull(raw) {
+		if len(sources) != 0 {
+			return nil, bad(0, "missing")
+		}
+		return queries, nil
+	}
+	var shapeError *Error
+	queries, shapeError = ParseQueries(raw)
+	if shapeError != nil {
+		return nil, shapeError
 	}
 	if len(queries) != len(sources) {
 		return nil, bad(len(queries), "count")

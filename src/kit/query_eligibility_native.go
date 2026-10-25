@@ -2,6 +2,7 @@ package kit
 
 import (
 	"bytes"
+	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/drivers"
@@ -155,6 +156,16 @@ func (s *eligibilitySession) verifyNative() *Error {
 				return fail(KindInvalidInput, "JSON_SHAPE", inv.ID, err)
 			}
 
+			var capability struct {
+				Policy                string `json:"policy"`
+				RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
+			}
+			if e := s.b.decode("native-observation-capability", raw.Producer.ReuseObservation, &capability, true); e != nil {
+				return e
+			}
+			if e := s.nativeReservation(raw, versions); e != nil {
+				return e
+			}
 			abi, p := w.Native.ProducerABI, raw.Producer
 			// The approved current runtime manifest pins ABI compatibility to 13..15.
 			if w.Native.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256 && (abi.RuntimeLanguageVersion != 15 || abi.RuntimeMinCompatible != 13) {
@@ -184,9 +195,6 @@ func (s *eligibilitySession) verifyNative() *Error {
 			expect.EditPoints = points
 			for _, version := range versions {
 				expect.Sources = append(expect.Sources, nativewire.SourceID{Bytes: uint64(len(version)), SHA256: digestHex(version)})
-			}
-			if e := s.nativeReservation(raw, versions); e != nil {
-				return e
 			}
 			stop, err := nativewire.CheckHeader(raw, len(raw.Steps), expect)
 			if err != nil || stop {
@@ -310,8 +318,14 @@ func (s *eligibilitySession) verifyNative() *Error {
 			} else {
 				k := observation.ResponseOrdinal
 				ref := out.responses[k]
-				if observation.ByteOffset != out.offsets[k] || observation.ByteLength != uint64(len(out.rows[k])) || observation.SHA256 != digestHex(out.rows[k]) || observation.QueryID != ref.Query.ID || observation.SourceSHA256 != ref.Input.SHA256 || observation.SourceBytes != ref.Input.Bytes || int(tuple.Step) >= len(versions) || observation.SourceSHA256 != digestHex(versions[tuple.Step]) || observation.SourceBytes != uint64(len(versions[tuple.Step])) {
+				if observation.ByteOffset != out.offsets[k] || observation.ByteLength != uint64(len(out.rows[k])) || observation.SHA256 != digestHex(out.rows[k]) || observation.QueryID != ref.Query.ID || observation.SourceSHA256 != ref.Input.SHA256 || observation.SourceBytes != ref.Input.Bytes {
 					s.finding("ELIGIBILITY_OBSERVATION_SLICE", tuple.Query, true)
+					ready = false
+				}
+				if int(tuple.Step) >= len(versions) {
+					ready = false
+				} else if observation.SourceSHA256 != digestHex(versions[tuple.Step]) || observation.SourceBytes != uint64(len(versions[tuple.Step])) {
+					s.finding("ELIGIBILITY_OBSERVATION_SOURCE_VERSION", tuple.Query, true)
 					ready = false
 				}
 				if q.Metadata != nil && (ref.Query.Patterns != q.Metadata.Patterns || !slices.Equal(ref.Query.CaptureNames, q.Metadata.CaptureNames) || !reflect.DeepEqual(ref.Query.Predicates, q.Metadata.Predicates)) {
@@ -546,6 +560,20 @@ func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions
 		if e := s.b.charge(1, 0, "native-bound"); e != nil {
 			return e
 		}
+		if raw.Protocol == nativewire.ProtocolR4 || len(step.Observations) > 0 {
+			if e := s.b.reserveJSON("native-observations", step.Observations, 4); e != nil {
+				return e
+			}
+			var observations []jsontext.Value
+			if e := s.b.decode("native-observations", step.Observations, &observations, true); e != nil {
+				return e
+			}
+			for _, record := range observations {
+				if _, err := reuseobs.Parse(record); err != nil {
+					return fail(KindInvalidInput, "JSON_SHAPE", "native-observation", err)
+				}
+			}
+		}
 		for _, tree := range []*nativewire.WireTree{&step.Incremental, step.Fresh} {
 			if tree == nil {
 				continue
@@ -585,12 +613,42 @@ func (s *eligibilitySession) nativeReservation(raw nativewire.Response, versions
 					return e
 				}
 			}
-			if e := s.b.reserveJSON("native-query-bound", tree.Queries, 12); e != nil {
+			if e := s.b.reserveJSON("native-query-bound", tree.Queries, 18); e != nil {
 				return e
 			}
-			// A byte-size upper bound reserves decode, validation and query traversal before CheckStep.
+			queries, err := querywire.ParseQueries(tree.Queries)
+			if err != nil {
+				return fail(KindInvalidInput, "JSON_SHAPE", "native-queries", err)
+			}
+			// Compact captures may repeatedly reference one long type string.
+			for _, q := range queries {
+				for _, row := range q.Captures {
+					repeated := uint64(256)
+					if len(row) == 12 {
+						if row[4] >= 0 && row[4] < int64(len(q.Types)) {
+							repeated += 4 * uint64(len(q.Types[row[4]]))
+						}
+						if row[3] >= 0 && row[3] < int64(len(tree.Nodes)) {
+							node := tree.Nodes[row[3]]
+							if len(node) == 10 && node[1] >= 0 && node[1] < int64(len(tree.Types)) {
+								repeated += 4 * uint64(len(tree.Types[node[1]]))
+							}
+						}
+					}
+					if e := s.b.charge(256, repeated, "native-capture-strings"); e != nil {
+						return e
+					}
+				}
+			}
+			if len(tree.API) > 0 && !bytes.Equal(bytes.TrimSpace(tree.API), []byte("null")) {
+				var api querywire.API
+				if e := s.b.decode("native-api", tree.API, &api, true); e != nil {
+					return e
+				}
+			}
+			// Reserve strict preflight, validation and query traversal before CheckStep.
 			work += 4 * uint64(len(tree.Queries))
-			logical += 16 * uint64(len(tree.Queries))
+			logical += 24 * uint64(len(tree.Queries))
 		}
 		if i < len(versions) {
 			logical += 16 * uint64(len(versions[i]))
@@ -703,6 +761,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		allowed := map[string]bool{"library": true, "source": true}
 		queries := make([]QueryWitnessQuery, pairs)
 		observations := make([]QueryReferenceObservation, pairs)
+		knownStep := make([]bool, pairs)
 		for i := 0; i < pairs; i++ {
 			qi, ii := queryStart, queryIDIndex
 			if batch {
@@ -729,10 +788,44 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				}
 			}
 			if selected == nil {
-				s.finding("ELIGIBILITY_CURRENT_QUERY_UNREFERENCED", inv.ID, true)
-				ready = false
+				s.finding("ELIGIBILITY_CURRENT_QUERY_UNREFERENCED", inv.ID, false)
+				queries[i].ID = ids[i]
+				observations[i].Query = ids[i]
+				if source.MemberPin != nil {
+					observations[i].SourceSHA256 = source.MemberPin.Member.SHA256
+					observations[i].SourceBytes = source.MemberPin.Member.Bytes
+				}
+				input, found := inv.Inputs[queryKey]
+				if !found {
+					s.finding("ELIGIBILITY_INPUT_MISSING", inv.ID+"/"+queryKey, false)
+					ready = false
+				} else if input.MemberPin == nil {
+					s.finding("ELIGIBILITY_CURRENT_QUERY_INPUT", inv.ID, true)
+				} else {
+					data, have, e := s.member(input.MemberPin)
+					if e != nil {
+						return e
+					}
+					size := input.MemberPin.Member.Bytes
+					if ok, e := s.input(inv, queryKey, "PINNED", eligibilityIndex(qi), req.Args[qi], input.MemberPin.Member.SHA256, &size); e != nil {
+						return e
+					} else if !ok {
+						ready = false
+					}
+					if !have {
+						ready = false
+					}
+					if have {
+						if !utf8.Valid(data) {
+							s.finding("ELIGIBILITY_CURRENT_QUERY_ENCODING", inv.ID, true)
+						} else {
+							queries[i].Source = string(data)
+						}
+					}
+				}
 				continue
 			}
+			knownStep[i] = true
 			index := slices.IndexFunc(s.witness.Queries, func(q QueryWitnessQuery) bool { return q.ID == selected.Query })
 			if index < 0 {
 				s.finding("ELIGIBILITY_CURRENT_QUERY_UNKNOWN", inv.ID, true)
@@ -811,7 +904,15 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			}
 			symbol := req.Args[symbolIndex]
 			obs := observations[i]
-			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queries[i].Source != "", versions, s.r)
+			responseVersions := versions
+			if !knownStep[i] {
+				responseVersions = nil
+				if haveSource {
+					responseVersions = [][]byte{sourceBytes}
+					obs.Step = 0
+				}
+			}
+			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queries[i].Source != "", responseVersions, s.r)
 			if e != nil {
 				return e
 			}

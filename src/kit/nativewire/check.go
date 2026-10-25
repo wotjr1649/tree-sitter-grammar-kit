@@ -188,7 +188,7 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 		}
 	}
 	if r2 {
-		if err := t.checkQueries(e.Queries, sourceBytes); err != nil {
+		if err := t.checkQueries(e.Queries, sourceBytes, e.Check); err != nil {
 			return t, err
 		}
 		if err := t.checkAPI(e); err != nil {
@@ -199,12 +199,18 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 }
 
 // checkQueries retains the full-node link check while sharing strict wire validation.
-func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64) error {
+func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64, check func() error) error {
 	t.Queries = nil
 	var queries []WireQuery
 	var err *querywire.Error
+	var stopped error
 	if t.Nodes != nil {
 		queries, err = querywire.DecodeFull(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount, func(q WireQuery, row []int64) bool {
+			if check != nil {
+				if stopped = check(); stopped != nil {
+					return false
+				}
+			}
 			if row[3] < 0 || row[3] >= int64(len(t.Nodes)) {
 				return false
 			}
@@ -215,6 +221,9 @@ func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64) erro
 		})
 	} else {
 		queries, err = querywire.DecodeSummary(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount)
+	}
+	if stopped != nil {
+		return stopped
 	}
 	if err != nil {
 		return invalid(err.Code, err.Cause)
