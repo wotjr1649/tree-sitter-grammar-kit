@@ -731,6 +731,9 @@ func (x *replayEnv) walk(dir string, count *uint64) *Error {
 		return e
 	}
 	for _, d := range entries {
+		if e := x.r.eligibility.charge(128, 128*uint64(len(dir)+len(d.Name())+1), dir); e != nil {
+			return e
+		}
 		p := join(dir, d.Name())
 		info, e := x.g.lstat(p)
 		if e != nil {

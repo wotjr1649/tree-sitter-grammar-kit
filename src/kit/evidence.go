@@ -160,6 +160,11 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 		res.Explanation = append(res.Explanation, "evidence 검증을 끝내지 못했다: "+e.Code)
 		return res, e
 	}
+	if sharedRun != nil {
+		if e := sharedRun.eligibility.reserveJSON("policy", req.Policy, 3); e != nil {
+			return bad(e)
+		}
+	}
 	pol, e := parseEvidencePolicy(req.Policy)
 	if e != nil {
 		return bad(e)
@@ -210,6 +215,9 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	}
 	data := st.content
 	res.Identities = append(res.Identities, IdentityRef{Role: "evidence", Schema: EvidenceSchema, SHA256: st.sha256})
+	if e := r.eligibility.reserveJSON("evidence", data, 3); e != nil {
+		return bad(e)
+	}
 	if e := strictDoc("evidence", data, EvidenceSchema); e != nil {
 		return bad(e)
 	}
@@ -222,6 +230,9 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	}
 	if snapshot != nil {
 		snapshot.nodes = doc.Nodes
+	}
+	if e := r.eligibility.reserveGraph(doc.Nodes, pol); e != nil {
+		return bad(e)
 	}
 	add := func(code, path, msg string) { x.finding(code, path, msg) }
 	markNode := func(id string) {
@@ -540,6 +551,12 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 				Attempt  uint64 `json:"attempt"`
 				Platform string `json:"platform"`
 			} `json:"subject"`
+		}
+		if x.r != nil {
+			if e := x.r.eligibility.reserveJSON("replay-result", data, 4); e != nil {
+				x.finding(e.Code, f.Path, "stored replay JSON exceeds eligibility budget")
+				continue
+			}
 		}
 		if err := jsonv2.Unmarshal(data, &rr); err != nil {
 			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 올바르지 않다")

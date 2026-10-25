@@ -609,6 +609,10 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 }
 
 func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg QueryReferenceRegistration, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
+	return decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, q, queryKnown, versions, r)
+}
+
+func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
 	var head struct {
 		Schema   string `json:"schema"`
 		Status   string `json:"status"`
@@ -647,20 +651,29 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 	if e := decodeWitnessDocument("reference-response", data, &ref, true, r); e != nil {
 		return invalid(e)
 	}
+	if r.eligibility != nil {
+		if e := r.eligibility.reserveReference(&ref, versions); e != nil {
+			return nil, "", false, e
+		}
+	}
 	if ref.Status != StatusCompleted || ref.Code != "" || !ref.Complete || !ref.CursorExhausted || ref.DidExceedMatchLimit {
 		return nil, "REFERENCE_COMPLETION_INVALID", false, nil
 	}
 	if int(obs.Step) < len(versions) && !utf8.Valid(versions[obs.Step]) {
 		return nil, "REFERENCE_SOURCE_ENCODING_INVALID", false, nil
 	}
-	if ref.Upstream != instrumentedReferenceCommit || ref.Input.Encoding != EncodingUTF8 || ref.Input.Bytes != obs.SourceBytes || ref.Input.SHA256 != obs.SourceSHA256 || ref.Grammar.LibrarySHA256 != reg.LibrarySHA256 || ref.Grammar.Symbol != reg.Symbol || ref.Query.ID != obs.Query || !hex64.MatchString(ref.Query.SHA256) || queryKnown && ref.Query.SHA256 != digestHex([]byte(q.Source)) {
+	if ref.Upstream != instrumentedReferenceCommit || ref.Input.Encoding != EncodingUTF8 || ref.Input.Bytes != obs.SourceBytes || ref.Input.SHA256 != obs.SourceSHA256 || ref.Grammar.LibrarySHA256 != librarySHA256 || ref.Grammar.Symbol != symbol || ref.Query.ID != obs.Query || !hex64.MatchString(ref.Query.SHA256) || queryKnown && ref.Query.SHA256 != digestHex([]byte(q.Source)) {
 		return nil, "REFERENCE_CONTEXT_MISMATCH", false, nil
 	}
 	l := ref.Limits
 	if l.Nodes != 100000 || l.Captures != 50000 || l.GroupCaptures != 200000 || l.Matches != 100000 || l.WallMillis != 3000 || uint64(len(ref.Tree.Nodes)) > l.Nodes || uint64(len(ref.Query.Structural)) > l.Captures || uint64(len(ref.Query.Evaluated)) > l.Captures || ref.Query.Matches > l.Matches || len(ref.Query.MatchMapping) != int(ref.Query.Matches) {
 		return nil, "REFERENCE_LIMITS_INVALID", false, nil
 	}
-	if ref.Tree.Nodes == nil || ref.Query.CaptureNames == nil || ref.Query.Predicates == nil || ref.Query.Structural == nil || ref.Query.Evaluated == nil || ref.Query.MatchMapping == nil || ValidateTree(ref.Tree.Nodes, ref.Input.Bytes) != nil || !witnessCST(ref.Tree.Nodes) {
+	if ref.Tree.Nodes == nil || ref.Query.CaptureNames == nil || ref.Query.Predicates == nil || ref.Query.Structural == nil || ref.Query.Evaluated == nil || ref.Query.MatchMapping == nil || ValidateTree(ref.Tree.Nodes, ref.Input.Bytes) != nil {
+		return nil, "REFERENCE_TREE_INVALID", false, nil
+	}
+	cstEligible := witnessCST(ref.Tree.Nodes)
+	if !cstEligible && r.eligibility == nil {
 		return nil, "REFERENCE_TREE_INVALID", false, nil
 	}
 	// A full parse ends at EOF; its root may start after legal leading padding.
@@ -747,5 +760,5 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 			return nil, "REFERENCE_EVALUATION_MISMATCH", false, nil
 		}
 	}
-	return &ref, "", true, nil
+	return &ref, "", cstEligible, nil
 }

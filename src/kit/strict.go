@@ -82,11 +82,17 @@ func decodeStrict(doc string, data []byte, maxBytes uint64) (*jv, *Error) {
 type valueBudget struct {
 	max, n uint64
 	check  func() *Error
+	charge func() *Error
 }
 
 func (b *valueBudget) take(doc string, at *jv) *Error {
 	if b == nil {
 		return nil
+	}
+	if b.charge != nil {
+		if e := b.charge(); e != nil {
+			return e
+		}
 	}
 	if b.n++; b.n > b.max {
 		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc+"#"+at.cptr(), nil)
