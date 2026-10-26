@@ -171,11 +171,19 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 						fail("REUSE_ACCEPTED_PARSE_ARGUMENT_MISMATCH")
 					}
 				}
-				if failures > before {
-					for i := range res.Steps {
-						if res.Steps[i].Step == k {
-							res.Steps[i].Result, res.Steps[i].Code = claimFail, res.Code
+				zero := req.Raw == nil && !omitControl && ok && failures == before && len(obs) == 2 && obs[0].Status == "COMPLETE" && obs[0].Counts != nil && obs[0].Counts.Accepted == 0
+				for i := range res.Steps {
+					target := &res.Steps[i]
+					if target.Step != k {
+						continue
+					}
+					if zero {
+						fail("REUSE_ACCEPTED_ZERO")
+						if target.Result != claimFail {
+							target.Result, target.Code = claimFail, "REUSE_ACCEPTED_ZERO"
 						}
+					} else if failures > before && target.Result != claimFail {
+						target.Result, target.Code = claimFail, res.Code
 					}
 				}
 			}
@@ -350,8 +358,10 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			}
 			switch {
 			case !omitControl && obsOK && len(observations) == 2 && observations[0].Status == "COMPLETE" && observations[0].Counts != nil && observations[0].Counts.Accepted == 0:
-				target.Result, target.Code = claimFail, "REUSE_ACCEPTED_ZERO"
-				fail(target.Code)
+				if target.Result != claimFail {
+					target.Result, target.Code = claimFail, "REUSE_ACCEPTED_ZERO"
+				}
+				fail("REUSE_ACCEPTED_ZERO")
 			case failures > beforeFailures:
 				target.Result, target.Code = claimFail, res.Code
 			case valid[k] && k > 0 && valid[k-1] && req.Source != nil && req.Projection != nil:

@@ -175,8 +175,13 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 	if top.Build != nil {
 		expected.Observation = &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: top.ObservationRunID, ProducerSHA256: top.Build.Identity}
 	}
-	if source != nil {
-		versions, points, err := ApplyEdits(registered.Encoding, source, registered.Edits, reg.InputBytes)
+	{
+		h := x.acceptedLedger.original(registered.ID)
+		if h == nil {
+			return fail(KindInvalidInput, "REUSE_ACCEPTED_HISTORY_MISMATCH", c.ID, nil)
+		}
+		edits := h.edits()
+		versions, points, err := ApplyEdits(EncodingUTF8, []byte(h.SourceUTF8), edits, reg.InputBytes)
 		if err != nil {
 			return fail(KindInvalidInput, "REUSE_ACCEPTED_SOURCE_INVALID", c.ID, err)
 		}
@@ -184,7 +189,7 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 		for _, b := range versions {
 			expected.Sources = append(expected.Sources, nativewire.SourceID{Bytes: uint64(len(b)), SHA256: digestHex(b)})
 		}
-		for _, ed := range registered.Edits {
+		for _, ed := range edits {
 			expected.Edits = append(expected.Edits, nativewire.EditSpan{StartByte: ed.StartByte, OldEndByte: ed.OldEndByte, NewEndByte: ed.NewEndByte})
 		}
 	}

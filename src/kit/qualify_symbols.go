@@ -319,6 +319,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		captureAccepted(true)
 		return nil, e
 	}
+	captureAccepted(false)
 	switch {
 	case rerr != nil:
 		add("REPLAY_FAILED", dir, reducer+" replay가 끝나지 않았다: "+rerr.Error())
@@ -335,7 +336,6 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		over = true // valid, but not every case was recomputed
 	}
 	if accepted {
-		captureAccepted(false)
 		cases := s.ReuseAccepted.Cases
 		if len(res.Cases) != len(w.Cases) {
 			add("CASE_SET_MISMATCH", resPath, "등록된 original history 수와 다르다")
