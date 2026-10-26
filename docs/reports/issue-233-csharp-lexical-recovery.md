@@ -41,4 +41,8 @@ SDK ProductVersion의 source commit `e34a38d2ae1fc26406a317517196e55c68ff83ab`�
 
 독립 정확성 검토에서 새 lexical 경계·edit/revert 시험이 mandatory CI 선택식에 포함되지 않은 문제를 발견했다. 두 시험을 기존 필수 `TestNativePreprocessCST`의 하위 검사로 연결하며 prepared closure와 build를 공유한다. 초기 step에는 fresh counterpart가 없다는 protocol을 따르고, 두 편집 step의 incremental/fresh 12필드 및 원상 복원 source·초기 CST를 대조한다. CI와 같은 `^TestNativePreprocess(Ranges|CST)$` 선택식의 실제 로컬 실행이 13.773초에 통과했고 두 새 하위 검사의 PASS와 skip 부재를 확인했다. 이 실행의 process는 HARD4GiB·정리확인 잔여0이었다. Foundation 전체는 registered anchor와 나머지로 나누어 모두 통과했으며, CI gate 전체 회귀도 통과했다.
 
-macOS symbol reference 검증은 사용자 결정으로 실행하지 않는다. 기존 mandatory baseline의 플랫폼 gate는 해당 계약을 유지한다. 최종 PR·main CI는 아직 실행하지 않았으며 전체 #233 acceptance 완료를 주장하지 않는다.
+첫 PR CI `40297763711`은 세 플랫폼의 `TestQualifySymbolSetLimits`에서 실패했다. 현재 C# grammar 등록을 바꾼 뒤에도 현재·역사 fixture 세 개가 모두 과거 parser/scanner를 가리켰고, 시험이 세 revision 모두에 현재 등록을 적용했다. `REGISTRATION_MISMATCH`는 올바른 거부였다. 앞선 로컬 컴파일과 선택 시험은 kit 전체 실행을 대신하지 못했다.
+
+현재 fixture의 정상 1사례는 등록된 closure와 고정 compiler로 실제 CLI를 다시 실행해 얻었다. 실행은 12.915초에 COMPLETED/PASS, HARD4GiB, 정리 후 잔여0이었다. profile SHA256은 `1d02f0fc9ecaf293991780cf92d6c66c7072eae5bac7acfc57c4f4a14cd0b513`이며 source는 기존 74byte·SHA256 `aa0c80936108908705d36dc193ea59e5047f0178b7387016769f4844e8d2c695`를 유지한다. profile·result·active raw·primary raw·source 다섯 원문을 함께 채택하고 기존 두 역사 fixture의 전체 bytes는 보존한다. 역사 시험은 저장소 profile의 독립 고정 SHA256을 검사한 뒤 당시 grammar만 사용하며, 같은 과거 기록을 현재 grammar로 평가하면 FAIL인지도 확인한다. 현재 기록의 잘못된 grammar 역시 거부한다. 공유 byte 예산 대조에는 primary raw 크기와 replay 진입 확인을 포함하며 기존 한도·code 변조·deadline·record 검사는 유지한다.
+
+macOS symbol reference 검증은 사용자 결정으로 실행하지 않는다. 기존 mandatory baseline의 플랫폼 gate는 해당 계약을 유지한다. 수정 후 필수 PR·main CI와 전체 #233 acceptance 완료는 아직 주장하지 않는다.

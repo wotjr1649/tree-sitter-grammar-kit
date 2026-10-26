@@ -241,16 +241,16 @@ C# symbol 모드(218-B) 연결 시험:
     - 건너뛴 구간의 leaf
   - job은 log의 PASS 줄로 skip이 아닌 실행을 확인한다.
 
-#277의 `TestPreprocessSelectionDisjoint`·`TestIncrementalRouteOnSelectionSwitch`는 독립 byte 범위 기대값과 caller fold로 완전 분기 전환·같은 선택의 좌표 이동·공통 trailer·전체 replacement·삽입/삭제·잘못된 범위/한도·reuse0 control을 검사한다. Selection BLOCKED와 equality/expectation FAIL, 뒤 step route FAIL의 동시 입력에서도 FAIL·실패 code가 우선해야 한다. 새 예외의 관측은 PASS여야 하므로 omit-old·누락·수집 cap은 FAIL이다. CLI 시험은 실제 branch-only BLOCKED/equality PASS와 common-trailer route PASS를 대조하고, source/edit·route PASS 승격·legacy reducer 변경을 거부한다. `TestQualifySymbolRole`은 현재 역할의 기존 workload와 별도 switch workload를 실제 실행·replay하며, `TestQualifySymbolSetLimits`는 현재 r6와 역사적 r5 경로의 fixture·공유 예산을 각각 검사한다. 현재 fixture를 새 정책으로 재기록하고 역사적 result/r4 fixture는 bytes 그대로 별도 보존한다. 각 새 판정 경계의 mutant 검출과 서로 다른 관점의 독립 리뷰를 최종 head에 결속한다.
+#277의 `TestPreprocessSelectionDisjoint`·`TestIncrementalRouteOnSelectionSwitch`는 독립 byte 범위 기대값과 caller fold로 완전 분기 전환·같은 선택의 좌표 이동·공통 trailer·전체 replacement·삽입/삭제·잘못된 범위/한도·reuse0 control을 검사한다. Selection BLOCKED와 equality/expectation FAIL, 뒤 step route FAIL의 동시 입력에서도 FAIL·실패 code가 우선해야 한다. 새 예외의 관측은 PASS여야 하므로 omit-old·누락·수집 cap은 FAIL이다. CLI 시험은 실제 branch-only BLOCKED/equality PASS와 common-trailer route PASS를 대조하고, source/edit·route PASS 승격·legacy reducer 변경을 거부한다. `TestQualifySymbolRole`은 현재 역할의 기존 workload와 별도 switch workload를 실제 실행·replay하며, 당시 `TestQualifySymbolSetLimits`는 r6와 역사적 r5 경로의 fixture·공유 예산을 각각 검사했다. 당시 새 정책으로 재기록한 fixture와 역사적 result/r4 fixture의 의미는 아래 현재·역사 revision 검사에서 유지한다. 각 새 판정 경계의 mutant 검출과 서로 다른 관점의 독립 리뷰를 최종 head에 결속한다.
 
-C# primary CST 검사 (#279)는 고위험 변경이다. `TestPreprocessCSTPrimary`는 실제 등록 C# grammar의 저장 raw를 정상 대조로 삼고 source/run/build/history/policy/role/process+4 결속, full/summary·fresh·완전 관측, 유효한 TRUNCATED start, 앞 mismatch 뒤 source/equality FAIL 우선, cleanup·memory·wall·부분 timeout 출력을 검사한다. `TestNativePreprocessCST`는 네 detector가 active를 실행하지 않는지와 primary ERROR만 있는 정상 대조가 active PASS인지 확인한다. 기존 `TestNativePreprocessRanges`를 실제 등록 grammar로 옮기고, prepared closure를 갖춘 필수 native-routes step에서 두 native 시험을 강제한다. 기존 foundation의 도구 없는 skip은 이 필수 route 검증을 대신하지 않는다. `TestIncrementalCLISymbolMode`·`TestQualifySymbolRole`은 현재 6set/30사례와 role/member 변조, `TestQualifySymbolSetLimits`는 현재 r7·역사적 r6/r5 inventory와 각각의 fixture를 검사한다. `qualify-symbols-r5`는 #277 result/r5 원본을 byte 그대로 보존한다.
+C# primary CST 검사 (#279)는 고위험 변경이다. `TestPreprocessCSTPrimary`는 실제 등록 C# grammar의 저장 raw를 정상 대조로 삼고 source/run/build/history/policy/role/process+4 결속, full/summary·fresh·완전 관측, 유효한 TRUNCATED start, 앞 mismatch 뒤 source/equality FAIL 우선, cleanup·memory·wall·부분 timeout 출력을 검사한다. `TestNativePreprocessCST`는 교정된 네 사례의 primary 지시문 위치와 active PASS·실제 ERROR를 확인하며, primary ERROR만 있는 기존 정상 대조의 active PASS도 유지한다. 새 lexical 경계와 edit/revert 하위 시험은 이 필수 parent에서 함께 실행한다. 기존 `TestNativePreprocessRanges`를 실제 등록 grammar로 옮기고, prepared closure를 갖춘 필수 native-routes step에서 두 native 시험을 강제한다. 기존 foundation의 도구 없는 skip은 이 필수 route 검증을 대신하지 않는다. `TestIncrementalCLISymbolMode`·`TestQualifySymbolRole`은 현재 6set/30사례와 role/member 변조, `TestQualifySymbolSetLimits`는 현재 r7·역사적 r6/r5 inventory와 각각의 fixture를 검사한다. `qualify-symbols-r5`는 #277 result/r5 원본을 byte 그대로 보존한다.
 
-`TestQualificationCSTBlockedIsExact`와 필수 Go integration gate는 trusted inventory로 별도 CST 축을 독립 계산한다. 기대값은 PASS22/MISMATCH4/NOT_APPLICABLE4·29비교step이며, 축 누락·분모 축소·중복·다른 set·prefix 축소·UNVERIFIED 대체·PASS 승격·DEFERRED 축 위조를 거부한다. 정확한 사전등록 detector 때문에 생긴 BLOCKED만 수용하고 기존78칸/2,478개 의무·mechanism·checks 조건은 유지한다. 두 독립 관점의 최종 구현 리뷰와 mutant 검출, 모든 필수 PR CI 및 병합 후 main artifact 검증을 기록한다. macOS symbol qualification은 #243 DEFERRED다.
+`TestQualificationCSTCorrectedIsExact`와 필수 Go integration gate는 trusted inventory로 별도 CST 축을 독립 계산한다. 현재 기대값은 PASS26/MISMATCH0/NOT_APPLICABLE4·29비교step이며, 축 누락·분모 축소·중복·다른 set·prefix 축소·UNVERIFIED 대체·PASS 승격·DEFERRED 축 위조를 거부한다. `TestQualificationCSTBlockedIsExact`는 역사적 PASS22/MISMATCH4/NOT_APPLICABLE4 fixture와 그 BLOCKED의 부당한 PASS 승격 거부를 유지한다. 기존78칸/2,478개 의무·mechanism·checks 조건도 유지한다. 두 독립 관점의 최종 구현 리뷰와 mutant 검출, 모든 필수 PR CI 및 병합 후 main artifact 검증을 기록한다. macOS symbol qualification은 #243 DEFERRED다.
 
 C# symbol 모드 qualification(218-C) 시험:
 
 - foundation `TestSymbolRoleRegistration`·`TestQualificationInventory`
-  - `csharp-symbols` 역할(사례 26개, 기존 네 symbols 조합의 25개와 별도 switch set 1개)을 고정 Roslyn 관측에서만 만드는지 확인한다(`src/internal/ppexpect`, kit 차분 시험과 같은 도출).
+  - `csharp-symbols` 역할(사례 30개, 기존 네 symbols 조합의 25개와 별도 switch set 1개 및 primary 회귀 4개)을 고정 Roslyn 관측에서만 만드는지 확인한다(`src/internal/ppexpect`, kit 차분 시험과 같은 도출).
   - edit 결과가 같은 symbols의 다른 corpus 원본과 byte 단위로 같은지 확인한다.
   - 멈춘 사례에 syntax 기대값이 없는지 확인한다.
   - 생성 inventory가 저장소의 `qualification-c1.json`과 같은지 확인한다.
@@ -262,7 +262,7 @@ C# symbol 모드 qualification(218-C) 시험:
   - 기록된 set `src/testdata/qualify-symbols`(windows/amd64에서 `run-routes.ps1 -Symbols`로 만든 `s05-csharp-symbols-a-c`)가 등록대로 PASS인지 확인한다.
   - 모든 step이 OK인 사례의 code를 summary와 함께 바꾸면 replay는 받지만 등록 결과 비교로 행 FAIL인지 확인한다.
   - replay member가 한도를 넘으면 행 INCOMPLETE(kit 축 BLOCKED)인지, replay가 host byte 예산과 record 한도 안에서 도는지 확인한다.
-  - 이 기록은 등록·고정 runtime commit·native policy에 결속된다. C# grammar, runtime, 연산 한도나 policy 문구가 바뀌면 baseline이 실패하므로 다시 기록한다.
+  - 이 기록은 등록·고정 runtime commit·native policy에 결속된다. C# grammar, runtime, 연산 한도나 policy 문구가 바뀌면 현재 fixture를 실제 실행으로 다시 기록한다. 역사적 `qualify-symbols-r4`·`qualify-symbols-r5`는 bytes를 보존하고, 저장소 profile의 고정 SHA256으로 확인한 당시 grammar에만 결속한다. 같은 과거 fixture가 현재 grammar 등록에서는 `REGISTRATION_MISMATCH`로 거부되는지도 확인한다. 현재 fixture의 primary 응답을 포함한 host byte 계산과 replay 진입 확인으로 공유 예산 경계를 검사한다.
 - `TestQualifySymbolRole`(native routes job, 등록 C# closure, 세 OS에서 실행. qualification 근거가 아니라 시험이다)
   - 등록 workload `s05-csharp-symbols-none`·`s05-csharp-symbols-a-c`·`s05-csharp-symbols-switch`를 `run-routes.ps1 -Symbols`처럼 실행한 host 근거로 Qualify한다.
   - 실행 행 PASS와 다른 platform의 DEFERRED 행을 확인한다.

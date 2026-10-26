@@ -236,7 +236,8 @@ func TestReplaySharedBudget(t *testing.T) {
 
 // #218: a recorded symbol-mode set (src/testdata/qualify-symbols: run-routes.ps1 -Symbols on
 // windows/amd64 for s05-csharp-symbols-a-c) under the qualification limits. The record binds
-// the current registration, runtime commit and native policy: when the C# grammar, the
+// the current registration, runtime commit and native policy. Historical fixtures keep their
+// pinned original registration and are rejected under the current grammar. When the C# grammar, the
 // pinned runtime, the operation limits or the policy text change, the baseline fails and
 // the set is recorded again with run-routes.ps1 -Routes none -Symbols (copy
 // incremental/s05-csharp-symbols-a-c). It passes as
@@ -273,7 +274,21 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 			}
 		}
 	}
+	currentGrammar := w.Grammar
 	if schema != QualificationInventorySchema {
+		// Only the immutable repository fixture defines the historical registration.
+		profile, err := os.ReadFile(filepath.Join("..", "testdata", fixture, w.Set, "profile.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sum(profile) != "5e4c24787031a29ce4ecdc218f9e16ad4f31a9a0ceea2631f9b2e649a7622b4e" {
+			t.Fatal("historical symbol profile changed")
+		}
+		old, err := ParseIncrementalProfile(profile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.Grammar = old.Grammar
 		for i := range w.Cases {
 			w.Cases[i].PreprocessCSTExpect = nil
 		}
@@ -310,6 +325,21 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 		}
 		return roleRow(r, "csharp-symbols", win.ID), err
 	}
+	registered := invData
+	wrongGrammar := append([]NativeInput{}, currentGrammar...)
+	if schema == QualificationInventorySchema {
+		wrongGrammar[0].SHA256 = strings.Repeat("0", 64)
+	}
+	inv.ExtraRoles[0].Workloads[0].Grammar = wrongGrammar
+	invData, err = json.Marshal(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r, err := qualify(); err != nil || r.Status != CellFail || r.Mechanism != AssessFail || len(r.Sets) != 1 || len(r.Sets[0].Findings) != 1 || r.Sets[0].Findings[0].Code != "REGISTRATION_MISMATCH" || !strings.HasSuffix(r.Sets[0].Findings[0].Message, ": grammar") {
+		t.Fatalf("fixture under wrong grammar: %v %+v", err, r)
+	}
+	inv.ExtraRoles[0].Workloads[0].Grammar = w.Grammar
+	invData = registered
 	if r, err := qualify(); err != nil || r.Status != CellPass || r.Mechanism != AssessPass {
 		t.Fatalf("recorded set: %v %+v", err, r)
 	}
@@ -356,10 +386,16 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 	for _, p := range []string{"profile.json", "result.json", "responses/00000-issue198-nested-directives.json", "sources/00000-issue198-nested-directives.bin"} {
 		pre += size(p)
 	}
+	if schema == QualificationInventorySchema {
+		pre += size("primary/responses/00000-issue198-nested-directives.json")
+	}
+	replayStarted := false
+	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { replayStarted = true; return l }
 	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = pre + 64; return l }
 	_, err = qualify()
 	testHookQualifyLimits = nil
-	if asError(err).Code != "TOTAL_BYTES_LIMIT" {
+	testHookReplayLimits = nil
+	if asError(err).Code != "TOTAL_BYTES_LIMIT" || !replayStarted {
 		t.Fatalf("replay beyond the host budget: %v", err)
 	}
 	// the qualification wall's deadline passing while the set replays is the qualification's
