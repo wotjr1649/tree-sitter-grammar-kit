@@ -2,6 +2,7 @@ package kit
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -369,5 +370,391 @@ func TestReuseAcceptedOmitLaterRoute(t *testing.T) {
 				t.Fatalf("later route corruption: %+v %v", proof, err)
 			}
 		})
+	}
+}
+
+func TestReuseAcceptedProjectionOnlyCST(t *testing.T) {
+	for _, damage := range []string{"none", "incremental-type", "fresh-type", "rehashed-mismatch", "matching-rehashed", "points", "parent", "both-parent", "input", "identity", "empty", "missing-tree", "summary", "missing-source-mismatch"} {
+		t.Run(damage, func(t *testing.T) {
+			req, _, projection := acceptedFixture(t, 12)
+			step := acceptedStep(projection, 1)
+			slot := "incremental"
+			if damage == "fresh-type" {
+				slot = "fresh"
+			}
+			tr := step[slot].(map[string]any)
+			tree := tr["tree"].(map[string]any)
+			switch damage {
+			case "incremental-type", "fresh-type", "rehashed-mismatch", "matching-rehashed", "missing-source-mismatch":
+				tree["nodes"].([]any)[0].(map[string]any)["type"] = "changed"
+			case "points":
+				tree["nodes"].([]any)[0].(map[string]any)["end_point"].(map[string]any)["column"] = 999
+			case "parent", "both-parent":
+				tree["nodes"].([]any)[0].(map[string]any)["parent"] = 0
+			case "input":
+				tree["input"].(map[string]any)["sha256"] = strings.Repeat("0", 64)
+			case "identity":
+				tree["identities"].([]any)[0].(map[string]any)["sha256"] = strings.Repeat("0", 64)
+			case "empty":
+				tree["nodes"] = []any{}
+			case "missing-tree":
+				tr["tree"] = nil
+			case "summary":
+				tr["form"], tr["tree"] = "record", nil
+			}
+			if damage == "rehashed-mismatch" || damage == "matching-rehashed" || damage == "points" || damage == "parent" || damage == "both-parent" {
+				b, _ := json.Marshal(tree["nodes"])
+				var nodes []TreeNode
+				if err := json.Unmarshal(b, &nodes); err != nil {
+					t.Fatal(err)
+				}
+				tr["digest"] = TreeDigest(nodes)
+				if damage == "matching-rehashed" || damage == "both-parent" {
+					fresh := step["fresh"].(map[string]any)
+					fresh["tree"].(map[string]any)["nodes"] = tree["nodes"]
+					fresh["digest"] = tr["digest"]
+				}
+			}
+			if damage == "missing-source-mismatch" {
+				req.Source = nil
+			}
+			req.Projection, _ = json.Marshal(projection)
+			proof, err := JudgeReuseAccepted(req)
+			want := claimFail
+			if damage == "none" || damage == "matching-rehashed" || damage == "summary" {
+				want = claimBlocked
+			}
+			if err != nil || proof.Result != want || proof.Steps[0].Result != want {
+				t.Fatalf("projection CST %s: %+v %v", damage, proof, err)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedProjectionOnlyBindings(t *testing.T) {
+	for _, damage := range []string{"step-index", "step-source", "edit", "restarted", "encoding", "capability", "process", "route-proven", "route-end", "comparison"} {
+		t.Run(damage, func(t *testing.T) {
+			req, _, projection := acceptedFixture(t, 12)
+			step := acceptedStep(projection, 1)
+			switch damage {
+			case "step-index":
+				step["step"] = 99
+			case "step-source":
+				step["source_sha256"] = strings.Repeat("0", 64)
+			case "edit":
+				step["edit"].(map[string]any)["start_byte"] = 999
+			case "restarted":
+				step["restarted"] = true
+			case "encoding":
+				projection["encoding"] = EncodingUTF16LE
+			case "capability":
+				projection["producer"].(map[string]any)["reuse_observation"].(map[string]any)["policy"] = "wrong"
+			case "process":
+				projection["process"].(map[string]any)["exit_code"] = 1
+			case "route-proven":
+				step["route"].(map[string]any)["proven"] = true
+			case "route-end":
+				step["route"].(map[string]any)["edited_root_end_byte"] = 0
+			case "comparison":
+				step["comparison"].(map[string]any)["equal"] = false
+			}
+			req.Projection, _ = json.Marshal(projection)
+			proof, err := JudgeReuseAccepted(req)
+			if err != nil || proof.Result != claimFail {
+				t.Fatalf("projection binding %s hidden: %+v %v", damage, proof, err)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedProjectionOnlyEnvelope(t *testing.T) {
+	for _, damage := range []string{"schema", "status", "count", "has-error", "source-identity", "policy-identity", "null-schema", "missing-bytes", "null-identities"} {
+		t.Run(damage, func(t *testing.T) {
+			req, _, projection := acceptedFixture(t, 12)
+			tr := acceptedStep(projection, 1)["incremental"].(map[string]any)
+			tree := tr["tree"].(map[string]any)
+			switch damage {
+			case "schema":
+				tree["schema"] = "wrong"
+			case "status":
+				tree["status"] = StatusFailed
+			case "count":
+				tr["descendant_count"] = 2
+			case "has-error":
+				tr["has_error"] = false
+			case "source-identity", "policy-identity":
+				index := 1
+				if damage == "policy-identity" {
+					index = 2
+				}
+				tree["identities"].([]any)[index].(map[string]any)["sha256"] = strings.Repeat("0", 64)
+			case "null-schema":
+				tree["schema"] = nil
+			case "missing-bytes":
+				delete(tree["input"].(map[string]any), "bytes")
+			case "null-identities":
+				tree["identities"] = nil
+			}
+			req.Projection, _ = json.Marshal(projection)
+			proof, err := JudgeReuseAccepted(req)
+			if err != nil || proof.Result != claimFail {
+				t.Fatalf("envelope %s: %+v %v", damage, proof, err)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedProjectionOnlyHonestMismatch(t *testing.T) {
+	req, _, projection := acceptedFixture(t, 12)
+	step := acceptedStep(projection, 1)
+	incremental := step["incremental"].(map[string]any)
+	tree := incremental["tree"].(map[string]any)
+	tree["nodes"].([]any)[0].(map[string]any)["type"] = "changed"
+	var a, b []TreeNode
+	v, _ := json.Marshal(tree["nodes"])
+	if err := json.Unmarshal(v, &a); err != nil {
+		t.Fatal(err)
+	}
+	v, _ = json.Marshal(step["fresh"].(map[string]any)["tree"].(map[string]any)["nodes"])
+	if err := json.Unmarshal(v, &b); err != nil {
+		t.Fatal(err)
+	}
+	incremental["digest"] = TreeDigest(a)
+	step["comparison"] = map[string]any{"equal": false, "first_difference": CompareTrees(a, b)}
+	req.Projection, _ = json.Marshal(projection)
+	calls := 0
+	req.Expected.Check = func() error { calls++; return nil }
+	proof, err := JudgeReuseAccepted(req)
+	if err != nil || proof.Code != "REUSE_ACCEPTED_CST_MISMATCH" || proof.Steps[0].Result != claimFail {
+		t.Fatalf("honest mismatch: %+v %v", proof, err)
+	}
+	stopAt := calls - 1
+	calls = 0
+	sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+	req.Expected.Check = func() error {
+		calls++
+		if calls >= stopAt {
+			return sentinel
+		}
+		return nil
+	}
+	proof, err = JudgeReuseAccepted(req)
+	if !errors.Is(err, sentinel) || proof.Code != "REUSE_ACCEPTED_CST_MISMATCH" || proof.Steps[0].Result != claimFail {
+		t.Fatalf("interrupted mismatch: %+v %v", proof, err)
+	}
+	req.Source = []byte("wrong")
+	req.Expected.Check = nil
+	proof, err = JudgeReuseAccepted(req)
+	if err != nil || proof.Code != "REUSE_ACCEPTED_SOURCE_MISMATCH" || proof.Steps[0].Result != claimFail {
+		t.Fatalf("first failure: %+v %v", proof, err)
+	}
+}
+
+func TestReuseAcceptedLateProjectionCST(t *testing.T) {
+	for _, damage := range []string{"type", "null-schema", "string-input", "missing-bytes", "null-node", "string-edit", "early-null-schema", "early-fresh-count", "early-positive"} {
+		t.Run(damage, func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			h := req.Ledger.original(req.Case.ID)
+			last := h.BlockedSteps[len(h.BlockedSteps)-1]
+			tree := acceptedStep(projection, last)["incremental"].(map[string]any)["tree"].(map[string]any)
+			switch damage {
+			case "type":
+				tree["nodes"].([]any)[0].(map[string]any)["type"] = "changed"
+			case "null-schema", "early-null-schema":
+				tree["schema"] = nil
+			case "string-input":
+				tree["input"] = "wrong"
+			case "null-node":
+				tree["nodes"].([]any)[0].(map[string]any)["extra"] = nil
+			case "string-edit":
+				acceptedStep(projection, last)["edit"] = "wrong"
+			case "missing-bytes":
+				delete(tree["input"].(map[string]any), "bytes")
+			}
+			if strings.HasPrefix(damage, "early-") {
+				projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+				projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+				if damage == "early-fresh-count" {
+					acceptedObs(projection, last, 1)["counts"].(map[string]any)["accepted"] = 1
+				}
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			calls := 0
+			req.Expected.Check = func() error { calls++; return nil }
+			proof, err := JudgeReuseAccepted(req)
+			want, lastWant := claimFail, claimFail
+			if damage == "early-positive" {
+				want, lastWant = claimBlocked, claimPass
+			}
+			if err != nil || proof.Result != want || proof.Steps[0].Result != claimPass || proof.Steps[len(proof.Steps)-1].Result != lastWant {
+				t.Fatalf("late CST erased earlier target: %+v %v", proof, err)
+			}
+			stopAt := calls
+			calls = 0
+			sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+			req.Expected.Check = func() error {
+				calls++
+				if calls >= stopAt {
+					return sentinel
+				}
+				return nil
+			}
+			interrupted, err := JudgeReuseAccepted(req)
+			if !errors.Is(err, sentinel) || interrupted.Code != proof.Code || interrupted.Steps[0].Result != claimPass || interrupted.Steps[len(interrupted.Steps)-1].Result != lastWant {
+				t.Fatalf("late shape interrupted: %+v %v", interrupted, err)
+			}
+
+		})
+	}
+}
+
+func TestReuseAcceptedProjectionOnlyMetadata(t *testing.T) {
+	for _, damage := range []string{"valid-r4", "r3-api", "r4-api", "r4-predicates", "response-status", "response-code", "tree-form", "tree-status", "partial-count", "partial-digest"} {
+		t.Run(damage, func(t *testing.T) {
+			req, _, projection := acceptedFixture(t, 12)
+			producer := projection["producer"].(map[string]any)
+			if damage == "valid-r4" || damage == "r4-api" || damage == "r4-predicates" {
+				req.Expected.Revision = "tsgk-native/r4"
+				producer["query"] = "tsgk-query/r1"
+				producer["api"] = "tsgk-api/r1"
+				producer["predicates"] = "NOT_EVALUATED"
+				producer["symbol_count"] = 10
+				producer["field_count"] = 0
+			}
+			tr := acceptedStep(projection, 1)["incremental"].(map[string]any)
+			switch damage {
+			case "r3-api":
+				producer["api"] = "tsgk-api/r1"
+			case "r4-api":
+				delete(producer, "api")
+			case "r4-predicates":
+				producer["predicates"] = "EVALUATED"
+			case "response-status":
+				projection["response_status"] = "FAILED"
+				projection["response_code"] = "PRODUCER_FAILED"
+			case "response-code":
+				projection["response_code"] = "WRONG"
+			case "tree-form":
+				tr["form"] = "bogus"
+				tr["tree"] = nil
+			case "tree-status":
+				tr["status"] = "bogus"
+				tr["form"] = "record"
+				tr["tree"] = nil
+			case "partial-count":
+				tr["form"] = "record"
+				tr["tree"] = nil
+				tr["descendant_count"] = 0
+			case "partial-digest":
+				tr["form"] = "record"
+				tr["tree"] = nil
+				tr["digest"] = ""
+			}
+			req.Projection, _ = json.Marshal(projection)
+			proof, err := JudgeReuseAccepted(req)
+			want := claimFail
+			if damage == "valid-r4" {
+				want = claimBlocked
+			}
+			if err != nil || proof.Result != want {
+				t.Fatalf("projection metadata %s: %+v %v", damage, proof, err)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedEarlyPrefixFailures(t *testing.T) {
+	for _, damage := range []string{"source", "initial", "initial-extra", "first-target"} {
+		t.Run(damage, func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+			projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+			h := req.Ledger.original(req.Case.ID)
+			last := h.BlockedSteps[len(h.BlockedSteps)-1]
+			acceptedStep(projection, last)["incremental"].(map[string]any)["tree"].(map[string]any)["schema"] = nil
+			switch damage {
+			case "source":
+				req.Source = []byte("wrong")
+			case "initial-extra":
+				acceptedObs(projection, 0, 0)["unexpected"] = true
+			case "initial":
+				acceptedStep(projection, 0)["incremental"].(map[string]any)["tree"].(map[string]any)["schema"] = nil
+			case "first-target":
+				acceptedObs(projection, 1, 1)["counts"].(map[string]any)["accepted"] = 1
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			proof, err := JudgeReuseAccepted(req)
+			want := claimBlocked
+			if damage == "first-target" {
+				want = claimFail
+			}
+			if err != nil || proof.Result != claimFail || proof.Steps[0].Result != want || proof.Steps[len(proof.Steps)-1].Result != claimFail || damage == "source" && proof.Code != "REUSE_ACCEPTED_SOURCE_MISMATCH" {
+				t.Fatalf("early prefix failure %s: %+v %v", damage, proof, err)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedProjectionObservationShape(t *testing.T) {
+	for _, step := range []int{0, 1, 2} {
+		req, raw, projection := acceptedFixture(t, 0)
+		acceptedObs(projection, step, 0)["unexpected"] = true
+		setAcceptedEvidence(&req, raw, projection)
+		proof, err := JudgeReuseAccepted(req)
+		first := claimBlocked
+		if step == 1 {
+			first = claimFail
+		}
+		if step == 2 {
+			first = claimPass
+		}
+		if err != nil || proof.Result != claimFail || proof.Steps[0].Result != first {
+			t.Fatalf("projection extra step%d: %+v %v", step, proof, err)
+		}
+	}
+}
+
+func TestReuseAcceptedRawInterruptedTarget(t *testing.T) {
+	req, raw, projection := acceptedFixture(t, 12)
+	for _, m := range []map[string]any{raw, projection} {
+		o := acceptedObs(m, 1, 0)
+		o["old_tree"], o["old_source_sha256"] = false, nil
+		c := o["counts"].(map[string]any)
+		c["new_parse"], c["parse_after_edit"], c["accepted"] = 1, 0, 0
+	}
+	setAcceptedEvidence(&req, raw, projection)
+	calls := 0
+	req.Expected.Check = func() error { calls++; return nil }
+	baseline, err := JudgeReuseAccepted(req)
+	if err != nil || baseline.Code != "REUSE_ACCEPTED_PARSE_ARGUMENT_MISMATCH" {
+		t.Fatalf("baseline: %+v %v", baseline, err)
+	}
+	total, seen := calls, 0
+	if total > 256 {
+		t.Fatalf("bounded checkpoint probe exceeded256: %d", total)
+	}
+	for stopAt := 1; stopAt <= total; stopAt++ {
+		calls = 0
+		sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+		req.Expected.Check = func() error {
+			calls++
+			if calls >= stopAt {
+				return sentinel
+			}
+			return nil
+		}
+		proof, err := JudgeReuseAccepted(req)
+		if err != nil && !errors.Is(err, sentinel) {
+			t.Fatalf("original interruption lost: %v", err)
+		}
+		if err != nil && proof.Code == "REUSE_ACCEPTED_PARSE_ARGUMENT_MISMATCH" {
+			seen++
+			if proof.Result != claimFail || proof.Steps[0].Result != claimFail {
+				t.Fatalf("known raw failure lost target at%d/%d: %+v %v", stopAt, total, proof, err)
+			}
+		}
+	}
+	if seen == 0 {
+		t.Fatal("probe did not interrupt after the known raw contradiction")
 	}
 }

@@ -87,6 +87,16 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 		}
 		res.Result = claimFail
 	}
+	retainStepFailure := func(k, before int) {
+		if failures > before {
+			for i := range res.Steps {
+				target := &res.Steps[i]
+				if target.Step == k && target.Result != claimFail {
+					target.Result, target.Code = claimFail, res.Code
+				}
+			}
+		}
+	}
 	if req.Source != nil && req.Raw != nil && req.Projection != nil {
 		res.Code = "REUSE_ACCEPTED_INCOMPLETE"
 	}
@@ -143,8 +153,28 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 	// Even an invalid enclosing expectation cannot hide contradictions in provided data.
 	e.Sources, e.Edits, e.EditPoints = sources, spans, points
 	var c rcCase
+	earlyStepFailures := 0
+	var loadProjectionStep func(int) error
+	readProjectionStep := func(k int) error {
+		if loadProjectionStep == nil {
+			return nil
+		}
+		err := loadProjectionStep(k)
+		if stopped != nil {
+			return stopped
+		}
+		if err != nil {
+			if asError(err).Kind == KindResourceLimit {
+				return err
+			}
+			fail("REUSE_ACCEPTED_PROJECTION_INVALID")
+		}
+		return nil
+	}
 	if req.Projection != nil {
-		if err := acceptedProjection(req.Projection, &c, check); err != nil {
+		var err error
+		loadProjectionStep, err = acceptedProjection(req.Projection, &c, check)
+		if err != nil {
 			if stopped != nil {
 				return res, stopped
 			}
@@ -157,11 +187,15 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			fail("REUSE_ACCEPTED_PROJECTION_BINDING")
 		}
 		{
-			for k, s := range c.Steps {
+			for k := range c.Steps {
 				if req.Raw != nil && k < len(versions) && !earlyProjectionAvailable(c) {
 					continue
 				}
 				before := failures
+				if err := readProjectionStep(k); err != nil {
+					return res, err
+				}
+				s := c.Steps[k]
 				obs, ok := acceptedObservations(s.Observations, k, e)
 				if !ok {
 					fail("REUSE_ACCEPTED_OBSERVATION_INVALID")
@@ -170,6 +204,18 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 					if acceptedArgumentContradiction(o, omitControl) {
 						fail("REUSE_ACCEPTED_PARSE_ARGUMENT_MISMATCH")
 					}
+				}
+				var projectionErr error
+				if req.Raw == nil {
+					var old *rcTree
+					if k > 0 {
+						old = c.Steps[k-1].Incremental
+					}
+					code, err := acceptedProjectionOnlyStep(s, k, old, versions, e, req.Policy, omitControl, check)
+					if code != "" {
+						fail(code)
+					}
+					projectionErr = err
 				}
 				zero := req.Raw == nil && !omitControl && ok && failures == before && len(obs) == 2 && obs[0].Status == "COMPLETE" && obs[0].Counts != nil && obs[0].Counts.Accepted == 0
 				for i := range res.Steps {
@@ -186,6 +232,12 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 						target.Result, target.Code = claimFail, res.Code
 					}
 				}
+				if req.Raw != nil && k < len(versions) {
+					earlyStepFailures += failures - before
+				}
+				if projectionErr != nil {
+					return res, projectionErr
+				}
 			}
 		}
 	}
@@ -194,6 +246,39 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 		fail("REUSE_ACCEPTED_PROCESS_MISMATCH")
 	}
 	processComplete := process != nil && process.Status == StatusCompleted && process.Reason == "EXITED" && process.ExitCode == 0 && process.Cleanup.Verified && !process.StdoutTruncated && !process.StderrTruncated
+	if req.Raw == nil && req.Projection != nil {
+		var top struct {
+			Encoding string               `json:"encoding"`
+			Producer *nativewire.Producer `json:"producer"`
+		}
+		if jsonv2.Unmarshal(req.Projection, &top) != nil || top.Encoding != EncodingUTF8 || top.Producer == nil && c.ExecutionStatus == StatusCompleted {
+			fail("REUSE_ACCEPTED_PRODUCER_MISMATCH")
+		}
+		if p := top.Producer; p != nil {
+			manifest, ok := observationProducer(p.ReuseObservation)
+			capabilities := p.Query != ""
+			if e.Revision == nativewire.ProtocolR3 {
+				capabilities = p.Query == "UNSUPPORTED" && p.API == nil && p.Predicates == nil && p.SymbolCount == nil && p.FieldCount == nil
+			} else if e.Revision == nativewire.ProtocolR4 {
+				capabilities = capabilities && p.API != nil && p.Predicates != nil && *p.Predicates == "NOT_EVALUATED" && p.SymbolCount != nil && p.FieldCount != nil
+			}
+			if !ok || e.Observation == nil || manifest != e.Observation.Manifest || !capabilities {
+				fail("REUSE_ACCEPTED_PRODUCER_MISMATCH")
+			}
+		}
+		if c.ExecutionStatus == StatusCompleted && (c.ResponseStatus != StatusCompleted || c.ResponseCode != "") {
+			fail("REUSE_ACCEPTED_PROCESS_MISMATCH")
+		}
+		if process != nil && process.Reason == "EXITED" && c.ResponseStatus != "" {
+			exit, ok := map[string]int{StatusCompleted: 0, "INVALID_REQUEST": 2, StatusResourceLimit: 3, StatusFailed: 4}[c.ResponseStatus]
+			if !ok || exit != process.ExitCode || (c.ResponseStatus == StatusCompleted) != (c.ResponseCode == "") {
+				fail("REUSE_ACCEPTED_PROCESS_MISMATCH")
+			}
+		}
+		if c.ExecutionStatus == StatusCompleted && !processComplete || process != nil && process.Reason == "EXITED" && req.Expected.Exit != nil && process.ExitCode != *req.Expected.Exit {
+			fail("REUSE_ACCEPTED_PROCESS_MISMATCH")
+		}
+	}
 	earlyProjection := process != nil && c.ExecutionStatus != StatusCompleted && (!process.Cleanup.Verified && c.Code == "PROCESS_CLEANUP_UNVERIFIED" ||
 		process.Status == StatusResourceLimit && c.ExecutionStatus == StatusResourceLimit && c.Code == process.Reason ||
 		process.Status == StatusCancelled && c.ExecutionStatus == StatusCancelled && c.Code == "CANCELLED")
@@ -272,8 +357,12 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			fail("REUSE_ACCEPTED_RAW_INVALID")
 			continue
 		}
-		before := res.Result
 		beforeFailures := failures
+		if req.Projection != nil && k < len(c.Steps) {
+			if err := readProjectionStep(k); err != nil {
+				return res, err
+			}
+		}
 		// Inspect observation arguments independently of tree completeness and wire errors.
 		observations, obsOK := acceptedObservations(s.Observations, k, e)
 		if !obsOK {
@@ -293,6 +382,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 		}
 		cs, wireErr := nativewire.CheckStep(k, s, e)
 		if stopped != nil {
+			retainStepFailure(k, beforeFailures)
 			return res, stopped
 		}
 		if wireErr != nil {
@@ -314,6 +404,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 				}
 				pointsCode := witnessPointsChecked(t.Nodes, EncodingUTF8, versions[k], check)
 				if stopped != nil {
+					retainStepFailure(k, beforeFailures)
 					return res, stopped
 				}
 				if pointsCode != "" {
@@ -370,8 +461,8 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			}
 		}
 		complete = complete && obsComplete && allFull && wireErr == nil
-		// Per-step proof does not erase later failures of the original history.
-		valid[k], full[k] = obsComplete && allFull && wireErr == nil && k < len(c.Steps) && before != claimFail && res.Result != claimFail, allFull
+		// Early projection failures are checked again at their raw step; earlier targets remain provable.
+		valid[k], full[k] = obsComplete && allFull && wireErr == nil && k < len(c.Steps) && failures == earlyStepFailures, allFull
 		for i := range res.Steps {
 			target := &res.Steps[i]
 			if target.Step != k {
@@ -385,7 +476,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 				fail("REUSE_ACCEPTED_ZERO")
 			case failures > beforeFailures:
 				target.Result, target.Code = claimFail, res.Code
-			case valid[k] && k > 0 && valid[k-1] && req.Source != nil && req.Projection != nil:
+			case target.Result != claimFail && valid[k] && k > 0 && valid[k-1] && req.Source != nil && req.Projection != nil:
 				target.Result, target.Code = claimPass, ""
 			}
 		}
@@ -545,8 +636,8 @@ func acceptedStepProjection(p rcStep, cs nativewire.CheckedStep, obs []reuseobs.
 	if p.Step != s.Step || p.Restarted || p.Composite != nil || p.SourceBytes != s.SourceBytes || p.SourceSHA256 != s.SourceSHA256 {
 		return false
 	}
-	var observations []reuseobs.Observation
-	if jsonv2.Unmarshal(p.Observations, &observations) != nil || !reflect.DeepEqual(observations, obs) {
+	observations, ok := acceptedObservations(p.Observations, p.Step, e)
+	if !ok || !reflect.DeepEqual(observations, obs) {
 		return false
 	}
 	if (p.Edit == nil) != (s.Edit == nil) || (p.Route == nil) != (s.Route == nil) {
@@ -584,9 +675,128 @@ func acceptedStepProjection(p rcStep, cs nativewire.CheckedStep, obs []reuseobs.
 	return p.Comparison == nil
 }
 
-func acceptedProjection(data []byte, c *rcCase, check func() error) error {
+// A missing raw cannot authenticate a projection, but cannot hide its contradictions.
+func acceptedProjectionOnlyStep(p rcStep, k int, old *rcTree, versions [][]byte, e nativewire.Expect, policy IdentityRef, omit bool, check func() error) (code string, interrupted error) {
+	bad := func(c string) {
+		if code == "" {
+			code = c
+		}
+	}
+	checkpoint := func() error {
+		if interrupted == nil && check != nil {
+			interrupted = check()
+		}
+		return interrupted
+	}
+	if k >= len(versions) || k >= len(e.Sources) {
+		return "REUSE_ACCEPTED_PROJECTION_BINDING", checkpoint()
+	}
+	sid := e.Sources[k]
+	if p.Step != k || p.SourceBytes != sid.Bytes || p.SourceSHA256 != sid.SHA256 || p.Restarted || p.Composite != nil {
+		bad("REUSE_ACCEPTED_PROJECTION_BINDING")
+	}
+	if k == 0 {
+		if p.Edit != nil || p.Route != nil || p.Fresh != nil || p.Comparison != nil {
+			bad("REUSE_ACCEPTED_PROJECTION_BINDING")
+		}
+	} else {
+		ed, points := e.Edits[k-1], e.EditPoints[k-1]
+		if p.Edit == nil || p.Edit.StartByte == nil || p.Edit.OldEndByte == nil || p.Edit.NewEndByte == nil ||
+			*p.Edit.StartByte != ed.StartByte || *p.Edit.OldEndByte != ed.OldEndByte || *p.Edit.NewEndByte != ed.NewEndByte ||
+			!slices.Equal(p.Edit.StartPoint, []uint32{points.Start.Row, points.Start.Column}) || !slices.Equal(p.Edit.OldEndPoint, []uint32{points.OldEnd.Row, points.OldEnd.Column}) || !slices.Equal(p.Edit.NewEndPoint, []uint32{points.NewEnd.Row, points.NewEnd.Column}) {
+			bad("REUSE_ACCEPTED_PROJECTION_BINDING")
+		}
+	}
+	full := [2]bool{}
+	for i, t := range []*rcTree{p.Incremental, p.Fresh} {
+		if err := checkpoint(); err != nil {
+			return code, err
+		}
+		if t == nil {
+			continue
+		}
+		switch t.Status {
+		case StatusCompleted:
+			if t.Code != "" || !slices.Contains([]string{"full", "summary", "record"}, t.Form) || t.DescendantCount == 0 || t.DescendantCount > NativeOperations()["native-parse-edit"].Nodes || !hex64.MatchString(t.Digest) {
+				bad("REUSE_ACCEPTED_CST_INVALID")
+			}
+		case StatusResourceLimit, StatusFailed:
+			if t.Code == "" || t.Form != "" {
+				bad("REUSE_ACCEPTED_CST_INVALID")
+			}
+		default:
+			bad("REUSE_ACCEPTED_CST_INVALID")
+		}
+		if t.Tree == nil {
+			if t.Form == "full" {
+				bad("REUSE_ACCEPTED_CST_INVALID")
+			}
+			continue
+		}
+		f := t.Tree
+		if t.Status != StatusCompleted || t.Code != "" || t.Form != "full" || t.Summary != nil || f.Schema != TreeSchema || f.Status != StatusCompleted ||
+			f.Input.Encoding != EncodingUTF8 || f.Input.Bytes != sid.Bytes || f.Input.SHA256 != sid.SHA256 || len(f.Nodes) == 0 || uint64(len(f.Nodes)) > NativeOperations()["native-parse-edit"].Nodes || uint64(len(f.Nodes)) != t.DescendantCount ||
+			ValidateTree(f.Nodes, sid.Bytes) != nil || !witnessCST(f.Nodes) || f.Nodes[0].HasError != t.HasError || TreeDigest(f.Nodes) != t.Digest {
+			bad("REUSE_ACCEPTED_CST_INVALID")
+			continue
+		}
+		if e.Observation == nil {
+			bad("REUSE_ACCEPTED_CST_INVALID")
+		} else {
+			ids := []IdentityRef{{Role: "producer", Schema: "tsgk-native-build/r1", SHA256: e.Observation.ProducerSHA256}, {Role: "source", Schema: "tsgk-source-bytes/r1", SHA256: sid.SHA256}, policy}
+			if !reflect.DeepEqual(f.Identities, ids) {
+				bad("REUSE_ACCEPTED_CST_INVALID")
+			}
+		}
+		points := witnessPointsChecked(f.Nodes, EncodingUTF8, versions[k], checkpoint)
+		if interrupted != nil {
+			return code, interrupted
+		}
+		if points != "" {
+			bad("REUSE_ACCEPTED_CST_INVALID")
+		} else {
+			full[i] = true
+		}
+	}
+	if k > 0 && full[0] && full[1] {
+		d := CompareTrees(p.Incremental.Tree.Nodes, p.Fresh.Tree.Nodes)
+		if d != nil {
+			bad("REUSE_ACCEPTED_CST_MISMATCH")
+		}
+		if p.Comparison != nil && (p.Comparison.Equal != (d == nil) || !reflect.DeepEqual(p.Comparison.First, d)) {
+			bad("REUSE_ACCEPTED_PROJECTION_BINDING")
+		}
+	}
+	if k > 0 {
+		r := p.Route
+		if r == nil && omit {
+			bad("REUSE_ACCEPTED_CONTROL_MISMATCH")
+		}
+		if r != nil {
+			proven := r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
+			if r.Proven != proven || !r.EditHasChanges || r.FreshReusedNodes != 0 {
+				bad("REUSE_ACCEPTED_ROUTE_MISMATCH")
+			}
+			if old != nil && old.Form == "full" && old.Tree != nil && len(old.Tree.Nodes) > 0 {
+				end := old.Tree.Nodes[0].EndByte
+				ed := e.Edits[k-1]
+				if end >= ed.OldEndByte {
+					end = end - ed.OldEndByte + ed.NewEndByte
+				} else if end >= ed.StartByte {
+					end = ed.NewEndByte
+				}
+				if r.EditedRootEndByte != end {
+					bad("REUSE_ACCEPTED_ROUTE_MISMATCH")
+				}
+			}
+		}
+	}
+	return code, checkpoint()
+}
+
+func acceptedProjection(data []byte, c *rcCase, check func() error) (func(int) error, error) {
 	if uint64(len(data)) > ReplayOperations()["evidence-replay"].FileBytes {
-		return fail(KindResourceLimit, "REUSE_ACCEPTED_OUTPUT_LIMIT", "reuse-accepted-projection", nil)
+		return nil, fail(KindResourceLimit, "REUSE_ACCEPTED_OUTPUT_LIMIT", "reuse-accepted-projection", nil)
 	}
 	budget := &valueBudget{max: 2000000, check: func() *Error {
 		if check != nil {
@@ -598,7 +808,7 @@ func acceptedProjection(data []byte, c *rcCase, check func() error) error {
 	}}
 	v, err := decodeBounded("reuse-accepted-projection", data, ReplayOperations()["evidence-replay"].FileBytes, budget)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Check only the proof's projection fields; unrelated legacy extras remain data.
 	shape := func(v *jv, typ reflect.Type) error {
@@ -622,19 +832,36 @@ func acceptedProjection(data []byte, c *rcCase, check func() error) error {
 		Steps          []jsontext.Value `json:"steps"`
 	}
 	if err := shape(v, reflect.TypeOf(header)); err != nil {
-		return err
+		return nil, err
 	}
 	if process := jvMember(v, "process"); process.kind != 'n' {
 		var processShape acceptedProcess
 		if err := shape(process, reflect.TypeOf(processShape)); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	steps := jvMember(v, "steps")
 	if steps.kind != '[' {
-		return fmt.Errorf("projection steps")
+		return nil, fmt.Errorf("projection steps")
 	}
-	for _, s := range steps.vals {
+	var envelope struct {
+		rcCase
+		Steps []jsontext.Value `json:"steps"`
+	}
+	if err := jsonv2.Unmarshal(data, &envelope); err != nil {
+		return nil, err
+	}
+	*c = envelope.rcCase
+	c.Steps = make([]rcStep, len(envelope.Steps))
+	seen := make([]bool, len(c.Steps))
+	errors := make([]error, len(c.Steps))
+	// Defer step shape checks so a later malformed step cannot erase an earlier proof.
+	return func(k int) (err error) {
+		if seen[k] {
+			return errors[k]
+		}
+		defer func() { seen[k], errors[k] = true, err }()
+		s := steps.vals[k]
 		var stepShape struct {
 			Step         uint32               `json:"step"`
 			Bytes        uint64               `json:"source_bytes"`
@@ -676,17 +903,24 @@ func acceptedProjection(data []byte, c *rcCase, check func() error) error {
 			}
 			tree := jvMember(t, "tree")
 			if tree != nil && tree.kind != 'n' {
-				nodes := jvMember(tree, "nodes")
-				if nodes == nil {
-					return fmt.Errorf("missing nodes")
+				var fullShape struct {
+					Schema string `json:"schema"`
+					Status string `json:"status"`
+					Input  struct {
+						Encoding string `json:"encoding"`
+						Bytes    uint64 `json:"bytes"`
+						SHA256   string `json:"sha256"`
+					} `json:"input"`
+					Nodes      []TreeNode    `json:"nodes"`
+					Identities []IdentityRef `json:"identities"`
 				}
-				if err := witnessShape(typed{doc: "reuse-accepted-projection"}, nodes, reflect.TypeFor[[]TreeNode](), false, false, budget); err != nil {
+				if err := shape(tree, reflect.TypeOf(fullShape)); err != nil {
 					return err
 				}
 			}
 		}
-	}
-	return jsonv2.Unmarshal(data, c)
+		return jsonv2.Unmarshal(envelope.Steps[k], &c.Steps[k])
+	}, nil
 }
 
 func earlyProjectionAvailable(c rcCase) bool {
