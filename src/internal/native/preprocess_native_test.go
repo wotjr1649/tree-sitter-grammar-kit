@@ -157,6 +157,19 @@ func testCSharpLexicalBoundaries(t *testing.T, b *Build) {
 		{"prefix-dollar-at", "class C { string s = $@\"x\"; }\n", "NO_ERROR"},
 		{"prefix-at-dollar", "class C { string s = @$\"x\"; }\n", "NO_ERROR"},
 		{"prefix-at-dollar-at", "class C { string s = @$@\"x\"; }\n", "ERROR"},
+		{"line-filename-lf-before", "#line 10 /* c\n*/ \"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-crlf-before", "#line 10 /* c\r\n*/ \"file.cs\"\r\nclass C {}", "ERROR"},
+		{"line-filename-cr-before", "#line 10 /* c\r*/ \"file.cs\"\rclass C {}", "ERROR"},
+		{"line-filename-nel-before", "#line 10 /* c\u0085*/ \"file.cs\"\u0085class C {}", "ERROR"},
+		{"line-filename-ls-before", "#line 10 /* c\u2028*/ \"file.cs\"\u2028class C {}", "ERROR"},
+		{"line-filename-ps-before", "#line 10 /* c\u2029*/ \"file.cs\"\u2029class C {}", "ERROR"},
+		{"line-filename-inline", "#line 10 /* c */ \"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-unterminated", "#line 10 /* c\n\"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-follow-directive", "#line 10 /* c\n*/ \"file.cs\"\n#define A\nclass C {}", "ERROR"},
+		{"line-filename-normal-backslash", "#line 10 \"a\\b.cs\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-normal-empty", "#line 10 \"\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-enhanced-normal", "#line (1, 1) - (2, 1) \"file.cs\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-enhanced-comment", "#line (1, 1) - (2, 1) /* c */ \"file.cs\"\nclass C {}", "ERROR"},
 	} {
 		t.Run(tc.id, func(t *testing.T) {
 			c := kit.IncrementalCase{ID: tc.id, Encoding: kit.EncodingUTF8, Expect: []kit.StepExpectation{{Step: 0, Syntax: tc.syntax}}}
@@ -173,11 +186,12 @@ func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	type lexicalSource struct {
+		ID     string `json:"id"`
+		Source []byte `json:"source"`
+	}
 	var corpus struct {
-		Cases []struct {
-			ID     string `json:"id"`
-			Source []byte `json:"source"`
-		} `json:"cases"`
+		Cases []lexicalSource `json:"cases"`
 	}
 	if err := json.Unmarshal(data, &corpus); err != nil {
 		t.Fatal(err)
@@ -187,6 +201,13 @@ func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
 		"razor-comment-lines":           {"@*", "@**"},
 		"dollars-two-quotes-raw":        {`$$""`, `$$"`},
 		"nested-string-open-no-runaway": {"#else", "#elif"},
+	}
+	for _, tc := range []struct{ id, comment string }{
+		{"line-filename-multiline", "/* comment\n*/ "},
+		{"line-filename-inline", "/* comment */ "},
+	} {
+		corpus.Cases = append(corpus.Cases, lexicalSource{tc.id, []byte("#line 10 \"file.cs\"\nclass C {}")})
+		changes[tc.id] = edit{"10 ", "10 " + tc.comment}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -199,6 +220,10 @@ func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
 		t.Run(source.ID, func(t *testing.T) {
 			c := kit.IncrementalCase{ID: source.ID, Encoding: kit.EncodingUTF8,
 				Edits: editsBy(string(source.Source), change, edit{change.repl, change.find})}
+			lineFilename := strings.HasPrefix(source.ID, "line-filename-")
+			if lineFilename {
+				c.Expect = []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}, {Step: 1, Syntax: "ERROR"}, {Step: 2, Syntax: "NO_ERROR"}}
+			}
 			r := b.RunCase(ctx, testContext("native-parse-edit"), c, source.Source)
 			if r.ExecutionStatus != kit.StatusCompleted || len(r.Steps) != 3 || r.Claims.IncrementalEquality != ClaimPass {
 				t.Fatalf("edit/revert CST unverified: %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
@@ -216,6 +241,9 @@ func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
 				if step.Fresh == nil || step.Fresh.Tree == nil || kit.CompareTrees(step.Incremental.Tree.Nodes, step.Fresh.Tree.Nodes) != nil {
 					t.Fatalf("incremental/fresh full CST differs at step %d", step.Step)
 				}
+			}
+			if lineFilename && (r.Claims.Expectations != ClaimPass || !slices.ContainsFunc(r.Steps[1].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError })) {
+				t.Fatal("comment before filename lost its genuine ERROR")
 			}
 			if r.Steps[0].SourceSHA256 != r.Steps[2].SourceSHA256 || kit.CompareTrees(r.Steps[0].Incremental.Tree.Nodes, r.Steps[2].Fresh.Tree.Nodes) != nil {
 				t.Fatal("reverted source did not restore the full CST")

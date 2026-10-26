@@ -256,7 +256,7 @@ raw는 frame header를 제외한 JSON이며 `primary/responses/<nnnnn>-<case>.js
 
 ### C# lexical producer 교정 (#233)
 
-등록 C2 patch는 일반 문자열의 닫는 따옴표·escape를 immediate token으로 처리하고 LF·CR·NEL·LS·PS를 일반 문자열 content에서 제외한다. 지시문 안의 문자열은 escape를 해석하지 않는 별도 lexical 경계를 사용하며, `#error`·`#warning`·`#region`·`#endregion`의 자유 텍스트는 물리행 의미를 유지한다. `#line` filename의 외부 토큰과 `#pragma` filename의 기존 내부 토큰을 구분해 정상 checksum의 CST 선택을 보존한다.
+등록 C2 patch는 일반 문자열의 닫는 따옴표·escape를 immediate token으로 처리하고 LF·CR·NEL·LS·PS를 일반 문자열 content에서 제외한다. 지시문 안의 문자열은 escape를 해석하지 않는 별도 lexical 경계를 사용하며, `#error`·`#warning`·`#region`·`#endregion`의 자유 텍스트는 물리행 의미를 유지한다. `#line` filename과 `#pragma` filename은 각각 escape를 해석하지 않는 internal immediate token을 사용한다. filename 앞의 extra comment가 물리행 경계를 건너 지시문을 성공시키지 않으며, 잘못된 quoted/raw tail의 소유 범위는 별도 recovery scanner가 유지한다. 정상 checksum의 CST 선택도 보존한다.
 
 Razor `@*…*@`와 잘못된 interpolated raw prefix는 recovery에서 하나의 lexical 단위로 소비한다. `lexical_error` 외부 토큰은 정상 rules·extras에서 사용하지 않으므로 실제 parser `ERROR` 아래에 남는다. 잘못된 prefix는 정상 interpolation frame을 만들지 않는다. 복구 walker의 임시 stack은 token 호출 안에서 해제하고 incremental serialization에는 넣지 않는다. 정상 source와 ERROR source 모두 full incremental/fresh CST의 12개 필드 대조를 거친다.
 
