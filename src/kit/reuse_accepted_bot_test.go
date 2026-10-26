@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -756,5 +757,413 @@ func TestReuseAcceptedRawInterruptedTarget(t *testing.T) {
 	}
 	if seen == 0 {
 		t.Fatal("probe did not interrupt after the known raw contradiction")
+	}
+}
+
+func TestReuseAcceptedLateRawShape(t *testing.T) {
+	for _, early := range []bool{false, true} {
+		for _, damage := range []string{"null-digest", "missing-digest", "typed-digest", "typed-nodes", "unknown-step", "null-step"} {
+			name := damage
+			if early {
+				name = "early-" + name
+			}
+			t.Run(name, func(t *testing.T) {
+				req, raw, projection := acceptedFixture(t, 0)
+				h := req.Ledger.original(req.Case.ID)
+				last := h.BlockedSteps[len(h.BlockedSteps)-1]
+				step := acceptedStep(raw, last)
+				tree := step["incremental"].(map[string]any)
+				switch damage {
+				case "null-digest":
+					tree["digest"] = nil
+				case "missing-digest":
+					delete(tree, "digest")
+				case "typed-digest":
+					tree["digest"] = 1
+				case "typed-nodes":
+					tree["nodes"] = "wrong"
+				case "unknown-step":
+					step["unexpected"] = true
+				case "null-step":
+					raw["steps"].([]any)[last] = nil
+				}
+				if early {
+					projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+					projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+				}
+				setAcceptedEvidence(&req, raw, projection)
+				proof, err := JudgeReuseAccepted(req)
+				if err != nil || proof.Result != claimFail || proof.Code != "REUSE_ACCEPTED_RAW_INVALID" || proof.Steps[0].Result != claimPass || proof.Steps[len(proof.Steps)-1].Result != claimFail {
+					t.Fatalf("late raw %s: %+v %v", name, proof, err)
+				}
+			})
+		}
+	}
+}
+
+func TestQualifyReuseAcceptedKeepsFailureCode(t *testing.T) {
+	root, _ := acceptedReplayFixture(t, func(files map[string][]byte, _ map[string]any) {
+		for path, data := range files {
+			if strings.HasPrefix(path, "sources/") {
+				files[path] = []byte(strings.Repeat("x", len(data)))
+			}
+		}
+	})
+	q, w, p := acceptedReaderQualifier(t, root, false)
+	s, err := q.evalSymbolSet(w, p)
+	if err != nil || s.ReuseAccepted.Cases[0].Result != claimFail || s.ReuseAccepted.Cases[0].Code != "REUSE_ACCEPTED_SOURCE_MISMATCH" {
+		t.Fatalf("qualification lost accepted failure: %+v %v", s.ReuseAccepted, err)
+	}
+}
+
+func TestReuseAcceptedCompletedHeaderCount(t *testing.T) {
+	for _, early := range []bool{false, true} {
+		for _, damage := range []string{"zero", "one", "minus-one", "plus-one"} {
+			name := damage
+			if early {
+				name = "early-" + name
+			}
+			t.Run(name, func(t *testing.T) {
+				req, raw, projection := acceptedFixture(t, 0)
+				n := len(raw["steps"].([]any))
+				if n < 3 {
+					t.Fatal("multi-target fixture required")
+				}
+				count := map[string]int{"zero": 0, "one": 1, "minus-one": n - 1, "plus-one": n + 1}[damage]
+				raw["steps_completed"] = count
+				if early {
+					projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+					projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+				}
+				setAcceptedEvidence(&req, raw, projection)
+				proof, err := JudgeReuseAccepted(req)
+				if err != nil || proof.Result != claimFail || proof.Code != "REUSE_ACCEPTED_RAW_INVALID" {
+					t.Fatalf("header count %d/%d: %+v %v", count, n, proof, err)
+				}
+				for _, step := range proof.Steps {
+					if step.Result == claimPass {
+						t.Fatalf("common header contradiction promoted target: %+v", proof)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestReuseAcceptedPartialHeader(t *testing.T) {
+	for _, damage := range []string{"valid", "count", "code", "status", "late-invalid", "late-invalid-code", "zero-code", "last-target-valid", "last-target-code", "last-malformed", "last-malformed-code", "last-wire-invalid", "last-wire-invalid-code"} {
+		t.Run(damage, func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			n := len(raw["steps"].([]any))
+			h := req.Ledger.original(req.Case.ID)
+			if strings.HasPrefix(damage, "last-target") {
+				n = h.BlockedSteps[len(h.BlockedSteps)-1] + 1
+				raw["steps"] = raw["steps"].([]any)[:n]
+				projection["steps"] = projection["steps"].([]any)[:n]
+			}
+			last := n - 1
+			status, code, exit := StatusResourceLimit, "PARSE_TIME_LIMIT", 3
+			raw["steps_completed"] = last
+			acceptedStep(raw, last)["fresh"] = map[string]any{"status": status, "code": code, "form": nil}
+			acceptedStep(projection, last)["fresh"] = map[string]any{"status": status, "code": code, "form": "", "descendant_count": 0, "has_error": false, "digest": "", "tree": nil}
+			acceptedStep(projection, last)["comparison"] = nil
+			for _, m := range []map[string]any{raw, projection} {
+				o := acceptedObs(m, last, 1)
+				o["status"], o["reason"] = "UNAVAILABLE", "PARSE_INCOMPLETE"
+				o["counts"].(map[string]any)["done"] = 0
+			}
+			switch damage {
+			case "count":
+				raw["steps_completed"] = n
+			case "code", "late-invalid-code", "zero-code", "last-target-code", "last-malformed-code", "last-wire-invalid-code":
+				code = "NODE_LIMIT"
+			case "status":
+				status, code, exit = StatusFailed, "PARSE_NULL", 4
+			}
+			if strings.HasPrefix(damage, "late-invalid") {
+				delete(acceptedStep(raw, h.BlockedSteps[len(h.BlockedSteps)-1])["incremental"].(map[string]any), "digest")
+			}
+			if strings.HasPrefix(damage, "last-malformed") {
+				raw["steps"].([]any)[last] = nil
+			}
+			if strings.HasPrefix(damage, "last-wire-invalid") {
+				acceptedStep(raw, last)["incremental"].(map[string]any)["digest"] = strings.Repeat("f", 64)
+			}
+			if damage == "zero-code" {
+				for _, m := range []map[string]any{raw, projection} {
+					acceptedObs(m, h.BlockedSteps[0], 0)["counts"].(map[string]any)["accepted"] = 0
+				}
+			}
+			req.Expected.Exit = &exit
+			raw["status"], raw["code"] = status, code
+			projection["execution_status"], projection["code"], projection["response_status"], projection["response_code"] = status, code, status, code
+			process := projection["process"].(map[string]any)
+			process["status"], process["exit_code"] = StatusFailed, exit
+			setAcceptedEvidence(&req, raw, projection)
+			calls := 0
+			req.Expected.Check = func() error { calls++; return nil }
+			proof, err := JudgeReuseAccepted(req)
+			wantResult, wantFirst := claimFail, claimBlocked
+			if damage == "valid" || damage == "last-target-valid" {
+				wantResult, wantFirst = claimBlocked, claimPass
+			}
+			if damage == "late-invalid" || strings.HasPrefix(damage, "last-malformed") || strings.HasPrefix(damage, "last-wire-invalid") {
+				wantFirst = claimPass
+			}
+			if damage == "zero-code" {
+				wantFirst = claimFail
+			}
+			if err != nil || proof.Result != wantResult || proof.Steps[0].Result != wantFirst {
+				t.Fatalf("partial header %s: %+v %v", damage, proof, err)
+			}
+			if strings.HasPrefix(damage, "last-target") && proof.Steps[len(proof.Steps)-1].Result != claimBlocked {
+				t.Fatalf("common header failure blamed current target: %+v", proof)
+			}
+			if damage == "zero-code" && (proof.Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[0].Code != "REUSE_ACCEPTED_ZERO") {
+				t.Fatalf("known first failure lost: %+v", proof)
+			}
+			if strings.HasPrefix(damage, "late-invalid") && proof.Steps[len(proof.Steps)-1].Result != claimFail {
+				t.Fatalf("late target failure lost: %+v", proof)
+			}
+			if damage == "code" {
+				total, seen := calls, 0
+				if total > 256 {
+					t.Fatalf("bounded checkpoint probe exceeded256: %d", total)
+				}
+				for stopAt := 1; stopAt <= total; stopAt++ {
+					calls = 0
+					sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+					req.Expected.Check = func() error {
+						calls++
+						if calls >= stopAt {
+							return sentinel
+						}
+						return nil
+					}
+					got, err := JudgeReuseAccepted(req)
+					if err != nil && !errors.Is(err, sentinel) {
+						t.Fatalf("original interruption lost: %v", err)
+					}
+					if err != nil && got.Code == "REUSE_ACCEPTED_RAW_INVALID" {
+						seen++
+						if got.Result != claimFail || got.Steps[0].Result == claimPass {
+							t.Fatalf("known common header failure lost: %+v %v", got, err)
+						}
+					}
+				}
+				if seen == 0 {
+					t.Fatal("no interruption after known header contradiction")
+				}
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedZeroBeforeCSTInterruption(t *testing.T) {
+	req, raw, projection := acceptedFixture(t, 12)
+	if req.Ledger.original(req.Case.ID).BlockedSteps[0] != 1 || len(acceptedStep(raw, 0)["incremental"].(map[string]any)["nodes"].([]any)) != 1 {
+		t.Fatal("one-node initial then target1 fixture required")
+	}
+	for _, m := range []map[string]any{raw, projection} {
+		acceptedObs(m, 1, 0)["counts"].(map[string]any)["accepted"] = 0
+	}
+	setAcceptedEvidence(&req, raw, projection)
+	sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+	nodeChecks := 0
+	req.Expected.Check = func() error {
+		var pcs [16]uintptr
+		frames := runtime.CallersFrames(pcs[:runtime.Callers(2, pcs[:])])
+		for {
+			frame, more := frames.Next()
+			if strings.HasSuffix(frame.Function, "/nativewire.nodes") {
+				nodeChecks++
+				if nodeChecks == 2 {
+					return sentinel
+				}
+				break
+			}
+			if !more {
+				break
+			}
+		}
+		return nil
+	}
+	proof, err := JudgeReuseAccepted(req)
+	if nodeChecks != 2 || !errors.Is(err, sentinel) || proof.Result != claimFail || proof.Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[0].Result != claimFail || proof.Steps[0].Code != "REUSE_ACCEPTED_ZERO" {
+		t.Fatalf("bound zero lost before target CST: nodechecks%d %+v %v", nodeChecks, proof, err)
+	}
+}
+
+func TestReuseAcceptedEarlyProjectionZeroInterruption(t *testing.T) {
+	req, raw, projection := acceptedFixture(t, 0)
+	h := req.Ledger.original(req.Case.ID)
+	last := h.BlockedSteps[len(h.BlockedSteps)-1]
+	for _, m := range []map[string]any{raw, projection} {
+		acceptedObs(m, last, 0)["counts"].(map[string]any)["accepted"] = 0
+	}
+	projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+	projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+	setAcceptedEvidence(&req, raw, projection)
+	baseline, err := JudgeReuseAccepted(req)
+	if err != nil || baseline.Result != claimFail || baseline.Code != "REUSE_ACCEPTED_ZERO" || baseline.Steps[0].Result != claimPass || baseline.Steps[len(baseline.Steps)-1].Result != claimFail {
+		t.Fatalf("late zero prefix control: %+v %v", baseline, err)
+	}
+	sentinel := &Error{Kind: KindResourceLimit, Code: "TEST_WALL_LIMIT"}
+	stopped := false
+	req.Expected.Check = func() error {
+		var pcs [24]uintptr
+		frames := runtime.CallersFrames(pcs[:runtime.Callers(2, pcs[:])])
+		for {
+			frame, more := frames.Next()
+			if strings.HasSuffix(frame.Function, "/nativewire.nodes") {
+				stopped = true
+				return sentinel
+			}
+			if !more {
+				break
+			}
+		}
+		return nil
+	}
+	proof, err := JudgeReuseAccepted(req)
+	if !stopped || !errors.Is(err, sentinel) || proof.Result != claimFail || proof.Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[len(proof.Steps)-1].Result != claimFail || proof.Steps[len(proof.Steps)-1].Code != "REUSE_ACCEPTED_ZERO" {
+		t.Fatalf("early projection zero lost before raw target: stopped%v %+v %v", stopped, proof, err)
+	}
+}
+
+func TestReuseAcceptedProjectionUnknownFields(t *testing.T) {
+	for _, early := range []bool{false, true} {
+		for _, slot := range []string{"step", "edit", "route", "comparison", "tree-header", "full-tree", "input", "node", "point", "identity"} {
+			name := slot
+			if early {
+				name = "early-" + name
+			}
+			t.Run(name, func(t *testing.T) {
+				req, raw, projection := acceptedFixture(t, 0)
+				h := req.Ledger.original(req.Case.ID)
+				last := h.BlockedSteps[len(h.BlockedSteps)-1]
+				step := acceptedStep(projection, last)
+				tree := step["incremental"].(map[string]any)
+				full := tree["tree"].(map[string]any)
+				var target map[string]any
+				switch slot {
+				case "step":
+					target = step
+				case "edit", "route", "comparison":
+					target = step[slot].(map[string]any)
+				case "tree-header":
+					target = tree
+				case "full-tree":
+					target = full
+				case "input":
+					target = full["input"].(map[string]any)
+				case "node":
+					target = full["nodes"].([]any)[0].(map[string]any)
+				case "point":
+					target = full["nodes"].([]any)[0].(map[string]any)["start_point"].(map[string]any)
+				case "identity":
+					target = full["identities"].([]any)[0].(map[string]any)
+				}
+				target["unexpected"] = true
+				if early {
+					projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+					projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+				}
+				setAcceptedEvidence(&req, raw, projection)
+				proof, err := JudgeReuseAccepted(req)
+				if err != nil || proof.Result != claimFail || proof.Steps[0].Result != claimPass || proof.Steps[len(proof.Steps)-1].Result != claimFail {
+					t.Fatalf("unknown projection %s: %+v %v", name, proof, err)
+				}
+			})
+		}
+	}
+}
+
+func TestReuseAcceptedProjectionKnownExtras(t *testing.T) {
+	req, raw, projection := acceptedFixture(t, 0)
+	for _, value := range projection["steps"].([]any) {
+		step := value.(map[string]any)
+		for _, name := range []string{"incremental", "fresh"} {
+			tree, _ := step[name].(map[string]any)
+			if tree == nil {
+				continue
+			}
+			tree["parse_ms"], tree["max_depth"] = 0, 1
+			full := tree["tree"].(map[string]any)
+			full["capabilities"], full["captures"] = map[string]string{"full_cst": "SUPPORTED"}, []any{}
+			full["input"].(map[string]any)["encoding_source"] = SourceDeclaration
+		}
+	}
+	setAcceptedEvidence(&req, raw, projection)
+	proof, err := JudgeReuseAccepted(req)
+	if err != nil || proof.Result != claimPass {
+		t.Fatalf("known native projection fields: %+v %v", proof, err)
+	}
+}
+
+func TestReuseAcceptedProjectionProducerAndFullForm(t *testing.T) {
+	for _, damage := range []string{"producer-extra", "capability-extra", "full-summary"} {
+		t.Run(damage, func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			producer := projection["producer"].(map[string]any)
+			switch damage {
+			case "producer-extra":
+				producer["unexpected"] = true
+			case "capability-extra":
+				producer["reuse_observation"].(map[string]any)["unexpected"] = true
+			case "full-summary":
+				h := req.Ledger.original(req.Case.ID)
+				last := h.BlockedSteps[len(h.BlockedSteps)-1]
+				acceptedStep(projection, last)["incremental"].(map[string]any)["summary"] = map[string]any{}
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			proof, err := JudgeReuseAccepted(req)
+			if err != nil || proof.Result != claimFail {
+				t.Fatalf("projection %s: %+v %v", damage, proof, err)
+			}
+			if damage == "full-summary" {
+				if proof.Steps[0].Result != claimPass || proof.Steps[len(proof.Steps)-1].Result != claimFail {
+					t.Fatalf("late full-form contradiction: %+v", proof)
+				}
+			} else {
+				for _, step := range proof.Steps {
+					if step.Result == claimPass {
+						t.Fatalf("common producer contradiction promoted target: %+v", proof)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedDistinctTargetFailureCodes(t *testing.T) {
+	for _, mode := range []string{"raw", "early", "projection-only"} {
+		t.Run(mode, func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			h := req.Ledger.original(req.Case.ID)
+			first, last := h.BlockedSteps[0], h.BlockedSteps[len(h.BlockedSteps)-1]
+			for _, m := range []map[string]any{raw, projection} {
+				acceptedObs(m, first, 0)["counts"].(map[string]any)["accepted"] = 0
+			}
+			want := "REUSE_ACCEPTED_RAW_INVALID"
+			if mode == "raw" || mode == "early" {
+				delete(acceptedStep(raw, last)["incremental"].(map[string]any), "digest")
+			} else {
+				acceptedStep(projection, last)["unexpected"] = true
+				want = "REUSE_ACCEPTED_PROJECTION_INVALID"
+			}
+			if mode == "early" {
+				projection["execution_status"], projection["code"] = StatusFailed, "PROCESS_CLEANUP_UNVERIFIED"
+				projection["process"].(map[string]any)["cleanup"].(map[string]any)["verified"] = false
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			if mode == "projection-only" {
+				req.Raw = nil
+			}
+			proof, err := JudgeReuseAccepted(req)
+			if err != nil || proof.Result != claimFail || proof.Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[0].Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[len(proof.Steps)-1].Result != claimFail || proof.Steps[len(proof.Steps)-1].Code != want {
+				t.Fatalf("distinct %s: %+v %v", mode, proof, err)
+			}
+		})
 	}
 }

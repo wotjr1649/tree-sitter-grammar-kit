@@ -257,7 +257,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			}
 			previous := c.Result
 			c.Result = worseClaim(previous, legacy)
-			if legacy == claimFail || c.Result != previous {
+			if previous != claimFail && c.Result != previous {
 				c.Code = code
 			}
 			acceptedCases[id] = c
