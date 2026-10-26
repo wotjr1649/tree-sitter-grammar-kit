@@ -157,3 +157,69 @@ func TestReuseAcceptedEarlyTargetFailureCode(t *testing.T) {
 		t.Fatalf("later ZERO replaced earlier target failure: %+v %v", proof, err)
 	}
 }
+
+func TestReuseAcceptedUnsubmittedProjection(t *testing.T) {
+	for _, name := range []string{"missing", "missing-multiple", "missing-source", "zero", "wrong-source", "invalid-raw", "null-process", "empty-projection", "malformed-projection", "argument", "cst"} {
+		t.Run(name, func(t *testing.T) {
+			index := 12
+			if name == "missing-multiple" {
+				index = 0
+			}
+			req, raw, projection := acceptedFixture(t, index)
+			if name == "zero" {
+				acceptedObs(raw, 1, 0)["counts"].(map[string]any)["accepted"] = 0
+			}
+			if name == "null-process" {
+				projection["process"] = nil
+			}
+			if name == "argument" {
+				observation := acceptedObs(raw, 1, 0)
+				observation["old_tree"], observation["old_source_sha256"] = false, nil
+				counts := observation["counts"].(map[string]any)
+				counts["new_parse"], counts["parse_after_edit"], counts["accepted"] = 1, 0, 0
+			}
+			if name == "cst" {
+				data, _ := json.Marshal(acceptedStep(projection, 1)["fresh"].(map[string]any)["tree"].(map[string]any)["nodes"])
+				var nodes []TreeNode
+				if err := json.Unmarshal(data, &nodes); err != nil {
+					t.Fatal(err)
+				}
+				nodes[0].Type = "other"
+				fresh := acceptedStep(raw, 1)["fresh"].(map[string]any)
+				fresh["types"], fresh["digest"] = []string{"other"}, TreeDigest(nodes)
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			req.Projection = nil
+			switch name {
+			case "missing-source":
+				req.Source = nil
+			case "wrong-source":
+				req.Source = []byte("wrong")
+			case "invalid-raw":
+				req.Raw = []byte("{")
+			case "null-process":
+				req.Projection, _ = json.Marshal(projection)
+			case "empty-projection":
+				req.Projection = []byte{}
+			case "malformed-projection":
+				req.Projection = []byte("{")
+			}
+			want := claimFail
+			if strings.HasPrefix(name, "missing") {
+				want = claimBlocked
+			}
+			proof, err := JudgeReuseAccepted(req)
+			if err != nil || proof.Result != want || want == claimBlocked && (proof.Code != "REUSE_ACCEPTED_EVIDENCE_MISSING" || proof.Steps[0].Result != claimBlocked) || name == "zero" && (proof.Code != "REUSE_ACCEPTED_ZERO" || proof.Steps[0].Result != claimFail) {
+				t.Fatalf("projection %s: %+v %v", name, proof, err)
+			}
+			for _, step := range proof.Steps {
+				if want == claimBlocked && step.Result != claimBlocked {
+					t.Fatalf("missing projection manufactured target completion: %+v", proof)
+				}
+			}
+			if name == "cst" && proof.Code != "REUSE_ACCEPTED_CST_MISMATCH" || name == "argument" && proof.Code != "REUSE_ACCEPTED_PARSE_ARGUMENT_MISMATCH" {
+				t.Fatalf("raw contradiction was lost: %+v", proof)
+			}
+		})
+	}
+}

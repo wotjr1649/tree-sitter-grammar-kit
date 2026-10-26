@@ -220,7 +220,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			fail("REUSE_ACCEPTED_RAW_INVALID")
 		} else {
 			rawOK = true
-			if process == nil {
+			if req.Projection != nil && process == nil {
 				fail("REUSE_ACCEPTED_PROCESS_MISSING")
 			}
 			if _, err := nativewire.CheckHeader(raw, len(raw.Steps), e); err != nil {
