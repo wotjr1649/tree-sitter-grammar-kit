@@ -367,7 +367,7 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 		return false, nil
 	}
 	if e := s.b.charge(8*(uint64(len(data))+1)+uint64(len(n.Grammar)), 40*uint64(len(data)), "native-build-manifest"); e != nil {
-		return false, nil
+		return false, e
 	}
 	if digestHex(data) != w.ProducerSHA256 || !utf8.Valid(data) || len(data) == 0 || data[len(data)-1] != '\n' {
 		s.finding("ELIGIBILITY_NATIVE_BUILD_MANIFEST", "native", true)
@@ -925,6 +925,10 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			out.responses = append(out.responses, ref)
 			if code != "" {
 				s.finding("ELIGIBILITY_CURRENT_RESPONSE", inv.ID+"/"+code, true)
+				ready = false
+			} else if !complete && ref == nil && out.execution.ExitCode != 1 {
+				// A validated FAILED envelope is the decoder's nil/no-code partial result.
+				s.finding("ELIGIBILITY_CURRENT_RESPONSE_EXIT", inv.ID, true)
 				ready = false
 			} else if !complete {
 				s.finding("ELIGIBILITY_CURRENT_RESPONSE_PARTIAL", inv.ID, false)

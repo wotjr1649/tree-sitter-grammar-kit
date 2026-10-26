@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -76,6 +77,85 @@ func testNativeSession(t *testing.T, ctx context.Context, b *native.Build, cc st
 		t.Fatal(err)
 	}
 	t.Logf("actual session: nodes=%d pages=%d process_wall_ms=%d parse_count=1; all legacy payloads identical", nodes, len(s.RawPages), s.Batch.Process.WallMillis)
+	t.Run("session/single-page", func(t *testing.T) {
+		legacy := run(ctx, filepath.Join(b.Dir, "api-audit.exe"), digest(mustSessionBinary(t, filepath.Join(b.Dir, "api-audit.exe"))), b.Dir, req, 0, nodes, nodes)
+		payload, err := native.SplitFrame(legacy.Raw)
+		if legacy.Error != "" || err != nil {
+			t.Fatalf("single-page legacy: %s %v", legacy.Error, err)
+		}
+		single, err := runSession(ctx, exe, digest(binaryBytes), b.Dir, req, nodes, nodes, firstReceipt.Fields)
+		if err != nil || largeaudit.CheckSession(single, req, [][]byte{payload}) != nil {
+			t.Fatalf("single-page session: %v", err)
+		}
+	})
+	for _, delayed := range []struct {
+		name, anchor string
+		wantComplete bool
+	}{
+		{"bulk-cleanup-delay", "      idmap_free(&audit.map);", true},
+		{"post-frame-delay", "    buf_free(&out);", false},
+	} {
+		t.Run("session/"+delayed.name, func(t *testing.T) {
+			if strings.Count(string(source), delayed.anchor) != 1 {
+				t.Fatal("delay anchor missing or ambiguous")
+			}
+			path := filepath.Join(b.Dir, "session-"+delayed.name+".c")
+			modified := strings.Replace(string(source), delayed.anchor, "    if (end == expected_nodes) Sleep(6000);\n"+delayed.anchor, 1)
+			if err := writeExclusive(path, []byte(modified)); err != nil {
+				t.Fatal(err)
+			}
+			variant, _, err := compile(ctx, b, cc, path, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := runSession(ctx, variant, digest(mustSessionBinary(t, variant)), b.Dir, req, nodes, pageSize, firstReceipt.Fields)
+			if delayed.wantComplete {
+				if err != nil || largeaudit.CheckSession(result, req, expected) != nil {
+					t.Fatalf("bulk cleanup escaped frame deadline: %v", err)
+				}
+			} else if err == nil || result.Complete || result.Batch.Process.Reason != runner.ReasonBatchExit || !result.Batch.Process.Cleanup.Verified || result.Batch.Process.Cleanup.ResidualAfterExit != 0 {
+				t.Fatalf("post-frame exit guard weakened: %v %+v", err, result.Batch.Process)
+			}
+		})
+	}
+	t.Run("session/interactive-extra-after-final", func(t *testing.T) {
+		op := kit.NativeOperations()["native-query-large"]
+		p, err := runner.Start(ctx, runner.Spec{Path: exe, Dir: b.Dir, Args: []string{strings.Repeat("0", 32), strconv.FormatUint(nodes, 10), strconv.FormatUint(nodes, 10)}, Interactive: true, StdoutBytes: 1 << 20, StderrBytes: 65536, Wall: 15 * time.Second, Grace: time.Second, Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: true}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		done := false
+		defer func() {
+			if !done {
+				p.Terminate(runner.ReasonCancelled)
+				p.Wait()
+			}
+		}()
+		if _, err := p.Stdin().Write(native.Frame(req.Encode())); err != nil {
+			t.Fatal(err)
+		}
+		var header [4]byte
+		if _, err := io.ReadFull(p.Stdout(), header[:]); err != nil {
+			t.Fatal(err)
+		}
+		n := binary.BigEndian.Uint32(header[:])
+		if n == 0 || n > largeaudit.SessionPageLimit {
+			t.Fatal("invalid final frame size")
+		}
+		if _, err := io.ReadFull(p.Stdout(), make([]byte, n)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := p.Stdin().Write([]byte{0}); err != nil {
+			t.Fatal(err)
+		}
+		p.Stdin().Close()
+		tail, readErr := io.ReadAll(p.Stdout())
+		result := p.Wait()
+		done = true
+		if readErr != nil || len(tail) != 0 || result.ExitCode != 2 || result.Reason != runner.ReasonExited || !result.Cleanup.Verified || result.Cleanup.ResidualAfterExit != 0 {
+			t.Fatalf("interactive extra input accepted: %v %+v", readErr, result)
+		}
+	})
 	frames, err := sessionFrames(req, nodes, pageSize)
 	if err != nil {
 		t.Fatal(err)
@@ -154,6 +234,15 @@ func testNativeSession(t *testing.T, ctx context.Context, b *native.Build, cc st
 			}
 		}
 	})
+}
+
+func mustSessionBinary(t *testing.T, path string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 func TestSessionFramePlanBounded(t *testing.T) {

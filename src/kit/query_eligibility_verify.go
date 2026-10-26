@@ -169,6 +169,11 @@ func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceElig
 			return res, e
 		}
 	}
+	for _, pin := range s.reg.OwnedMembers {
+		if _, _, e := s.member(&pin); e != nil {
+			return res, e
+		}
+	}
 	for _, tool := range s.reg.Tools {
 		if _, _, e := s.member(&tool.IdentityMember); e != nil {
 			return res, e

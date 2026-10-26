@@ -217,7 +217,7 @@ func (s *eligibilitySession) receipt(inv *eligibilityInvocation, request eligibi
 		if i == 1 {
 			count, cut, limit = receipt.Execution.StderrBytes, receipt.Execution.StderrTruncated, request.StderrBytes
 		}
-		if cut && uint64(len(raw)) != limit {
+		if cut && (uint64(len(raw)) != limit || count <= limit) {
 			s.finding("ELIGIBILITY_TRUNCATED_PREFIX", inv.ID, true)
 			return nil, false, nil
 		}

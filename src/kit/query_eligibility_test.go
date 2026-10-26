@@ -958,7 +958,7 @@ func TestQueryReferenceEligibilityFreshSnapshot(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityBudgetReservations(t *testing.T) {
-	for _, kind := range []string{"graph", "unit", "native-static"} {
+	for _, kind := range []string{"graph", "unit", "native-static", "native-manifest", "native-manifest-prior-fail"} {
 		t.Run(kind, func(t *testing.T) {
 			r, e := startRun(ctxT(t), 30*time.Second)
 			if e != nil {
@@ -973,13 +973,25 @@ func TestQueryReferenceEligibilityBudgetReservations(t *testing.T) {
 			case "unit":
 				s := &eligibilitySession{r: r, b: b}
 				_, e = s.unitSet([]byte(strings.Repeat("\n", 8000000)))
-			case "native-static":
+			case "native-static", "native-manifest", "native-manifest-prior-fail":
 				f := newEligibilityFixture(t)
 				pin := f.reg.Native.BuildManifest
 				s := &eligibilitySession{r: r, b: b, res: &QueryReferenceEligibilityResult{}, witness: f.witness, owned: map[string]eligibilityMember{pin.Member.Path: pin}, owners: map[string]string{pin.Member.Path: pin.NodeID}, snapshot: &evidenceSnapshot{files: f.files, verifiedMembers: map[string]ReplayMember{pin.Member.Path: pin.Member}}}
-				b.logical = eligibilityLogicalLimit - 40*pin.Member.Bytes - uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256))
+				if kind == "native-static" {
+					b.logical = eligibilityLogicalLimit - 40*pin.Member.Bytes - uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256))
+				} else {
+					b.work = eligibilityWorkLimit - 1
+				}
+				var prior uint64
+				if kind == "native-manifest-prior-fail" {
+					s.finding("PRIOR", "native", true)
+					prior = 1
+				}
 				_, e = s.nativeBuild(f.reg.Native, f.witness.Native)
-				if s.failures != 0 || len(s.res.Findings) != 0 {
+				if kind != "native-static" && (e == nil || e.Code != "ELIGIBILITY_WORK_LIMIT") {
+					t.Fatalf("manifest reservation swallowed: %v", e)
+				}
+				if s.failures != prior || len(s.res.Findings) != int(prior) {
 					t.Fatalf("resource turned into contradiction %+v", s.res)
 				}
 			}
@@ -3111,5 +3123,64 @@ func TestQueryReferenceEligibilityReferenceAbsolutePath(t *testing.T) {
 				t.Errorf("%s path%q got%v want%v", platform, c.path, got, want)
 			}
 		}
+	}
+}
+
+func TestQueryReferenceEligibilityReview64(t *testing.T) {
+	for _, mode := range []string{"valid", "phantom", "wrong-owner"} {
+		t.Run("unused-owned/"+mode, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			if mode == "phantom" {
+				f.reg.OwnedMembers = append(f.reg.OwnedMembers, eligibilityMember{NodeID: "unknown-node", Member: ReplayMember{Path: "unreferenced.json", Role: "identity", Bytes: 0, SHA256: digestHex(nil)}})
+			} else {
+				f.member("current-ref-0", "unreferenced.json", "identity", []byte("{}"))
+				if mode == "wrong-owner" {
+					f.reg.OwnedMembers[len(f.reg.OwnedMembers)-1].NodeID = "native-current"
+				}
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			want := AssessFail
+			if mode == "valid" {
+				want = AssessPass
+			}
+			if err != nil || !got.Complete || got.Assessment != want || mode != "valid" && !eligibilityFinding(got, "ELIGIBILITY_MEMBER_OWNER") {
+				t.Fatalf("owned pin err%v assessment%s findings%+v", err, got.Assessment, got.Findings)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+	for _, count := range []uint64{1024, 1025} {
+		t.Run(fmt.Sprintf("truncated-count-%d", count), func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			f.receiptMutation("control-batch-truncated", func(r *eligibilityReceipt) { r.Execution.StdoutBytes = count })
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			want := AssessPass
+			if count == 1024 {
+				want = AssessFail
+			}
+			if err != nil || !got.Complete || got.Assessment != want || want == AssessFail && !eligibilityFinding(got, "ELIGIBILITY_TRUNCATED_PREFIX") {
+				t.Fatalf("truncation count err%v assessment%s findings%+v", err, got.Assessment, got.Findings)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+	for _, code := range []string{"QUERY_COMPILE", "CST_LIMIT"} {
+		t.Run("failed-successful-exit/"+code, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			data := eligibilityJSON(t, map[string]any{"schema": instrumentedReferenceSchema, "status": StatusFailed, "code": code, "complete": false})
+			f.stdoutMutation("current-ref-0", func([]byte) []byte { return data })
+			for i := range f.reg.Observations {
+				o := &f.reg.Observations[i]
+				if o.InvocationID == "current-ref-0" {
+					o.ByteLength = uint64(len(data))
+					o.SHA256 = digestHex(data)
+				}
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if err != nil || !got.Complete || got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_CURRENT_RESPONSE_EXIT") {
+				t.Fatalf("failed response err%v assessment%s findings%+v", err, got.Assessment, got.Findings)
+			}
+			eligibilityAssertCounts(t, got)
+		})
 	}
 }

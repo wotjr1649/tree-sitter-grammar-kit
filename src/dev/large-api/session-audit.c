@@ -73,13 +73,17 @@ int main(int argc, char **argv) {
     puts_(&out,",\"receipt\":"); put(&out,receipt.data,receipt.len);
     puts_(&out,",\"complete\":true}");
     if (receipt.over || out.over) return 3;
+    buf_free(&receipt);
+    if (end == expected_nodes) {
+      /* out owns the copied receipt; keep bulk teardown within the final page deadline. */
+      idmap_free(&audit.map); t_free(audit.nodes);
+      ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input);
+    }
     write_frame(out.data,out.len);
-    buf_free(&receipt); buf_free(&out);
+    buf_free(&out);
     if (differences) return 1;
     start = end; index++;
   }
   if (fgetc(stdin) != EOF || ferror(stdin)) return 2;
-  idmap_free(&audit.map); t_free(audit.nodes);
-  ts_tree_delete(tree); ts_parser_delete(parser); req_free(&r); t_free(input);
   return 0;
 }

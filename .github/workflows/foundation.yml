@@ -903,6 +903,19 @@ jobs:
         with:
           name: s05-prepared-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/s05-prepared
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-large-api-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Windows 대용량 전체 API audit
         timeout-minutes: 45
         run: |
@@ -929,19 +942,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 6
-      - name: Margin 실행 구성 기록
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          & src/dev/ci-gate/config.ps1
-          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
-      - name: Margin 실행 구성 보관
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-config-large-api-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
-          if-no-files-found: error
-          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
