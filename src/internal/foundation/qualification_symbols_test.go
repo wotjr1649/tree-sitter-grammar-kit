@@ -73,8 +73,8 @@ var symbolSets = []struct {
 		{id: "region-in-group", syntax: []string{"NO_ERROR"}, contains: [][]string{class}},
 		{id: "malformed-expression"},
 		{id: "unterminated"},
-		{id: "directive-string-no-escape", cstOnly: []uint32{25}},
-		{id: "razor-comment-lines", cstOnly: []uint32{9}},
+		{id: "directive-string-no-escape", syntax: []string{"ERROR"}, contains: [][]string{{"ERROR"}}},
+		{id: "razor-comment-lines", syntax: []string{"ERROR"}, contains: [][]string{{"ERROR"}}},
 	}},
 	{"s05-csharp-symbols-enabled", []string{"ENABLED"}, []symbolCase{
 		{id: "issue198-undef-inactive", syntax: []string{"NO_ERROR"}, contains: [][]string{class}},
@@ -86,8 +86,8 @@ var symbolSets = []struct {
 		{id: "literal-true", find: "true", replace: "(false)", edit: "literal-paren-false", syntax: []string{"NO_ERROR", "NO_ERROR"}, contains: [][]string{class, class}, routeBlocked: true},
 	}},
 	{"s05-csharp-symbols-cst-mismatch", []string{}, []symbolCase{
-		{id: "dollars-two-quotes-raw", cstOnly: []uint32{37}},
-		{id: "nested-string-open-no-runaway", cstOnly: []uint32{62}},
+		{id: "dollars-two-quotes-raw", syntax: []string{"ERROR"}, contains: [][]string{{"ERROR"}}},
+		{id: "nested-string-open-no-runaway", syntax: []string{"ERROR"}, contains: [][]string{{"ERROR"}}},
 	}},
 }
 
@@ -270,7 +270,7 @@ func TestSymbolRoleRegistration(t *testing.T) {
 			}
 		}
 	}
-	if len(r.Workloads) != 6 || n != 30 || stopped != 8 || edited != 3 {
+	if len(r.Workloads) != 6 || n != 30 || stopped != 4 || edited != 3 {
 		t.Fatalf("workloads %d cases %d stopped %d edited %d", len(r.Workloads), n, stopped, edited)
 	}
 	// literal-true's edit replaces the condition: both steps are selected from Roslyn's own

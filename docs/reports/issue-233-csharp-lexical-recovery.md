@@ -1,0 +1,44 @@
+# #233 C# lexical producer 교정
+
+2026-10-26 KST 기준 로컬 구현·검증 기록이다. #279의 primary full CST 대조가 검출한 네 producer 오판을 수정하며, #233 전체 acceptance는 별도로 유지한다.
+
+| 원본 사례 | 교정 전 추가 지시문 byte | 교정 후 전체 지시문 byte | 활성 구문 기대값 |
+|---|---:|---|---|
+| `directive-string-no-escape` | 25 | `[0]` | `ERROR` |
+| `razor-comment-lines` | 9 | `[18,35]` | `ERROR` |
+| `dollars-two-quotes-raw` | 37 | `[]` | `ERROR` |
+| `nested-string-open-no-runaway` | 62 | `[]` | `ERROR` |
+
+`#nullable`은 활성 상태의 비선택 지시문이므로 활성 source에도 남는다. 네 사례는 지시문 위치가 일치한 뒤 활성 파싱까지 실행하며 실제 `ERROR` 노드를 유지한다. 오류 source를 정상 source로 바꾸거나 comparator가 오류 노드를 제외하도록 수정한 결과가 아니다.
+
+## 원인과 구현
+
+일반 문자열의 token 사이에서 lexer가 줄바꿈을 건너뛰면 다음 줄의 따옴표가 앞 문자열을 닫았다. 닫는 따옴표·escape를 immediate로 바꾸고 C# 줄 경계를 content에서 제외했다. 지시문 문자열의 잘못된 escape 해석과 raw tail의 줄 소유 범위도 별도 scanner 경계로 처리한다.
+
+Razor comment와 짧은 quote의 잘못된 interpolated raw literal을 일반 token 복구에 맡기면 내부 `#`가 새 지시문이 됐다. recovery 전용 lexical 단위가 comment·literal의 실제 경계를 소비하고 parser의 실제 `ERROR` 아래에 남는다. 임시 walker는 중첩 문자열·hole·group·format의 소유자와 오류 상태를 구분하며, 잘못된 `$@$` prefix 뒤의 다음 실제 문자열도 독립된 문자열 상태로 읽는다.
+
+독립 검토에서 정상 verbatim content의 256개 quote를 임시 byte counter가 거부하는 문제와 중복 `@` prefix를 정상 문자열로 수용하는 문제를 추가로 발견했다. 임시 counter를 넓히고 persistent 필드에 저장할 때만 범위를 확인했다. `$@"x"`·`@$"x"`와 doubled quote 254·256개는 원본 full CST를 보존하며 `@$@"x"`에는 실제 오류를 남긴다.
+
+## 독립 기대값과 재구성
+
+설치된 SDK `10.0.401`의 `Microsoft.CodeAnalysis.CSharp.dll`은 19,191,592 byte, SHA256 `12b0428203faae6555858d2ff856cef7450d2764cf00c57e7516587a04885870`이다. 이 DLL과 compiler·runtime·reference·oracle source를 고정한 새 실행에서 기존157개 typed 관측이 checked-in fixture와 정확히 같았다. 새 경계58개와 독립 검토 반례6개도 같은 고정 oracle로 관측했다. 과거 #218 실행의 진위를 소급 인증하는 근거로 사용하지 않는다.
+
+SDK ProductVersion의 source commit `e34a38d2ae1fc26406a317517196e55c68ff83ab`은 공식 저장소에서 확보하지 못했다. 다른 Roslyn commit이나 현재 공개 source는 기전 설명에만 사용하며 해당 DLL의 정확한 source로 간주하지 않는다.
+
+제품 변경은 `src/dev/c2-patches/csharp.json`의 literal patch chain과 `language-sources`·`native-routes`·`reproduction-routes`의 C# identity에 함께 등록한다. 원본 adoption chain을 재구성한 두 workspace의 생성 결과는 동일했다. prototype은 package metadata를 생략해 parser language version이 `0.0.0`이었고, 실제 pinned metadata `0.23.5`로 생성한 결과와 그 상수만 달랐다. 초기 reference 불일치 결과를 보존한 뒤 정본 metadata에 맞는 identity를 등록하고 두 workspace의 결과를 다시 대조했다.
+
+## 검증과 한계
+
+로컬 registered closure의 primary/active 회귀6개와 정상·오류 문자열 경계5개가 통과했다. 네 교정 사례의 위치는 위 표의 독립 anchor와 같으며 활성 `ERROR`가 실제 node로 남는다. 기존 두 control은 primary 오류와 활성 `NO_ERROR` 기대값의 분리를 계속 확인한다.
+
+최종 등록 소스의 157개 원본 source를 기존 baseline 157개와 full CST로 대조했다. 정상 source의 CST 변화·새 지시문 위치 불일치·기존 ERROR 소실은 모두 0개였다. 새 ERROR 두 개인 `dollars-at-raw`와 `at-dollar-at-raw`는 고정 Roslyn에도 각각 오류가 있는 잘못된 prefix다. 두 번째 교정을 예상하지 않은 초기 비교 스크립트의 실패를 보존하고 원 관측을 다시 실행하지 않은 별도 disposition으로 근거를 기록했다. 새 경계58개는 지시문 위치52개 일치, 기존4개 gap, 표현 한도 producer 실패2개였다. 단순한 oracle 위치 차이 수는 unknown directive·file-based mode·멈춘 사례를 포함하므로 qualification defect 수나 전체 semantic 지원률로 사용하지 않는다.
+
+현재 trusted inventory는 기존6set/30사례/29비교step을 유지하고 `PASS26·MISMATCH0·NOT_APPLICABLE4`를 요구한다. 실제 CLI의 `TestQualifySymbolRole`이 이 분모와 축·변조 controls를 63.683초에 통과했다. 등록만으로 실행 PASS를 판단하지 않는다. 역사적 네 mismatch와 위치25·9·37·62는 CI 판정기의 독립 음성 fixture에서 유지하며, 과거 BLOCKED를 임의 PASS로 승격하는 변조를 계속 거부한다.
+
+기존 byte 표현을 넘는 raw quote·dollar·frame 수는 producer 실패다. 예를 들어 raw quote·dollar256은 성공한 CST나 C# syntax rejection으로 기록하지 않는다. 임시 count의 폭을 늘린 것과 persistent 표현 한도의 처분을 구분한다. native 실행은 별도 process에서 감독하며 생성4GiB·180초, compile4GiB·120초, 작은 native 관측1GiB·30초와 제한된 출력을 사용했다.
+
+남은 기존 경계에는 raw `#line` filename, raw q3의 closing q−1/q+1, token을 읽는 `#pragma` raw tail이 있다. 정확한 `#pragma """\n#if HIDDEN\n"""\n#undef X\n`는 고정 Roslyn의 지시문 `[0,27]`과 baseline·candidate의 `[0,12]`가 다르며 두 native full CST는 같다. 이 기존 결함을 이번 네 사례 교정의 완료 범위에 포함하지 않는다. #233은 계속 열어 두며 후속 producer 교정·전체 acceptance로 연결한다.
+
+독립 정확성 검토에서 새 lexical 경계·edit/revert 시험이 mandatory CI 선택식에 포함되지 않은 문제를 발견했다. 두 시험을 기존 필수 `TestNativePreprocessCST`의 하위 검사로 연결하며 prepared closure와 build를 공유한다. 초기 step에는 fresh counterpart가 없다는 protocol을 따르고, 두 편집 step의 incremental/fresh 12필드 및 원상 복원 source·초기 CST를 대조한다. CI와 같은 `^TestNativePreprocess(Ranges|CST)$` 선택식의 실제 로컬 실행이 13.773초에 통과했고 두 새 하위 검사의 PASS와 skip 부재를 확인했다. 이 실행의 process는 HARD4GiB·정리확인 잔여0이었다. Foundation 전체는 registered anchor와 나머지로 나누어 모두 통과했으며, CI gate 전체 회귀도 통과했다.
+
+macOS symbol reference 검증은 사용자 결정으로 실행하지 않는다. 기존 mandatory baseline의 플랫폼 gate는 해당 계약을 유지한다. 최종 PR·main CI는 아직 실행하지 않았으며 전체 #233 acceptance 완료를 주장하지 않는다.

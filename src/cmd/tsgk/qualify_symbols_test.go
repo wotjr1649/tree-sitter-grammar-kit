@@ -198,7 +198,7 @@ func TestQualifySymbolRole(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 6 || r.Sets[0].Records != len(ws[0].Cases) || r.Sets[4].Records != 1 || r.PreprocessCST == nil || r.PreprocessCST.Result != kit.AssessBlocked || r.PreprocessCST.Counts.Mismatch != 4 || r.PreprocessCST.Counts.Pass != 22 || r.PreprocessCST.ComparedSteps != 29 {
+	if r := row(res, hp.ID); r.Status != kit.CellPass || r.Mechanism != kit.AssessPass || r.Checks != "PASS" || len(r.Sets) != 6 || r.Sets[0].Records != len(ws[0].Cases) || r.Sets[4].Records != 1 || r.PreprocessCST == nil || r.PreprocessCST.Result != kit.AssessPass || r.PreprocessCST.Counts.Mismatch != 0 || r.PreprocessCST.Counts.Pass != 26 || r.PreprocessCST.ComparedSteps != 29 {
 		t.Fatalf("host row %s %s %s %v", r.Status, r.Mechanism, r.Checks, codes(r))
 	}
 	if d := row(res, other.ID); d.Status != kit.RoleDeferred || d.Mechanism != "" || d.Checks != "" || len(d.Sets) != 0 {
