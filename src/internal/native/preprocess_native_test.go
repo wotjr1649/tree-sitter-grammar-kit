@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -111,37 +112,146 @@ func TestNativePreprocessCST(t *testing.T) {
 	if err := json.Unmarshal(data, &corpus); err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]int{"dollars-two-quotes-raw": 37, "nested-string-open-no-runaway": 62, "directive-string-no-escape": 25, "razor-comment-lines": 9, "issue198-inactive-broken": -1, "feff-after-hash": -1}
+	want := map[string]string{"dollars-two-quotes-raw": "ERROR", "nested-string-open-no-runaway": "ERROR", "directive-string-no-escape": "ERROR", "razor-comment-lines": "ERROR", "issue198-inactive-broken": "NO_ERROR", "feff-after-hash": "NO_ERROR"}
+	anchors := map[string][]uint32{"dollars-two-quotes-raw": {}, "nested-string-open-no-runaway": {}, "directive-string-no-escape": {0}, "razor-comment-lines": {18, 35}}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	for _, source := range corpus.Cases {
-		at, selected := want[source.ID]
+		syntax, selected := want[source.ID]
 		if !selected {
 			continue
 		}
 		delete(want, source.ID)
 		t.Run(source.ID, func(t *testing.T) {
 			c := kit.IncrementalCase{ID: source.ID, Input: kit.NativeInput{SHA256: sha(source.Source), Bytes: uint64(len(source.Source))}, Encoding: kit.EncodingUTF8,
-				Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
+				Expect: []kit.StepExpectation{{Step: 0, Syntax: syntax}}}
 			r := b.RunCase(ctx, symbolContext(source.Symbols...), c, source.Source)
 			if r.PreprocessCST == nil {
 				t.Fatal("missing CST receipt")
 			}
-			if at >= 0 {
-				if r.PreprocessCST.Result != "MISMATCH" || r.ExecutionStatus != kit.StatusNotRun || r.Assessment != kit.AssessBlocked || r.Code != kit.PreprocessCSTPrefix+"0" || r.Process != nil || r.Raw != nil || len(r.Steps) != 0 || len(r.PrimaryRaw) == 0 {
-					t.Fatalf("unsafe mismatch outcome: %+v / %s %s active_steps=%d raw_bytes=%d primary_bytes=%d", r.PreprocessCST, r.ExecutionStatus, r.Code, len(r.Steps), len(r.Raw), len(r.PrimaryRaw))
-				}
-				positions := r.PreprocessCST.Steps[0].CSTOnly
-				if len(positions) != 1 || positions[0] != uint32(at) {
-					t.Fatalf("extra positions %v; expected manual anchor %d", positions, at)
-				}
-			} else if r.PreprocessCST.Result != "PASS" || r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass {
-				t.Fatalf("primary ERROR inherited active expectation: %+v / %s %s", r.PreprocessCST, r.Assessment, r.Code)
+			if r.PreprocessCST.Result != "PASS" || r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass || len(r.PreprocessCST.Steps) != 1 || len(r.Steps) != 1 || len(r.PrimaryRaw) == 0 || len(r.Raw) == 0 {
+				t.Fatalf("producer correction unverified: %+v / %s %s", r.PreprocessCST, r.Assessment, r.Code)
+			}
+			if positions, fixed := anchors[source.ID]; fixed && !slices.Equal(r.PreprocessCST.Steps[0].CSTHashes, positions) {
+				t.Fatalf("primary positions %v; independent anchors %v", r.PreprocessCST.Steps[0].CSTHashes, positions)
+			}
+			if syntax == "ERROR" && !slices.ContainsFunc(r.Steps[0].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError }) {
+				t.Fatal("malformed literal lost its genuine ERROR node")
 			}
 		})
 	}
 	if len(want) != 0 {
 		t.Fatalf("missing corpus controls: %v", want)
+	}
+	t.Run("lexical-boundaries", func(t *testing.T) { testCSharpLexicalBoundaries(t, b) })
+	t.Run("lexical-edit-revert", func(t *testing.T) { testCSharpLexicalEditRevert(t, b) })
+}
+
+// The independent Roslyn controls distinguish doubled-quote content from malformed prefixes.
+func testCSharpLexicalBoundaries(t *testing.T, b *Build) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, tc := range []struct{ id, source, syntax string }{
+		{"verbatim-content-254", "class C { string s = $@\"" + strings.Repeat("\"", 254) + "x\"; }\n", "NO_ERROR"},
+		{"verbatim-content-256", "class C { string s = $@\"" + strings.Repeat("\"", 256) + "x\"; }\n", "NO_ERROR"},
+		{"prefix-dollar-at", "class C { string s = $@\"x\"; }\n", "NO_ERROR"},
+		{"prefix-at-dollar", "class C { string s = @$\"x\"; }\n", "NO_ERROR"},
+		{"prefix-at-dollar-at", "class C { string s = @$@\"x\"; }\n", "ERROR"},
+		{"line-filename-lf-before", "#line 10 /* c\n*/ \"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-crlf-before", "#line 10 /* c\r\n*/ \"file.cs\"\r\nclass C {}", "ERROR"},
+		{"line-filename-cr-before", "#line 10 /* c\r*/ \"file.cs\"\rclass C {}", "ERROR"},
+		{"line-filename-nel-before", "#line 10 /* c\u0085*/ \"file.cs\"\u0085class C {}", "ERROR"},
+		{"line-filename-ls-before", "#line 10 /* c\u2028*/ \"file.cs\"\u2028class C {}", "ERROR"},
+		{"line-filename-ps-before", "#line 10 /* c\u2029*/ \"file.cs\"\u2029class C {}", "ERROR"},
+		{"line-filename-inline", "#line 10 /* c */ \"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-unterminated", "#line 10 /* c\n\"file.cs\"\nclass C {}", "ERROR"},
+		{"line-filename-follow-directive", "#line 10 /* c\n*/ \"file.cs\"\n#define A\nclass C {}", "ERROR"},
+		{"line-filename-normal-backslash", "#line 10 \"a\\b.cs\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-normal-empty", "#line 10 \"\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-enhanced-normal", "#line (1, 1) - (2, 1) \"file.cs\"\nclass C {}", "NO_ERROR"},
+		{"line-filename-enhanced-comment", "#line (1, 1) - (2, 1) /* c */ \"file.cs\"\nclass C {}", "ERROR"},
+	} {
+		t.Run(tc.id, func(t *testing.T) {
+			c := kit.IncrementalCase{ID: tc.id, Encoding: kit.EncodingUTF8, Expect: []kit.StepExpectation{{Step: 0, Syntax: tc.syntax}}}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(tc.source))
+			if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass {
+				t.Fatalf("lexical boundary %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+			}
+		})
+	}
+}
+
+func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "csharp-pp", "cases.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	type lexicalSource struct {
+		ID     string `json:"id"`
+		Source []byte `json:"source"`
+	}
+	var corpus struct {
+		Cases []lexicalSource `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &corpus); err != nil {
+		t.Fatal(err)
+	}
+	changes := map[string]edit{
+		"directive-string-no-escape":    {`"""`, `""""`},
+		"razor-comment-lines":           {"@*", "@**"},
+		"dollars-two-quotes-raw":        {`$$""`, `$$"`},
+		"nested-string-open-no-runaway": {"#else", "#elif"},
+	}
+	for _, tc := range []struct{ id, comment string }{
+		{"line-filename-multiline", "/* comment\n*/ "},
+		{"line-filename-inline", "/* comment */ "},
+	} {
+		corpus.Cases = append(corpus.Cases, lexicalSource{tc.id, []byte("#line 10 \"file.cs\"\nclass C {}")})
+		changes[tc.id] = edit{"10 ", "10 " + tc.comment}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, source := range corpus.Cases {
+		change, found := changes[source.ID]
+		if !found {
+			continue
+		}
+		delete(changes, source.ID)
+		t.Run(source.ID, func(t *testing.T) {
+			c := kit.IncrementalCase{ID: source.ID, Encoding: kit.EncodingUTF8,
+				Edits: editsBy(string(source.Source), change, edit{change.repl, change.find})}
+			lineFilename := strings.HasPrefix(source.ID, "line-filename-")
+			if lineFilename {
+				c.Expect = []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}, {Step: 1, Syntax: "ERROR"}, {Step: 2, Syntax: "NO_ERROR"}}
+			}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, source.Source)
+			if r.ExecutionStatus != kit.StatusCompleted || len(r.Steps) != 3 || r.Claims.IncrementalEquality != ClaimPass {
+				t.Fatalf("edit/revert CST unverified: %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+			}
+			for _, step := range r.Steps {
+				if step.Incremental == nil || step.Incremental.Tree == nil {
+					t.Fatalf("missing incremental full CST at step %d", step.Step)
+				}
+				if step.Step == 0 {
+					if step.Fresh != nil {
+						t.Fatal("initial parse unexpectedly has a fresh counterpart")
+					}
+					continue
+				}
+				if step.Fresh == nil || step.Fresh.Tree == nil || kit.CompareTrees(step.Incremental.Tree.Nodes, step.Fresh.Tree.Nodes) != nil {
+					t.Fatalf("incremental/fresh full CST differs at step %d", step.Step)
+				}
+			}
+			if lineFilename && (r.Claims.Expectations != ClaimPass || !slices.ContainsFunc(r.Steps[1].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError })) {
+				t.Fatal("comment before filename lost its genuine ERROR")
+			}
+			if r.Steps[0].SourceSHA256 != r.Steps[2].SourceSHA256 || kit.CompareTrees(r.Steps[0].Incremental.Tree.Nodes, r.Steps[2].Fresh.Tree.Nodes) != nil {
+				t.Fatal("reverted source did not restore the full CST")
+			}
+		})
+	}
+	if len(changes) != 0 {
+		t.Fatalf("missing edit/revert cases: %v", changes)
 	}
 }
 

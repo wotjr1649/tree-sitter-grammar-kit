@@ -117,8 +117,10 @@ func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.Qualificat
 						setAxis := expectedCSTAxis([]kit.QualWorkload{w})
 						row.Sets = append(row.Sets, kit.QualSet{Set: w.Set, Platform: p.ID, PreprocessCST: &setAxis})
 					}
-					q.Assessment, q.SupportClaim = kit.AssessBlocked, "BLOCKED"
-					q.PlatformClaims[p.ID] = "BLOCKED"
+					if axis.Result == kit.AssessBlocked {
+						q.Assessment, q.SupportClaim = kit.AssessBlocked, "BLOCKED"
+						q.PlatformClaims[p.ID] = "BLOCKED"
+					}
 				}
 			case x.NotApplicable[p.ID] != "":
 				row.Status = kit.RoleNotApplicable

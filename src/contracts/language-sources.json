@@ -69,13 +69,13 @@
         "patched_files": [
           {
             "path": "grammar.js",
-            "bytes": 74968,
-            "sha256": "144dd0e5978a6cb84548f6bcfcf0e8eb36e36da0149182ab53e59ef890a9e1c9"
+            "bytes": 75142,
+            "sha256": "9fad313278c64957a22318934f38403c76d6f5ae10ca59f626e5049896fa037e"
           },
           {
             "path": "src/scanner.c",
-            "bytes": 33334,
-            "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948"
+            "bytes": 46552,
+            "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0"
           }
         ]
       }

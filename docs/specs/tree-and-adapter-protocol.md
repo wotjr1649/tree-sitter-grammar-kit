@@ -254,6 +254,16 @@ primary receipt는 `schema=tsgk-preprocess-primary/r1`, `role=primary-full-sourc
 
 raw는 frame header를 제외한 JSON이며 `primary/responses/<nnnnn>-<case>.json`에 저장한다. 정상 full 응답의 `stdout_bytes`는 raw+4이며 output 한도+4 이내여야 한다. process exit/status·정해진 OS cleanup scope·memory backend(Windows JOB_OBJECT/HARD, Linux CGROUP_KILL/HARD, macOS PROCESS_GROUP/SAMPLED)·한도·wall 예산을 검사한다. Linux의 CGROUP 별칭이나 sampled fallback을 허용하지 않는다. wall은 parse/edit와 남은 run wall의 최솟값이며 기존 runner의 cleanup grace 5초와 밀리초 올림 1ms만 허용한다. cleanup 미확인·정상 제한 종료·부분 출력은 PASS나 MISMATCH 근거가 아니다. raw 없는 제한 종료의 stdout_bytes는 저장 길이가 아닌 실제 수신 수이며, stdout_truncated는 수신 수가 output 한도+4를 넘는지와 같아야 한다. runner는 최초 종료 reason을 유지하므로 이후 관측한 memory_limit_hit와 WALL/OUTPUT/CANCELLED reason이 함께 남을 수 있다. 이들은 일관된 UNVERIFIED 근거이며 완전한 raw의 상한·frame-byte·memory-hit 검사를 완화하지 않는다. primary raw 저장 뒤 메모리 버퍼를 비우며 full projection을 결과에 중복하지 않는다. primary와 active는 직렬이고 기존 source64KiB/nodes10,000/output8MiB/memory4GiB/parse·edit10초/edit4개/run3,600초 한도를 공유한다. active는 남은 run 시간 안에서만 실행한다. 이 저장 검사는 실행 진위를 인증하거나 producer가 실제로 범위를 생략했음을 증명하지 않는다.
 
+### C# lexical producer 교정 (#233)
+
+등록 C2 patch는 일반 문자열의 닫는 따옴표·escape를 immediate token으로 처리하고 LF·CR·NEL·LS·PS를 일반 문자열 content에서 제외한다. 지시문 안의 문자열은 escape를 해석하지 않는 별도 lexical 경계를 사용하며, `#error`·`#warning`·`#region`·`#endregion`의 자유 텍스트는 물리행 의미를 유지한다. `#line` filename과 `#pragma` filename은 각각 escape를 해석하지 않는 internal immediate token을 사용한다. filename 앞의 extra comment가 물리행 경계를 건너 지시문을 성공시키지 않으며, 잘못된 quoted/raw tail의 소유 범위는 별도 recovery scanner가 유지한다. 정상 checksum의 CST 선택도 보존한다.
+
+Razor `@*…*@`와 잘못된 interpolated raw prefix는 recovery에서 하나의 lexical 단위로 소비한다. `lexical_error` 외부 토큰은 정상 rules·extras에서 사용하지 않으므로 실제 parser `ERROR` 아래에 남는다. 잘못된 prefix는 정상 interpolation frame을 만들지 않는다. 복구 walker의 임시 stack은 token 호출 안에서 해제하고 incremental serialization에는 넣지 않는다. 정상 source와 ERROR source 모두 full incremental/fresh CST의 12개 필드 대조를 거친다.
+
+기존 persistent byte 필드의 raw quote 수·interpolated dollar 수·중첩 frame 수를 표현할 수 없으면 scanner는 producer를 exit2로 종료한다. wrap·narrowing이나 serialization 상태 소실을 성공한 CST로 받지 않는다. 이는 해당 source가 C# 문법 오류라는 판정이 아니며, 완전한 primary 근거가 없으면 기존 `PREPROCESS_CST_PRIMARY_UNVERIFIED` 경계가 적용된다. 임시 run counter는 넓은 정수로 계산하므로 정상 verbatim content의 256개 doubled quote를 이 저장 한도로 거부하지 않는다. 저장 형식은 directive·자유 텍스트 mode 두 bit와 frame당 네 byte이며 길이·mode 조합을 확인한다.
+
+이 교정의 네 회귀 사례와 잔여 경계는 [검증 보고서](../reports/issue-233-csharp-lexical-recovery.md)에 기록한다. 등록 사례의 위치 대조 PASS를 일반 C# lexical 의미의 전수 동등성으로 확대하지 않는다.
+
 ### query·API와 필수 관측 — `tsgk-native/r4` (#217)
 
 `r4`는 r2 request(query 한도 세 개, `queries`, `api`)의 끝에 r3의 관측 member 네 개를 같은 순서로 더한다. 응답은 r2의 query·API member와 step별 `observations`를 함께 담는다. producer는 r2 capability 전부와 r3 `reuse_observation` capability를 선언한다. 같은 parse 호출이 query·API 대상 tree와 관측을 함께 만든다. 따라서 별도 실행의 관측으로 oracle 실행의 old-tree 전달을 대신하지 않는다. r4 응답은 r2·r3 request의 응답이 아니며, 그 반대도 같다. r1·r2·r3의 wire shape와 의미는 바뀌지 않는다.

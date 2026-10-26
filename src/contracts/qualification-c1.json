@@ -45,14 +45,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-      "bytes": 51465791
+      "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+      "bytes": 51472926
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-      "bytes": 33334
+      "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+      "bytes": 46552
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -350798,14 +350798,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -353765,14 +353765,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -354047,14 +354047,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -354261,14 +354261,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -355489,14 +355489,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356241,13 +356241,22 @@
         "bytes": 46
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "ERROR"
+         ],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": [],
        "dynamic_sql_expect": null,
-       "expect_status": "NOT_RUN",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
@@ -356278,19 +356287,16 @@
          "step": 0,
          "source_sha256": "0c1bb85696845af178a412a9fd6eb9e51b3d850ea07845e387ad0e3f9653a79e",
          "source_bytes": 46,
-         "result": "MISMATCH",
-         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "result": "MATCH",
+         "code": "",
          "host_hashes": [
           0
          ],
          "cst_hashes": [
-          0,
-          25
+          0
          ],
          "host_only": [],
-         "cst_only": [
-          25
-         ]
+         "cst_only": []
         }
        ]
       },
@@ -356304,13 +356310,22 @@
         "bytes": 42
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "ERROR"
+         ],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": [],
        "dynamic_sql_expect": null,
-       "expect_status": "NOT_RUN",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
@@ -356351,21 +356366,18 @@
          "step": 0,
          "source_sha256": "15b430848813685572d5af6470100d5a640d33c34b6827924280c2920a970539",
          "source_bytes": 42,
-         "result": "MISMATCH",
-         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "result": "MATCH",
+         "code": "",
          "host_hashes": [
           18,
           35
          ],
          "cst_hashes": [
-          9,
           18,
           35
          ],
          "host_only": [],
-         "cst_only": [
-          9
-         ]
+         "cst_only": []
         }
        ]
       }
@@ -356390,14 +356402,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356542,14 +356554,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356715,14 +356727,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356928,14 +356940,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "f47008bb9366fdf8617d4b906833da9e3a13ddbc505e6563d1e9e9dd60a09276",
-       "bytes": 51465791
+       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+       "bytes": 51472926
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "f40491bc0bc88b9c272a891818f6431e0c923a84cfc63399ce75a02b3fcda948",
-       "bytes": 33334
+       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+       "bytes": 46552
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356971,13 +356983,22 @@
         "bytes": 50
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "ERROR"
+         ],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": [],
        "dynamic_sql_expect": null,
-       "expect_status": "NOT_RUN",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
@@ -357001,16 +357022,12 @@
          "step": 0,
          "source_sha256": "c62c61d5b2b6c3b2945f70e6686db49f6c6c9db812b8efd88474fe67e491466e",
          "source_bytes": 50,
-         "result": "MISMATCH",
-         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "result": "MATCH",
+         "code": "",
          "host_hashes": [],
-         "cst_hashes": [
-          37
-         ],
+         "cst_hashes": [],
          "host_only": [],
-         "cst_only": [
-          37
-         ]
+         "cst_only": []
         }
        ]
       },
@@ -357024,13 +357041,22 @@
         "bytes": 69
        },
        "edits": [],
-       "expect": [],
+       "expect": [
+        {
+         "step": 0,
+         "syntax": "ERROR",
+         "contains": [
+          "ERROR"
+         ],
+         "declarations": ""
+        }
+       ],
        "query_expect": [],
        "points": [],
        "dynamic_sql_expect": null,
-       "expect_status": "NOT_RUN",
-       "expect_assessment": "BLOCKED",
-       "expect_code": "PREPROCESS_CST_MISMATCH_STEP_0",
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
        "covers": {},
        "alternatives": [],
        "sample": null,
@@ -357054,16 +357080,12 @@
          "step": 0,
          "source_sha256": "bd952d74494666ba1943c8c0342bc4dffaa804dfb120193450d371cd42bc06b6",
          "source_bytes": 69,
-         "result": "MISMATCH",
-         "code": "PREPROCESS_CST_MISMATCH_STEP_0",
+         "result": "MATCH",
+         "code": "",
          "host_hashes": [],
-         "cst_hashes": [
-          62
-         ],
+         "cst_hashes": [],
          "host_only": [],
-         "cst_only": [
-          62
-         ]
+         "cst_only": []
         }
        ]
       }
