@@ -94,6 +94,7 @@ func TestNullNestedPrimitiveIsNotZeroValue(t *testing.T) {
 	q.Status, q.Code, q.Captures, q.Patterns = "INVALID_QUERY", "QUERY_SYNTAX", nil, 0
 	q.Error = &CompileError{Type: "SYNTAX", Point: [2]uint32{0, 0}}
 	q.Predicates, q.CaptureNames = nil, nil
+	q.Matches, q.QueryMillis, q.Types = 0, 0, []string{}
 	base = encode(t, q)
 	if got, err := DecodeSummary(base, requested, 1, 1); err != nil || len(got) != 1 {
 		t.Fatalf("valid rejection/null stream lost: %+v %v", got, err)
@@ -116,6 +117,9 @@ func TestNullNestedPrimitiveIsNotZeroValue(t *testing.T) {
 
 func TestPaddedNullQueryList(t *testing.T) {
 	for _, raw := range []jsontext.Value{[]byte("null"), []byte(" \nnull\t\r")} {
+		if got, err := DecodeIntrinsic(raw, 1, 1, nil); err != nil || len(got) != 0 {
+			t.Fatalf("intrinsic nullable list: %+v %v", got, err)
+		}
 		if got, err := DecodeSummary(raw, nil, 1, 1); err != nil || len(got) != 0 {
 			t.Fatalf("empty request lost nullable list: %+v %v", got, err)
 		}

@@ -50,6 +50,11 @@ func (e *TreeError) Error() string { return e.Code + ": " + e.Path }
 // TreeDigest returns the tsgk-tree-digest/r1 sha256 of a preorder node sequence. A full
 // tree and a summary of the same bytes, grammar and producer have the same digest.
 func TreeDigest(nodes []TreeNode) string {
+	digest, _ := treeDigest(nodes, nil)
+	return digest
+}
+
+func treeDigest(nodes []TreeNode, check func() error) (string, error) {
 	h := sha256.New()
 	h.Write([]byte("tsgk-tree-digest/r1\n"))
 	var buf []byte
@@ -60,6 +65,11 @@ func TreeDigest(nodes []TreeNode) string {
 		return '0'
 	}
 	for i := range nodes {
+		if check != nil {
+			if err := check(); err != nil {
+				return "", err
+			}
+		}
 		n := &nodes[i]
 		field := ""
 		if n.Field != nil {
@@ -82,7 +92,7 @@ func TreeDigest(nodes []TreeNode) string {
 		buf = append(buf, '\n')
 		h.Write(buf)
 	}
-	return hex.EncodeToString(h.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 // ValidateTree checks a complete tree's structure: exactly one root, parent-before-child

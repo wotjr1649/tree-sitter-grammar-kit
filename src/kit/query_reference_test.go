@@ -2,6 +2,7 @@ package kit
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
@@ -1154,6 +1155,24 @@ func TestQueryReferenceConnectionPartialAnchorsKeepContradictions(t *testing.T) 
 			r, e := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
 			if e != nil || r.Assessment != AssessFail || !slices.Contains(codes(r.Findings), "REFERENCE_CAPTURE_MISMATCH") {
 				t.Fatalf("partial anchor hid contradiction: %+v %v", r, e)
+			}
+		})
+	}
+}
+
+func TestQueryReferenceConnectionInvalidParent(t *testing.T) {
+	for _, parent := range []int{-2, 100000} {
+		t.Run(fmt.Sprint(parent), func(t *testing.T) {
+			f := newReferenceFixture(t)
+			for path, response := range f.responses {
+				nodes := response["tree"].(map[string]any)["nodes"].([]TreeNode)
+				nodes[1].Parent = int64(parent)
+				f.files[path] = mustJSON(t, response)
+				f.approve(t, path)
+			}
+			got, err := VerifyQueryReferenceConnection(ctxT(t), f.request(t))
+			if err != nil || got.Assessment != AssessFail {
+				t.Fatalf("invalid parent accepted %v %+v", err, got)
 			}
 		})
 	}

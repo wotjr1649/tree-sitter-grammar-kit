@@ -82,3 +82,5 @@ The shared `development-start` and `pr-review-workflow` skills are optional aids
 ## Campaign material
 
 `docs/prompts/` and `docs/plans/` hold local execution material; `artifacts/` holds retained raw evidence and handoffs; `_ref/` holds pinned references; `.work/` is regenerable workspace. Keep these paths untracked. Public acceptance criteria must be understandable from this map and applicable Issues without local material.
+
+Query reference의 caller-trusted 승인, build/control closure 및 native/r4 저장 일관성은 [offline eligibility 계약](specs/query-reference-eligibility.md)을 따른다.

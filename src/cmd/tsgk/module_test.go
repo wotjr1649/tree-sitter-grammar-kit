@@ -4,12 +4,15 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
 const (
@@ -116,6 +119,19 @@ func TestModuleProxyConsumer(t *testing.T) {
 	sum, _ := os.ReadFile(filepath.Join(module, "go.sum"))
 	if !strings.Contains(string(sum), modulePath+" "+moduleVersion+" h1:") {
 		t.Fatalf("the consumer did not resolve the kit module by version:\n%s", sum)
+	}
+	_, eligibilityLine, _ := runBin(t, []string{"PATH=", "SystemRoot=" + os.Getenv("SystemRoot")}, consumer, "query-eligibility", t.TempDir())
+	eligibilityParts := strings.SplitN(strings.TrimSpace(eligibilityLine), "\t", 3)
+	if len(eligibilityParts) != 3 || eligibilityParts[0] != "query-eligibility" || eligibilityParts[1] != "-" {
+		t.Fatalf("module consumer eligibility: %q", eligibilityLine)
+	}
+	var eligibility struct {
+		Assessment   string `json:"assessment"`
+		ResultSchema string `json:"result_schema"`
+		Complete     bool   `json:"complete"`
+	}
+	if err := json.Unmarshal([]byte(eligibilityParts[2]), &eligibility); err != nil || eligibility.Assessment != kit.AssessBlocked || eligibility.Complete || eligibility.ResultSchema != kit.QueryReferenceEligibilityResultSchema {
+		t.Fatalf("module eligibility approval boundary: %v %+v", err, eligibility)
 	}
 	inv := filepath.Join(root, "src", "contracts", "qualification-c1.json")
 	host := t.TempDir()

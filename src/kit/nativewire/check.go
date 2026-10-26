@@ -16,6 +16,7 @@ import (
 // the documented absent form and only the rule that needs it is skipped. A caller must not
 // fill a value from the response itself.
 type Expect struct {
+	Check       func() error       // Optional cancellation checkpoint for repeated tree hashing.
 	Revision    string             // the request revision ("" is r1)
 	ID          string             // the request id
 	Nodes       uint64             // the node limit of a completed tree
@@ -108,6 +109,24 @@ func requireMembers(raw jsontext.Value, array bool, names ...string) error {
 // CheckTree validates a tree object against the step's source length, the node limit and,
 // for r2/r4, the requested queries and API observations.
 func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
+	t, err := CheckTreeStructure(w, sourceBytes, e)
+	if err != nil || w.Status != StatusCompleted {
+		return t, err
+	}
+	if e.queries() {
+		if err := t.CheckQueries(e.Queries, sourceBytes, e.Check); err != nil {
+			return t, err
+		}
+		if err := t.CheckAPI(e); err != nil {
+			return t, err
+		}
+	}
+	return t, nil
+}
+
+// CheckTreeStructure checks intrinsic structure against a declared byte bound, without
+// query identities or actual source proof. CheckTree additionally checks queries/API.
+func CheckTreeStructure(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 	t := Tree{Status: w.Status, Code: w.Code, Wire: w}
 	r2 := e.queries()
 	if r2 != (w.Queries != nil) || r2 != (w.API != nil) {
@@ -132,7 +151,7 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 	}
 	switch t.Form {
 	case "full":
-		ns, err := Nodes(w.Nodes, w.Types, w.Fields)
+		ns, err := nodes(w.Nodes, w.Types, w.Fields, e.Check)
 		if err != nil {
 			return t, err
 		}
@@ -142,7 +161,11 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 		if uint64(len(ns)) != w.DescendantCount || ns[0].HasError != w.HasError {
 			return t, invalid("RESPONSE_INVALID", errors.New("count or root flags"))
 		}
-		if TreeDigest(ns) != w.Digest {
+		digest, err := treeDigest(ns, e.Check)
+		if err != nil {
+			return t, err
+		}
+		if digest != w.Digest {
 			return t, invalid("TREE_DIGEST_MISMATCH", nil)
 		}
 		t.Nodes = ns
@@ -156,7 +179,12 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 			}
 		}
 		for _, p := range w.PartialTrees {
-			ns, err := Nodes(p.Nodes, w.Types, w.Fields)
+			if e.Check != nil {
+				if err := e.Check(); err != nil {
+					return t, err
+				}
+			}
+			ns, err := nodes(p.Nodes, w.Types, w.Fields, e.Check)
 			if err != nil {
 				return t, err
 			}
@@ -182,24 +210,32 @@ func CheckTree(w WireTree, sourceBytes uint64, e Expect) (Tree, error) {
 			}
 		}
 	}
-	if r2 {
-		if err := t.checkQueries(e.Queries, sourceBytes); err != nil {
-			return t, err
-		}
-		if err := t.checkAPI(e); err != nil {
-			return t, err
-		}
-	}
 	return t, nil
 }
 
-// checkQueries retains the full-node link check while sharing strict wire validation.
-func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64) error {
+// CheckQueries retains the full-node link check while sharing strict wire validation.
+func (t *Tree) CheckQueries(sources []querywire.Source, sourceBytes uint64, check func() error) error {
+	return t.checkQueries(sources, sourceBytes, check, false)
+}
+
+// CheckQueryStructure validates source-independent query invariants and full-node
+// links when available; it does not establish query identity or compile-error points.
+func (t *Tree) CheckQueryStructure(sourceBytes uint64, check func() error) error {
+	return t.checkQueries(nil, sourceBytes, check, true)
+}
+
+func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64, check func() error, intrinsic bool) error {
 	t.Queries = nil
 	var queries []WireQuery
 	var err *querywire.Error
+	var stopped error
 	if t.Nodes != nil {
-		queries, err = querywire.DecodeFull(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount, func(q WireQuery, row []int64) bool {
+		link := func(q WireQuery, row []int64) bool {
+			if check != nil {
+				if stopped = check(); stopped != nil {
+					return false
+				}
+			}
 			if row[3] < 0 || row[3] >= int64(len(t.Nodes)) {
 				return false
 			}
@@ -207,9 +243,19 @@ func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64) erro
 			n, f := t.Nodes[row[3]], row[5]
 			return n.Type == q.Types[row[4]] && n.Named == (f&1 != 0) && n.Extra == (f&2 != 0) && n.IsError == (f&4 != 0) && n.HasError == (f&8 != 0) && n.IsMissing == (f&16 != 0) &&
 				n.StartByte == uint32(row[6]) && n.EndByte == uint32(row[7]) && n.StartPoint == (Point{Row: uint32(row[8]), Column: uint32(row[9])}) && n.EndPoint == (Point{Row: uint32(row[10]), Column: uint32(row[11])})
-		})
+		}
+		if intrinsic {
+			queries, err = querywire.DecodeIntrinsic(t.Wire.Queries, sourceBytes, t.Wire.DescendantCount, link)
+		} else {
+			queries, err = querywire.DecodeFull(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount, link)
+		}
+	} else if intrinsic {
+		queries, err = querywire.DecodeIntrinsic(t.Wire.Queries, sourceBytes, t.Wire.DescendantCount, nil)
 	} else {
 		queries, err = querywire.DecodeSummary(t.Wire.Queries, sources, sourceBytes, t.Wire.DescendantCount)
+	}
+	if stopped != nil {
+		return stopped
 	}
 	if err != nil {
 		return invalid(err.Code, err.Cause)
@@ -218,10 +264,10 @@ func (t *Tree) checkQueries(sources []querywire.Source, sourceBytes uint64) erro
 	return nil
 }
 
-// checkAPI validates the shape of requested API observations: present exactly for a
+// CheckAPI validates the shape of requested API observations: present exactly for a
 // completed full tree of an API request, with every row's arity and table indices in
 // range. Whether the values agree with the serialized tree is judged by the caller.
-func (t *Tree) checkAPI(e Expect) error {
+func (t *Tree) CheckAPI(e Expect) error {
 	bad := func(what string) error { return invalid("RESPONSE_INVALID", errors.New("api: "+what)) }
 	want := e.API && t.Form == "full"
 	if isNull(t.Wire.API) {
@@ -276,11 +322,10 @@ func (cs CheckedStep) Done(k int) bool {
 	return !incBad && (k == 0 || !freshBad)
 }
 
-// CheckHeader validates everything of a response but its steps, given their number n:
-// protocol and id, status/exit agreement, the producer capabilities, the step count and
-// the source length. stop reports an INVALID_REQUEST response, which has no steps and
-// nothing more to check.
-func CheckHeader(r Response, n int, e Expect) (stop bool, err error) {
+// CheckEnvelope checks protocol, request identity, status/exit and producer capability.
+// It does not establish source identity, edit count or tree/query correctness.
+// stop reports an INVALID_REQUEST response, which has no steps.
+func CheckEnvelope(r Response, n int, e Expect) (stop bool, err error) {
 	if r.Protocol != e.revision() {
 		return false, invalid("RESPONSE_PROTOCOL_MISMATCH", fmt.Errorf("request %s response %s", e.revision(), r.Protocol))
 	}
@@ -336,6 +381,14 @@ func CheckHeader(r Response, n int, e Expect) (stop bool, err error) {
 			return false, invalid("RESPONSE_INVALID", errors.New("steps on invalid request"))
 		}
 		return true, nil
+	}
+	return false, nil
+}
+
+// CheckHeader adds source length and edit-count expectations to the envelope.
+func CheckHeader(r Response, n int, e Expect) (bool, error) {
+	if stop, err := CheckEnvelope(r, n, e); err != nil || stop {
+		return stop, err
 	}
 	if r.Status == StatusCompleted && n != len(e.Edits)+1 {
 		return false, invalid("RESPONSE_INVALID", errors.New("step count"))

@@ -45,11 +45,15 @@ type CompileError struct {
 
 // ValidCompileError binds a runtime rejection class and byte point to its query source.
 func ValidCompileError(e *CompileError, source []byte) bool {
-	if e == nil || !slices.Contains([]string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE"}, e.Type) || uint64(e.Offset) > uint64(len(source)) {
+	if !validCompileErrorClass(e) || uint64(e.Offset) > uint64(len(source)) {
 		return false
 	}
 	prefix := source[:e.Offset]
 	return e.Point == [2]uint32{uint32(bytes.Count(prefix, []byte{'\n'})), uint32(len(prefix) - bytes.LastIndexByte(prefix, '\n') - 1)}
+}
+
+func validCompileErrorClass(e *CompileError) bool {
+	return e != nil && slices.Contains([]string{"SYNTAX", "NODE_TYPE", "FIELD", "CAPTURE", "STRUCTURE", "LANGUAGE"}, e.Type)
 }
 
 type Error struct {
@@ -94,27 +98,30 @@ func DecodeFull(raw jsontext.Value, sources []Source, sourceBytes, descendantCou
 	if link == nil {
 		return nil, invalid("RESPONSE_INVALID", errors.New("full query validation requires node links"))
 	}
-	return decode(raw, sources, sourceBytes, descendantCount, link)
+	return decode(raw, sources, sourceBytes, descendantCount, link, true)
 }
 
 // DecodeSummary validates the wire stream only; it supplies no full-node link evidence.
 // The caller bounds raw bytes and independently validates the tree summary and count.
 func DecodeSummary(raw jsontext.Value, sources []Source, sourceBytes, descendantCount uint64) ([]Query, *Error) {
-	return decode(raw, sources, sourceBytes, descendantCount, nil)
+	return decode(raw, sources, sourceBytes, descendantCount, nil, true)
+}
+
+// DecodeIntrinsic checks status, metadata, accounting and optional node links without
+// query source identities or compile-error byte/point proof. A nil link is summary-only.
+// The caller bounds raw bytes and validates the declared tree byte/count bounds.
+func DecodeIntrinsic(raw jsontext.Value, sourceBytes, descendantCount uint64, link func(Query, []int64) bool) ([]Query, *Error) {
+	return decode(raw, nil, sourceBytes, descendantCount, link, false)
 }
 
 var queryLimitCodes = map[string]bool{"QUERY_TIME_LIMIT": true, "MATCH_LIMIT": true, "CAPTURE_LIMIT": true, "QUERY_MATCH_OVERFLOW": true}
 
-func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount uint64, link func(Query, []int64) bool) ([]Query, *Error) {
+// ParseQueries checks only the JSON shape, before semantic validation or capture linking.
+// Callers bound input and repeated work before calling DecodeFull or DecodeSummary.
+func ParseQueries(raw jsontext.Value) ([]Query, *Error) {
 	var queries []Query
-	bad := func(i int, what string) *Error {
-		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
-	}
 	if isNull(raw) {
-		if len(sources) != 0 {
-			return nil, bad(0, "missing")
-		}
-		return queries, nil
+		return nil, nil
 	}
 	if err := RequireMembers(raw, true, "id", "status", "code", "query_ms", "error", "patterns", "capture_names", "predicates", "matches", "partial", "types", "captures"); err != nil {
 		return nil, err
@@ -158,11 +165,30 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 	if err := rejectNullPrimitives(raw); err != nil {
 		return nil, invalid("RESPONSE_MALFORMED", err)
 	}
-	if len(queries) != len(sources) {
+	return queries, nil
+}
+
+func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount uint64, link func(Query, []int64) bool, sourceKnown bool) ([]Query, *Error) {
+	var queries []Query
+	bad := func(i int, what string) *Error {
+		return invalid("RESPONSE_INVALID", fmt.Errorf("query %d: %s", i, what))
+	}
+	if isNull(raw) {
+		if len(sources) != 0 {
+			return nil, bad(0, "missing")
+		}
+		return queries, nil
+	}
+	var shapeError *Error
+	queries, shapeError = ParseQueries(raw)
+	if shapeError != nil {
+		return nil, shapeError
+	}
+	if sourceKnown && len(queries) != len(sources) {
 		return nil, bad(len(queries), "count")
 	}
 	for i, q := range queries {
-		if q.ID != sources[i].ID {
+		if sourceKnown && q.ID != sources[i].ID {
 			return nil, bad(i, "id")
 		}
 		for _, p := range q.Predicates {
@@ -191,7 +217,7 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 			}
 			continue
 		case "INVALID_QUERY":
-			if !ValidCompileError(q.Error, sources[i].Source) || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial {
+			if !validCompileErrorClass(q.Error) || sourceKnown && !ValidCompileError(q.Error, sources[i].Source) || q.Code != "QUERY_"+q.Error.Type || q.Captures != nil || q.Patterns != 0 || q.Partial || q.QueryMillis != 0 || q.Matches != 0 || len(q.Types) != 0 {
 				return nil, bad(i, "invalid shape")
 			}
 			continue

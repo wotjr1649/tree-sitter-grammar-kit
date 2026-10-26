@@ -379,6 +379,14 @@ func VerifyQueryReferenceConnection(ctx context.Context, req QueryReferenceConne
 
 Reference 연결의 `full-input-utf8/r1` 경계는 실제 source가 있는 완료 응답에 UTF-8 유효성을 요구하고, 제공된 모든 완료 full raw·projection·reference root의 끝을 해당 version 길이에 결속한다. Leading padding으로 root 시작이 0보다 큰 정상 CST는 허용한다. 독립 capture 개수·query 식별 순서 모순은 CST 부적격 전에 FAIL로 판정하되 CST에 종속된 node index·type·flags·range 비교는 tree 동등성 이후 수행한다. Native full CST 부재 시 기존 전체 anchor 대조와, 다른 anchor가 누락된 경우에도 존재하는 anchor의 대조를 유지한다. 상세 계약은 [계측 reference 계약](instrumented-query-reference.md)을 따른다.
 
+## Query reference eligibility — experimental
+
+```go
+func VerifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceEligibilityRequest) (QueryReferenceEligibilityResult, error)
+```
+
+Request는 `Evidence EvidenceRequest`와 evidence 밖에서 신뢰한 `Approval`, `Registration`, `WitnessRegistration []byte`를 받는다. 새 승인/등록/결과 r1, `full-input-utf8/r2` 및 witness r2는 기존 connection/witness/replay의 r1/native-r2 의미와 별개다. 외부 승인·wire field·독립 catalogue·native/r4·판정·고정 예산의 정본은 [offline eligibility 계약](query-reference-eligibility.md)이다. 실제 process·network는 실행하지 않는다. 결과의 `Complete`는 평가 완료이며 PASS와 독립이고, Build9/Unit4/Control53/Assertion36 및 승인 witness tuple 분모를 각각 유지한다. 오류·중단에도 이미 확정한 FAIL은 보존한다. Producer/claim/reducer/inventory/fan-in을 활성화하지 않는다.
+
 ## S07 함수 — replay, reducer 등록부, 수치 비교, evidence graph
 
 ```go

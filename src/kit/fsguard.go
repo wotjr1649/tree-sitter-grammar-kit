@@ -226,6 +226,19 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 	if uint64(before.Size()) > hardMax {
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", name, nil)
 	}
+	if r.eligibility != nil {
+		passes := uint64(3 + len(sinks))
+		if keep > 0 {
+			passes++
+		}
+		logical, e := eligibilityProduct(name, uint64(before.Size())+1, passes)
+		if e != nil {
+			return nil, e
+		}
+		if e := r.eligibility.charge(1, logical, name); e != nil {
+			return nil, e
+		}
+	}
 	if testHookOpen != nil {
 		testHookOpen(name)
 	}

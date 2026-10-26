@@ -17,6 +17,11 @@ import (
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+	if os.Args[1] == "query-eligibility" {
+		res, err := kit.VerifyQueryReferenceEligibility(ctx, kit.QueryReferenceEligibilityRequest{Evidence: kit.EvidenceRequest{Root: os.Args[2]}})
+		emit("query-eligibility", res, err)
+		return
+	}
 	if os.Args[1] == "qualify" { // qualify INVENTORY CANDIDATE PLATFORM DIR: S08 aggregation, read only
 		inv, err := os.ReadFile(os.Args[2])
 		if err != nil {

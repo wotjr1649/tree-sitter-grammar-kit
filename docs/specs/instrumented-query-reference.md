@@ -73,6 +73,10 @@ Native의 field patch 때문에 이 reference와 CST 또는 capture가 달라지
 
 연결 검증은 기존 `VerifyEvidence`가 해석한 graph와 동일 guard 읽기에서 hash가 확인된 요청 member bytes만 사용한다. 보관 대상을 골라도 다른 member·graph·policy·한도·취소 검사는 그대로 실행하며, 일반 member에 replay-result용 record 한도를 추가하지 않는다. 빈 member는 누락과 구분하고 실패한 member의 bytes나 이전 호출의 snapshot을 재사용하지 않는다.
 
+## 저장 eligibility API
+
+`VerifyQueryReferenceEligibility`의 독립 승인·build/control closure·native/r4·shared budget 정본은 [offline eligibility 계약](query-reference-eligibility.md)이다. 기존 connection r1을 재해석하지 않는 별도 experimental API이며 producer/claim/reducer/inventory/fan-in은 후속이다.
+
 ## 저장 데이터 연결 API
 
 `VerifyQueryReferenceConnection`은 [공개 Go API](public-go-api.md)의 experimental offline 연산이다. Caller는 evidence 밖에서 `tsgk-query-reference-connection-registration/r1`을 승인한다. 이 등록은 정확한 evidence policy SHA-256, native/reference node와 빈 값 없는 전체 11-role identity(빈 값은 `REFERENCE_REGISTRATION_INVALID`), witness 등록·source·raw·projection·build manifest·각 reference response의 member path/role/bytes/hash, 승인 binary/library hash와 symbol을 고정한다. Build manifest 자체가 제시한 hash를 승인 값으로 채택하지 않는다. `full-input-utf8/r1` 문맥은 full input·included range 없음·composite format 없음과 build/tool/grammar/platform/run 문맥을 caller가 외부에서 승인했다는 전제다. SVC·UTF-16·CP949·large paging의 자격을 추가하지 않는다.

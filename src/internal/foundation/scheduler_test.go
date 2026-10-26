@@ -188,6 +188,13 @@ func TestWorkflowRouteSchedulePolicy(t *testing.T) {
 }
 
 func integrationPolicy(text string) error {
+	large := workflowJobBody(text, "large-api")
+	config := strings.Index(large, "      - name: Margin 실행 구성 기록\n")
+	upload := strings.Index(large, "      - name: Margin 실행 구성 보관\n")
+	audit := strings.Index(large, "      - name: Windows 대용량 전체 API audit\n")
+	if config < 0 || upload <= config || audit <= upload || !strings.Contains(large[upload:audit], "name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}") {
+		return fmt.Errorf("large API configuration must be retained before the audit can fail")
+	}
 	needs := "    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]\n"
 	eventRule := `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}` + "\n"
 	for _, name := range []string{"race", "macos-regenerate"} {
@@ -219,7 +226,12 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 	if e := integrationPolicy(text); e != nil {
 		t.Fatal(e)
 	}
+	large := workflowJobBody(text, "large-api")
+	config := large[strings.Index(large, "      - name: Margin 실행 구성 기록\n"):strings.Index(large, "      - name: Windows 대용량 전체 API audit\n")]
+	lateConfig := strings.Replace(large, config, "", 1) + config
 	for name, broken := range map[string]string{
+		"late-large-config":        strings.Replace(text, large, lateConfig, 1),
+		"wrong-large-config-name":  strings.Replace(text, "name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}", "name: wrong-config", 1),
 		"PR-diagnostic":            strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request","push","schedule","workflow_dispatch"]`),
 		"PR-target-diagnostic":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
 		"missing-large-dependency": strings.ReplaceAll(text, "native-routes-macos, large-api, qualification]", "native-routes-macos, qualification]"),

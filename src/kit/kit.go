@@ -204,10 +204,11 @@ func messageFor(err *Error) string {
 
 // run holds per-call state: caller context, kit wall, limits accounting.
 type run struct {
-	caller    context.Context
-	wall      context.Context
-	cancel    context.CancelFunc
-	totalRead uint64
+	caller      context.Context
+	wall        context.Context
+	cancel      context.CancelFunc
+	totalRead   uint64
+	eligibility *eligibilityBudget
 }
 
 var errWall = errors.New("kit wall limit")
@@ -245,6 +246,9 @@ func (r *run) check() *Error {
 	}
 	if r.wall.Err() != nil {
 		return fail(KindResourceLimit, "WALL_LIMIT", "", context.Cause(r.wall))
+	}
+	if r.eligibility != nil && r.eligibility.err != nil {
+		return r.eligibility.err
 	}
 	return nil
 }

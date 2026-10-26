@@ -2,6 +2,7 @@ package nativewire
 
 import (
 	jsonv2 "encoding/json/v2"
+	"errors"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
@@ -37,7 +38,7 @@ func TestQueryNodeLinkFields(t *testing.T) {
 			tree := Tree{Wire: WireTree{DescendantCount: 1, Queries: raw},
 				Nodes: []TreeNode{{Type: "identifier", Named: true, EndByte: 1, EndPoint: Point{Column: 1}}}}
 			req := []querywire.Source{{ID: "q", Source: []byte("(identifier) @x")}}
-			if err := tree.checkQueries(req, 1); err != nil || len(tree.Queries) != 1 {
+			if err := tree.CheckQueries(req, 1, nil); err != nil || len(tree.Queries) != 1 {
 				t.Fatalf("normal link failed: %+v %v", tree.Queries, err)
 			}
 			tc.edit(&q)
@@ -49,12 +50,33 @@ func TestQueryNodeLinkFields(t *testing.T) {
 			// The mutation stays valid wire; only the full CST link rejects it.
 			summary := tree
 			summary.Nodes = nil
-			if err := summary.checkQueries(req, 1); err != nil {
+			if err := summary.CheckQueries(req, 1, nil); err != nil {
 				t.Fatalf("mutation is not valid wire: %v", err)
 			}
-			if err := tree.checkQueries(req, 1); err == nil || err.(*Error).Code != "CAPTURE_LINK_MISMATCH" || tree.Queries != nil {
+			if err := tree.CheckQueries(req, 1, nil); err == nil || err.(*Error).Code != "CAPTURE_LINK_MISMATCH" || tree.Queries != nil {
 				t.Fatalf("changed full-node field adopted: %+v %v", tree.Queries, err)
 			}
 		})
+	}
+}
+
+func TestQueryNodeLinkCancellation(t *testing.T) {
+	q := WireQuery{ID: "q", Status: StatusCompleted, Patterns: 1, Matches: 1, CaptureNames: []string{"x"}, Types: []string{"identifier"}, Predicates: []querypolicy.Predicate{}, Captures: [][]int64{{0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}, {0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1}}}
+	raw, err := jsonv2.Marshal([]WireQuery{q})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tree := Tree{Wire: WireTree{DescendantCount: 1, Queries: raw}, Nodes: []TreeNode{{Type: "identifier", Named: true, EndByte: 1, EndPoint: Point{Column: 1}}}}
+	stopped := errors.New("cancelled during capture link")
+	calls := 0
+	err = tree.CheckQueries([]querywire.Source{{ID: "q", Source: []byte("(identifier) @x")}}, 1, func() error {
+		calls++
+		if calls == 2 {
+			return stopped
+		}
+		return nil
+	})
+	if err != stopped || calls != 2 || tree.Queries != nil {
+		t.Fatalf("cancel swallowed: err%v calls%d queries%v", err, calls, tree.Queries)
 	}
 }

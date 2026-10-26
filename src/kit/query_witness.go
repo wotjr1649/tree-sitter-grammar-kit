@@ -1017,10 +1017,14 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 	if e := decodeWitnessDocument("query-registration", data, &reg, true, r); e != nil {
 		return reg, e
 	}
+	return validateQueryWitnessRegistration(reg, QueryWitnessRegistrationSchema)
+}
+
+func validateQueryWitnessRegistration(reg QueryWitnessRegistration, schema string) (QueryWitnessRegistration, *Error) {
 	bad := func(code string) (QueryWitnessRegistration, *Error) {
 		return reg, fail(KindInvalidInput, code, "query-registration", nil)
 	}
-	if reg.Schema != QueryWitnessRegistrationSchema {
+	if reg.Schema != schema {
 		return bad("SCHEMA_UNSUPPORTED")
 	}
 	if reg.Policy != querypolicy.Revision {
@@ -1073,6 +1077,9 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 }
 
 func decodeWitnessDocument(doc string, data []byte, target any, exact bool, r *run) *Error {
+	if r.eligibility != nil {
+		return r.eligibility.decode(doc, data, target, exact)
+	}
 	v, e := decodeBounded(doc, data, MaxDocumentBytes, &valueBudget{max: 2000000, check: r.check})
 	if e != nil {
 		return e
