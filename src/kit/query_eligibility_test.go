@@ -1238,7 +1238,7 @@ func TestQueryReferenceEligibilityReview34(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
-	for _, where := range []string{"tool", "input", "replay"} {
+	for _, where := range []string{"tool", "registered-tool", "input", "replay"} {
 		for _, kind := range []string{"cancel", "wall", "work", "values"} {
 			if kind == "values" && where != "replay" {
 				continue
@@ -1287,6 +1287,8 @@ func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
 					switch where {
 					case "tool":
 						_, e = s.tool(tool.ID, tool.CohortID, tool.ToolName, tool.IdentityMember, map[string]string{tool.ToolName: tool.SubjectSHA256}, map[string]string{tool.ToolName: tool.PathLiteral})
+					case "registered-tool":
+						_, _, e = s.member(&tool.IdentityMember)
 					case "input":
 						inv := &eligibilityInvocation{ID: "test", Inputs: map[string]eligibilityInput{"source": {Kind: "PINNED", MemberPin: &tool.IdentityMember, ArgvIndex: eligibilityIndex(0), PathLiteral: "source"}}}
 						_, e = s.input(inv, "source", "PINNED", eligibilityIndex(0), "source", "", nil)
@@ -2924,5 +2926,190 @@ func TestQueryReferenceEligibilityPathBudget(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestQueryReferenceEligibilityReview60(t *testing.T) {
+	for _, batch := range []bool{false, true} {
+		for _, name := range []string{"valid", "library", "source", "query-0", "query-1"} {
+			if !batch && name == "query-1" {
+				continue
+			}
+			t.Run(fmt.Sprintf("reference-batch-%v/%s", batch, name), func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				i := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == "current-ref-0" })
+				inv := &f.reg.Invocations[i]
+				var req eligibilityProcessRequest
+				if e := jsonv2.Unmarshal(inv.ApprovedRequest, &req); e != nil {
+					t.Fatal(e)
+				}
+				if batch {
+					old := req.Args
+					req.Args = []string{"--batch", old[0], old[1], old[2], old[5], "q0", old[3], "extra", old[3]}
+					for key, index := range map[string]int{"library": 1, "source": 3, "query-0": 6} {
+						x := inv.Inputs[key]
+						x.ArgvIndex = eligibilityIndex(index)
+						inv.Inputs[key] = x
+					}
+					x := inv.Inputs["query-0"]
+					x.ArgvIndex = eligibilityIndex(8)
+					inv.Inputs["query-1"] = x
+					var receipt eligibilityReceipt
+					if e := jsonv2.Unmarshal(f.files[inv.Receipt.Member.Path], &receipt); e != nil {
+						t.Fatal(e)
+					}
+					row, e := base64.StdEncoding.DecodeString(receipt.StdoutBase64)
+					if e != nil {
+						t.Fatal(e)
+					}
+					var ref instrumentedReference
+					if e := jsonv2.Unmarshal(row, &ref); e != nil {
+						t.Fatal(e)
+					}
+					row = []byte(strings.TrimSpace(string(row)))
+					for j := range f.reg.Observations {
+						o := &f.reg.Observations[j]
+						if o.InvocationID == inv.ID {
+							o.ByteLength = uint64(len(row))
+							o.SHA256 = digestHex(row)
+						}
+					}
+					ref.Query.ID = "extra"
+					stdout := append(slices.Clone(row), '\n')
+					stdout = append(stdout, eligibilityJSON(t, ref)...)
+					stdout = append(stdout, '\n')
+					footer := eligibilityBatchFooter{Schema: "tsgk-instrumented-query-reference-batch/r1", Status: StatusCompleted, Complete: true, Queries: []string{"q0", "extra"}, ResponsesCompleted: 2}
+					stdout = append(stdout, eligibilityJSON(t, footer)...)
+					stdout = append(stdout, '\n')
+					f.stdoutMutation(inv.ID, func([]byte) []byte { return stdout })
+				}
+				if name != "valid" {
+					x := inv.Inputs[name]
+					x.PathLiteral = "relative-input"
+					inv.Inputs[name] = x
+					req.Args[*x.ArgvIndex] = x.PathLiteral
+				}
+				inv.ApprovedRequest = eligibilityJSON(t, req)
+				f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				if err != nil || !got.Complete {
+					t.Fatalf("err%v complete%v", err, got.Complete)
+				}
+				if name == "valid" {
+					want := AssessPass
+					if batch {
+						want = AssessBlocked
+					}
+					if got.Assessment != want {
+						t.Fatalf("valid assessment%s findings%+v", got.Assessment, got.Findings)
+					}
+				} else if got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_REFERENCE_INPUT_PATH") {
+					t.Fatalf("relative input accepted: assessment%s findings%+v", got.Assessment, got.Findings)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+	for _, id := range []string{"build-cargo-version", "control-compile", "current-ref-0", "native-current"} {
+		for _, parent := range []string{"/delegated", "", "relative", `C:\delegated`, "/delegated\x00bad"} {
+			t.Run(id+"/cgroup-"+parent, func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				i := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == id })
+				if i < 0 {
+					t.Fatalf("unknown fixture invocation %s", id)
+				}
+				inv := &f.reg.Invocations[i]
+				var req eligibilityProcessRequest
+				if id == "native-current" {
+					if e := jsonv2.Unmarshal(inv.ApprovedRequest, &f.witness.Native); e != nil {
+						t.Fatal(e)
+					}
+					req = f.witness.Native.Process
+				} else if e := jsonv2.Unmarshal(inv.ApprovedRequest, &req); e != nil {
+					t.Fatal(e)
+				}
+				req.CgroupParent = parent
+				inv.ApprovedRequest = eligibilityJSON(t, req)
+				if id == "native-current" {
+					f.witness.Native.Process = req
+					inv.ApprovedRequest = eligibilityJSON(t, f.witness.Native)
+				}
+				f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				want := AssessFail
+				if parent == "/delegated" {
+					want = AssessPass
+				}
+				if err != nil || !got.Complete || got.Assessment != want || want == AssessFail && !eligibilityFinding(got, "ELIGIBILITY_CGROUP_PARENT") {
+					t.Fatalf("cgroup binding err%v assessment%s findings%+v", err, got.Assessment, got.Findings)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+	for _, mutation := range []string{"valid", "unknown-node", "undeclared", "wrong-owner", "hash", "role", "missing-file", "no-groups-hash"} {
+		t.Run("unused-tool/"+mutation, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			tool := f.reg.Tools[0]
+			tool.IdentityMember = f.member("current-ref-0", "extra-tool/identity.json", "identity", slices.Clone(f.files[tool.IdentityMember.Member.Path]))
+			tool.ID = "extra-tool"
+			tool.CohortID = "current"
+			tool.ProvenanceID = "p-current"
+			switch mutation {
+			case "unknown-node":
+				tool.IdentityMember.NodeID = "unknown-node"
+			case "undeclared":
+				tool.IdentityMember.Member.Path = "missing.json"
+			case "wrong-owner":
+				tool.IdentityMember.NodeID = "native-current"
+			case "hash", "no-groups-hash":
+				tool.IdentityMember.Member.SHA256 = strings.Repeat("0", 64)
+				if mutation == "no-groups-hash" {
+					f.reg.Build = nil
+					f.reg.Control = nil
+					f.reg.Native = nil
+				}
+			case "role":
+				tool.IdentityMember.Member.Role = "wrong-role"
+			case "missing-file":
+				delete(f.files, tool.IdentityMember.Member.Path)
+			}
+			f.reg.Tools = append(f.reg.Tools, tool)
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			want := AssessFail
+			if mutation == "valid" {
+				want = AssessPass
+			}
+			if err != nil || !got.Complete || got.Assessment != want {
+				t.Fatalf("unused pin err%v assessment%s complete%v findings%+v", err, got.Assessment, got.Complete, got.Findings)
+			}
+			eligibilityAssertCounts(t, got)
+		})
+	}
+}
+
+func TestQueryReferenceEligibilityReferenceAbsolutePath(t *testing.T) {
+	cases := []struct {
+		path           string
+		windows, posix bool
+	}{
+		{"", false, false}, {"input", false, false}, {"/input", false, true}, {"//host/share/input", true, true},
+		{`C:\input`, true, false}, {"c:/input", true, false}, {`C:input`, false, false}, {`\input`, false, false},
+		{`1:\input`, false, false}, {`/:input`, false, true}, {`\\`, false, false}, {`\\host`, false, false},
+		{`\\host\share`, true, false}, {`\\host\..\input`, true, false}, {`\\host\\input`, false, false},
+		{`\\?\C:\input`, true, false}, {`\\?\C:`, true, false}, {`\\?\`, true, false}, {`\\?\..\input`, true, false},
+		{`\\?\UNC\host\share\input`, true, false}, {`\\.\pipe\name`, true, false}, {`\\.\`, true, false},
+		{`\??\C:\input`, false, false}, {`//?/`, false, true}, {`//?/C:/input`, true, true},
+	}
+	for _, c := range cases {
+		for _, platform := range []string{"linux/amd64", "windows/amd64", "darwin/arm64"} {
+			want := c.posix
+			if platform == "windows/amd64" {
+				want = c.windows
+			}
+			if got := eligibilityReferenceAbsolutePath(c.path, platform); got != want {
+				t.Errorf("%s path%q got%v want%v", platform, c.path, got, want)
+			}
+		}
 	}
 }

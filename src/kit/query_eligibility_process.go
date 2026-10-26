@@ -113,12 +113,16 @@ func (s *eligibilitySession) request(inv *eligibilityInvocation) (eligibilityPro
 }
 
 func (s *eligibilitySession) processPaths(id string, request eligibilityProcessRequest, platform string) (bool, *Error) {
-	n := uint64(len(request.Path) + len(request.Dir))
+	n := uint64(len(request.Path) + len(request.Dir) + len(request.CgroupParent))
 	if e := s.b.charge(8*n+1, 2*n, id+"/paths"); e != nil {
 		return false, e
 	}
 	if !eligibilityLiteral(request.Path) || !eligibilityLiteral(request.Dir) || !eligibilityAbsolutePath(request.Path, platform) || !eligibilityAbsolutePath(request.Dir, platform) {
 		s.finding("ELIGIBILITY_PROCESS_PATH", id, true)
+		return false, nil
+	}
+	if platform == "linux/amd64" && request.Memory.Hard && (!eligibilityLiteral(request.CgroupParent) || !eligibilityAbsolutePath(request.CgroupParent, platform)) {
+		s.finding("ELIGIBILITY_CGROUP_PARENT", id, true)
 		return false, nil
 	}
 	return true, nil

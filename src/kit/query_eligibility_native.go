@@ -699,6 +699,24 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			s.ready[inv.ID] = false
 			continue
 		}
+		inputIndices := []int{libraryIndex, sourceIndex}
+		for i := 0; i < pairs; i++ {
+			index := queryStart
+			if batch {
+				index += 2 * i
+			}
+			inputIndices = append(inputIndices, index)
+		}
+		for _, index := range inputIndices {
+			literal := req.Args[index]
+			if e := s.b.charge(8*uint64(len(literal))+1, 2*uint64(len(literal)), inv.ID+"/input-path"); e != nil {
+				return e
+			}
+			if !eligibilityLiteral(literal) || !eligibilityReferenceAbsolutePath(literal, s.cohorts[inv.CohortID].Platform) {
+				s.finding("ELIGIBILITY_REFERENCE_INPUT_PATH", inv.ID, true)
+				ready = false
+			}
+		}
 		symbolIndex := 1
 		if batch {
 			symbolIndex = 2
@@ -1015,4 +1033,24 @@ func eligibilityBuildStep(text string) (string, []string, bool) {
 		}
 	}
 	return name, args, len(args) > 0 && fmt.Sprintf("%q", args) == list
+}
+
+// Rust 1.97.1 Path::is_absolute differs from Go for Windows prefixes.
+func eligibilityReferenceAbsolutePath(value, platform string) bool {
+	if platform != "windows/amd64" {
+		return eligibilityAbsolutePath(value, platform)
+	}
+	if strings.HasPrefix(value, `\\?\`) {
+		return true
+	}
+	p := strings.ReplaceAll(value, `\`, "/")
+	if strings.HasPrefix(p, "//./") {
+		return true
+	}
+	if strings.HasPrefix(p, "//") {
+		server, rest, ok := strings.Cut(p[2:], "/")
+		share, _, _ := strings.Cut(rest, "/")
+		return ok && server != "" && share != ""
+	}
+	return len(p) >= 3 && (p[0] >= 'a' && p[0] <= 'z' || p[0] >= 'A' && p[0] <= 'Z') && p[1] == ':' && p[2] == '/'
 }
