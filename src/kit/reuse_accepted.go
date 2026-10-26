@@ -261,6 +261,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 	complete := len(raw.Steps) == len(versions) && raw.Status == StatusCompleted && c.ExecutionStatus == StatusCompleted && processComplete
 	var tally nativewire.Tally
 	firstOmit := 0
+	legacyCode := ""
 	for k, s := range raw.Steps {
 		if check != nil {
 			if err := check(); err != nil {
@@ -321,12 +322,32 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			}
 			if k > 0 && allFull && CompareTrees(cs.Incremental.Nodes, cs.Fresh.Nodes) != nil {
 				fail("REUSE_ACCEPTED_CST_MISMATCH")
+				if omitControl && legacyCode == "" {
+					legacyCode = "INCREMENTAL_FRESH_MISMATCH_STEP_" + strconv.Itoa(k)
+				}
 			}
 		}
 		if req.Projection != nil && k < len(c.Steps) {
 			p := c.Steps[k]
 			if !acceptedStepProjection(p, cs, observations, wireErr == nil, e, req.Policy) {
 				fail("REUSE_ACCEPTED_RAW_PROJECTION_MISMATCH")
+			}
+			if omitControl && k > 0 {
+				r := s.Route
+				proven := r != nil && r.EditHasChanges && r.ReusedNodes > 0 && r.FreshReusedNodes == 0
+				v := routeStepClaim(proven, r != nil && r.EditHasChanges && r.ReusedNodes == 0 && r.FreshReusedNodes == 0, c.Steps[k-1].Incremental, p.Incremental)
+				if r == nil {
+					fail("REUSE_ACCEPTED_CONTROL_MISMATCH")
+				}
+				code := ""
+				if v == claimFail {
+					code = "INCREMENTAL_ROUTE_NOT_OBSERVED_STEP_" + strconv.Itoa(k)
+				} else if v == claimBlocked && obsOK && reuseobs.CaseClaim([]reuseobs.Step{{Native: true, Edit: true, Observations: observations}}, true) == claimFail {
+					code = "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_" + strconv.Itoa(k)
+				}
+				if legacyCode == "" {
+					legacyCode = code
+				}
 			}
 			if k > 0 && s.Route != nil {
 				proven := s.Route != nil && s.Route.EditHasChanges && s.Route.ReusedNodes > 0 && s.Route.FreshReusedNodes == 0
@@ -374,10 +395,10 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			fail("REUSE_ACCEPTED_RAW_INVALID")
 		}
 	}
-	if omitControl {
+	if omitControl && req.Raw != nil && req.Projection != nil && complete {
 		var legacy string
 		if firstOmit != h.OmitOldFirst || c.ExecutionStatus != StatusCompleted || c.Assessment != AssessFail || c.Claims.IncrementalEquality != claimPass || c.Claims.IncrementalRoute != claimFail ||
-			jsonv2.Unmarshal(c.ReuseObservationClaim, &legacy) != nil || legacy != claimFail || c.Code != "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_"+strconv.Itoa(h.OmitOldFirst) {
+			jsonv2.Unmarshal(c.ReuseObservationClaim, &legacy) != nil || legacy != claimFail || c.Code != legacyCode || legacyCode != "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_"+strconv.Itoa(h.OmitOldFirst) {
 			fail("REUSE_ACCEPTED_CONTROL_MISMATCH")
 		}
 	}

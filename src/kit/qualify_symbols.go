@@ -106,6 +106,9 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			}
 			s.ReuseAccepted = qualAcceptedUnverified(s.ReuseAccepted.Cases, result, code)
 		}
+		if accepted && !over && s.ReuseAccepted.Result == claimFail {
+			s.Mechanism = AssessFail
+		}
 		return s, nil
 	}
 	stop := func(e *Error) bool {
@@ -229,21 +232,11 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	acceptedCases := map[string]QualReuseAcceptedCase{}
 	budget := &replayBudget{r: h.x.r, total: q.lim.TotalBytes}
 	if accepted {
-		budget.acceptedConsumer = func(req ReuseAcceptedRequest, proof ReuseAcceptedResult, proofErr error) error {
+		budget.acceptedControl = w.ReuseAccepted.Control == "omit-old-tree"
+		budget.acceptedConsumer = func(req ReuseAcceptedRequest, proof ReuseAcceptedResult, _ error) error {
 			c := QualReuseAcceptedCase{Set: w.Set, ID: req.Case.ID, Control: w.ReuseAccepted.Control, Result: proof.Result, Code: proof.Code, Steps: slices.Clone(proof.Steps)}
 			if c.Control == "omit-old-tree" {
-				c.Result, c.Code, c.Steps = claimBlocked, "REUSE_ACCEPTED_NOT_RECOMPUTED", []ReuseAcceptedStep{}
-				if proofErr != nil {
-					acceptedCases[c.ID] = c
-					return nil
-				}
-				result, err := checkReuseOmitControl(req)
-				c.Result, c.Code, c.Steps = result, "", []ReuseAcceptedStep{}
-				if result != claimPass {
-					c.Code = "REUSE_ACCEPTED_CONTROL_INVALID"
-				}
-				acceptedCases[c.ID] = c
-				return err
+				c.Steps = []ReuseAcceptedStep{}
 			}
 			acceptedCases[c.ID] = c
 			return nil

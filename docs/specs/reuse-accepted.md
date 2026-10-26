@@ -12,6 +12,8 @@ initial은 COMPLETE, old tree 없음, new_parse=1, done=1, accepted=0이어야 �
 
 FAIL은 BLOCKED보다 우선한다. accepted=0인 COMPLETE target, 확인된 old-tree/counter·source·CST·producer·raw/projection 모순은 FAIL이다. 수집 prefix·overflow·부분 CST·미제출 증거는 BLOCKED이고, 선언한 member의 누락·hash 불일치는 FAIL이다. 취소와 wall/byte 제한은 enclosing 연산의 예산을 공유한다. 과거 실행의 timeout은 replay의 현재 검증 budget을 취소하지 않는다. 새 FAIL은 기존 FAIL과 code를 보존한다. 전체 새 proof가 PASS일 때만 정확히 등록된 target의 기존 오류-tree route BLOCKED를 PASS로 올리며 `route.proven=false`는 그대로다.
 
+등록된 omit-old-tree 대조군은 private proof를 public proof보다 먼저 같은 예산에서 계산한다. 중도 오류도 확인한 독립 FAIL과 원래 typed 오류를 함께 보존한다. private 검사가 오류 없이 끝나면 public proof와 저장 claim을 기존대로 비교하며 public omit FAIL을 승격하지 않는다. private 검사는 실제 CST equality·route·mandatory 관측 순서로 legacy 첫 실패를 재계산하고 등록된 첫 omit step 및 저장 code와 대조한다. 뒤 step의 route 누락도 거부한다. 완료된 control FAIL은 set mechanism에도 FAIL로 반영하며, 증거 미제출만으로 FAIL을 만들지 않는다.
+
 ## 실행·저장·호환성
 
 지원 범위는 Windows/amd64와 Linux/amd64의 구조 full-tree 단일 사례 process다. structural 실행은 `native-parse-edit`, 작은 Oracle 대조군은 query 없는 `native-query`다. SVC, preprocess, batch, large, query, API, fact pack, declarations, dynamic SQL 및 다른 원장을 거부한다. macOS의 새 claim은 DEFERRED다. 명시한 빈 ledger/빈 flag도 거부하며, opt-in하지 않은 실행은 기존 revision을 유지한다.

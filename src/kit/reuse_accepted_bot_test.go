@@ -223,3 +223,151 @@ func TestReuseAcceptedUnsubmittedProjection(t *testing.T) {
 		})
 	}
 }
+
+func TestQualifyReuseAcceptedOmitMissingRoute(t *testing.T) {
+	for _, missing := range []bool{false, true} {
+		t.Run(map[bool]string{false: "positive", true: "first-route"}[missing], func(t *testing.T) {
+			root, _ := acceptedReplayFixture(t, func(files map[string][]byte, top map[string]any) {
+				acceptedOmitRouteControl(t, files, top)
+				if !missing {
+					return
+				}
+				c := top["cases"].([]any)[0].(map[string]any)
+				acceptedStep(c, 1)["route"] = nil
+				for path, data := range files {
+					if strings.HasPrefix(path, "responses/") {
+						var raw map[string]any
+						if err := json.Unmarshal(data, &raw); err != nil {
+							t.Fatal(err)
+						}
+						acceptedStep(raw, 1)["route"] = nil
+						b, err := json.Marshal(raw)
+						if err != nil {
+							t.Fatal(err)
+						}
+						files[path] = b
+						c["process"].(map[string]any)["stdout_bytes"] = len(b) + 4
+					}
+				}
+			})
+			q, w, p := acceptedReaderQualifier(t, root, false)
+			w.ReuseAccepted.Control = "omit-old-tree"
+			s, err := q.evalSymbolSet(w, p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := claimPass
+			if missing {
+				want = claimFail
+			}
+			if s.ReuseAccepted.Cases[0].Result != want || missing && s.Mechanism != AssessFail {
+				t.Fatalf("omit route corruption not recomputed: %+v", s)
+			}
+		})
+	}
+}
+
+func TestQualifyReuseAcceptedOmitFailureBeforeDepthLimit(t *testing.T) {
+	for _, damage := range []string{"none", "source", "fresh-count"} {
+		t.Run(damage, func(t *testing.T) {
+			root, _ := acceptedReplayFixture(t, func(files map[string][]byte, top map[string]any) {
+				acceptedOmitRouteControl(t, files, top)
+				c := top["cases"].([]any)[0].(map[string]any)
+				if damage == "fresh-count" {
+					acceptedObs(c, 1, 1)["counts"].(map[string]any)["accepted"] = 1
+					c["execution_status"], c["code"] = StatusResourceLimit, "MESSAGE_LIMIT"
+					process := c["process"].(map[string]any)
+					process["status"], process["reason"], process["exit_code"] = StatusResourceLimit, "MESSAGE_LIMIT", 2
+				}
+				for path, data := range files {
+					if strings.HasPrefix(path, "responses/") {
+						deep := []byte(strings.Repeat("[", jsonMaxDepth+1) + "0" + strings.Repeat("]", jsonMaxDepth+1))
+						files[path] = deep
+						c["process"].(map[string]any)["stdout_bytes"] = len(deep) + 4
+					}
+					if damage == "source" && strings.HasPrefix(path, "sources/") {
+						files[path] = []byte(strings.Repeat("x", len(data)))
+					}
+				}
+			})
+			q, w, p := acceptedReaderQualifier(t, root, false)
+			w.ReuseAccepted.Control = "omit-old-tree"
+			_, err := q.evalSymbolSet(w, p)
+			if err == nil || err.Kind != KindResourceLimit || err.Code != "JSON_DEPTH_LIMIT" {
+				t.Fatalf("typed depth limit lost: %v", err)
+			}
+			s := q.acceptedSets[p.ID+"/"+w.Set]
+			a := s.ReuseAccepted
+			if damage != "none" {
+				if a.Controls.Failed != 1 || a.Controls.Blocked != 0 {
+					t.Fatalf("independent omit failure lost: %+v", a)
+				}
+			} else if a.Controls.Failed != 0 || a.Controls.Blocked != 1 {
+				t.Fatalf("expected public omit failure became independent FAIL: %+v", a)
+			}
+		})
+	}
+}
+
+func TestReuseAcceptedOmitUnsubmittedMembers(t *testing.T) {
+	for _, member := range []string{"source", "raw", "projection", "all"} {
+		t.Run(member, func(t *testing.T) {
+			acceptedReplayFixture(t, func(files map[string][]byte, top map[string]any) {
+				acceptedOmitRouteControl(t, files, top)
+				c := top["cases"].([]any)[0].(map[string]any)
+				var raw map[string]any
+				path := "responses/00000-" + c["id"].(string) + ".json"
+				if err := json.Unmarshal(files[path], &raw); err != nil {
+					t.Fatal(err)
+				}
+				req, _, _ := acceptedFixture(t, 12)
+				req.Case.Input.Role = "case"
+				setAcceptedEvidence(&req, raw, c)
+				if member == "source" || member == "all" {
+					req.Source = nil
+				}
+				if member == "raw" || member == "all" {
+					req.Raw = nil
+				}
+				if member == "projection" || member == "all" {
+					req.Projection = nil
+				}
+				proof, err := judgeReuseAccepted(req, true)
+				if err != nil || proof.Result != claimBlocked {
+					t.Fatalf("unsubmitted omit %s became contradiction: %+v %v", member, proof, err)
+				}
+			})
+		})
+	}
+}
+
+func TestReuseAcceptedOmitLaterRoute(t *testing.T) {
+	for _, missing := range []bool{false, true} {
+		t.Run(map[bool]string{false: "positive", true: "later-route"}[missing], func(t *testing.T) {
+			req, raw, projection := acceptedFixture(t, 0)
+			for k := 1; k < len(raw["steps"].([]any)); k++ {
+				for _, m := range []map[string]any{raw, projection} {
+					o := acceptedObs(m, k, 0)
+					o["old_tree"], o["old_source_sha256"] = false, nil
+					counts := o["counts"].(map[string]any)
+					counts["new_parse"], counts["parse_after_edit"], counts["accepted"] = 1, 0, 0
+				}
+			}
+			projection["assessment"], projection["reuse_observation_claim"] = AssessFail, claimFail
+			projection["claims"] = map[string]string{"incremental_equality": claimPass, "incremental_route": claimFail}
+			projection["code"] = "INCREMENTAL_ROUTE_OLD_TREE_UNVERIFIED_STEP_1"
+			if missing {
+				acceptedStep(raw, 2)["route"], acceptedStep(projection, 2)["route"] = nil, nil
+			}
+			setAcceptedEvidence(&req, raw, projection)
+			proof, err := judgeReuseAccepted(req, true)
+			want := claimPass
+			if missing {
+				want = claimFail
+			}
+			if err != nil || proof.Result != want {
+				t.Fatalf("later route corruption: %+v %v", proof, err)
+			}
+		})
+	}
+}

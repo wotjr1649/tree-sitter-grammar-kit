@@ -484,6 +484,7 @@ type replayEnv struct {
 	reuseAccepted          bool
 	acceptedLedger         *ReuseAcceptedLedger
 	currentAccepted        *ReuseAcceptedResult
+	acceptedControl        bool
 	acceptedConsumer       func(ReuseAcceptedRequest, ReuseAcceptedResult, error) error
 	acceptedLegacyConsumer func(string, caseOutcome, string)
 	nativeInputBytes       uint64
@@ -797,6 +798,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 // symbol-mode set, #218): the replay starts from its count, stops at its limit and leaves
 // its own reads in it.
 type replayBudget struct {
+	acceptedControl        bool
 	acceptedConsumer       func(ReuseAcceptedRequest, ReuseAcceptedResult, error) error
 	acceptedLegacyConsumer func(string, caseOutcome, string)
 	evidenceFailed         bool
@@ -884,6 +886,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
 		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
 	if budget != nil {
+		x.acceptedControl = budget.acceptedControl
 		x.acceptedConsumer = budget.acceptedConsumer
 		x.acceptedLegacyConsumer = budget.acceptedLegacyConsumer
 		defer func() {

@@ -200,9 +200,22 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 		expected.Exit = &process.ExitCode
 	}
 	req := ReuseAcceptedRequest{Ledger: x.acceptedLedger, Route: top.Route, Case: *registered, Source: source, Raw: response, Projection: raw, Expected: expected, Policy: policy, Platform: x.prof.Subject.Platform, RecordedPlatform: top.Platform}
+	if x.acceptedControl {
+		// Retain independent control failures before a shared budget can stop public proof.
+		proof, err := judgeReuseAccepted(req, true)
+		if x.acceptedConsumer != nil {
+			consumerErr := x.acceptedConsumer(req, proof, err)
+			if err == nil && consumerErr != nil {
+				return asError(consumerErr)
+			}
+		}
+		if err != nil {
+			return asError(err)
+		}
+	}
 	proof, err := JudgeReuseAccepted(req)
 	x.currentAccepted = &proof
-	if x.acceptedConsumer != nil {
+	if !x.acceptedControl && x.acceptedConsumer != nil {
 		consumerErr := x.acceptedConsumer(req, proof, err)
 		if err == nil && consumerErr != nil {
 			return asError(consumerErr)
