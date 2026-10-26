@@ -44,11 +44,17 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 		if e := eligibilityValidateRequest(stored.Process, inv.ID); e != nil {
 			return record, e
 		}
+		if _, e := s.processPaths(inv.ID, stored.Process, s.cohorts[inv.CohortID].Platform); e != nil {
+			return record, e
+		}
 		if !reflect.DeepEqual(stored, record.approved) {
 			s.finding("ELIGIBILITY_NATIVE_REQUEST", inv.ID, true)
 		}
 	}
 	if e := eligibilityValidateRequest(record.approved.Process, inv.ID); e != nil {
+		return record, e
+	}
+	if _, e := s.processPaths(inv.ID, record.approved.Process, s.cohorts[inv.CohortID].Platform); e != nil {
 		return record, e
 	}
 	a := record.approved
@@ -159,6 +165,9 @@ func (s *eligibilitySession) nativeIndependent(inv *eligibilityInvocation, recor
 				s.finding("ELIGIBILITY_NATIVE_SOURCE_ENCODING", inv.ID, true)
 			}
 		} else {
+			if len(data) == 0 || len(data) > 65536 {
+				s.finding("ELIGIBILITY_NATIVE_QUERY_SOURCE", inv.ID+"/"+key, true)
+			}
 			sources[strings.TrimPrefix(key, "query-")] = data
 		}
 	}
@@ -231,6 +240,9 @@ func (s *eligibilitySession) nativeIndependent(inv *eligibilityInvocation, recor
 				return false, e
 			}
 			if err == nil && wire.Status == StatusCompleted {
+				if tree.Form == "full" && (len(tree.Nodes) == 0 || uint64(tree.Nodes[0].EndByte) != step.SourceBytes) {
+					s.finding("ELIGIBILITY_NATIVE_TREE_EOF", path, true)
+				}
 				if e := s.nativeIndependentQueries(inv, &tree, sources, knownQueries, step.SourceBytes, expect.Check); e != nil {
 					return false, e
 				}

@@ -81,6 +81,10 @@ func (s *eligibilitySession) request(inv *eligibilityInvocation) (eligibilityPro
 	if e := s.b.decode(inv.ID+"/approved-request", inv.ApprovedRequest, &expected, true); e != nil {
 		return actual, false, e
 	}
+	expectedPaths, e := s.processPaths(inv.ID, expected, s.cohorts[inv.CohortID].Platform)
+	if e != nil {
+		return actual, false, e
+	}
 	data, ok, e := s.member(inv.Request)
 	if e != nil {
 		return actual, false, e
@@ -89,6 +93,10 @@ func (s *eligibilitySession) request(inv *eligibilityInvocation) (eligibilityPro
 		return actual, false, nil
 	}
 	if e := s.b.decode(inv.ID+"/request", data, &actual, true); e != nil {
+		return actual, false, e
+	}
+	actualPaths, e := s.processPaths(inv.ID, actual, s.cohorts[inv.CohortID].Platform)
+	if e != nil {
 		return actual, false, e
 	}
 	if e := s.b.charge(50, uint64(len(data)+len(inv.ApprovedRequest)), inv.ID); e != nil {
@@ -101,7 +109,58 @@ func (s *eligibilitySession) request(inv *eligibilityInvocation) (eligibilityPro
 	if e := eligibilityValidateRequest(actual, inv.ID); e != nil {
 		return actual, false, e
 	}
-	return actual, true, nil
+	return actual, expectedPaths && actualPaths, nil
+}
+
+func (s *eligibilitySession) processPaths(id string, request eligibilityProcessRequest, platform string) (bool, *Error) {
+	n := uint64(len(request.Path) + len(request.Dir))
+	if e := s.b.charge(8*n+1, 2*n, id+"/paths"); e != nil {
+		return false, e
+	}
+	if !eligibilityLiteral(request.Path) || !eligibilityLiteral(request.Dir) || !eligibilityAbsolutePath(request.Path, platform) || !eligibilityAbsolutePath(request.Dir, platform) {
+		s.finding("ELIGIBILITY_PROCESS_PATH", id, true)
+		return false, nil
+	}
+	return true, nil
+}
+
+// Use the recorded platform's Go path grammar without resolving host paths.
+func eligibilityAbsolutePath(value, platform string) bool {
+	if platform == "linux/amd64" || platform == "darwin/arm64" {
+		return strings.HasPrefix(value, "/")
+	}
+	if platform != "windows/amd64" {
+		return false
+	}
+	p := strings.ReplaceAll(value, "\\", "/")
+	if len(p) >= 2 && p[1] == ':' {
+		return len(p) >= 3 && p[2] == '/'
+	}
+	start, parts := 2, 2
+	if strings.HasPrefix(p, "//?/") || strings.HasPrefix(p, "//./") || strings.HasPrefix(p, "/??/") {
+		start, parts = 4, 1
+		if len(p) >= 7 && strings.EqualFold(p[4:7], "UNC") && (len(p) == 7 || p[7] == '/') {
+			start, parts = min(8, len(p)), 2
+		}
+	} else if !strings.HasPrefix(p, "//") {
+		return false
+	}
+	end := len(p)
+	for i := start; i < len(p); i++ {
+		if p[i] == '/' {
+			parts--
+			if parts == 0 {
+				end = i
+				break
+			}
+		}
+	}
+	for component := range strings.SplitSeq(p[:end], "/") {
+		if component == ".." {
+			return false
+		}
+	}
+	return strings.HasPrefix(p, "//") || end < len(p) && p[end] == '/'
 }
 
 func eligibilityValidateRequest(request eligibilityProcessRequest, id string) *Error {

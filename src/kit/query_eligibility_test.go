@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -2212,12 +2213,12 @@ func TestQueryReferenceEligibilityReview39(t *testing.T) {
 
 func TestQueryReferenceEligibilityReview42(t *testing.T) {
 	for _, extra := range []bool{false, true} {
-		for _, bad := range []string{"valid", "valid-no-source", "raw-no-source-length", "raw-edit-old-order", "raw-edit-new-order", "raw-edit-old-bound", "raw-edit-new-bound", "raw-edit-length", "raw-edit-empty", "raw-edit-new-point", "raw-edit-old-points", "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
+		for _, bad := range []string{"valid", "valid-query-limit", "valid-postedit-length", "raw-postedit-eof", "raw-postedit-fresh-eof", "query-empty", "query-oversize", "request-relative-path", "request-relative-dir", "request-relative-both", "valid-no-source", "raw-no-source-length", "raw-edit-old-order", "raw-edit-new-order", "raw-edit-old-bound", "raw-edit-new-bound", "raw-edit-length", "raw-edit-empty", "raw-edit-new-point", "raw-edit-old-points", "valid-rejected-query", "missing-query-rejected-valid", "rejected-query-matches", "rejected-query-types", "rejected-query-time", "missing-query-rejected-matches", "missing-query-rejected-types", "missing-query-rejected-time", "missing-query-valid", "missing-query-code", "missing-query-link", "valid-zero-null", "valid-zero-array", "pinned-null", "valid-own", "valid-reordered", "raw-id", "raw-abi", "raw-capability", "raw-complete", "raw-status", "raw-steps-completed", "raw-step-index", "raw-initial-shape", "raw-source-hash", "raw-source-bytes", "raw-point", "raw-eof", "logger-run", "logger-role", "logger-initial-accepted", "logger-old-source", "request-id", "request-shape", "approved-shape", "process-shape", "process-stdout", "process-cleanup", "process-limit", "request-path", "request-limit", "executable-pin"} {
 			for _, prior := range []bool{false, true} {
 				if !extra && bad == "valid-reordered" {
 					continue
 				}
-				if prior && !strings.HasPrefix(bad, "raw-edit-") && bad != "raw-no-source-length" && bad != "valid-no-source" && !strings.Contains(bad, "rejected-query") && !strings.Contains(bad, "query-rejected") && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
+				if prior && !strings.Contains(bad, "postedit") && !strings.HasPrefix(bad, "query-") && !strings.HasPrefix(bad, "request-relative-") && !strings.HasPrefix(bad, "raw-edit-") && bad != "raw-no-source-length" && bad != "valid-no-source" && !strings.Contains(bad, "rejected-query") && !strings.Contains(bad, "query-rejected") && bad != "request-id" && bad != "request-shape" && !strings.HasPrefix(bad, "missing-query-") && !strings.HasPrefix(bad, "valid-zero-") && bad != "pinned-null" {
 					continue
 				}
 				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
@@ -2245,7 +2246,7 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 					inv := &f.reg.Invocations[index]
 					malformed := false
 					switch bad {
-					case "request-id", "request-path", "request-limit":
+					case "request-id", "request-path", "request-limit", "request-relative-path", "request-relative-dir", "request-relative-both":
 						var request eligibilityNativeExpected
 						if e := jsonv2.Unmarshal(f.files[inv.Request.Member.Path], &request); e != nil {
 							t.Fatal(e)
@@ -2255,6 +2256,13 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 							request.RequestID = "other-request"
 						case "request-path":
 							request.Process.Path = "/other/native"
+						case "request-relative-path", "request-relative-dir", "request-relative-both":
+							if bad != "request-relative-dir" {
+								request.Process.Path, inv.ExecutablePath = "native", "native"
+							}
+							if bad != "request-relative-path" {
+								request.Process.Dir = "."
+							}
 						case "request-limit":
 							request.Process.Wall = 0
 							malformed = true
@@ -2323,6 +2331,15 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 							t.Fatalf("unselected assessment%s want%s counts%+v", got.Assessment, want, got.Tuple)
 						}
 					}
+					if strings.HasPrefix(bad, "request-relative-") && !eligibilityFinding(got, "ELIGIBILITY_PROCESS_PATH") {
+						t.Fatal("relative process paths unchecked")
+					}
+					if strings.HasPrefix(bad, "query-") && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_QUERY_SOURCE") {
+						t.Fatal("native query length unchecked")
+					}
+					if strings.HasPrefix(bad, "raw-postedit-") && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_TREE_EOF") {
+						t.Fatal("post-edit EOF unchecked")
+					}
 					if bad == "request-id" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_REQUEST") {
 						t.Fatal("stored-approved request contradiction was not checked")
 					}
@@ -2361,6 +2378,49 @@ func (f *eligibilityFixture) nativeIndependentMutation(inv *eligibilityInvocatio
 		t.Fatal(e)
 	}
 	switch bad {
+	case "raw-postedit-eof", "raw-postedit-fresh-eof", "valid-postedit-length":
+		raw.Steps[1].SourceBytes++
+		raw.Steps[1].Edit.NewEndByte++
+		raw.Steps[1].Edit.NewEndPoint[1]++
+		var observations []reuseobs.Observation
+		if e := jsonv2.Unmarshal(raw.Steps[1].Observations, &observations); e != nil {
+			t.Fatal(e)
+		}
+		for i := range observations {
+			observations[i].SourceBytes++
+		}
+		raw.Steps[1].Observations = eligibilityJSON(t, observations)
+		if bad != "raw-postedit-eof" {
+			for j, tree := range []*nativewire.WireTree{&raw.Steps[1].Incremental, raw.Steps[1].Fresh} {
+				if j == 1 && bad == "raw-postedit-fresh-eof" {
+					continue
+				}
+				tree.Nodes = make([][]int64, len(tree.Nodes))
+				original := raw.Steps[0].Incremental.Nodes
+				for i := range original {
+					tree.Nodes[i] = slices.Clone(original[i])
+				}
+				tree.Nodes[0][5], tree.Nodes[0][9] = 7, 1
+				nodes, e := nativewire.Nodes(tree.Nodes, tree.Types, tree.Fields)
+				if e != nil {
+					t.Fatal(e)
+				}
+				tree.Digest = TreeDigest(nodes)
+			}
+		}
+	case "query-empty", "query-oversize", "valid-query-limit":
+		slot := inv.Inputs["query-q0"]
+		data := []byte{}
+		if bad == "valid-query-limit" {
+			data = slices.Clone(f.files[slot.MemberPin.Member.Path])
+			data = append(data, []byte(strings.Repeat(" ", 65536-len(data)))...)
+		}
+		if bad == "query-oversize" {
+			data = []byte(strings.Repeat(" ", 65537))
+		}
+		pin := f.member(inv.ID, inv.ID+"/invalid-length.scm", slot.MemberPin.Member.Role, data)
+		slot.MemberPin = &pin
+		inv.Inputs["query-q0"] = slot
 	case "valid-no-source", "raw-no-source-length":
 		delete(inv.Inputs, "source")
 		if bad == "raw-no-source-length" {
@@ -2750,5 +2810,119 @@ func TestQueryReferenceEligibilitySourceFailureBeforeCancellation(t *testing.T) 
 				}
 			})
 		}
+	}
+}
+
+func TestQueryReferenceEligibilityProcessPaths(t *testing.T) {
+	for _, id := range []string{"native-current", "current-ref-0"} {
+		for _, field := range []string{"Path", "Dir", "Both"} {
+			t.Run(id+"/"+field, func(t *testing.T) {
+				f := newEligibilityFixture(t)
+				i := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == id })
+				inv := &f.reg.Invocations[i]
+				request := eligibilityProcessRequest{}
+				if id == "native-current" {
+					if e := jsonv2.Unmarshal(inv.ApprovedRequest, &f.witness.Native); e != nil {
+						t.Fatal(e)
+					}
+					request = f.witness.Native.Process
+				} else if e := jsonv2.Unmarshal(inv.ApprovedRequest, &request); e != nil {
+					t.Fatal(e)
+				}
+				if field != "Dir" {
+					request.Path, inv.ExecutablePath = "native", "native"
+				}
+				if field != "Path" {
+					request.Dir = "."
+				}
+				inv.ApprovedRequest = eligibilityJSON(t, request)
+				if id == "native-current" {
+					f.witness.Native.Process = request
+					inv.ApprovedRequest = eligibilityJSON(t, f.witness.Native)
+				}
+				f.replace(inv.Request.Member.Path, inv.ApprovedRequest)
+				got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+				if err != nil || !got.Complete || got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_PROCESS_PATH") {
+					t.Fatalf("relative path accepted: err%v assessment%s complete%v findings%+v", err, got.Assessment, got.Complete, got.Findings)
+				}
+				eligibilityAssertCounts(t, got)
+			})
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityAbsolutePath(t *testing.T) {
+	cases := []struct {
+		path           string
+		windows, posix bool
+	}{
+		{"", false, false}, {"native", false, false}, {".", false, false},
+		{"/native", false, true}, {"//host/share/native", true, true},
+		{`C:\native`, true, false}, {"C:/native", true, false},
+		{`C:native`, false, false}, {`C:`, false, false}, {`\native`, false, false},
+		{`\\host\share\native`, true, false}, {`\\host\..\native`, false, false},
+		{`\\?\C:\native`, true, false}, {`\\.\pipe\name`, true, false},
+		{`\??\C:\native`, true, false}, {`\??\C:`, false, false},
+		{`\\?\UNC\host\share\native`, true, false},
+		{`\\?\UNC\host\..\native`, false, false},
+		{`\\?\..\native`, false, false}, {`\\?\C:\..\native`, true, false},
+		{`\\`, true, false}, {`\\?`, true, false}, {`/:native`, false, true},
+	}
+	for _, c := range cases {
+		for _, platform := range []string{"windows/amd64", "linux/amd64", "darwin/arm64"} {
+			want := c.posix
+			if platform == "windows/amd64" {
+				want = c.windows
+			}
+			got := eligibilityAbsolutePath(c.path, platform)
+			if got != want {
+				t.Errorf("%s path%q got%v want%v", platform, c.path, got, want)
+			}
+			if strings.HasPrefix(platform, runtime.GOOS+"/") && got != filepath.IsAbs(c.path) {
+				t.Errorf("host Go path grammar differs for %q: %v", c.path, got)
+			}
+		}
+	}
+}
+
+func TestQueryReferenceEligibilityPathBudget(t *testing.T) {
+	for _, mode := range []string{"budget", "cancel", "known-fail"} {
+		t.Run(mode, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(ctxT(t))
+			defer cancel()
+			r, e := startRun(ctx, 30*time.Second)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			res := QueryReferenceEligibilityResult{Report: newReport("test")}
+			b := &eligibilityBudget{r: r}
+			s := &eligibilitySession{r: r, b: b, res: &res}
+			if mode == "budget" {
+				b.work = eligibilityWorkLimit
+			}
+			if mode == "cancel" {
+				cancel()
+			}
+			ok, e := s.processPaths("extra", eligibilityProcessRequest{Path: "native", Dir: "."}, "linux/amd64")
+			if mode == "known-fail" {
+				if ok || e != nil || res.Assessment != AssessFail {
+					t.Fatal("relative paths not recorded")
+				}
+				cancel()
+				e = r.check()
+				if e == nil || e.Kind != KindCancelled || res.Assessment != AssessFail {
+					t.Fatal("known path failure lost")
+				}
+			} else {
+				want := KindResourceLimit
+				if mode == "cancel" {
+					want = KindCancelled
+				}
+				if ok || e == nil || e.Kind != want || res.Assessment == AssessFail {
+					t.Fatalf("path interruption misclassified: %v %v %s", ok, e, res.Assessment)
+				}
+			}
+		})
 	}
 }
