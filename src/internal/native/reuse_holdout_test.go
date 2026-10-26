@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"testing"
@@ -49,6 +50,18 @@ func TestNativeReuseHoldouts(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
+	captureRoot := os.Getenv("TSGK_REUSE_ACCEPTED_OUT")
+	var ledger *kit.ReuseAcceptedLedger
+	captures := map[string]*acceptedHoldoutCapture{}
+	if captureRoot != "" {
+		if runtime.GOOS == "darwin" || !filepath.IsAbs(captureRoot) {
+			t.Fatal("accepted capture requires absolute Windows/Linux destination")
+		}
+		ledger, err = kit.ParseReuseAcceptedLedger(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	completed := map[bool]int{}
 	for _, omit := range []bool{false, true} {
 		var defines []string
@@ -65,7 +78,11 @@ func TestNativeReuseHoldouts(t *testing.T) {
 			}
 			x := testContext("native-parse-edit")
 			x.Route, x.Protocol, x.ObservationRunID = h.Route, ProtocolR3, "reuse-holdout-run"
-			r := registeredBuild(t, h.Route, defines...).RunCase(ctx, x, kit.IncrementalCase{ID: h.ID, Encoding: kit.EncodingUTF8, Edits: edits}, []byte(h.SourceUTF8))
+			source := []byte(h.SourceUTF8)
+			c := kit.IncrementalCase{ID: h.ID, Encoding: kit.EncodingUTF8, Edits: edits, Points: []kit.NativePoint{}, Expect: []kit.StepExpectation{}, Input: kit.NativeInput{Path: h.ID + ".txt", Role: "case", Bytes: uint64(len(source)), SHA256: sha(source)}}
+			built := registeredBuild(t, h.Route, defines...)
+			x.ObservationProducerSHA256 = built.Identity
+			r := built.RunCase(ctx, x, c, source)
 			if r.ExecutionStatus != "COMPLETED" || r.Claims.IncrementalEquality != ClaimPass || len(r.Steps) != len(edits)+1 {
 				t.Fatalf("%s omit_old=%t: status=%s code=%s claims=%+v", h.ID, omit, r.ExecutionStatus, r.Code, r.Claims)
 			}
@@ -109,8 +126,16 @@ func TestNativeReuseHoldouts(t *testing.T) {
 				!slices.Equal(blocked, h.BlockedSteps) || r.Code != routeUnobservablePrefix+strconv.Itoa(h.BlockedSteps[0]) {
 				t.Fatalf("%s disposition changed: assessment=%s route=%s observation=%s code=%s blocked_steps=%v", h.ID, r.Assessment, r.Claims.IncrementalRoute, r.ReuseObservationClaim, r.Code, blocked)
 			}
+			if ledger != nil {
+				captureAcceptedHoldout(t, ctx, captureRoot, data, ledger, captures, omit, x, built, c, source, r)
+			}
 			completed[omit]++
 			t.Logf("%s omit_old=%t assessment=%s code=%s blocked_steps=%v", h.ID, omit, r.Assessment, r.Code, blocked)
+		}
+	}
+	for _, key := range []string{"tsql", "json", "tsql-omit", "json-omit"} {
+		if capture := captures[key]; capture != nil {
+			capture.finish(t)
 		}
 	}
 	t.Logf("reuse holdouts=%d completed=%d omit_old_completed=%d", len(f.Holdouts), completed[false], completed[true])

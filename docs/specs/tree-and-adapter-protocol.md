@@ -396,3 +396,7 @@ SVC r2의 완료된 모든 step은 등록 source edit에서 byte offset과 LF �
 Replay producer 검증은 caller-trusted registration의 producer 선택과 저장된 전체 producer record hash/route를 신뢰 경계로 삼는다. Compile/build 의미를 오프라인에서 새로 실행하거나 증명하지 않는다. Replay 자체의 운영 wall 상한은1시간이며 native plan의 낮춘 wall과 별개다. Caller의 전체6시간 budget에는 native·replay 실제 경과를 모두 포함한다.
 
 `VerifyOracleSet`의 실제 파일 읽기는 manifest 16 MiB, record/raw member 64 MiB, source member 32 MiB 상한으로 제한한다. Member는 선언한 bytes+1까지만 읽으며, 거짓 크기 선언으로 큰 실제 파일을 전부 메모리에 적재하지 않는다. 초과는 MANIFEST_BYTES_LIMIT·MEMBER_BYTES_LIMIT·SOURCE_BYTES_LIMIT finding이며 열린 파일을 닫는다. Source 무결성 검사도 이 읽기 경계를 공유한다.
+
+## Accepted reuse opt-in (#264)
+
+`--reuse-accepted FILE`의 current structural result/r7 및 Oracle record/r3·manifest/r4, 요청·source·전체 CST·logger 결속, 기존 route 승격의 제한은 [accepted reuse 계약](reuse-accepted.md)이 소유한다. 기존 symbol result/r6과 mandatory 관측의 의미는 유지한다.

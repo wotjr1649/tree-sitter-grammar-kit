@@ -14,8 +14,10 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r7"
-	QualificationResultSchema    = "tsgk-qualification-result/r8"
+	QualificationInventorySchema = "tsgk-qualification-inventory/r8"
+	QualificationResultSchema    = "tsgk-qualification-result/r9"
+	qualificationInventoryR7     = "tsgk-qualification-inventory/r7"
+	qualificationResultR8        = "tsgk-qualification-result/r8"
 	qualificationInventoryR6     = "tsgk-qualification-inventory/r6"
 	qualificationResultR7        = "tsgk-qualification-result/r7"
 	qualificationInventoryR5     = "tsgk-qualification-inventory/r5"
@@ -168,21 +170,22 @@ type ByteRange struct {
 // symbol-mode workload (Preprocess, #218) is an S05 incremental run under incremental/<set>/
 // instead, replayed with the registered runtime commit.
 type QualWorkload struct {
-	SvcContext   *SvcContext   `json:"svc_context,omitempty"`
-	Set          string        `json:"set"`
-	Profile      string        `json:"profile"`
-	Route        string        `json:"route"`
-	Operation    string        `json:"operation"`
-	Output       string        `json:"output"`
-	Symbol       string        `json:"symbol"`
-	Format       string        `json:"format"`
-	Grammar      []NativeInput `json:"grammar"`
-	Declarations *Declarations `json:"declarations"`
-	Queries      []QualQuery   `json:"queries"`
-	FactPack     *FactPackRef  `json:"fact_pack"`
-	API          bool          `json:"api"`
-	Cases        []QualCase    `json:"cases"`
-	Preprocess   *Preprocess   `json:"preprocess,omitempty"`
+	ReuseAccepted *QualReuseAcceptedRegistration `json:"reuse_accepted,omitempty"`
+	SvcContext    *SvcContext                    `json:"svc_context,omitempty"`
+	Set           string                         `json:"set"`
+	Profile       string                         `json:"profile"`
+	Route         string                         `json:"route"`
+	Operation     string                         `json:"operation"`
+	Output        string                         `json:"output"`
+	Symbol        string                         `json:"symbol"`
+	Format        string                         `json:"format"`
+	Grammar       []NativeInput                  `json:"grammar"`
+	Declarations  *Declarations                  `json:"declarations"`
+	Queries       []QualQuery                    `json:"queries"`
+	FactPack      *FactPackRef                   `json:"fact_pack"`
+	API           bool                           `json:"api"`
+	Cases         []QualCase                     `json:"cases"`
+	Preprocess    *Preprocess                    `json:"preprocess,omitempty"`
 	// RuntimeCommit is the pinned native runtime of a symbol-mode workload
 	// (src/drivers/native-c/runtime-manifest.json).
 	RuntimeCommit string `json:"runtime_commit,omitempty"`
@@ -291,13 +294,21 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 	if schema == nil || schema.kind != '"' {
 		return inv, fail(KindInvalidInput, "JSON_MISSING_FIELD", doc+"#/schema", nil)
 	}
-	if schema.s != QualificationInventorySchema && schema.s != qualificationInventoryR6 && schema.s != qualificationInventoryR5 {
+	if schema.s != QualificationInventorySchema && schema.s != qualificationInventoryR7 && schema.s != qualificationInventoryR6 && schema.s != qualificationInventoryR5 {
 		return inv, fail(KindUnsupported, "SCHEMA_UNSUPPORTED", doc+"#/schema", nil)
 	}
 	var checkCST func(*jv) *Error
 	checkCST = func(node *jv) *Error {
+		if node.name == "reuse_accepted" {
+			if schema.s != QualificationInventorySchema {
+				return fail(KindInvalidInput, "WORKLOAD_INVALID", doc+"#"+node.cptr(), nil)
+			}
+			if e := witnessShape(typed{doc: doc}, node, reflect.TypeFor[QualReuseAcceptedRegistration](), true, false, nil); e != nil {
+				return e
+			}
+		}
 		if node.name == "preprocess_cst_expect" {
-			if schema.s != QualificationInventorySchema || !preprocessCSTShape(node, reflect.TypeFor[[]PreprocessCSTStep]()) {
+			if !qualificationHasCST(schema.s) || !preprocessCSTShape(node, reflect.TypeFor[[]PreprocessCSTStep]()) {
 				return fail(KindInvalidInput, "CASE_INVALID", doc+"#"+node.cptr(), nil)
 			}
 		}
@@ -347,6 +358,10 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			if !role || w.Route != "csharp" || w.Operation != "native-parse-edit" || w.Output != "tree" || w.Format != "" || w.SvcContext != nil || len(w.Queries) > 0 ||
 				w.FactPack != nil || w.API || w.Declarations != nil || pp.Mode != PreprocessMode || pp.Symbols == nil || preprocessSymbolsValid(pp.Symbols) != "" || !hex40.MatchString(w.RuntimeCommit) {
 				return badW("WORKLOAD_INVALID", "/preprocess")
+			}
+		} else if w.ReuseAccepted != nil {
+			if !role || !qualAcceptedWorkload(w) {
+				return badW("WORKLOAD_INVALID", "/reuse_accepted")
 			}
 		} else if w.RuntimeCommit != "" {
 			return badW("WORKLOAD_INVALID", "/runtime_commit")
@@ -405,16 +420,16 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 				}
 			}
 			if w.Preprocess != nil {
-				if bad := symbolCase(c, inv.Schema != qualificationInventoryR5, inv.Schema == QualificationInventorySchema); bad != "" {
+				if bad := symbolCase(c, inv.Schema != qualificationInventoryR5, qualificationHasCST(inv.Schema)); bad != "" {
 					return badW("CASE_INVALID", cp+"/"+bad)
 				}
 			} else if c.PreprocessExpect != nil || c.PreprocessCSTExpect != nil {
 				return badW("CASE_INVALID", cp+"/preprocess_expect")
 			}
-			if w.Preprocess == nil && c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
+			if w.Preprocess == nil && w.ReuseAccepted == nil && c.ExpectStatus != "" && (c.ExpectStatus != StatusResourceLimit || len(c.Covers) > 0) {
 				return badW("CASE_INVALID", cp+"/expect_status") // an over-limit case judges no row
 			}
-			if w.Preprocess == nil && (c.ExpectAssessment != "" || c.ExpectCode != "") {
+			if w.Preprocess == nil && w.ReuseAccepted == nil && (c.ExpectAssessment != "" || c.ExpectCode != "") {
 				// a registered SVC observation-only verdict: a composite-format case that covers
 				// no row and needs no tree, PASS without a code or BLOCKED with one
 				observed := (w.Format == SvcFormat || w.Format == SvcLegacyFormat) && len(c.Covers) == 0 && c.Role != "detector" && len(c.Expect) == 0 && len(c.QueryExpect) == 0 &&
@@ -550,6 +565,9 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		case RoleExecuted:
 			if len(x.Workloads) == 0 || len(x.Platforms) == 0 {
 				return bad("ROLE_INVALID", p)
+			}
+			if (inv.Schema == QualificationInventorySchema && x.ID == "reuse-accepted" || slices.ContainsFunc(x.Workloads, func(w QualWorkload) bool { return w.ReuseAccepted != nil })) && !qualAcceptedRole(x, inv.Platforms) {
+				return bad("ROLE_INVALID", p+"/reuse_accepted")
 			}
 			for j, w := range x.Workloads {
 				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), routeRules{reqs: map[string][]string{}, alts: map[string]string{}}, true); e != nil {
@@ -740,6 +758,7 @@ type QualCounts struct {
 // axis (set integrity, registration, S07 gates, kit claims and expected statuses); host
 // observations are retained apart and never compared.
 type QualSet struct {
+	ReuseAccepted *QualReuseAcceptedAxis `json:"reuse_accepted,omitempty"`
 	PreprocessCST *QualPreprocessCSTAxis `json:"preprocess_cst,omitempty"`
 	Set           string                 `json:"set"`
 	Platform      string                 `json:"platform"`
@@ -783,6 +802,7 @@ type QualCell struct {
 
 // QualRoleRow is one extra-role row on one platform.
 type QualRoleRow struct {
+	ReuseAccepted *QualReuseAcceptedAxis `json:"reuse_accepted,omitempty"`
 	PreprocessCST *QualPreprocessCSTAxis `json:"preprocess_cst,omitempty"`
 	ID            string                 `json:"id"`
 	Role          string                 `json:"role"`
@@ -864,8 +884,12 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res := QualificationResult{Report: newReport("qualify"), ResultSchema: QualificationResultSchema, Hosts: map[string]string{}, Cells: []QualCell{},
 		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail, PlatformClaims: map[string]string{}}
 	res.Assessment = AssessNotAssessed
+	var q *qualifier
 	bad := func(e *Error) (QualificationResult, error) {
 		failReport(&res.Report, e)
+		if q != nil {
+			q.restoreAccepted(&res)
+		}
 		// a run that did not complete claims nothing: also after aggregation (output limit,
 		// wall or cancellation), where the claims and their explanation were already set
 		res.SupportClaim, res.PlatformClaims = "BLOCKED", map[string]string{}
@@ -880,6 +904,8 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 		res.ResultSchema = qualificationResultR6
 	} else if inv.Schema == qualificationInventoryR6 {
 		res.ResultSchema = qualificationResultR7
+	} else if inv.Schema == qualificationInventoryR7 {
+		res.ResultSchema = qualificationResultR8
 	}
 	if !hex40.MatchString(req.Candidate) {
 		return bad(fail(KindInvalidInput, "CANDIDATE_INVALID", "candidate", nil))
@@ -898,7 +924,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 		return bad(e)
 	}
 	defer r.cancel()
-	q := &qualifier{r: r, lim: lim, inv: inv, candidate: req.Candidate, hosts: map[string]*qhost{}}
+	q = &qualifier{r: r, lim: lim, inv: inv, candidate: req.Candidate, hosts: map[string]*qhost{}}
 	defer q.close()
 	completeness := true
 	for i, h := range req.Hosts {

@@ -1,0 +1,35 @@
+# Accepted reuse 증거 계약 (#264)
+
+이 기능은 실험적이며 caller가 `--reuse-accepted FILE`로 고정 원장을 명시한 실행에만 적용한다. `FILE`은 [original 원장](../../src/testdata/native/reuse-holdouts.json)이며 입력 root 밖에 있어야 한다. 기존 `reuseobs.Mandatory`, `CaseClaim`, `Judge`, public `TSNode.id` 교집합으로 계산한 `route.proven`과 과거 revision의 판정은 유지한다.
+
+## 고정 등록과 판정
+
+원장은 원래 순서의 T-SQL 12개·JSON 3개 history, 43개 edit, target 25개(T-SQL 22개·JSON 3개)를 고정한다. source·원래 edit bytes와 위치·target 순서·첫 omit 실패 step을 바꾸면 거부한다. legacy history hash는 원래 Go `encoding/json` 직렬화로 검증한다. 새 history hash는 `tsgk-reuse-accepted-history/r1\n`, ID, 검증된 legacy hash, 원래 순서 target의 comma-separated decimal, 첫 omit step의 decimal을 각각 LF로 이어 SHA-256을 계산한다. 새 ledger hash는 `tsgk-reuse-accepted-ledger/r1\n` 뒤에 원래 순서의 `ID\t새 history hash\n`을 이어 계산한다. 고정 semantic ledger SHA-256은 `23b1c07240604df9bf92d1336034ed03178236771cfdbe3e7da92083f46e36fc`다. 원본 파일의 bytes/hash는 별도로 보관한다.
+
+`tsgk-reuse-accepted/r1`은 같은 incremental parse의 accepted event가 1 이상이고 그 parse의 전체 CST가 같은 source의 fresh 전체 CST와 동등함을 증명한다. unique node 수, 최종 subtree/node identity, 문법의 구문 적합성 또는 성능은 증명하지 않는다. source witness에서 모든 version과 edit point를 재계산하고, 독립적인 요청 기대값에 raw·projection·producer·run·platform·현재 runtime manifest를 결속한다. tree 비교는 기존 `CompareTrees`의 전체 12개 필드를 사용한다.
+
+initial은 COMPLETE, old tree 없음, new_parse=1, done=1, accepted=0이어야 한다. 각 incremental은 COMPLETE, 직전 source의 old tree, parse_after_edit=1, new_parse=resume_parse=0, done=1이어야 한다. fresh는 COMPLETE, old tree 없음, new_parse=1, parse_after_edit=resume_parse=accepted=0, done=1이어야 한다. 각 target에는 incremental accepted≥1을 요구한다. 모든 initial/edit/fresh가 완결된 전체 CST이고 incremental/fresh가 동등해야 original history 전체를 승격한다. 앞 target의 PASS는 뒤 실패와 함께 남으며, 전체 FAIL을 지우지 않는다.
+
+FAIL은 BLOCKED보다 우선한다. accepted=0인 COMPLETE target, 확인된 old-tree/counter·source·CST·producer·raw/projection 모순은 FAIL이다. 수집 prefix·overflow·부분 CST·미제출 증거는 BLOCKED이고, 선언한 member의 누락·hash 불일치는 FAIL이다. 취소와 wall/byte 제한은 enclosing 연산의 예산을 공유한다. 과거 실행의 timeout은 replay의 현재 검증 budget을 취소하지 않는다. 새 FAIL은 기존 FAIL과 code를 보존한다. 전체 새 proof가 PASS일 때만 정확히 등록된 target의 기존 오류-tree route BLOCKED를 PASS로 올리며 `route.proven=false`는 그대로다.
+
+## 실행·저장·호환성
+
+지원 범위는 Windows/amd64와 Linux/amd64의 구조 full-tree 단일 사례 process다. structural 실행은 `native-parse-edit`, 작은 Oracle 대조군은 query 없는 `native-query`다. SVC, preprocess, batch, large, query, API, fact pack, declarations, dynamic SQL 및 다른 원장을 거부한다. macOS의 새 claim은 DEFERRED다. 명시한 빈 ledger/빈 flag도 거부하며, opt-in하지 않은 실행은 기존 revision을 유지한다.
+
+structural 결과는 `tsgk-incremental-result/r7`이다. 결과에 `reuse_accepted_policy`, `reuse_accepted_ledger_sha256`, 사례별 `reuse_accepted`를 기록하고, 같은 held output root 아래 `reuse-ledger.json`, `sources/<순번 5자리>-<ID>.bin`, `responses/<동일 순번>-<ID>.json`을 배타적으로 쓴다. source는 실제 요청에 넘긴 동일 buffer이며 재독하지 않는다.
+
+Oracle stdout 결과는 `tsgk-oracle-result/r2`, record는 `tsgk-oracle-record/r3`, manifest는 `tsgk-oracle-manifest/r4`, native wire는 `tsgk-native/r4`다. record는 single-process `process`를 갖고 batch transport를 갖지 않는다. manifest는 기존 source-witness 규칙과 ledger 결속, 실제 유한 한도를 담은 `operation`을 추가한다. operation의 duration은 numeric nanosecond이며 등록 한도와 같아야 하고 run wall만 양의 등록 상한 이내로 좁힐 수 있다. policy는 이 실제 operation에서 재계산한다. `source/`, `raw/`, `records/`와 manifest `cases`의 ordinal/ID를 정확히 결속하고 manifest는 마지막에 발행한다. `VerifyOracleSet`의 set 무결성 검사와 accepted claim의 raw replay 재계산은 별도 검사다.
+
+`native-result-r8`은 기존 structural mandatory reducer/r4에서 파생되어 결과/r7만 읽는다. symbol reducer/r7을 상속하지 않는다. `oracle-set-r3`는 manifest/r4와 record/r3를 읽는다. 두 reducer는 같은 pure checker를 호출하며, 저장된 PASS를 증거로 신뢰하지 않는다. 새 member가 없는 과거 revision은 당시 의미를 유지하고, 과거 revision에 새 claim/config member를 넣으면 null·빈 값도 거부한다.
+
+## Qualification과 실행 비용
+
+inventory `tsgk-qualification-inventory/r8` → result `tsgk-qualification-result/r9`는 owned `reuse-accepted` 역할을 더한다. workload는 `reuse-accepted-tsql`, `reuse-accepted-json`, `reuse-accepted-tsql-omit`, `reuse-accepted-json-omit`의 정확히 네 개다. Windows/Linux 각 행은 정상 original 15개와 target 25개를 고정 분모로 집계한다. PASS·FAIL·BLOCKED·MISSING 합은 항상 등록 분모와 같다. profile의 일부 history만 선택하는 작은 Oracle 검증과 달리 qualification의 original 집합·순서는 줄일 수 없다. macOS 행은 사유를 가진 DEFERRED이며 기존 mandatory 78칸은 유지한다.
+
+omit-old-tree 15개는 정상 target 통계 밖의 대조군이다. 실제 fault는 모든 edit에서 old tree를 생략한다. 공개 accepted proof와 legacy verdict는 계속 FAIL이다. qualification 전용 내부 검사만 모든 incremental의 COMPLETE·old_tree=false·old source 없음·new_parse=1·parse_after_edit=accepted=resume_parse=0·done=1, 정상 initial/fresh, 전체 source/CST/raw/projection/producer/process 결속, 등록된 첫 legacy 실패 step/code 및 equality PASS·route FAIL·mandatory observation FAIL을 함께 요구한다. 임의의 FAIL이나 첫 실패 code 일치만으로 대조군을 통과시키지 않는다. 내부 성공은 공개 accepted proof나 route 승격에 쓰지 않는다.
+
+과거 inventory/r5→result/r6, r6→r7, r7→r8 매핑과 symbol primary CST 검사는 유지한다. 새 집계는 기존 guarded reader와 host의 byte/record/wall budget을 공유한다. 누락이나 미완료 증거가 이미 확인한 FAIL을 덮지 않는다.
+
+중도 오류 결과에도 accepted 역할의 고정 분모와 확보한 case·target·control 결과를 보존한다. 중단된 현재 set의 미확인 부분은 BLOCKED, 아직 실행하지 않은 set은 MISSING이다. 오류와 실행 상태·소비 bytes는 원래 값을 유지하며, 확인된 accepted 실패는 assessment FAIL로 남긴다. 완결되지 않은 qualification의 support claim은 BLOCKED이고 platform claim은 비운다. 정상 omit의 공개 proof/replay FAIL과 운영 제한 자체의 finding은 qualification 실패의 근거로 삼지 않는다.
+
+기존 holdout의 normal+omit 관측은 OS당 202개, Windows/Linux 합계 404개이며 기존 실행에서 네 set으로 저장한다. accepted 증명을 위해 같은 404개를 Oracle로 다시 실행하지 않는다. 별도 `json-repair-close` Oracle 대조군은 parse 관측 3개를 추가한다. cached build는 `KEPT_BY_TEST_CACHE`로 남기며 삭제했다고 기록하지 않는다. native 한도(작은 입력 64 KiB, 10,000 nodes, stdout 8 MiB, process 4 GiB·10초), replay 한도(파일 16 MiB·총 256 MiB·120초), qualification 한도(파일 64 MiB·host 총 576 MiB·360초·결과 16 MiB)는 변경하지 않는다. 실제 bytes·wall과 여유는 유효한 실행 receipt로 확인하며 상한을 자동으로 늘리지 않는다.

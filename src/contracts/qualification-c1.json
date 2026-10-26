@@ -1,5 +1,5 @@
 {
- "schema": "tsgk-qualification-inventory/r7",
+ "schema": "tsgk-qualification-inventory/r8",
  "id": "tsgk-c1-qualification-r1",
  "campaign": "TSGK-C1",
  "qualification_cells": 78,
@@ -357094,6 +357094,1514 @@
       "mode": "csharp-symbols/r1",
       "symbols": []
      },
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    }
+   ]
+  },
+  {
+   "id": "reuse-accepted",
+   "role": "owned",
+   "status": "EXECUTED",
+   "reason": "고정 original history의 accepted 관측과 fresh 전체 CST 동등성; node identity·성능은 주장하지 않는다",
+   "platforms": [
+    "windows-amd64",
+    "linux-amd64"
+   ],
+   "not_applicable": {},
+   "deferred": {
+    "darwin-arm64": "사용자 결정으로 macOS accepted claim 검증은 제외한다"
+   },
+   "workloads": [
+    {
+     "reuse_accepted": {
+      "policy": "tsgk-reuse-accepted/r1",
+      "ledger_sha256": "23b1c07240604df9bf92d1336034ed03178236771cfdbe3e7da92083f46e36fc",
+      "control": "normal"
+     },
+     "set": "reuse-accepted-tsql",
+     "profile": "reuse-accepted-tsql",
+     "route": "tsql",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_mssql",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "542db94c263993ff68c0dddabcc12252dbb0bcf309e0d1acf2de8d4cd18abc24",
+       "bytes": 68647192
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "1efec197937cc59be09e480baae01008bbf8a2bec22ab95a7e731a670238bea4",
+       "bytes": 14415
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "tsql-issue137-builtin-default-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue137-builtin-default-r1.txt",
+        "role": "case",
+        "sha256": "e8657407a3788577f968159ec8668c1da7b4112721751d977fabb17c4796eb27",
+        "bytes": 27
+       },
+       "edits": [
+        {
+         "start_byte": 13,
+         "old_end_byte": 14,
+         "new_end_byte": 20,
+         "old": "YQ==",
+         "new": "REVGQVVMVA=="
+        },
+        {
+         "start_byte": 13,
+         "old_end_byte": 20,
+         "new_end_byte": 14,
+         "old": "REVGQVVMVA==",
+         "new": "YQ=="
+        },
+        {
+         "start_byte": 26,
+         "old_end_byte": 27,
+         "new_end_byte": 41,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMHg7"
+        },
+        {
+         "start_byte": 38,
+         "old_end_byte": 40,
+         "new_end_byte": 60,
+         "old": "MHg=",
+         "new": "KiBGUk9NIHQgV0hFUkUgYSBJTiAoKQ=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "SELECT COUNT(a) FROM dbo.t;"
+      },
+      {
+       "id": "tsql-issue137-dynamic-payload-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue137-dynamic-payload-r1.txt",
+        "role": "case",
+        "sha256": "6787f3c8bcbaa8f13f6973d51fb1753e3ccd005e05694b35ced54dc48221c3fb",
+        "bytes": 34
+       },
+       "edits": [
+        {
+         "start_byte": 6,
+         "old_end_byte": 17,
+         "new_end_byte": 7,
+         "old": "TidTRUxFQ1QgMSc=",
+         "new": "MQ=="
+        },
+        {
+         "start_byte": 6,
+         "old_end_byte": 7,
+         "new_end_byte": 17,
+         "old": "MQ==",
+         "new": "TidTRUxFQ1QgMSc="
+        },
+        {
+         "start_byte": 33,
+         "old_end_byte": 34,
+         "new_end_byte": 57,
+         "old": "Ow==",
+         "new": "OwpHTwpJRiAxID0gMSBCRUdJTiBFTkQ7"
+        },
+        {
+         "start_byte": 38,
+         "old_end_byte": 56,
+         "new_end_byte": 53,
+         "old": "SUYgMSA9IDEgQkVHSU4gRU5E",
+         "new": "U0VMRUNUIFRPUCAoKSAx"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "EXEC (N'SELECT 1') AS LOGIN = 'u';"
+      },
+      {
+       "id": "tsql-issue139-procedure-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-procedure-r1.txt",
+        "role": "case",
+        "sha256": "257730b286dff4a2051378c627789ac2513cc07fef7a9519a990cbb5d8e40dc3",
+        "bytes": 41
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 20,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "cCA=",
+         "new": "cCBA"
+        },
+        {
+         "start_byte": 40,
+         "old_end_byte": 41,
+         "new_end_byte": 79,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMTsKR08gLypjb21tZW50Ki8KU0VMRUNUIDI7"
+        },
+        {
+         "start_byte": 64,
+         "old_end_byte": 67,
+         "new_end_byte": 68,
+         "old": "ZW50",
+         "new": "ZW50Cg=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;"
+      },
+      {
+       "id": "tsql-issue139-function-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-function-r1.txt",
+        "role": "case",
+        "sha256": "82d3c86e95b7a2a766589f8556a62718810b0348428392277156d9c8d274140c",
+        "bytes": 65
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 21,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "KA==",
+         "new": "KEA="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;"
+      },
+      {
+       "id": "tsql-issue139-output-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-output-r1.txt",
+        "role": "case",
+        "sha256": "256d3bb7153cf4fde341a5c40078c10fc524ff88bf17e290ee8d8d9cfd1575f3",
+        "bytes": 74
+       },
+       "edits": [
+        {
+         "start_byte": 21,
+         "old_end_byte": 24,
+         "new_end_byte": 23,
+         "old": "cCBA",
+         "new": "cCA="
+        },
+        {
+         "start_byte": 21,
+         "old_end_byte": 23,
+         "new_end_byte": 24,
+         "old": "cCA=",
+         "new": "cCBA"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+      },
+      {
+       "id": "tsql-issue139-clr-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-clr-r1.txt",
+        "role": "case",
+        "sha256": "b72a31d5b62d92e2da113af3e251f5f003d7acbce050d9e7519e2e3535c76c34",
+        "bytes": 79
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 20,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "Zyg=",
+         "new": "ZyhA"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+      },
+      {
+       "id": "tsql-issue138-leading-01473-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-01473-r1.txt",
+        "role": "case",
+        "sha256": "7b81ccc97a58da923951319d1589301d28658245b0f78e52260340b34f8bb1ad",
+        "bytes": 44
+       },
+       "edits": [
+        {
+         "start_byte": 23,
+         "old_end_byte": 24,
+         "new_end_byte": 23,
+         "old": "cA==",
+         "new": ""
+        },
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 24,
+         "old": "Lg==",
+         "new": "LnA="
+        },
+        {
+         "start_byte": 43,
+         "old_end_byte": 44,
+         "new_end_byte": 106,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgKiBGUk9NIENIQU5HRVRBQkxFKFZFUlNJT04gZGJvLnQsIChpZCksICgxKSkgQVMgY3Q7"
+        },
+        {
+         "start_byte": 74,
+         "old_end_byte": 98,
+         "new_end_byte": 90,
+         "old": "VkVSU0lPTiBkYm8udCwgKGlkKSwgKDEp",
+         "new": "Q0hBTkdFUyBkYm8udCwgMA=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "ALTER SECURITY POLICY .p WITH (STATE = OFF);"
+      },
+      {
+       "id": "tsql-issue138-leading-02133-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-02133-r1.txt",
+        "role": "case",
+        "sha256": "e72fbf2bb81619597e89a2426bac43e99193474e04a0957a91b2727737d56b8d",
+        "bytes": 36
+       },
+       "edits": [
+        {
+         "start_byte": 13,
+         "old_end_byte": 15,
+         "new_end_byte": 14,
+         "old": "LnQ=",
+         "new": "Lg=="
+        },
+        {
+         "start_byte": 13,
+         "old_end_byte": 14,
+         "new_end_byte": 15,
+         "old": "Lg==",
+         "new": "LnQ="
+        },
+        {
+         "start_byte": 35,
+         "old_end_byte": 36,
+         "new_end_byte": 62,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMTsNR08NU0VMRUNUIDI7"
+        },
+        {
+         "start_byte": 50,
+         "old_end_byte": 53,
+         "new_end_byte": 58,
+         "old": "R08N",
+         "new": "CglHTyAyDQo="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE TABLE .t (a int DEFAULT (1));"
+      },
+      {
+       "id": "tsql-issue138-leading-02657-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-02657-r1.txt",
+        "role": "case",
+        "sha256": "9c1491062c15b7c19f7f0bb4dd036f1ba64b825ed973b8d762a4539b9262d732",
+        "bytes": 56
+       },
+       "edits": [
+        {
+         "start_byte": 17,
+         "old_end_byte": 18,
+         "new_end_byte": 17,
+         "old": "Zg==",
+         "new": ""
+        },
+        {
+         "start_byte": 16,
+         "old_end_byte": 17,
+         "new_end_byte": 18,
+         "old": "Lg==",
+         "new": "LmY="
+        },
+        {
+         "start_byte": 54,
+         "old_end_byte": 56,
+         "new_end_byte": 100,
+         "old": "RDs=",
+         "new": "RDsKR08KU0VMRUNUIDEgRlJPTSBkYm8udCBHUk9VUCBCWSBDVUJFKGEsKCkpOw=="
+        },
+        {
+         "start_byte": 89,
+         "old_end_byte": 98,
+         "new_end_byte": 90,
+         "old": "Q1VCRShhLCgp",
+         "new": "KA=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;"
+      },
+      {
+       "id": "tsql-issue148-negative-pair-00-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue148-negative-pair-00-r1.txt",
+        "role": "case",
+        "sha256": "4e602bd9bb28e72ecf33bf7898e79a609b26cdfa48976d7d69a63aeecb76a9cb",
+        "bytes": 356
+       },
+       "edits": [
+        {
+         "start_byte": 0,
+         "old_end_byte": 178,
+         "new_end_byte": 177,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBDT05UQUlOUyhhLCAiYXBwbGUiKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICJhcHBsZSIpOwoKR08K"
+        },
+        {
+         "start_byte": 0,
+         "old_end_byte": 177,
+         "new_end_byte": 178,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICJhcHBsZSIpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBDT05UQUlOUyhhLCAiYXBwbGUiKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 178,
+         "old_end_byte": 356,
+         "new_end_byte": 355,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBGUkVFVEVYVChhLCAiYXBwbGUiKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIEZSRUVURVhUKGEsICJhcHBsZSIpOwoKR08K"
+        },
+        {
+         "start_byte": 178,
+         "old_end_byte": 355,
+         "new_end_byte": 356,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIEZSRUVURVhUKGEsICJhcHBsZSIpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBGUkVFVEVYVChhLCAiYXBwbGUiKTsKCkdPCg=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+      },
+      {
+       "id": "tsql-issue148-negative-pair-01-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue148-negative-pair-01-r1.txt",
+        "role": "case",
+        "sha256": "d2aaa7241e16367ec13e07f0c6c5b504b14391a0fec5ccb8878a19bbac691c51",
+        "bytes": 381
+       },
+       "edits": [
+        {
+         "start_byte": 0,
+         "old_end_byte": 190,
+         "new_end_byte": 189,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKFBST1BFUlRZKGEsICJ0aXRsZSIpLCAnYXBwbGUnKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoUFJPUEVSVFkoYSwgInRpdGxlIiksICdhcHBsZScpOwoKR08K"
+        },
+        {
+         "start_byte": 0,
+         "old_end_byte": 189,
+         "new_end_byte": 190,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoUFJPUEVSVFkoYSwgInRpdGxlIiksICdhcHBsZScpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKFBST1BFUlRZKGEsICJ0aXRsZSIpLCAnYXBwbGUnKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 190,
+         "old_end_byte": 381,
+         "new_end_byte": 380,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICdhcHBsZScsIExBTkdVQUdFICJFbmdsaXNoIik7CgpHTwo=",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoYSwgJ2FwcGxlJywgTEFOR1VBR0UgIkVuZ2xpc2giKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 190,
+         "old_end_byte": 380,
+         "new_end_byte": 381,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoYSwgJ2FwcGxlJywgTEFOR1VBR0UgIkVuZ2xpc2giKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICdhcHBsZScsIExBTkdVQUdFICJFbmdsaXNoIik7CgpHTwo="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+      },
+      {
+       "id": "tsql-issue198-unclosed-bracket",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue198-unclosed-bracket.txt",
+        "role": "case",
+        "sha256": "85705abf8fb4c9f4337c2c17198508c9e4c818653d857db602f2684042b08031",
+        "bytes": 13
+       },
+       "edits": [
+        {
+         "start_byte": 12,
+         "old_end_byte": 12,
+         "new_end_byte": 13,
+         "old": "",
+         "new": "XQ=="
+        },
+        {
+         "start_byte": 12,
+         "old_end_byte": 13,
+         "new_end_byte": 12,
+         "old": "XQ==",
+         "new": ""
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "SELECT [name;"
+      }
+     ],
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "reuse_accepted": {
+      "policy": "tsgk-reuse-accepted/r1",
+      "ledger_sha256": "23b1c07240604df9bf92d1336034ed03178236771cfdbe3e7da92083f46e36fc",
+      "control": "normal"
+     },
+     "set": "reuse-accepted-json",
+     "profile": "reuse-accepted-json",
+     "route": "json",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_json",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "86971e7cb4e6dae9c5395bedf51abf525b2b662c6bcb632d33b72e4519aaab83",
+       "bytes": 23126
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "json-repair-close",
+       "role": "support",
+       "input": {
+        "path": "json-repair-close.txt",
+        "role": "case",
+        "sha256": "4138c6ae42992f3ca53610b0c858e0f5a5a8d7e3424a81feb73b89f0f1877ba9",
+        "bytes": 2
+       },
+       "edits": [
+        {
+         "start_byte": 2,
+         "old_end_byte": 2,
+         "new_end_byte": 3,
+         "old": "",
+         "new": "XQ=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "[1"
+      },
+      {
+       "id": "json-break-close",
+       "role": "support",
+       "input": {
+        "path": "json-break-close.txt",
+        "role": "case",
+        "sha256": "080a9ed428559ef602668b4c00f114f1a11c3f6b02a435f0bdc154578e4d7f22",
+        "bytes": 3
+       },
+       "edits": [
+        {
+         "start_byte": 2,
+         "old_end_byte": 3,
+         "new_end_byte": 2,
+         "old": "XQ==",
+         "new": ""
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "[1]"
+      },
+      {
+       "id": "json-repair-colon",
+       "role": "support",
+       "input": {
+        "path": "json-repair-colon.txt",
+        "role": "case",
+        "sha256": "767ee938616b3ef0c272d90d58a86d091f76789ba877e30c18514a88a5fdb752",
+        "bytes": 7
+       },
+       "edits": [
+        {
+         "start_byte": 4,
+         "old_end_byte": 5,
+         "new_end_byte": 5,
+         "old": "IA==",
+         "new": "Og=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "{\"a\" 1}"
+      }
+     ],
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "reuse_accepted": {
+      "policy": "tsgk-reuse-accepted/r1",
+      "ledger_sha256": "23b1c07240604df9bf92d1336034ed03178236771cfdbe3e7da92083f46e36fc",
+      "control": "omit-old-tree"
+     },
+     "set": "reuse-accepted-tsql-omit",
+     "profile": "reuse-accepted-tsql-omit",
+     "route": "tsql",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_mssql",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "542db94c263993ff68c0dddabcc12252dbb0bcf309e0d1acf2de8d4cd18abc24",
+       "bytes": 68647192
+      },
+      {
+       "path": "src/scanner.c",
+       "role": "scanner",
+       "sha256": "1efec197937cc59be09e480baae01008bbf8a2bec22ab95a7e731a670238bea4",
+       "bytes": 14415
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "tsql-issue137-builtin-default-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue137-builtin-default-r1.txt",
+        "role": "case",
+        "sha256": "e8657407a3788577f968159ec8668c1da7b4112721751d977fabb17c4796eb27",
+        "bytes": 27
+       },
+       "edits": [
+        {
+         "start_byte": 13,
+         "old_end_byte": 14,
+         "new_end_byte": 20,
+         "old": "YQ==",
+         "new": "REVGQVVMVA=="
+        },
+        {
+         "start_byte": 13,
+         "old_end_byte": 20,
+         "new_end_byte": 14,
+         "old": "REVGQVVMVA==",
+         "new": "YQ=="
+        },
+        {
+         "start_byte": 26,
+         "old_end_byte": 27,
+         "new_end_byte": 41,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMHg7"
+        },
+        {
+         "start_byte": 38,
+         "old_end_byte": 40,
+         "new_end_byte": 60,
+         "old": "MHg=",
+         "new": "KiBGUk9NIHQgV0hFUkUgYSBJTiAoKQ=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "SELECT COUNT(a) FROM dbo.t;"
+      },
+      {
+       "id": "tsql-issue137-dynamic-payload-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue137-dynamic-payload-r1.txt",
+        "role": "case",
+        "sha256": "6787f3c8bcbaa8f13f6973d51fb1753e3ccd005e05694b35ced54dc48221c3fb",
+        "bytes": 34
+       },
+       "edits": [
+        {
+         "start_byte": 6,
+         "old_end_byte": 17,
+         "new_end_byte": 7,
+         "old": "TidTRUxFQ1QgMSc=",
+         "new": "MQ=="
+        },
+        {
+         "start_byte": 6,
+         "old_end_byte": 7,
+         "new_end_byte": 17,
+         "old": "MQ==",
+         "new": "TidTRUxFQ1QgMSc="
+        },
+        {
+         "start_byte": 33,
+         "old_end_byte": 34,
+         "new_end_byte": 57,
+         "old": "Ow==",
+         "new": "OwpHTwpJRiAxID0gMSBCRUdJTiBFTkQ7"
+        },
+        {
+         "start_byte": 38,
+         "old_end_byte": 56,
+         "new_end_byte": 53,
+         "old": "SUYgMSA9IDEgQkVHSU4gRU5E",
+         "new": "U0VMRUNUIFRPUCAoKSAx"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "EXEC (N'SELECT 1') AS LOGIN = 'u';"
+      },
+      {
+       "id": "tsql-issue139-procedure-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-procedure-r1.txt",
+        "role": "case",
+        "sha256": "257730b286dff4a2051378c627789ac2513cc07fef7a9519a990cbb5d8e40dc3",
+        "bytes": 41
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 20,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "cCA=",
+         "new": "cCBA"
+        },
+        {
+         "start_byte": 40,
+         "old_end_byte": 41,
+         "new_end_byte": 79,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMTsKR08gLypjb21tZW50Ki8KU0VMRUNUIDI7"
+        },
+        {
+         "start_byte": 64,
+         "old_end_byte": 67,
+         "new_end_byte": 68,
+         "old": "ZW50",
+         "new": "ZW50Cg=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "ALTER PROCEDURE dbo.p @a int AS SELECT 1;"
+      },
+      {
+       "id": "tsql-issue139-function-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-function-r1.txt",
+        "role": "case",
+        "sha256": "82d3c86e95b7a2a766589f8556a62718810b0348428392277156d9c8d274140c",
+        "bytes": 65
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 21,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "KA==",
+         "new": "KEA="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION dbo.g(@a int) RETURNS int AS BEGIN RETURN 1; END;"
+      },
+      {
+       "id": "tsql-issue139-output-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-output-r1.txt",
+        "role": "case",
+        "sha256": "256d3bb7153cf4fde341a5c40078c10fc524ff88bf17e290ee8d8d9cfd1575f3",
+        "bytes": 74
+       },
+       "edits": [
+        {
+         "start_byte": 21,
+         "old_end_byte": 24,
+         "new_end_byte": 23,
+         "old": "cCBA",
+         "new": "cCA="
+        },
+        {
+         "start_byte": 21,
+         "old_end_byte": 23,
+         "new_end_byte": 24,
+         "old": "cCA=",
+         "new": "cCBA"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE PROCEDURE dbo.p @a int = 1 OUTPUT, @t dbo.tt READONLY AS SELECT @a;"
+      },
+      {
+       "id": "tsql-issue139-clr-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue139-clr-r1.txt",
+        "role": "case",
+        "sha256": "b72a31d5b62d92e2da113af3e251f5f003d7acbce050d9e7519e2e3535c76c34",
+        "bytes": 79
+       },
+       "edits": [
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 22,
+         "old": "QA==",
+         "new": ""
+        },
+        {
+         "start_byte": 20,
+         "old_end_byte": 22,
+         "new_end_byte": 23,
+         "old": "Zyg=",
+         "new": "ZyhA"
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION dbo.g(@a int = 1) RETURNS TABLE (a int) AS EXTERNAL NAME a.c.m;"
+      },
+      {
+       "id": "tsql-issue138-leading-01473-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-01473-r1.txt",
+        "role": "case",
+        "sha256": "7b81ccc97a58da923951319d1589301d28658245b0f78e52260340b34f8bb1ad",
+        "bytes": 44
+       },
+       "edits": [
+        {
+         "start_byte": 23,
+         "old_end_byte": 24,
+         "new_end_byte": 23,
+         "old": "cA==",
+         "new": ""
+        },
+        {
+         "start_byte": 22,
+         "old_end_byte": 23,
+         "new_end_byte": 24,
+         "old": "Lg==",
+         "new": "LnA="
+        },
+        {
+         "start_byte": 43,
+         "old_end_byte": 44,
+         "new_end_byte": 106,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgKiBGUk9NIENIQU5HRVRBQkxFKFZFUlNJT04gZGJvLnQsIChpZCksICgxKSkgQVMgY3Q7"
+        },
+        {
+         "start_byte": 74,
+         "old_end_byte": 98,
+         "new_end_byte": 90,
+         "old": "VkVSU0lPTiBkYm8udCwgKGlkKSwgKDEp",
+         "new": "Q0hBTkdFUyBkYm8udCwgMA=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "ALTER SECURITY POLICY .p WITH (STATE = OFF);"
+      },
+      {
+       "id": "tsql-issue138-leading-02133-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-02133-r1.txt",
+        "role": "case",
+        "sha256": "e72fbf2bb81619597e89a2426bac43e99193474e04a0957a91b2727737d56b8d",
+        "bytes": 36
+       },
+       "edits": [
+        {
+         "start_byte": 13,
+         "old_end_byte": 15,
+         "new_end_byte": 14,
+         "old": "LnQ=",
+         "new": "Lg=="
+        },
+        {
+         "start_byte": 13,
+         "old_end_byte": 14,
+         "new_end_byte": 15,
+         "old": "Lg==",
+         "new": "LnQ="
+        },
+        {
+         "start_byte": 35,
+         "old_end_byte": 36,
+         "new_end_byte": 62,
+         "old": "Ow==",
+         "new": "OwpHTwpTRUxFQ1QgMTsNR08NU0VMRUNUIDI7"
+        },
+        {
+         "start_byte": 50,
+         "old_end_byte": 53,
+         "new_end_byte": 58,
+         "old": "R08N",
+         "new": "CglHTyAyDQo="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE TABLE .t (a int DEFAULT (1));"
+      },
+      {
+       "id": "tsql-issue138-leading-02657-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue138-leading-02657-r1.txt",
+        "role": "case",
+        "sha256": "9c1491062c15b7c19f7f0bb4dd036f1ba64b825ed973b8d762a4539b9262d732",
+        "bytes": 56
+       },
+       "edits": [
+        {
+         "start_byte": 17,
+         "old_end_byte": 18,
+         "new_end_byte": 17,
+         "old": "Zg==",
+         "new": ""
+        },
+        {
+         "start_byte": 16,
+         "old_end_byte": 17,
+         "new_end_byte": 18,
+         "old": "Lg==",
+         "new": "LmY="
+        },
+        {
+         "start_byte": 54,
+         "old_end_byte": 56,
+         "new_end_byte": 100,
+         "old": "RDs=",
+         "new": "RDsKR08KU0VMRUNUIDEgRlJPTSBkYm8udCBHUk9VUCBCWSBDVUJFKGEsKCkpOw=="
+        },
+        {
+         "start_byte": 89,
+         "old_end_byte": 98,
+         "new_end_byte": 90,
+         "old": "Q1VCRShhLCgp",
+         "new": "KA=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "CREATE FUNCTION .f() RETURNS int AS BEGIN RETURN 1; END;"
+      },
+      {
+       "id": "tsql-issue148-negative-pair-00-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue148-negative-pair-00-r1.txt",
+        "role": "case",
+        "sha256": "4e602bd9bb28e72ecf33bf7898e79a609b26cdfa48976d7d69a63aeecb76a9cb",
+        "bytes": 356
+       },
+       "edits": [
+        {
+         "start_byte": 0,
+         "old_end_byte": 178,
+         "new_end_byte": 177,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBDT05UQUlOUyhhLCAiYXBwbGUiKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICJhcHBsZSIpOwoKR08K"
+        },
+        {
+         "start_byte": 0,
+         "old_end_byte": 177,
+         "new_end_byte": 178,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICJhcHBsZSIpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1jb250YWlucy1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBDT05UQUlOUyhhLCAiYXBwbGUiKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 178,
+         "old_end_byte": 356,
+         "new_end_byte": 355,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBGUkVFVEVYVChhLCAiYXBwbGUiKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIEZSRUVURVhUKGEsICJhcHBsZSIpOwoKR08K"
+        },
+        {
+         "start_byte": 178,
+         "old_end_byte": 355,
+         "new_end_byte": 356,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047IFNFTEVDVCAxIFdIRVJFIEZSRUVURVhUKGEsICJhcHBsZSIpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1mcmVldGV4dC1zZWFyY2gtcjEKU0VUIFFVT1RFRF9JREVOVElGSUVSIE9OOwpHTwpTRUxFQ1QgQEBST1dDT1VOVCBBUyByb3dzX2FmZmVjdGVkOwpHTwpTRVQgUVVPVEVEX0lERU5USUZJRVIgT0ZGOyBTRUxFQ1QgMSBXSEVSRSBGUkVFVEVYVChhLCAiYXBwbGUiKTsKCkdPCg=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "-- tsql-issue148-qi-on-contains-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, \"apple\");\n\nGO\n-- tsql-issue148-qi-on-freetext-search-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE FREETEXT(a, \"apple\");\n\nGO\n"
+      },
+      {
+       "id": "tsql-issue148-negative-pair-01-r1",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue148-negative-pair-01-r1.txt",
+        "role": "case",
+        "sha256": "d2aaa7241e16367ec13e07f0c6c5b504b14391a0fec5ccb8878a19bbac691c51",
+        "bytes": 381
+       },
+       "edits": [
+        {
+         "start_byte": 0,
+         "old_end_byte": 190,
+         "new_end_byte": 189,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKFBST1BFUlRZKGEsICJ0aXRsZSIpLCAnYXBwbGUnKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoUFJPUEVSVFkoYSwgInRpdGxlIiksICdhcHBsZScpOwoKR08K"
+        },
+        {
+         "start_byte": 0,
+         "old_end_byte": 189,
+         "new_end_byte": 190,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoUFJPUEVSVFkoYSwgInRpdGxlIiksICdhcHBsZScpOwoKR08K",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1wcm9wZXJ0eS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKFBST1BFUlRZKGEsICJ0aXRsZSIpLCAnYXBwbGUnKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 190,
+         "old_end_byte": 381,
+         "new_end_byte": 380,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICdhcHBsZScsIExBTkdVQUdFICJFbmdsaXNoIik7CgpHTwo=",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoYSwgJ2FwcGxlJywgTEFOR1VBR0UgIkVuZ2xpc2giKTsKCkdPCg=="
+        },
+        {
+         "start_byte": 190,
+         "old_end_byte": 380,
+         "new_end_byte": 381,
+         "old": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPTjsgU0VMRUNUIDEgV0hFUkUgQ09OVEFJTlMoYSwgJ2FwcGxlJywgTEFOR1VBR0UgIkVuZ2xpc2giKTsKCkdPCg==",
+         "new": "LS0gdHNxbC1pc3N1ZTE0OC1xaS1vbi1sYW5ndWFnZS1yMQpTRVQgUVVPVEVEX0lERU5USUZJRVIgT047CkdPClNFTEVDVCBAQFJPV0NPVU5UIEFTIHJvd3NfYWZmZWN0ZWQ7CkdPClNFVCBRVU9URURfSURFTlRJRklFUiBPRkY7IFNFTEVDVCAxIFdIRVJFIENPTlRBSU5TKGEsICdhcHBsZScsIExBTkdVQUdFICJFbmdsaXNoIik7CgpHTwo="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "-- tsql-issue148-qi-on-property-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(PROPERTY(a, \"title\"), 'apple');\n\nGO\n-- tsql-issue148-qi-on-language-r1\nSET QUOTED_IDENTIFIER ON;\nGO\nSELECT @@ROWCOUNT AS rows_affected;\nGO\nSET QUOTED_IDENTIFIER OFF; SELECT 1 WHERE CONTAINS(a, 'apple', LANGUAGE \"English\");\n\nGO\n"
+      },
+      {
+       "id": "tsql-issue198-unclosed-bracket",
+       "role": "support",
+       "input": {
+        "path": "tsql-issue198-unclosed-bracket.txt",
+        "role": "case",
+        "sha256": "85705abf8fb4c9f4337c2c17198508c9e4c818653d857db602f2684042b08031",
+        "bytes": 13
+       },
+       "edits": [
+        {
+         "start_byte": 12,
+         "old_end_byte": 12,
+         "new_end_byte": 13,
+         "old": "",
+         "new": "XQ=="
+        },
+        {
+         "start_byte": 12,
+         "old_end_byte": 13,
+         "new_end_byte": 12,
+         "old": "XQ==",
+         "new": ""
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "SELECT [name;"
+      }
+     ],
+     "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
+    },
+    {
+     "reuse_accepted": {
+      "policy": "tsgk-reuse-accepted/r1",
+      "ledger_sha256": "23b1c07240604df9bf92d1336034ed03178236771cfdbe3e7da92083f46e36fc",
+      "control": "omit-old-tree"
+     },
+     "set": "reuse-accepted-json-omit",
+     "profile": "reuse-accepted-json-omit",
+     "route": "json",
+     "operation": "native-parse-edit",
+     "output": "tree",
+     "symbol": "tree_sitter_json",
+     "format": "",
+     "grammar": [
+      {
+       "path": "src/parser.c",
+       "role": "parser",
+       "sha256": "86971e7cb4e6dae9c5395bedf51abf525b2b662c6bcb632d33b72e4519aaab83",
+       "bytes": 23126
+      },
+      {
+       "path": "src/tree_sitter/alloc.h",
+       "role": "header",
+       "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+       "bytes": 985
+      },
+      {
+       "path": "src/tree_sitter/array.h",
+       "role": "header",
+       "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+       "bytes": 13453
+      },
+      {
+       "path": "src/tree_sitter/parser.h",
+       "role": "header",
+       "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+       "bytes": 7624
+      }
+     ],
+     "declarations": null,
+     "queries": [],
+     "fact_pack": null,
+     "api": false,
+     "cases": [
+      {
+       "id": "json-repair-close",
+       "role": "support",
+       "input": {
+        "path": "json-repair-close.txt",
+        "role": "case",
+        "sha256": "4138c6ae42992f3ca53610b0c858e0f5a5a8d7e3424a81feb73b89f0f1877ba9",
+        "bytes": 2
+       },
+       "edits": [
+        {
+         "start_byte": 2,
+         "old_end_byte": 2,
+         "new_end_byte": 3,
+         "old": "",
+         "new": "XQ=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "[1"
+      },
+      {
+       "id": "json-break-close",
+       "role": "support",
+       "input": {
+        "path": "json-break-close.txt",
+        "role": "case",
+        "sha256": "080a9ed428559ef602668b4c00f114f1a11c3f6b02a435f0bdc154578e4d7f22",
+        "bytes": 3
+       },
+       "edits": [
+        {
+         "start_byte": 2,
+         "old_end_byte": 3,
+         "new_end_byte": 2,
+         "old": "XQ==",
+         "new": ""
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "[1]"
+      },
+      {
+       "id": "json-repair-colon",
+       "role": "support",
+       "input": {
+        "path": "json-repair-colon.txt",
+        "role": "case",
+        "sha256": "767ee938616b3ef0c272d90d58a86d091f76789ba877e30c18514a88a5fdb752",
+        "bytes": 7
+       },
+       "edits": [
+        {
+         "start_byte": 4,
+         "old_end_byte": 5,
+         "new_end_byte": 5,
+         "old": "IA==",
+         "new": "Og=="
+        }
+       ],
+       "expect": [],
+       "query_expect": [],
+       "points": [],
+       "dynamic_sql_expect": null,
+       "expect_status": "",
+       "expect_assessment": "",
+       "expect_code": "",
+       "covers": {},
+       "alternatives": [],
+       "sample": null,
+       "source": "{\"a\" 1}"
+      }
+     ],
      "runtime_commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a"
     }
    ]

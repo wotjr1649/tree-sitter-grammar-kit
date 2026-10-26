@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -24,7 +25,20 @@ import (
 // is not recomputed from stored evidence.
 func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error) {
 	s := newQSet(w, p)
-	if q.inv.Schema == QualificationInventorySchema {
+	accepted := w.ReuseAccepted != nil
+	if accepted {
+		if q.acceptedSets == nil {
+			q.acceptedSets = map[string]*qset{}
+		}
+		q.acceptedSets[p.ID+"/"+w.Set] = s
+		defer func() {
+			if s.Evidence == ModeNewRun && s.Mechanism == AssessNotAssessed {
+				s.Mechanism = AssessBlocked
+				s.ReuseAccepted = qualAcceptedUnverified(s.ReuseAccepted.Cases, claimBlocked, "REUSE_ACCEPTED_NOT_RECOMPUTED")
+			}
+		}()
+	}
+	if !accepted && qualificationHasCST(q.inv.Schema) {
 		cases := []QualPreprocessCSTCase{}
 		for _, c := range w.Cases {
 			cases = append(cases, QualPreprocessCSTCase{Set: w.Set, Case: c.ID, Result: "UNVERIFIED", Code: "PREPROCESS_CST_EVIDENCE_MISSING", Steps: []PreprocessCSTStep{}})
@@ -38,11 +52,25 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	dir := "incremental/" + w.Set + "/"
 	profPath, resPath := dir+"profile.json", dir+"result.json"
 	if h.files[profPath] == nil {
+		if accepted {
+			for path := range h.files {
+				if strings.HasPrefix(path, dir) {
+					markUsed(h, dir, "")
+					s.Evidence, s.Mechanism = "REJECTED", AssessFail
+					s.Findings = append(s.Findings, Finding{Code: "PROFILE_MISSING", Severity: "error", Path: p.ID + "/" + profPath, Message: "제출된 accepted set의 workload profile이 없다"})
+					s.ReuseAccepted = qualAcceptedUnverified(s.ReuseAccepted.Cases, claimFail, "REUSE_ACCEPTED_PROFILE_MISSING")
+					break
+				}
+			}
+		}
 		return s, nil
 	}
 	markUsed(h, dir, "") // its files are this set's; the replay rejects any it does not register
 	if h.id == nil || len(h.rejected) > 0 {
 		s.Evidence, s.Mechanism = "REJECTED", AssessFail
+		if accepted {
+			s.ReuseAccepted = qualAcceptedUnverified(s.ReuseAccepted.Cases, claimFail, "REUSE_ACCEPTED_HOST_INVALID")
+		}
 		s.Findings = append(s.Findings, h.rejected...)
 		if h.id == nil {
 			s.Findings = append(s.Findings, Finding{Code: "RUN_IDENTITY_MISSING", Severity: "error", Path: p.ID, Message: "host 실행 identity가 없어 칸을 채울 수 없다"})
@@ -51,7 +79,9 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	}
 	s.Evidence = ModeNewRun
 	over := false
+	evidenceFailed := false
 	add := func(code, path, msg string) {
+		evidenceFailed = true
 		if len(s.Findings) < 200 {
 			s.Findings = append(s.Findings, Finding{Code: code, Severity: "error", Path: p.ID + "/" + path, Message: msg})
 		}
@@ -64,10 +94,17 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			}
 		}
 		switch {
-		case len(s.Findings) > 0:
+		case len(s.Findings) > 0 && (!accepted || evidenceFailed):
 			s.Mechanism = AssessFail
 		case over:
-			s.Mechanism = AssessBlocked // not every case was recomputed: never a pass
+			s.Mechanism = worseMechanism(s.Mechanism, AssessBlocked) // known failures survive incomplete evidence
+		}
+		if accepted && (s.Mechanism == AssessFail || over) {
+			result, code := claimBlocked, "REUSE_ACCEPTED_NOT_RECOMPUTED"
+			if s.Mechanism == AssessFail {
+				result, code = claimFail, "REUSE_ACCEPTED_SET_INVALID"
+			}
+			s.ReuseAccepted = qualAcceptedUnverified(s.ReuseAccepted.Cases, result, code)
 		}
 		return s, nil
 	}
@@ -128,11 +165,13 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		role := map[string]string{"profile.json": "workload-profile", "result.json": "result"}[rel]
 		switch {
 		case role != "":
+		case accepted && rel == "reuse-ledger.json":
+			role = "reuse-ledger"
 		case strings.HasPrefix(rel, "responses/"):
 			role = "response"
 		case strings.HasPrefix(rel, "sources/"):
 			role = "case-source"
-		case strings.HasPrefix(rel, "primary/responses/") && q.inv.Schema == QualificationInventorySchema:
+		case strings.HasPrefix(rel, "primary/responses/") && qualificationHasCST(q.inv.Schema):
 			role = "primary-response"
 		default:
 			continue // not a member: the replay rejects it (MEMBER_UNLISTED)
@@ -165,9 +204,13 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		reducer = "native-result-r6"
 	}
 	policy := nativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess, selection).SHA256
-	if q.inv.Schema == QualificationInventorySchema {
+	if qualificationHasCST(q.inv.Schema) {
 		reducer = "native-result-r7"
 		policy = NativePolicy(NativeOperations()[w.Operation], w.Output, w.Preprocess).SHA256
+	}
+	if accepted {
+		reducer = "native-result-r8"
+		policy = NativePolicy(NativeOperations()[w.Operation], w.Output, nil).SHA256
 	}
 	reg, _ := json.Marshal(map[string]any{"schema": ReplaySchema, "id": "qualification-" + w.Set, "reducer": reducer, "operation": "evidence-replay",
 		"subject": map[string]any{"run": h.id.RunID, "attempt": attempt, "platform": p.pair(), "commit": q.candidate, "evidence_mode": ModeNewRun,
@@ -183,21 +226,99 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	// own cause (the caller, or its wall as WALL_LIMIT), not the replay's view of it
 	ctx, cancel := context.WithCancel(q.r.caller)
 	stopWall := context.AfterFunc(q.r.wall, cancel)
-	rr, rerr := replayShared(ctx, ReplayRequest{Root: filepath.Join(h.root, "incremental", w.Set), Profile: reg}, &replayBudget{r: h.x.r, total: q.lim.TotalBytes})
+	acceptedCases := map[string]QualReuseAcceptedCase{}
+	budget := &replayBudget{r: h.x.r, total: q.lim.TotalBytes}
+	if accepted {
+		budget.acceptedConsumer = func(req ReuseAcceptedRequest, proof ReuseAcceptedResult, proofErr error) error {
+			c := QualReuseAcceptedCase{Set: w.Set, ID: req.Case.ID, Control: w.ReuseAccepted.Control, Result: proof.Result, Code: proof.Code, Steps: slices.Clone(proof.Steps)}
+			if c.Control == "omit-old-tree" {
+				c.Result, c.Code, c.Steps = claimBlocked, "REUSE_ACCEPTED_NOT_RECOMPUTED", []ReuseAcceptedStep{}
+				if proofErr != nil {
+					acceptedCases[c.ID] = c
+					return nil
+				}
+				result, err := checkReuseOmitControl(req)
+				c.Result, c.Code, c.Steps = result, "", []ReuseAcceptedStep{}
+				if result != claimPass {
+					c.Code = "REUSE_ACCEPTED_CONTROL_INVALID"
+				}
+				acceptedCases[c.ID] = c
+				return err
+			}
+			acceptedCases[c.ID] = c
+			return nil
+		}
+		budget.acceptedLegacyConsumer = func(id string, out caseOutcome, code string) {
+			if w.ReuseAccepted.Control != "normal" || out.status != StatusCompleted {
+				return
+			}
+			c, ok := acceptedCases[id]
+			if !ok {
+				return
+			}
+			legacy := claimPass
+			if out.recomputedAssessment == AssessFail {
+				legacy = claimFail
+			} else if out.recomputedAssessment != AssessPass {
+				legacy = claimBlocked
+			}
+			previous := c.Result
+			c.Result = worseClaim(previous, legacy)
+			if legacy == claimFail || c.Result != previous {
+				c.Code = code
+			}
+			acceptedCases[id] = c
+		}
+	}
+	rr, rerr := replayShared(ctx, ReplayRequest{Root: filepath.Join(h.root, "incremental", w.Set), Profile: reg}, budget)
 	stopWall()
 	cancel()
-	if rerr != nil && stop(asError(rerr)) {
+	s.Gates = append(s.Gates, rr.Gates...)
+	s.Identities = map[string]string{"runtime": rr.Observed["runtime"], "policy": rr.Observed["policy"], "operation": rr.Observed["operation"], "workload-route": w.Route}
+	s.Host = map[string]string{"build_identity": res.Build.Identity, "executable_sha256": res.Build.ExecutableSHA256, "compiler_sha256": res.Build.Compiler.SHA256, "platform": p.pair()}
+	captureAccepted := func(interrupted bool) {
+		if !accepted {
+			return
+		}
+		cases := qualAcceptedMissing(w)
+		for i := range cases {
+			if c, ok := acceptedCases[cases[i].ID]; ok {
+				cases[i].Result, cases[i].Code = c.Result, c.Code
+				for j := range cases[i].Steps {
+					for _, step := range c.Steps {
+						if cases[i].Steps[j].Step == step.Step {
+							cases[i].Steps[j] = step
+						}
+					}
+				}
+			}
+		}
+		s.ReuseAccepted = qualAcceptedAxis(cases)
+		if interrupted {
+			s.ReuseAccepted = qualAcceptedUnverified(cases, claimBlocked, "REUSE_ACCEPTED_NOT_RECOMPUTED")
+			s.Findings = append(s.Findings, rr.Findings...)
+			evidenceFailed, over = budget.evidenceFailed, true
+			_, _ = done()
+		}
+		for _, c := range s.ReuseAccepted.Cases {
+			v := c.Result
+			if v == CellMissing {
+				v = claimBlocked
+			}
+			s.checks[c.ID] = v
+		}
+	}
+	if rerr != nil && (stop(asError(rerr)) || accepted && asError(rerr).Kind == KindResourceLimit) {
+		captureAccepted(true)
 		if e := q.r.check(); e != nil {
 			return nil, e
 		}
 		return nil, asError(rerr)
 	}
 	if e := q.r.check(); e != nil {
+		captureAccepted(true)
 		return nil, e
 	}
-	s.Gates = append(s.Gates, rr.Gates...)
-	s.Identities = map[string]string{"runtime": rr.Observed["runtime"], "policy": rr.Observed["policy"], "operation": rr.Observed["operation"], "workload-route": w.Route}
-	s.Host = map[string]string{"build_identity": res.Build.Identity, "executable_sha256": res.Build.ExecutableSHA256, "compiler_sha256": res.Build.Compiler.SHA256, "platform": p.pair()}
 	switch {
 	case rerr != nil:
 		add("REPLAY_FAILED", dir, reducer+" replay가 끝나지 않았다: "+rerr.Error())
@@ -213,12 +334,37 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	case rr.EvidenceMode != ModeReplayedRaw || rr.Recomputed != rr.Recorded || rr.Recomputed.Assessment == AssessUnresolved:
 		over = true // valid, but not every case was recomputed
 	}
+	if accepted {
+		captureAccepted(false)
+		cases := s.ReuseAccepted.Cases
+		if len(res.Cases) != len(w.Cases) {
+			add("CASE_SET_MISMATCH", resPath, "등록된 original history 수와 다르다")
+			return done()
+		}
+		for i, c := range res.Cases {
+			qc := w.Cases[i]
+			if c.ID != qc.ID {
+				add("CASE_SET_MISMATCH", resPath, "등록된 original history 순서와 다르다")
+				return done()
+			}
+			v := cases[i].Result
+			if v == CellMissing {
+				v = claimBlocked
+			}
+			s.checks[qc.ID] = v
+			sum, _ := json.Marshal(cases[i])
+			s.summaries[qc.ID] = string(sum)
+			s.Records++
+		}
+		s.ReuseAccepted = qualAcceptedAxis(cases)
+		return done()
+	}
 	// the registered outcome and the Roslyn-derived selection of every case, in order
 	if len(res.Cases) != len(w.Cases) {
 		add("CASE_SET_MISMATCH", resPath, "result 사례 수가 등록 workload와 다르다")
 		return done()
 	}
-	if q.inv.Schema == QualificationInventorySchema && len(rr.PreprocessCST) != len(w.Cases) {
+	if qualificationHasCST(q.inv.Schema) && len(rr.PreprocessCST) != len(w.Cases) {
 		if over {
 			return done()
 		}
@@ -236,7 +382,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			v = claimFail // a registered check: it fails the row's checks, not the kit axis
 		}
 		s.checks[qc.ID] = v
-		if q.inv.Schema == QualificationInventorySchema {
+		if qualificationHasCST(q.inv.Schema) {
 			observed := rr.PreprocessCST[i]
 			if observed.ID != qc.ID {
 				add("PREPROCESS_CST_CASE_SET_MISMATCH", resPath, "검증된 CST 관측의 순서·ID가 다르다")
@@ -246,7 +392,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			if checked.Result == "FAIL" {
 				s.checks[qc.ID] = claimFail
 			} else if checked.Result == "UNVERIFIED" {
-				s.checks[qc.ID] = claimBlocked
+				s.checks[qc.ID] = worseClaim(s.checks[qc.ID], claimBlocked)
 			}
 			cstCases = append(cstCases, checked)
 		}
@@ -260,7 +406,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 		s.summaries[qc.ID] = string(sum)
 		s.Records++
 	}
-	if q.inv.Schema == QualificationInventorySchema {
+	if qualificationHasCST(q.inv.Schema) {
 		s.PreprocessCST = qualCSTAxis(cstCases)
 	}
 	return done()

@@ -329,3 +329,7 @@ S04의 executable hash/argv/환경 allowlist/resource policy, S05의 edit record
 선택 case `svc_source`는 r2의 재관측용 원본 bytes를 표준 padded base64로 등록한다. source의 encoding·길이·SHA256은 case input과 같아야 한다(`SVC_SOURCE_INVALID`). 원본 값이 필요 없는 일반 C# profile에는 허용하지 않는다. r2 replay는 원본 등록 없이 `SVC_SOURCE_MISSING`을 보고하며 증거를 검증했다고 주장하지 않는다. 공개 owned fixture만 CI에 등록한다. qualification의 r2 SVC workload는 기존 `source`에 UTF-8 원본을 등록하고 profile의 `svc_source`와 결속한다. 비공개 source를 원격으로 보내는 기능은 추가하지 않는다.
 
 SVC 완료 기록의 초기 step 외에는 관측 전용 step에도 edit의 byte·point 증거가 있다. SVC r2 replay는 이를 등록 source와 대조한다. 구간별 FAIL 사유는 BLOCKED 사유에 앞서며 step 번호는 전체 사례 기준이다. 미완료 구간이 있으면 그 terminal 상태를 반환하고 전체 claim은 NOT_CLAIMED다. 구간 자원 최댓값은 qualification의 host 관측으로 집계한다([tree/protocol](tree-and-adapter-protocol.md)).
+
+## Accepted reuse의 명시 선택 (#264)
+
+`tsgk incremental --reuse-accepted FILE`와 `tsgk oracle record --reuse-accepted FILE`은 입력 root 밖의 고정 holdout 원장을 요구하고 필수 관측·source witness를 함께 사용한다. 빈 flag·빈 문서·미지원 조합은 output/build 전에 거부한다. 기존 profile 형식은 유지한다. 새 결과/replay/qualification 선택자와 Windows/Linux 범위는 [accepted reuse 계약](reuse-accepted.md)을 따른다.
