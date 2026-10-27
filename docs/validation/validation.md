@@ -6,6 +6,8 @@
 
 ## 편집 중 선택 검사와 후보 검증
 
+#216 Windows JSON24의 명시적 수동 연결은 [실제 검증 보고서](../reports/issue-216-json24-reference.md)를 따른다. 고정 query8/tuple24, 원본 producer BLOCKED, build9/unit4/control53/assertion36의 전체 closure와 독립 caller 승인을 유지한다. 세 local helper는 기본 시험에서 SKIP이며 실제 실행 PASS를 뜻하지 않는다. 외부 승인 후 같은 저장 bytes의 API/replay에서 모든 counts·완료/binding/base/semantic/producer verdict·관련 digest와 읽기 bytes를 대조한다. owner와 출력 slice 음성 자료는 각각 해당 결속 finding으로 FAIL이어야 한다. 기존 small 한도와 필수 CI는 유지하며 전체26/SVC/large의 대체 근거로 사용하지 않는다.
+
 #216 실제 JSON producer/capture/API/replay·ABI99 대조는 기존 Windows/Linux native 제어군의 동일 `go test` 호출·180초 한도에서 실행하며, 각 최상위 시험의 PASS가 로그에 없으면 실패한다. 기존 `reuse-accepted-oracle.log` artifact에 함께 보존한다. 별도 dispatch·job·동시 heavy 실행은 추가하지 않는다. 새 macOS producer와 JSON24 capture 검증은 제외하며 기존 필수 baseline CI는 유지한다.
 
 #216 결속 반례는 같은 hash의 control grammar owner와 같은 driver의 다른 경로, declared compiler name/version만 바꾸고 입력 pin까지 재승인한 자료를 검사한다. 5 MiB 공백 registration의 공개 API·replay와 저장 r3, 5 MiB profile 및 8 MiB projection의 공개 API·set 무결성 대조를 유지한다. 내부 base gate의 미재계산·일부 삭제·mode/counter·완료 PASS code 모순을 거부하며, raw full/projection record의 실제 FAIL은 base BLOCKED와 최초 code를 유지해 저장 reader에서도 허용해야 한다.
