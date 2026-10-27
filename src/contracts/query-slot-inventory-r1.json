@@ -1,0 +1,1733 @@
+{
+  "coordinate": [
+    "qualification_inventory.sha256",
+    "set",
+    "case",
+    "query",
+    "step",
+    "tree_role"
+  ],
+  "semantic_platform_scope": [
+    "windows/amd64",
+    "linux/amd64"
+  ],
+  "new_macos_validation": "EXCLUDED",
+  "schema": "tsgk-query-slot-inventory/r1",
+  "scope": "STATIC_CLASSIFICATION",
+  "assessment": "NOT_ASSESSED",
+  "semantic_required": null,
+  "expansion_rule": "case-query-edit-tree-role/r1",
+  "qualification_inventory": {
+    "path": "src/contracts/qualification-c1.json",
+    "bytes": 8297072,
+    "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+  },
+  "query_sources": [
+    {
+      "path": "src/testdata/native/queries/csharp.json",
+      "bytes": 23714,
+      "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+    },
+    {
+      "path": "src/testdata/native/queries/go.json",
+      "bytes": 4398,
+      "sha256": "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
+    },
+    {
+      "path": "src/testdata/native/queries/python.json",
+      "bytes": 9291,
+      "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+    },
+    {
+      "path": "src/testdata/native/queries/javascript.json",
+      "bytes": 6270,
+      "sha256": "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505"
+    },
+    {
+      "path": "src/testdata/native/queries/jsx.json",
+      "bytes": 4366,
+      "sha256": "036457f6bba87231d75fb55d768adef9ab8f03c8e2d43231da093aa18f8ffb62"
+    },
+    {
+      "path": "src/testdata/native/queries/typescript.json",
+      "bytes": 7706,
+      "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+    },
+    {
+      "path": "src/testdata/native/queries/tsx.json",
+      "bytes": 2814,
+      "sha256": "9ff203465bdcda7bcee4ab553e92aff327da72ed23d03ed559dd9b5d5fd72374"
+    },
+    {
+      "path": "src/testdata/native/queries/java.json",
+      "bytes": 5565,
+      "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+    },
+    {
+      "path": "src/testdata/native/queries/kotlin.json",
+      "bytes": 7135,
+      "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+    },
+    {
+      "path": "src/testdata/native/queries/c.json",
+      "bytes": 6204,
+      "sha256": "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd"
+    },
+    {
+      "path": "src/testdata/native/queries/cpp.json",
+      "bytes": 4734,
+      "sha256": "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766"
+    },
+    {
+      "path": "src/testdata/native/queries/rust.json",
+      "bytes": 5349,
+      "sha256": "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5"
+    },
+    {
+      "path": "src/testdata/native/queries/swift.json",
+      "bytes": 9390,
+      "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+    },
+    {
+      "path": "src/testdata/native/queries/dart.json",
+      "bytes": 10437,
+      "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+    },
+    {
+      "path": "src/testdata/native/queries/php.json",
+      "bytes": 7603,
+      "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+    },
+    {
+      "path": "src/testdata/native/queries/ruby.json",
+      "bytes": 6291,
+      "sha256": "265972373a9dedd0650675954b659f35348e929fc8d1791038c9e3ad37fbc8c4"
+    },
+    {
+      "path": "src/testdata/native/queries/r.json",
+      "bytes": 5850,
+      "sha256": "5fae6fb13622e4eb18bde54a89436af437b1eb874f6be1f20040ad71eba42fb3"
+    },
+    {
+      "path": "src/testdata/native/queries/bash.json",
+      "bytes": 3186,
+      "sha256": "996b3b155f5fb9a534fe26c8b103fc09a9b1b5699e8c6bb382efd5356b9da359"
+    },
+    {
+      "path": "src/testdata/native/queries/powershell.json",
+      "bytes": 3451,
+      "sha256": "d53b1588703d33fb033cbbc87d5f8e0508e05dc1038ecd942b6665ebc53eb79a"
+    },
+    {
+      "path": "src/testdata/native/queries/html.json",
+      "bytes": 5003,
+      "sha256": "dca8b1397376a0f013d8180b439d1c5c0cc639971b53c9abd0c4769d0bb59955"
+    },
+    {
+      "path": "src/testdata/native/queries/css.json",
+      "bytes": 36030,
+      "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+    },
+    {
+      "path": "src/testdata/native/queries/json.json",
+      "bytes": 2321,
+      "sha256": "3b1c4cac01ee08056098e6a5a7fa463158222bc0b3c345155925d1cc1e4373c3"
+    },
+    {
+      "path": "src/testdata/native/queries/yaml.json",
+      "bytes": 2426,
+      "sha256": "008d4d04351a7e9a4eb39e38f1820de313fcb2c7f6bc0527caf4efc4695e79b1"
+    },
+    {
+      "path": "src/testdata/native/queries/xml.json",
+      "bytes": 2409,
+      "sha256": "32e54336d7a2189cbf497644717ccee3d6ccfb2d35db2686c6c4b21ef0f12847"
+    },
+    {
+      "path": "src/testdata/native/queries/tsql.json",
+      "bytes": 11934,
+      "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+    },
+    {
+      "path": "src/testdata/native/queries/postgresql-sql.json",
+      "bytes": 8110,
+      "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+    },
+    {
+      "path": "src/contracts/fact-query-pack.json",
+      "bytes": 9702,
+      "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+    }
+  ],
+  "ordinary_totals": {
+    "cases": 3201,
+    "edits": 1852,
+    "case_steps": 5053,
+    "tree_roles": 6905,
+    "potential_query_tree_roles": 53104
+  },
+  "ordinary": [
+    {
+      "route": "csharp",
+      "set": "s06-csharp",
+      "profile": "s06-csharp",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 390,
+        "edits": 125,
+        "case_steps": 515,
+        "tree_roles": 640,
+        "potential_query_tree_roles": 9600
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "3b7d516c6ab1ab1eb5c9d913b22c86d486ac8b15250a2d2644bc221184257f1f",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-B02",
+          "sha256": "246b031e0c9b66f4b3156e97a8f2e4b861c41778e9ca2bd4200c8009585855a6",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-B03",
+          "sha256": "3a3bc698fc26d0f0ff218f6fdbccbb0f61325cdad8118ec65ddac8b1efb46f7b",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V73",
+          "sha256": "4edae94ce8a6a065380bee3ab92b6a83e7919d7daf2691f5c6896543ce91e873",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V08",
+          "sha256": "bd23b9f6887d31348c0f1ee918c12faf6f40067d61d0c1033ebdf4c3058a5ea6",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V10",
+          "sha256": "3baa19f32357bc7d3f37adb3e5a5e94dedcc059edd57bdc3786d125fae4b9777",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V11",
+          "sha256": "338d5c82dd5a0b1add4e367eff308e8389be6596c1fb347e887188c0569afa08",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V12",
+          "sha256": "b7e172079e66843334b9b35887b3ff1219ef71df13e07939e13ed27e024a42dc",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V13",
+          "sha256": "39ee7a69cf656fd7528d7a0af4c7a4a9e2a7d92c48863f134415829daa66971b",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V14a",
+          "sha256": "747800b442389fc7b3db2caef6dc8d62e45414f76193c7ef7bc584e3afb80ace",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V14b",
+          "sha256": "e9505d002fef25a6895165a3532cf5dbabd9045ae7ccebe5bb22b0a34b125024",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.issue152-name",
+          "sha256": "01df7a8b868b88c4f6bb650924118ba96095c65cee321629fb0917c10227d5b1",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.issue153-eof",
+          "sha256": "c40403f570069875add4a3eab115c280673f9048c286426338ac0e5419ff92e3",
+          "source_file": "src/testdata/native/queries/csharp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.declarations",
+          "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.dynamic_sql",
+          "sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "go",
+      "set": "s06-go",
+      "profile": "s06-go",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 57,
+        "edits": 37,
+        "case_steps": 94,
+        "tree_roles": 131,
+        "potential_query_tree_roles": 393
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "ce0ace9af2164936693efb63dcc12574cf64eda21fe78a4d9ad1ce7950df15eb",
+          "source_file": "src/testdata/native/queries/go.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v18",
+          "sha256": "d0bde1d011f6faff3d6ffeff5990639afe92e5f05492b79e60c93466a52a9416",
+          "source_file": "src/testdata/native/queries/go.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v27",
+          "sha256": "30695fe32e69f8e31a1d1051b64251a747d2380e151e9fe1af598b6163d6c1d9",
+          "source_file": "src/testdata/native/queries/go.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "python",
+      "set": "s06-python",
+      "profile": "s06-python",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 49,
+        "edits": 60,
+        "case_steps": 109,
+        "tree_roles": 169,
+        "potential_query_tree_roles": 1352
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "065cf5de0604363066c0c39759638dcec9af935a0b1373696f691040fc9723a9",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b02",
+          "sha256": "cde154e002ca7e2f37c90a6e6bc801ddb89fa6a0e9864ddad4c36c180d4f43f0",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v38",
+          "sha256": "5241a4423ad724acd2b33cdb765a642190e4e1ac8f095baec3034112b5cf13ad",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v39",
+          "sha256": "31d97eeb189767f0ad59f0b0db5620eee6d9994b90521685488f006feec67989",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v310",
+          "sha256": "30fd3966fac0a83b53e0cd6369d17ab7b7a9ca67bb587a28ff880146fe3c5664",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v311",
+          "sha256": "3d277f382dd112715ae031529c21aee61258f81a426a532c0055d5d4c68e96c2",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v313",
+          "sha256": "82ee085ab918978502e7bcf95185693374bfabed52f758823a1db9fe57cd3707",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v314",
+          "sha256": "413712877f31e7200e9b2307cd3ff9cf78ce5d3e22cf50e99490ae3097f84d2c",
+          "source_file": "src/testdata/native/queries/python.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "javascript",
+      "set": "s06-javascript",
+      "profile": "s06-javascript",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 58,
+        "edits": 40,
+        "case_steps": 98,
+        "tree_roles": 138,
+        "potential_query_tree_roles": 552
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "d5c47480683d350ed43669b6cd07d1aec567d585093237d5f96c1f405a35a2bd",
+          "source_file": "src/testdata/native/queries/javascript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v16",
+          "sha256": "68b529ff3343a0b6d713e6a37c50a335fb7e6bb46e51576dcd6d71d5aac4aa48",
+          "source_file": "src/testdata/native/queries/javascript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v20",
+          "sha256": "f29a1a2a4be3ea9faff06653dca56216af779280e97939cf7a183ee2d8a75791",
+          "source_file": "src/testdata/native/queries/javascript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v22",
+          "sha256": "1411fa645026d8454339cd78d8d171d7cc1ffebee4a6d38d65eab314e788abe8",
+          "source_file": "src/testdata/native/queries/javascript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "jsx",
+      "set": "s06-jsx",
+      "profile": "s06-jsx",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 58,
+        "edits": 28,
+        "case_steps": 86,
+        "tree_roles": 114,
+        "potential_query_tree_roles": 342
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "8704313cbd2b50ca5899acab82b2da3a193a0ba12c4efca916cb2581650f5416",
+          "source_file": "src/testdata/native/queries/jsx.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b02",
+          "sha256": "99c375a77d619da22005303b03932f8e01007c4feb464756dbd8ea1de7c3c55d",
+          "source_file": "src/testdata/native/queries/jsx.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b03",
+          "sha256": "b4d71bd30038f1ca36248ea80ebb0d6947d8a9625ed62b52966ff59c93f5d4fd",
+          "source_file": "src/testdata/native/queries/jsx.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "typescript",
+      "set": "s06-typescript",
+      "profile": "s06-typescript",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 81,
+        "edits": 26,
+        "case_steps": 107,
+        "tree_roles": 133,
+        "potential_query_tree_roles": 931
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "94b718ea5696901a19e30582397afe6037fe0ebf65855f6a765a83ba41022a2f",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V28",
+          "sha256": "d9a7639fba1f7cf108bdca789ab6800702f8bc38b57c3c7c362865b6a6837255",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V3",
+          "sha256": "a8b2f1c046976f9f6b5cc20776ed8b8377ec0421618ef1a8aa2c6a472a7ce9ef",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V40",
+          "sha256": "47f632cb4424a761e3047d2107698843bf5285957af9e3278b8361963d0712ae",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V45",
+          "sha256": "2b4202215cb85c8d4f2e03f979b67677c089c2ee7d063f9ed3b74d14e13d5136",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V50",
+          "sha256": "65afc82d65c1525e8d7284e88dce96aa39fa56128960cd0176fc31f631f3556d",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-V59",
+          "sha256": "1baa54c41379035e935e4db7e43b3c9ab3c27251d29ce63ad548d77b7a64a901",
+          "source_file": "src/testdata/native/queries/typescript.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "tsx",
+      "set": "s06-tsx",
+      "profile": "s06-tsx",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 71,
+        "edits": 18,
+        "case_steps": 89,
+        "tree_roles": 107,
+        "potential_query_tree_roles": 214
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "9c7ac03567566d0b379fda0303f5db461cea457732bc8104e76101a118c44064",
+          "source_file": "src/testdata/native/queries/tsx.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-B02",
+          "sha256": "29f60a58af9943e2c546263bebc105379ee5cd82d41c9709cc6c3d5fb9a9ae19",
+          "source_file": "src/testdata/native/queries/tsx.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "java",
+      "set": "s06-java",
+      "profile": "s06-java",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 40,
+        "edits": 32,
+        "case_steps": 72,
+        "tree_roles": 104,
+        "potential_query_tree_roles": 520
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "6b31aaa0626f4d2ef8e0e542cfcd3e3102581f267e6ac3482c5265616b478d01",
+          "source_file": "src/testdata/native/queries/java.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v9",
+          "sha256": "956f820c26bf247d5877cc8450aa7c639496ee332b34217c85edc318c1916bf6",
+          "source_file": "src/testdata/native/queries/java.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v21",
+          "sha256": "e163eac14537175162a1865aeb315fd470d2ac2e215de2d491abfc908ee16763",
+          "source_file": "src/testdata/native/queries/java.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v25-compact",
+          "sha256": "bd65786741e63b7da62527a2241064c04583045523824f0d4adb963c4d533dff",
+          "source_file": "src/testdata/native/queries/java.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v25-ctor",
+          "sha256": "30c5ee77cc3d50b374cdaf7ad8faaa13f0154fa8dc169d1f7deec57a67250280",
+          "source_file": "src/testdata/native/queries/java.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "kotlin",
+      "set": "s06-kotlin",
+      "profile": "s06-kotlin",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 38,
+        "edits": 32,
+        "case_steps": 70,
+        "tree_roles": 102,
+        "potential_query_tree_roles": 510
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "3948d9b3b28919dc7d78644ed99c383b8a0d0287b499393fe87719c08026a2cc",
+          "source_file": "src/testdata/native/queries/kotlin.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b02",
+          "sha256": "22d934886244d3623cabdf879e9dd38c1be8e93496a25a60a4f639bc86ae3104",
+          "source_file": "src/testdata/native/queries/kotlin.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v14",
+          "sha256": "ea6b48fdac43474737477653de739b92c41d28282adf63e711c7763429f8af19",
+          "source_file": "src/testdata/native/queries/kotlin.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v22",
+          "sha256": "01e3fc670a0c7656a4e5c516e7cf150ce2a2018c2bc7529a9288c436a5d0c916",
+          "source_file": "src/testdata/native/queries/kotlin.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v24",
+          "sha256": "d4f39e572fa9004ae8b3e7f0eb62c68a511e143e013127ca0617076baa99036e",
+          "source_file": "src/testdata/native/queries/kotlin.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "c",
+      "set": "s06-c",
+      "profile": "s06-c",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 58,
+        "edits": 18,
+        "case_steps": 76,
+        "tree_roles": 94,
+        "potential_query_tree_roles": 376
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "e9eba020e1b34816c5f12c21545fbea0b895e03996974593562cb23e1ff911a7",
+          "source_file": "src/testdata/native/queries/c.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-c-V11",
+          "sha256": "d3930fba7799c448bbe5fdf9a75fb102d7b5ffd896228600d140dfea3202a0e3",
+          "source_file": "src/testdata/native/queries/c.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-c-V23",
+          "sha256": "0d001ee87956853e839787e05f3da182b14d8a06777426fb984d7dfea2c0b757",
+          "source_file": "src/testdata/native/queries/c.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-c-L01",
+          "sha256": "6e33506bbd6c2914ca580874e90c3ec8fe65a70f26e2b9a1beb8b66f58656f1f",
+          "source_file": "src/testdata/native/queries/c.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "cpp",
+      "set": "s06-cpp",
+      "profile": "s06-cpp",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 77,
+        "edits": 13,
+        "case_steps": 90,
+        "tree_roles": 103,
+        "potential_query_tree_roles": 412
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "2a57e6e5cb3c6136878e5d27ced7c7a090d491ec2e9e5e3d51f6305c6227945e",
+          "source_file": "src/testdata/native/queries/cpp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-cpp-V14",
+          "sha256": "1077f4c6e42da4eb404eb4a819b5338f3c2aeeabbfeb1605678e3a4dd3d28f31",
+          "source_file": "src/testdata/native/queries/cpp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-cpp-V17",
+          "sha256": "29e660f47b5bb900c4321ea914fe6ea74f94d4662912773075e3aac7bf744c49",
+          "source_file": "src/testdata/native/queries/cpp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-cpp-V23",
+          "sha256": "fde3be27ac5b9a89fa6e366ed03a24f035e1f21d0ea4434a80e1d666aef3a467",
+          "source_file": "src/testdata/native/queries/cpp.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "rust",
+      "set": "s06-rust",
+      "profile": "s06-rust",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 33,
+        "edits": 14,
+        "case_steps": 47,
+        "tree_roles": 61,
+        "potential_query_tree_roles": 244
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "e3bddbcb1621ba8a3c546d30532ff349d0073b2a2728972d291f1a3b5d9c56a2",
+          "source_file": "src/testdata/native/queries/rust.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-rust-B02",
+          "sha256": "138adb98d09e76d140e5895c158c948c5eacfe53577f8cd297bb190d8ff8d2b9",
+          "source_file": "src/testdata/native/queries/rust.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-rust-V18",
+          "sha256": "39db79528b589ba56f1e88a5797302065732f5e87d5b5d72c095ba780e6407bb",
+          "source_file": "src/testdata/native/queries/rust.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-rust-V24",
+          "sha256": "5297a5811821401bc11f7881d439c135076abc6760147b56223bc496701d16f2",
+          "source_file": "src/testdata/native/queries/rust.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "swift",
+      "set": "s06-swift",
+      "profile": "s06-swift",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 76,
+        "edits": 62,
+        "case_steps": 138,
+        "tree_roles": 200,
+        "potential_query_tree_roles": 1600
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "6d88d7735d57a8811212c5b2a1530bb38edba699c2410fe88e776df4c5bb1459",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b02",
+          "sha256": "633bb081a17c16f86332a6342d67f80fa14a1d6800ca6e5f1e118ff094dc490b",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v51",
+          "sha256": "593535bc4f0c3366d2cbfca37ae26365609b21e0f8e0fa51a595e6258d03728e",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v55",
+          "sha256": "be22a5c1e67ccf88e9c21ff5ec8a9d3e87fede0c98d7e2107ff56724f95618db",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v59",
+          "sha256": "3fd8897fa2284fb0e46e430ed8eb25e4db523756ec5dfa49ae53d43a6a0c2088",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v61",
+          "sha256": "1053aec87985bcc9739a03cc87e6d5f2d54e9a77432d345d0b2ea401a6ef2018",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v62",
+          "sha256": "ff3f2f1a325e9f09f80b6ef9a6184e764ddbb132f2eff2708f7ad58eaa7d5a37",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v64",
+          "sha256": "aa4d6b32c8c84ce015800e49dc64f07132b5fe695ce8096c537112c6eff44745",
+          "source_file": "src/testdata/native/queries/swift.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "dart",
+      "set": "s06-dart",
+      "profile": "s06-dart",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 53,
+        "edits": 24,
+        "case_steps": 77,
+        "tree_roles": 101,
+        "potential_query_tree_roles": 707
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "9be21f392aaa4a7b47ca93c8d4150af880520dbe1c884e8e881015d6b258a52d",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-B02",
+          "sha256": "5f8d4ba8ceaabd923cca46c0d557b415733227eb99b40d549ff7f3a9e19ed598",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-V213",
+          "sha256": "f9d341d65ec3667741775ca19458a44ca67dbad00ca1ecce16054129130adf13",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-V30",
+          "sha256": "4dd168f6989acfea5b2059d37709b3239d510fd5a20e48a1ab5bda25dc2f5846",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-V36",
+          "sha256": "085280dddc558a58a2650baabdaaa0f7512b5dfd60a2b5dc4e82089cd9c03c8b",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-V310",
+          "sha256": "6cbc215635bcb2888fada030d7ac8945eb51eaf5905124dd422858574cacbc55",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-dart-L01",
+          "sha256": "9d3e9c99f7545318e2f1d93104413b8fd3e221812d099ea1df8980aab0de3a3a",
+          "source_file": "src/testdata/native/queries/dart.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "php",
+      "set": "s06-php",
+      "profile": "s06-php",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 48,
+        "edits": 46,
+        "case_steps": 94,
+        "tree_roles": 140,
+        "potential_query_tree_roles": 700
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "8a679972baa8493da206d5cedb2c0bedf68e82af503185a41281ab0b64de0d51",
+          "source_file": "src/testdata/native/queries/php.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v56",
+          "sha256": "95f1911dfbfa7e2bbe61b967b8be979d118f1201ac2c135f624c7a8b6049745d",
+          "source_file": "src/testdata/native/queries/php.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v72",
+          "sha256": "260d4f5dcc6720772b4a2ca705c77b79f8c5703fffcc902ea0a9b7312165c9ab",
+          "source_file": "src/testdata/native/queries/php.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v82",
+          "sha256": "4b97a5952f1301c1df3f47bdf7dfaa20cc12360f00e66e4c2a7d045920ccb4c3",
+          "source_file": "src/testdata/native/queries/php.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v84",
+          "sha256": "80ee339d6c2f7a0aacab439200e8f48161aa193805ffbefd68d2f1df362d8f8d",
+          "source_file": "src/testdata/native/queries/php.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "ruby",
+      "set": "s06-ruby",
+      "profile": "s06-ruby",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 30,
+        "edits": 34,
+        "case_steps": 64,
+        "tree_roles": 98,
+        "potential_query_tree_roles": 392
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "a5cc4a7dc40c57581cdf56094b8b3673cdb3ea6ff393d0b6114c7b0671cf2587",
+          "source_file": "src/testdata/native/queries/ruby.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b01",
+          "sha256": "dc33a0856cab4045ed1909eeac8894a50b243bea26dce84cd64244f1d3208028",
+          "source_file": "src/testdata/native/queries/ruby.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v27",
+          "sha256": "136c749e65d6b58678a32d1b959d8d75767663fab50eb9413bbcac7c0d55db4e",
+          "source_file": "src/testdata/native/queries/ruby.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v31",
+          "sha256": "b897352ef19ee12be7f3a7f2b975b51e38c95009978cd721508cbd188fcdf827",
+          "source_file": "src/testdata/native/queries/ruby.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "r",
+      "set": "s06-r",
+      "profile": "s06-r",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 17,
+        "edits": 28,
+        "case_steps": 45,
+        "tree_roles": 73,
+        "potential_query_tree_roles": 219
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "c792db5a2edb3d3a48cbeb61a6b2607bc95e65aef05ca6a65f14532c383ee6b3",
+          "source_file": "src/testdata/native/queries/r.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v40",
+          "sha256": "9e5dce7edc8aa9e381da11611e1f263d994e92e89e6ac0a5ba06e402396ed663",
+          "source_file": "src/testdata/native/queries/r.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v42",
+          "sha256": "3f65de0b8c997711434d558b4eb0a00c554e1f16612e0c3314ca283f94211e26",
+          "source_file": "src/testdata/native/queries/r.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "bash",
+      "set": "s06-bash",
+      "profile": "s06-bash",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 31,
+        "edits": 18,
+        "case_steps": 49,
+        "tree_roles": 67,
+        "potential_query_tree_roles": 134
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "c9f77947f4ea7b77754a9b447dc6e66af76b827c70bbf1237a0aef1a048bd355",
+          "source_file": "src/testdata/native/queries/bash.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v4",
+          "sha256": "ad30db7ad9f830aab2136d3a579ab585d99f10126811f677b3de98b1dfc41578",
+          "source_file": "src/testdata/native/queries/bash.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "powershell",
+      "set": "s06-powershell",
+      "profile": "s06-powershell",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 39,
+        "edits": 24,
+        "case_steps": 63,
+        "tree_roles": 87,
+        "potential_query_tree_roles": 261
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "36efa2ef8b8d235827d03a487b4f8296a3c3daf4e308a3a7a02b31b843ad13f4",
+          "source_file": "src/testdata/native/queries/powershell.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v7-chain",
+          "sha256": "82a52a565141daed32602f0f8861abcb2a0da3806f2875e726d32584f7a544b6",
+          "source_file": "src/testdata/native/queries/powershell.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v7-blocks",
+          "sha256": "b842c7bff54bb402d9fa90c3c66a6ece314dca6cc0b9e62dc9aa40bb59017fa0",
+          "source_file": "src/testdata/native/queries/powershell.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "html",
+      "set": "s06-html",
+      "profile": "s06-html",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 34,
+        "edits": 8,
+        "case_steps": 42,
+        "tree_roles": 50,
+        "potential_query_tree_roles": 100
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "a2ec6d274471dae0d094c63445488f0463f0f7593fe82020f909f40aabbc5a18",
+          "source_file": "src/testdata/native/queries/html.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.source",
+          "sha256": "a3502f6c81bdbccb69b3f08a337201d23eb87539f3cba989bd53a8bb1075cd20",
+          "source_file": "src/testdata/native/queries/html.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "css",
+      "set": "s06-css",
+      "profile": "s06-css",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 246,
+        "edits": 30,
+        "case_steps": 276,
+        "tree_roles": 306,
+        "potential_query_tree_roles": 3366
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "aa9dedcc031ca2bf19d116d552647078ebb0b864bf7f176729662c58fc9d874d",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.property",
+          "sha256": "c13e3ce0363023caa52de753923408d6916f25e8d870dcb7dfc6d84b00523c56",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.value",
+          "sha256": "51fdcb6dd0235bf191f1c54bbc836aeab687ba0167fdfd39016eee1a7ddf48c3",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.call",
+          "sha256": "793d2aeb5b2600e6c4188b7d6e65b9a07fd7cc388dc6203c0129465af160e1b3",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.selectors",
+          "sha256": "08c73efedba5fd7eb31c88d0819d5b7d99ffec0765e3f653b013f69ae40c461a",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.import",
+          "sha256": "b107565df1c734022b1007cfb48d814addb229381ec96641acfadbdb0ec3f077",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.calc",
+          "sha256": "6b01dffaa02b5e6785dd84e8a02716ffc178cad130db72535555caee371f70b1",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.at",
+          "sha256": "523ef692141f6cbd74188feee0a0852b178341a91fbf1be1d9d72f4c187efe5e",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.media",
+          "sha256": "55bed83b0e371591bb6a02d1262d7f9ed04801b6984c557e8f64174adfa3fd7c",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.grid",
+          "sha256": "d9aab723cca20750c5f32ac7a7ce95b78f941e4664194271cca704355f877902",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.supports",
+          "sha256": "429b5b96421b1ad469caf87a89c7301ac41b9d3e800d1a947ac2be6ff12d6509",
+          "source_file": "src/testdata/native/queries/css.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "json",
+      "set": "s06-json",
+      "profile": "s06-json",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 23,
+        "edits": 24,
+        "case_steps": 47,
+        "tree_roles": 71,
+        "potential_query_tree_roles": 71
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "1862753c69e51b6365315be1d0e788969e3a899a7e05a22cdbbea3e096ff0f41",
+          "source_file": "src/testdata/native/queries/json.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "yaml",
+      "set": "s06-yaml",
+      "profile": "s06-yaml",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 27,
+        "edits": 22,
+        "case_steps": 49,
+        "tree_roles": 71,
+        "potential_query_tree_roles": 71
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "7f2d2c9782a06629b02bd0213e13de72334ced48e686fe2ee9637a009d7689f1",
+          "source_file": "src/testdata/native/queries/yaml.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "xml",
+      "set": "s06-xml",
+      "profile": "s06-xml",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 30,
+        "edits": 34,
+        "case_steps": 64,
+        "tree_roles": 98,
+        "potential_query_tree_roles": 196
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "bc3851a4b2a54ae9bfdb6b4f910479c955cae7cf38f31722f7ab1abff16ff227",
+          "source_file": "src/testdata/native/queries/xml.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.xml_structure",
+          "sha256": "5aa16c3d6107e93005486a5e720fb06c2fef9c279fdcd85267942cdc14de19d6",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "tsql",
+      "set": "s06-tsql",
+      "profile": "s06-tsql",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 1000,
+        "edits": 991,
+        "case_steps": 1991,
+        "tree_roles": 2982,
+        "potential_query_tree_roles": 23856
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "b251c313124e45c4db8fc470a5963f54d7b53df488a4ad9928203bd81d7e0a41",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.r6-structure",
+          "sha256": "3873c504301578837306f5fbe483433cfc58fb3ae30cebe913c12d029825ba63",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.r6-begin",
+          "sha256": "5cca4ecb56cff2f575328d63276e1745a21021cb2944b276e845c8885e871674",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v16",
+          "sha256": "4159b9338522a4f7509f9d638f5817c6928f4677b2a31edbf4b38c4901f10aa8",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v22",
+          "sha256": "3fc130b6a79d424a3a07f06f7d1a7769b158c69c67099ae5be37cac60feba949",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.issue128-ownership",
+          "sha256": "c52218d06db46e4c9db7a8024626bce15236127ee15a43794b0d28281385f0ad",
+          "source_file": "src/testdata/native/queries/tsql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.declarations",
+          "sha256": "bfca18365c23af4a2cbcff969760772237fe443be4b6d8f4585f92f64489df23",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.dynamic_sql",
+          "sha256": "fa5fad90879b878dd42a2fae18dd43312a0c165e6ac8c9d0ffe96369138ae418",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    },
+    {
+      "route": "postgresql-sql",
+      "set": "s06-postgresql-sql",
+      "profile": "s06-postgresql-sql",
+      "operation": "native-query-batch",
+      "counts": {
+        "cases": 537,
+        "edits": 64,
+        "case_steps": 601,
+        "tree_roles": 665,
+        "potential_query_tree_roles": 5985
+      },
+      "queries": [
+        {
+          "id": "q.structure",
+          "sha256": "35e55e9d63eafae23dfd6fd23e9f52018574905884d99d78227fa7abad0a0a4e",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b01-strings",
+          "sha256": "9004103236ba4fdcb76b71442a6c2ba5a3b14ec031416f313633b974e92253fa",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-b04-utility",
+          "sha256": "b4264eb4db18dd8c652f890dce53b1b07a82b628b80c583b0a73c8b4d7e080c7",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v10-partition",
+          "sha256": "01d1260c7c90dd7c0ee0286f4f6bbb850a84a903314ba94db7207dd10ca54da2",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v13-merge",
+          "sha256": "b5e10f700059e1cfc7712a3dd2ca091ea3b76f152dc50d23894015946239c1ad",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v16-json-table",
+          "sha256": "37e8d705152701242987e07600c6aff590be3f2b6ae9b75f907e179999175f8f",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-v18-returning",
+          "sha256": "0fbedd7084e35b58bd9f50c787e3015d3049c8b62dc145cdb548ef632199a6f3",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "q.probe-l01-oids",
+          "sha256": "b72a313c2f8e47b0fa1022d89a26983808000413e8634fb5bffc9143667d334d",
+          "source_file": "src/testdata/native/queries/postgresql-sql.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        },
+        {
+          "id": "facts.declarations",
+          "sha256": "1f2284ae901d05903ec6fc8418420a9a459806e2e15ea9d1e45033aeeba528aa",
+          "source_file": "src/contracts/fact-query-pack.json",
+          "class": "STRUCTURAL_CANDIDATE",
+          "compiled_metadata": "UNVERIFIED"
+        }
+      ]
+    }
+  ],
+  "extra_roles": [
+    {
+      "id": "n461-svc",
+      "role": "owned",
+      "registered_status": "EXECUTED",
+      "reason": "SVC-SERVICEHOST-r2 directive, C# inline, recovery and explicitly registered C# reference fixtures (OWNED_FIXTURE, three hosts; syntax only)",
+      "platforms": [
+        "windows-amd64",
+        "linux-amd64",
+        "darwin-arm64"
+      ],
+      "not_applicable": {},
+      "deferred": {},
+      "class": "CONTEXT_NOT_EXPANDED",
+      "workloads": [
+        {
+          "set": "s06-csharp-svc",
+          "profile": "s06-csharp-svc",
+          "route": "csharp",
+          "operation": "native-query",
+          "format": "SVC-SERVICEHOST-r2",
+          "cases": 69,
+          "edits": 41,
+          "queries": [
+            {
+              "id": "facts.declarations",
+              "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b"
+            },
+            {
+              "id": "facts.dynamic_sql",
+              "sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n461-large",
+      "role": "owned",
+      "registered_status": "EXECUTED",
+      "reason": "real-world-source-r3 / native-query-large synthetic large C# fixtures (OWNED_FIXTURE)",
+      "platforms": [
+        "windows-amd64"
+      ],
+      "not_applicable": {
+        "darwin-arm64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)",
+        "linux-amd64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
+      },
+      "deferred": {},
+      "class": "CONTEXT_NOT_EXPANDED",
+      "workloads": [
+        {
+          "set": "s06-large",
+          "profile": "s06-large",
+          "route": "csharp",
+          "operation": "native-query-large",
+          "format": "",
+          "cases": 3,
+          "edits": 0,
+          "queries": [
+            {
+              "id": "facts.declarations",
+              "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b"
+            }
+          ]
+        },
+        {
+          "set": "s06-large-over",
+          "profile": "s06-large-over",
+          "route": "csharp",
+          "operation": "native-query-large",
+          "format": "",
+          "cases": 1,
+          "edits": 0,
+          "queries": [
+            {
+              "id": "all.nodes",
+              "sha256": "da842c4ec943d4fa4de79e9a127b1dfed56a03ac8f3ace869525b569468d37f6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csharp-symbols",
+      "role": "owned",
+      "registered_status": "EXECUTED",
+      "reason": "C# symbol mode (csharp-symbols/r1, #218): selections derived from tsgk-csharp-pp-roslyn/r2 observation sha256 261213a109904e7572f7b7e229fe399e417025b7306e171959c51f40a4fd3ab6 by Roslyn 5.9.0.0 of src/testdata/csharp-pp/cases.json sha256 9981758151e43df80cb0aa0479a73ec119d713d7789a2afdb93e406c0eadae5d, with hand-registered syntax; syntax only",
+      "platforms": [
+        "windows-amd64",
+        "linux-amd64"
+      ],
+      "not_applicable": {},
+      "deferred": {
+        "darwin-arm64": "#243: the macOS symbol-mode host result is deferred (Windows amd64 and Linux amd64 are the completion criteria)"
+      },
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": [
+        {
+          "set": "s05-csharp-symbols-none",
+          "profile": "s05-csharp-symbols-none",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 14,
+          "edits": 1,
+          "queries": []
+        },
+        {
+          "set": "s05-csharp-symbols-a",
+          "profile": "s05-csharp-symbols-a",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 11,
+          "edits": 1,
+          "queries": []
+        },
+        {
+          "set": "s05-csharp-symbols-enabled",
+          "profile": "s05-csharp-symbols-enabled",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 1,
+          "edits": 0,
+          "queries": []
+        },
+        {
+          "set": "s05-csharp-symbols-a-c",
+          "profile": "s05-csharp-symbols-a-c",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 1,
+          "edits": 0,
+          "queries": []
+        },
+        {
+          "set": "s05-csharp-symbols-switch",
+          "profile": "s05-csharp-symbols-switch",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 1,
+          "edits": 1,
+          "queries": []
+        },
+        {
+          "set": "s05-csharp-symbols-cst-mismatch",
+          "profile": "s05-csharp-symbols-cst-mismatch",
+          "route": "csharp",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 2,
+          "edits": 0,
+          "queries": []
+        }
+      ]
+    },
+    {
+      "id": "reuse-accepted",
+      "role": "owned",
+      "registered_status": "EXECUTED",
+      "reason": "고정 original history의 accepted 관측과 fresh 전체 CST 동등성; node identity·성능은 주장하지 않는다",
+      "platforms": [
+        "windows-amd64",
+        "linux-amd64"
+      ],
+      "not_applicable": {},
+      "deferred": {
+        "darwin-arm64": "사용자 결정으로 macOS accepted claim 검증은 제외한다"
+      },
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": [
+        {
+          "set": "reuse-accepted-tsql",
+          "profile": "reuse-accepted-tsql",
+          "route": "tsql",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 12,
+          "edits": 40,
+          "queries": []
+        },
+        {
+          "set": "reuse-accepted-json",
+          "profile": "reuse-accepted-json",
+          "route": "json",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 3,
+          "edits": 3,
+          "queries": []
+        },
+        {
+          "set": "reuse-accepted-tsql-omit",
+          "profile": "reuse-accepted-tsql-omit",
+          "route": "tsql",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 12,
+          "edits": 40,
+          "queries": []
+        },
+        {
+          "set": "reuse-accepted-json-omit",
+          "profile": "reuse-accepted-json-omit",
+          "route": "json",
+          "operation": "native-parse-edit",
+          "format": "",
+          "cases": 3,
+          "edits": 3,
+          "queries": []
+        }
+      ]
+    },
+    {
+      "id": "owned-native-fixtures",
+      "role": "owned",
+      "registered_status": "EXTERNAL",
+      "reason": "owned scannerless and stateful-scanner fixtures: the foundation job's native tests on each host (src/internal/native), not this aggregation",
+      "platforms": [],
+      "not_applicable": {},
+      "deferred": {},
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": null
+    },
+    {
+      "id": "brightscript-maintained",
+      "role": "maintained",
+      "registered_status": "NOT_RUN",
+      "reason": "BrightScript v0.1.4 maintained reference: no native route or workload is registered in this campaign",
+      "platforms": [],
+      "not_applicable": {},
+      "deferred": {},
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": null
+    },
+    {
+      "id": "brightscript-historical",
+      "role": "historical",
+      "registered_status": "NOT_RUN",
+      "reason": "BrightScript v0.1.2 historical replay (S07-REPLAY-2ULP-r1): the verification bundle is not prepared; never a NEW_RUN",
+      "platforms": [],
+      "not_applicable": {},
+      "deferred": {},
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": null
+    },
+    {
+      "id": "cooklang-audit",
+      "role": "historical",
+      "registered_status": "NOT_RUN",
+      "reason": "Cooklang legacy metadata audit: static S00 observation only, not executed",
+      "platforms": [],
+      "not_applicable": {},
+      "deferred": {},
+      "class": "NO_REGISTERED_QUERIES",
+      "workloads": null
+    }
+  ]
+}

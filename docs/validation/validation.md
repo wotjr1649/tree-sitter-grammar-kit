@@ -401,3 +401,7 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 ## #264 accepted reuse 변경 검증
 
 공개 pure checker·고정 원장·오래된 revision 거부, 정상/omit 모순·부분 관측·후속 FAIL 보존, CLI 거부 경계, record/set/replay와 qualification의 고정 15 original·25 target 및 별도 15 omit 대조군을 검사한다. 기존 normal+omit holdout 실행에서 Windows/Linux 합계 404개 관측을 저장하고 raw replay/qualification으로 소비하며, 별도 작은 JSON Oracle 대조군의 관측 3개를 검증한다. macOS 새 accepted 검증은 제외한다. 기존 78칸·symbol primary CST와 필수 CI는 유지하며 실제 bytes/wall·hard memory·cleanup receipt와 두 독립 최종 리뷰를 기록한다. 계약은 [accepted reuse](../specs/reuse-accepted.md)에 있다.
+
+## #216 정적 슬롯 원장 검사
+
+`TestQuerySlotInventory`는 기존 `ParseQualificationInventory`와 실제 query 원문에서 [정적 원장](../../src/contracts/query-slot-inventory-r1.json)을 재구성해 source pin·전체 group/정의·계수·extra 역할의 상태와 사유를 대조한다. `TestQuerySlotTreeRoles`는 수작업0편집/1편집 예제로 initial incremental과 편집 후 incremental/fresh, initial fresh 제외를 확인한다. `TestQuerySlotSourceClassification`은 정상 원문과 일치하는 hash의 `#eq?` 원문을 실제 분류 함수에 전달해 거부 경로를 확인하고 잘못된 source hash도 거부한다. `#` 거부 조건을 제거한 Go overlay 변이에서도 새 predicate 대조가 실패해야 한다. `TestQuerySlotInventoryControls`는 route/query 누락·중복, pin·계수 변경, EVALUATED/PASS·semantic 분모 위조, 필수 null 누락, deferred 사유 손실, 중복·미지 member와256KiB 초과를 거부한다. 생성 모드의 성공을 검증 gate로 세지 않으며, 정상 검사는 `TSGK_WRITE_INVENTORY`를 비워 원문을 고정한 채 실행한다. 이 정적 검사는 native/reference 실행·독립 expected·전체 semantic completion을 대신하지 않는다.
