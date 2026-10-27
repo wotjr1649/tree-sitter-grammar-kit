@@ -86,3 +86,5 @@ The shared `development-start` and `pr-review-workflow` skills are optional aids
 `docs/prompts/` and `docs/plans/` hold local execution material; `artifacts/` holds retained raw evidence and handoffs; `_ref/` holds pinned references; `.work/` is regenerable workspace. Keep these paths untracked. Public acceptance criteria must be understandable from this map and applicable Issues without local material.
 
 Query reference의 caller-trusted 승인, build/control closure 및 native/r4 저장 일관성은 [offline eligibility 계약](specs/query-reference-eligibility.md)을 따른다.
+
+일반 query 슬롯의 정적 분류·전개 규칙·추가 역할 보존은 [정적 슬롯 계약](specs/instrumented-query-reference.md#216-정적-query-슬롯-원장)과 [고정 원장](../src/contracts/query-slot-inventory-r1.json)을 따른다. 잠재 슬롯 수는 semantic 필수 분모가 아니다.

@@ -133,3 +133,17 @@ Grammar closure member는 기존 eligibility/r1이 요구하는 `grammar-parser`
 완료된 native 응답과 projection의 기본 판정 입력도 대조한다. producer의 ABI·query/API/predicate capability·symbol/field 수·reuse capability와 response status/code, 단계별 route 원값 및 그 값에서 계산한 proven, 단일 실행의 restart 부재, incremental/fresh의 순서 있는 declaration/name span을 같은 retained raw에서 확인한다. provenance 승인과 hash를 다시 맞춰도 projection이 raw의 사실을 바꾸면 FAIL이다. ABI 거부 등 미완료 실행의 원 producer 정보는 이 완료 전용 대조로 덮지 않는다.
 
 producer_fold_valid는 record와 projection의 claim·상태·판정·code 관계가 모두 맞고 pending leaf를 포함한 집계가 올바를 때만 true다. 모순을 finding으로 남겼더라도 이 표시를 true로 유지하지 않는다. 이 판정 뒤의 취소·자원 한도는 이미 확인한 producer 기록과 원 FAIL/code를 지우지 않는다.
+
+## #216 정적 query 슬롯 원장
+
+[query-slot-inventory-r1.json](../../src/contracts/query-slot-inventory-r1.json)은 `tsgk-query-slot-inventory/r1`의 정적 분류다. 기존 qualification 등록부의 원문 path·bytes·SHA-256과 query 정의 파일의 pin을 결속하며, 사례 행과 source를 다시 복제하지 않는다. `STATIC_CLASSIFICATION`과 `assessment=NOT_ASSESSED`는 실행 결과가 아니다. `semantic_required:null`은 이 원장에서 semantic 분모를 등록하지 않았다는 뜻이고, 필드 누락이나 0으로 바꾸지 않는다. 별도로 사전 등록한 JSON24 등의 의미 분모를 이 값으로 대체하지 않는다.
+
+일반 슬롯의 좌표는 `(qualification_inventory.sha256, set, case, query, step, tree_role)`다. 원본 등록부의 모든 일반 route workload에서 모든 case와 모든 query를 선택한다. 일반 사례3,201개 중3,047개는 등록부에 source 원문이 내장되지 않았으므로 후속 witness에는 원문과 독립 expected를 별도로 준비해야 한다. step0은 incremental만 있고 편집 이후 각 step에는 incremental과 fresh를 이 순서로 둔다. 원본 parser가 검사한 set 및 case/query ID의 유일성과 전체 원문 pin을 함께 사용하므로, 정규화한 group과 전개 규칙으로 각 슬롯을 유일하게 복원한다. `case_steps`는 `1 + len(edits)`, `tree_roles`는 `1 + 2*len(edits)`이며 `potential_query_tree_roles`는 query 수와 tree role 수의 곱이다.
+
+현재 등록부는 일반26 route, 3,201사례, 130 query 정의, 편집1,852개, case step5,053개, tree role6,905개, 잠재 query/tree-role 좌표53,104개다. 이 수에는 플랫폼 축이 없으며 semantic 필수 tuple이나 실행 건수도 아니다. 새 semantic 대상은 Windows/Linux로 별도 표시하고 신규 macOS 검증은 제외한다. 기존 baseline의 플랫폼과 extra-role의 적용·유예 사유는 원형대로 유지한다.
+
+각 일반 query는 실제 원문 정의와 등록된 hash가 같아야 한다. 현재130개 원문에는 ASCII `#`가 없어 `STRUCTURAL_CANDIDATE`, compiled metadata는 `UNVERIFIED`로 기록한다. 이는 컴파일 성공·capture/pattern metadata의 독립 확인이나 EVALUATED를 뜻하지 않는다. 원문에 `#`가 새로 생기면 정적 분류를 자동 승격하지 않고 독립 검토·명시적 등록을 요구한다. 기존 네 가지 text predicate와 nonempty predicate 등록 조건은 유지한다.
+
+8개 extra 역할은 ID·role·등록 status·reason·platforms·not_applicable·deferred와 원본 workload의 set/profile/route/operation/format·query pin을 보존한다. Workload 부재의 null과 빈 배열을 구별한다. Query가 없는 역할은 `NO_REGISTERED_QUERIES`, query가 있는 별도 context는 `CONTEXT_NOT_EXPANDED`다. SVC69사례의 원문 좌표·segment 및 large 정상3+over-limit1의 paging을 일반 슬롯 곱셈으로 확장하지 않는다. `s06-large-over`의 기대 자원 제한과 각 사례의 전체 입력·편집·기대값은 pin으로 고정한 원본 qualification 등록부를 따른다. Symbol·reuse-accepted의 query0과 EXTERNAL/NOT_RUN/DEFERRED를 의미 PASS로 바꾸지 않는다.
+
+정적 문서 상한은256KiB다. 중복·미지 JSON member, 필수 null/0 필드의 누락, 원문 pin·분류·계수·추가 역할 사유의 변경을 거부한다. 재생성은 기존 `TSGK_WRITE_INVENTORY=1`을 명시한 `TestQuerySlotInventory`가 수행하고, 쓰기 모드를 끈 별도 검사로 원장과 음성 대조를 검증한다. 기본 foundation 검사는 원장 존재·정확한 값과 shape를 요구한다. 이는 기존 small/large runtime budget, producer/reducer 또는 qualification verdict를 변경하지 않으며, 독립 predicate probe·reference·전체 semantic completion/fan-in gate는 후속 단위다.
