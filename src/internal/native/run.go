@@ -214,7 +214,8 @@ type ExpectationResult struct {
 
 // CaseResult is the outcome of one registered case.
 type CaseResult struct {
-	ReuseAccepted         *kit.ReuseAcceptedResult `json:"reuse_accepted,omitempty"`
+	QuerySemantics        *kit.OracleQuerySemantics `json:"query_semantics,omitempty"`
+	ReuseAccepted         *kit.ReuseAcceptedResult  `json:"reuse_accepted,omitempty"`
 	acceptedExpected      *nativewire.Expect
 	ReuseObservationClaim string                   `json:"reuse_observation_claim,omitempty"`
 	References            []SvcReferenceResult     `json:"references,omitempty"`
@@ -284,12 +285,30 @@ func (x Context) request(c kit.IncrementalCase, source []byte) Request {
 // Exec launches the driver on one framed request and returns the process result. It is
 // the single launch path for cases and the protocol tests.
 func (b *Build) Exec(ctx context.Context, mode string, stdin []byte, wall time.Duration, op kit.NativeOperation, cgroup string) (runner.Result, error) {
+	return b.exec(ctx, mode, stdin, wall, op, cgroup, nil)
+}
+
+func (b *Build) exec(ctx context.Context, mode string, stdin []byte, wall time.Duration, op kit.NativeOperation, cgroup string, capture *driverCapture) (runner.Result, error) {
 	if err := b.Verify(); err != nil {
+		if capture != nil {
+			*capture = driverCapture{stage: "VERIFY_REFUSED", err: err}
+		}
 		return runner.Result{}, err
 	}
 	spec := runner.Spec{Path: b.Executable, Args: []string{mode}, Dir: b.Dir, Env: nil, Stdin: stdin, StdoutBytes: int64(op.OutputBytes) + 4, StderrBytes: 65536,
 		Wall: wall, Grace: 5 * time.Second, Memory: runner.Memory{Bytes: op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: cgroup}
-	return runner.Run(ctx, spec)
+	if capture != nil {
+		// The runner reads these owned slices; later caller mutations cannot rewrite the capture.
+		spec.Args, spec.Env, spec.Stdin = slices.Clone(spec.Args), slices.Clone(spec.Env), slices.Clone(spec.Stdin)
+		*capture = driverCapture{spec: &spec}
+	}
+	result, err := runner.Run(ctx, spec)
+	if capture != nil {
+		frozen := result
+		frozen.Stdout, frozen.Stderr = slices.Clone(result.Stdout), slices.Clone(result.Stderr)
+		capture.stage, capture.result, capture.err = "RUN_RETURNED", &frozen, err
+	}
+	return result, err
 }
 
 // caseRequest is a validated case ready for its driver frame.
@@ -313,6 +332,13 @@ func finishEarly(out *CaseResult, status, assess, code string) {
 
 // RunCase validates the case, runs one driver process for it and assesses the result.
 func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte) (out CaseResult) {
+	return b.runCase(ctx, x, c, source, nil)
+}
+
+func (b *Build) runCase(ctx context.Context, x Context, c kit.IncrementalCase, source []byte, capture *driverCapture) (out CaseResult) {
+	if capture != nil {
+		*capture = driverCapture{}
+	}
 	x.ObservationProducerSHA256 = b.Identity
 	out = newCaseResult(c)
 	if x.Preprocess != nil {
@@ -335,7 +361,7 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 	if done {
 		return out
 	}
-	res, err := b.Exec(ctx, "single", Frame(cr.payload), cr.wall, x.Op, x.CgroupParent)
+	res, err := b.exec(ctx, "single", Frame(cr.payload), cr.wall, x.Op, x.CgroupParent, capture)
 	if err != nil {
 		var ne *Error
 		if errors.As(err, &ne) {

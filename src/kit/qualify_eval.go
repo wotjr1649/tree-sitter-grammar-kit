@@ -556,6 +556,8 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		prof, pe := parseOracle(pdata)
 		if pe != nil {
 			add("PROFILE_INVALID_"+pe.Code, profPath, "workload profile이 계약에 맞지 않는다")
+		} else if prof.Native.Schema == OracleSemanticsSchema {
+			add("SEMANTICS_INVENTORY_REQUIRED", profPath, "이 inventory revision은 새 semantic profile을 소비하지 않는다")
 		} else {
 			if d := registrationDiff(prof, w); d != "" {
 				add("REGISTRATION_MISMATCH", profPath, "host workload가 등록 inventory와 다르다: "+d)

@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -23,6 +24,7 @@ const (
 	ReplaySchema                = "tsgk-replay/r1"
 	ReplayResultSchema          = "tsgk-replay-result/r1"
 	ReplayReferenceResultSchema = "tsgk-replay-result/r2"
+	ReplaySemanticsResultSchema = "tsgk-replay-result/r3"
 
 	ModeReplayedRaw           = "REPLAYED_RAW"
 	ModeCarriedForward        = "CARRIED_FORWARD"
@@ -143,6 +145,7 @@ type ReplayResult struct {
 	BytesRead      uint64                          `json:"bytes_read"`
 	Explanation    []string                        `json:"explanation"`
 	QueryReference *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
+	QuerySemantics *QuerySemanticsResult           `json:"query_semantics,omitempty"`
 	PreprocessCST  []PreprocessCSTCase             `json:"preprocess_cst,omitempty"`
 }
 
@@ -172,6 +175,11 @@ func parseReplay(data []byte) (ReplayProfile, *Error) {
 	if e != nil {
 		return p, e
 	}
+	return parseReplayValue(data, v, t)
+}
+
+func parseReplayValue(data []byte, v *jv, t typed) (ReplayProfile, *Error) {
+	var p ReplayProfile
 	m, e := t.object(v, []string{"schema", "id", "reducer", "operation", "subject", "identities", "records", "members"})
 	if e != nil {
 		return p, e
@@ -215,13 +223,13 @@ func parseReplay(data []byte) (ReplayProfile, *Error) {
 	if s.Attempt, e = t.uint(sm["attempt"]); e != nil {
 		return p, e
 	}
-	im, e := t.object(m["identities"], m["identities"].keys)
-	if e != nil {
+	im := m["identities"]
+	if e := t.want(im, '{'); e != nil {
 		return p, e
 	}
 	p.Identities = map[string]string{}
-	for k, iv := range im {
-		if p.Identities[k], e = t.str(iv); e != nil {
+	for i, k := range im.keys {
+		if p.Identities[k], e = t.str(im.vals[i]); e != nil {
 			return p, e
 		}
 	}
@@ -300,6 +308,12 @@ type reducer struct {
 
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
+
+		"oracle-set-r4": {ReducerInfo{ID: "oracle-set-r4", Revision: "r4", Operation: "evidence-replay",
+			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r5 and record/r4"},
+			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
+			Gates:  []string{"query-semantics"}, Recorded: []string{"execution authenticity", "unrecomputed API/fact/dynamic claims"},
+			Description: "Query semantics with immutable producer verdict, recomputed base and caller-approved reference closure under one run and guarded snapshot"}, replayQuerySemantics},
 		"query-reference-connection-r1": {ReducerInfo{ID: "query-reference-connection-r1", Revision: "r1", Operation: "evidence-replay",
 			Inputs:      []string{"caller-approved reference registration, witness registration and evidence policy", "evidence/ closed graph and pinned members"},
 			Roles:       []string{"reference-registration", "query-registration", "reference-policy", "reference-evidence", "retained"},
@@ -463,6 +477,7 @@ type replayEnv struct {
 	lim            ReplayLimits
 	prof           ReplayProfile
 	files          map[string]fs.FileInfo
+	directories    map[string]fs.FileInfo
 	members        map[string]ReplayMember
 	verified       map[string]bool
 	consumed       map[string]bool            // members the reducer read or bound
@@ -507,6 +522,8 @@ type replayEnv struct {
 	observationNodes             uint64             // the set operation's node limit, bounding a raw tree's count
 	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
+	querySemantics               *QuerySemanticsResult
+	recomputedOracle             map[string]string
 }
 
 func (x *replayEnv) finding(code, path, msg string) {
@@ -772,6 +789,9 @@ func (x *replayEnv) walk(dir string, count *uint64) *Error {
 		}
 		switch kind(info) {
 		case "dir":
+			if x.directories != nil {
+				x.directories[p] = info
+			}
 			if depthOf(p) > 64 {
 				return fail(KindResourceLimit, "DEPTH_LIMIT", p, nil)
 			}
@@ -814,14 +834,15 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
-		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || partial.reuseAccepted) {
+		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || partial.reuseAccepted) {
+			res.QuerySemantics = partial.querySemantics
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
 			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
 			res.Observed, res.BytesRead = partial.actual, partial.r.totalRead
 			if !partialFindingsCopied {
 				res.Findings = append(res.Findings, partial.findings...)
 			}
-			knownFailure := len(partial.findings) > 0 || partial.recomp.Assessment == AssessFail || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail ||
+			knownFailure := partial.querySemantics != nil && partial.querySemantics.Assessment == AssessFail || len(partial.findings) > 0 || partial.recomp.Assessment == AssessFail || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail ||
 				partial.reuseAccepted && partial.currentAccepted != nil && partial.currentAccepted.Result == claimFail
 			for _, g := range partial.gates {
 				knownFailure = knownFailure || g.Failed > 0
@@ -839,7 +860,56 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		res.Explanation = append(res.Explanation, explainFailure(e))
 		return res, e
 	}
-	prof, e := parseReplay(req.Profile)
+	profileStart := time.Now()
+	selected, selectionErr := selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil)
+	// A non-selected revision keeps its existing decoder's error ordering.
+	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
+		return bad(selectionErr)
+	}
+	rootValue := bytes.TrimLeft(req.Profile, " \t\r\n")
+	if selected == "" && len(rootValue) > 0 && rootValue[0] != '{' {
+		invalidRun, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall-time.Since(profileStart))
+		if e != nil {
+			return bad(e)
+		}
+		defer invalidRun.cancel()
+		invalidRun.eligibility = &eligibilityBudget{r: invalidRun}
+		if e := invalidRun.eligibility.reserveJSON("replay", req.Profile, 0); e != nil {
+			return bad(e)
+		}
+		code := "JSON_TYPE"
+		if rootValue[0] == 'n' {
+			code = "JSON_NULL"
+		}
+		return bad(fail(KindInvalidInput, code, "replay#", nil))
+	}
+	var prof ReplayProfile
+	var e *Error
+	var semanticRun *run
+	var semanticLimits ReplayLimits
+	if selected == "oracle-set-r4" {
+		semanticLimits = ReplayOperations()["evidence-replay"]
+		if testHookReplayLimits != nil {
+			semanticLimits = testHookReplayLimits(semanticLimits)
+		}
+		semanticRun, e = startRun(ctx, semanticLimits.Wall-time.Since(profileStart))
+		if e != nil {
+			return bad(e)
+		}
+		defer semanticRun.cancel()
+		semanticRun.eligibility = &eligibilityBudget{r: semanticRun}
+		b := semanticRun.eligibility
+		if e := b.reserveJSON("replay", req.Profile, 3); e != nil {
+			return bad(e)
+		}
+		var v *jv
+		v, e = decodeBounded("replay", req.Profile, MaxDocumentBytes, &valueBudget{max: 2000000, check: semanticRun.check, charge: func() *Error { return b.charge(1, 0, "replay-profile") }})
+		if e == nil {
+			prof, e = parseReplayValue(req.Profile, v, typed{doc: "replay", check: semanticRun.check})
+		}
+	} else {
+		prof, e = parseReplay(req.Profile)
+	}
 	if e != nil {
 		return bad(e)
 	}
@@ -851,6 +921,9 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		return bad(fail(KindUnsupported, "REDUCER_UNSUPPORTED", "replay#/reducer", nil))
 	}
 	res.Reducer = red.info
+	if red.info.ID == "oracle-set-r4" {
+		res.ResultSchema = ReplaySemanticsResultSchema
+	}
 	if red.info.ID == "query-reference-connection-r1" {
 		res.ResultSchema = ReplayReferenceResultSchema
 	}
@@ -861,19 +934,45 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	if prof.Operation != red.info.Operation {
 		return bad(fail(KindInvalidInput, "OPERATION_REDUCER_MISMATCH", "replay#/operation", nil))
 	}
-	if testHookReplayLimits != nil {
+	if semanticRun != nil {
+		lim = semanticLimits
+	} else if testHookReplayLimits != nil {
 		lim = testHookReplayLimits(lim)
 	}
 	res.Limits = lim
+	if semanticRun != nil {
+		var fields uint64
+		for _, member := range prof.Members {
+			if e := semanticRun.eligibility.charge(1, 0, "replay-profile-members"); e != nil {
+				return bad(e)
+			}
+			fields += uint64(len(member.Path) + len(member.Role) + len(member.SHA256) + 32)
+		}
+		levels := uint64(1)
+		for n := len(prof.Members); n > 1; n = (n + 1) / 2 {
+			levels++
+		}
+		if e := semanticRun.eligibility.charge(32*levels*(fields+1), 3*fields+128*uint64(len(prof.Members)), "replay-profile-members"); e != nil {
+			return bad(e)
+		}
+	}
 	res.Identities = append(res.Identities, IdentityRef{Role: "reducer", Schema: red.info.ID, SHA256: digestHex([]byte(reducerText(red.info)))},
 		IdentityRef{Role: "policy", Schema: "tsgk-replay-policy/r1", SHA256: digestHex([]byte(replayPolicyText(prof.Operation, lim)))},
 		IdentityRef{Role: "evidence-set", Schema: "tsgk-replay-members/r1", SHA256: digestHex([]byte(membersText(prof.Members)))})
 	res.Coverage.Requested = slices.Clone(red.info.Gates)
-	r, e := startRun(ctx, lim.Wall)
-	if e != nil {
-		return bad(e)
+	if semanticRun != nil {
+		if e := semanticRun.check(); e != nil {
+			return bad(e)
+		}
 	}
-	defer r.cancel()
+	r := semanticRun
+	if r == nil {
+		r, e = startRun(ctx, lim.Wall)
+		if e != nil {
+			return bad(e)
+		}
+		defer r.cancel()
+	}
 	if budget != nil {
 		r.totalRead, lim.TotalBytes = budget.r.totalRead, budget.total
 		defer func() { budget.r.totalRead = r.totalRead }()
@@ -901,13 +1000,17 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		x.members[m.Path] = m
 	}
 	var count uint64
+	if red.info.ID == "oracle-set-r4" {
+		x.directories = map[string]fs.FileInfo{}
+	}
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
 	}
 	reduceErr := red.run(x)
+	res.QuerySemantics = x.querySemantics
 	res.QueryReference = x.queryReference
 	res.PreprocessCST = x.preprocessCSTResults
-	if res.ResultSchema == ReplayReferenceResultSchema && x.recorded.ExecutionStatus != "" {
+	if (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema) && x.recorded.ExecutionStatus != "" {
 		if x.recorded != res.Recorded {
 			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
 		}

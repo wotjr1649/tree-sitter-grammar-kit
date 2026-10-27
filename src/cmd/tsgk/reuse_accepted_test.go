@@ -16,3 +16,21 @@ func TestReuseAcceptedCLIEmptyFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestOracleSemanticsCLIFlags(t *testing.T) {
+	for _, tc := range []struct {
+		kind string
+		args []string
+		want string
+	}{
+		{"oracle", []string{"--query-semantics="}, "empty --query-semantics"},
+		{"oracle", []string{"--query-semantics", "registration.json"}, "[--query-semantics FILE]"},
+		{"incremental", []string{"--query-semantics", "registration.json"}, "flag provided but not defined"},
+	} {
+		var out, stderr bytes.Buffer
+		code := runNative(context.Background(), tc.kind, tc.args, &out, &stderr)
+		if code != exitUsage || out.Len() != 0 || !strings.Contains(stderr.String(), tc.want) {
+			t.Fatalf("%s flags: %d %q %q", tc.kind, code, out.String(), stderr.String())
+		}
+	}
+}

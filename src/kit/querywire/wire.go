@@ -270,27 +270,49 @@ func decode(raw jsontext.Value, sources []Source, sourceBytes, descendantCount u
 // ValidMetadata reports whether metadata is what a compiled query yields: unique non-empty
 // capture names, and predicates in pattern order whose captures name one of them.
 func ValidMetadata(patterns uint32, names []string, predicates []querypolicy.Predicate) bool {
+	valid, _ := ValidMetadataChecked(nil, patterns, names, predicates)
+	return valid
+}
+
+// ValidMetadataChecked preserves metadata validation while checking every untrusted element.
+func ValidMetadataChecked(check func() error, patterns uint32, names []string, predicates []querypolicy.Predicate) (bool, error) {
 	if patterns == 0 && len(names) != 0 { // the runtime parses captures only inside a pattern
-		return false
+		return false, nil
 	}
 	seen := map[string]bool{}
 	for _, name := range names {
+		if check != nil {
+			if err := check(); err != nil {
+				return false, err
+			}
+		}
 		if name == "" || seen[name] {
-			return false
+			return false, nil
 		}
 		seen[name] = true
 	}
 	for i, p := range predicates {
+		if check != nil {
+			if err := check(); err != nil {
+				return false, err
+			}
+		}
 		if i > 0 && p.Pattern < predicates[i-1].Pattern {
-			return false
+			return false, nil
 		}
 		for _, step := range p.Steps {
+			if check != nil {
+				if err := check(); err != nil {
+					return false, err
+				}
+			}
 			if step.Kind == "capture" && !seen[step.Value] {
-				return false
+				return false, nil
 			}
 		}
 	}
-	return querypolicy.Support(patterns, predicates, "UTF-8") != querypolicy.InvalidMetadata
+	code, err := querypolicy.SupportChecked(check, patterns, predicates, "UTF-8")
+	return code != querypolicy.InvalidMetadata && err == nil, err
 }
 
 // MatchAccounting checks an unfiltered structural stream without reordering captures.

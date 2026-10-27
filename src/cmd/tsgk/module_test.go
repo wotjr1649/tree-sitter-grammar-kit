@@ -133,6 +133,15 @@ func TestModuleProxyConsumer(t *testing.T) {
 	if err := json.Unmarshal([]byte(eligibilityParts[2]), &eligibility); err != nil || eligibility.Assessment != kit.AssessBlocked || eligibility.Complete || eligibility.ResultSchema != kit.QueryReferenceEligibilityResultSchema {
 		t.Fatalf("module eligibility approval boundary: %v %+v", err, eligibility)
 	}
+	_, semanticsLine, _ := runBin(t, []string{"PATH=", "SystemRoot=" + os.Getenv("SystemRoot")}, consumer, "query-semantics", t.TempDir())
+	semanticsParts := strings.SplitN(strings.TrimSpace(semanticsLine), "\t", 3)
+	if len(semanticsParts) != 3 || semanticsParts[0] != "query-semantics" || !strings.HasPrefix(semanticsParts[1], kit.KindInvalidInput+"/") {
+		t.Fatalf("module consumer semantics: %q", semanticsLine)
+	}
+	var semantics kit.QuerySemanticsResult
+	if err := json.Unmarshal([]byte(semanticsParts[2]), &semantics); err != nil || semantics.ResultSchema != kit.QuerySemanticsResultSchema || semantics.Complete || semantics.Assessment == kit.AssessPass {
+		t.Fatalf("module semantics invalid-input boundary: %v %+v", err, semantics)
+	}
 	inv := filepath.Join(root, "src", "contracts", "qualification-c1.json")
 	host := t.TempDir()
 	cand := strings.Repeat("c", 40)

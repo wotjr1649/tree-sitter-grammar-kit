@@ -1307,7 +1307,7 @@ func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
 					case "replay":
 						data := []byte(`{}`)
 						if kind == "values" {
-							data = []byte(`{"padding":[` + strings.Repeat("0,", 2000000) + `0]}`)
+							data = []byte(`{"result_schema":"tsgk-replay-result/r3","padding":[` + strings.Repeat("0,", 2000000) + `0]}`)
 						}
 						node := &EvidenceNode{Files: []ReplayMember{{Path: "result.json", Role: "replay-result"}}}
 						e = x.checkReplayFile(node, &EvidenceNode{}, map[string][]byte{"result.json": data}, x.finding)
@@ -2162,9 +2162,10 @@ func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
 					r.eligibility = b
 					var decoded nativewire.Response
 					e = b.decode("native-shape", eligibilityJSON(t, changed), &decoded, true)
-					if bad == "null" && nullable {
+					optional := index == 3 && (field == "reason" || field == "errors" || field == "partial_trees")
+					if bad == "missing" && optional || bad == "null" && nullable {
 						if e != nil {
-							t.Fatalf("nullable wire arm rejected: %v", e)
+							t.Fatalf("allowed nullable/conditional wire arm rejected: %v", e)
 						}
 					} else if e == nil || e.Kind != KindInvalidInput {
 						t.Fatalf("malformed wire accepted: %v", e)

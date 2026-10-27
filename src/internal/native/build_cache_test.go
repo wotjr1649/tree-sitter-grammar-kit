@@ -47,7 +47,7 @@ func TestBuildCache(t *testing.T) {
 		t.Fatal(err)
 	}
 	warm := time.Since(start)
-	if !second.Reuse.Hit || len(second.Steps) != 0 || len(second.Reuse.SourceSteps) != len(first.Steps) || second.Identity != identity || second.ExecutableSHA256 != executable || second.Dir == first.Dir {
+	if second.identityText != first.identityText || sha([]byte(second.identityText)) != identity || !second.Reuse.Hit || len(second.Steps) != 0 || len(second.Reuse.SourceSteps) != len(first.Steps) || second.Identity != identity || second.ExecutableSHA256 != executable || second.Dir == first.Dir {
 		t.Fatal("cache did not preserve identity with zero new compilation steps")
 	}
 	replayed := runCase(t, second, "cache", kit.EncodingUTF8, plainSource, nil)

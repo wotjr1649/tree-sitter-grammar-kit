@@ -492,3 +492,28 @@ func TestReplayRevisionSelected(t *testing.T) {
 		})
 	}
 }
+
+func TestSemanticProfileRequiresSemanticReducer(t *testing.T) {
+	root, reg := fxOracleSet(t, func(_ []map[string]any, files map[string][]byte) {
+		var profile map[string]any
+		if err := json.Unmarshal(files["workload.json"], &profile); err != nil {
+			t.Fatal(err)
+		}
+		profile["schema"], profile["query_semantics_registration_sha256"] = OracleSemanticsSchema, strings.Repeat("a", 64)
+		data, err := json.Marshal(profile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files["workload.json"] = data
+	})
+	data, err := os.ReadFile(filepath.Join(root, "workload.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg["identities"].(map[string]string)["workload"] = sum(data)
+	profileData, _ := json.Marshal(reg)
+	result, err := Replay(ctxT(t), ReplayRequest{Root: root, Profile: profileData})
+	if err == nil || asError(err).Code != "SEMANTICS_REDUCER_REQUIRED" || result.EvidenceValid {
+		t.Fatalf("historical reducer consumed profile3: %+v", result.Findings)
+	}
+}

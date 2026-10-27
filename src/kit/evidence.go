@@ -1,13 +1,16 @@
 package kit
 
 import (
+	"bytes"
 	"context"
+	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
 	"io/fs"
 	"os"
 	"slices"
 	"strconv"
+	"unicode/utf8"
 )
 
 // Evidence graph schemas (Session 07).
@@ -127,15 +130,18 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 
 // Requested bytes come from the same guarded pass that hashes every graph member.
 type evidenceSnapshot struct {
-	wanted          map[string]bool
-	wantedNodes     map[string]bool
-	files           map[string][]byte
-	nodes           []EvidenceNode
-	graphBound      bool
-	invalidNodes    map[string]bool
-	approved        map[string]ReplayMember
-	verifiedMembers map[string]ReplayMember
-	walked          map[string]fs.FileInfo // the caller's walk of the same files; nil when none
+	observed          map[string]fs.FileInfo
+	directories       map[string]fs.FileInfo
+	wanted            map[string]bool
+	wantedNodes       map[string]bool
+	files             map[string][]byte
+	nodes             []EvidenceNode
+	graphBound        bool
+	invalidNodes      map[string]bool
+	approved          map[string]ReplayMember
+	verifiedMembers   map[string]ReplayMember
+	walked            map[string]fs.FileInfo // the caller's walk of the same files; nil when none
+	walkedDirectories map[string]fs.FileInfo
 }
 
 func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot) (EvidenceResult, error) {
@@ -146,20 +152,33 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot, sharedRun *run, heldRoot *os.Root) (EvidenceResult, error) {
 	if snapshot != nil {
 		snapshot.files, snapshot.nodes = map[string][]byte{}, nil
+		snapshot.observed = nil
+		snapshot.directories = nil
 		snapshot.graphBound, snapshot.invalidNodes = false, map[string]bool{}
 		snapshot.verifiedMembers = map[string]ReplayMember{}
 	}
 	res := EvidenceResult{Report: newReport("evidence verify"), ResultSchema: EvidenceResultSchema, Modes: map[string]int{}, Explanation: []string{}}
 	var x *replayEnv
+	findingsCopied := false
 	bad := func(e *Error) (EvidenceResult, error) {
-		failReport(&res.Report, e)
-		if snapshot != nil && snapshot.approved != nil && x != nil && len(x.findings) > 0 {
+		known := x != nil && len(x.findings) > 0
+		if known && !findingsCopied {
 			res.Findings = append(res.Findings, x.findings...)
+			findingsCopied = true
+		}
+		failReport(&res.Report, e)
+		if known {
 			res.Assessment = AssessFail
+		}
+		if len(res.Findings) > 1000 {
+			last := res.Findings[len(res.Findings)-1]
+			res.Findings = res.Findings[:1000]
+			res.Findings[999] = last
 		}
 		res.Explanation = append(res.Explanation, "evidence 검증을 끝내지 못했다: "+e.Code)
 		return res, e
 	}
+
 	if sharedRun != nil {
 		if e := sharedRun.eligibility.reserveJSON("policy", req.Policy, 3); e != nil {
 			return bad(e)
@@ -192,9 +211,16 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 		defer root.Close()
 	}
 	x = &replayEnv{r: r, g: newGuard(root), lim: lim, files: map[string]fs.FileInfo{}, verified: map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+	if snapshot != nil {
+		x.directories = map[string]fs.FileInfo{}
+	}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
+	}
+	if snapshot != nil {
+		snapshot.observed = x.files
+		snapshot.directories = x.directories
 	}
 	if snapshot != nil && snapshot.walked != nil {
 		// a file swapped between the caller's walk and this one must not inherit its verification
@@ -202,6 +228,20 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 			outer := snapshot.walked[p]
 			if outer == nil || !os.SameFile(outer, inner) || outer.Size() != inner.Size() || !outer.ModTime().Equal(inner.ModTime()) {
 				return bad(fail(KindIO, "SOURCE_CHANGED", p, nil))
+			}
+		}
+	}
+	if snapshot != nil && snapshot.walkedDirectories != nil {
+		if len(x.directories) != len(snapshot.walkedDirectories) {
+			return bad(fail(KindIO, "SOURCE_CHANGED", ".", nil))
+		}
+		for path, inner := range x.directories {
+			if e := r.eligibility.charge(uint64(len(path))+1, 0, "snapshot-directory"); e != nil {
+				return bad(e)
+			}
+			outer := snapshot.walkedDirectories[path]
+			if outer == nil || !os.SameFile(outer, inner) {
+				return bad(fail(KindIO, "SOURCE_CHANGED", path, nil))
 			}
 		}
 	}
@@ -466,6 +506,7 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	}
 	res.Nodes, res.Files = len(nodes), len(files)-1
 	res.Findings = append(res.Findings, x.findings...)
+	findingsCopied = true
 	res.Assessment = AssessPass
 	if len(x.findings) > 0 {
 		res.Assessment = AssessFail
@@ -547,7 +588,8 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			Reducer      struct {
 				ID string `json:"id"`
 			} `json:"reducer"`
-			QueryReference *QueryReferenceConnectionResult `json:"query_reference"`
+			QueryReference jsontext.Value `json:"query_reference"`
+			QuerySemantics jsontext.Value `json:"query_semantics"`
 			Subject        struct {
 				Run      string `json:"run"`
 				Attempt  uint64 `json:"attempt"`
@@ -555,19 +597,57 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			} `json:"subject"`
 		}
 		if x.r != nil {
-			if e := x.r.eligibility.reserveJSON("replay-result", data, 4); e != nil {
+			if e := x.r.check(); e != nil {
 				return e
 			}
+			if b := x.r.eligibility; b != nil {
+				if e := b.charge(uint64(len(data))+1, 0, "replay-result-probe"); e != nil {
+					return e
+				}
+			}
 		}
-		if err := jsonv2.Unmarshal(data, &rr); err != nil {
+		selection, e := replayResultRevision(data, x.r)
+		if e != nil {
+			if e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO {
+				return e
+			}
 			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 올바르지 않다")
 			continue
 		}
-		valid := rr.ResultSchema == ReplayResultSchema && rr.QueryReference == nil && rr.Reducer.ID != "query-reference-connection-r1"
-		if rr.ResultSchema == ReplayReferenceResultSchema {
-			var full ReplayResult
-			valid = decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
+		valid := false
+		if selection == ReplaySemanticsResultSchema {
+			full, e := decodeSemanticReplayResult(data, x.r)
+			if e != nil && (e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO) {
+				return e
+			}
+			valid = e == nil && validSemanticReplayResult(full)
+			if valid && full.ExecutionStatus == StatusCompleted && full.EvidenceValid && (full.Subject.ExecutionStatus != subject.ExecutionStatus || full.Subject.Assessment != subject.Assessment || full.Subject.EvidenceMode != subject.EvidenceMode) {
+				valid = false
+			}
+			rr.ResultSchema, rr.EvidenceMode, rr.Assessment = full.ResultSchema, full.EvidenceMode, full.Assessment
+			rr.Subject.Run, rr.Subject.Attempt, rr.Subject.Platform = full.Subject.Run, full.Subject.Attempt, full.Subject.Platform
+		} else {
+			if x.r != nil {
+				if e := x.r.eligibility.reserveLegacyReplayResult(data); e != nil {
+					if e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO {
+						return e
+					}
+					add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 올바르지 않다")
+					continue
+				}
+			}
+			if err := jsonv2.Unmarshal(data, &rr); err != nil {
+				add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 문서가 올바르지 않다")
+				continue
+			}
+			referenceAbsent := len(rr.QueryReference) == 0 || bytes.Equal(bytes.TrimSpace(rr.QueryReference), []byte("null"))
+			valid = rr.ResultSchema == ReplayResultSchema && referenceAbsent && len(rr.QuerySemantics) == 0 && rr.Reducer.ID != "query-reference-connection-r1" && rr.Reducer.ID != "oracle-set-r4"
+			if rr.ResultSchema == ReplayReferenceResultSchema {
+				var full ReplayResult
+				valid = len(rr.QuerySemantics) == 0 && decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
+			}
 		}
+
 		if !valid {
 			add("REPLAY_RESULT_INVALID", f.Path, "replay 결과 revision과 payload가 일치하지 않는다")
 			continue
@@ -580,6 +660,258 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 		}
 	}
 	return nil
+}
+
+// This selector scans delimiters and bounded schema strings only; the selected decoder validates JSON.
+func replayResultRevision(data []byte, r *run) (string, *Error) {
+	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema})
+}
+
+func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string) (selected string, resultErr *Error) {
+	defer func() {
+		if resultErr != nil && resultErr.Kind == KindInvalidInput && !utf8.Valid(data) {
+			resultErr = fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
+		}
+	}()
+	if uint64(len(data)) > MaxDocumentBytes {
+		return "", fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
+	}
+	if r != nil {
+		if e := r.check(); e != nil {
+			return "", e
+		}
+	}
+	pos, nextCheck := 0, 0
+	checkpoint := func() *Error {
+		if pos < nextCheck || r == nil {
+			return nil
+		}
+		nextCheck = pos + 4096
+		return r.check()
+	}
+	space := func() *Error {
+		for pos < len(data) && (data[pos] == ' ' || data[pos] == '\r' || data[pos] == '\n' || data[pos] == '\t') {
+			if e := checkpoint(); e != nil {
+				return e
+			}
+			pos++
+		}
+		return nil
+	}
+	invalid := func() *Error {
+		code := "JSON_SYNTAX"
+		if pos >= len(data) && allowed == nil {
+			code = "JSON_TRUNCATED"
+		}
+		return fail(KindInvalidInput, code, doc, nil)
+	}
+	quoted := func() ([]byte, *Error) {
+		start := pos
+		if pos >= len(data) || data[pos] != '"' {
+			return nil, invalid()
+		}
+		pos++
+		for pos < len(data) {
+			if e := checkpoint(); e != nil {
+				return nil, e
+			}
+			c := data[pos]
+			pos++
+			if c == '"' {
+				return data[start:pos], nil
+			}
+			if c == '\\' {
+				pos++ // Escape validity belongs to the selected decoder.
+			}
+		}
+		return nil, invalid()
+	}
+	if e := space(); e != nil {
+		return "", e
+	}
+	if pos >= len(data) || data[pos] != '{' {
+		if allowed == nil {
+			return "", nil
+		} // A non-object cannot select the new revision.
+		return "", invalid()
+	}
+	pos++
+	revision, seen := "", false
+	for {
+		if e := space(); e != nil {
+			return "", e
+		}
+		if pos < len(data) && data[pos] == '}' {
+			pos++
+			break
+		}
+		key, e := quoted()
+		if e != nil {
+			return "", e
+		}
+		isSchema := jsonASCIIString(key, name)
+		if e := space(); e != nil {
+			return "", e
+		}
+		if pos >= len(data) || data[pos] != ':' {
+			return "", invalid()
+		}
+		pos++
+		if e := space(); e != nil {
+			return "", e
+		}
+		if isSchema {
+			if seen {
+				return "", fail(KindInvalidInput, "JSON_DUPLICATE_KEY", doc, nil)
+			}
+			seen = true
+			if pos < len(data) && data[pos] != '"' {
+				// Read one aliased token only; no nested name index or number String allocation.
+				dec := jsontext.NewDecoder(bytes.NewBuffer(data[pos:]), jsontext.AllowDuplicateNames(true))
+				token, err := dec.ReadToken()
+				if err != nil {
+					e := jsonError(doc, "", err)
+					e.Path = doc + "#/" + name
+					return "", e
+				}
+				if token.Kind() != '{' && token.Kind() != '[' {
+					pos += int(dec.InputOffset())
+					if e := space(); e != nil {
+						return "", e
+					}
+					if pos == len(data) {
+						return "", fail(KindInvalidInput, "JSON_TRUNCATED", doc+"#/"+name, nil)
+					}
+					if data[pos] != ',' && data[pos] != '}' {
+						return "", fail(KindInvalidInput, "JSON_SYNTAX", doc+"#/"+name, nil)
+					}
+				}
+				code := "JSON_TYPE"
+				if token.Kind() == 'n' {
+					code = "JSON_NULL"
+				}
+				return "", fail(KindInvalidInput, code, doc+"#/"+name, nil)
+			}
+			value, e := quoted()
+			if e != nil {
+				return "", e
+			}
+			if len(value) > 6*128+2 {
+				if allowed != nil {
+					return "", fail(KindInvalidInput, "JSON_SHAPE", doc+"#/"+name, nil)
+				}
+				revision = "" // A non-target legacy value belongs to its existing decoder.
+			} else if decodeErr := jsonv2.Unmarshal(value, &revision); decodeErr != nil {
+				if allowed == nil {
+					e := jsonError(doc, "", decodeErr)
+					e.Path = doc + "#/" + name
+					return "", e
+				}
+				return "", fail(KindInvalidInput, "JSON_SHAPE", doc+"#/"+name, nil)
+			}
+			if revision == early {
+				return revision, nil // Its bounded decoder owns all following syntax and duplicates.
+			}
+		} else {
+			start, depth := pos, 0
+			for pos < len(data) {
+				if e := checkpoint(); e != nil {
+					return "", e
+				}
+				c := data[pos]
+				if depth == 0 && (c == ',' || c == '}') {
+					break
+				}
+				if c == '"' {
+					if _, e := quoted(); e != nil {
+						return "", e
+					}
+					continue
+				}
+				pos++
+				switch c {
+				case '{', '[':
+					depth++
+				case '}', ']':
+					if depth > 0 {
+						depth--
+					}
+				}
+			}
+			if pos == start || depth != 0 {
+				return "", invalid()
+			}
+		}
+		if e := space(); e != nil {
+			return "", e
+		}
+		if pos >= len(data) {
+			return "", invalid()
+		}
+		if data[pos] == '}' {
+			pos++
+			break
+		}
+		if data[pos] != ',' {
+			return "", invalid()
+		}
+		pos++
+		if e := space(); e != nil {
+			return "", e
+		}
+		if pos >= len(data) || data[pos] == '}' {
+			return "", invalid()
+		}
+	}
+	if e := space(); e != nil {
+		return "", e
+	}
+	if pos != len(data) {
+		return "", invalid()
+	}
+	if allowed != nil && (!seen || !slices.Contains(allowed, revision)) {
+		return "", fail(KindInvalidInput, "SCHEMA_UNSUPPORTED", doc, nil)
+	}
+	return revision, nil
+}
+
+func jsonASCIIString(key []byte, name string) bool {
+	if len(key) < len(name)+2 || len(key) > 6*len(name)+2 {
+		return false
+	}
+	pos := 1
+	for i := range len(name) {
+		if pos >= len(key)-1 {
+			return false
+		}
+		value := uint16(key[pos])
+		pos++
+		if value == '\\' {
+			if pos+5 > len(key)-1 || key[pos] != 'u' {
+				return false
+			}
+			pos++
+			value = 0
+			for range 4 {
+				c := key[pos]
+				pos++
+				switch {
+				case c >= '0' && c <= '9':
+					value = value*16 + uint16(c-'0')
+				case c >= 'a' && c <= 'f':
+					value = value*16 + uint16(c-'a'+10)
+				case c >= 'A' && c <= 'F':
+					value = value*16 + uint16(c-'A'+10)
+				default:
+					return false
+				}
+			}
+		}
+		if value != uint16(name[i]) {
+			return false
+		}
+	}
+	return pos == len(key)-1 && key[pos] == '"'
 }
 
 // findCycle returns a node on a reference cycle, or "".

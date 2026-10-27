@@ -321,13 +321,21 @@ type nativeExtras struct {
 // operation (S06) is accepted only by the oracle profile, and the other operations only by
 // the incremental one.
 func parseNative(data []byte, schemas []string, doc string, topExtra, caseExtra []string) (IncrementalProfile, nativeExtras, *Error) {
-	var p IncrementalProfile
 	t := typed{doc: doc}
-	x := nativeExtras{t: t, top: map[string]*jv{}}
 	v, e := decodeStrict(t.doc, data, MaxDocumentBytes)
 	if e != nil {
-		return p, x, e
+		return IncrementalProfile{}, nativeExtras{t: t, top: map[string]*jv{}}, e
 	}
+	return parseNativeValue(data, schemas, doc, topExtra, caseExtra, v)
+}
+
+func parseNativeValue(data []byte, schemas []string, doc string, topExtra, caseExtra []string, v *jv, checkpoint ...func() *Error) (IncrementalProfile, nativeExtras, *Error) {
+	var p IncrementalProfile
+	t := typed{doc: doc}
+	if len(checkpoint) != 0 {
+		t.check = checkpoint[0]
+	}
+	x := nativeExtras{t: t, top: map[string]*jv{}}
 	m, e := t.object(v, append([]string{"schema", "id", "route", "operation", "symbol", "encoding", "output", "compiler", "grammar", "declarations", "cases"}, topExtra...), "format", "svc_context", "preprocess")
 	if e != nil {
 		return p, x, e
@@ -515,7 +523,10 @@ func parseGrammarInputs(t typed, v *jv) ([]NativeInput, *Error) {
 			parsers++
 		}
 		out = append(out, in)
-		m, _ := t.object(item, []string{"path", "role", "sha256", "bytes"})
+		m, e := t.object(item, []string{"path", "role", "sha256", "bytes"})
+		if e != nil {
+			return nil, e
+		}
 		paths = append(paths, m["path"])
 	}
 	if parsers != 1 {

@@ -20,6 +20,8 @@ grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다.
 
 ## Path와 archive
 
+`VerifyQuerySemantics`와 `oracle-set-r4`의 profile·사전 등록·run-binding·eligibility 승인/등록·witness·policy는 producer graph 밖의 caller 문서다. producer가 생성한 digest나 미래 run-binding을 자기 신뢰 root로 사용하지 않는다. 추가 wanted 경로는 eligibility/r1의 승인 member 경계를 넓히지 않는다. 동일 hash라도 owner·역할·경로를 바꿀 수 없고, Oracle-local 경로로 변환하기 전에 evidence pass가 보존한 file/directory metadata와 held child root의 물리 동일성을 확인한다. 이 offline 검사는 프로세스나 네트워크를 시작하지 않으며 실행 진위·누락된 현재 reference 근거를 대신 승인하지 않는다.
+
 portable path는 UTF-8 상대 경로, `/` separator, 빈 segment/`.`/`..`/제어문자/절대 경로/drive/UNC/역슬래시/ADS `:`를 거부한다. 대소문자 접기 충돌, Windows device basename(CON/PRN/AUX/NUL/COM1~9/LPT1~9/COM¹²³/LPT¹²³/CONIN$/CONOUT$, 확장자 형태와 첫 마침표 앞 공백 형태 `CON .txt` 포함; [Windows 이름 규칙](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file)), trailing dot/space도 거부한다. Unicode 정규화 충돌은 S02가 고정한 이름 정책 `portable-names-r1`(아래)이 ASCII 밖 이름을 명시 거부하는 방식으로 다룬다.
 
 grammar 선택의 `Selection.Grammar`와 source 등록부의 `grammar_subdirectory`는 전체 값 `"."`에 한해 별도 root sentinel을 허용한다. 검증된 root를 가리키며 정규화로 다른 문자열을 sentinel로 바꾸지 않는다. 파일/member path와 `./child`·`child/.`·`child/../other`에는 이 예외를 적용하지 않는다.

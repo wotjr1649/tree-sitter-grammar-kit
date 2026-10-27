@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -28,10 +30,13 @@ const (
 	MaxOracleSourceBytes       = 32 << 20
 	// A set run through batch driver processes (#266): each r2 record names its batch and
 	// frame instead of a process, and the r3 manifest lists every batch process once.
-	OracleBatchRecordSchema      = "tsgk-oracle-record/r2"
-	OracleBatchManifestSchema    = "tsgk-oracle-manifest/r3"
-	OracleAcceptedRecordSchema   = "tsgk-oracle-record/r3"
-	OracleAcceptedManifestSchema = "tsgk-oracle-manifest/r4"
+	OracleBatchRecordSchema       = "tsgk-oracle-record/r2"
+	OracleBatchManifestSchema     = "tsgk-oracle-manifest/r3"
+	OracleAcceptedRecordSchema    = "tsgk-oracle-record/r3"
+	OracleAcceptedManifestSchema  = "tsgk-oracle-manifest/r4"
+	OracleSemanticsRecordSchema   = "tsgk-oracle-record/r4"
+	OracleSemanticsManifestSchema = "tsgk-oracle-manifest/r5"
+	OracleSemanticsSchema         = "tsgk-oracle/r3"
 )
 
 // oracleSchemaR1 is still decoded (without anchors) so earlier evidence replays.
@@ -101,19 +106,20 @@ type OracleCase struct {
 	DynamicSQL  *DynamicSQLExpectation `json:"dynamic_sql_expect"`
 }
 
-// OracleProfile is a decoded tsgk-oracle/r2 (or r1) profile. Native holds the shared members (its
+// OracleProfile is a decoded Oracle r1/r2 or semantics-aware r3 profile. Native holds the shared members (its
 // Cases are the base of OracleCases, in the same order).
 type OracleProfile struct {
-	Native      IncrementalProfile `json:"-"`
-	Queries     []OracleQuery      `json:"queries"`
-	FactPack    *FactPackRef       `json:"fact_pack"`
-	API         bool               `json:"api"`
-	OracleCases []OracleCase       `json:"cases"`
+	QuerySemanticsRegistrationSHA256 string             `json:"query_semantics_registration_sha256,omitempty"`
+	Native                           IncrementalProfile `json:"-"`
+	Queries                          []OracleQuery      `json:"queries"`
+	FactPack                         *FactPackRef       `json:"fact_pack"`
+	API                              bool               `json:"api"`
+	OracleCases                      []OracleCase       `json:"cases"`
 }
 
 var queryStatus = map[string]bool{StatusCompleted: true, StatusResourceLimit: true, "INVALID_QUERY": true, StatusFailed: true, "UNSUPPORTED": true, StatusNotRun: true}
 
-// ParseOracleProfile strictly decodes a tsgk-oracle/r2 (or r1) profile: the incremental profile
+// ParseOracleProfile strictly decodes an Oracle r1/r2 or semantics-aware r3 profile: the incremental profile
 // members (with a query operation), the queries, the optional fact pack binding, the API
 // switch and per case the query and dynamic SQL expectations.
 func ParseOracleProfile(data []byte) (OracleProfile, error) {
@@ -125,13 +131,30 @@ func ParseOracleProfile(data []byte) (OracleProfile, error) {
 }
 
 func parseOracle(data []byte) (OracleProfile, *Error) {
+	v, e := decodeStrict("oracle", data, MaxDocumentBytes)
+	if e != nil {
+		return OracleProfile{}, e
+	}
+	return parseOracleValue(data, v)
+}
+
+func parseOracleValue(data []byte, v *jv, checkpoint ...func() *Error) (OracleProfile, *Error) {
 	var o OracleProfile
-	n, x, e := parseNative(data, []string{OracleSchema, oracleSchemaR1}, "oracle", []string{"queries", "fact_pack", "api"}, []string{"query_expect", "dynamic_sql_expect"})
+	topExtra := []string{"queries", "fact_pack", "api"}
+	if schema := jvMember(v, "schema"); schema != nil && schema.s == OracleSemanticsSchema {
+		topExtra = append(topExtra, "query_semantics_registration_sha256")
+	}
+	n, x, e := parseNativeValue(data, []string{OracleSchema, oracleSchemaR1, OracleSemanticsSchema}, "oracle", topExtra, []string{"query_expect", "dynamic_sql_expect"}, v, checkpoint...)
 	if e != nil {
 		return o, e
 	}
 	o.Native = n
 	t := x.t
+	if n.Schema == OracleSemanticsSchema {
+		if o.QuerySemanticsRegistrationSHA256, e = hexDigest(t, x.top["query_semantics_registration_sha256"]); e != nil {
+			return o, e
+		}
+	}
 	qs, e := t.array(x.top["queries"])
 	if e != nil {
 		return o, e
@@ -390,25 +413,36 @@ type OracleMember struct {
 
 // OracleManifest is the completeness inventory of a record set. It is written last; its
 // final member complete is the set's completeness marker.
+// OracleQuerySemantics preserves producer-local pending evidence, never external approval.
+type OracleQuerySemantics struct {
+	Phase              string        `json:"phase"`
+	Claim              string        `json:"claim"`
+	Code               string        `json:"code"`
+	RegistrationSHA256 string        `json:"registration_sha256"`
+	Capture            *ReplayMember `json:"capture"`
+	Projection         ReplayMember  `json:"projection"`
+}
+
 type OracleManifest struct {
-	Operation                 *NativeOperation  `json:"operation,omitempty"`
-	ReuseAcceptedPolicy       string            `json:"reuse_accepted_policy,omitempty"`
-	ReuseAcceptedLedgerSHA256 string            `json:"reuse_accepted_ledger_sha256,omitempty"`
-	Schema                    string            `json:"schema"`
-	Workload                  map[string]string `json:"workload"` // profile id and sha256, route, operation, output
-	Producer                  map[string]string `json:"producer"` // build identity, executable sha256, compiler, runtime, platform
-	Policy                    IdentityRef       `json:"policy"`
-	Protocol                  string            `json:"protocol"`
-	Comparators               []string          `json:"comparators"`
-	Queries                   []IdentityRef     `json:"queries"`
-	FactPack                  *FactPackRef      `json:"fact_pack"`
-	ExecutionStatus           string            `json:"execution_status"`
-	Assessment                string            `json:"assessment"`
-	Records                   int               `json:"records"`
-	Cases                     []string          `json:"cases"` // the profile's case ids in order
-	Members                   []OracleMember    `json:"members"`
-	Batches                   []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
-	Complete                  bool              `json:"complete"`
+	QuerySemanticsRegistrationSHA256 string            `json:"query_semantics_registration_sha256,omitempty"`
+	Operation                        *NativeOperation  `json:"operation,omitempty"`
+	ReuseAcceptedPolicy              string            `json:"reuse_accepted_policy,omitempty"`
+	ReuseAcceptedLedgerSHA256        string            `json:"reuse_accepted_ledger_sha256,omitempty"`
+	Schema                           string            `json:"schema"`
+	Workload                         map[string]string `json:"workload"` // profile id and sha256, route, operation, output
+	Producer                         map[string]string `json:"producer"` // build identity, executable sha256, compiler, runtime, platform
+	Policy                           IdentityRef       `json:"policy"`
+	Protocol                         string            `json:"protocol"`
+	Comparators                      []string          `json:"comparators"`
+	Queries                          []IdentityRef     `json:"queries"`
+	FactPack                         *FactPackRef      `json:"fact_pack"`
+	ExecutionStatus                  string            `json:"execution_status"`
+	Assessment                       string            `json:"assessment"`
+	Records                          int               `json:"records"`
+	Cases                            []string          `json:"cases"` // the profile's case ids in order
+	Members                          []OracleMember    `json:"members"`
+	Batches                          []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
+	Complete                         bool              `json:"complete"`
 }
 
 // OracleBatch is one batch driver process of a manifest r3 set: the cases sent to it in
@@ -439,6 +473,7 @@ func (b OracleBatch) Accepted() bool {
 // no batch process received. Fail is a completed case's own FAIL, kept even when its batch
 // is not accepted: a failure is never a support claim.
 type recordTransport struct {
+	Semantics    *OracleQuerySemantics
 	Sent         bool
 	Batch, Frame uint64
 	Answered     bool
@@ -507,6 +542,7 @@ var sourceMemberPath = regexp.MustCompile(`^source/[0-9]{5}-[A-Za-z0-9._-]{1,128
 // finding makes the set invalid; nothing is repaired.
 func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	r := OracleSetReport{Findings: []Finding{}}
+	var semanticB *eligibilityBudget
 	limitError := errors.New("oracle member bytes limit")
 	read := func(path string, limit int64) ([]byte, error) {
 		f, err := fsys.Open(path)
@@ -521,8 +557,13 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		return b, err
 	}
 	add := func(code, path, msg string) {
+		if semanticB != nil && len(r.Findings) >= 1000 {
+			r.Findings[999] = Finding{Code: code, Severity: "error", Path: path, Message: msg}
+			return
+		}
 		r.Findings = append(r.Findings, Finding{Code: code, Severity: "error", Path: path, Message: msg})
 	}
+	manifestStart := time.Now()
 	data, err := read("manifest.json", MaxDocumentBytes)
 	if err != nil {
 		code := "MANIFEST_MISSING"
@@ -532,10 +573,71 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		add(code, "manifest.json", "완결 표시인 manifest를 제한 안에서 읽지 못했다")
 		return r
 	}
+	var semanticFiles map[string][]byte
+	var semanticRecord *jv
 	var m OracleManifest
-	if e := decodeOracleManifestVersion(data, &m, OracleManifestSchema, OracleSourceManifestSchema, OracleBatchManifestSchema, OracleAcceptedManifestSchema); e != nil {
+	if !utf8.Valid(data) {
+		add("JSON_INVALID_UTF8", "manifest", "manifest가 UTF-8이 아니다")
+		return r
+	}
+	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil)
+	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
+		add(selectionErr.Code, selectionErr.Path, "manifest revision을 선택하지 못했다")
+		return r
+	}
+	if selected == OracleSemanticsManifestSchema {
+		lim := ReplayOperations()["evidence-replay"]
+		ctx, cancel := context.WithTimeout(context.Background(), lim.Wall+time.Second)
+		defer cancel()
+		run, e := startRun(ctx, lim.Wall-time.Since(manifestStart))
+		if e != nil {
+			add(e.Code, e.Path, "검증 예산을 시작하지 못했다")
+			return r
+		}
+		defer run.cancel()
+		semanticB = &eligibilityBudget{r: run}
+		run.eligibility = semanticB
+		v, e := semanticB.semanticAST("manifest", data)
+		if e != nil {
+			add(e.Code, e.Path, "manifest 해석 예산을 넘었다")
+			return r
+		}
+		significant, sizeErr := semanticB.significantJSONBytes(data)
+		if sizeErr != nil {
+			add(sizeErr.Code, sizeErr.Path, "manifest 해석을 중단했다")
+			return r
+		}
+		if e := semanticB.charge(8*significant, 16*uint64(len(data)), "semantic-manifest-typed"); e != nil {
+			add(e.Code, e.Path, "manifest 해석 예산을 넘었다")
+			return r
+		}
+		if e := decodeOracleManifestValue(data, &m, v, typed{doc: "manifest", check: run.check}, OracleSemanticsManifestSchema); e != nil {
+			add(e.Code, e.Path, "manifest 형식이 틀렸다")
+			return r
+		}
+	} else if e := decodeOracleManifestVersion(data, &m, OracleManifestSchema, OracleSourceManifestSchema, OracleBatchManifestSchema, OracleAcceptedManifestSchema); e != nil {
 		add(e.Code, e.Path, "manifest가 완결되지 않았거나 형식이 틀렸다")
 		return r
+	}
+	if semanticB != nil {
+		lim := ReplayOperations()["evidence-replay"]
+		var total = uint64(len(data))
+		if uint64(len(m.Members))+1 > lim.Files {
+			add("SEMANTICS_SET_LIMIT", "manifest.json", "member 수 한도를 넘었다")
+			return r
+		}
+		for _, mem := range m.Members {
+			if mem.Bytes > lim.FileBytes || total > lim.TotalBytes-mem.Bytes {
+				add("SEMANTICS_SET_LIMIT", mem.Path, "member 또는 전체 bytes 한도를 넘었다")
+				return r
+			}
+			total += mem.Bytes
+		}
+		if e := semanticB.charge(uint64(len(m.Members))+1, 512*uint64(len(m.Members))+8*uint64(len(data)), "semantics-set-members"); e != nil {
+			add(e.Code, e.Path, "검증 예산을 넘었다")
+			return r
+		}
+		semanticFiles = map[string][]byte{}
 	}
 	r.ExecutionStatus, r.Assessment = m.ExecutionStatus, m.Assessment
 	listed := map[string]bool{"manifest.json": true}
@@ -569,7 +671,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		validPath := memberPath.MatchString(mem.Path)
-		if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema {
+		if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema {
 			// the producer names every member by its case's position in cases
 			ordinal, known := caseOrdinals[mem.Case]
 			if mem.Role == "source" {
@@ -578,12 +680,25 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 				validPath = validPath && known && mem.Path == fmt.Sprintf("%s%05d-%s.json", dir, ordinal, mem.Case)
 			}
 		}
+		if m.Schema == OracleSemanticsManifestSchema {
+			switch mem.Role {
+			case "capture", "stdin-frame", "process", "stdout-frame", "stderr":
+				dir, validPath = "capture/", portable(mem.Path, false) && caseOrdinals[mem.Case] == 0 && len(m.Cases) == 1 && mem.Case == m.Cases[0]
+			case "projection":
+				dir, validPath = "projection/", mem.Case == m.Cases[0] && mem.Path == "projection/00000-"+mem.Case+".json"
+			case "driver", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "build", "build-manifest":
+				dir, validPath = "capture/", portable(mem.Path, false) && mem.Case == "" && mem.InputBytes == mem.Bytes && mem.InputSHA256 == mem.SHA256 && mem.ExecutionStatus == StatusCompleted
+			}
+		}
 		if !validPath || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
 			add("MEMBER_INVALID", mem.Path, "member 경로·역할이 틀렸거나 중복이다")
 			continue
 		}
 		listed[mem.Path] = true
 		limit := uint64(MaxDocumentBytes * 4)
+		if m.Schema == OracleSemanticsManifestSchema {
+			limit = MaxDocumentBytes
+		}
 		if mem.Role == "source" {
 			limit = MaxOracleSourceBytes
 			if mem.Bytes > MaxOracleSourceBytes {
@@ -594,6 +709,12 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if mem.Bytes > limit {
 			add("MEMBER_BYTES_LIMIT", mem.Path, "member 크기 한도를 넘었다")
 			continue
+		}
+		if semanticB != nil {
+			if e := semanticB.charge(1, mem.Bytes, mem.Path); e != nil {
+				add(e.Code, e.Path, "검증 예산을 넘었다")
+				return r
+			}
 		}
 		b, err := read(mem.Path, int64(mem.Bytes))
 		if err != nil {
@@ -608,11 +729,26 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			add("MEMBER_MISMATCH", mem.Path, "member bytes 또는 sha256이 manifest와 다르다")
 			continue
 		}
+		if semanticFiles != nil {
+			semanticFiles[mem.Path] = b
+		}
 		if mem.Role == "record" {
 			records++
 			perCase[mem.Case]++
 			recordInputs[mem.Case] = mem
-			tr, code := checkRecord(b, mem, m.Schema)
+			var tr recordTransport
+			var code string
+			if semanticB != nil {
+				v, e := semanticB.semanticAST(mem.Path, b)
+				if e != nil {
+					add(e.Code, e.Path, "record 해석 예산을 넘었다")
+					return r
+				}
+				semanticRecord = v
+				tr, code = checkRecordValue(typed{doc: mem.Path, check: semanticB.r.check}, v, mem, m.Schema)
+			} else {
+				tr, code = checkRecord(b, mem, m.Schema)
+			}
 			if code != "" {
 				add(code, mem.Path, "record가 완결되지 않았거나 member identity와 다르다")
 			} else {
@@ -621,13 +757,42 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		if mem.Role == "raw" {
 			raws[mem.Case]++
-			rawIDs[mem.Case] = responseID(b)
+			if m.Schema != OracleSemanticsManifestSchema {
+				rawIDs[mem.Case] = responseID(b)
+			}
 		}
 		if mem.Role == "source" {
 			sources[mem.Case]++
 			if mem.Bytes != mem.InputBytes || mem.SHA256 != mem.InputSHA256 {
 				add("SOURCE_INPUT_MISMATCH", mem.Path, "source witness와 사례 입력 identity가 다르다")
 			}
+		}
+	}
+	if m.Schema == OracleSemanticsManifestSchema {
+		pins := map[string]OracleMember{}
+		for _, mem := range m.Members {
+			pins[mem.Path] = mem
+		}
+		for id, tr := range transports {
+			if tr.Semantics == nil || tr.Semantics.RegistrationSHA256 != m.QuerySemanticsRegistrationSHA256 {
+				add("SEMANTICS_LOCAL_BINDING", id, "local semantic 등록 결속이 다르다")
+				continue
+			}
+			refs := []ReplayMember{tr.Semantics.Projection}
+			if tr.Semantics.Capture != nil {
+				refs = append(refs, *tr.Semantics.Capture)
+			}
+			for _, pin := range refs {
+				mem, ok := pins[pin.Path]
+				if !ok || mem.Case != id || mem.Role != pin.Role || mem.Bytes != pin.Bytes || mem.SHA256 != pin.SHA256 {
+					add("SEMANTICS_LOCAL_PIN", pin.Path, "local semantic pin의 소유 member가 다르다")
+				}
+			}
+		}
+	}
+	if semanticB != nil {
+		if e := semanticB.checkSemanticSet(m, semanticFiles, semanticRecord, nil, add); e != nil {
+			add(e.Code, e.Path, "semantic set 검증을 끝내지 못했다")
 		}
 	}
 	if records != m.Records || len(m.Cases) != m.Records {
@@ -637,7 +802,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if perCase[c] != 1 {
 			add("CASE_RECORD_MISMATCH", "manifest.json", "사례마다 record가 정확히 하나여야 한다: "+c)
 		}
-		if (m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema) && sources[c] != 1 {
+		if (m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema) && sources[c] != 1 {
 			add("CASE_SOURCE_MISMATCH", "manifest.json", "사례마다 source witness가 정확히 하나여야 한다: "+c)
 		}
 	}
@@ -647,11 +812,14 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	if m.Schema == OracleAcceptedManifestSchema && accepted == nil {
 		add("REUSE_ACCEPTED_LEDGER_MISSING", "manifest.json", "고정 원장 member가 없다")
 	}
-	if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema {
+	if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema {
 		if len(m.Cases) == 0 {
 			add("CASE_SOURCE_EMPTY", "manifest.json", "source witness set에 사례가 없다")
 		}
 		for _, mem := range m.Members {
+			if m.Schema == OracleSemanticsManifestSchema && mem.Case == "" {
+				continue
+			}
 			if m.Schema == OracleAcceptedManifestSchema && mem.Role == "reuse-ledger" {
 				continue
 			}
@@ -661,16 +829,23 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			}
 		}
 	}
-	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			add("SET_UNREADABLE", path, "set을 읽지 못했다")
+	if semanticB != nil {
+		if e := semanticB.walkSemanticSet(fsys, listed, add); e != nil {
+			add(e.Code, e.Path, "set 순회 예산을 넘었거나 읽을 수 없다")
+		}
+	} else {
+		_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				add("SET_UNREADABLE", path, "set을 읽지 못했다")
+				return nil
+			}
+			if !d.IsDir() && !listed[path] {
+				add("MEMBER_UNLISTED", path, "manifest에 없는 파일이 있다")
+			}
 			return nil
-		}
-		if !d.IsDir() && !listed[path] {
-			add("MEMBER_UNLISTED", path, "manifest에 없는 파일이 있다")
-		}
-		return nil
-	})
+		})
+	}
+
 	r.Records = records
 	r.Valid = len(r.Findings) == 0
 	return r
@@ -699,9 +874,17 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 	if e != nil {
 		return e
 	}
+	return decodeOracleManifestValue(data, m, v, t, allowed...)
+}
+
+func decodeOracleManifestValue(data []byte, m *OracleManifest, v *jv, t typed, allowed ...string) *Error {
+	var e *Error
 	keys := []string{"schema", "workload", "producer", "policy", "protocol", "comparators", "queries", "fact_pack", "execution_status", "assessment", "records", "cases", "members", "complete"}
 	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleAcceptedManifestSchema {
 		keys = slices.Insert(keys, len(keys)-1, "reuse_accepted_policy", "reuse_accepted_ledger_sha256", "operation")
+	}
+	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleSemanticsManifestSchema {
+		keys = slices.Insert(keys, len(keys)-1, "query_semantics_registration_sha256", "operation")
 	}
 	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleBatchManifestSchema {
 		keys = slices.Insert(keys, len(keys)-1, "batches")
@@ -720,6 +903,24 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 		return t.bad("SCHEMA_UNSUPPORTED", mm["schema"])
 	} else {
 		m.Schema = s
+	}
+	if m.Schema == OracleSemanticsManifestSchema {
+		if m.QuerySemanticsRegistrationSHA256, e = hexDigest(t, mm["query_semantics_registration_sha256"]); e != nil {
+			return e
+		}
+		if e := witnessShape(t, mm["operation"], reflect.TypeFor[NativeOperation](), true, false, nil); e != nil {
+			return e
+		}
+		var extra struct {
+			Operation *NativeOperation `json:"operation"`
+		}
+		if err := json.Unmarshal(data, &extra); err != nil || extra.Operation == nil {
+			return t.bad("SEMANTICS_OPERATION_INVALID", mm["operation"])
+		}
+		m.Operation = extra.Operation
+		if !reflect.DeepEqual(*m.Operation, NativeOperations()["native-query"]) {
+			return t.bad("SEMANTICS_OPERATION_INVALID", mm["operation"])
+		}
 	}
 	if m.Schema == OracleAcceptedManifestSchema {
 		if e := witnessShape(t, mm["operation"], reflect.TypeFor[NativeOperation](), true, false, nil); e != nil {
@@ -925,6 +1126,11 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 			return t.bad("REUSE_ACCEPTED_MANIFEST_INVALID", v)
 		}
 	}
+	if m.Schema == OracleSemanticsManifestSchema {
+		if m.Protocol != nativewire.ProtocolR4 || m.Workload["operation"] != "native-query" || m.Workload["output"] != OutputTree || len(m.Cases) != 1 || m.FactPack != nil || !slices.Contains([]string{"windows/amd64", "linux/amd64"}, m.Producer["platform"]) || m.Policy != NativePolicy(*m.Operation, OutputTree, nil) {
+			return t.bad("SEMANTICS_MANIFEST_INVALID", v)
+		}
+	}
 	m.Complete = true
 	return nil
 }
@@ -938,8 +1144,22 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	if e != nil {
 		return tr, e.Code
 	}
+	return checkRecordValue(t, v, mem, manifestSchema)
+}
+
+func checkRecordValue(t typed, v *jv, mem OracleMember, manifestSchema string) (recordTransport, string) {
+	tr, e := checkRecordValueError(t, v, mem, manifestSchema)
+	if e != nil {
+		return tr, e.Code
+	}
+	return tr, ""
+}
+
+func checkRecordValueError(t typed, v *jv, mem OracleMember, manifestSchema string) (recordTransport, *Error) {
+	var tr recordTransport
+	var e *Error
 	if v.kind != '{' || len(v.keys) == 0 || v.keys[len(v.keys)-1] != "complete" || v.vals[len(v.vals)-1].kind != 't' {
-		return tr, "RECORD_INCOMPLETE"
+		return tr, fail(KindInvalidInput, "RECORD_INCOMPLETE", t.doc, nil)
 	}
 	get := func(o *jv, k string) *jv {
 		if o == nil || o.kind != '{' {
@@ -963,54 +1183,67 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	if manifestSchema == OracleAcceptedManifestSchema {
 		schema = OracleAcceptedRecordSchema
 	}
+	if manifestSchema == OracleSemanticsManifestSchema {
+		schema = OracleSemanticsRecordSchema
+	}
+	if schema == OracleSemanticsRecordSchema {
+		if get(v, "query_semantics") == nil {
+			return tr, fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc, nil)
+		}
+		if tr.Semantics, e = semanticLocalValue(t, get(v, "query_semantics")); e != nil {
+			return tr, e
+		}
+	} else if get(v, "query_semantics") != nil {
+		return tr, fail(KindInvalidInput, "SEMANTICS_SCHEMA_UNSUPPORTED", t.doc, nil)
+	}
 	if schema != OracleAcceptedRecordSchema {
 		for _, name := range []string{"reuse_accepted", "reuse_accepted_policy", "reuse_accepted_ledger_sha256"} {
 			if get(v, name) != nil {
-				return tr, "REUSE_ACCEPTED_SCHEMA_UNSUPPORTED"
+				return tr, fail(KindInvalidInput, "REUSE_ACCEPTED_SCHEMA_UNSUPPORTED", t.doc, nil)
 			}
 		}
 	}
 	if schema == OracleAcceptedRecordSchema {
 		if get(v, "transport") != nil || get(v, "process") == nil {
-			return tr, "RECORD_TRANSPORT_INVALID"
+			return tr, fail(KindInvalidInput, "RECORD_TRANSPORT_INVALID", t.doc, nil)
 		}
 		if e := checkAcceptedResultShape(t, get(v, "reuse_accepted")); e != nil {
-			return tr, e.Code
+			return tr, e
 		}
 	}
 	if str(get(v, "schema")) != schema || str(get(v, "case")) != mem.Case {
-		return tr, "RECORD_IDENTITY_MISMATCH"
+		return tr, fail(KindInvalidInput, "RECORD_IDENTITY_MISMATCH", t.doc, nil)
 	}
 	in := get(v, "input")
 	if str(get(in, "sha256")) != mem.InputSHA256 || get(in, "bytes") == nil || get(in, "bytes").s != itoa(mem.InputBytes) {
-		return tr, "RECORD_INPUT_MISMATCH"
+		return tr, fail(KindInvalidInput, "RECORD_INPUT_MISMATCH", t.doc, nil)
 	}
 	if str(get(v, "execution_status")) != mem.ExecutionStatus {
-		return tr, "RECORD_STATUS_MISMATCH"
+		return tr, fail(KindInvalidInput, "RECORD_STATUS_MISMATCH", t.doc, nil)
 	}
 	if steps := get(v, "steps"); steps != nil && steps.kind == '[' && len(steps.vals) > 0 {
 		s0 := steps.vals[0]
 		if str(get(s0, "source_sha256")) != mem.InputSHA256 || get(s0, "source_bytes") == nil || get(s0, "source_bytes").s != itoa(mem.InputBytes) {
-			return tr, "RECORD_STEP_MISMATCH"
+			return tr, fail(KindInvalidInput, "RECORD_STEP_MISMATCH", t.doc, nil)
 		}
 	}
 	// r2: a batch frame instead of a process; a case no batch received has a null transport
 	transport := get(v, "transport")
-	if schema == OracleRecordSchema || schema == OracleAcceptedRecordSchema {
+	if schema == OracleRecordSchema || schema == OracleAcceptedRecordSchema || schema == OracleSemanticsRecordSchema {
 		if transport != nil {
-			return tr, "RECORD_TRANSPORT_INVALID"
+			return tr, fail(KindInvalidInput, "RECORD_TRANSPORT_INVALID", t.doc, nil)
 		}
-		return tr, ""
+		return tr, nil
 	}
 	if p := get(v, "process"); p == nil || p.kind != 'n' || transport == nil {
-		return tr, "RECORD_TRANSPORT_INVALID"
+		return tr, fail(KindInvalidInput, "RECORD_TRANSPORT_INVALID", t.doc, nil)
 	}
 	if transport.kind == 'n' {
-		return tr, ""
+		return tr, nil
 	}
 	tm, e := t.object(transport, []string{"batch", "frame", "state", "frame_wall_ms"})
 	if e != nil {
-		return tr, "RECORD_TRANSPORT_INVALID"
+		return tr, fail(KindInvalidInput, "RECORD_TRANSPORT_INVALID", t.doc, nil)
 	}
 	state, se := t.str(tm["state"])
 	var be, fe, we *Error
@@ -1018,10 +1251,10 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	tr.Frame, fe = t.uint(tm["frame"])
 	_, we = t.uint(tm["frame_wall_ms"])
 	if se != nil || be != nil || fe != nil || we != nil || state != "SENT" && state != "ANSWERED" {
-		return tr, "RECORD_TRANSPORT_INVALID"
+		return tr, fail(KindInvalidInput, "RECORD_TRANSPORT_INVALID", t.doc, nil)
 	}
 	tr.Sent, tr.Answered, tr.Fail = true, state == "ANSWERED", str(get(v, "assessment")) == AssessFail
-	return tr, ""
+	return tr, nil
 }
 
 func itoa(n uint64) string {

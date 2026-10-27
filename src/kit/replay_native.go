@@ -755,6 +755,11 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		} else {
 			recorded = append(recorded, c.Oracle.QueryEquality)
 		}
+		for _, id := range []string{"api", "query-expectations", "fact-reproduction", "dynamic-sql"} {
+			if value, ok := x.recomputedOracle[id]; ok {
+				claims = append(claims, value)
+			}
+		}
 		recorded = append(recorded, x.recordOracleClaims(c, name)...)
 	}
 	vg := x.gate("verdict")
@@ -783,6 +788,10 @@ func (x *replayEnv) recordOracleClaims(c *rcCase, name string) []string {
 	for _, rc := range []struct{ id, v string }{{"api", c.Oracle.API}, {"query-expectations", c.Oracle.QueryExpectations},
 		{"fact-reproduction", c.Oracle.FactReproduction}, {"dynamic-sql", c.Oracle.DynamicSQL}} {
 		x.gate(rc.id).check(slices.Contains([]string{claimNotClaimed, claimPass, claimFail, claimBlocked}, rc.v), name, "CLAIM_INVALID", "Oracle claim 값이 유효하지 않다")
+		if computed, ok := x.recomputedOracle[rc.id]; ok {
+			x.gate(rc.id).check(rc.v == computed, name, "CLAIM_MISMATCH", "Oracle claim이 같은 native 결과의 재계산과 다르다")
+			continue
+		}
 		if rc.v != claimNotClaimed {
 			x.gate(rc.id).recorded()
 			recorded = append(recorded, rc.v)
@@ -1485,6 +1494,10 @@ func replayOracleSet(x *replayEnv) *Error {
 	if e != nil {
 		return e
 	}
+	if prof.Native.Schema == OracleSemanticsSchema {
+		return fail(KindUnsupported, "SEMANTICS_REDUCER_REQUIRED", pm.Path, nil)
+	}
+
 	mdata, e := x.member(mm.Path)
 	if e != nil {
 		return e

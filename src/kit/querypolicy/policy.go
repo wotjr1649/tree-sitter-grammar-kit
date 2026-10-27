@@ -31,66 +31,96 @@ type Capture struct {
 	StartByte, EndByte uint32
 }
 
-func validMetadata(patterns uint32, predicates []Predicate) bool {
+func validMetadata(check func() error, patterns uint32, predicates []Predicate) (bool, error) {
 	for _, p := range predicates {
+		if check != nil {
+			if err := check(); err != nil {
+				return false, err
+			}
+		}
 		if p.Pattern >= patterns || len(p.Steps) == 0 || p.Steps[0].Kind != "string" {
-			return false
+			return false, nil
 		}
 		for _, step := range p.Steps {
+			if check != nil {
+				if err := check(); err != nil {
+					return false, err
+				}
+			}
 			switch step.Kind {
 			case "string":
 				if step.Quantifier != nil {
-					return false
+					return false, nil
 				}
 			case "capture":
 				if step.Quantifier == nil || step.Value == "" {
-					return false
+					return false, nil
 				}
 				switch *step.Quantifier {
 				case "ZERO", "ZERO_OR_ONE", "ZERO_OR_MORE", "ONE", "ONE_OR_MORE":
 				default:
-					return false
+					return false, nil
 				}
 			default:
-				return false
+				return false, nil
 			}
 		}
 	}
-	return true
+	return true, nil
 }
 
 // Support validates metadata before examining policy operands. Caller owns envelope,
 // stream completeness, query/source identity and outer byte/count limits.
 func Support(patterns uint32, predicates []Predicate, encoding string) string {
-	if !validMetadata(patterns, predicates) {
-		return InvalidMetadata
+	code, _ := SupportChecked(nil, patterns, predicates, encoding)
+	return code
+}
+
+// SupportChecked checks cancellation and budgets inside metadata and operand scans.
+func SupportChecked(check func() error, patterns uint32, predicates []Predicate, encoding string) (string, error) {
+	valid, err := validMetadata(check, patterns, predicates)
+	if err != nil {
+		return "", err
+	}
+	if !valid {
+		return InvalidMetadata, nil
 	}
 	single := func(s Step) bool { return s.Kind == "capture" && *s.Quantifier == "ONE" }
 	for _, p := range predicates {
+		if check != nil {
+			if err := check(); err != nil {
+				return "", err
+			}
+		}
 		op, args := p.Steps[0].Value, p.Steps[1:]
 		unsupported := "QUERY_PREDICATE_UNSUPPORTED:" + op
 		switch op {
 		case "eq?", "not-eq?":
 			if len(args) != 2 || !single(args[0]) || (args[1].Kind == "capture" && !single(args[1])) {
-				return unsupported
+				return unsupported, nil
 			}
 		case "any-of?", "not-any-of?":
 			if len(args) < 2 || !single(args[0]) {
-				return unsupported
+				return unsupported, nil
 			}
 			for _, a := range args[1:] {
+				if check != nil {
+					if err := check(); err != nil {
+						return "", err
+					}
+				}
 				if a.Kind != "string" {
-					return unsupported
+					return unsupported, nil
 				}
 			}
 		default:
-			return unsupported
+			return unsupported, nil
 		}
 		if encoding != "UTF-8" {
-			return "QUERY_PREDICATE_ENCODING"
+			return "QUERY_PREDICATE_ENCODING", nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // Filter returns original indices without sorting or renumbering. Invalid evidence
@@ -114,7 +144,10 @@ func FilterChecked(checkpoint func() error, patterns uint32, predicates []Predic
 	if err := check(); err != nil {
 		return nil, "", err
 	}
-	reason := Support(patterns, predicates, encoding)
+	reason, err := SupportChecked(check, patterns, predicates, encoding)
+	if err != nil {
+		return nil, "", err
+	}
 	if reason == InvalidMetadata {
 		return nil, reason, nil
 	}

@@ -341,3 +341,26 @@ func TestOutputTargetDoesNotReopenPath(t *testing.T) {
 		t.Fatalf("closed parent fallback: %v %v", d, err)
 	}
 }
+
+func TestOracleSemanticsCleanupPreservesFailure(t *testing.T) {
+	for _, status := range []string{kit.StatusCancelled, kit.StatusResourceLimit} {
+		kind, code := kit.KindCancelled, "CANCELLED"
+		assessment := kit.AssessNotAssessed
+		if status == kit.StatusResourceLimit {
+			kind, code, assessment = kit.KindResourceLimit, "WALL_LIMIT", kit.AssessBlocked
+		}
+		original := refuse(kind, code, nil)
+		resultErr := error(original)
+		report := kit.Report{ExecutionStatus: status, Assessment: assessment, Findings: []kit.Finding{{Code: "FIRST", Severity: "error"}}}
+		cleanup := errors.New("cleanup control")
+		recordCleanupFailure(&report, &resultErr, "BUILD_CLEANUP_FAILED", cleanup)
+		var actual *Error
+		if report.ExecutionStatus != status || report.Assessment != assessment || !errors.As(resultErr, &actual) || actual != original || !errors.Is(resultErr, cleanup) || report.Findings[0].Code != "FIRST" || report.Findings[1].Code != "BUILD_CLEANUP_FAILED" {
+			t.Fatalf("cleanup replaced failure: %+v %v", report, resultErr)
+		}
+		recordCleanupFailure(&report, &resultErr, "OUTPUT_CLOSE_FAILED", cleanup)
+		if report.ExecutionStatus != status || !errors.As(resultErr, &actual) || actual != original || report.Findings[2].Code != "OUTPUT_CLOSE_FAILED" {
+			t.Fatal("output close replaced failure")
+		}
+	}
+}

@@ -771,9 +771,12 @@ jobs:
           if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }
           $env:TSGK_REUSE_ACCEPTED_OUT = $null
           if (-not $IsMacOS) {
-            go test ./src/internal/native -run '^TestReuseAcceptedOracle$' -count=1 -v -timeout=180s > (Join-Path $out 'reuse-accepted-oracle.log') 2>&1
+            go test ./src/internal/native -run '^Test(ReuseAcceptedOracle|OracleSemantics(Producer|ProducerIncompatibleABI|LocalFold|BuildCaptureBounds|FailureClassification)|DriverCaptureJSONSemantics24)$' -count=1 -v -timeout=180s > (Join-Path $out 'reuse-accepted-oracle.log') 2>&1
             if ($LASTEXITCODE -ne 0) { throw 'accepted Oracle control or raw replay failed' }
             if (!(Select-String -LiteralPath (Join-Path $out 'reuse-accepted-oracle.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestReuseAcceptedOracle \(')) { throw 'accepted Oracle control did not run' }
+            foreach ($test in @('TestOracleSemanticsProducer', 'TestOracleSemanticsProducerIncompatibleABI', 'TestOracleSemanticsLocalFold', 'TestOracleSemanticsBuildCaptureBounds', 'TestOracleSemanticsFailureClassification', 'TestDriverCaptureJSONSemantics24')) {
+              if (!(Select-String -LiteralPath (Join-Path $out 'reuse-accepted-oracle.log') -CaseSensitive -Quiet -Pattern "^--- PASS: $test \(")) { throw "semantic producer control did not run: $test" }
+            }
           }
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
