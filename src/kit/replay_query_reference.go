@@ -144,6 +144,9 @@ func replayQueryReferenceConnection(x *replayEnv) *Error {
 
 // r2 admits producer failures without inventing a completed nested result.
 func validReferenceReplayResult(rr ReplayResult) bool {
+	if rr.QuerySemantics != nil {
+		return false
+	}
 	if rr.Schema != ReportSchema || rr.ResultSchema != ReplayReferenceResultSchema || rr.Reducer.ID != "query-reference-connection-r1" || rr.Reducer.Revision != "r1" || rr.Operation != "evidence-replay" || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] {
 		return false
 	}

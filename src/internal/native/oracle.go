@@ -64,8 +64,9 @@ type OracleRequest struct {
 	SourceWitness bool // explicit opt-in: retain exact initial source in manifest r2
 	// ReuseObservation records through tsgk-native/r4: the r2 queries and API with the
 	// bounded logger observations of every native parse on the same parse (#217).
-	ReuseObservation bool
-	ReuseAccepted    []byte
+	ReuseObservation           bool
+	ReuseAccepted              []byte
+	QuerySemanticsRegistration []byte
 }
 
 // OracleResult is the stdout result of a record run.
@@ -91,13 +92,14 @@ type OracleResult struct {
 
 // CaseLine summarizes one case in the stdout result; the record holds the details.
 type CaseLine struct {
-	ReuseAccepted   *kit.ReuseAcceptedResult `json:"reuse_accepted,omitempty"`
-	ID              string                   `json:"id"`
-	ExecutionStatus string                   `json:"execution_status"`
-	Assessment      string                   `json:"assessment"`
-	Code            string                   `json:"code"`
-	Claims          Claims                   `json:"claims"`
-	Oracle          *OracleClaims            `json:"oracle_claims"`
+	QuerySemantics  *kit.OracleQuerySemantics `json:"query_semantics,omitempty"`
+	ReuseAccepted   *kit.ReuseAcceptedResult  `json:"reuse_accepted,omitempty"`
+	ID              string                    `json:"id"`
+	ExecutionStatus string                    `json:"execution_status"`
+	Assessment      string                    `json:"assessment"`
+	Code            string                    `json:"code"`
+	Claims          Claims                    `json:"claims"`
+	Oracle          *OracleClaims             `json:"oracle_claims"`
 	// ReuseObservationClaim is the case's mandatory observation claim in an r4 run.
 	ReuseObservationClaim string `json:"reuse_observation_claim,omitempty"`
 }
@@ -132,7 +134,7 @@ func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
 // offline. A refusal before the build creates nothing.
 func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr error) {
 	start := time.Now()
-	if req.ReuseAccepted != nil {
+	if req.ReuseAccepted != nil || req.QuerySemanticsRegistration != nil {
 		req.ReuseObservation, req.SourceWitness = true, true
 	}
 	res = OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
@@ -159,6 +161,13 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return stop(refuse(ke.Kind, ke.Code, ke))
 	}
 	n := prof.Native
+	if err := semanticRecording(req, prof); err != nil {
+		return stop(err.(*Error))
+	}
+	semantics := req.QuerySemanticsRegistration != nil
+	if semantics {
+		res.ResultSchema = "tsgk-oracle-result/r3"
+	}
 	ledger, err := acceptedLedger(req.ReuseAccepted, n, true)
 	if err != nil {
 		var ne *Error
@@ -222,6 +231,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	defer closeOutput(output, &res.Report, &resultErr)
 	memberRoots := map[string]*os.Root{".": output.Root}
 	directories := []string{"records", "raw"}
+	if semantics {
+		directories = append(directories, "capture", "projection")
+	}
 	if req.SourceWitness {
 		directories = append(directories, "source")
 	}
@@ -267,10 +279,38 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		}
 		return true
 	}
+	var semanticCaptureErr error
+	if semantics && berr == nil {
+		files, err := semanticBuildFiles(runCtx, b)
+		if err != nil {
+			semanticCaptureErr = err
+			writeFailed = true
+			res.Findings = append(res.Findings, finding(func() string {
+				code := projectCaptureError(err).Code
+				if code == "" {
+					return "SEMANTICS_BUILD_CAPTURE_FAILED"
+				}
+				return code
+			}(), "error", "", "실제 build 입력을 보존하지 못했다"))
+		} else {
+			for _, file := range files {
+				if runCtx.Err() != nil {
+					writeFailed = true
+					break
+				}
+				if write(file.pin.Path, file.data) {
+					members = append(members, kit.OracleMember{Path: file.pin.Path, Role: file.pin.Role, Bytes: file.pin.Bytes, SHA256: file.pin.SHA256, InputBytes: file.pin.Bytes, InputSHA256: file.pin.SHA256, ExecutionStatus: kit.StatusCompleted})
+				}
+			}
+		}
+	}
 	if ledger != nil && write("reuse-ledger.json", req.ReuseAccepted) {
 		members = append(members, kit.OracleMember{Path: "reuse-ledger.json", Role: "reuse-ledger", Bytes: uint64(len(req.ReuseAccepted)), SHA256: sha(req.ReuseAccepted), InputBytes: uint64(len(req.ReuseAccepted)), InputSHA256: sha(req.ReuseAccepted), ExecutionStatus: kit.StatusCompleted})
 	}
-	if berr != nil {
+	if semantics && berr == nil && writeFailed {
+		res.ExecutionStatus, res.Assessment, resultErr = semanticFailure(ctx, runCtx, semanticCaptureErr)
+
+	} else if berr != nil {
 		if req.SourceWitness {
 			writeFailed = true
 			res.Findings = append(res.Findings, finding("SOURCE_WITNESS_UNAVAILABLE", "error", "", "build 실패로 source witness set을 완결할 수 없다"))
@@ -280,6 +320,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		res.ExecutionStatus, res.Assessment = kit.StatusFailed, kit.AssessNotAssessed
 		if ne.Kind == kit.KindInvalidInput {
 			res.ExecutionStatus = kit.StatusNotRun
+		}
+		if semantics {
+			res.ExecutionStatus, res.Assessment, resultErr = semanticFailure(ctx, runCtx, berr)
+			errors.As(resultErr, &ne)
 		}
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
@@ -309,6 +353,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		for i, oc := range prof.OracleCases {
 			c := oc.IncrementalCase
 			var cr CaseResult
+			var capture driverCapture
 			var sourceMember *kit.OracleMember
 			if op.Batch { // read, prepared and run above; the source is not read again
 				cr = batched[i]
@@ -331,18 +376,65 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 							InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256}
 					}
 				}
+				if semantics && writeFailed {
+					resultErr = refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", nil)
+					break
+				}
 				var found bool
 				cr, found = refs[c.ID]
 				if !found {
-					cr = b.RunCase(runCtx, x, c, src)
+					if semantics {
+						cr = b.runCase(runCtx, x, c, src, &capture)
+					} else {
+						cr = b.RunCase(runCtx, x, c, src)
+					}
 					linkSvcReferences(&cr, refs)
 					judgeOracle(&cr, oc, prof, pack, x, src)
 				}
 			}
 			x.observeCase(&cr) // last, on every case: one that never parsed is NOT_CLAIMED
 			x.foldAccepted(&cr)
-			cases = append(cases, cr)
 			name := fmt.Sprintf("%05d-%s.json", i, c.ID)
+			if semantics {
+				projection, err := json.Marshal(cr)
+				var capturePin *kit.ReplayMember
+				add := func(pin kit.ReplayMember, data []byte) {
+					if uint64(len(data)) > kit.MaxDocumentBytes {
+						writeFailed = true
+						res.Findings = append(res.Findings, finding("SEMANTICS_MEMBER_LIMIT", "error", pin.Path, "offline member 한도를 넘었다"))
+						return
+					}
+					if writeFailed {
+						return
+					}
+					if write(pin.Path, data) {
+						members = append(members, kit.OracleMember{Path: pin.Path, Role: pin.Role, Case: c.ID, Bytes: pin.Bytes, SHA256: pin.SHA256, InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
+					}
+				}
+				if err != nil {
+					writeFailed = true
+					res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "semantic-free projection을 직렬화하지 못했다"))
+				}
+				pin := kit.ReplayMember{Path: "projection/" + name, Role: "projection", Bytes: uint64(len(projection)), SHA256: sha(projection)}
+				add(pin, projection)
+				if capture.stage != "" {
+					files, err := capture.files(fmt.Sprintf("capture/%05d-%s", i, c.ID))
+					if err != nil {
+						writeFailed = true
+						res.Findings = append(res.Findings, finding("SEMANTICS_CAPTURE_FAILED", "error", c.ID, "실제 invocation을 보존하지 못했다"))
+					} else {
+						for _, file := range files {
+							add(file.pin, file.data)
+							if file.pin.Role == "capture" {
+								copy := file.pin
+								capturePin = &copy
+							}
+						}
+					}
+				}
+				semanticLocalCase(&cr, prof.QuerySemanticsRegistrationSHA256, capturePin, pin)
+			}
+			cases = append(cases, cr)
 			if sourceMember != nil {
 				sourceMember.ExecutionStatus = cr.ExecutionStatus
 				members = append(members, *sourceMember)
@@ -366,6 +458,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			}
 			if !writeFailed {
 				rec := OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true}
+				if semantics {
+					rec.Schema = kit.OracleSemanticsRecordSchema
+				}
 				if ledger != nil {
 					rec.Schema = kit.OracleAcceptedRecordSchema
 				}
@@ -384,7 +479,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
 				}
 			}
-			res.Cases = append(res.Cases, CaseLine{ReuseAccepted: cr.ReuseAccepted, ID: cr.ID, ExecutionStatus: cr.ExecutionStatus, Assessment: cr.Assessment, Code: cr.Code, Claims: cr.Claims, Oracle: cr.Oracle, ReuseObservationClaim: cr.ReuseObservationClaim})
+			res.Cases = append(res.Cases, CaseLine{QuerySemantics: cr.QuerySemantics, ReuseAccepted: cr.ReuseAccepted, ID: cr.ID, ExecutionStatus: cr.ExecutionStatus, Assessment: cr.Assessment, Code: cr.Code, Claims: cr.Claims, Oracle: cr.Oracle, ReuseObservationClaim: cr.ReuseObservationClaim})
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(cases)
 	}
@@ -392,14 +487,15 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		res.BuildRemoved = "REMOVED"
 		if err := b.Remove(); err != nil {
 			res.BuildRemoved = "FAILED: " + err.Error()
-			res.Findings = append(res.Findings, finding("BUILD_CLEANUP_FAILED", "error", "", "build 디렉터리를 지우지 못했다"))
-			res.ExecutionStatus = kit.StatusFailed
+			recordCleanupFailure(&res.Report, &resultErr, "BUILD_CLEANUP_FAILED", err)
 		}
 	}
 	res.Summary = summarize(cases, nil)
 	if writeFailed {
 		// no manifest: the set has no completeness marker and is never a reference set
-		res.ExecutionStatus = kit.StatusFailed
+		if !semantics || resultErr == nil || res.ExecutionStatus != kit.StatusCancelled && res.ExecutionStatus != kit.StatusResourceLimit {
+			res.ExecutionStatus = kit.StatusFailed
+		}
 		if res.Assessment == kit.AssessPass {
 			res.Assessment = kit.AssessNotAssessed
 		}
@@ -410,6 +506,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
 		if req.SourceWitness {
 			m.Schema = kit.OracleSourceManifestSchema
+		}
+		if semantics {
+			m.Schema, m.QuerySemanticsRegistrationSHA256, m.Operation = kit.OracleSemanticsManifestSchema, prof.QuerySemanticsRegistrationSHA256, &op
 		}
 		if ledger != nil {
 			m.Schema, m.ReuseAcceptedPolicy, m.ReuseAcceptedLedgerSHA256 = kit.OracleAcceptedManifestSchema, kit.ReuseAcceptedSchema, kit.ReuseAcceptedLedgerSHA256
@@ -456,7 +555,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	if res.ExecutionStatus == kit.StatusCompleted {
 		res.Coverage.Observed = res.Coverage.Requested
 	}
-	return res, nil
+	return res, resultErr
 }
 
 // checkFactPack binds the profile's pack queries to the pack file: same revision and

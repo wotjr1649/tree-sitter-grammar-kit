@@ -131,6 +131,7 @@ type Build struct {
 	Closure          []ClosureFile    `json:"closure"`
 	Steps            []BuildStep      `json:"steps"`
 	Reuse            *BuildReuse      `json:"reuse,omitempty"`
+	identityText     string
 	env              []string
 	cgroup           string
 }
@@ -377,7 +378,8 @@ func NewBuild(ctx context.Context, req BuildRequest) (*Build, error) {
 		}
 		fmt.Fprintf(&text, "step=%s %q\n", steps[i].name, steps[i].argv)
 	}
-	idsum := sha256.Sum256([]byte(text.String()))
+	b.identityText = text.String()
+	idsum := sha256.Sum256([]byte(b.identityText))
 	b.Identity = hex.EncodeToString(idsum[:])
 	if req.CacheDir != "" {
 		if err := ctx.Err(); err != nil {

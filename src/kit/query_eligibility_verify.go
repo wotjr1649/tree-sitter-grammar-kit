@@ -3,6 +3,8 @@ package kit
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"os"
 	"reflect"
 	"slices"
 	"strconv"
@@ -10,7 +12,20 @@ import (
 	"unicode/utf8"
 )
 
+type eligibilityScope struct {
+	documentsRead     bool
+	walkedDirectories map[string]fs.FileInfo
+	walked            map[string]fs.FileInfo
+	r                 *run
+	root              *os.Root
+	wanted            map[string]bool
+	session           *eligibilitySession
+	native            *semanticNativeCache
+}
+
 type eligibilitySession struct {
+	firstFailure                      string
+	semantic                          *semanticNativeCache
 	r                                 *run
 	b                                 *eligibilityBudget
 	res                               *QueryReferenceEligibilityResult
@@ -43,6 +58,9 @@ func (s *eligibilitySession) finding(code, at string, bad bool) {
 	severity := "warning"
 	if bad {
 		s.failures++
+		if s.firstFailure == "" {
+			s.firstFailure = code
+		}
 		if s.failItem != nil {
 			s.failItem()
 		}
@@ -69,18 +87,38 @@ func eligibilityRevision(x string) bool {
 	return true
 }
 
-func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceEligibilityRequest) (res QueryReferenceEligibilityResult, resultErr error) {
+func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceEligibilityRequest) (QueryReferenceEligibilityResult, error) {
+	return verifyQueryReferenceEligibilityInRun(ctx, req, nil)
+}
+
+func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenceEligibilityRequest, scope *eligibilityScope) (res QueryReferenceEligibilityResult, resultErr error) {
 	res = QueryReferenceEligibilityResult{Report: newReport("query reference eligibility"), ResultSchema: QueryReferenceEligibilityResultSchema,
 		Build: QueryEligibilityCounts{Required: 9, Unprocessed: 9}, Unit: QueryEligibilityCounts{Required: 4, Unprocessed: 4}, Control: QueryEligibilityCounts{Required: 53, Unprocessed: 53}, Assertion: QueryEligibilityCounts{Required: 36, Unprocessed: 36}}
-	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
-	if e != nil {
-		failReport(&res.Report, e)
-		return res, e
+	var r *run
+	if scope != nil {
+		r = scope.r
 	}
-	defer r.cancel()
-	b := &eligibilityBudget{r: r}
-	r.eligibility = b
+	if r == nil {
+		var e *Error
+		r, e = startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
+		if e != nil {
+			failReport(&res.Report, e)
+			return res, e
+		}
+		defer r.cancel()
+	}
+	b := r.eligibility
+	if b == nil {
+		b = &eligibilityBudget{r: r}
+		r.eligibility = b
+	}
+
 	s := &eligibilitySession{r: r, b: b, res: &res, bound: true, invocationTuples: map[string][]int{}, failedInvocations: map[string]bool{}, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, invocations: map[string]*eligibilityInvocation{}, catalogueInvocations: map[string]*eligibilityInvocation{}, tools: map[string]eligibilityTool{}, owned: map[string]eligibilityMember{}, nodes: map[string]EvidenceNode{}, owners: map[string]string{}, ready: map[string]bool{}, build: map[string]string{}, units: map[string]string{}, control: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, outputs: map[string]*eligibilityOutput{}}
+	if scope != nil {
+		s.semantic = scope.native
+		scope.session = s
+	}
+
 	res.ExecutionStatus, res.EvidenceMode, res.Assessment = StatusCompleted, ModeReplayedRaw, AssessPass
 	defer func() {
 		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead, b.work, b.logical
@@ -101,6 +139,9 @@ func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceElig
 	for _, doc := range docs {
 		if uint64(len(doc.data)) > MaxDocumentBytes {
 			return res, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc.name, nil)
+		}
+		if scope != nil && scope.documentsRead {
+			continue
 		}
 		if uint64(len(doc.data)) > ReplayOperations()["evidence-replay"].TotalBytes-r.totalRead {
 			return res, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", doc.name, nil)
@@ -143,8 +184,18 @@ func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceElig
 		approved[path] = pin.Member
 		wantedNodes[pin.NodeID] = true
 	}
+	var heldRoot *os.Root
+	if scope != nil {
+		heldRoot = scope.root
+		for path := range scope.wanted {
+			wanted[path] = true
+		}
+	}
 	s.snapshot = &evidenceSnapshot{wanted: wanted, wantedNodes: wantedNodes, approved: approved}
-	evidence, err := verifyEvidenceInRun(ctx, req.Evidence, s.snapshot, r, nil)
+	if scope != nil {
+		s.snapshot.walked, s.snapshot.walkedDirectories = scope.walked, scope.walkedDirectories
+	}
+	evidence, err := verifyEvidenceInRun(ctx, req.Evidence, s.snapshot, r, heldRoot)
 	res.Evidence = &evidence
 	for _, identity := range evidence.Identities {
 		if identity.Role == "evidence" {

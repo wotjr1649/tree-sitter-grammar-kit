@@ -1,17 +1,60 @@
 package kit
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
+	"errors"
+	"io"
 	"reflect"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 const eligibilityWorkLimit uint64 = 32000000
 const eligibilityLogicalLimit uint64 = 1 << 30
+
+// Legacy headers need no AST; reserve decoder/error buffers and typed values before decoding.
+func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
+	if b == nil {
+		return nil
+	}
+	if e := b.charge(uint64(len(data))+1, 32*uint64(len(data))+32768, "legacy-replay-buffers"); e != nil {
+		return e
+	}
+	dec := jsontext.NewDecoder(bytes.NewBuffer(data), jsontext.AllowDuplicateNames(true))
+	values := uint64(0)
+	for {
+		if e := b.r.check(); e != nil {
+			return e
+		}
+		kind, count := dec.StackIndex(dec.StackDepth())
+		name := kind == '{' && count%2 == 0
+		token, err := dec.ReadToken()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			var syntax *jsontext.SyntacticError
+			if errors.As(err, &syntax) && syntax.Err != nil && syntax.Err.Error() == "exceeded max depth" {
+				return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", "replay-result", nil)
+			}
+			return fail(KindInvalidInput, "JSON_SYNTAX", "replay-result", nil)
+		}
+		if !name && token.Kind() != '}' && token.Kind() != ']' {
+			values++
+			if values > 2000000 {
+				return fail(KindResourceLimit, "JSON_VALUE_LIMIT", "replay-result", nil)
+			}
+			if e := b.charge(1, 448, "legacy-replay-values"); e != nil {
+				return e
+			}
+		}
+	}
+}
 
 // One ledger covers repeated work, including conservative reservations for shared leaves.
 type eligibilityBudget struct {
@@ -48,25 +91,39 @@ func eligibilityProduct(at string, values ...uint64) (uint64, *Error) {
 }
 
 func (b *eligibilityBudget) decode(doc string, data []byte, target any, exact bool) *Error {
+	_, e := b.decodeValue(doc, data, target, exact)
+	return e
+}
+
+func (b *eligibilityBudget) decodeValue(doc string, data []byte, target any, exact bool) (*jv, *Error) {
 	if e := b.charge(1, 2*uint64(len(data)), doc); e != nil {
-		return e
+		return nil, e
+	}
+	if uint64(len(data)) > MaxDocumentBytes {
+		return nil, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
+	}
+	if !utf8.Valid(data) {
+		return nil, fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
+	}
+	if e := b.reserveJSON(doc, data, 3); e != nil {
+		return nil, e
 	}
 	values := &valueBudget{max: 2000000, check: b.r.check, charge: func() *Error { return b.charge(1, 0, doc) }}
 	v, e := decodeBounded(doc, data, MaxDocumentBytes, values)
 	if e != nil {
-		return e
+		return nil, e
 	}
-	shape := &valueBudget{max: 2000000, check: b.r.check, charge: func() *Error { return b.charge(1, 0, doc) }}
+	shape := &valueBudget{max: 2000000, check: b.r.check, charge: func() *Error { return b.charge(1, 0, doc) }, reserve: func(n uint64) *Error { return b.charge(0, n, doc) }}
 	if e := eligibilityShape(typed{doc: doc}, v, reflect.TypeOf(target).Elem(), exact, shape); e != nil {
-		return e
+		return nil, e
 	}
 	if e := b.charge(values.n, uint64(len(data)), doc); e != nil {
-		return e
+		return nil, e
 	}
 	if err := jsonv2.Unmarshal(data, target, jsonv2.RejectUnknownMembers(exact)); err != nil {
-		return fail(KindInvalidInput, "JSON_SHAPE", doc, err)
+		return nil, fail(KindInvalidInput, "JSON_SHAPE", doc, err)
 	}
-	return nil
+	return v, nil
 }
 
 // Registration optionals use omitempty; native wire nullable arms are explicit.
@@ -93,9 +150,15 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 		if e := t.want(v, '{'); e != nil {
 			return e
 		}
+		if e := budget.allocate(256 + 256*uint64(typ.NumField())); e != nil {
+			return e
+		}
 		fields := map[string]reflect.StructField{}
 		var collect func(reflect.Type) *Error
 		collect = func(st reflect.Type) *Error {
+			if e := budget.allocate(256 * uint64(st.NumField())); e != nil {
+				return e
+			}
 			if e := budget.charge(); e != nil {
 				return e
 			}
@@ -103,7 +166,7 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 				f := st.Field(i)
 				tag := f.Tag.Get("json")
 				name, _, _ := strings.Cut(tag, ",")
-				if strings.Contains(tag, ",inline") {
+				if strings.Contains(tag, ",inline") || f.Anonymous && tag == "" && f.Type.Kind() == reflect.Struct {
 					if e := collect(f.Type); e != nil {
 						return e
 					}
@@ -134,7 +197,7 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 			}
 		}
 		for name, f := range fields {
-			if jvMember(v, name) == nil && (!strings.Contains(f.Tag.Get("json"), ",omitempty") || typ == reflect.TypeFor[nativewire.Producer]() || typ == reflect.TypeFor[nativewire.Step]()) {
+			if jvMember(v, name) == nil && !eligibilityNativeOptional(typ, name, v) && (!strings.Contains(f.Tag.Get("json"), ",omitempty") || typ == reflect.TypeFor[nativewire.Producer]() || typ == reflect.TypeFor[nativewire.Step]()) {
 				return fail(KindInvalidInput, "JSON_MISSING_FIELD", t.doc+"#"+v.cptr()+"/"+name, nil)
 			}
 		}
@@ -171,29 +234,128 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 // Nullable wire arms do not permit null primitives or null compact-array elements.
 func eligibilityNativeNullable(typ reflect.Type, name string) bool {
 	switch typ {
+	case reflect.TypeFor[QuerySemanticsResult]():
+		return name == "evidence" || name == "eligibility"
+	case reflect.TypeFor[QueryReferenceEligibilityResult]():
+		return name == "evidence"
 	case reflect.TypeFor[nativewire.Step]():
 		return name == "edit" || name == "route" || name == "fresh"
 	case reflect.TypeFor[nativewire.WireTree]():
 		return name == "form" || name == "types" || name == "fields" || name == "nodes" || name == "errors" || name == "declarations" || name == "partial_trees"
 	case reflect.TypeFor[nativewire.DeclItem]():
 		return name == "name"
+	case reflect.TypeFor[semanticProcessCapture]():
+		return name == "spec" || name == "process" || name == "stdout" || name == "stderr" || name == "error"
+	case reflect.TypeFor[semanticCaptureSpec]():
+		return name == "Args" || name == "Env" || name == "Stdin"
+	case reflect.TypeFor[semanticCaptureError]():
+		return name == "kind" || name == "blocked"
+	case reflect.TypeFor[semanticExpectationResult]():
+		return name == "contains"
+	case reflect.TypeFor[semanticQueryExpectationResult]():
+		return name == "captures" || name == "error"
+	case reflect.TypeFor[semanticBuildReuse]():
+		return name == "source_steps"
+	case reflect.TypeFor[semanticOracleMeaning]():
+		return name == "declarations" || name == "fact_pack"
+	case reflect.TypeFor[semanticOracleCase]():
+		return name == "dynamic_sql_expect"
+	case reflect.TypeFor[QueryExpectation]():
+		return name == "captures" || name == "error"
 	}
 	return false
 }
 
-// The existing graph/policy decoders run only after this bounded strict pass and reservation.
+func (b *eligibilityBudget) significantJSONBytes(data []byte) (uint64, *Error) {
+	var significant uint64
+	quoted, escaped := false, false
+	for i, c := range data {
+		if i%4096 == 0 {
+			if e := b.r.check(); e != nil {
+				return 0, e
+			}
+		}
+		if quoted {
+			significant++
+			if escaped {
+				escaped = false
+			} else if c == '\\' {
+				escaped = true
+			} else if c == '"' {
+				quoted = false
+			}
+		} else if c == '"' {
+			quoted = true
+			significant++
+		} else if c != ' ' && c != '\t' && c != '\r' && c != '\n' {
+			significant++
+		}
+	}
+	return significant, nil
+}
+
+// Token preflight reserves decoder/error buffers first, then AST and typed containers before any AST pass.
 func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) *Error {
 	if b == nil {
 		return nil
 	}
+	if e := b.r.check(); e != nil {
+		return e
+	}
 	if e := b.charge(1, uint64(len(data)), doc); e != nil {
 		return e
 	}
-	values := &valueBudget{max: 2000000, check: b.r.check, charge: func() *Error { return b.charge(1, 0, doc) }}
-	if _, e := decodeBounded(doc, data, MaxDocumentBytes, values); e != nil {
+	if uint64(len(data)) > MaxDocumentBytes {
+		return fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
+	}
+	if !utf8.Valid(data) {
+		return fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
+	}
+	significant, sizeErr := b.significantJSONBytes(data)
+	if sizeErr != nil {
+		return sizeErr
+	}
+	// bytes.Buffer aliases the input; only strings and non-whitespace syntax can grow names/error paths.
+	if e := b.charge(0, 32*significant+32768, doc); e != nil {
 		return e
 	}
-	work, e := eligibilityProduct(doc, values.n, passes)
+	dec := jsontext.NewDecoder(bytes.NewBuffer(data))
+	values := uint64(0)
+	for {
+		if e := b.r.check(); e != nil {
+			return e
+		}
+		kind, count := dec.StackIndex(dec.StackDepth())
+		if dec.StackDepth() == 0 && count > 0 {
+			if _, err := dec.ReadToken(); err == io.EOF {
+				break
+			} else if err != nil {
+				return jsonError(doc, "", err)
+			}
+			return fail(KindInvalidInput, "JSON_TRAILING_VALUE", doc, nil)
+		}
+		name := kind == '{' && count%2 == 0
+		peek := dec.PeekKind()
+		if !name && peek != '}' && peek != ']' && peek != 0 {
+			values++
+			if values > 2000000 {
+				return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
+			}
+			// 448 covers one jv, geometric child/key growth, and subsequent typed containers.
+			if e := b.charge(1, 448, doc); e != nil {
+				return e
+			}
+			if (peek == '{' || peek == '[') && dec.StackDepth() >= jsonMaxDepth {
+				return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
+			}
+		}
+		if _, err := dec.ReadToken(); err == io.EOF {
+			break
+		} else if err != nil {
+			return jsonError(doc, "", err)
+		}
+	}
+	work, e := eligibilityProduct(doc, values, passes)
 	if e != nil {
 		return e
 	}
@@ -314,4 +476,16 @@ func (s *eligibilitySession) fixedBytes(input eligibilityFixedInput) ([]byte, *E
 		return nil, fail(KindInvalidInput, "CATALOGUE_INVALID", "catalogue-input", err)
 	}
 	return data, nil
+}
+
+// Full trees omit summary-only arms in the actual native/r4 producer.
+func eligibilityNativeOptional(typ reflect.Type, name string, v *jv) bool {
+	if typ != reflect.TypeFor[nativewire.WireTree]() {
+		return false
+	}
+	status, form := jvMember(v, "status"), jvMember(v, "form")
+	if status != nil && status.kind == '"' && status.s != StatusCompleted {
+		return name != "status" && name != "code" && name != "parse_ms" && name != "form" && name != "queries" && name != "api"
+	}
+	return form != nil && form.kind == '"' && form.s == "full" && (name == "reason" || name == "errors" || name == "partial_trees")
 }

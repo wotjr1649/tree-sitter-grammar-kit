@@ -80,9 +80,17 @@ func decodeStrict(doc string, data []byte, maxBytes uint64) (*jv, *Error) {
 // valueBudget bounds the decoded value count (so a small-valued document cannot allocate far
 // beyond its byte size) and runs a cancellation checkpoint every 4096 values.
 type valueBudget struct {
-	max, n uint64
-	check  func() *Error
-	charge func() *Error
+	max, n  uint64
+	check   func() *Error
+	charge  func() *Error
+	reserve func(uint64) *Error
+}
+
+func (b *valueBudget) allocate(n uint64) *Error {
+	if b != nil && b.reserve != nil {
+		return b.reserve(n)
+	}
+	return nil
 }
 
 func (b *valueBudget) take(doc string, at *jv) *Error {
@@ -188,7 +196,11 @@ func jsonError(doc, ptr string, err error) *Error {
 }
 
 // typed reads strict values out of one document; every error carries doc#pointer.
-type typed struct{ doc string }
+type typed struct {
+	doc                    string
+	check                  func() *Error
+	emptyProjectionQueries bool
+}
 
 func (t typed) bad(code string, v *jv) *Error {
 	return fail(KindInvalidInput, code, t.doc+"#"+v.cptr(), nil)
@@ -196,6 +208,11 @@ func (t typed) bad(code string, v *jv) *Error {
 
 // want rejects null distinctly from a wrong type: null is never an absent value.
 func (t typed) want(v *jv, kind byte) *Error {
+	if t.check != nil {
+		if e := t.check(); e != nil {
+			return e
+		}
+	}
 	switch {
 	case v.kind == kind:
 		return nil
@@ -238,6 +255,11 @@ func (t typed) str(v *jv) (string, *Error) {
 }
 
 func (t typed) boolean(v *jv) (bool, *Error) {
+	if t.check != nil {
+		if e := t.check(); e != nil {
+			return false, e
+		}
+	}
 	if v.kind == 't' || v.kind == 'f' {
 		return v.kind == 't', nil
 	}

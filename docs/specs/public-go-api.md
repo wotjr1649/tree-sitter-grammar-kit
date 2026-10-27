@@ -6,6 +6,20 @@
 
 `src/kit/reuseobs`는 native host와 offline replay가 공유하는 실험적 pure Go validator다. `Observation`, `Counts`, `Binding`, `Decode`와 `Judge` 및 고정 schema/policy/runtime·수집 상한, 기록된 관측을 읽을 runtime manifest를 판정하는 `VerifiedRuntimeManifest`를 제공한다. `Decode`는 호출자가 독립적으로 검증한 입력·build·run·history·role의 `Binding`과 versioned 관측을 대조하며, `Judge`는 유효한 수집과 actual old-tree 전달의 별도 축만 판정한다(결과 r2의 의미). `Mandatory`·`CaseClaim`·`Step`은 모든 native parse 관측을 필수로 요구하는 결과 r3의 판정이며(#217), 역할 순서 누락과 host marker 모순도 판정한다. event 수로 공개 node 재사용·구문 적합성·성능을 판정하지 않는다. 자체 구조 검증은 실행의 인증을 대신하지 않으며 연결되지 않은 관측을 `Judge`에 제공하는 것만으로 workload 결속을 주장할 수 없다. package는 파일·process·network를 사용하지 않는다. native 실행·logger 설치는 계속 CLI의 별도 process 경계 안에 있고 `TestOfflineClosure`의 기존 금지는 유지한다. 구체적인 값·상태는 [native protocol](tree-and-adapter-protocol.md), 공개 replay 선택자는 [identity/evidence](identity-and-evidence.md)가 소유한다.
 
+## #216 query semantics의 실험적 offline 진입점
+
+`VerifyQuerySemantics(ctx, QuerySemanticsRequest)`는 process를 실행하지 않는다. `Evidence`는 caller가 승인한 policy와 evidence root이고, `Profile`·`Registration`·`RunBinding`·`EligibilityApproval`·`EligibilityRegistration`·`WitnessRegistration`은 graph 밖의 caller 원문이다. root의 `oracle/`에 저장된 profile/r3 생산 set을 같은 evidence pass에서 읽는다. 첫 구현 범위는 단일 UTF-8 full-input `native-query` case이며 [계측 reference 계약](instrumented-query-reference.md)의 사전 등록과 기존 eligibility/r1 closure를 사용한다. SVC·전처리·batch·large 및 새 macOS claim은 이 진입점의 완료 근거가 아니다.
+
+`tsgk-query-semantics-result/r1`은 `producer_recorded`, `producer_fold_valid`, `base_verified`, `query_semantics`와 최종 E0 판정을 구분한다. producer의 local pending leaf는 저장된 그대로 남는다. `producer_fold_valid`는 저장된 기존 claim과 pending leaf의 producer 집계 관계를 확인했는지 나타내며 실행 진위나 최종 PASS가 아니다. `tuple`은 사전 등록에서 먼저 고정한 `required`를 `verified`·`failed`·`blocked`·`unprocessed`로 나누며, 승인 ABSENT라도 분모를 없애지 않는다. ABSENT에서는 graph·producer set·실제 request·native·projection과 기존 base claim을 검증하지만 semantic PASS는 만들지 않는다. BOUND에서는 같은 run·누적 예산·held root·한 번의 evidence snapshot과 eligibility가 이미 검사한 native/tree/query/evaluation을 재사용한다. 실패가 확인된 뒤의 취소·자원 한도는 그 FAIL·최초 code·부분 counter를 지우지 않는다.
+
+`base_verified=PASS`는 필요한 base gate의 존재와 재계산 완료를 요구하며, 미재계산 또는 실패 gate와 공존하지 않는다. 미재계산 gate가 남은 실제 오류 결과는 base BLOCKED로 두고 이미 확인한 전체 FAIL·최초 code를 유지한다. 최종 PASS의 code는 비어 있어야 한다. replay-result/r3에서 유효한 evidence는 바깥 실행이 완료되어야 하며 바깥 error finding과 공존하지 않는다. 완료된 report와 완료된 semantic 결과 안의 report는 비실패 판정에 error finding을 남길 수 없다. 완료된 semantic 결과의 eligibility 실행 상태도 COMPLETED여야 한다. 승인 ABSENT에서 eligibility의 Complete가 false인 정상 결과는 허용한다. 취소·자원 한도로 중단된 비실패 부분 결과의 error finding과 core 완료 뒤 바깥 출력만 중단된 결과는 유지한다. JSON 컨테이너는 실제 token 수와 문자열·escape를 보존한 유의미한 bytes, shape의 reflection map 비용을 할당 전에 예약한다. 문자열 밖 JSON 공백은 구조 비용의 값 수로 추정하지 않지만 원문 bytes·파일/총량·digest에는 그대로 포함한다.
+
+완료된 full-input projection은 query가 0개이고 API가 꺼져 있어도 `oracle_claims`를 보존한다. query가 없으면 query 비교를 만들지 않고 `query_equality=NOT_CLAIMED`로 재계산하며, 필수 base gate 집합을 줄이거나 0개 tuple로 semantic PASS를 만들지 않는다. 부분 FAIL도 비어 있지 않은 최초 code를 보존하고, 저장 결과에서 비교 가능한 최초 error finding의 code와 일치해야 한다. 빈 error code로 비교를 생략할 수 없다. eligibility의 최초 실패가 보존 상한 앞의 경고 때문에 드러나지 않은 경우에는 상한 뒤에 붙은 취소·자원 오류를 원래 실패로 추정하지 않는다.
+
+run-binding/r1은 profile·manifest·semantic 등록·eligibility 승인/등록·witness·policy·graph digest와 완전한 사전 member 순서를 고정한다. 각 member는 D/O 논리 owner, Oracle-local 이름, 실제 graph node, 정확한 `oracle/` 경로·role·bytes·SHA-256을 함께 가진다. native invocation의 plain `process`와 current reference invocation별 `references[].receipt`를 구분한다. native/r1 eligibility DTO의 `Receipt == nil` 계약은 유지한다. 같은 hash의 다른 경로나 owner로 대신할 수 없다. 파일·디렉터리의 물리 동일성도 같은 pass의 metadata와 held child root로 대조한다.
+
+small 예산은 파일당 16 MiB, 총 256 MiB, 10,000 files, wall 120초, work 32,000,000, logical allocation 1 GiB다. frame 한도에는 4-byte header가 포함된다. 이 값은 기존 reference/replay 한도를 올리지 않는다. `complete`는 offline 평가가 끝났다는 뜻이며, 조건부 저장 일관성 PASS가 실행 진위를 인증하지 않는다. 재계산하지 않은 기존 API/fact/dynamic claim은 base PASS의 근거로 채택하지 않는다. 전체 route·SVC·large·replay/qualification 통합과 실제 main 확인은 별도 완료 조건이다.
+
 ## S01 함수와 소유권
 
 ```go

@@ -204,11 +204,12 @@ func messageFor(err *Error) string {
 
 // run holds per-call state: caller context, kit wall, limits accounting.
 type run struct {
-	caller      context.Context
-	wall        context.Context
-	cancel      context.CancelFunc
-	totalRead   uint64
-	eligibility *eligibilityBudget
+	caller          context.Context
+	wall            context.Context
+	cancel          context.CancelFunc
+	totalRead       uint64
+	eligibility     *eligibilityBudget
+	storedSemantics *eligibilityBudget // Stored r3 decoding cannot activate legacy eligibility behavior.
 }
 
 var errWall = errors.New("kit wall limit")

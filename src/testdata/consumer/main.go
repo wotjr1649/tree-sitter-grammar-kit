@@ -17,6 +17,11 @@ import (
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+	if os.Args[1] == "query-semantics" {
+		res, err := kit.VerifyQuerySemantics(ctx, kit.QuerySemanticsRequest{Evidence: kit.EvidenceRequest{Root: os.Args[2]}})
+		emit("query-semantics", res, err)
+		return
+	}
 	if os.Args[1] == "query-eligibility" {
 		res, err := kit.VerifyQueryReferenceEligibility(ctx, kit.QueryReferenceEligibilityRequest{Evidence: kit.EvidenceRequest{Root: os.Args[2]}})
 		emit("query-eligibility", res, err)

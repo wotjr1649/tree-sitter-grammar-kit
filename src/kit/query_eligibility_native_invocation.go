@@ -17,6 +17,7 @@ type eligibilityNativeRecord struct {
 	approved eligibilityNativeExpected
 	process  eligibilityExecution
 	raw      nativewire.Response
+	rawBytes uint64
 	haveRaw  bool
 	ready    bool
 }
@@ -87,6 +88,9 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 		}
 	}
 	record.raw, record.haveRaw, e = s.nativeResponse(inv, versions)
+	if record.haveRaw && inv.Response != nil {
+		record.rawBytes = inv.Response.Member.Bytes
+	}
 	if e != nil {
 		return record, e
 	}

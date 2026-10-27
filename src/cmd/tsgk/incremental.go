@@ -16,6 +16,8 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
+const oracleUsage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] [--reuse-observation] [--reuse-accepted FILE] [--query-semantics FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+
 // runIncremental builds the native driver for a tsgk-incremental/r2 (or r1) profile and runs its
 // cases through the S04 runner (S05). Only this command, oracle record and reproduce
 // start processes.
@@ -27,7 +29,7 @@ func runIncremental(ctx context.Context, args []string, stdout, stderr io.Writer
 // incremental, with r2 queries and API observations and a published record set.
 func runOracle(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] != "record" {
-		fmt.Fprintln(stderr, "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] [--reuse-observation] [--reuse-accepted FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE")
+		fmt.Fprintln(stderr, oracleUsage)
 		return exitUsage
 	}
 	return runNative(ctx, "oracle", args[1:], stdout, stderr)
@@ -54,7 +56,9 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	var pack *string
 	var sourceWitness bool
+	var semanticsRegistration string
 	if kind == "oracle" {
+		fs.StringVar(&semanticsRegistration, "query-semantics", "", "preregistered query semantics outside input roots; records pending external approval")
 		pack = fs.String("fact-pack", "", "fact query pack the profile binds (outside the root)")
 		fs.BoolVar(&sourceWitness, "source-witness", false, "retain exact initial case source in a manifest r2 set")
 	}
@@ -65,18 +69,26 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		return exitUsage
 	}
 	acceptedFlag := false
+	semanticsFlag := false
 	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "query-semantics" {
+			semanticsFlag = true
+		}
 		if f.Name == "reuse-accepted" {
 			acceptedFlag = true
 		}
 	})
+	if semanticsFlag && semanticsRegistration == "" {
+		fmt.Fprintln(stderr, "tsgk: USAGE: empty --query-semantics")
+		return exitUsage
+	}
 	if acceptedFlag && *accepted == "" {
 		fmt.Fprintln(stderr, "tsgk: USAGE: empty --reuse-accepted")
 		return exitUsage
 	}
 	usage := "tsgk: USAGE: tsgk incremental --root PATH [--grammar-root PATH] --profile FILE [--reuse-observation] [--reuse-accepted FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 	if kind == "oracle" {
-		usage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] [--reuse-observation] [--reuse-accepted FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+		usage = oracleUsage
 	}
 	if fs.NArg() != 0 || *root == "" || *profile == "" || *rt == "" || *out == "" || *work == "" || len(tools) != 1 {
 		fmt.Fprintln(stderr, usage)
@@ -176,6 +188,9 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		}
 	}
 	docs := []string{*profile}
+	if semanticsRegistration != "" {
+		docs = append(docs, semanticsRegistration)
+	}
 	if *accepted != "" {
 		docs = append(docs, *accepted)
 	}
@@ -208,6 +223,14 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			return exitIO
 		}
 	}
+	var semanticsData []byte
+	if semanticsRegistration != "" {
+		semanticsData, err = readDocument(semanticsRegistration)
+		if err != nil {
+			fmt.Fprintf(stderr, "tsgk: PROFILE_UNREADABLE: %v\n", err)
+			return exitIO
+		}
+	}
 	wall := time.Duration(max(*runWall, 0)) * time.Second
 	if testHookBeforeNativeRun != nil {
 		testHookBeforeNativeRun(target)
@@ -225,7 +248,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			}
 		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, SourceWitness: sourceWitness, ReuseObservation: reuseObservation, ReuseAccepted: acceptedData})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, SourceWitness: sourceWitness, ReuseObservation: reuseObservation, ReuseAccepted: acceptedData, QuerySemanticsRegistration: semanticsData})
 		res, report, rerr = &r, &r.Report, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],

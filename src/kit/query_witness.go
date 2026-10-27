@@ -1030,6 +1030,10 @@ func parseQueryWitnessRegistration(data []byte, r *run) (QueryWitnessRegistratio
 }
 
 func validateQueryWitnessRegistration(reg QueryWitnessRegistration, schema string) (QueryWitnessRegistration, *Error) {
+	return validateQueryWitnessRegistrationChecked(reg, schema, nil)
+}
+
+func validateQueryWitnessRegistrationChecked(reg QueryWitnessRegistration, schema string, checkpoint func() *Error) (QueryWitnessRegistration, *Error) {
 	bad := func(code string) (QueryWitnessRegistration, *Error) {
 		return reg, fail(KindInvalidInput, code, "query-registration", nil)
 	}
@@ -1069,13 +1073,39 @@ func validateQueryWitnessRegistration(reg QueryWitnessRegistration, schema strin
 		if !validID(q.ID) || queries[q.ID] || q.Source == "" || len(q.Source) > MaxQueryBytes {
 			return bad("QUERY_REGISTRATION_QUERY_INVALID")
 		}
-		if q.Metadata != nil && !querywire.ValidMetadata(q.Metadata.Patterns, q.Metadata.CaptureNames, q.Metadata.Predicates) {
-			return bad("QUERY_REGISTRATION_QUERY_INVALID")
+		if checkpoint != nil {
+			if e := checkpoint(); e != nil {
+				return reg, e
+			}
+		}
+		if q.Metadata != nil {
+			var stopped *Error
+			check := func() error {
+				if checkpoint != nil {
+					stopped = checkpoint()
+				}
+				if stopped != nil {
+					return stopped
+				}
+				return nil
+			}
+			valid, _ := querywire.ValidMetadataChecked(check, q.Metadata.Patterns, q.Metadata.CaptureNames, q.Metadata.Predicates)
+			if stopped != nil {
+				return reg, stopped
+			}
+			if !valid {
+				return bad("QUERY_REGISTRATION_QUERY_INVALID")
+			}
 		}
 		queries[q.ID] = true
 	}
 	seen := map[string]bool{}
 	for _, tuple := range reg.Required {
+		if checkpoint != nil {
+			if e := checkpoint(); e != nil {
+				return reg, e
+			}
+		}
 		key := fmt.Sprintf("%s/%d/%s", tuple.Query, tuple.Step, tuple.TreeRole)
 		if !queries[tuple.Query] || int(tuple.Step) > len(reg.Edits) || !slices.Contains([]string{"incremental", "fresh"}, tuple.TreeRole) || tuple.Step == 0 && tuple.TreeRole == "fresh" || seen[key] {
 			return bad("QUERY_REGISTRATION_TUPLE_INVALID")
@@ -1125,6 +1155,9 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 		if e := t.want(v, '{'); e != nil {
 			return e
 		}
+		if e := budget.allocate(256 + 256*uint64(typ.NumField())); e != nil {
+			return e
+		}
 		fields := map[string]reflect.StructField{}
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
@@ -1158,6 +1191,9 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 		}
 		for name, f := range fields {
 			optional := name == "encoding_source"
+			if t.emptyProjectionQueries && typ == reflect.TypeFor[witnessTreeProjection]() && name == "queries" {
+				optional = true
+			}
 			if typ == reflect.TypeFor[NativeOperation]() && strings.Contains(f.Tag.Get("json"), ",omitempty") {
 				optional = true
 			}

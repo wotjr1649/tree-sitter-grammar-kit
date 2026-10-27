@@ -24,7 +24,19 @@ func (s *eligibilitySession) verifyNative() *Error {
 	n := s.reg.Native
 	var versions [][]byte
 	var points []EditPoints
+	var selected eligibilityNativeRecord
+	var checked []nativewire.CheckedStep
 	nativeReady := false
+	if s.semantic != nil {
+		if e := s.b.charge(uint64(len(w.Required)), 128*uint64(len(w.Required))+512, "semantic-native-cache"); e != nil {
+			return e
+		}
+		s.semantic.values = make([]witnessEvaluation, len(w.Required))
+		s.semantic.evaluated = make([]bool, len(w.Required))
+		defer func() {
+			s.semantic.record, s.semantic.checked, s.semantic.versions, s.semantic.points, s.semantic.ready = selected, checked, versions, points, nativeReady
+		}()
+	}
 	var inv *eligibilityInvocation
 	if n != nil {
 		inv = s.invocations[n.InvocationID]
@@ -85,7 +97,6 @@ func (s *eligibilitySession) verifyNative() *Error {
 	if e := s.currentReferences(versions); e != nil {
 		return e
 	}
-	var selected eligibilityNativeRecord
 	for _, declared := range s.reg.Invocations {
 		if declared.Kind != "NATIVE_DRIVER" {
 			continue
@@ -102,7 +113,6 @@ func (s *eligibilitySession) verifyNative() *Error {
 			selected = record
 		}
 	}
-	var checked []nativewire.CheckedStep
 	if inv != nil {
 		s.failItem = func() { s.failInvocation(inv) }
 		nativeReady = nativeReady && selected.ready
@@ -233,6 +243,9 @@ func (s *eligibilitySession) verifyNative() *Error {
 				value, err := witnessEvaluate(s.r, *nativeQuery, EncodingUTF8, versions[tuple.Step])
 				if err != nil {
 					return asError(err)
+				}
+				if s.semantic != nil {
+					s.semantic.values[i], s.semantic.evaluated[i] = value, true
 				}
 				evaluated = value.captures
 				structural := make([]Capture, 0, len(nativeQuery.Captures))
@@ -373,7 +386,7 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 		s.finding("ELIGIBILITY_NATIVE_BUILD_MANIFEST", "native", true)
 		return false, nil
 	}
-	expectedFiles, runtimeCommit, e := s.nativeStaticClosure(n.Symbol)
+	expectedFiles, runtimeCommit, e := s.b.nativeStaticClosure(n.Symbol)
 	if e != nil {
 		return false, e
 	}
@@ -955,14 +968,14 @@ func eligibilityAllVerified(states map[string]string, n int) bool {
 	return true
 }
 
-func (s *eligibilitySession) nativeStaticClosure(symbol string) (map[string]eligibilitySnapshotRow, string, *Error) {
+func (b *eligibilityBudget) nativeStaticClosure(symbol string) (map[string]eligibilitySnapshotRow, string, *Error) {
 	files := map[string]eligibilitySnapshotRow{}
 	read := func(name string) ([]byte, *Error) {
 		info, err := fs.Stat(drivers.NativeC, "native-c/"+name)
 		if err != nil || info.Size() < 0 || info.Size() > 4<<20 {
 			return nil, fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", name, err)
 		}
-		if e := s.b.charge(1, 4*uint64(info.Size()), "native-static"); e != nil {
+		if e := b.charge(1, 4*uint64(info.Size()), "native-static"); e != nil {
 			return nil, e
 		}
 		data, err := drivers.NativeC.ReadFile("native-c/" + name)
@@ -983,7 +996,7 @@ func (s *eligibilitySession) nativeStaticClosure(symbol string) (map[string]elig
 			SHA256 string `json:"sha256"`
 		} `json:"files"`
 	}
-	if e := s.b.reserveJSON("embedded-runtime-manifest", manifest, 3); e != nil {
+	if e := b.reserveJSON("embedded-runtime-manifest", manifest, 3); e != nil {
 		return nil, "", e
 	}
 	if err := jsonv2.Unmarshal(manifest, &runtime); err != nil {
@@ -1003,7 +1016,7 @@ func (s *eligibilitySession) nativeStaticClosure(symbol string) (map[string]elig
 		files["driver driver/"+name] = eligibilitySnapshotRow{Bytes: uint64(len(data)), SHA256: digestHex(data)}
 	}
 	shim := []byte(fmt.Sprintf("#include <tree_sitter/api.h>\nconst TSLanguage *%s(void);\nconst TSLanguage *tsgk_language(void) { return %s(); }\n", symbol, symbol))
-	if e := s.b.charge(1, 2*uint64(len(shim)), "native-shim"); e != nil {
+	if e := b.charge(1, 2*uint64(len(shim)), "native-shim"); e != nil {
 		return nil, "", e
 	}
 	files["driver driver/shim.c"] = eligibilitySnapshotRow{Bytes: uint64(len(shim)), SHA256: digestHex(shim)}

@@ -100,3 +100,36 @@ Owned control의 compiler 출력 library도 hash 계산 전에 64 MiB 한도와 
 제공된 모든 완료 full native raw·projection 및 완료 reference CST의 root 끝은 해당 version의 input bytes와 같아야 한다. Reference CST도 native와 같은 CST 형태 규칙(MISSING의 has_error, 부모 안 자식 범위; 빈 alias type은 허용)을 만족해야 하며 위반은 `REFERENCE_TREE_INVALID`, reference metadata의 `querywire.ValidMetadata` 위반은 `REFERENCE_METADATA_INVALID`다. 필수 tuple 밖의 tree도 검사한다. Root 시작은 leading padding 이후일 수 있으며 공백 전용 입력의 `[input.bytes,input.bytes]`와 빈 입력을 허용한다. 이 끝점 검사는 실행 진위나 임의 prefix의 문법적 적합성을 증명하지 않는다.
 
 CST 비교 전에 독립 anchor의 capture 개수·순서별 match/pattern/capture/name을 대조한다. 확인된 모순은 CST 부적격과 함께 있어도 FAIL이다. Node preorder index·type·flags·range 등 전체 필드는 CST 동등성 확보 후 기존 comparator로 대조한다. Uncaptured node 차이로 index만 이동한 유효한 reference는 CST_INELIGIBLE/BLOCKED로 유지한다. Native full CST가 없을 때에는 기존 전체 anchor 대조를 유지하며, anchor 하나의 누락이 존재하는 다른 anchor의 대조를 생략하지 않는다.
+
+### #216 small 실제 driver 캡처 경계
+
+`tsgk-native-process-capture/r1`은 실행당 실제 요청·반환값을 보존하는 내부 캡처 형식이다. 이 형식 자체는 `query_semantics` claim이나 실행 진위를 승인하지 않는다. 기존 eligibility/r1의 승인 Request wrapper, plain Process 및 unframed Response 의미는 그대로다. 공개 `Build.Exec`·`RunCase`의 기존 경로는 캡처를 만들지 않으며, private 캡처 경로는 runner에 전달할 Args·Env·Stdin의 사본과 반환 직후 Result·stdout·stderr를 보존한다. 새 case의 준비 단계가 실패하면 이전 case의 캡처를 물려받지 않는다.
+
+필수 최상위 필드는 `schema,stage,spec,process,stdout,stderr,error`다. `VERIFY_REFUSED`는 실행 전 build 검증 거부이며 spec·process·stdout·stderr는 null이고 native error가 필수다. `RUN_RETURNED`는 spec과 process pin이 필수이며 runner의 실패 반환도 보존한다. 이 stage에 native error를 함께 기록하지 않는다. 실패 반환만으로 child 미시작이나 cleanup 성공을 추정하지 않는다. 아직 exec에 도달하지 않은 준비 실패에는 캡처가 없다.
+
+spec은 실제 `runner.Spec`의 `Path,Args,Dir,Env,Stdin,Interactive,StdoutBytes,StderrBytes,Wall,Grace,Memory,CgroupParent`를 모두 담는다. Wall·Grace는 signed 정수 나노초이고 stdout/stderr 한도도 signed 원값이다. Args·Env의 null과 []를 구별하며 Env:null은 빈 환경이다. Stdin·stdout·stderr는 Oracle 로컬 `ReplayMember{path,role,bytes,sha256}` pin 또는 null이다. nil stream은 null이고 non-nil 빈 stream은 0바이트 파일 pin이다. Binary stream을 UTF-8 문자열로 바꾸지 않는다. process pin은 plain Result 파일을 참조한다. 캡처 파일은 의존 member 뒤에 직렬화하며 미래 manifest·graph·approval의 hash를 참조하지 않는다.
+
+error는 null 또는 필수 `type,code,kind,blocked` 객체다. native는 kind와 code 및 blocked:null, runner는 code와 blocked 및 kind:null, other는 빈 code와 두 null을 보존한다. Cause의 문자열을 직렬화하지 않으며 호출자에게 반환하는 원 오류는 유지한다. 모든 JSON 문자열은 잘못된 UTF-8을 대체하지 않고 거부한다. 파일 바이트를 소비자가 변경해도 보존된 내부 캡처를 변경하지 못한다.
+
+small offline 캡처·프레임 파일에는 기존 evidence-replay의 파일당16MiB 한도를 적용하며 4바이트 프레임 헤더도 이 한도에 포함한다. 본문은 헤더의 big-endian 길이와 전체 바이트 수가 정확히 맞을 때만 채택한다. native 요청 payload의48MiB 한도를 offline 파일 한도로 해석하지 않는다. 실제 r2/r4 payload는 기존 strict JSON shape와 canonical Base64를 사용한다. r2에는 네 observation 필드의 존재 자체를 거부하고 r4에는 네 필드를 모두 요구한다. Base64 decode·재인코딩과 decoded query/edit 배열, 편집 version·point·반복 scan의 비용은 같은 eligibilityBudget에서 할당 전에 예약한다. 편집 한도는 version별 상한이며 누적 교체 길이로 바꾸지 않는다.
+
+새 Oracle opt-in·manifest/record/replay·최종 의미 검증과 전체26route/SVC/large qualification은 이 내부 형식과 별도의 완료 조건이다. 캡처 검사만으로 reference 자격·외부 승인·semantic PASS 또는 #216 완료를 선언하지 않는다.
+
+첫 small 생산 경로는 `tsgk oracle record --query-semantics FILE`로 명시적으로 선택한다. 이 문서는 input root 밖의 caller 문서이며 profile/r3의 `query_semantics_registration_sha256`과 정확한 원문을 결속한다. 이 선택은 source witness와 native/r4를 함께 요구한다. 첫 범위는 Windows/Linux의 단일 UTF-8 full-input native-query case이며 SVC·전처리·batch·large·accepted·fact pack과 run-wall 변경은 실행 전에 거부한다. profile/r3에 opt-in 문서가 없으면 과거 생산 방식으로 돌아가지 않는다.
+
+실제 build executable·closure 입력·build 설명은 build 제거 전에 `capture/`의 명시적 manifest member로 보존한다. 실제 invocation의 request frame·plain process·stdout/stderr frame도 같은 capture를 사용한다. `projection/`에는 semantic leaf를 추가하기 전의 case 결과를 저장한다. record/r4의 필수 `query_semantics`는 `phase=PRODUCER_LOCAL`, `claim=BLOCKED`, `code=EXTERNAL_APPROVAL_PENDING`, 등록 digest와 로컬 capture/projection pin을 보존한다. 실행 준비 단계에서 호출에 도달하지 않았다면 capture는 null이다. 완료된 기존 PASS만 이 leaf 때문에 BLOCKED가 되며 기존 FAIL·BLOCKED·미완료 판정과 최초 code를 유지한다. manifest/r5와 Oracle result/r3도 이 producer 판정을 기록한다. 외부 승인이나 최종 의미 PASS를 자체 생성하지 않는다.
+
+보관한 build의 compiler `name`·`version`은 profile의 `ToolIdentity` 선언값 전체와 일치해야 한다. 이 선언은 별도 관측값인 `compiler_version`과 구분하며, 이름이나 선언 version의 일치만으로 compiler 실행이나 관측 version의 진위를 인증하지 않는다.
+
+r5 set 무결성 검사는 producer 판정을 의미 검사 완료로 채택하지 않는다. 필수 projection 필드와 상태·판정 조합, projection에서 pending leaf를 접은 record 및 단일 case의 manifest 집계를 대조한다. 완료 실행에는 raw·capture가 필요하며 plain process의 형식, 실제 보존한 stream 길이·truncation 관계, stdin/stdout frame을 확인한다. `capture/build-manifest.txt`는 원래 build identity를 만든 문구이며 새 identity를 만들지 않는다. 실행 파일·각 closure 입력·build 설명·manifest의 runtime/compiler/version 및 원 argv를 결속하고, cache hit은 `source_steps`를 사용한다.
+
+새 r5의 최초 manifest/record 파싱부터 JSON 값 수·작업·할당 예산을 적용한다. 기존 small 한도를 유지하며 사전 member 수·합계 bytes 검사 뒤 member를 읽는다. 실제 순회는 디렉터리당 최대 128개씩 읽고 파일·디렉터리 수와 깊이·wall을 확인한다. 잘못된 경로·비정규 파일·미등록 파일·디렉터리 읽기/종료 실패를 거부하며 finding은 1,000개로 제한하되 최초 오류와 마지막 원인을 보존한다. r5용 `fs.FS`의 directory file은 bounded `fs.ReadDirFile`을 지원해야 한다. build 보존 실패 뒤에는 driver를 실행하지 않고 build 정리를 수행하며 취소·자원 한도를 일반 I/O 실패로 바꾸지 않는다.
+
+
+Grammar closure member는 기존 eligibility/r1이 요구하는 `grammar-parser`·`grammar-scanner`·`grammar-header` 역할을 그대로 사용한다. `capture/build-input-NNNNN.bin` 경로와 bytes/hash를 바꾸거나 다른 경로의 같은 hash로 대신하지 않는다. Runtime·driver source closure의 일반 역할은 `build-input`이다. 이 구분은 기존 eligibility 계약을 완화하지 않고 원 member를 연결하기 위한 것이다. 빈 query의 생략 가능한 projection `queries`는 manifest query 목록이 비어 있을 때만 허용하며, 의미 검증의 required=0은 완료 PASS가 아니다. Capture가 없는 사례에는 raw도 없어야 한다. 정리 오류는 별도 finding과 결합 오류로 남기며 이미 확정된 CANCELLED·RESOURCE_LIMIT 상태와 원 오류를 덮지 않는다.
+
+공개 의미 검증과 `oracle-set-r4`는 사전 등록으로 required를 먼저 고정한다. 기존 eligibility/r1의 ABSENT 조기 반환을 유지하되 새 의미 caller는 한 번의 graph/Oracle 검증을 수행하고 전체 required를 BLOCKED로 남긴다. BOUND는 같은 실행 범위에서 실제 checked native와 tuple별 `witnessEvaluation`을 재사용한다. query expectation은 raw의 COMPLETED가 아니라 predicate 평가 후 status/code를 비교한다. 평가값이 없으면 저장 PASS와 모순을 확정하지 않고 base를 BLOCKED로 둔다. producer의 stored fold가 확인된 즉시 기존 FAIL·최초 code를 보존하고, 이후 stream 모순·취소·자원 한도로 덮지 않는다.
+
+완료된 native 응답과 projection의 기본 판정 입력도 대조한다. producer의 ABI·query/API/predicate capability·symbol/field 수·reuse capability와 response status/code, 단계별 route 원값 및 그 값에서 계산한 proven, 단일 실행의 restart 부재, incremental/fresh의 순서 있는 declaration/name span을 같은 retained raw에서 확인한다. provenance 승인과 hash를 다시 맞춰도 projection이 raw의 사실을 바꾸면 FAIL이다. ABI 거부 등 미완료 실행의 원 producer 정보는 이 완료 전용 대조로 덮지 않는다.
+
+producer_fold_valid는 record와 projection의 claim·상태·판정·code 관계가 모두 맞고 pending leaf를 포함한 집계가 올바를 때만 true다. 모순을 finding으로 남겼더라도 이 표시를 true로 유지하지 않는다. 이 판정 뒤의 취소·자원 한도는 이미 확인한 producer 기록과 원 FAIL/code를 지우지 않는다.

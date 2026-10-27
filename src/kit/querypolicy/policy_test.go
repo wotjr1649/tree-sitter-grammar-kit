@@ -153,3 +153,24 @@ func TestOriginalIndicesAndEmptyPresence(t *testing.T) {
 		t.Fatalf("zero-width capture lost: %v %q", kept, code)
 	}
 }
+
+func TestSupportCancellationInsideOperands(t *testing.T) {
+	p := predicate("any-of?", capture("x", "ONE"))
+	for i := 0; i < 2000; i++ {
+		p.Steps = append(p.Steps, text("a"))
+	}
+	checks := 0
+	code, err := SupportChecked(func() error {
+		checks++
+		if checks == len(p.Steps)+100 {
+			return context.Canceled
+		}
+		return nil
+	}, 1, []Predicate{p}, "UTF-8")
+	if code != "" || !errors.Is(err, context.Canceled) || checks != len(p.Steps)+100 {
+		t.Fatalf("operand cancellation: %q %v checks=%d", code, err, checks)
+	}
+	if code := Support(1, []Predicate{p}, "UTF-8"); code != "" {
+		t.Fatalf("legacy support changed: %q", code)
+	}
+}

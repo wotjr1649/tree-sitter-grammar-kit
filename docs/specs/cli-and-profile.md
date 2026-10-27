@@ -20,7 +20,7 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `schema diff --before FILE --after FILE` | node/field/type/required/multiple/supertype 변경 | READ_DATA, 03 |
 | `reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH --allow EXEC_GENERATOR` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
 | `incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | 매 edit의 incremental/fresh 결과(edit는 profile 안) | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
-| `oracle record --root PATH --profile FILE [--fact-pack FILE] [--source-witness] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
+| `oracle record --root PATH --profile FILE [--fact-pack FILE] [--source-witness] [--query-semantics FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
 | `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
 | `evidence query-reference --input DIR --profile FILE --registration FILE --witness-registration FILE` | 별도 승인된 저장 reference 연결 | READ_DATA, experimental |
@@ -333,3 +333,10 @@ SVC 완료 기록의 초기 step 외에는 관측 전용 step에도 edit의 byte
 ## Accepted reuse의 명시 선택 (#264)
 
 `tsgk incremental --reuse-accepted FILE`와 `tsgk oracle record --reuse-accepted FILE`은 입력 root 밖의 고정 holdout 원장을 요구하고 필수 관측·source witness를 함께 사용한다. 빈 flag·빈 문서·미지원 조합은 output/build 전에 거부한다. 기존 profile 형식은 유지한다. 새 결과/replay/qualification 선택자와 Windows/Linux 범위는 [accepted reuse 계약](reuse-accepted.md)을 따른다.
+
+
+## Query 의미의 승인 대기 생산 (#216)
+
+`oracle record --query-semantics FILE`은 input root 밖의 사전 등록 원문을 profile/r3의 필수 `query_semantics_registration_sha256`과 결속한다. 첫 구현 범위는 Windows/Linux의 단일 UTF-8 full-input `native-query` case다. source witness와 native/r4를 강제하며 SVC·전처리·batch·large·accepted·fact pack 및 run-wall 변경은 거부한다. profile/r3에 이 선택이 빠지면 과거 기록 방식으로 돌아가지 않는다. 빈 flag와 incremental의 동일 flag는 usage 오류다.
+
+record/r4·manifest/r5·Oracle result/r3은 `PRODUCER_LOCAL / BLOCKED / EXTERNAL_APPROVAL_PENDING` 상태를 보존한다. 기존 완료 PASS만 이 대기 leaf 때문에 BLOCKED가 되고, 기존 FAIL·BLOCKED·미완료 규칙은 유지한다. profile/r3은 과거 Oracle reducer와 qualification inventory가 소비하지 않는다. 실제 캡처·보존 관계와 최종 의미 검증의 별도 완료 조건은 [계측 reference 계약](instrumented-query-reference.md)이 소유한다.

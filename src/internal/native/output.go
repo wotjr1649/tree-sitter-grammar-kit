@@ -29,15 +29,21 @@ func (d *outputDirectory) Close() error {
 	return err
 }
 
+func recordCleanupFailure(report *kit.Report, resultErr *error, code string, cause error) {
+	if report.ExecutionStatus != kit.StatusCancelled && report.ExecutionStatus != kit.StatusResourceLimit {
+		report.ExecutionStatus = kit.StatusFailed
+	}
+	if report.Assessment == kit.AssessPass {
+		report.Assessment = kit.AssessNotAssessed
+	}
+	report.Coverage.Observed = []string{}
+	report.Findings = append(report.Findings, finding(code, "error", "", "build 또는 출력 경로의 자원을 해제하지 못했다"))
+	*resultErr = errors.Join(*resultErr, refuse(kit.KindIO, code, cause))
+}
+
 func closeOutput(d *outputDirectory, report *kit.Report, resultErr *error) {
 	if err := d.Close(); err != nil {
-		report.ExecutionStatus = kit.StatusFailed
-		if report.Assessment == kit.AssessPass {
-			report.Assessment = kit.AssessNotAssessed
-		}
-		report.Coverage.Observed = []string{}
-		report.Findings = append(report.Findings, finding("OUTPUT_CLOSE_FAILED", "error", "", "출력 directory handle을 해제하지 못했다"))
-		*resultErr = errors.Join(*resultErr, refuse(kit.KindIO, "OUTPUT_CLOSE_FAILED", err))
+		recordCleanupFailure(report, resultErr, "OUTPUT_CLOSE_FAILED", err)
 	}
 }
 
