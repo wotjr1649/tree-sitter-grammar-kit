@@ -413,6 +413,7 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	grammar := map[string]bool{}
 	steps := []string{}
 	parsers, scanners := 0, 0
+	pagedParsers := 0
 	previousFile := ""
 	for _, line := range lines[5:] {
 		if e := s.b.charge(1, uint64(len(line)), "native-build-manifest"); e != nil {
@@ -494,7 +495,17 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 			if e != nil {
 				return false, e
 			}
-			if !found || !verified || pin.Member.Role != fields[0] || pin.Member.SHA256 != fields[2] || pin.Member.Bytes != size {
+			if s.reg.Context == semanticPagedContext && fields[0] == "grammar-parser" && size > MaxDocumentBytes {
+				pagedParsers++
+				verified, e = s.nativePagedParser(n, pin, semanticBuildInput{Role: fields[0], Path: fields[1], Bytes: size, SHA256: fields[2]})
+				if e != nil {
+					return false, e
+				}
+				if !verified {
+					s.finding("ELIGIBILITY_NATIVE_PARSER_PAGES", fields[1], true)
+					good = false
+				}
+			} else if !found || !verified || pin.Member.Role != fields[0] || pin.Member.SHA256 != fields[2] || pin.Member.Bytes != size {
 				s.finding("ELIGIBILITY_NATIVE_GRAMMAR", fields[1], true)
 				good = false
 			}
@@ -512,6 +523,10 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 		expectedSteps = append(expectedSteps, "scanner")
 	}
 	expectedSteps = append(expectedSteps, "driver", "shim", "link")
+	if s.reg.Context == semanticPagedContext && pagedParsers != 1 {
+		s.finding("ELIGIBILITY_NATIVE_PARSER_PAGES", "native", true)
+		good = false
+	}
 	if parsers != 1 || len(grammar) != len(n.Grammar) || !slices.Equal(steps, expectedSteps) {
 		s.finding("ELIGIBILITY_NATIVE_BUILD_CLOSURE", "native", true)
 		good = false
@@ -1070,4 +1085,34 @@ func eligibilityReferenceAbsolutePath(value, platform string) bool {
 		return ok && server != "" && share != ""
 	}
 	return len(p) >= 3 && (p[0] >= 'a' && p[0] <= 'z' || p[0] >= 'A' && p[0] <= 'Z') && p[1] == ':' && p[2] == '/'
+}
+
+func (s *eligibilitySession) nativePagedParser(n *eligibilityNative, pin eligibilityMember, input semanticBuildInput) (bool, *Error) {
+	inv := s.invocations[n.InvocationID]
+	indexText := strings.TrimSuffix(strings.TrimPrefix(pin.Member.Path, "oracle/capture/build-input-"), ".pages.json")
+	index, err := strconv.Atoi(indexText)
+	if err != nil || index < 0 || index >= 10000 || pin.Member.Path != fmt.Sprintf("oracle/capture/build-input-%05d.pages.json", index) || pin.Member.Role != "grammar-paged-descriptor" || inv == nil || inv.Kind != "NATIVE_DRIVER" || pin.NodeID != inv.Node.ID {
+		return false, nil
+	}
+	data, ok, e := s.member(&pin)
+	if e != nil || !ok {
+		return false, e
+	}
+	used := map[string]bool{pin.Member.Path: true}
+	good, e := s.b.semanticPagedParser(data, input, index, func(part ReplayMember) ([]byte, bool, *Error) {
+		part.Path = "oracle/" + part.Path
+		used[part.Path] = true
+		return s.member(&eligibilityMember{NodeID: inv.Node.ID, Member: part})
+	})
+	if e != nil || !good {
+		return false, e
+	}
+	for _, m := range s.reg.OwnedMembers {
+		if m.Member.Role == "grammar-paged-descriptor" || m.Member.Role == "grammar-paged-part" {
+			if !used[m.Member.Path] || m.NodeID != inv.Node.ID {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
 }

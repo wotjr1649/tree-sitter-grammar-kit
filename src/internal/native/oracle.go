@@ -161,8 +161,19 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return stop(refuse(ke.Kind, ke.Code, ke))
 	}
 	n := prof.Native
-	if err := semanticRecording(req, prof); err != nil {
-		return stop(err.(*Error))
+	capturePlan, semanticErr := semanticRecording(ctx, req, prof)
+	if err := semanticErr; err != nil {
+		var ne *Error
+		if errors.As(err, &ne) {
+			if ne.Kind == kit.KindCancelled {
+				res.ExecutionStatus = kit.StatusCancelled
+			}
+			if ne.Code == "WALL_LIMIT" || ne.Code == "SEMANTICS_REGISTRATION_LIMIT" {
+				res.ExecutionStatus, res.Assessment = kit.StatusResourceLimit, kit.AssessBlocked
+			}
+			return stop(ne)
+		}
+		return stop(refuse(kit.KindCancelled, "CANCELLED", err))
 	}
 	semantics := req.QuerySemanticsRegistration != nil
 	if semantics {
@@ -281,7 +292,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	}
 	var semanticCaptureErr error
 	if semantics && berr == nil {
-		files, err := semanticBuildFiles(runCtx, b)
+		files, err := semanticBuildFiles(runCtx, b, capturePlan.Context == semanticPagedContext)
+		if err == nil && capturePlan.Context == semanticPagedContext && !capturePlan.matches(files, true) {
+			err = refuse(kit.KindInvalidInput, "SEMANTICS_MEMBER_PLAN", nil)
+		}
 		if err != nil {
 			semanticCaptureErr = err
 			writeFailed = true
@@ -490,15 +504,20 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			recordCleanupFailure(&res.Report, &resultErr, "BUILD_CLEANUP_FAILED", err)
 		}
 	}
+	if semantics && capturePlan.Context == semanticPagedContext {
+		actual := make([]captureFile, 0, len(members))
+		for _, m := range members {
+			actual = append(actual, captureFile{pin: kit.ReplayMember{Path: m.Path, Role: m.Role}})
+		}
+		if !capturePlan.matches(actual, false) {
+			writeFailed = true
+			res.Findings = append(res.Findings, finding("SEMANTICS_MEMBER_PLAN", "error", "", "사전 계획과 실제 capture member가 다르다"))
+		}
+	}
 	res.Summary = summarize(cases, nil)
 	if writeFailed {
 		// no manifest: the set has no completeness marker and is never a reference set
-		if !semantics || resultErr == nil || res.ExecutionStatus != kit.StatusCancelled && res.ExecutionStatus != kit.StatusResourceLimit {
-			res.ExecutionStatus = kit.StatusFailed
-		}
-		if res.Assessment == kit.AssessPass {
-			res.Assessment = kit.AssessNotAssessed
-		}
+		incompleteOracleSet(&res.Report, semantics)
 	} else {
 		m := kit.OracleManifest{Schema: kit.OracleManifestSchema, Policy: policy, Protocol: protocol, Queries: qids, FactPack: prof.FactPack, Cases: []string{},
 			Comparators: []string{kit.TreeDigestScheme, kit.CaptureCompareScheme, APICapability, PredicatePolicy},
@@ -509,6 +528,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		}
 		if semantics {
 			m.Schema, m.QuerySemanticsRegistrationSHA256, m.Operation = kit.OracleSemanticsManifestSchema, prof.QuerySemanticsRegistrationSHA256, &op
+			if capturePlan.Context == semanticPagedContext {
+				m.Schema = kit.OraclePagedSemanticsManifestSchema
+			}
 		}
 		if ledger != nil {
 			m.Schema, m.ReuseAcceptedPolicy, m.ReuseAcceptedLedgerSHA256 = kit.OracleAcceptedManifestSchema, kit.ReuseAcceptedSchema, kit.ReuseAcceptedLedgerSHA256

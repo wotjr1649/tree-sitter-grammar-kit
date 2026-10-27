@@ -54,7 +54,7 @@ func (b *eligibilityBudget) semanticSnapshot(parent, child *os.Root, snapshot *e
 	if e := b.charge(8*significant, 16*uint64(len(data)), "semantic-manifest-typed"); e != nil {
 		return manifest, files, state, e
 	}
-	if e := decodeOracleManifestValue(data, &manifest, v, typed{doc: "oracle/manifest.json", check: b.r.check}, OracleSemanticsManifestSchema); e != nil {
+	if e := decodeOracleManifestValue(data, &manifest, v, typed{doc: "oracle/manifest.json", check: b.r.check}, semanticContextManifest(reg.Context)); e != nil {
 		return manifest, files, state, e
 	}
 	if len(manifest.Cases) != 1 || manifest.Cases[0] != reg.Case || manifest.Records != 1 {
@@ -88,6 +88,9 @@ func (b *eligibilityBudget) semanticSnapshot(parent, child *os.Root, snapshot *e
 		case "capture", "stdin-frame", "process", "stdout-frame", "stderr":
 			valid = member.Case == reg.Case && strings.HasPrefix(member.Path, "capture/")
 		case "driver", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "build", "build-manifest":
+			valid = member.Case == "" && strings.HasPrefix(member.Path, "capture/") && member.InputBytes == member.Bytes && member.InputSHA256 == member.SHA256 && member.ExecutionStatus == StatusCompleted
+		}
+		if manifest.Schema == OraclePagedSemanticsManifestSchema && (member.Role == "grammar-paged-descriptor" || member.Role == "grammar-paged-part") {
 			valid = member.Case == "" && strings.HasPrefix(member.Path, "capture/") && member.InputBytes == member.Bytes && member.InputSHA256 == member.SHA256 && member.ExecutionStatus == StatusCompleted
 		}
 		if !valid || !portable(member.Path, false) {

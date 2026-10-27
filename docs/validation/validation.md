@@ -401,3 +401,9 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 ## #264 accepted reuse 변경 검증
 
 공개 pure checker·고정 원장·오래된 revision 거부, 정상/omit 모순·부분 관측·후속 FAIL 보존, CLI 거부 경계, record/set/replay와 qualification의 고정 15 original·25 target 및 별도 15 omit 대조군을 검사한다. 기존 normal+omit holdout 실행에서 Windows/Linux 합계 404개 관측을 저장하고 raw replay/qualification으로 소비하며, 별도 작은 JSON Oracle 대조군의 관측 3개를 검증한다. macOS 새 accepted 검증은 제외한다. 기존 78칸·symbol primary CST와 필수 CI는 유지하며 실제 bytes/wall·hard memory·cleanup receipt와 두 독립 최종 리뷰를 기록한다. 계약은 [accepted reuse](../specs/reuse-accepted.md)에 있다.
+
+## #216 parser-only paging 회귀
+
+`TestSemanticPagedParserValidation`은 16 MiB 경계와 연속 index/offset·순서·누락·중복·잘림·개별 재해시·전체 logical pin·owner를 검사한다. `TestSemanticPagedPublicAPIAndReplay`는 같은 합성 저장 closure의 BOUND/API·standalone·새 reducer replay, ABSENT 3 BLOCKED와 다른 실제 node의 part 소유권 거부를 대조한다. 이 합성 검사는 실제 C#·reference 실행 인증이 아니다. `TestSemanticPagedParserCapture`, `TestSemanticCapturePlanPreflight`, `TestSemanticPagedPreflightInterruptions`, `TestSemanticIncompletePreservesInterruption`은 실제 파일 분할·전체 해시·기존 opaque r5 등록·필수 manifest 계획·portable 경로/role·caller/내부 중단과 cleanup 상태 보존을 검사한다. 기존 JSON producer·ABI 거부 제어군, BOUND/r4 및 대형 문서 예산 회귀를 유지한다. 필수 CI와 실제 main의 완료 전에는 후보 통합이나 전체 #216 완료로 기록하지 않는다.
+
+`TestOracleSemanticsPagedProducerControl`은 고정 JSON parser의 의미를 유지하는 16 MiB 초과 공백 padding으로 실제 compiler/driver의 r6 분할 캡처를 검사한다. 사전 manifest 계획 누락은 compiler 전에 거부하고, 고정 stderr만 쓰는 owned constructor 제어군은 실제 stderr bytes를 보존하되 완결 manifest를 만들지 않아야 한다. Windows/Linux의 기존 native 제어군 호출과 180초 한도에 포함하며 신규 macOS 실행은 하지 않는다. 이는 C# 실제 reference 또는 의미 자격의 근거가 아니다. `TestSemanticPagedRehashCannotReplaceProfile`은 part·descriptor·build·logger·graph·외부 승인 pin까지 다시 맞춘 일관된 합성 자료가 standalone eligibility를 통과하더라도, 별도의 원본 profile pin이 다른 경우 API/replay에서 거부되는지 확인한다.

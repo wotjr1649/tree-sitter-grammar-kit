@@ -243,3 +243,7 @@ PREPARE tracking receipt의 객체별 S00 보존은 `s00_object_preservation.app
 ## Accepted reuse replay와 qualification (#264)
 
 `native-result-r8` 및 `oracle-set-r3`의 새 opt-in evidence, inventory/r8→result/r9, 고정 original/target 집계와 별도 omit 대조군은 [accepted reuse 계약](reuse-accepted.md)을 따른다. 과거 inventory/r7→result/r8과 symbol primary CST 축은 계속 검증한다.
+
+## Parser-only semantic set
+
+`tsgk-oracle-manifest/r6`은 [parser-only paging 문맥](instrumented-query-reference.md#216-parser-only-paging)의 명시적 생산 set이다. `grammar-paged-descriptor`와 `grammar-paged-part`는 각각 자기 물리 bytes·SHA-256으로 manifest·graph·owned registration·run-binding에 들어간다. 원본 parser의 logical pin은 descriptor 및 기존 build.json/plain manifest에 별도로 남으며 물리 pin으로 가장하지 않는다. 기존 r5 set은 새 역할을 허용하지 않는다. `oracle-set-r5`는 r6/paged context만 받고 `oracle-set-r4`는 기존 r5/full-input context만 받는다. 기존 r4 reducer identity·profile/r3·record/r4·approval/r1·witness/r2·replay-result/r3의 의미는 유지한다. 새 reducer도 같은 유한 run·guard snapshot·누적 small 예산에서 소비하며 결과와 저장 검증의 reducer ID/revision을 정확히 대조한다.

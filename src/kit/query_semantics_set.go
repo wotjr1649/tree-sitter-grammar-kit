@@ -522,7 +522,7 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 	if state != nil {
 		state.build = build
 	}
-	if build.Identity != m.Producer["build_identity"] || build.Identity != manifestPin.SHA256 || build.ExecutableSHA256 != driverPin.SHA256 || build.ExecutableBytes != driverPin.Bytes || build.ExecutableSHA256 != m.Producer["executable_sha256"] || len(roles["build-input"])+len(roles["grammar-parser"])+len(roles["grammar-scanner"])+len(roles["grammar-header"]) != len(build.Closure) {
+	if build.Identity != m.Producer["build_identity"] || build.Identity != manifestPin.SHA256 || build.ExecutableSHA256 != driverPin.SHA256 || build.ExecutableBytes != driverPin.Bytes || build.ExecutableSHA256 != m.Producer["executable_sha256"] || len(roles["build-input"])+len(roles["grammar-parser"])+len(roles["grammar-scanner"])+len(roles["grammar-header"])+len(roles["grammar-paged-descriptor"]) != len(build.Closure) {
 		bad("SEMANTICS_BUILD_BINDING", buildPin.Path)
 	}
 	if build.Runtime != m.Producer["runtime_commit"] || build.Compiler.SHA256 != m.Producer["compiler_sha256"] || build.CompilerVersion != m.Producer["compiler_version"] {
@@ -537,6 +537,7 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 	}
 	seen := map[string]bool{}
 	parsers, grammar, scanners := 0, 0, 0
+	pagedParsers, pagedParts := 0, 0
 	for i, input := range build.Closure {
 		if e := b.charge(20*uint64(len(input.Path))+1, 16*uint64(len(input.Path))+256, "semantic-build-closure"); e != nil {
 			return e
@@ -546,9 +547,29 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			bad("SEMANTICS_BUILD_CLOSURE", buildPin.Path)
 		}
 		seen[key] = true
-		pin, ok := pins[fmt.Sprintf("capture/build-input-%05d.bin", i)]
-		if !ok || pin.Role != semanticBuildMemberRole(input.Role) || pin.Bytes != input.Bytes || pin.SHA256 != input.SHA256 || pin.Case != "" {
-			bad("SEMANTICS_BUILD_INPUT", buildPin.Path)
+		if input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes && m.Schema == OraclePagedSemanticsManifestSchema {
+			pin, ok := pins[fmt.Sprintf("capture/build-input-%05d.pages.json", i)]
+			valid := ok && pin.Role == "grammar-paged-descriptor" && pin.Case == ""
+			if valid {
+				var e *Error
+				valid, e = b.semanticPagedParser(files[pin.Path], input, i, func(p ReplayMember) ([]byte, bool, *Error) {
+					m, ok := pins[p.Path]
+					return files[p.Path], ok && m.Role == p.Role && m.Bytes == p.Bytes && m.SHA256 == p.SHA256 && m.Case == "", nil
+				})
+				if e != nil {
+					return e
+				}
+			}
+			if !valid {
+				bad("SEMANTICS_PARSER_PAGES", pin.Path)
+			}
+			pagedParts += int((input.Bytes + MaxDocumentBytes - 1) / MaxDocumentBytes)
+			pagedParsers++
+		} else {
+			pin, ok := pins[fmt.Sprintf("capture/build-input-%05d.bin", i)]
+			if input.Bytes > MaxDocumentBytes || !ok || pin.Role != semanticBuildMemberRole(input.Role) || pin.Bytes != input.Bytes || pin.SHA256 != input.SHA256 || pin.Case != "" {
+				bad("SEMANTICS_BUILD_INPUT", buildPin.Path)
+			}
 		}
 		if expected, ok := static[key]; ok {
 			if expected.Bytes != input.Bytes || expected.SHA256 != input.SHA256 {
@@ -573,6 +594,9 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		if !seen[key] {
 			bad("SEMANTICS_BUILD_STATIC_MISSING", buildPin.Path)
 		}
+	}
+	if len(roles["grammar-paged-descriptor"]) != pagedParsers || len(roles["grammar-paged-part"]) != pagedParts || (m.Schema == OraclePagedSemanticsManifestSchema && pagedParsers != 1) {
+		bad("SEMANTICS_PARSER_PAGES", buildPin.Path)
 	}
 	if parsers != 1 || grammar > BuildFiles {
 		bad("SEMANTICS_BUILD_GRAMMAR", buildPin.Path)

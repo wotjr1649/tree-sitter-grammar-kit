@@ -149,6 +149,9 @@ func (b *eligibilityBudget) semanticRunBinding(binding *semanticRunBinding, req 
 		bad("SEMANTICS_NATIVE_BINDING", "run-binding")
 		return false, nil
 	}
+	if session.reg.Context != reg.Context {
+		bad("SEMANTICS_CONTEXT_BINDING", "eligibility-registration")
+	}
 	n := session.reg.Native
 	inv := session.invocations[binding.InvocationID]
 	if inv == nil || n.InvocationID != binding.InvocationID || inv.CohortID != binding.CohortID || session.cohorts[inv.CohortID].Purpose != "current" || inv.Node.ID != binding.DriverNode || inv.Process == nil || binding.Process != *inv.Process {
@@ -206,6 +209,13 @@ func (b *eligibilityBudget) semanticRunBinding(binding *semanticRunBinding, req 
 		}
 		path := fmt.Sprintf("oracle/capture/build-input-%05d.bin", i)
 		want := eligibilityMember{NodeID: binding.DriverNode, Member: ReplayMember{Path: path, Role: input.Role, Bytes: input.Bytes, SHA256: input.SHA256}}
+		if manifest.Schema == OraclePagedSemanticsManifestSchema && input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes {
+			path = fmt.Sprintf("oracle/capture/build-input-%05d.pages.json", i)
+			want = eligibilityMember{NodeID: binding.DriverNode, Member: snapshot.verifiedMembers[path]}
+			if want.Member.Role != "grammar-paged-descriptor" {
+				bad("SEMANTICS_NATIVE_PIN", path)
+			}
+		}
 		if n.Grammar[input.Path] != want {
 			bad("SEMANTICS_NATIVE_PIN", path)
 		}
