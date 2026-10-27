@@ -760,10 +760,21 @@ jobs:
           foreach ($route in @('json', 'tsql')) {
             if (!(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED "routes/$route/src/parser.c") -PathType Leaf)) { throw "reuse holdout prepared closure missing: $route" }
           }
+          # #264: capture the existing 404 normal/omit observations, without a second execution.
+          if (-not $IsMacOS) {
+            $env:TSGK_REUSE_ACCEPTED_OUT = Join-Path $out 'incremental'
+            New-Item -ItemType Directory -Force -Path $env:TSGK_REUSE_ACCEPTED_OUT | Out-Null
+          }
           go test ./src/internal/native -run '^TestNativeReuseHoldouts$' -count=1 -v -timeout=300s > (Join-Path $out 'reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'reuse holdout disposition or omit-old control failed' }
           # a skipped run passes go test; the ledger must have run in full
           if (!(Select-String -LiteralPath (Join-Path $out 'reuse-observation.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeReuseHoldouts \(')) { throw 'reuse holdouts did not run' }
+          $env:TSGK_REUSE_ACCEPTED_OUT = $null
+          if (-not $IsMacOS) {
+            go test ./src/internal/native -run '^TestReuseAcceptedOracle$' -count=1 -v -timeout=180s > (Join-Path $out 'reuse-accepted-oracle.log') 2>&1
+            if ($LASTEXITCODE -ne 0) { throw 'accepted Oracle control or raw replay failed' }
+            if (!(Select-String -LiteralPath (Join-Path $out 'reuse-accepted-oracle.log') -CaseSensitive -Quiet -Pattern '^--- PASS: TestReuseAcceptedOracle \(')) { throw 'accepted Oracle control did not run' }
+          }
           if ([string]::IsNullOrWhiteSpace($env:TSGK_BENCH_PREPARED) -or !(Test-Path -LiteralPath (Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp/src/parser.c') -PathType Leaf)) { throw 'SVC reuse observation prepared closure missing' }
           go test ./src/cmd/tsgk -run '^TestIncrementalCLI$/^svc-observation$' -count=1 -v -timeout=180s > (Join-Path $out 'svc-reuse-observation.log') 2>&1
           if ($LASTEXITCODE -ne 0) { throw 'SVC reuse observation replay controls failed' }
@@ -813,6 +824,7 @@ jobs:
           name: reuse-observation-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/reuse-observation.log
+            ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/reuse-accepted-oracle.log
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/svc-reuse-observation.log
             ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/csharp-symbols.log
           if-no-files-found: error

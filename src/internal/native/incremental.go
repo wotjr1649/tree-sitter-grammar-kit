@@ -55,6 +55,7 @@ type IncrementalRequest struct {
 	CgroupParent     string
 	RunWall          time.Duration // optional, at most the operation's run wall
 	ReuseObservation bool
+	ReuseAccepted    []byte // nil: legacy mode; otherwise the exact registered ledger
 }
 
 // Summary counts case outcomes.
@@ -70,8 +71,10 @@ type Summary struct {
 
 // Result is the published tsgk-incremental-result/r1 document.
 type Result struct {
-	ReuseObservationPolicy string `json:"reuse_observation_policy,omitempty"`
-	ObservationRunID       string `json:"observation_run_id,omitempty"`
+	ReuseAcceptedPolicy       string `json:"reuse_accepted_policy,omitempty"`
+	ReuseAcceptedLedgerSHA256 string `json:"reuse_accepted_ledger_sha256,omitempty"`
+	ReuseObservationPolicy    string `json:"reuse_observation_policy,omitempty"`
+	ObservationRunID          string `json:"observation_run_id,omitempty"`
 	kit.Report
 	ResultSchema  string              `json:"result_schema"`
 	ProfileID     string              `json:"profile_id"`
@@ -158,6 +161,9 @@ func readCase(root string, in kit.NativeInput, binding *os.Root) ([]byte, error)
 // the build returns an error and creates nothing; later failures are recorded per case.
 func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resultErr error) {
 	start := time.Now()
+	if req.ReuseAccepted != nil {
+		req.ReuseObservation = true
+	}
 	res = Result{Report: kit.Report{Schema: kit.ReportSchema, Command: "incremental", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{"query"}}},
 		ResultSchema: ResultSchema, Cases: []CaseResult{}, Batches: []BatchRecord{}, Platform: runtime.GOOS + "/" + runtime.GOARCH, StartedAt: start.UTC().Format(time.RFC3339)}
@@ -185,6 +191,15 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		return stop(refuse(ke.Kind, ke.Code, ke))
 	}
 	op := kit.NativeOperations()[prof.Operation]
+	ledger, err := acceptedLedger(req.ReuseAccepted, prof, false)
+	if err != nil {
+		var ne *Error
+		errors.As(err, &ne)
+		return stop(ne)
+	}
+	if ledger != nil {
+		res.ResultSchema, res.ReuseAcceptedPolicy, res.ReuseAcceptedLedgerSHA256 = AcceptedResultSchema, kit.ReuseAcceptedSchema, kit.ReuseAcceptedLedgerSHA256
+	}
 	res.ProfileID, res.Route, res.Operation, res.Output, res.ProfileSHA256 = prof.ID, prof.Route, op, prof.Output, prof.SHA256
 	if prof.Preprocess != nil {
 		// the symbol mode is observed or not run: its result revision is r3 plus preprocess
@@ -236,6 +251,22 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 			closeOutput(responses, &res.Report, &resultErr)
 		}
 	}()
+	var acceptedSources *outputDirectory
+	acceptedSourcesClosed := false
+	defer func() {
+		if acceptedSources != nil && !acceptedSourcesClosed {
+			closeOutput(acceptedSources, &res.Report, &resultErr)
+		}
+	}()
+	if ledger != nil {
+		acceptedSources, err = createOutputDirectory(output.Root, "sources")
+		if err != nil {
+			return stop(refuse(kit.KindIO, "OUTPUT_FAILED", err))
+		}
+		if err := createExclusive(output.Root, "reuse-ledger.json", req.ReuseAccepted); err != nil {
+			return stop(refuse(kit.KindIO, "EVIDENCE_WRITE_FAILED", err))
+		}
+	}
 	var primaryDirectory, primaryResponses *outputDirectory
 	primaryClosed := false
 	defer func() {
@@ -287,7 +318,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		res.Findings = append(res.Findings, finding(ne.Code, "error", "", buildFailure(berr, b)))
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
-		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy, Preprocess: prof.Preprocess}
+		x := Context{Op: op, Route: prof.Route, Output: prof.Output, Declarations: prof.Declarations, Format: prof.Format, SvcContext: prof.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy, Preprocess: prof.Preprocess, ReuseAccepted: ledger}
 		if req.ReuseObservation {
 			x.Protocol, x.ObservationRunID, x.ObservationProducerSHA256 = ProtocolR3, res.ObservationRunID, b.Identity
 		}
@@ -303,6 +334,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 					if prof.Preprocess != nil {
 						failed.PreprocessCST = &kit.PreprocessCSTResult{Schema: kit.PreprocessCSTSchema, Result: "NOT_APPLICABLE", Code: failed.Code, Steps: []kit.PreprocessCSTStep{}}
 					}
+					x.acceptCase(runCtx, c, nil, &failed)
 					res.Cases = append(res.Cases, failed)
 					continue
 				}
@@ -311,7 +343,12 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 					cr = b.RunCase(runCtx, x, c, src)
 					linkSvcReferences(&cr, refs)
 				}
-				if cr.Raw != nil {
+				if ledger != nil {
+					if err := writeAcceptedMembers(responses.Root, acceptedSources.Root, len(res.Cases), c.ID, cr.Raw, src); err != nil {
+						res.Findings = append(res.Findings, finding("EVIDENCE_WRITE_FAILED", "error", c.ID, "accepted 원 응답·source witness를 보존하지 못했다"))
+						writeFailed = true
+					}
+				} else if cr.Raw != nil {
 					// The case order makes the name unique on case-insensitive filesystems too.
 					name := fmt.Sprintf("%05d-%s.json", len(res.Cases), c.ID)
 					if err := createExclusive(responses.Root, name, cr.Raw); err != nil {
@@ -344,6 +381,7 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		}
 		for i := range res.Cases {
 			x.observeCase(&res.Cases[i])
+			x.foldAccepted(&res.Cases[i])
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(res.Cases)
 		if writeFailed {
@@ -385,6 +423,10 @@ func Incremental(ctx context.Context, req IncrementalRequest) (res Result, resul
 		testHookOutputFinalization("before-close", output, responses)
 	}
 	responsesClosed, outputClosed = true, true
+	if acceptedSources != nil {
+		acceptedSourcesClosed = true
+		closeOutput(acceptedSources, &res.Report, &resultErr)
+	}
 	primaryClosed = true
 	if primaryResponses != nil {
 		closeOutput(primaryResponses, &res.Report, &resultErr)

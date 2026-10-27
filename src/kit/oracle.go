@@ -3,11 +3,14 @@ package kit
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 	"io"
 	"io/fs"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -25,8 +28,10 @@ const (
 	MaxOracleSourceBytes       = 32 << 20
 	// A set run through batch driver processes (#266): each r2 record names its batch and
 	// frame instead of a process, and the r3 manifest lists every batch process once.
-	OracleBatchRecordSchema   = "tsgk-oracle-record/r2"
-	OracleBatchManifestSchema = "tsgk-oracle-manifest/r3"
+	OracleBatchRecordSchema      = "tsgk-oracle-record/r2"
+	OracleBatchManifestSchema    = "tsgk-oracle-manifest/r3"
+	OracleAcceptedRecordSchema   = "tsgk-oracle-record/r3"
+	OracleAcceptedManifestSchema = "tsgk-oracle-manifest/r4"
 )
 
 // oracleSchemaR1 is still decoded (without anchors) so earlier evidence replays.
@@ -386,21 +391,24 @@ type OracleMember struct {
 // OracleManifest is the completeness inventory of a record set. It is written last; its
 // final member complete is the set's completeness marker.
 type OracleManifest struct {
-	Schema          string            `json:"schema"`
-	Workload        map[string]string `json:"workload"` // profile id and sha256, route, operation, output
-	Producer        map[string]string `json:"producer"` // build identity, executable sha256, compiler, runtime, platform
-	Policy          IdentityRef       `json:"policy"`
-	Protocol        string            `json:"protocol"`
-	Comparators     []string          `json:"comparators"`
-	Queries         []IdentityRef     `json:"queries"`
-	FactPack        *FactPackRef      `json:"fact_pack"`
-	ExecutionStatus string            `json:"execution_status"`
-	Assessment      string            `json:"assessment"`
-	Records         int               `json:"records"`
-	Cases           []string          `json:"cases"` // the profile's case ids in order
-	Members         []OracleMember    `json:"members"`
-	Batches         []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
-	Complete        bool              `json:"complete"`
+	Operation                 *NativeOperation  `json:"operation,omitempty"`
+	ReuseAcceptedPolicy       string            `json:"reuse_accepted_policy,omitempty"`
+	ReuseAcceptedLedgerSHA256 string            `json:"reuse_accepted_ledger_sha256,omitempty"`
+	Schema                    string            `json:"schema"`
+	Workload                  map[string]string `json:"workload"` // profile id and sha256, route, operation, output
+	Producer                  map[string]string `json:"producer"` // build identity, executable sha256, compiler, runtime, platform
+	Policy                    IdentityRef       `json:"policy"`
+	Protocol                  string            `json:"protocol"`
+	Comparators               []string          `json:"comparators"`
+	Queries                   []IdentityRef     `json:"queries"`
+	FactPack                  *FactPackRef      `json:"fact_pack"`
+	ExecutionStatus           string            `json:"execution_status"`
+	Assessment                string            `json:"assessment"`
+	Records                   int               `json:"records"`
+	Cases                     []string          `json:"cases"` // the profile's case ids in order
+	Members                   []OracleMember    `json:"members"`
+	Batches                   []OracleBatch     `json:"batches,omitzero"` // manifest r3 only: [] when no process ran
+	Complete                  bool              `json:"complete"`
 }
 
 // OracleBatch is one batch driver process of a manifest r3 set: the cases sent to it in
@@ -525,7 +533,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		return r
 	}
 	var m OracleManifest
-	if e := decodeOracleManifestVersion(data, &m, OracleManifestSchema, OracleSourceManifestSchema, OracleBatchManifestSchema); e != nil {
+	if e := decodeOracleManifestVersion(data, &m, OracleManifestSchema, OracleSourceManifestSchema, OracleBatchManifestSchema, OracleAcceptedManifestSchema); e != nil {
 		add(e.Code, e.Path, "manifest가 완결되지 않았거나 형식이 틀렸다")
 		return r
 	}
@@ -534,6 +542,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	records := 0
 	perCase := map[string]int{}
 	sources := map[string]int{}
+	var accepted *ReuseAcceptedLedger
 	recordInputs := map[string]OracleMember{}
 	transports, statuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	caseOrdinals := map[string]int{}
@@ -541,9 +550,26 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		caseOrdinals[c] = i
 	}
 	for _, mem := range m.Members {
+		if m.Schema == OracleAcceptedManifestSchema && mem.Role == "reuse-ledger" {
+			if accepted != nil || mem.Path != "reuse-ledger.json" || mem.Case != "" || mem.Bytes > MaxDocumentBytes || mem.InputBytes != mem.Bytes || mem.InputSHA256 != mem.SHA256 || mem.ExecutionStatus != StatusCompleted {
+				add("MEMBER_INVALID", mem.Path, "accepted 원장 member 결속이 틀렸다")
+				continue
+			}
+			listed[mem.Path] = true
+			b, err := read(mem.Path, int64(mem.Bytes))
+			if err != nil || uint64(len(b)) != mem.Bytes || digestHex(b) != mem.SHA256 {
+				add("MEMBER_MISMATCH", mem.Path, "accepted 원장 bytes가 다르다")
+				continue
+			}
+			accepted, err = ParseReuseAcceptedLedger(b)
+			if err != nil {
+				add("REUSE_ACCEPTED_LEDGER_INVALID", mem.Path, "원장이 고정 등록과 다르다")
+			}
+			continue
+		}
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		validPath := memberPath.MatchString(mem.Path)
-		if m.Schema == OracleSourceManifestSchema {
+		if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema {
 			// the producer names every member by its case's position in cases
 			ordinal, known := caseOrdinals[mem.Case]
 			if mem.Role == "source" {
@@ -611,18 +637,24 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if perCase[c] != 1 {
 			add("CASE_RECORD_MISMATCH", "manifest.json", "사례마다 record가 정확히 하나여야 한다: "+c)
 		}
-		if m.Schema == OracleSourceManifestSchema && sources[c] != 1 {
+		if (m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema) && sources[c] != 1 {
 			add("CASE_SOURCE_MISMATCH", "manifest.json", "사례마다 source witness가 정확히 하나여야 한다: "+c)
 		}
 	}
 	if m.Schema == OracleBatchManifestSchema {
 		checkBatches(m, transports, statuses, raws, rawIDs, add)
 	}
-	if m.Schema == OracleSourceManifestSchema {
+	if m.Schema == OracleAcceptedManifestSchema && accepted == nil {
+		add("REUSE_ACCEPTED_LEDGER_MISSING", "manifest.json", "고정 원장 member가 없다")
+	}
+	if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema {
 		if len(m.Cases) == 0 {
 			add("CASE_SOURCE_EMPTY", "manifest.json", "source witness set에 사례가 없다")
 		}
 		for _, mem := range m.Members {
+			if m.Schema == OracleAcceptedManifestSchema && mem.Role == "reuse-ledger" {
+				continue
+			}
 			rec, ok := recordInputs[mem.Case]
 			if !slices.Contains(m.Cases, mem.Case) || !ok || mem.InputBytes != rec.InputBytes || mem.InputSHA256 != rec.InputSHA256 || mem.ExecutionStatus != rec.ExecutionStatus {
 				add("CASE_MEMBER_MISMATCH", mem.Path, "member의 사례·입력·상태가 record와 다르다")
@@ -668,6 +700,9 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 		return e
 	}
 	keys := []string{"schema", "workload", "producer", "policy", "protocol", "comparators", "queries", "fact_pack", "execution_status", "assessment", "records", "cases", "members", "complete"}
+	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleAcceptedManifestSchema {
+		keys = slices.Insert(keys, len(keys)-1, "reuse_accepted_policy", "reuse_accepted_ledger_sha256", "operation")
+	}
 	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleBatchManifestSchema {
 		keys = slices.Insert(keys, len(keys)-1, "batches")
 	}
@@ -685,6 +720,33 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 		return t.bad("SCHEMA_UNSUPPORTED", mm["schema"])
 	} else {
 		m.Schema = s
+	}
+	if m.Schema == OracleAcceptedManifestSchema {
+		if e := witnessShape(t, mm["operation"], reflect.TypeFor[NativeOperation](), true, false, nil); e != nil {
+			return e
+		}
+		var extra struct {
+			Operation *NativeOperation `json:"operation"`
+		}
+		if err := json.Unmarshal(data, &extra); err != nil || extra.Operation == nil {
+			return t.bad("REUSE_ACCEPTED_OPERATION_INVALID", mm["operation"])
+		}
+		m.Operation = extra.Operation
+		reg := NativeOperations()["native-query"]
+		op := *m.Operation
+		op.RunWall = reg.RunWall
+		if !reflect.DeepEqual(op, reg) || m.Operation.RunWall <= 0 || m.Operation.RunWall > reg.RunWall {
+			return t.bad("REUSE_ACCEPTED_OPERATION_INVALID", mm["operation"])
+		}
+		if m.ReuseAcceptedPolicy, e = t.str(mm["reuse_accepted_policy"]); e != nil {
+			return e
+		}
+		if m.ReuseAcceptedLedgerSHA256, e = t.str(mm["reuse_accepted_ledger_sha256"]); e != nil {
+			return e
+		}
+		if m.ReuseAcceptedPolicy != ReuseAcceptedSchema || m.ReuseAcceptedLedgerSHA256 != ReuseAcceptedLedgerSHA256 {
+			return t.bad("REUSE_ACCEPTED_POLICY_MISMATCH", v)
+		}
 	}
 	for _, k := range []string{"workload", "producer"} {
 		obj, e := t.object(mm[k], mm[k].keys)
@@ -857,6 +919,12 @@ func decodeOracleManifestVersion(data []byte, m *OracleManifest, allowed ...stri
 			m.Batches = append(m.Batches, b)
 		}
 	}
+	if m.Schema == OracleAcceptedManifestSchema {
+		if m.Protocol != nativewire.ProtocolR4 || m.Workload["operation"] != "native-query" || m.Workload["output"] != OutputTree || len(m.Queries) != 0 || m.FactPack != nil ||
+			!slices.Contains([]string{"windows/amd64", "linux/amd64"}, m.Producer["platform"]) || m.Policy != NativePolicy(*m.Operation, OutputTree, nil) {
+			return t.bad("REUSE_ACCEPTED_MANIFEST_INVALID", v)
+		}
+	}
 	m.Complete = true
 	return nil
 }
@@ -892,6 +960,24 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	if manifestSchema == OracleBatchManifestSchema {
 		schema = OracleBatchRecordSchema
 	}
+	if manifestSchema == OracleAcceptedManifestSchema {
+		schema = OracleAcceptedRecordSchema
+	}
+	if schema != OracleAcceptedRecordSchema {
+		for _, name := range []string{"reuse_accepted", "reuse_accepted_policy", "reuse_accepted_ledger_sha256"} {
+			if get(v, name) != nil {
+				return tr, "REUSE_ACCEPTED_SCHEMA_UNSUPPORTED"
+			}
+		}
+	}
+	if schema == OracleAcceptedRecordSchema {
+		if get(v, "transport") != nil || get(v, "process") == nil {
+			return tr, "RECORD_TRANSPORT_INVALID"
+		}
+		if e := checkAcceptedResultShape(t, get(v, "reuse_accepted")); e != nil {
+			return tr, e.Code
+		}
+	}
 	if str(get(v, "schema")) != schema || str(get(v, "case")) != mem.Case {
 		return tr, "RECORD_IDENTITY_MISMATCH"
 	}
@@ -910,7 +996,7 @@ func checkRecord(data []byte, mem OracleMember, manifestSchema string) (recordTr
 	}
 	// r2: a batch frame instead of a process; a case no batch received has a null transport
 	transport := get(v, "transport")
-	if schema == OracleRecordSchema {
+	if schema == OracleRecordSchema || schema == OracleAcceptedRecordSchema {
 		if transport != nil {
 			return tr, "RECORD_TRANSPORT_INVALID"
 		}

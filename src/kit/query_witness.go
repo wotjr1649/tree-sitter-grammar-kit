@@ -971,6 +971,15 @@ func witnessCapturePoints(captures []Capture, encoding string, source []byte, r 
 }
 
 func witnessPoints(nodes []TreeNode, encoding string, source []byte, r *run) string {
+	return witnessPointsChecked(nodes, encoding, source, func() error {
+		if err := r.check(); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func witnessPointsChecked(nodes []TreeNode, encoding string, source []byte, check func() error) string {
 	offsets := make([]uint32, 0, len(nodes)*2)
 	for _, n := range nodes {
 		offsets = append(offsets, n.StartByte, n.EndByte)
@@ -980,7 +989,7 @@ func witnessPoints(nodes []TreeNode, encoding string, source []byte, r *run) str
 	positions := make(map[uint32]Point, len(offsets))
 	previous, position := uint32(0), (Point{})
 	for i, offset := range offsets {
-		if i%1024 == 0 && r.check() != nil {
+		if i%1024 == 0 && check != nil && check() != nil {
 			return ""
 		}
 		if (encoding == EncodingUTF16LE || encoding == EncodingUTF16BE) && offset%2 != 0 {
@@ -1149,6 +1158,9 @@ func witnessShape(t typed, v *jv, typ reflect.Type, exact, nullable bool, budget
 		}
 		for name, f := range fields {
 			optional := name == "encoding_source"
+			if typ == reflect.TypeFor[NativeOperation]() && strings.Contains(f.Tag.Get("json"), ",omitempty") {
+				optional = true
+			}
 			if typ == reflect.TypeFor[witnessTreeProjection]() && name == "tree" {
 				status, form := jvMember(v, "status"), jvMember(v, "form")
 				optional = (status != nil && slices.Contains([]string{StatusFailed, StatusResourceLimit}, status.s)) ||

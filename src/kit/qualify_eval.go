@@ -15,12 +15,13 @@ import (
 
 // qualifier is the state of one qualification: the shared run and the opened hosts.
 type qualifier struct {
-	r         *run
-	lim       ReplayLimits
-	inv       QualificationInventory
-	candidate string
-	hosts     map[string]*qhost
-	findings  []Finding
+	r            *run
+	lim          ReplayLimits
+	inv          QualificationInventory
+	candidate    string
+	hosts        map[string]*qhost
+	findings     []Finding
+	acceptedSets map[string]*qset
 }
 
 func (q *qualifier) finding(code, path, msg string) {
@@ -351,7 +352,6 @@ func partDiff(a, b jsontext.Value) string {
 
 // role evaluates one extra-role row on every platform.
 func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, []QualComparison, *Error) {
-	var rows []QualRoleRow
 	var cmps []QualComparison
 	byPlat := map[string][]*qset{}
 	if x.Status == RoleExecuted {
@@ -378,6 +378,11 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 			}
 		}
 	}
+	return q.roleRows(x, platforms, byPlat), cmps, nil
+}
+
+func (q *qualifier) roleRows(x QualRole, platforms []QualPlatform, byPlat map[string][]*qset) []QualRoleRow {
+	var rows []QualRoleRow
 	for _, p := range platforms {
 		row := QualRoleRow{ID: x.ID, Role: x.Role, Platform: p.ID, Reason: x.Reason, Sets: []QualSet{}}
 		switch {
@@ -411,15 +416,15 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 				}
 			}
 			switch {
-			case missing:
-				row.Status, row.Mechanism, row.Checks = CellMissing, AssessNotAssessed, ""
 			case row.Mechanism == AssessFail || row.Checks == claimFail:
 				row.Status = CellFail
+			case missing:
+				row.Status, row.Mechanism, row.Checks = CellMissing, AssessNotAssessed, ""
 			case row.Mechanism != AssessPass || row.Checks != claimPass:
 				row.Status = CellIncomplete
 			}
 		}
-		if q.inv.Schema == QualificationInventorySchema && len(row.Sets) > 0 {
+		if qualificationHasCST(q.inv.Schema) && len(row.Sets) > 0 {
 			cases := []QualPreprocessCSTCase{}
 			found := false
 			for _, set := range row.Sets {
@@ -432,9 +437,18 @@ func (q *qualifier) role(x QualRole, platforms []QualPlatform) ([]QualRoleRow, [
 				row.PreprocessCST = qualCSTAxis(cases)
 			}
 		}
+		accepted := []QualReuseAcceptedCase{}
+		for _, set := range row.Sets {
+			if set.ReuseAccepted != nil {
+				accepted = append(accepted, set.ReuseAccepted.Cases...)
+			}
+		}
+		if len(accepted) > 0 {
+			row.ReuseAccepted = qualAcceptedAxis(accepted)
+		}
 		rows = append(rows, row)
 	}
-	return rows, cmps, nil
+	return rows
 }
 
 // worseMechanism orders kit-axis values: FAIL > BLOCKED/NOT_ASSESSED > PASS.
@@ -448,7 +462,7 @@ func worseMechanism(a, b string) string {
 
 // evalSet verifies and judges one workload's record set on one host.
 func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (*qset, *Error) {
-	if w.Preprocess != nil {
+	if w.Preprocess != nil || w.ReuseAccepted != nil {
 		return q.evalSymbolSet(w, p)
 	}
 	s := newQSet(w, p)
@@ -767,8 +781,12 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 
 // newQSet is a set evaluation without evidence yet.
 func newQSet(w QualWorkload, p QualPlatform) *qset {
-	return &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{}, BranchSelectionNotClaimed: []string{},
+	s := &qset{QualSet: QualSet{Set: w.Set, Platform: p.ID, Evidence: "MISSING", Mechanism: AssessNotAssessed, Gates: []ReplayGate{}, Detectors: map[string]string{}, BranchSelectionNotClaimed: []string{},
 		Host: map[string]string{}, Identities: map[string]string{}, Findings: []Finding{}}, kinds: map[string]map[string]string{}, checks: map[string]string{}, summaries: map[string]string{}}
+	if w.ReuseAccepted != nil {
+		s.ReuseAccepted = qualAcceptedAxis(qualAcceptedMissing(w))
+	}
+	return s
 }
 
 // markUsed marks a set's files and profile as consumed by its (rejected) cell.

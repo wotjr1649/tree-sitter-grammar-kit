@@ -12,6 +12,7 @@ import (
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
@@ -213,6 +214,8 @@ type ExpectationResult struct {
 
 // CaseResult is the outcome of one registered case.
 type CaseResult struct {
+	ReuseAccepted         *kit.ReuseAcceptedResult `json:"reuse_accepted,omitempty"`
+	acceptedExpected      *nativewire.Expect
 	ReuseObservationClaim string                   `json:"reuse_observation_claim,omitempty"`
 	References            []SvcReferenceResult     `json:"references,omitempty"`
 	Segments              []SvcSegment             `json:"segments,omitempty"`
@@ -241,6 +244,7 @@ type CaseResult struct {
 
 // Context is the per-profile information a case run needs.
 type Context struct {
+	ReuseAccepted             *kit.ReuseAcceptedLedger
 	SvcContext                *kit.SvcContext
 	Op                        kit.NativeOperation
 	Route                     string
@@ -319,7 +323,10 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 			}
 		}()
 	}
-	defer func() { x.observeCase(&out) }()
+	defer func() {
+		x.observeCase(&out)
+		x.acceptCase(ctx, c, source, &out)
+	}()
 	notRun := func(status, assess, code string) CaseResult {
 		finishEarly(&out, status, assess, code)
 		return out
@@ -341,6 +348,12 @@ func (b *Build) RunCase(ctx context.Context, x Context, c kit.IncrementalCase, s
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "START_FAILED")
 	}
 	out.Process = &res
+	if out.acceptedExpected != nil {
+		out.acceptedExpected.Exit = &out.Process.ExitCode
+		if frame, err := SplitFrame(res.Stdout); err == nil {
+			out.Raw = frame
+		}
+	}
 	switch {
 	case !res.Cleanup.Verified:
 		return notRun(kit.StatusFailed, kit.AssessNotAssessed, "PROCESS_CLEANUP_UNVERIFIED")
@@ -372,6 +385,14 @@ func (b *Build) prepareCase(ctx context.Context, x Context, c kit.IncrementalCas
 		return notRun(kit.StatusNotRun, kit.AssessNotAssessed, ke.Code)
 	}
 	req := x.request(c, source)
+	if x.ReuseAccepted != nil {
+		if err := x.ReuseAccepted.CheckCase(x.Route, c, source); err != nil {
+			return notRun(kit.StatusNotRun, kit.AssessNotAssessed, "REUSE_ACCEPTED_HISTORY_MISMATCH")
+		}
+		e := req.expect(versions, points, nil)
+		e.Check = ctx.Err
+		out.acceptedExpected = &e
+	}
 	if x.Preprocess != nil {
 		// every step is preprocessed anew; the first step that is not OK decides the case,
 		// and no driver runs for it

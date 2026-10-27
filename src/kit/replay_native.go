@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"encoding/json"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"errors"
@@ -10,6 +11,8 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 // The S05/S06 case gates, recomputed from the recorded trees with the shared comparators
@@ -142,6 +145,7 @@ type rcClaims struct {
 // rcCase is the part of a recorded S05 case or S06 record the reducer reads; the rest
 // (process, producer, host observations) is retained in the raw and not judged.
 type rcCase struct {
+	ReuseAccepted         jsontext.Value   `json:"reuse_accepted,omitempty"`
 	ReuseObservationClaim jsontext.Value   `json:"reuse_observation_claim,omitempty"`
 	Segments              []rcSvcSegment   `json:"segments"`
 	References            []rcSvcReference `json:"references"`
@@ -248,6 +252,9 @@ func routeStepClaim(proven, noReuse bool, old, cur *rcTree) string {
 // when the reducer has no per-case registration), queries says whether the workload
 // registered queries.
 func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, queries bool) caseOutcome {
+	if !x.reuseAccepted && len(c.ReuseAccepted) != 0 {
+		x.gate("reuse-accepted").fail(c.ID, "REUSE_ACCEPTED_SCHEMA_UNSUPPORTED", "이 revision은 accepted 증거를 소비하지 않는다")
+	}
 	if !x.preprocessCST && len(c.PreprocessCST) != 0 {
 		x.gate("preprocess-cst").fail(c.ID, "PREPROCESS_CST_SCHEMA_UNSUPPORTED", "이 revision은 primary CST 증거를 소비하지 않는다")
 	}
@@ -295,6 +302,10 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	st := x.gate("case-status")
 	if c.ExecutionStatus != StatusCompleted {
 		allowed, known := statusAssessments[c.ExecutionStatus]
+		if x.reuseAccepted && x.currentAccepted != nil && x.currentAccepted.Result == claimFail {
+			allowed = append(slices.Clone(allowed), AssessFail)
+			out.assess = AssessFail
+		}
 		if x.preprocessCST && x.currentCST != nil && x.currentCST.Result == "FAIL" && c.ExecutionStatus == StatusNotRun {
 			allowed = append(slices.Clone(allowed), AssessFail)
 		}
@@ -484,7 +495,10 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		}
 	}
 	var claims, recorded []string // recomputed claims; recorded-only claims
-	var observed []string         // r4: each step's mandatory observation claim
+	if x.reuseAccepted && x.currentAccepted != nil {
+		claims = append(claims, x.currentAccepted.Result)
+	}
+	var observed []string // r4: each step's mandatory observation claim
 	if x.mandatoryObservation {
 		var claim string
 		claim, observed = mandatoryObservations(c)
@@ -569,6 +583,10 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			}
 			if v == claimBlocked && observed != nil && ov != claimPass && (selection || ov != claimBlocked) {
 				v = claimFail // r4: an error-tree BLOCKED needs the old tree observed passed
+			}
+			if v == claimBlocked && x.reuseAccepted && x.currentAccepted != nil && x.currentAccepted.Result == claimPass &&
+				slices.ContainsFunc(x.currentAccepted.Steps, func(p ReuseAcceptedStep) bool { return p.Step == k+1 && p.Result == claimPass }) {
+				v = claimPass
 			}
 			ir = worseClaim(ir, v)
 			if seg := segmentAt(k + 1); seg != nil {
@@ -1155,15 +1173,17 @@ type nativeBuild struct {
 
 // nativeResult is the top of a tsgk-incremental-result/r1 document.
 type nativeResult struct {
-	ReuseObservationPolicy string        `json:"reuse_observation_policy"`
-	ObservationRunID       string        `json:"observation_run_id"`
-	Schema                 string        `json:"schema"`
-	ResultSchema           string        `json:"result_schema"`
-	ExecutionStatus        string        `json:"execution_status"`
-	Assessment             string        `json:"assessment"`
-	Identities             []IdentityRef `json:"identities"`
-	Route                  string        `json:"route"`
-	Operation              struct {
+	ReuseAcceptedPolicy       string        `json:"reuse_accepted_policy"`
+	ReuseAcceptedLedgerSHA256 string        `json:"reuse_accepted_ledger_sha256"`
+	ReuseObservationPolicy    string        `json:"reuse_observation_policy"`
+	ObservationRunID          string        `json:"observation_run_id"`
+	Schema                    string        `json:"schema"`
+	ResultSchema              string        `json:"result_schema"`
+	ExecutionStatus           string        `json:"execution_status"`
+	Assessment                string        `json:"assessment"`
+	Identities                []IdentityRef `json:"identities"`
+	Route                     string        `json:"route"`
+	Operation                 struct {
 		Name string `json:"name"`
 	} `json:"operation"`
 	operation jsontext.Value // the whole recorded operation (#218 policy recomputation)
@@ -1228,8 +1248,11 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		if !x.reuseObservation && (name == "reuse_observation_policy" || name == "observation_run_id") {
 			return fail(KindUnsupported, "OBSERVATION_SCHEMA_UNSUPPORTED", resultPath, nil)
 		}
+		if !x.reuseAccepted && (name == "reuse_accepted_policy" || name == "reuse_accepted_ledger_sha256") {
+			return fail(KindUnsupported, "REUSE_ACCEPTED_SCHEMA_UNSUPPORTED", resultPath, nil)
+		}
 		switch name {
-		case "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256", "reuse_observation_policy", "observation_run_id":
+		case "reuse_accepted_policy", "reuse_accepted_ledger_sha256", "schema", "result_schema", "execution_status", "assessment", "identities", "route", "operation", "build", "summary", "platform", "profile_sha256", "reuse_observation_policy", "observation_run_id":
 			wrapped := append(append([]byte(`{"`+name+`":`), raw...), '}')
 			if name == "operation" {
 				top.operation = slices.Clone(raw)
@@ -1252,12 +1275,23 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 				return e
 			}
 		}
+		if x.reuseAccepted {
+			if e := x.replayAccepted(&c, raw, i, want[c.ID], top); e != nil {
+				return e
+			}
+		}
 		o := x.replayCase(&c, i, want[c.ID], false)
+		if x.acceptedLegacyConsumer != nil {
+			x.acceptedLegacyConsumer(c.ID, o, c.Code)
+		}
+		if x.reuseAccepted && o.assess == AssessFail {
+			x.recomp = Verdict{o.status, AssessFail}
+		}
 		if x.preprocessCST && x.currentCST != nil && x.currentCST.Result == "UNVERIFIED" {
 			o.complete = false
 			o.assess = AssessUnresolved
 		}
-		if x.reuseObservation {
+		if x.reuseObservation && !x.reuseAccepted {
 			unknownPoints := x.gate("edit-points").NotRecomputed
 			if e := x.replayObservations(&c, i, top, want[c.ID]); e != nil {
 				return e
@@ -1294,7 +1328,9 @@ func (x *replayEnv) replayResultFile(resultPath string, prof IncrementalProfile,
 		return top, outs, e
 	}
 	wantSchema := "tsgk-incremental-result/r1"
-	if x.preprocessCST {
+	if x.reuseAccepted {
+		wantSchema = "tsgk-incremental-result/r7"
+	} else if x.preprocessCST {
 		wantSchema = "tsgk-incremental-result/r6"
 	} else if x.selectionRoute {
 		wantSchema = "tsgk-incremental-result/r5"
@@ -1380,6 +1416,11 @@ func replayNativeResult(x *replayEnv) *Error {
 	if (prof.Preprocess != nil) != x.preprocess {
 		return fail(KindUnsupported, "PREPROCESS_REDUCER_MISMATCH", pm.Path, nil)
 	}
+	if x.reuseAccepted {
+		if e := x.readAcceptedLedger(prof); e != nil {
+			return e
+		}
+	}
 	prof.SHA256 = digestHex(data)
 	if x.prof.Records != nil && !slices.Equal(x.prof.Records, caseIDs(prof.Cases)) {
 		x.finding("RECORDS_WORKLOAD_MISMATCH", "", "등록 record 목록이 workload profile의 case와 다르다")
@@ -1449,8 +1490,26 @@ func replayOracleSet(x *replayEnv) *Error {
 		return e
 	}
 	var man OracleManifest
-	if e := decodeOracleManifest(mdata, &man); e != nil {
+	allowed := []string{OracleManifestSchema, OracleBatchManifestSchema}
+	if x.reuseAccepted {
+		allowed = []string{OracleAcceptedManifestSchema}
+	}
+	if e := decodeOracleManifestVersion(mdata, &man, allowed...); e != nil {
 		return fail(KindInvalidInput, "MEMBER_INVALID_"+e.Code, mm.Path, nil)
+	}
+	if x.reuseAccepted {
+		if e := x.readAcceptedLedger(prof.Native); e != nil {
+			return e
+		}
+		if prof.API || len(prof.Queries) != 0 || prof.FactPack != nil || man.Protocol != nativewire.ProtocolR4 || len(man.Queries) != 0 || man.FactPack != nil {
+			return fail(KindUnsupported, "REUSE_ACCEPTED_PROFILE_MISMATCH", pm.Path, nil)
+		}
+		for _, c := range prof.OracleCases {
+			if len(c.QueryExpect) != 0 || c.DynamicSQL != nil {
+				return fail(KindUnsupported, "REUSE_ACCEPTED_PROFILE_MISMATCH", pm.Path, nil)
+			}
+		}
+		x.responseDir, x.observationWire = "raw/", nativewire.ProtocolR4
 	}
 	ids := caseIDs(prof.Native.Cases)
 	if x.prof.Records != nil && !slices.Equal(x.prof.Records, ids) {
@@ -1473,7 +1532,7 @@ func replayOracleSet(x *replayEnv) *Error {
 	statuses, assessments := map[string]int{}, map[string]int{}
 	transports, caseStatuses, raws, rawIDs := map[string]recordTransport{}, map[string]string{}, map[string]int{}, map[string]string{}
 	records := 0
-	for i, mem := range man.Members {
+	for _, mem := range man.Members {
 		pmem, registered := x.members[mem.Path]
 		if !registered || pmem.SHA256 != mem.SHA256 || pmem.Bytes != mem.Bytes {
 			x.finding("MANIFEST_MEMBER_UNREGISTERED", mem.Path, "manifest member가 등록 inventory와 다르다")
@@ -1510,10 +1569,25 @@ func replayOracleSet(x *replayEnv) *Error {
 		if e := decodeRecord(mem.Path, b, &c); e != nil {
 			return e
 		}
-		if !cons.take(c.ID, i) {
+		ordinal := records - 1
+		if !cons.take(c.ID, ordinal) {
 			continue
 		}
-		o := x.replayCase(&c, i, want[c.ID], len(prof.Queries) > 0)
+		if x.reuseAccepted {
+			op := *man.Operation
+			top := nativeResult{ReuseAcceptedPolicy: man.ReuseAcceptedPolicy, ReuseAcceptedLedgerSHA256: man.ReuseAcceptedLedgerSHA256, Route: prof.Native.Route, Platform: man.Producer["platform"], ObservationRunID: man.Producer["observation_run_id"], Build: &nativeBuild{Identity: man.Producer["build_identity"]}, Identities: []IdentityRef{man.Policy}}
+			top.operation, _ = json.Marshal(op)
+			if e := x.replayAccepted(&c, b, ordinal, want[c.ID], top); e != nil {
+				return e
+			}
+		}
+		o := x.replayCase(&c, ordinal, want[c.ID], len(prof.Queries) > 0)
+		if x.acceptedLegacyConsumer != nil {
+			x.acceptedLegacyConsumer(c.ID, o, c.Code)
+		}
+		if x.reuseAccepted && o.assess == AssessFail {
+			x.recomp = Verdict{o.status, AssessFail}
+		}
 		outs = append(outs, o)
 		statuses[c.ExecutionStatus]++
 		assessments[c.Assessment]++

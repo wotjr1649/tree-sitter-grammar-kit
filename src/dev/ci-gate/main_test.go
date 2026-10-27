@@ -109,6 +109,13 @@ func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.Qualificat
 			case x.Status != kit.RoleExecuted:
 			case slices.Contains(x.Platforms, p.ID):
 				row.Status, row.Mechanism, row.Checks, row.Sets = "PASS", "PASS", "PASS", []kit.QualSet{{}}
+				if x.ID == "reuse-accepted" {
+					row.ReuseAccepted = expectedAcceptedAxis(t, x.Workloads)
+					row.Sets = nil
+					for _, w := range x.Workloads {
+						row.Sets = append(row.Sets, kit.QualSet{Set: w.Set, Platform: p.ID, ReuseAccepted: expectedAcceptedAxis(t, []kit.QualWorkload{w})})
+					}
+				}
 				if x.ID == "csharp-symbols" {
 					axis := expectedCSTAxis(x.Workloads)
 					row.PreprocessCST = &axis

@@ -23,10 +23,10 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 	}
 	e = x.streamTop(m, "cases", func(name string, raw jsontext.Value) *Error {
 		switch name {
-		case "result_schema", "reuse_observation_policy", "observation_run_id", "build":
+		case "result_schema", "reuse_observation_policy", "observation_run_id", "build", "reuse_accepted_policy", "reuse_accepted_ledger_sha256", "identities", "platform", "route":
 			return decodeRecord(path, append(append([]byte(`{"`+name+`":`), raw...), '}'), top)
 		case "operation":
-			if x.preprocessCST {
+			if x.preprocessCST || x.reuseAccepted {
 				top.operation = slices.Clone(raw)
 			}
 		}
@@ -36,7 +36,9 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 		return e
 	}
 	schema := "tsgk-incremental-result/r2"
-	if x.preprocessCST {
+	if x.reuseAccepted {
+		schema = "tsgk-incremental-result/r7"
+	} else if x.preprocessCST {
 		schema = "tsgk-incremental-result/r6"
 	} else if x.selectionRoute {
 		schema = "tsgk-incremental-result/r5"

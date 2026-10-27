@@ -65,10 +65,13 @@ type OracleRequest struct {
 	// ReuseObservation records through tsgk-native/r4: the r2 queries and API with the
 	// bounded logger observations of every native parse on the same parse (#217).
 	ReuseObservation bool
+	ReuseAccepted    []byte
 }
 
 // OracleResult is the stdout result of a record run.
 type OracleResult struct {
+	ReuseAcceptedPolicy       string `json:"reuse_accepted_policy,omitempty"`
+	ReuseAcceptedLedgerSHA256 string `json:"reuse_accepted_ledger_sha256,omitempty"`
 	kit.Report
 	ResultSchema  string               `json:"result_schema"`
 	ProfileID     string               `json:"profile_id"`
@@ -88,12 +91,13 @@ type OracleResult struct {
 
 // CaseLine summarizes one case in the stdout result; the record holds the details.
 type CaseLine struct {
-	ID              string        `json:"id"`
-	ExecutionStatus string        `json:"execution_status"`
-	Assessment      string        `json:"assessment"`
-	Code            string        `json:"code"`
-	Claims          Claims        `json:"claims"`
-	Oracle          *OracleClaims `json:"oracle_claims"`
+	ReuseAccepted   *kit.ReuseAcceptedResult `json:"reuse_accepted,omitempty"`
+	ID              string                   `json:"id"`
+	ExecutionStatus string                   `json:"execution_status"`
+	Assessment      string                   `json:"assessment"`
+	Code            string                   `json:"code"`
+	Claims          Claims                   `json:"claims"`
+	Oracle          *OracleClaims            `json:"oracle_claims"`
 	// ReuseObservationClaim is the case's mandatory observation claim in an r4 run.
 	ReuseObservationClaim string `json:"reuse_observation_claim,omitempty"`
 }
@@ -128,6 +132,9 @@ func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
 // offline. A refusal before the build creates nothing.
 func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr error) {
 	start := time.Now()
+	if req.ReuseAccepted != nil {
+		req.ReuseObservation, req.SourceWitness = true, true
+	}
 	res = OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", ExecutionStatus: kit.StatusNotRun, EvidenceMode: kit.ModeNotRun,
 		Assessment: kit.AssessNotAssessed, Identities: []kit.IdentityRef{}, Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{}}},
 		ResultSchema: OracleResultSchema, Cases: []CaseLine{}, Platform: hostPlatform}
@@ -152,6 +159,18 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		return stop(refuse(ke.Kind, ke.Code, ke))
 	}
 	n := prof.Native
+	ledger, err := acceptedLedger(req.ReuseAccepted, n, true)
+	if err != nil {
+		var ne *Error
+		errors.As(err, &ne)
+		return stop(ne)
+	}
+	if ledger != nil {
+		if prof.API || len(prof.Queries) != 0 || prof.FactPack != nil || req.FactPack != nil || slices.ContainsFunc(prof.OracleCases, func(c kit.OracleCase) bool { return len(c.QueryExpect) != 0 || c.DynamicSQL != nil }) {
+			return stop(refuse(kit.KindUnsupported, "REUSE_ACCEPTED_MODE_UNSUPPORTED", nil))
+		}
+		res.ResultSchema, res.ReuseAcceptedPolicy, res.ReuseAcceptedLedgerSHA256 = "tsgk-oracle-result/r2", kit.ReuseAcceptedSchema, kit.ReuseAcceptedLedgerSHA256
+	}
 	if req.SourceWitness && (n.Format == kit.SvcFormat || n.Format == kit.SvcLegacyFormat || n.SvcContext != nil) {
 		return stop(refuse(kit.KindUnsupported, "SOURCE_WITNESS_SVC_UNSUPPORTED", nil))
 	}
@@ -248,6 +267,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 		}
 		return true
 	}
+	if ledger != nil && write("reuse-ledger.json", req.ReuseAccepted) {
+		members = append(members, kit.OracleMember{Path: "reuse-ledger.json", Role: "reuse-ledger", Bytes: uint64(len(req.ReuseAccepted)), SHA256: sha(req.ReuseAccepted), InputBytes: uint64(len(req.ReuseAccepted)), InputSHA256: sha(req.ReuseAccepted), ExecutionStatus: kit.StatusCompleted})
+	}
 	if berr != nil {
 		if req.SourceWitness {
 			writeFailed = true
@@ -263,7 +285,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	} else {
 		res.Identities = append(res.Identities, kit.IdentityRef{Role: "producer", Schema: BuildSchema, SHA256: b.Identity})
 		x := Context{Op: op, Route: n.Route, Output: n.Output, Declarations: n.Declarations, Format: n.Format, SvcContext: n.SvcContext, CgroupParent: req.CgroupParent, PolicyRef: policy,
-			Protocol: protocol, Queries: queries, API: prof.API}
+			Protocol: protocol, Queries: queries, API: prof.API, ReuseAccepted: ledger}
 		if req.ReuseObservation {
 			x.ObservationRunID, x.ObservationProducerSHA256 = res.ObservationRunID, b.Identity
 		}
@@ -318,6 +340,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 				}
 			}
 			x.observeCase(&cr) // last, on every case: one that never parsed is NOT_CLAIMED
+			x.foldAccepted(&cr)
 			cases = append(cases, cr)
 			name := fmt.Sprintf("%05d-%s.json", i, c.ID)
 			if sourceMember != nil {
@@ -343,6 +366,9 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			}
 			if !writeFailed {
 				rec := OracleRecord{Schema: kit.OracleRecordSchema, Case: c.ID, Workload: n.ID, CaseResult: cr, Complete: true}
+				if ledger != nil {
+					rec.Schema = kit.OracleAcceptedRecordSchema
+				}
 				if op.Batch {
 					rec.Schema, rec.Transport = kit.OracleBatchRecordSchema, json.RawMessage("null")
 					if cr.Transport != nil {
@@ -358,7 +384,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 						InputBytes: c.Input.Bytes, InputSHA256: c.Input.SHA256, ExecutionStatus: cr.ExecutionStatus})
 				}
 			}
-			res.Cases = append(res.Cases, CaseLine{cr.ID, cr.ExecutionStatus, cr.Assessment, cr.Code, cr.Claims, cr.Oracle, cr.ReuseObservationClaim})
+			res.Cases = append(res.Cases, CaseLine{ReuseAccepted: cr.ReuseAccepted, ID: cr.ID, ExecutionStatus: cr.ExecutionStatus, Assessment: cr.Assessment, Code: cr.Code, Claims: cr.Claims, Oracle: cr.Oracle, ReuseObservationClaim: cr.ReuseObservationClaim})
 		}
 		res.ExecutionStatus, res.Assessment = aggregate(cases)
 	}
@@ -384,6 +410,10 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			Producer:    map[string]string{"platform": res.Platform}, ExecutionStatus: res.ExecutionStatus, Assessment: res.Assessment, Members: members, Complete: true}
 		if req.SourceWitness {
 			m.Schema = kit.OracleSourceManifestSchema
+		}
+		if ledger != nil {
+			m.Schema, m.ReuseAcceptedPolicy, m.ReuseAcceptedLedgerSHA256 = kit.OracleAcceptedManifestSchema, kit.ReuseAcceptedSchema, kit.ReuseAcceptedLedgerSHA256
+			m.Operation = &op
 		}
 		if op.Batch {
 			m.Schema, m.Batches = kit.OracleBatchManifestSchema, batches

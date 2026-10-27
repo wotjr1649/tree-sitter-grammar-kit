@@ -181,6 +181,9 @@ func verify(ctx context.Context, expected kit.RunIdentity, root string) (map[str
 }
 
 func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inventory kit.QualificationInventory) error {
+	if err := checkAcceptedAxes(q, inventory); err != nil {
+		return err
+	}
 	cstBlocked, err := checkCSTAxes(q, inventory)
 	if err != nil {
 		return err

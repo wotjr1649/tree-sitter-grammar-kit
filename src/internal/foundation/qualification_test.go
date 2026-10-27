@@ -503,6 +503,7 @@ func buildInventory(t *testing.T, root string) []byte {
 		{ID: "n461-large", Role: "owned", Status: kit.RoleExecuted, Reason: "real-world-source-r3 / native-query-large synthetic large C# fixtures (OWNED_FIXTURE)",
 			Platforms: []string{"windows-amd64"}, NotApplicable: map[string]string{"linux-amd64": r3, "darwin-arm64": r3}, Deferred: map[string]string{}, Workloads: []kit.QualWorkload{lw, over}},
 		symbolRole(t, root, csSymbol, csGrammar),
+		acceptedRole(t, root, grammarOf),
 		{ID: "owned-native-fixtures", Role: "owned", Status: kit.RoleExternal, Reason: "owned scannerless and stateful-scanner fixtures: the foundation job's native tests on each host (src/internal/native), not this aggregation",
 			Platforms: []string{}, NotApplicable: map[string]string{}, Deferred: map[string]string{}},
 		{ID: "brightscript-maintained", Role: "maintained", Status: kit.RoleNotRun, Reason: "BrightScript v0.1.4 maintained reference: no native route or workload is registered in this campaign",

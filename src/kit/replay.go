@@ -399,6 +399,28 @@ func reducerTable() map[string]reducer {
 	r7.info.Description += "; r7 (#279): source-bound primary full-CST directive positions, complete observations and equality, policy/r4, a separate mismatch BLOCKED axis"
 	r7.run = func(x *replayEnv) *Error { x.preprocessCST = true; return r6.run(x) }
 	t[r7.info.ID] = r7
+
+	r8 := r4
+	r8.info.ID, r8.info.Revision = "native-result-r8", "r8"
+	r8.info.Inputs = []string{"tsgk-incremental-result/r7 result.json", "registered original history profile", "tsgk-native/r3 full CST responses", "sources/ original bytes", "reuse-ledger.json"}
+	r8.info.Roles = append(slices.Clone(r4.info.Roles), "reuse-ledger")
+	r8.info.Gates = append(slices.Clone(r4.info.Gates), "reuse-accepted")
+	r8.info.Recorded = []string{"execution authenticity; node identity route retains its historical meaning"}
+	r8.info.Description += "; r8 (#264): exact registered histories, source-bound full CST and accepted parse events, preserving legacy route and mandatory observation rules"
+	r8.run = func(x *replayEnv) *Error { x.reuseAccepted = true; return r4.run(x) }
+	t[r8.info.ID] = r8
+	or3 := t["oracle-set-r2"]
+	or3.info.ID, or3.info.Revision = "oracle-set-r3", "r3"
+	or3.info.Inputs = []string{"tsgk-oracle-manifest/r4", "tsgk-oracle-record/r3", "registered original history profile", "tsgk-native/r4 full CST responses", "sources/ original bytes", "reuse-ledger.json"}
+	or3.info.Roles = append(slices.Clone(or3.info.Roles), "case-source", "reuse-ledger")
+	or3.info.Gates = append(slices.Clone(or3.info.Gates), "reuse-observation", "edit-points", "reuse-accepted")
+	or3.info.Recorded = slices.Clone(r8.info.Recorded)
+	or3.run = func(x *replayEnv) *Error {
+		x.reuseAccepted, x.reuseObservation, x.mandatoryObservation, x.errorTreeRoute = true, true, true, true
+		x.observationResponses = map[string]bool{}
+		return replayOracleSet(x)
+	}
+	t[or3.info.ID] = or3
 	return t
 }
 
@@ -459,18 +481,24 @@ type replayEnv struct {
 	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
 	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
 
-	nativeInputBytes     uint64
-	reuseObservation     bool
-	mandatoryObservation bool             // r4: the observation claim is mandatory and folds into the verdict
-	preprocess           bool             // r5: the C# symbol mode (#218)
-	preprocessTrees      []preprocessTree // r5: every symbol-mode tree, for its policy
-	selectionRoute       bool             // r6: a disjoint active-selection switch can block reuse
-	selectionSteps       []PreprocessStep // recomputed from the guarded original witness
-	selectionBytes       []uint64         // source version lengths, never recorded projections
-	preprocessCST        bool
-	currentCST           *PreprocessCSTResult
-	preprocessCSTResults []PreprocessCSTCase
-	observationResponses map[string]bool
+	reuseAccepted          bool
+	acceptedLedger         *ReuseAcceptedLedger
+	currentAccepted        *ReuseAcceptedResult
+	acceptedControl        bool
+	acceptedConsumer       func(ReuseAcceptedRequest, ReuseAcceptedResult, error) error
+	acceptedLegacyConsumer func(string, caseOutcome, string)
+	nativeInputBytes       uint64
+	reuseObservation       bool
+	mandatoryObservation   bool             // r4: the observation claim is mandatory and folds into the verdict
+	preprocess             bool             // r5: the C# symbol mode (#218)
+	preprocessTrees        []preprocessTree // r5: every symbol-mode tree, for its policy
+	selectionRoute         bool             // r6: a disjoint active-selection switch can block reuse
+	selectionSteps         []PreprocessStep // recomputed from the guarded original witness
+	selectionBytes         []uint64         // source version lengths, never recorded projections
+	preprocessCST          bool
+	currentCST             *PreprocessCSTResult
+	preprocessCSTResults   []PreprocessCSTCase
+	observationResponses   map[string]bool
 	// qualification of an r4 oracle set: the raw responses are under responseDir (default
 	// "responses/") and answer in observationWire (default tsgk-native/r3)
 	responseDir, observationWire string
@@ -770,8 +798,12 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 // symbol-mode set, #218): the replay starts from its count, stops at its limit and leaves
 // its own reads in it.
 type replayBudget struct {
-	r     *run
-	total uint64
+	acceptedControl        bool
+	acceptedConsumer       func(ReuseAcceptedRequest, ReuseAcceptedResult, error) error
+	acceptedLegacyConsumer func(string, caseOutcome, string)
+	evidenceFailed         bool
+	r                      *run
+	total                  uint64
 }
 
 func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) (ReplayResult, error) {
@@ -782,14 +814,15 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
-		if res.ResultSchema == ReplayReferenceResultSchema && partial != nil {
+		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || partial.reuseAccepted) {
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
 			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
 			res.Observed, res.BytesRead = partial.actual, partial.r.totalRead
 			if !partialFindingsCopied {
 				res.Findings = append(res.Findings, partial.findings...)
 			}
-			knownFailure := len(partial.findings) > 0 || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail
+			knownFailure := len(partial.findings) > 0 || partial.recomp.Assessment == AssessFail || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail ||
+				partial.reuseAccepted && partial.currentAccepted != nil && partial.currentAccepted.Result == claimFail
 			for _, g := range partial.gates {
 				knownFailure = knownFailure || g.Failed > 0
 			}
@@ -852,6 +885,17 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	defer root.Close()
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
 		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+	if budget != nil {
+		x.acceptedControl = budget.acceptedControl
+		x.acceptedConsumer = budget.acceptedConsumer
+		x.acceptedLegacyConsumer = budget.acceptedLegacyConsumer
+		defer func() {
+			budget.evidenceFailed = len(x.findings) > 0
+			for _, g := range x.gates {
+				budget.evidenceFailed = budget.evidenceFailed || g.Failed > 0
+			}
+		}()
+	}
 	partial = x
 	for _, m := range prof.Members {
 		x.members[m.Path] = m
