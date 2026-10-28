@@ -52,13 +52,9 @@ func actualCSharpPlan(t *testing.T, root string) {
 		ABI          eligibilityProducerABI `json:"expected_producer_abi"`
 		ChildAnchors jsontext.Value         `json:"independent_cst_anchors"`
 	}
-	draftPath := os.Getenv("TSGK_QUERY_CSHARP_DRAFT")
-	if !filepath.IsAbs(draftPath) {
-		t.Fatal("draft must be absolute")
-	}
-	anchorData := actualJSONRead(t, draftPath)
-	if digestHex(anchorData) != "555079bb3f892d7008a40d726ad4da9550814c9f2d9ef7f476e09b2cf6be5138" {
-		t.Fatal("reviewed static draft changed")
+	anchorData := actualJSONRead(t, "../testdata/query-semantics/csharp3-anchors.json")
+	if digestHex(anchorData) != "8641fb3207ceb385d0bf2d8eba6ea1150757717687c05d41388964ad89debf9c" {
+		t.Fatal("reviewed static C# anchors changed")
 	}
 	if err := jsonv2.Unmarshal(anchorData, &draft); err != nil {
 		t.Fatal(err)

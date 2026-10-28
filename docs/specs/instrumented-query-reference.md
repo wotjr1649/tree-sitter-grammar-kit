@@ -149,3 +149,9 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
 이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+
+## Windows C# parser paging 첫 실제 표본
+
+[독립 anchor fixture](../../src/testdata/query-semantics/csharp3-anchors.json)는 원래 실행 전 등록에서 필요한 기대값만 보존한다. `class C {}` → `class D {}`의 한 바이트 편집과 `((compilation_unit) @root (#eq? @root "class C {}"))`를 사용한다. 필수 표본은 초기 incremental, 편집 후 incremental·fresh의 세 개이며 structural root는 각각 1개, 평가 capture는 1/0/0이다. ABI 기대값은 15/15/13/654/26이며, 독립 child anchor는 type/span의 유일성·실제 root→class→identifier 부모 관계와 C/D 원문을 확인한다. 관측된 child node 번호로 사전 기대값을 만들지 않는다.
+
+로컬 Windows cohort에서 원본 parser 51,472,926바이트를 descriptor와 네 part로 보존하고 native/reference의 전체 7-node CST를 대조했다. 외부의 조건부 `approved-local` 승인 후 API와 `oracle-set-r5` replay는 같은 83,824,089바이트와 여덟 digest를 확인했으며 build9·unit4·control53·assertion36·tuple3을 VERIFIED로 판정했다. 승인 없음은 base PASS·3 BLOCKED, owner·slice 변조는 FAIL이며 원 producer의 COMPLETED/BLOCKED를 보존했다. 이 표본의 API 논리 처리량은 856,861,968바이트로 기존 1 GiB 이내였다. 이는 해당 저장 cohort의 일관성·capacity 관측이며 실행 진위 인증이나 전체26 route·SVC·large·신규 Linux/macOS 의미 검증을 뜻하지 않는다. Native/reference 캡처 소스 `4805c30e`와 이후 offline 조립기 소스 `47dfda68`을 구분하고, 재사용 build의 경로는 원래 영수증의 argv에 결속한다.
