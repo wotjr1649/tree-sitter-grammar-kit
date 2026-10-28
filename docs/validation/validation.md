@@ -414,6 +414,7 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 수동 `TestQuerySemanticsCSharpLocal`은 기본 SKIP이며 새 CI 지원 claim을 만들지 않는다. `TSGK_QUERY_CSHARP_LOCAL_STAGE=plan`은 추적된 독립 fixture로 세 표본과 107개 물리 member 계획을 고정하고, `assemble`은 실제 완료 캡처를 조립하되 승인을 생성하지 않으며, `verify`는 외부 caller 승인 유무를 구분해 API/replay 및 owner·slice 반례를 확인한다. 입력·reference·캡처·조립기 경로는 명시적인 절대 경로를 사용한다. 수동 단계의 PASS만으로 child anchor의 유일성·부모 관계가 확인되지는 않는다. fixture에 고정한 조건을 native/reference 전체 CST와 별도 대조하고 그 결과·소비 코드·실행 전 해시를 외부 승인 문맥에 결속한다. 실제 수집은 각 명령의 유한 timeout·hard memory·잘림 부재·실제 종료와 cleanup, 실행 전후 도구·소스·HEAD·파일 목록 및 CLI 사전 해시를 별도로 보존해야 한다. 실행 후 해시를 사전 기록으로 소급 표시하지 않는다. 재사용한 reference build의 patch/helper 경로는 현재 작업 디렉터리에서 추측하지 않고 실제 저장 request argv에서 가져온다.
 
+`TestQuerySlotSourceClassification`은 hash 불일치를 먼저 거부하고, 기존 `#` 및 legacy dot predicate·directive 머리, 공백·세미콜론 주석·Unicode 공백 뒤 dot을 명시적 분류 대상으로 검사한다. Capture 이름·sibling/trailing anchor·인용 문자열·주석 안의 점 자체는 별도 분류를 요구하지 않으며, 원문 내 `#`와 다른 predicate 위치는 별도로 검사한다. 이는 보수적 후보 검사이며 query compiler나 predicate 부재 증명을 대신하지 않는다. 기존130개 정의와 원장 bytes·미검증 metadata·미확정 semantic 분모는 유지한다.
 
 ## #216 Go3 수동 분류 검사
 
