@@ -300,6 +300,106 @@ func TestQuerySlotInventory(t *testing.T) {
 	t.Logf("static routes=%d cases=%d potential_slots=%d; semantic denominator unregistered, metadata unverified", len(want.Ordinary), want.Totals.Cases, want.Totals.PotentialSlots)
 }
 
+func TestQuerySlotGoDefinitionLinks(t *testing.T) {
+	type anchorDocument struct {
+		Route   string `json:"route"`
+		Queries []struct {
+			ID     string `json:"id"`
+			Source string `json:"source"`
+			SHA256 string `json:"sha256"`
+		} `json:"queries"`
+	}
+	root := repository(t)
+	const sourcePath = "src/testdata/native/queries/go.json"
+	var source queryFile
+	if err := jsonv2.Unmarshal(mustRead(t, filepath.Join(root, sourcePath)), &source); err != nil {
+		t.Fatal(err)
+	}
+	var queries []slotQuery
+	groups := 0
+	for _, group := range expectedQuerySlotInventory(t).Ordinary {
+		if group.Route == "go" && group.Set == "s06-go" {
+			queries = group.Queries
+			groups++
+		}
+	}
+	if groups != 1 {
+		t.Fatal("Go ordinary group is missing or duplicated")
+	}
+	// Project definition identity only; compiled metadata is a separate historical observation.
+	check := func(data []byte) error {
+		var anchors anchorDocument
+		if err := jsonv2.Unmarshal(data, &anchors); err != nil {
+			return err
+		}
+		if anchors.Route != "go" || len(anchors.Queries) != 3 {
+			return fmt.Errorf("Go3 definition denominator changed")
+		}
+		seen := map[string]bool{}
+		for _, q := range anchors.Queries {
+			if seen[q.ID] || shaHex([]byte(q.Source)) != q.SHA256 {
+				return fmt.Errorf("duplicate or inconsistent anchor %q", q.ID)
+			}
+			seen[q.ID] = true
+			sources, slots := 0, 0
+			for _, original := range source.Queries {
+				if original.ID == q.ID {
+					sources++
+					if original.Source != q.Source {
+						return fmt.Errorf("ordinary source differs for %q", q.ID)
+					}
+				}
+			}
+			for _, slot := range queries {
+				if slot.ID == q.ID {
+					slots++
+					if slot.SHA256 != q.SHA256 || slot.SourceFile != sourcePath {
+						return fmt.Errorf("ordinary pin differs for %q", q.ID)
+					}
+				}
+			}
+			if sources != 1 || slots != 1 {
+				return fmt.Errorf("anchor %q is not bound exactly once", q.ID)
+			}
+		}
+		return nil
+	}
+	data := mustRead(t, filepath.Join(root, "src/testdata/query-semantics/go3-classification-anchors.json"))
+	if err := check(data); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"route", "missing", "duplicate", "id", "source-and-hash", "hash"} {
+		t.Run(name, func(t *testing.T) {
+			var changed anchorDocument
+			if err := jsonv2.Unmarshal(data, &changed); err != nil {
+				t.Fatal(err)
+			}
+			switch name {
+			case "route":
+				changed.Route = "json"
+			case "missing":
+				changed.Queries = changed.Queries[1:]
+			case "duplicate":
+				changed.Queries[1] = changed.Queries[0]
+			case "id":
+				changed.Queries[0].ID = "unregistered"
+			case "source-and-hash":
+				changed.Queries[0].Source += "\n; changed definition"
+				changed.Queries[0].SHA256 = shaHex([]byte(changed.Queries[0].Source))
+			case "hash":
+				changed.Queries[0].SHA256 = strings.Repeat("0", 64)
+			}
+			bad, err := jsonv2.Marshal(changed)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := check(bad); err == nil {
+				t.Fatal("unbound Go3 definition accepted", name)
+			}
+		})
+	}
+}
+
 func TestQuerySlotInventoryControls(t *testing.T) {
 	want, err := json.Marshal(expectedQuerySlotInventory(t))
 	if err != nil {

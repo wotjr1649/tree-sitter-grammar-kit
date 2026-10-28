@@ -55,6 +55,7 @@ The current implementation consists of repository foundation checks, the Session
 | #217 오류 tree route BLOCKED 원본 처분·reuse holdout 원장·미처분 검사 | [처분 보고서](reports/issue-217-reuse-dispositions.md) |
 | #264 accepted event·전체 CST·고정 원장·replay·qualification | [증거 계약](specs/reuse-accepted.md) |
 | #216 Windows JSON24 실제 native/reference closure·외부 승인·API/replay | [검증 보고서](reports/issue-216-json24-reference.md) |
+| #216 Go3·ordinary 정의의 정적 연결과 당시 Windows metadata 관측 범위 | [분류 보고서](reports/issue-216-go3-classification.md) |
 | #233 C# lexical producer의 네 directive 오판·실제 ERROR 보존 | [교정 보고서](reports/issue-233-csharp-lexical-recovery.md) |
 | #233 kit 내부 identity 채택 경로·replay subject platform 결속 | [검증 경로와 반례](reports/issue-233-identity-paths.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
