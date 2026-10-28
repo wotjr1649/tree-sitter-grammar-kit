@@ -19,6 +19,16 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
+// Resolve the host temp alias before tests introduce their own path aliases.
+func qualifySemanticTempDir(t *testing.T) string {
+	t.Helper()
+	path, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
 func TestQualifySemanticCLIAdmissionAndTypedOutput(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -26,7 +36,7 @@ func TestQualifySemanticCLIAdmissionAndTypedOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dir, host := t.TempDir(), t.TempDir()
+	dir, host := qualifySemanticTempDir(t), qualifySemanticTempDir(t)
 	plan, err := json.Marshal(map[string]any{"schema": kit.QualificationSemanticsPlanSchema, "id": "cli-probes", "inventory_sha256": fmt.Sprintf("%x", sha256.Sum256(data)), "context": "full-input-utf8/r2", "scope": "small-full-input-predicate-probes/r1", "targets": []any{}})
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +72,7 @@ func TestQualifySemanticCLIAdmissionAndTypedOutput(t *testing.T) {
 }
 
 func TestQualifySemanticFileAliasUsesIdentityBeyondLinkCount(t *testing.T) {
-	path := t.TempDir()
+	path := qualifySemanticTempDir(t)
 	if err := os.WriteFile(filepath.Join(path, "bundle-member.json"), []byte("approval"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +97,7 @@ func TestQualifySemanticFileAliasUsesIdentityBeyondLinkCount(t *testing.T) {
 }
 
 func TestQualifySemanticPublicationUsesHeldRootAfterRename(t *testing.T) {
-	base := t.TempDir()
+	base := qualifySemanticTempDir(t)
 	original, moved := filepath.Join(base, "bundle"), filepath.Join(base, "moved")
 	if err := os.Mkdir(original, 0o700); err != nil {
 		t.Fatal(err)
@@ -177,13 +187,13 @@ func TestQualifySemanticPrefixCountsPartialBytesAndDoesNotProbe(t *testing.T) {
 }
 
 func TestQualifySemanticCallerDocumentsUseOpenedLeafAndStayOutsideRoots(t *testing.T) {
-	protectedPath := t.TempDir()
+	protectedPath := qualifySemanticTempDir(t)
 	protected, err := openQualifySemanticRoot(protectedPath, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer protected.root.Close()
-	outside := t.TempDir()
+	outside := qualifySemanticTempDir(t)
 	profile := filepath.Join(outside, "profile.json")
 	if err := os.WriteFile(profile, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
@@ -211,8 +221,18 @@ func TestQualifySemanticCallerDocumentsUseOpenedLeafAndStayOutsideRoots(t *testi
 		t.Fatal("hard-linked trust document was accepted")
 	}
 
+	leaf := filepath.Join(outside, "single-link.json")
+	if err := os.WriteFile(leaf, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	leafDoc, err := openQualifySemanticDocument(leaf, []qualifySemanticRoot{protected}, time.Now().Add(time.Minute))
+	if err != nil {
+		t.Fatalf("single-link regular file rejected: %v", err)
+	}
+	leafDoc.file.Close()
+	leafDoc.parent.Close()
 	symlink := filepath.Join(outside, "symlink.json")
-	if err := os.Symlink(profile, symlink); err != nil {
+	if err := os.Symlink(filepath.Base(leaf), symlink); err != nil {
 		t.Skipf("symlinks are unavailable: %v", err)
 	}
 	if _, err := openQualifySemanticDocument(symlink, []qualifySemanticRoot{protected}, time.Now().Add(time.Minute)); err == nil {
@@ -221,7 +241,7 @@ func TestQualifySemanticCallerDocumentsUseOpenedLeafAndStayOutsideRoots(t *testi
 }
 
 func TestQualifySemanticOutputStaysOutsideBundleRoot(t *testing.T) {
-	host, bundle := t.TempDir(), t.TempDir()
+	host, bundle := qualifySemanticTempDir(t), qualifySemanticTempDir(t)
 	out := filepath.Join(bundle, "result.json")
 	if code, err := publish(out, host, []byte("result"), bundle); code != "OUTPUT_INSIDE_INPUT" || err == nil {
 		t.Fatalf("output inside semantic bundle was accepted: code=%s err=%v", code, err)
@@ -229,11 +249,17 @@ func TestQualifySemanticOutputStaysOutsideBundleRoot(t *testing.T) {
 }
 
 func TestQualifySemanticTrustPathRejectsAliasedParent(t *testing.T) {
-	base, outside := t.TempDir(), t.TempDir()
+	base, outside := qualifySemanticTempDir(t), qualifySemanticTempDir(t)
 	profile := filepath.Join(outside, "profile.json")
 	if err := os.WriteFile(profile, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	doc, err := openQualifySemanticDocument(profile, nil, time.Now().Add(time.Minute))
+	if err != nil {
+		t.Fatalf("physical parent rejected before adding an alias: %v", err)
+	}
+	doc.file.Close()
+	doc.parent.Close()
 	alias := filepath.Join(base, "linked-parent")
 	if err := os.Symlink(outside, alias); err != nil {
 		t.Skipf("directory symlinks are unavailable: %v", err)
@@ -272,7 +298,7 @@ func TestConvertQualifyCLIWallPreservesCallerCancellationAndKnownFailure(t *test
 			t.Fatalf("known semantic failure erased by typed exit: code=%d stdout=%s stderr=%s", code, &stdout, &stderr)
 		}
 	}
-	closed, err := os.CreateTemp(t.TempDir(), "closed-stdout")
+	closed, err := os.CreateTemp(qualifySemanticTempDir(t), "closed-stdout")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,7 +341,7 @@ func TestQualifySemanticEmissionChecksExpiredDeadline(t *testing.T) {
 }
 
 func TestQualifySemanticLegacyPublicationErrorOrder(t *testing.T) {
-	root := t.TempDir()
+	root := qualifySemanticTempDir(t)
 	out := filepath.Join(root, "result.json")
 	code, err := publish(out, root, []byte("result"), filepath.Join(root, "missing-root"))
 	if err == nil || code != "OUTPUT_INSIDE_INPUT" {
@@ -327,7 +353,7 @@ func TestQualifySemanticCancellationDuringPublication(t *testing.T) {
 	old := testHookBeforeChildOpen
 	defer func() { testHookBeforeChildOpen = old }()
 	for _, assessment := range []string{kit.AssessBlocked, kit.AssessFail} {
-		path := t.TempDir()
+		path := qualifySemanticTempDir(t)
 		if err := os.Mkdir(filepath.Join(path, "child"), 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -343,7 +369,7 @@ func TestQualifySemanticCancellationDuringPublication(t *testing.T) {
 			cancel()
 			removed = os.Remove(filepath.Join(path, name))
 		}
-		out := filepath.Join(t.TempDir(), "result.json")
+		out := filepath.Join(qualifySemanticTempDir(t), "result.json")
 		res := kit.QualificationResult{Report: kit.Report{ExecutionStatus: kit.StatusCompleted, Assessment: assessment}, ResultSchema: kit.QualificationSemanticsResultSchema, QuerySemantics: &kit.QualQuerySemanticsAxis{Code: "ORIGINAL_CODE"}}
 		var stdout, stderr bytes.Buffer
 		code := finishWithRoots(res, nil, out, "", &stdout, &stderr, nil, []*os.Root{root}, time.Now().Add(time.Minute), caller)
