@@ -181,8 +181,7 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 		t.Fatal("absolute caller-selected static donor required")
 	}
 	anchors, _ := classificationGoAnchors(t)
-	var plan classificationPlan
-	actualJSONDecode(t, filepath.Join(root, "plan", "preregistration.json"), &plan)
+	plan := classificationGoReadPlan(t, root)
 	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != classificationGoAnchorsSHA || plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA {
 		t.Fatal("preregistration changed")
 	}
@@ -190,9 +189,10 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 		Passed         bool   `json:"passed"`
 		SourceRevision string `json:"source_revision"`
 		RunID          string `json:"run_id"`
+		PlanSHA256     string `json:"plan_sha256"`
 	}
 	actualJSONDecode(t, filepath.Join(root, "capture-final.json"), &captured)
-	if !captured.Passed || captured.SourceRevision != plan.SourceRevision || captured.RunID != plan.RunID {
+	if !captured.Passed || captured.SourceRevision != plan.SourceRevision || captured.RunID != plan.RunID || captured.PlanSHA256 != os.Getenv("TSGK_QUERY_CLASSIFICATION_PLAN_SHA256") {
 		t.Fatal("current capture controller did not complete preregistered cohort")
 	}
 	var old eligibilityRegistration
@@ -405,14 +405,15 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 		}
 	}
 	anchors, _ := classificationGoAnchors(t)
-	var plan classificationPlan
-	actualJSONDecode(t, filepath.Join(root, "plan", "preregistration.json"), &plan)
+	plan := classificationGoReadPlan(t, root)
 	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != classificationGoAnchorsSHA {
 		t.Fatal("classification preregistration changed")
 	}
 	caller := filepath.Join(assembly, "caller")
 	req := QueryReferenceEligibilityRequest{Evidence: EvidenceRequest{Root: filepath.Join(assembly, "evidence"), Policy: actualJSONRead(t, filepath.Join(caller, "policy.json"))}, Approval: actualJSONRead(t, approvalPath), Registration: actualJSONRead(t, filepath.Join(caller, "eligibility-registration.json")), WitnessRegistration: actualJSONRead(t, filepath.Join(caller, "witness.json"))}
-	r, e := startRun(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer cancel()
+	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -437,6 +438,9 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 		}
 	}
 	classificationGoFrames(t, s, anchors, plan)
+	if !classificationGoLibraryNodeMatches(s.nodes["go-library-build"], plan) {
+		t.Fatal("guarded library node contradicts preregistration or compiler receipt")
+	}
 	readLibrary := func(path string) []byte {
 		t.Helper()
 		pin, exists := s.owned[path]
@@ -460,7 +464,9 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 		}
 	}
 	// This second API operation checks its public wrapper; anchors use the retained core snapshot above.
-	public, err := VerifyQueryReferenceEligibility(context.Background(), req)
+	publicCtx, publicCancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer publicCancel()
+	public, err := VerifyQueryReferenceEligibility(publicCtx, req)
 	if err != nil || public.Assessment != AssessPass || !public.Complete || public.Tuple != core.Tuple || public.Build != core.Build || public.Unit != core.Unit || public.Control != core.Control || public.Assertion != core.Assertion || public.WitnessSHA256 != core.WitnessSHA256 || public.RegistrationSHA256 != core.RegistrationSHA256 || public.GraphSHA256 != core.GraphSHA256 {
 		t.Fatal("public eligibility parity", err)
 	}
@@ -470,6 +476,77 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 	}
 	actualJSONWrite(t, filepath.Join(caller, "classification-result.json"), eligibilityJSON(t, map[string]any{"schema": "tsgk-query-classification-local-result/r1", "assessment": AssessPass, "required": 3, "verified": 3, "complete": true, "anchors_sha256": classificationGoAnchorsSHA, "registration_sha256": core.RegistrationSHA256, "witness_sha256": core.WitnessSHA256, "approval_sha256": core.ApprovalSHA256, "graph_sha256": core.GraphSHA256, "definitions": rows, "eligibility": public, "independent_native_reference_cst": "PASS", "scope": "caller-approved conditional definition classification; not semantic EVALUATED or inventory completion"}))
 	t.Log("guarded independent CST and public eligibility3 verified; conditional Go3 classification only")
+}
+
+func classificationGoPlanMatches(data []byte, expectedSHA256 string) bool {
+	return hex64.MatchString(expectedSHA256) && digestHex(data) == expectedSHA256
+}
+
+func classificationGoReadPlan(t *testing.T, root string) classificationPlan {
+	t.Helper()
+	data := actualJSONRead(t, filepath.Join(root, "plan", "preregistration.json"))
+	if !classificationGoPlanMatches(data, os.Getenv("TSGK_QUERY_CLASSIFICATION_PLAN_SHA256")) {
+		t.Fatal("caller must supply the plan digest independently frozen before query capture")
+	}
+	var plan classificationPlan
+	if err := jsonv2.Unmarshal(data, &plan, jsonv2.RejectUnknownMembers(true)); err != nil {
+		t.Fatal(err)
+	}
+	return plan
+}
+
+func classificationGoLibraryNodeMatches(node EvidenceNode, plan classificationPlan) bool {
+	grammar, err := jsonv2.Marshal(plan.Grammar)
+	if err != nil {
+		return false
+	}
+	identities := map[string]string{"source": plan.SourceRevision, "tool": plan.CompilerSHA256, "input": digestHex(grammar), "query": "NOT_APPLICABLE", "policy": digestHex([]byte(eligibilityCatalogueJSON)), "comparator": CaptureCompareScheme, "protocol": "compiler-capture/r1", "workload": "go3-definition-classification", "platform": "windows/amd64", "run": "go-library", "attempt": "1"}
+	return node.ID == "go-library-build" && node.Kind == "run" && node.ExecutionStatus == StatusCompleted && node.Assessment == AssessPass && node.EvidenceMode == ModeNewRun && reflect.DeepEqual(node.Identities, identities)
+}
+
+func TestQueryClassificationFrozenBindings(t *testing.T) {
+	plan := classificationPlan{SourceRevision: strings.Repeat("a", 40), CompilerSHA256: strings.Repeat("b", 64), Grammar: []NativeInput{{Path: "src/parser.c", Role: "parser", Bytes: 1, SHA256: digestHex([]byte("p"))}}}
+	plan.LibraryRequest.Wall = 120e9
+	original := eligibilityJSON(t, plan)
+	frozenSHA := digestHex(original)
+	if !classificationGoPlanMatches(original, frozenSHA) || classificationGoPlanMatches(original, "") {
+		t.Fatal("independent preregistration pin")
+	}
+	changed := plan
+	changed.LibraryRequest.Wall++
+	// Matching a changed request to a changed plan cannot replace the pre-query digest.
+	if classificationGoPlanMatches(eligibilityJSON(t, changed), frozenSHA) {
+		t.Fatal("jointly changed plan and compiler request accepted")
+	}
+	a := &actualJSONAssembly{workload: "go3-definition-classification", cohortSource: map[string]string{"current": plan.SourceRevision}, nodes: map[string]EvidenceNode{}}
+	node := a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
+	if !classificationGoLibraryNodeMatches(node, plan) {
+		t.Fatal("completed preregistered library node rejected")
+	}
+	for _, change := range []func(*EvidenceNode){
+		func(n *EvidenceNode) { n.ExecutionStatus = StatusFailed; n.Assessment = AssessFail },
+		func(n *EvidenceNode) { n.Identities["tool"] = strings.Repeat("c", 64) },
+		func(n *EvidenceNode) { n.Identities["input"] = strings.Repeat("c", 64) },
+		func(n *EvidenceNode) { n.Identities["source"] = strings.Repeat("c", 40) },
+		func(n *EvidenceNode) { n.Identities["run"] = "another-library" },
+	} {
+		var other EvidenceNode
+		if err := jsonv2.Unmarshal(eligibilityJSON(t, node), &other); err != nil {
+			t.Fatal(err)
+		}
+		change(&other)
+		graph := eligibilityJSON(t, map[string]any{"schema": EvidenceSchema, "nodes": []EvidenceNode{other}})
+		policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": "rebound-library", "evidence_sha256": digestHex(graph), "required": []map[string]any{{"node": other.ID, "kind": other.Kind, "identities": other.Identities}}, "carry_forward": []any{}})
+		root := t.TempDir()
+		actualJSONWrite(t, filepath.Join(root, "evidence.json"), graph)
+		result, err := VerifyEvidence(ctxT(t), EvidenceRequest{Root: root, Policy: policy})
+		if err != nil || result.Assessment != AssessPass {
+			t.Fatal("rebound graph must pass integrity before the classification guard", err, result.Findings)
+		}
+		if classificationGoLibraryNodeMatches(other, plan) {
+			t.Fatal("rehashed graph/policy accepted a contradictory library node")
+		}
+	}
 }
 
 func classificationGoFrames(t *testing.T, s *eligibilitySession, a classificationAnchors, plan classificationPlan) {
@@ -607,6 +684,14 @@ func TestQueryClassificationLibrary(t *testing.T) {
 	}
 	if err := check(request, receipt, []byte("compiler"), []byte("library")); err != nil {
 		t.Fatal(err)
+	}
+	changedPlan := plan
+	changedPlan.LibraryRequest.Wall++
+	if err := classificationGoLibrary(semanticTestBudget(t), changedPlan, eligibilityJSON(t, changedPlan.LibraryRequest), eligibilityJSON(t, receipt), []byte("compiler"), []byte("library")); err != nil {
+		t.Fatal("joint mutation must remain internally consistent for this counterexample", err)
+	}
+	if classificationGoPlanMatches(eligibilityJSON(t, changedPlan), digestHex(eligibilityJSON(t, plan))) {
+		t.Fatal("joint plan/request mutation replaced the independent pre-query pin")
 	}
 	for _, change := range []func(*eligibilityReceipt){
 		func(r *eligibilityReceipt) { r.Execution.Status = StatusFailed },

@@ -181,4 +181,6 @@ Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리
 
 Native node의 `run`은 invocation ID `native-go3`이며 별도 관측 run은 preregistration과 observation/cohort에 결속한다. Library compiler의 정확한 request와 도구 hash를 사전에 고정하고, 조립 전과 승인된 graph의 동일 guarded snapshot에서 request·compiler bytes·출력 및 정상 종료·HARD 한도·검증된 정리·잔류0을 확인한다. Native Spec의 `Interactive:false`도 직접 요구한다. 이 추가 검사는 수동 분류 helper의 조건이며 공개 eligibility API의 새 실행 인증이 아니다. 준비 이후 선택된 Go/cc/supervisor/reference의 경로와 hash가 모두 같아야 하며, controller는 별도 진입점의 실행 전 hash 검사를 거친다. Case/native/library/references는 caller가 전용으로 사용하는 실제 디렉터리여야 하고 실행 전 빈 출력 디렉터리·reparse 부재·case 내부 경로를 확인한다. 소유자가 동시에 경로·권한 의미를 바꾸는 경우까지 보호한다는 주장은 하지 않는다.
 
+`assemble`과 `verify`는 caller가 수집 전에 별도로 고정한 plan digest를 `TSGK_QUERY_CLASSIFICATION_PLAN_SHA256`으로 받아 외부 preregistration bytes와 대조한다. 이후 plan·request·graph·승인을 함께 다시 해시해도 이 사전 pin을 바꿀 수는 없다. Guarded graph의 `go-library-build` node도 완료/PASS/NEW_RUN과 compiler·grammar·source·protocol·run 등 정확한 identity를 확인하며, 무결성 검사 자체를 통과한 모순된 node도 분류 결과로 채택하지 않는다.
+
 세 정의가 모두 적격일 때만 별도 수동 결과에 동일한 승인 cohort의 `STRUCTURAL_ONLY`를 기록한다. 이 결과는 caller 승인에 조건부인 저장 일관성이며 실행 진위·서명·EVALUATED 또는 전체 query 슬롯·qualification/fan-in 완료가 아니다. 기본 시험의 수동 helper SKIP도 실제 실행 성공이 아니다. 신규 검증 범위는 Windows Go3로 한정하며 Linux의 새 current 실행과 나머지26 route·SVC·large 의무, macOS 신규 검증 제외를 유지한다.

@@ -423,4 +423,6 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 `TestQueryClassificationBuildCleanup`은 compiler뿐 아니라 driver 실행 시도 뒤 capture 누락·시작 불명·정리 미검증·잔류 자식도 build 제거를 막는지 검사한다. `TestQueryClassificationLibrary`는 사전 compiler request/hash와 모순되는 실패·exit·정리·메모리·stream·도구·argv·한도를 거부한다. 같은 검증을 조립 전과 승인된 guarded graph에서 사용한다. `TestQueryClassificationProcessSpec`은 실제 `Interactive:true`가 DTO 변환으로 사라져 통과하지 않게 한다. Controller 교정은 도구 선택과 prepared/review/current source manifest 일치, library/references의 빈 실제 디렉터리·reparse·containment 반례를 별도 보존한다. 변경 뒤 이전 binary/preregistration을 재사용하지 않고 새 commit·source/controller manifest·디렉터리·binary·preregistration을 동결해 실행 전에 다시 검토한다.
 
+`TestQueryClassificationFrozenBindings`와 library 검사는 수집 후 plan·request를 함께 바꾸는 내부 일관성만으로 사전 plan digest를 대체할 수 없음을 확인한다. Library node의 실패 상태·도구·grammar·source·run을 바꾸고 graph/policy를 다시 결속한 자료가 `VerifyEvidence` 무결성 검사를 통과해도 수동 분류 guard는 거부해야 한다. 이 반례는 실행 진위나 전체 caller-approved Go3 workload를 검증한 것으로 세지 않는다.
+
 Kit helper는 고정된 과거 static build/control closure와 새 current native/reference를 별도 graph로 조립한다. 실제 current graph에 대한 외부 caller 승인 이후에만 guarded bytes의 독립 CST·request/frame 결속 및 기존 eligibility9/4/53/36/tuple3과 공개 API 판정을 확인한다. 보고서 자체는 서명이나 실행 인증이 아니며 전체 semantic completion으로 집계하지 않는다. 기존 필수 baseline CI와 독립 검토·PR/actual-main gate는 유지한다.
