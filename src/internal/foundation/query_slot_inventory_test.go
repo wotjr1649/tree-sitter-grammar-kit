@@ -404,6 +404,9 @@ func TestQuerySlotSourceClassification(t *testing.T) {
 		{"quoted-dot", "\"(.eq?)\" @token", "STRUCTURAL_CANDIDATE", "", false},
 		{"escaped-quote", "\"\\\"(.eq?)\" @token", "STRUCTURAL_CANDIDATE", "", false},
 		{"comment-dot", "; (.eq? fake)\n(identifier) @name", "STRUCTURAL_CANDIDATE", "", false},
+		{"even-backslashes", "(\"x\\\\\" @name (.eq? @name \"C\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"hash-in-string", "\"#\" @token", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"hash-in-comment", "; # marker\n(identifier) @name", "", "QUERY_CLASSIFICATION_REQUIRED", false},
 		{"source-hash-dot", "((identifier) @name (.eq? @name \"C\"))", "", "QUERY_SOURCE_HASH", true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
