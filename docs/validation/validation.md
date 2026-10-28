@@ -421,4 +421,6 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 실제 수동 실행 전에는 별도 검토한 preregistration과 controller, 전체 source/HEAD·도구 pin을 고정하고 시험 binary를 먼저 빌드해 실행 직전 hash를 확인한다. Heavy 작업은 한 번에 하나, HARD4GiB·유한 timeout·파일 출력으로 순차 실행하고 종료·검증된 자식 정리·잔류0을 확인한다. Native helper는 독립 CST/ABI/세 query metadata와 원문 frame을 대조하며 판정 FAIL을 완료로 기록하지 않는다. 부분 build도 실행된 자식 정리가 확인된 뒤 정리하고, 불명확한 정리는 보존·중단한다. 완료 파일은 성공적인 build 제거 뒤에 쓴다.
 
+`TestQueryClassificationBuildCleanup`은 compiler뿐 아니라 driver 실행 시도 뒤 capture 누락·시작 불명·정리 미검증·잔류 자식도 build 제거를 막는지 검사한다. `TestQueryClassificationLibrary`는 사전 compiler request/hash와 모순되는 실패·exit·정리·메모리·stream·도구·argv·한도를 거부한다. 같은 검증을 조립 전과 승인된 guarded graph에서 사용한다. `TestQueryClassificationProcessSpec`은 실제 `Interactive:true`가 DTO 변환으로 사라져 통과하지 않게 한다. Controller 교정은 도구 선택과 prepared/review/current source manifest 일치, library/references의 빈 실제 디렉터리·reparse·containment 반례를 별도 보존한다. 변경 뒤 이전 binary/preregistration을 재사용하지 않고 새 commit·source/controller manifest·디렉터리·binary·preregistration을 동결해 실행 전에 다시 검토한다.
+
 Kit helper는 고정된 과거 static build/control closure와 새 current native/reference를 별도 graph로 조립한다. 실제 current graph에 대한 외부 caller 승인 이후에만 guarded bytes의 독립 CST·request/frame 결속 및 기존 eligibility9/4/53/36/tuple3과 공개 API 판정을 확인한다. 보고서 자체는 서명이나 실행 인증이 아니며 전체 semantic completion으로 집계하지 않는다. 기존 필수 baseline CI와 독립 검토·PR/actual-main gate는 유지한다.

@@ -22,24 +22,32 @@ func classificationNativeComplete(result CaseResult, capture *driverCapture) boo
 	return result.ExecutionStatus == kit.StatusCompleted && result.ResponseStatus == kit.StatusCompleted && result.Assessment == kit.AssessPass && result.Code == "" && len(result.Steps) == 1 && result.Process != nil && result.Process.Succeeded() && result.Process.Cleanup.ResidualAfterExit == 0 && capture != nil && capture.err == nil
 }
 
-func classificationBuildStopped(steps []BuildStep) bool {
+func classificationBuildStopped(steps []BuildStep, driverAttempted bool, capture *driverCapture) bool {
 	for _, step := range steps {
 		if !step.Executed || !step.Result.Cleanup.Verified || step.Result.Cleanup.ResidualAfterExit != 0 {
 			return false
 		}
 	}
-	return true
+	return !driverAttempted || capture != nil && capture.result != nil && capture.result.Cleanup.Verified && capture.result.Cleanup.ResidualAfterExit == 0
 }
 
 func TestQueryClassificationBuildCleanup(t *testing.T) {
 	known := BuildStep{Executed: true, Result: runner.Result{Cleanup: runner.Cleanup{Verified: true}}}
-	if !classificationBuildStopped([]BuildStep{known}) {
+	if !classificationBuildStopped([]BuildStep{known}, false, nil) {
 		t.Fatal("verified stopped build rejected")
 	}
 	for _, step := range []BuildStep{{Executed: false}, {Executed: true}, {Executed: true, Result: runner.Result{Cleanup: runner.Cleanup{Verified: true, ResidualAfterExit: 1}}}} {
-		if classificationBuildStopped([]BuildStep{known, step}) {
+		if classificationBuildStopped([]BuildStep{known, step}, false, nil) {
 			t.Fatal("unknown start/attach or cleanup permitted build removal")
 		}
+	}
+	for _, capture := range []*driverCapture{nil, {}, {stage: "VERIFY_REFUSED"}, {result: &runner.Result{}}, {result: &runner.Result{Cleanup: runner.Cleanup{Verified: true, ResidualAfterExit: 1}}}} {
+		if classificationBuildStopped([]BuildStep{known}, true, capture) {
+			t.Fatal("attempted driver with unknown start/cleanup permitted build removal")
+		}
+	}
+	if !classificationBuildStopped([]BuildStep{known}, true, &driverCapture{result: &runner.Result{Cleanup: runner.Cleanup{Verified: true}}}) {
+		t.Fatal("verified stopped driver rejected")
 	}
 }
 
@@ -176,6 +184,8 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 	request.Symbol = "tree_sitter_go"
 	b, err := NewBuild(ctx, request)
 	removed := false
+	driverAttempted := false
+	var capture *driverCapture
 	removeBuild := func() error {
 		if b == nil || removed {
 			return nil
@@ -184,7 +194,7 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 		if e != nil || rel == "." || rel == ".." || filepath.IsAbs(rel) || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			return fmt.Errorf("unexpected temporary build path: %s", b.Dir)
 		}
-		if !classificationBuildStopped(b.Steps) {
+		if !classificationBuildStopped(b.Steps, driverAttempted, capture) {
 			return fmt.Errorf("process start/cleanup unverified; retained partial build: %s", b.Dir)
 		}
 		if err := b.Remove(); err != nil {
@@ -229,7 +239,8 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 		x.Queries = append(x.Queries, QuerySource{ID: q.ID, Source: []byte(q.Source)})
 	}
 	c := kit.IncrementalCase{ID: "go3", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "source.bin", Role: "case", Bytes: 0, SHA256: anchors.Source.SHA256}, Edits: []kit.Edit{}, Points: []kit.NativePoint{}, Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
-	capture := &driverCapture{}
+	capture = &driverCapture{}
+	driverAttempted = true
 	result := b.runCase(ctx, x, c, []byte(anchors.Source.UTF8), capture)
 	captured, err := capture.files("capture/go3")
 	if err != nil {

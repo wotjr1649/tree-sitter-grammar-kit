@@ -40,13 +40,15 @@ type classificationAnchors struct {
 }
 
 type classificationPlan struct {
-	Schema                  string        `json:"schema"`
-	SourceRevision          string        `json:"source_revision"`
-	RunID                   string        `json:"run_id"`
-	AnchorsSHA256           string        `json:"anchors_sha256"`
-	RuntimeManifestSHA256   string        `json:"runtime_manifest_sha256"`
-	DonorRegistrationSHA256 string        `json:"donor_registration_sha256"`
-	Grammar                 []NativeInput `json:"grammar"`
+	Schema                  string                    `json:"schema"`
+	SourceRevision          string                    `json:"source_revision"`
+	RunID                   string                    `json:"run_id"`
+	AnchorsSHA256           string                    `json:"anchors_sha256"`
+	RuntimeManifestSHA256   string                    `json:"runtime_manifest_sha256"`
+	DonorRegistrationSHA256 string                    `json:"donor_registration_sha256"`
+	Grammar                 []NativeInput             `json:"grammar"`
+	CompilerSHA256          string                    `json:"compiler_sha256"`
+	LibraryRequest          eligibilityProcessRequest `json:"library_request"`
 }
 
 // These stages retain caller inputs; neither planning nor assembly issues approval.
@@ -133,6 +135,17 @@ func classificationGoPlan(t *testing.T, root string) {
 	}
 	_, data := classificationGoAnchors(t)
 	plan := classificationPlan{Schema: "tsgk-query-classification-plan/r1", SourceRevision: os.Getenv("TSGK_QUERY_CLASSIFICATION_SOURCE"), RunID: os.Getenv("TSGK_QUERY_CLASSIFICATION_RUN"), AnchorsSHA256: digestHex(data), DonorRegistrationSHA256: classificationDonorRegistrationSHA}
+	plan.CompilerSHA256 = os.Getenv("TSGK_QUERY_CLASSIFICATION_COMPILER_SHA256")
+	if err := jsonv2.Unmarshal([]byte(os.Getenv("TSGK_QUERY_CLASSIFICATION_LIBRARY_REQUEST")), &plan.LibraryRequest, jsonv2.RejectUnknownMembers(true)); err != nil {
+		t.Fatal("preregistered compiler request", err)
+	}
+	if !hex64.MatchString(plan.CompilerSHA256) || eligibilityValidateRequest(plan.LibraryRequest, "go-library") != nil || !eligibilityAbsolutePath(plan.LibraryRequest.Path, "windows/amd64") || plan.LibraryRequest.Dir != root || !plan.LibraryRequest.Memory.Hard || plan.LibraryRequest.Memory.Bytes != 4<<30 || plan.LibraryRequest.Wall != 120e9 || plan.LibraryRequest.Grace != 2e9 || plan.LibraryRequest.StdoutBytes != 16<<20 || plan.LibraryRequest.StderrBytes != 4<<20 {
+		t.Fatal("compiler preregistration identity or limits")
+	}
+	grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", "go")
+	if !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, []string{"-shared", "-O0", "-std=gnu11", "-I", filepath.Join(grammarRoot, "src"), filepath.Join(grammarRoot, "src", "parser.c"), filepath.Join(grammarRoot, "src", "scanner.c"), "-o", filepath.Join(root, "library", "go.dll")}) {
+		t.Fatal("compiler grammar inputs or output changed")
+	}
 	if !eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) {
 		t.Fatal("separate source revision and observation run preregistration required")
 	}
@@ -281,21 +294,18 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	}
 	var capture semanticProcessCapture
 	actualJSONDecode(t, filepath.Join(nativeRoot, "capture", "go3.json"), &capture)
-	if capture.Spec == nil || capture.Error != nil || capture.Stage != "RUN_RETURNED" || capture.Process == nil || capture.Stdout == nil || capture.Spec.Stdin == nil {
+	if capture.Spec == nil || capture.Spec.Interactive || capture.Error != nil || capture.Stage != "RUN_RETURNED" || capture.Process == nil || capture.Stdout == nil || capture.Spec.Stdin == nil {
 		t.Fatal("native process capture incomplete")
 	}
-	var process eligibilityProcessRequest
-	if err := jsonv2.Unmarshal(eligibilityJSON(t, capture.Spec), &process); err != nil {
+	process, err := classificationGoProcessSpec(*capture.Spec)
+	if err != nil {
 		t.Fatal(err)
-	}
-	if process.Env == nil {
-		process.Env = []string{}
 	}
 	queries := make([]OracleQuery, 0, 3)
 	for _, q := range anchors.Queries {
 		queries = append(queries, OracleQuery{ID: q.ID, Source: q.Source})
 	}
-	n := a.node("native-go3", "current", digestHex(actualJSONRead(t, filepath.Join(nativeRoot, "capture", "driver.bin"))), anchors.Source.SHA256, digestHex(eligibilityJSON(t, queries)), "tsgk-native/r4", plan.RunID, StatusCompleted, AssessPass)
+	n := a.node("native-go3", "current", digestHex(actualJSONRead(t, filepath.Join(nativeRoot, "capture", "driver.bin"))), anchors.Source.SHA256, digestHex(eligibilityJSON(t, queries)), "tsgk-native/r4", "native-go3", StatusCompleted, AssessPass)
 	n.Identities["policy"] = NativePolicy(NativeOperations()["native-query"], OutputTree, nil).SHA256
 	a.nodes[n.ID] = n
 	pins := map[string]eligibilityMember{}
@@ -338,12 +348,18 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 			grammar[row.Path] = pins[fmt.Sprintf("capture/build-input-%05d.bin", i)]
 		}
 	}
-	var buildIdentity eligibilityBuildIdentity
-	actualJSONDecode(t, filepath.Join(a.evidence, filepath.FromSlash(a.reg.Build.Identity.Member.Path)), &buildIdentity)
-	a.node("go-library-build", "current", buildIdentity.Tools["cc"], digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
-	library := a.copy("go-library-build", "current/go.dll", "runtime-library", filepath.Join(root, "library", "go.dll"))
-	a.copy("go-library-build", "current/library-request.json", "compiler-request", filepath.Join(root, "library", "request.json"))
-	a.copy("go-library-build", "current/library-receipt.json", "compiler-receipt", filepath.Join(root, "library", "receipt.json"))
+	requestData := actualJSONRead(t, filepath.Join(root, "library", "request.json"))
+	receiptData := actualJSONRead(t, filepath.Join(root, "library", "receipt.json"))
+	compilerData := actualJSONRead(t, plan.LibraryRequest.Path)
+	libraryData := actualJSONRead(t, filepath.Join(root, "library", "go.dll"))
+	if err := classificationGoLibrary(semanticTestBudget(t), plan, requestData, receiptData, compilerData, libraryData); err != nil {
+		t.Fatal("library compiler capture", err)
+	}
+	a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
+	library := a.add("go-library-build", "current/go.dll", "runtime-library", libraryData)
+	a.add("go-library-build", "current/library-request.json", "compiler-request", requestData)
+	a.add("go-library-build", "current/library-receipt.json", "compiler-receipt", receiptData)
+	a.add("go-library-build", "current/library-compiler.bin", "compiler", compilerData)
 	a.reg.Native = &eligibilityNative{InvocationID: n.ID, Source: source, BuildManifest: pins["capture/build-manifest.txt"], ReferenceLibrary: &library, Symbol: "tree_sitter_go", Grammar: grammar}
 	request := a.add(n.ID, "current/native-expected-request.json", "native-request", eligibilityJSON(t, expected))
 	processPin := pins[capture.Process.Path]
@@ -421,6 +437,18 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 		}
 	}
 	classificationGoFrames(t, s, anchors, plan)
+	readLibrary := func(path string) []byte {
+		t.Helper()
+		pin, exists := s.owned[path]
+		data, ok, err := s.member(&pin)
+		if !exists || pin.NodeID != "go-library-build" || !ok || err != nil {
+			t.Fatal("guarded library member", path, err)
+		}
+		return data
+	}
+	if err := classificationGoLibrary(s.b, plan, readLibrary("current/library-request.json"), readLibrary("current/library-receipt.json"), readLibrary("current/library-compiler.bin"), readLibrary("current/go.dll")); err != nil {
+		t.Fatal("guarded library compiler capture", err)
+	}
 	for _, tuple := range anchors.Required {
 		o, ok := s.observation(tuple)
 		if !ok {
@@ -451,7 +479,7 @@ func classificationGoFrames(t *testing.T, s *eligibilitySession, a classificatio
 		t.Fatal("guarded process capture absent")
 	}
 	capture, e := s.b.processCapture("go3/capture", captureData)
-	if e != nil || capture.Spec == nil || capture.Spec.Stdin == nil || capture.Process == nil || capture.Stdout == nil || capture.Error != nil {
+	if e != nil || capture.Spec == nil || capture.Spec.Interactive || capture.Spec.Stdin == nil || capture.Process == nil || capture.Stdout == nil || capture.Error != nil {
 		t.Fatal("guarded process capture", e)
 	}
 	read := func(pin *ReplayMember) []byte {
@@ -476,12 +504,9 @@ func classificationGoFrames(t *testing.T, s *eligibilitySession, a classificatio
 			t.Fatal("captured query differs", q.ID)
 		}
 	}
-	var spec eligibilityProcessRequest
-	if e := jsonv2.Unmarshal(eligibilityJSON(t, capture.Spec), &spec); e != nil {
-		t.Fatal(e)
-	}
-	if spec.Env == nil {
-		spec.Env = []string{}
+	spec, err := classificationGoProcessSpec(*capture.Spec)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(spec, s.witness.Native.Process) {
 		t.Fatal("actual process spec differs from approval")
@@ -501,5 +526,116 @@ func classificationGoFrames(t *testing.T, s *eligibilitySession, a classificatio
 	process, ok, e := s.member(inv.Process)
 	if e != nil || !ok || !bytes.Equal(process, read(capture.Process)) {
 		t.Fatal("guarded process differs from invocation", e)
+	}
+}
+
+func classificationGoProcessSpec(capture semanticCaptureSpec) (eligibilityProcessRequest, error) {
+	var spec eligibilityProcessRequest
+	if capture.Interactive {
+		return spec, fmt.Errorf("classification requires a noninteractive native process")
+	}
+	data, err := jsonv2.Marshal(capture)
+	if err != nil {
+		return spec, err
+	}
+	if err := jsonv2.Unmarshal(data, &spec); err != nil {
+		return spec, err
+	}
+	if spec.Env == nil {
+		spec.Env = []string{}
+	}
+	return spec, nil
+}
+
+func TestQueryClassificationProcessSpec(t *testing.T) {
+	capture := semanticCaptureSpec{Path: "C:/driver.exe", Args: []string{"single"}}
+	spec, err := classificationGoProcessSpec(capture)
+	if err != nil || spec.Path != capture.Path || !reflect.DeepEqual(spec.Args, capture.Args) || spec.Env == nil {
+		t.Fatal("noninteractive spec projection", err)
+	}
+	capture.Interactive = true
+	if _, err := classificationGoProcessSpec(capture); err == nil {
+		t.Fatal("Interactive was lost by the process request projection")
+	}
+}
+
+func classificationGoLibrary(b *eligibilityBudget, plan classificationPlan, requestData, receiptData, compiler, library []byte) error {
+	if err := b.charge(uint64(len(compiler)+len(library)), 0, "go-library/bytes"); err != nil {
+		return err
+	}
+	var request eligibilityProcessRequest
+	var receipt eligibilityReceipt
+	if err := b.decode("go-library/request", requestData, &request, true); err != nil {
+		return err
+	}
+	if err := b.decode("go-library/receipt", receiptData, &receipt, true); err != nil {
+		return err
+	}
+	if eligibilityValidateRequest(request, "go-library") != nil || !reflect.DeepEqual(request, plan.LibraryRequest) || !hex64.MatchString(plan.CompilerSHA256) || digestHex(compiler) != plan.CompilerSHA256 || len(library) == 0 || len(library) > MaxDocumentBytes || receipt.Schema != "tsgk-reference-process/r1" {
+		return fmt.Errorf("library request, compiler or output differs from preregistration")
+	}
+	check := &eligibilitySession{res: &QueryReferenceEligibilityResult{}}
+	if !check.execution("go-library", receipt.Execution, request, "windows/amd64", 0, false) {
+		return fmt.Errorf("library compiler did not complete under verified limits/cleanup: %s", check.firstFailure)
+	}
+	for i, text := range []string{receipt.StdoutBase64, receipt.StderrBase64} {
+		if err := b.charge(1, 4*uint64(len(text)), "go-library/streams"); err != nil {
+			return err
+		}
+		raw, err := base64.StdEncoding.Strict().DecodeString(text)
+		count, limit := receipt.Execution.StdoutBytes, request.StdoutBytes
+		if i == 1 {
+			count, limit = receipt.Execution.StderrBytes, request.StderrBytes
+		}
+		if err != nil || base64.StdEncoding.EncodeToString(raw) != text || uint64(len(raw)) != count || count > limit {
+			return fmt.Errorf("library compiler stream differs from receipt")
+		}
+	}
+	return nil
+}
+
+func TestQueryClassificationLibrary(t *testing.T) {
+	request := eligibilityProcessRequest{Path: "C:/tools/cc.exe", Args: []string{"-shared", "-o", "C:/case/library/go.dll"}, Dir: "C:/case", Env: []string{}, Wall: 120e9, Grace: 2e9, StdoutBytes: 16 << 20, StderrBytes: 4 << 20}
+	request.Memory.Bytes, request.Memory.Hard = 4<<30, true
+	plan := classificationPlan{CompilerSHA256: digestHex([]byte("compiler")), LibraryRequest: request}
+	x := eligibilityFixtureExecution(request, 0, false, nil, nil)
+	x.Capabilities.OS, x.Capabilities.Backend = "windows/amd64", "windows-job-object"
+	x.Cleanup.Method, x.Cleanup.Scope, x.Capabilities.TreeCleanup = "JOB_OBJECT", "JOB_OBJECT", "JOB_OBJECT"
+	receipt := eligibilityReceipt{Schema: "tsgk-reference-process/r1", Execution: x}
+	check := func(req eligibilityProcessRequest, rec eligibilityReceipt, compiler, library []byte) error {
+		return classificationGoLibrary(semanticTestBudget(t), plan, eligibilityJSON(t, req), eligibilityJSON(t, rec), compiler, library)
+	}
+	if err := check(request, receipt, []byte("compiler"), []byte("library")); err != nil {
+		t.Fatal(err)
+	}
+	for _, change := range []func(*eligibilityReceipt){
+		func(r *eligibilityReceipt) { r.Execution.Status = StatusFailed },
+		func(r *eligibilityReceipt) { r.Execution.ExitCode = 1 },
+		func(r *eligibilityReceipt) { r.Execution.Cleanup.Verified = false },
+		func(r *eligibilityReceipt) { r.Execution.Cleanup.ResidualAfterExit = 1 },
+		func(r *eligibilityReceipt) { r.Execution.Memory.Enforcement = "SOFT" },
+		func(r *eligibilityReceipt) { r.Execution.Memory.Limit-- },
+		func(r *eligibilityReceipt) { r.StdoutBase64 = "YQ==" },
+	} {
+		other := receipt
+		change(&other)
+		if check(request, other, []byte("compiler"), []byte("library")) == nil {
+			t.Fatal("failed, unclean or inconsistent compiler receipt accepted")
+		}
+	}
+	for _, change := range []func(*eligibilityProcessRequest){
+		func(r *eligibilityProcessRequest) { r.Path += ".other" },
+		func(r *eligibilityProcessRequest) { r.Args = []string{"-o", "C:/outside/go.dll"} },
+		func(r *eligibilityProcessRequest) { r.Memory.Hard = false },
+		func(r *eligibilityProcessRequest) { r.Wall++ },
+	} {
+		other := request
+		change(&other)
+		if check(other, receipt, []byte("compiler"), []byte("library")) == nil {
+			t.Fatal("unregistered compiler request accepted")
+		}
+	}
+	if check(request, receipt, []byte("changed compiler"), []byte("library")) == nil || check(request, receipt, []byte("compiler"), nil) == nil {
+		t.Fatal("changed compiler or empty output accepted")
 	}
 }
