@@ -694,6 +694,15 @@ func (b *eligibilityBudget) walkSemanticSet(fsys fs.FS, listed map[string]bool, 
 					return fail(KindInvalidInput, "SET_ENTRY_INVALID", dir, nil)
 				}
 				child := path.Join(dir, name)
+				if b.r.semanticEntries != nil {
+					info, infoErr := entry.Info()
+					if infoErr != nil {
+						return fail(KindIO, "SET_UNREADABLE", child, infoErr)
+					}
+					if _, e := b.r.semanticEntries.recordActive(child, info); e != nil {
+						return e
+					}
+				}
 				if entry.IsDir() {
 					if entry.Type() != fs.ModeDir {
 						return fail(KindInvalidInput, "SET_ENTRY_INVALID", child, nil)

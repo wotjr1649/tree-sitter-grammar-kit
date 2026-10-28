@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"reflect"
 	"regexp"
 	"slices"
@@ -721,16 +722,18 @@ func (r RunIdentity) cohort() string {
 // QualifyHost names one host's evidence directory (run-identity.json, profiles/,
 // records/ and the retained summary.json) by registered platform id.
 type QualifyHost struct {
-	Platform string
-	Root     string
+	Platform             string
+	Root                 string
+	ExpectedRootIdentity fs.FileInfo `json:"-"`
 }
 
 // QualifyRequest is the inventory bytes, the candidate commit every host must have run and
-// the host directories.
+// the host directories. QuerySemantics optionally adds the bounded, partial semantic axis.
 type QualifyRequest struct {
-	Inventory []byte
-	Candidate string
-	Hosts     []QualifyHost
+	Inventory      []byte
+	Candidate      string
+	Hosts          []QualifyHost
+	QuerySemantics *QualificationQuerySemanticsRequest
 }
 
 // QualObligation is one required row × kind of a cell with its result and covering cases.
@@ -836,7 +839,7 @@ type QualTotals struct {
 	NotCoveredByKind map[string]int `json:"not_covered_by_kind"`
 }
 
-// QualificationResult is the r8 (or historical r7/r6) document: the E0 envelope plus
+// QualificationResult is the r9 document (or r10 with QuerySemantics): the E0 envelope plus
 // the candidate, the run cohort, every mandatory cell, every extra-role row, the
 // comparisons, the support claim, which is SUPPORTED only when every cell passes, and the
 // per-platform claims (r2 adds platform_claims to r1; r3 adds the alternative counts of P
@@ -865,9 +868,11 @@ type QualificationResult struct {
 	// single cell of the platform with mechanism and requirement PASS, and every executed
 	// extra-role row of the platform with mechanism and status PASS. The cross-platform
 	// comparison stays in SupportClaim only.
-	PlatformClaims map[string]string `json:"platform_claims"`
-	BytesRead      uint64            `json:"bytes_read"`
-	Explanation    []string          `json:"explanation"`
+	PlatformClaims map[string]string       `json:"platform_claims"`
+	BytesRead      uint64                  `json:"bytes_read"`
+	Explanation    []string                `json:"explanation"`
+	Baseline       *QualBaselineSummary    `json:"baseline,omitempty"`
+	QuerySemantics *QualQuerySemanticsAxis `json:"query_semantics,omitempty"`
 }
 
 // testHookQualifyLimits lets a test lower the qualification limits.
@@ -884,11 +889,27 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res := QualificationResult{Report: newReport("qualify"), ResultSchema: QualificationResultSchema, Hosts: map[string]string{}, Cells: []QualCell{},
 		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail, PlatformClaims: map[string]string{}}
 	res.Assessment = AssessNotAssessed
+	if req.QuerySemantics != nil {
+		res.ResultSchema = QualificationSemanticsResultSchema
+		res.QuerySemantics = newQualSemanticsAxis()
+		res.Baseline = &QualBaselineSummary{Assessment: AssessNotAssessed, Completeness: AssessBlocked, MechanismGate: AssessBlocked, SupportClaim: "BLOCKED", PlatformClaims: map[string]string{}}
+	}
 	var q *qualifier
 	bad := func(e *Error) (QualificationResult, error) {
+		knownFailure := res.Assessment == AssessFail
 		failReport(&res.Report, e)
 		if q != nil {
 			q.restoreAccepted(&res)
+			if res.QuerySemantics != nil {
+				if res.Baseline != nil && res.Assessment == AssessFail {
+					res.Baseline.Assessment = AssessFail
+				}
+				q.restoreQuerySemantics(&res)
+				knownFailure = knownFailure || res.QuerySemantics.Assessment == AssessFail || knownQualificationFailure(res, q.findings)
+			}
+		}
+		if req.QuerySemantics != nil && knownFailure {
+			res.Assessment = AssessFail
 		}
 		// a run that did not complete claims nothing: also after aggregation (output limit,
 		// wall or cancellation), where the claims and their explanation were already set
@@ -900,7 +921,10 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	if e != nil {
 		return bad(e)
 	}
-	if inv.Schema == qualificationInventoryR5 {
+	if req.QuerySemantics != nil && inv.Schema != QualificationInventorySchema {
+		return bad(fail(KindUnsupported, "SEMANTICS_INVENTORY_REVISION", "inventory", nil))
+	}
+	if req.QuerySemantics == nil && inv.Schema == qualificationInventoryR5 {
 		res.ResultSchema = qualificationResultR6
 	} else if inv.Schema == qualificationInventoryR6 {
 		res.ResultSchema = qualificationResultR7
@@ -924,8 +948,14 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 		return bad(e)
 	}
 	defer r.cancel()
-	q = &qualifier{r: r, lim: lim, inv: inv, candidate: req.Candidate, hosts: map[string]*qhost{}}
+	q = &qualifier{r: r, lim: lim, inv: inv, candidate: req.Candidate, hosts: map[string]*qhost{}, semanticsRequested: req.QuerySemantics != nil}
 	defer q.close()
+	if req.QuerySemantics != nil {
+		if len(req.QuerySemantics.ForbiddenFileIdentities) > 9 {
+			return bad(fail(KindInvalidInput, "TRUST_DOCUMENT_COUNT_LIMIT", "query-semantics", nil))
+		}
+		r.forbiddenFiles = req.QuerySemantics.ForbiddenFileIdentities
+	}
 	completeness := true
 	for i, h := range req.Hosts {
 		idx := slices.IndexFunc(inv.Platforms, func(p QualPlatform) bool { return p.ID == h.Platform })
@@ -939,7 +969,7 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 			completeness = false
 			continue
 		}
-		hx, e := q.openHost(inv.Platforms[idx], h.Root)
+		hx, e := q.openHost(inv.Platforms[idx], h.Root, h.ExpectedRootIdentity)
 		if e != nil {
 			res.BytesRead = q.bytesRead()
 			return bad(e)
@@ -971,6 +1001,12 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	if e := r.check(); e != nil {
 		res.BytesRead = q.bytesRead()
 		return bad(e)
+	}
+	if req.QuerySemantics != nil {
+		if e := q.querySemantics(ctx, *req.QuerySemantics, res.QuerySemantics); e != nil {
+			res.BytesRead = q.bytesRead()
+			return bad(e)
+		}
 	}
 	comparisons := map[string]*QualComparison{}
 	for _, route := range inv.Routes {
@@ -1063,6 +1099,12 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	res.Coverage.Observed = slices.Clone(res.Coverage.Requested)
 	res.BytesRead = q.bytesRead()
 	res.Explanation = explainQualification(res, inv)
+	if req.QuerySemantics != nil {
+		q.foldQuerySemantics(&res)
+		if !validQualificationSemantics(res, q.semantic) {
+			return bad(fail(KindIO, "SEMANTICS_RESULT_INVALID", "qualification", nil))
+		}
+	}
 	if e := sealOutput(res, lim.OutputBytes); e != nil {
 		return bad(e)
 	}

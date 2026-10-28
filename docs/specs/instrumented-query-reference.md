@@ -146,7 +146,9 @@ producer_fold_valid는 record와 projection의 claim·상태·판정·code 관�
 
 8개 extra 역할은 ID·role·등록 status·reason·platforms·not_applicable·deferred와 원본 workload의 set/profile/route/operation/format·query pin을 보존한다. Workload 부재의 null과 빈 배열을 구별한다. Query가 없는 역할은 `NO_REGISTERED_QUERIES`, query가 있는 별도 context는 `CONTEXT_NOT_EXPANDED`다. SVC69사례의 원문 좌표·segment 및 large 정상3+over-limit1의 paging을 일반 슬롯 곱셈으로 확장하지 않는다. `s06-large-over`의 기대 자원 제한과 각 사례의 전체 입력·편집·기대값은 pin으로 고정한 원본 qualification 등록부를 따른다. Symbol·reuse-accepted의 query0과 EXTERNAL/NOT_RUN/DEFERRED를 의미 PASS로 바꾸지 않는다.
 
-정적 문서 상한은256KiB다. 중복·미지 JSON member, 필수 null/0 필드의 누락, 원문 pin·분류·계수·추가 역할 사유의 변경을 거부한다. 재생성은 기존 `TSGK_WRITE_INVENTORY=1`을 명시한 `TestQuerySlotInventory`가 수행하고, 쓰기 모드를 끈 별도 검사로 원장과 음성 대조를 검증한다. 기본 foundation 검사는 원장 존재·정확한 값과 shape를 요구한다. 이는 기존 small/large runtime budget, producer/reducer 또는 qualification verdict를 변경하지 않으며, 독립 predicate probe·reference·전체 semantic completion/fan-in gate는 후속 단위다.
+`semantic_required:null`은 이 정적 원장의 값으로 남는다. 별도의 #216 r10 plan은 최대 두 Windows/Linux small full-input predicate probes의 고정 분모만 등록하며 이 53,104개 potential 좌표를 실행 분모로 바꾸지 않는다. r10 결과도 ordinary query workload·SVC·large scope가 미등록인 부분 BLOCKED다. Plan·caller context·approval·결과 fold의 canonical 규칙은 [identity/evidence](identity-and-evidence.md) `#216 small semantic qualification opt-in — r10`을 따른다.
+
+정적 문서 상한은256KiB다. 중복·미지 JSON member, 필수 null/0 필드의 누락, 원문 pin·분류·계수·추가 역할 사유의 변경을 거부한다. 재생성은 기존 `TSGK_WRITE_INVENTORY=1`을 명시한 `TestQuerySlotInventory`가 수행하고, 쓰기 모드를 끈 별도 검사로 원장과 음성 대조를 검증한다. 기본 foundation 검사는 원장 존재·정확한 값과 shape를 요구한다. 이는 기존 small/large runtime budget, producer/reducer 또는 qualification verdict를 변경하지 않으며, #216 r10의 제한된 probe scope 밖인 전체 semantic completion/fan-in gate는 후속 단위다.
 
 ## #216 parser-only paging
 

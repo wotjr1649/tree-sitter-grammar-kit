@@ -554,7 +554,7 @@ func TestQualifyCompleteness(t *testing.T) {
 	}
 	// a duplicate row: the same platform twice
 	res, err := Qualify(ctxT(t), QualifyRequest{Inventory: f.invBytes(t), Candidate: qfxCandidate, Hosts: []QualifyHost{
-		{"windows-amd64", hosts["windows-amd64"]}, {"linux-amd64", hosts["linux-amd64"]}, {"darwin-arm64", hosts["darwin-arm64"]}, {"linux-amd64", hosts["linux-amd64"]}}})
+		{Platform: "windows-amd64", Root: hosts["windows-amd64"]}, {Platform: "linux-amd64", Root: hosts["linux-amd64"]}, {Platform: "darwin-arm64", Root: hosts["darwin-arm64"]}, {Platform: "linux-amd64", Root: hosts["linux-amd64"]}}})
 	if err != nil || res.Completeness != AssessFail || !slices.Contains(codes(res.Findings), "CELL_DUPLICATE") {
 		t.Fatalf("duplicate: %v %s %v", err, res.Completeness, codes(res.Findings))
 	}
@@ -942,7 +942,7 @@ func TestQualifyHostByteBoundary(t *testing.T) {
 	var hs []QualifyHost
 	var budget, total uint64
 	for _, p := range qfxPlatforms {
-		hs = append(hs, QualifyHost{p.ID, hosts[p.ID]})
+		hs = append(hs, QualifyHost{Platform: p.ID, Root: hosts[p.ID]})
 		var bytes uint64
 		if err := filepath.Walk(hosts[p.ID], func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -978,7 +978,7 @@ func TestQualifyLimitsAndCancel(t *testing.T) {
 	hosts := f.all(t, nil)
 	var hs []QualifyHost
 	for _, p := range qfxPlatforms {
-		hs = append(hs, QualifyHost{p.ID, hosts[p.ID]})
+		hs = append(hs, QualifyHost{Platform: p.ID, Root: hosts[p.ID]})
 	}
 	ctx, cancel := context.WithCancel(ctxT(t))
 	cancel()
