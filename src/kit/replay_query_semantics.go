@@ -82,6 +82,12 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 		return fail(KindIO, "SOURCE_CHANGED", "evidence", nil)
 	}
 	scope.root = root
+	if x.r.semanticEntries != nil {
+		if e := x.r.semanticEntries.bindChild(x.g.root, "evidence", root); e != nil {
+			return e
+		}
+	}
+	scope.qualification = x.qualificationSemantics
 	for path, info := range x.files {
 		if local, ok := strings.CutPrefix(path, "evidence/"); ok {
 			scope.walked[local] = info
@@ -136,6 +142,13 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 		gate.recorded()
 	}
 	return nil
+}
+
+func validSemanticCompletion(p *QuerySemanticsResult) bool {
+	return !p.Complete || p.ExecutionStatus == StatusCompleted && p.Evidence != nil && p.Eligibility != nil &&
+		executionStatuses[p.BaseVerified.ExecutionStatus] && slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.BaseVerified.Assessment) &&
+		p.Evidence.Schema == ReportSchema && p.Evidence.ResultSchema == EvidenceResultSchema && p.Evidence.ExecutionStatus == StatusCompleted &&
+		p.Eligibility.Schema == ReportSchema && p.Eligibility.ResultSchema == QueryReferenceEligibilityResultSchema && p.Eligibility.ExecutionStatus == StatusCompleted
 }
 
 func validSemanticReplayResult(rr ReplayResult) bool {
@@ -221,7 +234,7 @@ func validSemanticReplayResult(rr ReplayResult) bool {
 			return false
 		}
 	}
-	if p.Complete && (p.ExecutionStatus != StatusCompleted || p.Evidence == nil || p.Eligibility == nil || !executionStatuses[p.BaseVerified.ExecutionStatus] || !slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.BaseVerified.Assessment)) {
+	if !validSemanticCompletion(p) {
 		return false
 	}
 	if p.Complete && (p.Tuple.Unprocessed != 0 || !p.ProducerFoldValid && p.Assessment != AssessFail) {
@@ -231,9 +244,6 @@ func validSemanticReplayResult(rr ReplayResult) bool {
 		return false
 	}
 	if rr.ExecutionStatus == StatusCompleted && !recordedOnly && (rr.EvidenceValid && rr.Assessment != p.Assessment || !rr.EvidenceValid && rr.Assessment != AssessFail) {
-		return false
-	}
-	if p.Complete && (p.Evidence.Schema != ReportSchema || p.Evidence.ResultSchema != EvidenceResultSchema || p.Evidence.ExecutionStatus != StatusCompleted || p.Eligibility.Schema != ReportSchema || p.Eligibility.ResultSchema != QueryReferenceEligibilityResultSchema || p.Eligibility.ExecutionStatus != StatusCompleted) {
 		return false
 	}
 	if (p.Evidence != nil && p.Evidence.Assessment == AssessFail || p.Eligibility != nil && p.Eligibility.Assessment == AssessFail) && p.Assessment != AssessFail {

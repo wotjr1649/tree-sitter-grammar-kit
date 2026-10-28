@@ -473,33 +473,34 @@ func Reducers() []ReducerInfo {
 // replayEnv is the state of one replay: the bounded root, the walked file set and the
 // reducer's accounting.
 type replayEnv struct {
-	svcContext     *SvcContext
-	svcFormat      string
-	svcEvidence    map[string]svcCaseEvidence
-	svcReferences  []svcReferenceLink
-	r              *run
-	g              *guard
-	lim            ReplayLimits
-	prof           ReplayProfile
-	files          map[string]fs.FileInfo
-	directories    map[string]fs.FileInfo
-	members        map[string]ReplayMember
-	verified       map[string]bool
-	consumed       map[string]bool            // members the reducer read or bound
-	seen           map[string]map[string]bool // producer and policy values named by trees
-	covered        map[string]bool            // files a reducer inventory lists besides the profile members
-	gates          []*ReplayGate
-	cons           Consumption
-	actual         map[string]string
-	recorded       Verdict
-	recomp         Verdict
-	findings       []Finding
-	redact         bool
-	over           bool   // a needed or registered member exceeds the operation limits: recorded, not recomputed
-	overAt         string // the member that did
-	needOver       bool   // a member the reducer needed was beyond the limits: it stopped early
-	noRecomp       bool   // the reducer recomputed no subject outcome (absent raw)
-	errorTreeRoute bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
+	qualificationSemantics *qualSemanticTargetRun
+	svcContext             *SvcContext
+	svcFormat              string
+	svcEvidence            map[string]svcCaseEvidence
+	svcReferences          []svcReferenceLink
+	r                      *run
+	g                      *guard
+	lim                    ReplayLimits
+	prof                   ReplayProfile
+	files                  map[string]fs.FileInfo
+	directories            map[string]fs.FileInfo
+	members                map[string]ReplayMember
+	verified               map[string]bool
+	consumed               map[string]bool            // members the reducer read or bound
+	seen                   map[string]map[string]bool // producer and policy values named by trees
+	covered                map[string]bool            // files a reducer inventory lists besides the profile members
+	gates                  []*ReplayGate
+	cons                   Consumption
+	actual                 map[string]string
+	recorded               Verdict
+	recomp                 Verdict
+	findings               []Finding
+	redact                 bool
+	over                   bool   // a needed or registered member exceeds the operation limits: recorded, not recomputed
+	overAt                 string // the member that did
+	needOver               bool   // a member the reducer needed was beyond the limits: it stopped early
+	noRecomp               bool   // the reducer recomputed no subject outcome (absent raw)
+	errorTreeRoute         bool   // the r2 S05 route rule: no reuse next to a full error tree is BLOCKED
 
 	reuseAccepted          bool
 	acceptedLedger         *ReuseAcceptedLedger
@@ -697,6 +698,10 @@ func (x *replayEnv) stream(path string) (*memberReader, *Error) {
 		f.Close()
 		return nil, e
 	}
+	if e := x.r.rejectFileIdentity(opened, path); e != nil {
+		f.Close()
+		return nil, e
+	}
 	return &memberReader{x: x, f: f, path: path, mem: mem, h: sha256.New(), info: opened}, nil
 }
 
@@ -735,13 +740,34 @@ func (m *memberReader) Read(p []byte) (int, error) {
 	if len(p) > readChunk {
 		p = p[:readChunk]
 	}
+	if m.x.r.readCeiling != 0 {
+		remaining, e := m.x.r.remainingRead(m.x.lim.TotalBytes, m.path)
+		if e != nil {
+			m.err = e
+			return 0, e
+		}
+		if m.pos > m.info.Size() {
+			m.err = fail(KindIO, "SOURCE_CHANGED", m.path, nil)
+			return 0, m.err
+		}
+		left := uint64(m.info.Size() - m.pos)
+		if left > remaining {
+			m.err = fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", m.path, nil)
+			return 0, m.err
+		}
+		if left == 0 {
+			return 0, io.EOF
+		}
+		if uint64(len(p)) > left {
+			p = p[:int(left)]
+		}
+	}
 	n, err := m.f.Read(p)
 	if n > 0 {
 		m.pos += int64(n)
 		m.h.Write(p[:n])
-		m.x.r.totalRead += uint64(n)
-		if m.x.r.totalRead > m.x.lim.TotalBytes {
-			m.err = fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", m.path, nil)
+		if e := m.x.r.chargeRead(uint64(n), m.x.lim.TotalBytes, m.path); e != nil {
+			m.err = e
 			return n, m.err
 		}
 	}
@@ -792,8 +818,21 @@ func (x *replayEnv) walk(dir string, count *uint64) *Error {
 		if info == nil {
 			return fail(KindIO, "SOURCE_CHANGED", p, nil)
 		}
+		if e := x.r.rejectFileIdentity(info, p); e != nil {
+			return e
+		}
+		if x.r.semanticEntries != nil {
+			if _, e := x.r.semanticEntries.record(x.g.root, p, info); e != nil {
+				return e
+			}
+		}
 		switch kind(info) {
 		case "dir":
+			if x.qualificationSemantics != nil {
+				if e := x.qualificationSemantics.directory(x.g.root, p); e != nil {
+					return e
+				}
+			}
 			if x.directories != nil {
 				x.directories[p] = info
 			}
@@ -823,6 +862,7 @@ func Replay(ctx context.Context, req ReplayRequest) (ReplayResult, error) {
 // symbol-mode set, #218): the replay starts from its count, stops at its limit and leaves
 // its own reads in it.
 type replayBudget struct {
+	semantic               *qualSemanticTargetRun
 	acceptedControl        bool
 	acceptedConsumer       func(ReuseAcceptedRequest, ReuseAcceptedResult, error) error
 	acceptedLegacyConsumer func(string, caseOutcome, string)
@@ -866,7 +906,26 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		return res, e
 	}
 	profileStart := time.Now()
-	selected, selectionErr := selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5")
+	var borrowed *qualSemanticTargetRun
+	if budget != nil {
+		borrowed = budget.semantic
+	}
+	var selected string
+	var selectionErr *Error
+	if borrowed != nil {
+		if e := borrowed.owner.r.eligibility.charge(uint64(len(req.Profile))+1, 0, "qualification-replay-profile-identity"); e != nil {
+			return bad(e)
+		}
+		if borrowed.profile == nil || borrowed.profile.Reducer != "oracle-set-r4" || digestHex(req.Profile) != borrowed.profile.SHA256 {
+			return bad(fail(KindInvalidInput, "SEMANTICS_REPLAY_PROFILE_CHANGED", "replay", nil))
+		}
+		if e := borrowed.owner.r.check(); e != nil {
+			return bad(e)
+		}
+		selected = borrowed.profile.Reducer
+	} else {
+		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5")
+	}
 	// A non-selected revision keeps its existing decoder's error ordering.
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		return bad(selectionErr)
@@ -892,7 +951,9 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	var e *Error
 	var semanticRun *run
 	var semanticLimits ReplayLimits
-	if semanticReducer(selected) {
+	if borrowed != nil {
+		semanticRun, semanticLimits, prof = borrowed.owner.r, borrowed.owner.lim, *borrowed.profile
+	} else if semanticReducer(selected) {
 		semanticLimits = ReplayOperations()["evidence-replay"]
 		if testHookReplayLimits != nil {
 			semanticLimits = testHookReplayLimits(semanticLimits)
@@ -903,15 +964,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		}
 		defer semanticRun.cancel()
 		semanticRun.eligibility = &eligibilityBudget{r: semanticRun}
-		b := semanticRun.eligibility
-		if e := b.reserveJSON("replay", req.Profile, 3); e != nil {
-			return bad(e)
-		}
-		var v *jv
-		v, e = decodeBounded("replay", req.Profile, MaxDocumentBytes, &valueBudget{max: 2000000, check: semanticRun.check, charge: func() *Error { return b.charge(1, 0, "replay-profile") }})
-		if e == nil {
-			prof, e = parseReplayValue(req.Profile, v, typed{doc: "replay", check: semanticRun.check})
-		}
+		prof, e = parseSemanticReplayInRun(req.Profile, semanticRun)
 	} else {
 		prof, e = parseReplay(req.Profile)
 	}
@@ -945,7 +998,13 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		lim = testHookReplayLimits(lim)
 	}
 	res.Limits = lim
-	if semanticRun != nil {
+	var memberIdentity string
+	if borrowed != nil {
+		memberIdentity, e = qualificationMembersText(prof.Members, semanticRun.eligibility)
+		if e != nil {
+			return bad(e)
+		}
+	} else if semanticRun != nil {
 		var fields uint64
 		for _, member := range prof.Members {
 			if e := semanticRun.eligibility.charge(1, 0, "replay-profile-members"); e != nil {
@@ -961,9 +1020,12 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 			return bad(e)
 		}
 	}
+	if borrowed == nil {
+		memberIdentity = membersText(prof.Members)
+	}
 	res.Identities = append(res.Identities, IdentityRef{Role: "reducer", Schema: red.info.ID, SHA256: digestHex([]byte(reducerText(red.info)))},
 		IdentityRef{Role: "policy", Schema: "tsgk-replay-policy/r1", SHA256: digestHex([]byte(replayPolicyText(prof.Operation, lim)))},
-		IdentityRef{Role: "evidence-set", Schema: "tsgk-replay-members/r1", SHA256: digestHex([]byte(membersText(prof.Members)))})
+		IdentityRef{Role: "evidence-set", Schema: "tsgk-replay-members/r1", SHA256: digestHex([]byte(memberIdentity))})
 	res.Coverage.Requested = slices.Clone(red.info.Gates)
 	if semanticRun != nil {
 		if e := semanticRun.check(); e != nil {
@@ -978,15 +1040,23 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		}
 		defer r.cancel()
 	}
-	if budget != nil {
+	if budget != nil && borrowed == nil {
 		r.totalRead, lim.TotalBytes = budget.r.totalRead, budget.total
 		defer func() { budget.r.totalRead = r.totalRead }()
 	}
-	root, _, e := openRoot(req.Root)
-	if e != nil {
-		return bad(e)
+	var root *os.Root
+	if borrowed != nil {
+		root = borrowed.root
+		if root == nil {
+			return bad(fail(KindInvalidInput, "SEMANTIC_ROOT_UNBOUND", "", nil))
+		}
+	} else {
+		root, _, e = openRoot(req.Root)
+		if e != nil {
+			return bad(e)
+		}
+		defer root.Close()
 	}
-	defer root.Close()
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
 		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
 	if budget != nil {
@@ -1001,6 +1071,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		}()
 	}
 	partial = x
+	x.qualificationSemantics = borrowed
 	for _, m := range prof.Members {
 		x.members[m.Path] = m
 	}
@@ -1010,6 +1081,13 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	}
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
+	}
+	if borrowed != nil {
+		borrowed.directories = x.directories
+		if borrowed.host.records >= uint64(borrowed.owner.q.lim.Records) {
+			return bad(fail(KindResourceLimit, "RECORDS_LIMIT", borrowed.plan.ID, nil))
+		}
+		borrowed.host.records++
 	}
 	reduceErr := red.run(x)
 	res.QuerySemantics = x.querySemantics

@@ -458,7 +458,7 @@ func acceptedReaderQualifier(t *testing.T, root string, omitProfile bool) (*qual
 	}
 	q := &qualifier{r: run, lim: QualificationLimits(), candidate: candidate, inv: QualificationInventory{Schema: QualificationInventorySchema}, hosts: map[string]*qhost{}}
 	p := qfxPlatforms[0]
-	h, e := q.openHost(p, host)
+	h, e := q.openHost(p, host, nil)
 	if e != nil {
 		t.Fatal(e)
 	}

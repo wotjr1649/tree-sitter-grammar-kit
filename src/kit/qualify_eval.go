@@ -6,6 +6,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"fmt"
 	"io/fs"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,13 +16,15 @@ import (
 
 // qualifier is the state of one qualification: the shared run and the opened hosts.
 type qualifier struct {
-	r            *run
-	lim          ReplayLimits
-	inv          QualificationInventory
-	candidate    string
-	hosts        map[string]*qhost
-	findings     []Finding
-	acceptedSets map[string]*qset
+	r                  *run
+	lim                ReplayLimits
+	inv                QualificationInventory
+	candidate          string
+	hosts              map[string]*qhost
+	findings           []Finding
+	acceptedSets       map[string]*qset
+	semantic           *qualSemanticRun
+	semanticsRequested bool
 }
 
 func (q *qualifier) finding(code, path, msg string) {
@@ -31,6 +34,9 @@ func (q *qualifier) finding(code, path, msg string) {
 }
 
 func (q *qualifier) close() {
+	if q.semantic != nil {
+		q.semantic.r.cancel()
+	}
 	for _, h := range q.hosts {
 		h.x.g.root.Close()
 	}
@@ -49,6 +55,7 @@ type qhost struct {
 	rejected []Finding
 	unused   int
 	records  uint64
+	entries  uint64
 }
 
 func (h *qhost) reject(code, path, msg string) {
@@ -57,22 +64,37 @@ func (h *qhost) reject(code, path, msg string) {
 
 // openHost walks a host directory under the per-host limits and checks its run identity:
 // the registered OS/architecture, a NEW_RUN of the candidate checkout.
-func (q *qualifier) openHost(p QualPlatform, dir string) (*qhost, *Error) {
+func (q *qualifier) openHost(p QualPlatform, dir string, expected fs.FileInfo) (*qhost, *Error) {
 	root, _, e := openRoot(dir)
 	if e != nil {
 		return nil, e
 	}
+	if expected != nil {
+		actual, e := openedRootInfo(root, dir)
+		if e != nil || !os.SameFile(expected, actual) {
+			root.Close()
+			if e != nil {
+				return nil, e
+			}
+			return nil, fail(KindIO, "SOURCE_CHANGED", dir, nil)
+		}
+	}
 	// each host has its own byte budget; the wall and cancellation are shared
 	hr := &run{caller: q.r.caller, wall: q.r.wall, cancel: q.r.cancel}
+	hr.forbiddenFiles = q.r.forbiddenFiles
 	// the records are new CI evidence: they are judged with the oracle-set-r2 S05 route rule
 	x := &replayEnv{r: hr, g: newGuard(root), lim: q.lim, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{}, verified: map[string]bool{},
 		consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}, errorTreeRoute: true}
+	if q.semanticsRequested {
+		x.directories = map[string]fs.FileInfo{}
+	}
 	h := &qhost{platform: p, root: dir, x: x, files: x.files, used: map[string]bool{}}
 	var count uint64
 	if e := x.walk(".", &count); e != nil {
 		root.Close()
 		return nil, e
 	}
+	h.entries = count
 	const idPath = "run-identity.json"
 	h.used[idPath] = true
 	if f := x.files["summary.json"]; f != nil {

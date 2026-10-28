@@ -19,8 +19,9 @@ const readChunk = 1 << 20
 
 // testHookOpen and testHookAfterOpen are package-internal fault-injection seams.
 var (
-	testHookOpen      func(name string)
-	testHookAfterOpen func(name string)
+	testHookOpen       func(name string)
+	testHookAfterOpen  func(name string)
+	testHookBeforeRead func(name string)
 )
 
 // openRoot resolves the caller's explicit root once (platform aliases such as macOS
@@ -174,21 +175,64 @@ func (g *guard) lstat(name string) (fs.FileInfo, *Error) {
 
 // readDir lists a verified plain directory in sorted order, bounded by budget entries.
 func (g *guard) readDir(r *run, name string, budget *uint64, limit uint64) ([]fs.DirEntry, *Error) {
+	semantic := r.semanticEntries != nil
+	if semantic {
+		if r.eligibility == nil {
+			return nil, fail(KindInvalidInput, "SEMANTIC_ELIGIBILITY_BUDGET_MISSING", name, nil)
+		}
+		if e := r.eligibility.charge(1, 0, name); e != nil {
+			return nil, e
+		}
+	}
 	f, err := g.root.Open(name)
 	if err != nil {
 		return nil, fail(KindIO, "UNREADABLE", name, err)
 	}
 	defer f.Close()
+	var openedDirectory fs.FileInfo
+	if semantic && name != "." {
+		if e := r.eligibility.charge(128, 128*uint64(len(name)+1), name); e != nil {
+			return nil, e
+		}
+		openedDirectory, err = f.Stat()
+		if err != nil {
+			return nil, fail(KindIO, "UNREADABLE", name, err)
+		}
+		if _, e := r.semanticEntries.record(g.root, name, openedDirectory); e != nil {
+			return nil, e
+		}
+	}
 	var out []fs.DirEntry
 	for {
 		if e := r.check(); e != nil {
 			return nil, e
 		}
+		if semantic {
+			if e := r.eligibility.charge(1, 128*256, name); e != nil {
+				return nil, e
+			}
+		}
 		batch, err := f.ReadDir(256)
 		for _, entry := range batch {
+			var entryPath string
+			if semantic {
+				entryPath = join(name, entry.Name())
+				if e := r.eligibility.charge(128, 128*uint64(len(entryPath)+1), entryPath); e != nil {
+					return nil, e
+				}
+			}
 			*budget++
 			if *budget > limit {
 				return nil, fail(KindResourceLimit, "FILE_COUNT_LIMIT", name, nil)
+			}
+			if semantic {
+				info, infoErr := entry.Info()
+				if infoErr != nil {
+					return nil, fail(KindIO, "UNREADABLE", entryPath, infoErr)
+				}
+				if _, e := r.semanticEntries.record(g.root, entryPath, info); e != nil {
+					return nil, e
+				}
 			}
 			out = append(out, entry)
 		}
@@ -197,6 +241,27 @@ func (g *guard) readDir(r *run, name string, budget *uint64, limit uint64) ([]fs
 		}
 		if err != nil {
 			return nil, fail(KindIO, "UNREADABLE", name, err)
+		}
+	}
+	if openedDirectory != nil {
+		if e := r.eligibility.charge(128, 0, name); e != nil {
+			return nil, e
+		}
+		if _, e := r.semanticEntries.record(g.root, name, openedDirectory); e != nil {
+			return nil, e
+		}
+	}
+	if semantic {
+		fields := uint64(0)
+		for _, entry := range out {
+			fields += uint64(len(entry.Name())) + 1
+		}
+		levels := uint64(1)
+		for n := len(out); n > 1; n = (n + 1) / 2 {
+			levels++
+		}
+		if e := r.eligibility.charge(32*levels*(fields+1), 0, "semantic-directory-sort"); e != nil {
+			return nil, e
 		}
 	}
 	sortEntries(out)
@@ -225,6 +290,16 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 	}
 	if uint64(before.Size()) > hardMax {
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", name, nil)
+	}
+	semanticCeiling := r.readCeiling != 0
+	if semanticCeiling {
+		remaining, e := r.remainingRead(totalLimit, name)
+		if e != nil {
+			return nil, e
+		}
+		if uint64(before.Size()) > remaining {
+			return nil, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", name, nil)
+		}
 	}
 	if r.eligibility != nil {
 		passes := uint64(3 + len(sinks))
@@ -257,6 +332,19 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 	if !opened.Mode().IsRegular() || !os.SameFile(before, opened) || opened.Size() != before.Size() || !opened.ModTime().Equal(before.ModTime()) {
 		return nil, fail(KindIO, "SOURCE_CHANGED", name, nil)
 	}
+	if e := r.rejectFileIdentity(opened, name); e != nil {
+		return nil, e
+	}
+	confirmedSize := uint64(opened.Size())
+	if semanticCeiling {
+		remaining, e := r.remainingRead(totalLimit, name)
+		if e != nil {
+			return nil, e
+		}
+		if confirmedSize > remaining {
+			return nil, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", name, nil)
+		}
+	}
 	if e := checkLinks(f, name); e != nil {
 		return nil, e
 	}
@@ -268,15 +356,34 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 		if e := r.check(); e != nil {
 			return nil, e
 		}
-		n, err := f.Read(buf)
+		readBuf := buf
+		if semanticCeiling {
+			if st.size == confirmedSize {
+				break
+			}
+			remaining, e := r.remainingRead(totalLimit, name)
+			if e != nil {
+				return nil, e
+			}
+			fileRemaining := confirmedSize - st.size
+			if remaining == 0 {
+				return nil, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", name, nil)
+			}
+			request := min(uint64(len(readBuf)), remaining, fileRemaining)
+			readBuf = readBuf[:int(request)]
+		}
+		if testHookBeforeRead != nil {
+			testHookBeforeRead(name)
+		}
+		n, err := f.Read(readBuf)
 		if n > 0 {
 			st.size += uint64(n)
+			chargeErr := r.chargeRead(uint64(n), totalLimit, name)
 			if st.size > hardMax {
 				return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", name, nil)
 			}
-			r.totalRead += uint64(n)
-			if r.totalRead > totalLimit {
-				return nil, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", name, nil)
+			if chargeErr != nil {
+				return nil, chargeErr
 			}
 			chunk := buf[:n]
 			h.Write(chunk)
@@ -294,12 +401,18 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 		if err != nil {
 			return nil, fail(KindIO, "READ_FAILED", name, err)
 		}
+		if semanticCeiling && n == 0 {
+			return nil, fail(KindIO, "READ_FAILED", name, io.ErrNoProgress)
+		}
+		if semanticCeiling && st.size == confirmedSize {
+			break
+		}
 	}
 	after, err := f.Stat()
 	if err != nil {
 		return nil, fail(KindIO, "READ_FAILED", name, err)
 	}
-	if st.size != uint64(opened.Size()) || after.Size() != opened.Size() || !after.ModTime().Equal(opened.ModTime()) {
+	if !os.SameFile(opened, after) || st.size != confirmedSize || uint64(after.Size()) != confirmedSize || !after.ModTime().Equal(opened.ModTime()) {
 		return nil, fail(KindIO, "SOURCE_CHANGED", name, nil)
 	}
 	if keep > 0 && st.size > keep {

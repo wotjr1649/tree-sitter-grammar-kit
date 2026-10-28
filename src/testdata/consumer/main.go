@@ -14,6 +14,11 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
+// Keep the optional qualification input usable from a separately built module.
+var _ = kit.QualifyRequest{QuerySemantics: &kit.QualificationQuerySemanticsRequest{
+	Plan: nil, Targets: []kit.QualificationQuerySemanticsInput{{ID: "probe", Replay: kit.ReplayRequest{}, EligibilityApproval: nil, Context: nil}},
+}}
+
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

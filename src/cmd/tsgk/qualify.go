@@ -20,15 +20,27 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 	inventory := fs.String("inventory", "", "qualification inventory (tsgk-qualification-inventory/r8 or historical r7/r6/r5), outside every host directory")
 	candidate := fs.String("candidate", "", "candidate commit every host must have run (40 hex)")
 	out := fs.String("out", "", "new result file outside every host directory (no clobber)")
+	querySemantics := fs.String("query-semantics", "", "tsgk-qualification-query-semantics-input/r1 manifest; document paths are relative to its directory; approval and context are optional")
 	var hosts multi
 	fs.Var(&hosts, "host", "PLATFORM=DIR host run directory (repeat per platform)")
-	usage := "tsgk: USAGE: tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--out PATH]"
+	usage := "tsgk: USAGE: tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--query-semantics FILE] [--out PATH]"
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
 	if fs.NArg() != 0 || *inventory == "" || *candidate == "" || len(hosts) == 0 {
 		fmt.Fprintln(stderr, usage)
 		return exitUsage
+	}
+	semanticsProvided := false
+	fs.Visit(func(f *flag.Flag) {
+		semanticsProvided = semanticsProvided || f.Name == "query-semantics"
+	})
+	if semanticsProvided {
+		if *querySemantics == "" {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: SEMANTIC_MANIFEST_PATH_REQUIRED")
+			return exitUsage
+		}
+		return runQualifySemantics(ctx, *inventory, *candidate, *out, *querySemantics, hosts, stdout, stderr)
 	}
 	req := kit.QualifyRequest{Candidate: *candidate}
 	for _, h := range hosts {

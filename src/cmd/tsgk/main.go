@@ -387,21 +387,56 @@ func runReproduce(ctx context.Context, args []string, stdout, stderr io.Writer) 
 
 // finish renders the API result as one JSON line, maps the exit code and publishes --out.
 func finish(result any, err error, out, publishRoot string, stdout, stderr io.Writer, additionalRoots ...string) int {
+	return finishWithRoots(result, err, out, publishRoot, stdout, stderr, additionalRoots, nil, time.Time{}, context.Background())
+}
+
+func finishWithRoots(result any, err error, out, publishRoot string, stdout, stderr io.Writer, additionalRoots []string, heldRoots []*os.Root, deadline time.Time, caller context.Context) int {
 	data, merr := json.Marshal(result)
 	if merr != nil {
 		fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")
 		return exitIO
 	}
+	if err == nil && !deadline.IsZero() && (caller.Err() != nil || !time.Now().Before(deadline)) {
+		if q, ok := result.(kit.QualificationResult); ok && q.QuerySemantics != nil {
+			ke := &kit.Error{Kind: kit.KindResourceLimit, Code: "WALL_LIMIT", Cause: context.DeadlineExceeded}
+			callerDeadline, hasDeadline := caller.Deadline()
+			if caller.Err() != nil || hasDeadline && !time.Now().Before(callerDeadline) {
+				ke.Kind, ke.Code = kit.KindCancelled, "CANCELLED"
+				if caller.Err() != nil {
+					ke.Cause = caller.Err()
+				}
+			}
+			q = stopQualifyEmission(q, ke)
+			result, err = q, ke
+			data, merr = json.Marshal(result)
+			if merr != nil {
+				fmt.Fprintln(stderr, "tsgk: ENCODE_FAILED")
+				return exitIO
+			}
+		}
+	}
 	data = append(data, '\n')
 	if err != nil {
 		// A failure report goes to stdout only; --out receives complete results only.
-		stdout.Write(data)
+		q, semantic := result.(kit.QualificationResult)
+		semantic = semantic && q.ResultSchema == kit.QualificationSemanticsResultSchema && q.QuerySemantics != nil
+		knownSemanticFailure := semantic && q.Assessment == kit.AssessFail
+		if n, werr := stdout.Write(data); semantic && (werr != nil || n != len(data)) {
+			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 부분 semantic report를 쓰지 못했다")
+			return exitIO
+		}
 		var ke *kit.Error
 		if errors.As(err, &ke) {
 			fmt.Fprintf(stderr, "tsgk: %s: %s %s\n", ke.Kind, ke.Code, printable(ke.Path))
+			if knownSemanticFailure {
+				return exitFail
+			}
 			return exitFor(ke.Kind)
 		}
 		fmt.Fprintln(stderr, "tsgk: IO:", err)
+		if knownSemanticFailure {
+			return exitFail
+		}
 		return exitIO
 	}
 	// A completed comparison or check that found differences or violations is a complete report.
@@ -429,11 +464,28 @@ func finish(result any, err error, out, publishRoot string, stdout, stderr io.Wr
 		}
 		return code
 	}
-	if pcode, perr := publish(out, publishRoot, data, additionalRoots...); perr != nil {
+	if pcode, perr := publishAgainst(out, data, append([]string{publishRoot}, additionalRoots...), heldRoots, deadline, caller); perr != nil {
+		if q, ok := result.(kit.QualificationResult); ok && q.QuerySemantics != nil && caller.Err() != nil && errors.Is(perr, caller.Err()) {
+			ke := &kit.Error{Kind: kit.KindCancelled, Code: "CANCELLED", Cause: caller.Err()}
+			return finish(stopQualifyEmission(q, ke), ke, "", "", stdout, stderr)
+		}
 		fmt.Fprintf(stderr, "tsgk: %s: 분석은 끝났지만 결과 publication이 실패했다: %v\n", pcode, perr)
 		return exitIO
 	}
 	return code
+}
+
+func stopQualifyEmission(q kit.QualificationResult, err *kit.Error) kit.QualificationResult {
+	q.ExecutionStatus = kit.StatusResourceLimit
+	if err.Kind == kit.KindCancelled {
+		q.ExecutionStatus = kit.StatusCancelled
+	}
+	if q.Assessment != kit.AssessFail {
+		q.Assessment = kit.AssessBlocked
+	}
+	q.SupportClaim, q.PlatformClaims = "BLOCKED", map[string]string{}
+	q.Explanation = []string{"CLI의 취소 또는 전체 wall 만료로 결과 출력을 완성하지 못했다"}
+	return q
 }
 
 func assessExit(assessment string) int {
@@ -551,8 +603,18 @@ func exitFor(kind string) int {
 // file in the destination directory, then links it into place, which fails instead of
 // replacing an existing (or concurrently created) destination.
 func publish(out, root string, data []byte, additionalRoots ...string) (code string, resultErr error) {
+	return publishAgainst(out, data, append([]string{root}, additionalRoots...), nil, time.Time{}, context.Background())
+}
+
+func publishAgainst(out string, data []byte, subjects []string, heldRoots []*os.Root, deadline time.Time, caller context.Context) (code string, resultErr error) {
 	if testHookBeforePublish != nil {
 		testHookBeforePublish()
+	}
+	if err := caller.Err(); err != nil {
+		return "OUTPUT_CANCELLED", err
+	}
+	if !deadline.IsZero() && time.Now().After(deadline) {
+		return "OUTPUT_PATH_UNVERIFIED", errors.New("output identity check deadline exceeded")
 	}
 	abs, err := filepath.Abs(out)
 	if err != nil {
@@ -567,7 +629,7 @@ func publish(out, root string, data []byte, additionalRoots ...string) (code str
 	if err != nil {
 		return "OUTPUT_PARENT_INVALID", err
 	}
-	if unresolvedAlias(parent) {
+	if unresolvedAliasUntil(parent, deadline) {
 		return "OUTPUT_PARENT_ALIAS", errors.New("destination path keeps a junction or mount point that cannot be compared with the root")
 	}
 	destination, err := os.OpenRoot(parent)
@@ -575,7 +637,32 @@ func publish(out, root string, data []byte, additionalRoots ...string) (code str
 		return "OUTPUT_PARENT_INVALID", err
 	}
 	defer destination.Close()
-	for _, subject := range append([]string{root}, additionalRoots...) {
+	check := func(input *os.Root) (string, error) {
+		if err := caller.Err(); err != nil {
+			return "OUTPUT_CANCELLED", err
+		}
+		limit := deadline
+		if limit.IsZero() {
+			limit = time.Now().Add(pathWall)
+		}
+		contained, err := insideRootsUntilContext(caller, destination, input, limit)
+		if err != nil {
+			return "OUTPUT_PATH_UNVERIFIED", err
+		}
+		if err := caller.Err(); err != nil {
+			return "OUTPUT_CANCELLED", err
+		}
+		if contained {
+			return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside an input root")
+		}
+		return "", nil
+	}
+	for _, input := range heldRoots {
+		if code, err := check(input); err != nil {
+			return code, err
+		}
+	}
+	for _, subject := range subjects {
 		if subject == "" {
 			continue
 		}
@@ -584,13 +671,15 @@ func publish(out, root string, data []byte, additionalRoots ...string) (code str
 			return "OUTPUT_PATH_UNVERIFIED", err
 		}
 		defer input.Close()
-		contained, err := insideRoots(destination, input)
-		if err != nil {
-			return "OUTPUT_PATH_UNVERIFIED", err
+		if code, err := check(input); err != nil {
+			return code, err
 		}
-		if contained {
-			return "OUTPUT_INSIDE_INPUT", errors.New("destination is inside an input root")
-		}
+	}
+	if !deadline.IsZero() && time.Now().After(deadline) {
+		return "OUTPUT_PATH_UNVERIFIED", errors.New("output identity check deadline exceeded")
+	}
+	if err := caller.Err(); err != nil {
+		return "OUTPUT_CANCELLED", err
 	}
 	return publishOutput(destination, filepath.Base(abs), data)
 }
@@ -606,7 +695,16 @@ var testHookAfterLink func(*os.File)
 // junctions and volume mount points); its target cannot be compared with the root.
 // Subst drives and bind mounts are checked by inside using descendant identities.
 func unresolvedAlias(dir string) bool {
+	return unresolvedAliasUntil(dir, time.Time{})
+}
+
+func unresolvedAliasUntil(dir string, deadline time.Time) bool {
+	parents := 0
 	for p := dir; ; {
+		if !deadline.IsZero() && (time.Now().After(deadline) || parents >= pathParents) {
+			return true
+		}
+		parents++
 		if info, err := os.Lstat(p); err != nil || isAlias(p, info) {
 			return true
 		}

@@ -143,10 +143,17 @@ func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenc
 		if scope != nil && scope.documentsRead {
 			continue
 		}
-		if uint64(len(doc.data)) > ReplayOperations()["evidence-replay"].TotalBytes-r.totalRead {
+		ordinaryLimit := ReplayOperations()["evidence-replay"].TotalBytes
+		remaining, e := r.remainingRead(ordinaryLimit, doc.name)
+		if e != nil {
+			return res, e
+		}
+		if uint64(len(doc.data)) > remaining {
 			return res, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", doc.name, nil)
 		}
-		r.totalRead += uint64(len(doc.data))
+		if e := r.chargeRead(uint64(len(doc.data)), ordinaryLimit, doc.name); e != nil {
+			return res, e
+		}
 	}
 	if len(req.Approval) == 0 {
 		s.finding("ELIGIBILITY_APPROVAL_MISSING", "approval", false)

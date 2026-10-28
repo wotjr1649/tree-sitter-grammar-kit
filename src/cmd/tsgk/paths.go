@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -41,7 +42,23 @@ func inside(dir, root string) (bool, error) {
 // insideRoots always includes the actual destination handle in the comparison;
 // pathname ancestors are additional conservative checks, never its replacement.
 func insideRoots(dir, root *os.Root) (bool, error) {
-	deadline := time.Now().Add(pathWall)
+	return insideRootsUntil(dir, root, time.Now().Add(pathWall))
+}
+
+// insideRootsUntil keeps the per-check cap and also observes the caller's operation deadline.
+func insideRootsUntil(dir, root *os.Root, deadline time.Time) (bool, error) {
+	return insideRootsUntilContext(context.Background(), dir, root, deadline)
+}
+
+func insideRootsUntilContext(caller context.Context, dir, root *os.Root, deadline time.Time) (bool, error) {
+	if err := caller.Err(); err != nil {
+		return false, err
+	}
+	localDeadline := time.Now().Add(pathWall)
+	if deadline.Before(localDeadline) {
+		localDeadline = deadline
+	}
+	deadline = localDeadline
 	rf, err := root.Open(".")
 	if err != nil {
 		return false, err
@@ -53,6 +70,9 @@ func insideRoots(dir, root *os.Root) (bool, error) {
 	}
 	var parents []os.FileInfo
 	for p := dir.Name(); ; {
+		if err := caller.Err(); err != nil {
+			return false, err
+		}
 		if len(parents) == pathParents || time.Now().After(deadline) {
 			return false, errors.New("directory identity check limit exceeded")
 		}
@@ -87,12 +107,19 @@ func insideRoots(dir, root *os.Root) (bool, error) {
 		p = up
 	}
 	entries := 1 // the root directory
-	return containsDirectory(root, parents, 0, &entries, deadline)
+	return containsDirectoryContext(caller, root, parents, 0, &entries, deadline)
 }
 
 // containsDirectory never reads file contents; observed aliases and identity changes fail closed.
 // The deadline is cooperative; synchronous filesystem calls are not preempted.
-func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries *int, deadline time.Time) (bool, error) {
+func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries *int, deadline time.Time, files ...os.FileInfo) (bool, error) {
+	return containsDirectoryContext(context.Background(), root, parents, depth, entries, deadline, files...)
+}
+
+func containsDirectoryContext(caller context.Context, root *os.Root, parents []os.FileInfo, depth int, entries *int, deadline time.Time, files ...os.FileInfo) (bool, error) {
+	if err := caller.Err(); err != nil {
+		return false, err
+	}
 	if depth > pathDepth || time.Now().After(deadline) {
 		return false, errors.New("directory identity check limit exceeded")
 	}
@@ -114,6 +141,9 @@ func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries 
 		}
 	}
 	for {
+		if err := caller.Err(); err != nil {
+			return false, err
+		}
 		if time.Now().After(deadline) {
 			return false, errors.New("directory identity check limit exceeded")
 		}
@@ -125,6 +155,9 @@ func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries 
 			return false, errors.New("directory identity check limit exceeded")
 		}
 		for _, entry := range batch {
+			if err := caller.Err(); err != nil {
+				return false, err
+			}
 			*entries += 1
 			if *entries > pathEntries || time.Now().After(deadline) {
 				return false, errors.New("directory identity check limit exceeded")
@@ -142,10 +175,27 @@ func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries 
 				return false, errors.New("input contains an unresolved path alias")
 			}
 			if !info.IsDir() {
+				if len(files) != 0 {
+					file, opened, err := openQualifySemanticRegular(root, name)
+					if err != nil {
+						return false, err
+					}
+					if err := file.Close(); err != nil {
+						return false, err
+					}
+					for _, protected := range files {
+						if os.SameFile(opened, protected) {
+							return true, nil
+						}
+					}
+				}
 				continue
 			}
 			if testHookBeforeChildOpen != nil {
 				testHookBeforeChildOpen(root, name)
+			}
+			if err := caller.Err(); err != nil {
+				return false, err
 			}
 			child, err := root.OpenRoot(name)
 			if err != nil {
@@ -170,7 +220,7 @@ func containsDirectory(root *os.Root, parents []os.FileInfo, depth int, entries 
 				child.Close()
 				return false, errors.New("input directory entry changed during identity check")
 			}
-			found, err := containsDirectory(child, parents, depth+1, entries, deadline)
+			found, err := containsDirectoryContext(caller, child, parents, depth+1, entries, deadline, files...)
 			cerr = child.Close()
 			if err != nil {
 				return false, err

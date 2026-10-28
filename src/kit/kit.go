@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strings"
 	"time"
 )
@@ -207,9 +209,47 @@ type run struct {
 	caller          context.Context
 	wall            context.Context
 	cancel          context.CancelFunc
+	parent          *run
 	totalRead       uint64
+	readCeiling     uint64 // zero leaves the existing operation limit as the only read ceiling
 	eligibility     *eligibilityBudget
 	storedSemantics *eligibilityBudget // Stored r3 decoding cannot activate legacy eligibility behavior.
+	semanticEntries *semanticEntryBudget
+	forbiddenFiles  []fs.FileInfo
+}
+
+func (r *run) rejectFileIdentity(info fs.FileInfo, at string) *Error {
+	for _, forbidden := range r.forbiddenFiles {
+		if e := r.eligibility.charge(1, 0, "trust-document-file-identity"); e != nil {
+			return e
+		}
+		if forbidden != nil && os.SameFile(forbidden, info) {
+			return fail(KindInvalidInput, "TRUST_DOCUMENT_FILE_ALIAS", at, nil)
+		}
+	}
+	return nil
+}
+
+func (r *run) remainingRead(ordinaryLimit uint64, at string) (uint64, *Error) {
+	limit := ordinaryLimit
+	if r.readCeiling != 0 && r.readCeiling < limit {
+		limit = r.readCeiling
+	}
+	if r.totalRead > limit {
+		return 0, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", at, nil)
+	}
+	return limit - r.totalRead, nil
+}
+
+// chargeRead retains bytes already returned by a Reader, even when that read crosses a cap.
+func (r *run) chargeRead(actualN, ordinaryLimit uint64, at string) *Error {
+	if actualN > ^uint64(0)-r.totalRead {
+		r.totalRead = ^uint64(0)
+		return fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", at, nil)
+	}
+	r.totalRead += actualN
+	_, e := r.remainingRead(ordinaryLimit, at)
+	return e
 }
 
 var errWall = errors.New("kit wall limit")
@@ -244,6 +284,11 @@ func startRun(ctx context.Context, wall time.Duration) (*run, *Error) {
 func (r *run) check() *Error {
 	if err := r.caller.Err(); err != nil {
 		return fail(KindCancelled, "CANCELLED", "", err)
+	}
+	if r.parent != nil {
+		if e := r.parent.check(); e != nil {
+			return e
+		}
 	}
 	if r.wall.Err() != nil {
 		return fail(KindResourceLimit, "WALL_LIMIT", "", context.Cause(r.wall))

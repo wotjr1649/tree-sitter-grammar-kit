@@ -247,3 +247,39 @@ PREPARE tracking receipt의 객체별 S00 보존은 `s00_object_preservation.app
 ## Parser-only semantic set
 
 `tsgk-oracle-manifest/r6`은 [parser-only paging 문맥](instrumented-query-reference.md#216-parser-only-paging)의 명시적 생산 set이다. `grammar-paged-descriptor`와 `grammar-paged-part`는 각각 자기 물리 bytes·SHA-256으로 manifest·graph·owned registration·run-binding에 들어간다. 원본 parser의 logical pin은 descriptor 및 기존 build.json/plain manifest에 별도로 남으며 물리 pin으로 가장하지 않는다. 기존 r5 set은 새 역할을 허용하지 않는다. `oracle-set-r5`는 r6/paged context만 받고 `oracle-set-r4`는 기존 r5/full-input context만 받는다. 기존 r4 reducer identity·profile/r3·record/r4·approval/r1·witness/r2·replay-result/r3의 의미는 유지한다. 새 reducer도 같은 유한 run·guard snapshot·누적 small 예산에서 소비하며 결과와 저장 검증의 reducer ID/revision을 정확히 대조한다.
+
+## #216 small semantic qualification opt-in — r10
+
+`QualifyRequest.QuerySemantics`가 nil이면 기존 `tsgk-qualification-result/r9`의 inventory → 결과 선택·칸·JSON 동작을 유지한다. Opt-in은 현재 `tsgk-qualification-inventory/r8`만 받으며 별도 `tsgk-qualification-result/r10`을 만든다. 기존 `QualificationResultSchema` 상수와 r9 판정은 바뀌지 않는다. `r10`은 small predicate probe만 보는 닫힌 부분 scope이며 full semantic support를 나타낼 수 없다.
+
+### 사전 plan과 대상
+
+`QualificationSemanticsPlanSchema`는 `tsgk-qualification-query-semantics-plan/r1`, context tag는 `full-input-utf8/r2`, scope는 `small-full-input-predicate-probes/r1`이다. Plan은 `schema`, `id`, 현재 inventory 원문의 `inventory_sha256`, `context`, `scope`, 최대 두 `targets`를 고정한다. 각 target은 `id`, 실제 inventory `route`, `role`(`primary` 또는 실제 `EXECUTED` extra-role ID), 해당 workload `set`, platform ID, `probe_id`, 사전 workload profile의 `profile_sha256`, semantic `registration_sha256`, `queries`의 `(id, sha256)`와 `required`의 `(case, query, step, tree_role)`을 가진다. 이 profile hash는 post-capture outer replay profile의 hash가 아니다. Target key는 inventory digest와 route/role/set/platform/probe ID에 결속한다. 한 platform에는 target을 하나만 둔다. `windows-amd64`는 실제 `windows/amd64`, `linux-amd64`는 실제 `linux/amd64` pair여야 한다.
+
+Selector는 현재 inventory의 실제 primary route 또는 해당 platform에서 실행되는 extra-role workload와 route/set이 모두 같아야 한다. Guarded workload profile 및 semantic registration도 plan의 route·platform·query 원문 hash·required tuple과 정확히 같아야 하며, 각 query에는 predicate metadata가 있어야 한다. Mismatch는 재해시·재승인해도 semantic FAIL이다. Plan은 ordinary workload 등록이나 baseline obligation을 대신하지 않는다. 필수 Windows/Linux platform target이 빠지거나 분모가 0이면 `UNREGISTERED`/`BLOCKED`이며 알 수 없는 tuple 분모는 null로 둔다.
+
+### Post-capture context와 승인
+
+`QualificationSemanticsContextSchema`는 `tsgk-qualification-query-semantics-context/r1`이다. Context는 `schema`, `plan_sha256`, `target_id`, repository, workflow 표시 이름, 별도 workflow path/revision, run ID/attempt/event, `head_sha`, `checkout`, artifact ID/ZIP SHA-256, graph SHA-256을 가진다. `head_sha`는 host `RunIdentity.HeadSHA`에 결속하고 `checkout`은 후보 commit 및 host checkout에 결속한다. Pull request에서는 head와 checkout이 다를 수 있다. Workflow 표시 이름을 path와 동일시하지 않는다.
+
+Context·eligibility approval·r4 replay profile은 capture 이후 별도로 caller가 제공한다. Replay subject의 commit은 candidate, run/attempt/platform은 해당 host, evidence mode는 `NEW_RUN`이어야 하며 같은 guarded snapshot의 Oracle source identity도 candidate 및 current approval source와 같아야 한다. Current cohort는 host와 정확히 맞아야 하며 current provenance는 `reviewed-ci`여야 한다. `approved-local` current는 BLOCKED다. Current provenance의 repository/workflow path·revision/run/attempt/artifact ID·hash는 외부 context와 같고 `reviewed_context_sha256`은 context 원문 hash여야 한다. Context와 approval은 producer graph 밖의 신뢰 입력이다. API는 caller가 이 provenance를 검토했다는 전제를 인증하거나 서명 검증하지 않는다. 신뢰 입력 부재는 BLOCKED, 명시적 모순은 FAIL이며 이미 확정한 FAIL과 최초 code는 후속 누락·중단으로 덮지 않는다.
+
+### 예산과 physical identity
+
+단일 semantic run S는 최대 두 target에 걸쳐 파일당16MiB·실제 read 합계256MiB·32,000,000 work·1GiB logical allocation·10,000 unique physical entries·120초를 공유한다. Qualification wall360초·host당576MiB/64MiB file/10,000 entries·100,000 records·output16MiB는 그대로 적용한다. 각 target 입력과 guarded read는 S와 그 host H의 남은 read 한도 중 작은 값으로 제한한다. 파일의 확인된 길이가 잔여량을 넘으면 읽기 전에 거부하고 매 Read buffer도 S/H/확정 길이로 제한한다. 확인된 길이까지 읽은 뒤 추가 EOF probe 없이 최종 Stat·크기·mtime·identity로 성장을 확인한다. 반환된 partial bytes는 오류와 함께 발생해도 계수한다. S와 H의 누적·잔여 계산 overflow는 거부한다.
+
+Entry 분모는 열린 outer target root의 identity와 정규 상대경로로 정한다. Nested evidence/Oracle root는 held root의 열린 identity와 검증된 prefix로만 outer namespace에 결속한다. 동일 root/path 재방문은 unique entry와 H entry에 한 번만 넣되 identity를 다시 확인하고 기존 eligibility work를 매회 청구한다. 다른 root/path는 hash나 inode가 같아도 합치지 않는다. Outer replay·nested evidence·semantic set walk가 같은 S ledger를 쓴다. Root overlap·alias와 모든 trust 문서의 file/hardlink/reparse alias는 admission에서 거부한다. S의 상태와 eligibility ledger는 baseline H에 공유하지 않는다.
+
+CLI가 API 호출 전에 파일에서 준비하는 문서는 별도 admission이다. API는 전달받은 문서 bytes를 S의 소비로 계수하며, CLI admission의 물리 read를 API가 재읽은 것으로 계산하지 않는다. CLI 입력은 host 최대3개·semantic root 최대2개·trust document 최대9개, 실제 파일당16MiB·합계256MiB·협력적 wall120초로 제한한다. 이 admission 한도는 API caller의 파일 출처나 API 밖 I/O를 보증하지 않는다. CLI path/output 경계는 [trust 계약](trust-and-execution.md)과 [CLI/profile](cli-and-profile.md)이 따른다.
+
+CLI는 root마다 기존 10,000 entries(루트 포함)·깊이64·10초 metadata 검사로 열린 trust file identity와 모든 실제 regular file entry를 비교한다. 검사마다 첫 파일 전부터 시작한 admission120초 및 전체360초 중 남은 기한을 따른다. File-only bind alias는 nlink=1이어도 거부한다. 이 metadata 검사는 API S의 byte 소비량에 넣지 않는다. CLI의 열린 root identity는 API가 실제 연 host/target root와 대조하고, 출력 검사는 publication까지 보유한 root handle을 직접 사용한다. API의 선택적 `ExpectedRootIdentity`가 nil이면 기존 동작이며, 값을 제공하면 다른 root를 읽기 전에 `SOURCE_CHANGED`로 거부한다.
+
+CLI는 최대9개 trust 문서의 열린 file identity도 `QualificationQuerySemanticsRequest.ForbiddenFileIdentities`로 전달한다. API는 host/target walk와 실제 file open에서 이 identity와 같은 입력 파일을 `TRUST_DOCUMENT_FILE_ALIAS`로 거부한다. Admission 뒤 승인 파일 자체를 bundle member 위로 rename해도 bytes·nlink만으로 독립 문서로 취급하지 않는다. 직접 Go caller가 이 선택 필드를 비우면 bytes의 출처는 기존 caller 신뢰 전제이며, 이 필드도 인증 수단은 아니다. JSON으로 직렬화하지 않는다.
+
+### r10 결과와 판정
+
+`QualificationResult`는 r10에서 원래 78 cells·2,478 obligations·totals와 baseline 판정·completeness·mechanism/support/platform claims를 보존하고, `Baseline` 요약과 `QuerySemantics` 축을 더한다. Axis는 scope·plan digest·assessment/code·두 platform target row·`processing_complete`·`full_scope_complete`·`missing_scopes`·limits 및 bytes/work/logical/entries 실제 계수를 포함한다. Target row는 plan의 ID/route/role/set/platform/probe, 상태·판정·code, plan의 기대 profile/registration digest, 실제 소비된 profile/approval/context digest, tuple 분모·상태 counter, optional core 결과와 target bytes를 보존한다. 소비되지 않은 digest와 호출하지 않은 core는 null이다. Plan 기대값을 실제값처럼 채우지 않으며 tuple 수로 특정 query PASS를 추정하지 않는다.
+
+이 scope에서는 `full_scope_complete=false`와 `ordinary-query-workloads`, `svc-query-workloads`, `large-query-workloads` 누락이 항상 남는다. 모든 probe와 baseline이 PASS여도 `support_claim=BLOCKED`, platform claims BLOCKED, top assessment BLOCKED다. Baseline 또는 semantic의 확인된 FAIL은 top FAIL로 우선한다. 미처리 분모는 unprocessed로 남고 input 부재는 고정 plan N개를 blocked로 남긴다. `r10`의 생성 invariant만 추가되며 저장 r10의 public decoder·r9 CI gate 변경·workflow 활성화는 포함하지 않는다. 이 scope는 전체 #216/#195, 전체26 route, SVC 또는 large 완료 근거가 아니다.
+
+Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 복사하지 않는다. 알려진 host rejection과 semantic FAIL·최초 code는 typed 취소·resource·I/O 중단 뒤에도 보존한다. CLI는 이 r10 FAIL report를 출력하면 중단의 원래 error kind와 execution status를 유지하면서 exit1을 우선한다. 알려진 FAIL이 없으면 기존 typed exit를 따르고, report 쓰기 또는 publication 실패는 exit4다. Nil opt-in의 r9 exit는 바뀌지 않는다.

@@ -53,6 +53,7 @@ func VerifyQuerySemantics(ctx context.Context, req QuerySemanticsRequest) (res Q
 }
 
 type semanticReplayScope struct {
+	qualification     *qualSemanticTargetRun
 	expectedContext   string
 	documentsRead     bool
 	walkedDirectories map[string]fs.FileInfo
@@ -119,10 +120,16 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 		if replay != nil && replay.documentsRead {
 			continue
 		}
-		if uint64(len(doc.data)) > ReplayOperations()["evidence-replay"].TotalBytes-r.totalRead {
+		remaining, e := r.remainingRead(ReplayOperations()["evidence-replay"].TotalBytes, doc.name)
+		if e != nil {
+			return res, e
+		}
+		if uint64(len(doc.data)) > remaining {
 			return res, fail(KindResourceLimit, "TOTAL_BYTES_LIMIT", doc.name, nil)
 		}
-		r.totalRead += uint64(len(doc.data))
+		if e := r.chargeRead(uint64(len(doc.data)), ReplayOperations()["evidence-replay"].TotalBytes, doc.name); e != nil {
+			return res, e
+		}
 	}
 	profile, e := b.oracleProfile(req.Profile)
 	if e != nil {
@@ -141,6 +148,11 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 	}
 	res.Tuple.Required = uint64(len(reg.Required))
 	res.Tuple.Unprocessed = res.Tuple.Required
+	if replay != nil && replay.qualification != nil {
+		if e := replay.qualification.registration(req, profile, reg, add); e != nil {
+			return res, e
+		}
+	}
 	var root *os.Root
 	if replay != nil {
 		root = replay.root
@@ -171,6 +183,11 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 			resultErr = errors.Join(resultErr, fail(KindIO, "ROOT_CLOSE_FAILED", "oracle", err))
 		}
 	}()
+	if r.semanticEntries != nil {
+		if e := r.semanticEntries.bindChild(root, "oracle", child); e != nil {
+			return res, e
+		}
+	}
 	wanted := map[string]bool{}
 	for _, member := range reg.PlannedMembers {
 		wanted["oracle/"+member.Path] = true
@@ -236,6 +253,11 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 	res.BindingValid, e = b.semanticRunBinding(&binding, req, profile, reg, manifest, files, snapshot, scope.session, state, add)
 	if e != nil {
 		return res, e
+	}
+	if replay != nil && replay.qualification != nil {
+		if e := replay.qualification.snapshot(snapshot, binding, scope.session, &res, add); e != nil {
+			return res, e
+		}
 	}
 	if state.local == nil || state.projection == nil {
 		return res, fail(KindInvalidInput, "SEMANTICS_PROJECTION_MISSING", "oracle", nil)
