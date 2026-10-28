@@ -415,3 +415,15 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 수동 `TestQuerySemanticsCSharpLocal`은 기본 SKIP이며 새 CI 지원 claim을 만들지 않는다. `TSGK_QUERY_CSHARP_LOCAL_STAGE=plan`은 추적된 독립 fixture로 세 표본과 107개 물리 member 계획을 고정하고, `assemble`은 실제 완료 캡처를 조립하되 승인을 생성하지 않으며, `verify`는 외부 caller 승인 유무를 구분해 API/replay 및 owner·slice 반례를 확인한다. 입력·reference·캡처·조립기 경로는 명시적인 절대 경로를 사용한다. 수동 단계의 PASS만으로 child anchor의 유일성·부모 관계가 확인되지는 않는다. fixture에 고정한 조건을 native/reference 전체 CST와 별도 대조하고 그 결과·소비 코드·실행 전 해시를 외부 승인 문맥에 결속한다. 실제 수집은 각 명령의 유한 timeout·hard memory·잘림 부재·실제 종료와 cleanup, 실행 전후 도구·소스·HEAD·파일 목록 및 CLI 사전 해시를 별도로 보존해야 한다. 실행 후 해시를 사전 기록으로 소급 표시하지 않는다. 재사용한 reference build의 patch/helper 경로는 현재 작업 디렉터리에서 추측하지 않고 실제 저장 request argv에서 가져온다.
 
 `TestQuerySlotSourceClassification`은 hash 불일치를 먼저 거부하고, 기존 `#` 및 legacy dot predicate·directive 머리, 공백·세미콜론 주석·Unicode 공백 뒤 dot을 명시적 분류 대상으로 검사한다. Capture 이름·sibling/trailing anchor·인용 문자열·주석 안의 점 자체는 별도 분류를 요구하지 않으며, 원문 내 `#`와 다른 predicate 위치는 별도로 검사한다. 이는 보수적 후보 검사이며 query compiler나 predicate 부재 증명을 대신하지 않는다. 기존130개 정의와 원장 bytes·미검증 metadata·미확정 semantic 분모는 유지한다.
+
+## #216 Go3 수동 분류 검사
+
+`TestQueryClassificationGoRegistration`은 고정 기대값의 유효한 witness와 다른 route·query 원문·predicate null·필수 tuple 누락을 구분한다. `TestQueryClassificationNativeCompletion`은 r4 FAIL·설명 없는 code·잔여 자식이 있는 응답이 완료 capture로 채택되지 않게 한다. `TestQueryClassificationGoLocal` 및 `TestQueryClassificationGoLocalCapture`는 명시적 환경이 없으면 SKIP이다. 이 SKIP은 실제 compiler/native/reference 검증 근거가 아니다.
+
+실제 수동 실행 전에는 별도 검토한 preregistration과 controller, 전체 source/HEAD·도구 pin을 고정하고 시험 binary를 먼저 빌드해 실행 직전 hash를 확인한다. Heavy 작업은 한 번에 하나, HARD4GiB·유한 timeout·파일 출력으로 순차 실행하고 종료·검증된 자식 정리·잔류0을 확인한다. Native helper는 독립 CST/ABI/세 query metadata와 원문 frame을 대조하며 판정 FAIL을 완료로 기록하지 않는다. 부분 build도 실행된 자식 정리가 확인된 뒤 정리하고, 불명확한 정리는 보존·중단한다. 완료 파일은 성공적인 build 제거 뒤에 쓴다.
+
+`TestQueryClassificationBuildCleanup`은 compiler뿐 아니라 driver 실행 시도 뒤 capture 누락·시작 불명·정리 미검증·잔류 자식도 build 제거를 막는지 검사한다. `TestQueryClassificationLibrary`는 사전 compiler request/hash와 모순되는 실패·exit·정리·메모리·stream·도구·argv·한도를 거부한다. 같은 검증을 조립 전과 승인된 guarded graph에서 사용한다. `TestQueryClassificationProcessSpec`은 실제 `Interactive:true`가 DTO 변환으로 사라져 통과하지 않게 한다. Controller 교정은 도구 선택과 prepared/review/current source manifest 일치, library/references의 빈 실제 디렉터리·reparse·containment 반례를 별도 보존한다. 변경 뒤 이전 binary/preregistration을 재사용하지 않고 새 commit·source/controller manifest·디렉터리·binary·preregistration을 동결해 실행 전에 다시 검토한다.
+
+`TestQueryClassificationFrozenBindings`와 library 검사는 수집 후 plan·request를 함께 바꾸는 내부 일관성만으로 사전 plan digest를 대체할 수 없음을 확인한다. Library node의 실패 상태·도구·grammar·source·run을 바꾸고 graph/policy를 다시 결속한 자료가 `VerifyEvidence` 무결성 검사를 통과해도 수동 분류 guard는 거부해야 한다. 이 반례는 실행 진위나 전체 caller-approved Go3 workload를 검증한 것으로 세지 않는다.
+
+Kit helper는 고정된 과거 static build/control closure와 새 current native/reference를 별도 graph로 조립한다. 실제 current graph에 대한 외부 caller 승인 이후에만 guarded bytes의 독립 CST·request/frame 결속 및 기존 eligibility9/4/53/36/tuple3과 공개 API 판정을 확인한다. 보고서 자체는 서명이나 실행 인증이 아니며 전체 semantic completion으로 집계하지 않는다. 기존 필수 baseline CI와 독립 검토·PR/actual-main gate는 유지한다.
