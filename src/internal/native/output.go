@@ -38,6 +38,17 @@ func recordCleanupFailure(report *kit.Report, resultErr *error, code string, cau
 	}
 	report.Coverage.Observed = []string{}
 	report.Findings = append(report.Findings, finding(code, "error", "", "build 또는 출력 경로의 자원을 해제하지 못했다"))
+	interruptKind, interruptCode := "", ""
+	if report.ExecutionStatus == kit.StatusCancelled {
+		interruptKind, interruptCode = kit.KindCancelled, "CANCELLED"
+	}
+	if report.ExecutionStatus == kit.StatusResourceLimit {
+		interruptKind, interruptCode = kit.KindResourceLimit, "RESOURCE_LIMIT"
+	}
+	var original *Error
+	if interruptKind != "" && (!errors.As(*resultErr, &original) || original.Kind != interruptKind) {
+		*resultErr = errors.Join(refuse(interruptKind, interruptCode, nil), *resultErr)
+	}
 	*resultErr = errors.Join(*resultErr, refuse(kit.KindIO, code, cause))
 }
 

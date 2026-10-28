@@ -309,6 +309,11 @@ type reducer struct {
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
 
+		"oracle-set-r5": {ReducerInfo{ID: "oracle-set-r5", Revision: "r5", Operation: "evidence-replay",
+			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r6 and record/r4"},
+			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
+			Gates:  []string{"query-semantics"}, Recorded: []string{"execution authenticity", "unrecomputed API/fact/dynamic claims"},
+			Description: "Paged-parser query semantics with immutable producer verdict, recomputed base and caller-approved reference closure under one run and guarded snapshot"}, replayQuerySemantics},
 		"oracle-set-r4": {ReducerInfo{ID: "oracle-set-r4", Revision: "r4", Operation: "evidence-replay",
 			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r5 and record/r4"},
 			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
@@ -861,7 +866,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		return res, e
 	}
 	profileStart := time.Now()
-	selected, selectionErr := selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil)
+	selected, selectionErr := selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5")
 	// A non-selected revision keeps its existing decoder's error ordering.
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		return bad(selectionErr)
@@ -887,7 +892,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	var e *Error
 	var semanticRun *run
 	var semanticLimits ReplayLimits
-	if selected == "oracle-set-r4" {
+	if semanticReducer(selected) {
 		semanticLimits = ReplayOperations()["evidence-replay"]
 		if testHookReplayLimits != nil {
 			semanticLimits = testHookReplayLimits(semanticLimits)
@@ -921,7 +926,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		return bad(fail(KindUnsupported, "REDUCER_UNSUPPORTED", "replay#/reducer", nil))
 	}
 	res.Reducer = red.info
-	if red.info.ID == "oracle-set-r4" {
+	if semanticReducer(red.info.ID) {
 		res.ResultSchema = ReplaySemanticsResultSchema
 	}
 	if red.info.ID == "query-reference-connection-r1" {
@@ -1000,7 +1005,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		x.members[m.Path] = m
 	}
 	var count uint64
-	if red.info.ID == "oracle-set-r4" {
+	if semanticReducer(red.info.ID) {
 		x.directories = map[string]fs.FileInfo{}
 	}
 	if e := x.walk(".", &count); e != nil {

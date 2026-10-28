@@ -53,6 +53,7 @@ func VerifyQuerySemantics(ctx context.Context, req QuerySemanticsRequest) (res Q
 }
 
 type semanticReplayScope struct {
+	expectedContext   string
 	documentsRead     bool
 	walkedDirectories map[string]fs.FileInfo
 	caseID            string
@@ -134,6 +135,9 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 	res.ProfileSHA256, res.RegistrationSHA256, res.RunBindingSHA256 = digestHex(req.Profile), digestHex(req.Registration), digestHex(req.RunBinding)
 	if replay != nil {
 		replay.caseID = reg.Case
+		if replay.expectedContext != "" && replay.expectedContext != reg.Context {
+			return res, fail(KindInvalidInput, "SEMANTICS_REDUCER_CONTEXT", "semantics-registration", nil)
+		}
 	}
 	res.Tuple.Required = uint64(len(reg.Required))
 	res.Tuple.Unprocessed = res.Tuple.Required

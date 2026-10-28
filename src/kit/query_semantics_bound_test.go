@@ -31,12 +31,29 @@ func semanticBoundFixture(t *testing.T, registrationPadding int, omittedGrammarR
 }
 
 func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQueries bool, omittedGrammarRoles ...string) (QuerySemanticsRequest, *eligibilityFixture, semanticRunBinding) {
+	return semanticBoundFixtureMode(t, registrationPadding, withQueries, false, omittedGrammarRoles...)
+}
+
+func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries, paged bool, omittedGrammarRoles ...string) (QuerySemanticsRequest, *eligibilityFixture, semanticRunBinding) {
 	t.Helper()
 	runtimeRoot := os.Getenv("TSGK_NATIVE_RUNTIME")
 	if runtimeRoot == "" {
 		t.Skip("pinned runtime source closure is not configured")
 	}
 	f := newEligibilityFixture(t)
+	var parserData []byte
+	if paged {
+		parserData = bytes.Repeat([]byte("p"), MaxDocumentBytes+1)
+		old := f.reg.Native.Grammar["parser.c"]
+		pin := old
+		pin.Member.Bytes = uint64(len(parserData))
+		pin.Member.SHA256 = digestHex(parserData)
+		f.reg.Native.Grammar["parser.c"] = pin
+		text := f.files[f.reg.Native.BuildManifest.Member.Path]
+		text = bytes.Replace(text, []byte(fmt.Sprintf("file=grammar-parser parser.c %s %d\n", old.Member.SHA256, old.Member.Bytes)), []byte(fmt.Sprintf("file=grammar-parser parser.c %s %d\n", pin.Member.SHA256, pin.Member.Bytes)), 1)
+		f.nativeManifestMutation(func(string) string { return string(text) })
+		f.reg.Context = semanticPagedContext
+	}
 	f.witness.Input.Role = "case"
 	op := NativeOperations()["native-query"]
 	f.witness.Native.NodeLimit = op.Nodes
@@ -66,7 +83,23 @@ func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQuer
 	}
 	buildText := f.files[f.reg.Native.BuildManifest.Member.Path]
 	build := semanticBuildDescription{Identity: digestHex(buildText), Compiler: compiler, CompilerVersion: compiler.Version, Symbol: profile.Native.Symbol, Closure: []semanticBuildInput{}, Steps: []semanticBuildStep{}}
-	for _, line := range strings.Split(strings.TrimSpace(string(buildText)), "\n") {
+	buildLines := strings.Split(strings.TrimSpace(string(buildText)), "\n")
+	if paged {
+		rank := func(line string) int {
+			if strings.HasPrefix(line, "file=runtime ") {
+				return 1
+			}
+			if strings.HasPrefix(line, "file=grammar-") {
+				return 2
+			}
+			if strings.HasPrefix(line, "file=driver ") {
+				return 3
+			}
+			return 0
+		}
+		slices.SortStableFunc(buildLines, func(a, b string) int { return rank(a) - rank(b) })
+	}
+	for _, line := range buildLines {
 		if strings.HasPrefix(line, "runtime=") {
 			build.Runtime = strings.TrimPrefix(line, "runtime=")
 		}
@@ -99,12 +132,41 @@ func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQuer
 			data, err = drivers.NativeC.ReadFile("native-c/" + strings.TrimPrefix(input.Path, "driver/"))
 		default:
 			data = f.files[grammar[input.Path].Member.Path]
+			if paged && input.Role == "grammar-parser" {
+				data = parserData
+			}
 		}
 		if err != nil || uint64(len(data)) != input.Bytes || digestHex(data) != input.SHA256 {
 			t.Fatalf("pinned input differs: %s %s: %v", input.Role, input.Path, err)
 		}
 		path := fmt.Sprintf("capture/build-input-%05d.bin", len(build.Closure))
-		pin := add(path, semanticBuildMemberRole(input.Role), data)
+		var pin ReplayMember
+		if paged && input.Role == "grammar-parser" {
+			index := len(build.Closure)
+			d := semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}
+			d.Logical.ClosureIndex = uint64(index)
+			d.Logical.Path = input.Path
+			d.Logical.Role = input.Role
+			d.Logical.Bytes = input.Bytes
+			d.Logical.SHA256 = input.SHA256
+			for offset := 0; offset < len(data); {
+				i := len(d.Parts)
+				size := min(MaxDocumentBytes, len(data)-offset)
+				part := data[offset : offset+size]
+				p := add(fmt.Sprintf("capture/build-input-%05d.part-%05d.bin", index, i), "grammar-paged-part", part)
+				d.Parts = append(d.Parts, struct {
+					Index  uint64 `json:"index"`
+					Offset uint64 `json:"offset"`
+					Path   string `json:"path"`
+					Bytes  uint64 `json:"bytes"`
+					SHA256 string `json:"sha256"`
+				}{uint64(i), uint64(offset), p.Path, p.Bytes, p.SHA256})
+				offset += size
+			}
+			pin = add(fmt.Sprintf("capture/build-input-%05d.pages.json", index), "grammar-paged-descriptor", eligibilityJSON(t, d))
+		} else {
+			pin = add(path, semanticBuildMemberRole(input.Role), data)
+		}
 		if strings.HasPrefix(input.Role, "grammar-") {
 			f.reg.Native.Grammar[input.Path] = eligibilityMember{NodeID: "native-current", Member: ReplayMember{Path: "oracle/" + pin.Path, Role: pin.Role, Bytes: pin.Bytes, SHA256: pin.SHA256}}
 		}
@@ -191,6 +253,9 @@ func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQuer
 		files[projectionPin.Path] = eligibilityJSON(t, projection)
 		projectionPin.Bytes, projectionPin.SHA256 = uint64(len(files[projectionPin.Path])), digestHex(files[projectionPin.Path])
 	}
+	if paged {
+		reg.Context = semanticPagedContext
+	}
 	reg.Schema = querySemanticsRegistrationSchema
 	for _, path := range sortedKeys(roles) {
 		owner := "D"
@@ -224,6 +289,9 @@ func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQuer
 	recordData = append(recordData[:len(recordData)-1], []byte(`,"complete":true}`)...)
 	add("records/00000-"+caseID+".json", "record", recordData)
 	manifest := OracleManifest{Schema: OracleSemanticsManifestSchema, QuerySemanticsRegistrationSHA256: digestHex(registration), Operation: &op, Workload: map[string]string{"profile_sha256": digestHex(profileData), "profile_id": profile.Native.ID, "route": reg.Route, "operation": "native-query", "output": OutputTree}, Producer: map[string]string{"platform": reg.Platform, "build_identity": build.Identity, "executable_sha256": build.ExecutableSHA256, "compiler_sha256": compiler.SHA256, "compiler_version": compiler.Version, "runtime_commit": build.Runtime}, Policy: reg.NativePolicy, Protocol: nativewire.ProtocolR4, Comparators: []string{"ordered-cst/r1", "ordered-captures/r1"}, Queries: []IdentityRef{}, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked, Records: 1, Cases: []string{caseID}, Members: []OracleMember{}, Complete: true}
+	if paged {
+		manifest.Schema = OraclePagedSemanticsManifestSchema
+	}
 	if withQueries {
 		manifest.Queries = []IdentityRef{{Role: "query:q0", Schema: "tsgk-query-source/r1", SHA256: digestHex([]byte(profile.Queries[0].Source))}}
 	}
@@ -297,7 +365,17 @@ func semanticBoundReplay(t *testing.T, req QuerySemanticsRequest, f *eligibility
 	}
 	members = append(members, ReplayMember{Path: "evidence/evidence.json", Role: "semantics-evidence", Bytes: uint64(len(graph)), SHA256: digestHex(graph)})
 	o := f.nodes[binding.OracleNode]
-	profile := eligibilityJSON(t, map[string]any{"schema": ReplaySchema, "id": "semantic-bound-replay", "reducer": "oracle-set-r4", "operation": "evidence-replay", "subject": ReplaySubject{Run: o.Identities["run"], Attempt: 1, Platform: "linux/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked}, "identities": map[string]string{"workload": digestHex(req.Profile), "semantics-registration": digestHex(req.Registration), "semantics-run-binding": digestHex(req.RunBinding), "evidence-policy": digestHex(req.Evidence.Policy)}, "records": []string{f.witness.Case}, "members": members})
+	var mode struct {
+		Context string `json:"context"`
+	}
+	if err := json.Unmarshal(req.Registration, &mode); err != nil {
+		t.Fatal(err)
+	}
+	reducer := "oracle-set-r4"
+	if mode.Context == semanticPagedContext {
+		reducer = "oracle-set-r5"
+	}
+	profile := eligibilityJSON(t, map[string]any{"schema": ReplaySchema, "id": "semantic-bound-replay", "reducer": reducer, "operation": "evidence-replay", "subject": ReplaySubject{Run: o.Identities["run"], Attempt: 1, Platform: "linux/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked}, "identities": map[string]string{"workload": digestHex(req.Profile), "semantics-registration": digestHex(req.Registration), "semantics-run-binding": digestHex(req.RunBinding), "evidence-policy": digestHex(req.Evidence.Policy)}, "records": []string{f.witness.Case}, "members": members})
 	return root, profile
 }
 

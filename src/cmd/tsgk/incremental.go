@@ -275,11 +275,27 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		fmt.Fprintln(stderr, "tsgk: IO: OUTPUT_WRITE_FAILED")
 		return exitIO
 	}
+	return nativeResultExit(status, assessment, rerr, stderr)
+}
+
+func nativeResultExit(status, assessment string, rerr error, stderr io.Writer) int {
 	if rerr != nil {
 		var ne *native.Error
 		if errors.As(rerr, &ne) {
 			fmt.Fprintf(stderr, "tsgk: %s: %s\n", ne.Kind, ne.Code)
+			if status == kit.StatusCancelled {
+				return exitCanceled
+			}
+			if status == kit.StatusResourceLimit {
+				return exitBlocked
+			}
 			return exitFor(ne.Kind)
+		}
+		if status == kit.StatusCancelled {
+			return exitCanceled
+		}
+		if status == kit.StatusResourceLimit {
+			return exitBlocked
 		}
 		return exitIO
 	}

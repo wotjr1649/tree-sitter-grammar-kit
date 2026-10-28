@@ -33,7 +33,10 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 		}
 		*input.data = data
 	}
-	scope := &semanticReplayScope{documentsRead: true, pins: map[string]ReplayMember{}, walked: map[string]fs.FileInfo{}, walkedDirectories: map[string]fs.FileInfo{}}
+	scope := &semanticReplayScope{expectedContext: "full-input-utf8/r2", documentsRead: true, pins: map[string]ReplayMember{}, walked: map[string]fs.FileInfo{}, walkedDirectories: map[string]fs.FileInfo{}}
+	if x.prof.Reducer == "oracle-set-r5" {
+		scope.expectedContext = semanticPagedContext
+	}
 	for _, member := range x.prof.Members {
 		inside := strings.HasPrefix(member.Path, "evidence/")
 		if strings.HasPrefix(strings.ToLower(member.Path), "evidence/") && !inside || (member.Role == "semantics-evidence") != inside {
@@ -136,7 +139,7 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 }
 
 func validSemanticReplayResult(rr ReplayResult) bool {
-	if rr.Schema != ReportSchema || rr.ResultSchema != ReplaySemanticsResultSchema || rr.Reducer.ID != "oracle-set-r4" || rr.Reducer.Revision != "r4" || rr.Operation != "evidence-replay" || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || len(rr.Gates) > 1 {
+	if rr.Schema != ReportSchema || rr.ResultSchema != ReplaySemanticsResultSchema || !semanticReducer(rr.Reducer.ID) || (rr.Reducer.ID == "oracle-set-r4" && rr.Reducer.Revision != "r4") || (rr.Reducer.ID == "oracle-set-r5" && rr.Reducer.Revision != "r5") || rr.Operation != "evidence-replay" || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || len(rr.Gates) > 1 {
 		return false
 	}
 	if rr.Assessment == AssessPass && (rr.ExecutionStatus != StatusCompleted || !rr.EvidenceValid || rr.EvidenceMode != ModeReplayedRaw) {

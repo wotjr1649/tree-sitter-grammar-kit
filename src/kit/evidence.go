@@ -641,7 +641,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 				continue
 			}
 			referenceAbsent := len(rr.QueryReference) == 0 || bytes.Equal(bytes.TrimSpace(rr.QueryReference), []byte("null"))
-			valid = rr.ResultSchema == ReplayResultSchema && referenceAbsent && len(rr.QuerySemantics) == 0 && rr.Reducer.ID != "query-reference-connection-r1" && rr.Reducer.ID != "oracle-set-r4"
+			valid = rr.ResultSchema == ReplayResultSchema && referenceAbsent && len(rr.QuerySemantics) == 0 && rr.Reducer.ID != "query-reference-connection-r1" && !semanticReducer(rr.Reducer.ID)
 			if rr.ResultSchema == ReplayReferenceResultSchema {
 				var full ReplayResult
 				valid = len(rr.QuerySemantics) == 0 && decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
@@ -667,7 +667,7 @@ func replayResultRevision(data []byte, r *run) (string, *Error) {
 	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema})
 }
 
-func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string) (selected string, resultErr *Error) {
+func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string, alternatives ...string) (selected string, resultErr *Error) {
 	defer func() {
 		if resultErr != nil && resultErr.Kind == KindInvalidInput && !utf8.Valid(data) {
 			resultErr = fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
@@ -809,7 +809,7 @@ func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []
 				}
 				return "", fail(KindInvalidInput, "JSON_SHAPE", doc+"#/"+name, nil)
 			}
-			if revision == early {
+			if revision == early || slices.Contains(alternatives, revision) {
 				return revision, nil // Its bounded decoder owns all following syntax and duplicates.
 			}
 		} else {

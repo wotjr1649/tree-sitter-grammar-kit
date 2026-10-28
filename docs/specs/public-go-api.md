@@ -451,3 +451,7 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 ## Accepted reuse의 순수 검사 (#264)
 
 실험적 `ParseReuseAcceptedLedger([]byte)`는 고정 원장을 검증해 외부에서 수정할 수 없는 `ReuseAcceptedLedger`를 만든다. `CheckCase`와 `CheckProfile`은 original history 결속을 확인한다. `JudgeReuseAccepted(ReuseAcceptedRequest)`는 독립적으로 만든 `nativewire.Expect`, policy/platform, source/raw/projection을 받아 `ReuseAcceptedResult`와 target별 결과를 재계산한다. 파일·process·network를 사용하지 않는다. 호출자가 준 기대값·hash는 실행 인증이 아니며 guarded reader와 승인된 producer의 결속이 필요하다. 내부 omit-control 경로는 공개 API가 아니다. 정확한 증명 범위·revision은 [accepted reuse 계약](reuse-accepted.md)을 따른다.
+
+## Parser-only paging과 기존 의미 API
+
+`VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`와 `Replay`의 인자·결과 shape를 유지하며 [명시적 parser paging context](instrumented-query-reference.md#216-parser-only-paging)를 같은 core에서 검증한다. `OraclePagedSemanticsManifestSchema`는 manifest/r6를 나타낸다. 호출자가 승인한 문서의 context·전체 logical 입력과 동일 pass의 physical part pin을 대조하며, 새로운 source/CST 대형 한도를 부여하지 않는다. `oracle-set-r5`만 새 문맥을 받고 기존 `oracle-set-r4`는 이를 거부한다. 승인 ABSENT는 base 검증과 고정 required를 유지한 BLOCKED이며, caller-approved PASS는 저장 자료의 일관성에 한정된다.

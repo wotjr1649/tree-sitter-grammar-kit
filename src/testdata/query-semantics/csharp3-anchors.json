@@ -1,0 +1,210 @@
+{
+  "source_pins": {
+    "source-0.bin": {
+      "bytes": 10,
+      "sha256": "a4127100c72e204a2e27f5a8d29310899744c2e16642591e4656add6b9fac96a"
+    },
+    "source-1.bin": {
+      "bytes": 10,
+      "sha256": "b28d901a647800339125da3cc9effabfda9f6adcada072d0a6face222c4c55f2"
+    },
+    "query.scm": {
+      "bytes": 52,
+      "sha256": "84523f56cd06480dcc4d07511ef3427e5e890c7965b27247367d4ba99e6b4bbb"
+    }
+  },
+  "query_metadata": {
+    "patterns": 1,
+    "capture_names": [
+      "root"
+    ],
+    "predicates": [
+      {
+        "pattern": 0,
+        "steps": [
+          {
+            "kind": "string",
+            "value": "eq?",
+            "quantifier": null
+          },
+          {
+            "kind": "capture",
+            "value": "root",
+            "quantifier": "ONE"
+          },
+          {
+            "kind": "string",
+            "value": "class C {}",
+            "quantifier": null
+          }
+        ]
+      }
+    ]
+  },
+  "required": [
+    {
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [
+        {
+          "match": 0,
+          "pattern": 0,
+          "capture": 0,
+          "name": "root",
+          "node": 0,
+          "type": "compilation_unit",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 0,
+          "end_byte": 10,
+          "start_point": {
+            "row": 0,
+            "column": 0
+          },
+          "end_point": {
+            "row": 0,
+            "column": 10
+          }
+        }
+      ],
+      "expected": [
+        {
+          "match": 0,
+          "pattern": 0,
+          "capture": 0,
+          "name": "root",
+          "node": 0,
+          "type": "compilation_unit",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 0,
+          "end_byte": 10,
+          "start_point": {
+            "row": 0,
+            "column": 0
+          },
+          "end_point": {
+            "row": 0,
+            "column": 10
+          }
+        }
+      ],
+      "query": "root-eq"
+    },
+    {
+      "step": 1,
+      "tree_role": "incremental",
+      "structural": [
+        {
+          "match": 0,
+          "pattern": 0,
+          "capture": 0,
+          "name": "root",
+          "node": 0,
+          "type": "compilation_unit",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 0,
+          "end_byte": 10,
+          "start_point": {
+            "row": 0,
+            "column": 0
+          },
+          "end_point": {
+            "row": 0,
+            "column": 10
+          }
+        }
+      ],
+      "expected": [],
+      "query": "root-eq"
+    },
+    {
+      "step": 1,
+      "tree_role": "fresh",
+      "structural": [
+        {
+          "match": 0,
+          "pattern": 0,
+          "capture": 0,
+          "name": "root",
+          "node": 0,
+          "type": "compilation_unit",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 0,
+          "end_byte": 10,
+          "start_point": {
+            "row": 0,
+            "column": 0
+          },
+          "end_point": {
+            "row": 0,
+            "column": 10
+          }
+        }
+      ],
+      "expected": [],
+      "query": "root-eq"
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 654,
+    "field_count": 26
+  },
+  "independent_cst_anchors": {
+    "status": "STATIC_EXPECTATIONS_FOR_INDEPENDENT_REVIEW_BEFORE_CAPTURE",
+    "applies_to": [
+      "initial-incremental",
+      "after-edit-incremental",
+      "after-edit-fresh"
+    ],
+    "anchors": [
+      {
+        "id": "root",
+        "type": "compilation_unit",
+        "start_byte": 0,
+        "end_byte": 10,
+        "named": true,
+        "error": false,
+        "parent_anchor": null
+      },
+      {
+        "id": "class",
+        "type": "class_declaration",
+        "start_byte": 0,
+        "end_byte": 10,
+        "named": true,
+        "error": false,
+        "parent_anchor": "root"
+      },
+      {
+        "id": "name",
+        "type": "identifier",
+        "start_byte": 6,
+        "end_byte": 7,
+        "named": true,
+        "error": false,
+        "parent_anchor": "class",
+        "source_before": "C",
+        "source_after": "D"
+      }
+    ],
+    "consumption": "Resolve each type/span uniquely in each full preorder CST, then compare actual parent link; no invented observed node indices. Compare all native/reference CST nodes separately, including uncaptured nodes."
+  }
+}
