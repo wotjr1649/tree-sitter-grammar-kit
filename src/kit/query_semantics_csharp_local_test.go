@@ -29,6 +29,8 @@ func TestQuerySemanticsCSharpLocal(t *testing.T) {
 		actualCSharpPlan(t, root)
 	case "assemble":
 		actualJSONAssemble(t, root, os.Getenv("TSGK_QUERY_CSHARP_FRESH_REFERENCE"), os.Getenv("TSGK_QUERY_CSHARP_CAPTURE"))
+	case "verify":
+		actualJSONVerify(t, os.Getenv("TSGK_QUERY_CSHARP_ASSEMBLY"), os.Getenv("TSGK_QUERY_CSHARP_APPROVAL"))
 	default:
 		t.Fatalf("unknown local stage %q", stage)
 	}
