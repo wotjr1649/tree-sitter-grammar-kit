@@ -168,13 +168,14 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 	vendor := a.copy("build-static", "build/vendor-snapshot.json", "vendor-snapshot", filepath.Join(fresh, "build", "vendor-snapshot.json"))
 	binaryPath := filepath.Join(fresh, "build", "target", buildIdentity.Target, "release", "tsgk-query-reference.exe")
 	binary := a.copy("build-static", "build/reference.exe", "reference-executable", binaryPath)
-	patchPath := filepath.Join("..", "dev", "query-reference", "instrumentation.patch")
-	patch := a.copy("build-static", "build/instrumentation.patch", "patch", patchPath)
-	repo, err := filepath.Abs("../..")
-	if err != nil {
-		t.Fatal(err)
+	var patchRequest eligibilityProcessRequest
+	actualJSONDecode(t, filepath.Join(fresh, "build", "patch-check-request.json"), &patchRequest)
+	if len(patchRequest.Args) != 4 || patchRequest.Args[0] != "apply" || patchRequest.Args[1] != "--unidiff-zero" || patchRequest.Args[2] != "--check" || !filepath.IsAbs(patchRequest.Args[3]) || filepath.Base(patchRequest.Args[3]) != "instrumentation.patch" {
+		t.Fatal("historical patch request helper path")
 	}
-	bp := map[string]string{"B": filepath.Join(fresh, "build"), "H": filepath.Join(repo, "src", "dev", "query-reference"), "S": filepath.Join(fresh, "build", "source"), "T": buildIdentity.Target, "R": binaryPath}
+	patchPath := patchRequest.Args[3]
+	patch := a.copy("build-static", "build/instrumentation.patch", "patch", patchPath)
+	bp := map[string]string{"B": filepath.Join(fresh, "build"), "H": filepath.Dir(patchPath), "S": filepath.Join(fresh, "build", "source"), "T": buildIdentity.Target, "R": binaryPath}
 	a.reg.Build = &eligibilityBuild{CohortID: "build", Paths: bp, Identity: identity, SourceSnapshot: source, VendorSnapshot: vendor, ReferenceBinary: &binary}
 	for _, name := range []string{"cargo", "rustc", "cc", "ar", "git", "supervisor", "python"} {
 		a.reg.Tools = append(a.reg.Tools, eligibilityTool{ID: "build-tool-" + name, CohortID: "build", ToolName: name, PathLiteral: buildIdentity.ToolPaths[name], SubjectSHA256: buildIdentity.Tools[name], IdentityMember: identity, ProvenanceID: "p-build"})
