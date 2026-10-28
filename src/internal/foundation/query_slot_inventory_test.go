@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
@@ -106,6 +107,42 @@ func querySlotSourceClass(q kit.QualQuery, text string) (class, code string) {
 	// A new predicate requires explicit classification, not an automatic semantic upgrade.
 	if strings.Contains(text, "#") {
 		return "", "QUERY_CLASSIFICATION_REQUIRED"
+	}
+	// Only locate reserved predicate heads; compiled metadata remains unverified.
+	afterOpen, quoted, escaped, comment := false, false, false, false
+	for _, r := range text {
+		if comment {
+			if r == '\n' {
+				comment = false
+			}
+			continue
+		}
+		if quoted {
+			if escaped {
+				escaped = false
+				continue
+			}
+			if r == '\\' {
+				escaped = true
+			} else if r == '"' {
+				quoted = false
+			}
+			continue
+		}
+		if r == ';' {
+			comment = true
+			continue
+		}
+		if unicode.IsSpace(r) {
+			continue
+		}
+		if afterOpen && r == '.' {
+			return "", "QUERY_CLASSIFICATION_REQUIRED"
+		}
+		afterOpen = r == '('
+		if r == '"' {
+			quoted = true
+		}
 	}
 	return "STRUCTURAL_CANDIDATE", ""
 }
@@ -354,6 +391,20 @@ func TestQuerySlotSourceClassification(t *testing.T) {
 		{"plain", `(identifier) @name`, "STRUCTURAL_CANDIDATE", "", false},
 		{"predicate", `((identifier) @name (#eq? @name "C"))`, "", "QUERY_CLASSIFICATION_REQUIRED", false},
 		{"source-hash", `(identifier) @name`, "", "QUERY_SOURCE_HASH", true},
+		{"dot-predicate", "((identifier) @name (.eq? @name \"C\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"dot-whitespace", "((identifier) @name (\n\t.eq? @name \"C\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"dot-comment", "((identifier) @name (; predicate\r\n ; second\n .eq? @name \"C\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"dot-unicode-space", "((identifier) @name ( .eq? @name \"C\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"dot-directive", "((identifier) @name (.set! test \"value\"))", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"dot-malformed", "(. eq? @name \"C\")", "", "QUERY_CLASSIFICATION_REQUIRED", false},
+		{"capture-dot", "(identifier) @context.name", "STRUCTURAL_CANDIDATE", "", false},
+		{"sibling-anchor", "(array . (identifier) @name)", "STRUCTURAL_CANDIDATE", "", false},
+		{"trailing-anchor", "(array (identifier) @name .)", "STRUCTURAL_CANDIDATE", "", false},
+		{"group-anchor", "((comment) @a . (comment) @b)", "STRUCTURAL_CANDIDATE", "", false},
+		{"quoted-dot", "\"(.eq?)\" @token", "STRUCTURAL_CANDIDATE", "", false},
+		{"escaped-quote", "\"\\\"(.eq?)\" @token", "STRUCTURAL_CANDIDATE", "", false},
+		{"comment-dot", "; (.eq? fake)\n(identifier) @name", "STRUCTURAL_CANDIDATE", "", false},
+		{"source-hash-dot", "((identifier) @name (.eq? @name \"C\"))", "", "QUERY_SOURCE_HASH", true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			q := kit.QualQuery{ID: "test", SHA256: shaHex([]byte(test.text))}
