@@ -13,7 +13,11 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_JSON_LOCAL_STAGE") != "verify" {
 		t.Skip("explicit local assembled input is required")
 	}
-	root := os.Getenv("TSGK_QUERY_JSON_ASSEMBLY")
+	actualJSONVerify(t, os.Getenv("TSGK_QUERY_JSON_ASSEMBLY"), os.Getenv("TSGK_QUERY_JSON_APPROVAL"))
+}
+
+func actualJSONVerify(t *testing.T, root, approvalPath string) {
+	t.Helper()
 	if !filepath.IsAbs(root) {
 		t.Fatal("absolute assembly root required")
 	}
@@ -27,20 +31,28 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 	req := QuerySemanticsRequest{Evidence: EvidenceRequest{Root: filepath.Join(root, "evidence"), Policy: read("policy.json")}, Profile: read("profile.json"), Registration: read("semantic-registration.json")}
 	var reg eligibilityRegistration
 	actualJSONDecode(t, filepath.Join(caller, "eligibility-registration.json"), &reg)
+	var semanticReg semanticRegistration
+	actualJSONDecode(t, filepath.Join(caller, "semantic-registration.json"), &semanticReg)
+	required, oracleID, reducer, replayID := uint64(24), "oracle-json24", "oracle-set-r4", "actual-json24-replay"
+	if semanticReg.Context == semanticPagedContext {
+		if semanticReg.Route != "csharp" || len(semanticReg.Required) != 3 {
+			t.Fatal("unsupported manual paged verification")
+		}
+		required, oracleID, reducer, replayID = 3, "oracle-csharp3", "oracle-set-r5", "actual-csharp3-replay"
+	}
 	var members []semanticBoundMember
 	actualJSONDecode(t, filepath.Join(caller, "binding-members.json"), &members)
-	binding := semanticRunBinding{Schema: "tsgk-query-semantics-run-binding/r1", ProfileSHA256: digestHex(req.Profile), ManifestSHA256: digestHex(actualJSONRead(t, filepath.Join(req.Evidence.Root, "oracle", "manifest.json"))), RegistrationSHA256: digestHex(req.Registration), EligibilityApprovalSHA256: digestHex(nil), EligibilityRegistrationSHA256: digestHex(nil), WitnessRegistrationSHA256: digestHex(nil), EvidencePolicySHA256: digestHex(req.Evidence.Policy), EvidenceSHA256: reg.Graph.SHA256, DriverNode: "native-c1", OracleNode: "oracle-json24", References: []semanticReferenceBinding{}, Members: members}
+	binding := semanticRunBinding{Schema: "tsgk-query-semantics-run-binding/r1", ProfileSHA256: digestHex(req.Profile), ManifestSHA256: digestHex(actualJSONRead(t, filepath.Join(req.Evidence.Root, "oracle", "manifest.json"))), RegistrationSHA256: digestHex(req.Registration), EligibilityApprovalSHA256: digestHex(nil), EligibilityRegistrationSHA256: digestHex(nil), WitnessRegistrationSHA256: digestHex(nil), EvidencePolicySHA256: digestHex(req.Evidence.Policy), EvidenceSHA256: reg.Graph.SHA256, DriverNode: "native-c1", OracleNode: oracleID, References: []semanticReferenceBinding{}, Members: members}
 	req.RunBinding = eligibilityJSON(t, binding)
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	absent, err := VerifyQuerySemantics(ctx, req)
 	actualJSONWrite(t, filepath.Join(out, "absent-result.json"), eligibilityJSON(t, absent))
-	if err != nil || !absent.Complete || absent.Assessment != AssessBlocked || absent.BaseVerified.Assessment != AssessPass || absent.Tuple != (QueryEligibilityCounts{Required: 24, Blocked: 24}) {
+	if err != nil || !absent.Complete || absent.Assessment != AssessBlocked || absent.BaseVerified.Assessment != AssessPass || absent.Tuple != (QueryEligibilityCounts{Required: required, Blocked: required}) {
 		t.Fatalf("actual absent approval: %v code=%s findings=%+v", err, absent.Code, absent.Findings)
 	}
-	approvalPath := os.Getenv("TSGK_QUERY_JSON_APPROVAL")
 	if approvalPath == "" {
-		t.Log("actual bytes without approval: base PASS, 24 BLOCKED; no approval supplied")
+		t.Logf("actual bytes without approval: base PASS, %d BLOCKED; no approval supplied", required)
 		return
 	}
 	if !filepath.IsAbs(approvalPath) {
@@ -68,13 +80,13 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 		for _, count := range []struct {
 			got      QueryEligibilityCounts
 			required uint64
-		}{{r.Eligibility.Build, 9}, {r.Eligibility.Unit, 4}, {r.Eligibility.Control, 53}, {r.Eligibility.Assertion, 36}, {r.Eligibility.Tuple, 24}, {r.Tuple, 24}} {
+		}{{r.Eligibility.Build, 9}, {r.Eligibility.Unit, 4}, {r.Eligibility.Control, 53}, {r.Eligibility.Assertion, 36}, {r.Eligibility.Tuple, required}, {r.Tuple, required}} {
 			if count.got != (QueryEligibilityCounts{Required: count.required, Verified: count.required}) {
 				t.Fatalf("actual denominator not fully verified: %+v expected %d", count.got, count.required)
 			}
 		}
 	}
-	if err != nil || !passed.Complete || passed.Assessment != AssessPass || !passed.BindingValid || passed.Semantic != AssessPass || passed.BaseVerified.Assessment != AssessPass || passed.Tuple != (QueryEligibilityCounts{Required: 24, Verified: 24}) || passed.ProducerRecorded != (Verdict{StatusCompleted, AssessBlocked}) || passed.Eligibility == nil || passed.Eligibility.Assessment != AssessPass {
+	if err != nil || !passed.Complete || passed.Assessment != AssessPass || !passed.BindingValid || passed.Semantic != AssessPass || passed.BaseVerified.Assessment != AssessPass || passed.Tuple != (QueryEligibilityCounts{Required: required, Verified: required}) || passed.ProducerRecorded != (Verdict{StatusCompleted, AssessBlocked}) || passed.Eligibility == nil || passed.Eligibility.Assessment != AssessPass {
 		t.Fatalf("actual caller-bound API: %v code=%s findings=%+v eligibility=%+v", err, passed.Code, passed.Findings, passed.Eligibility)
 	}
 	checkCounts(passed)
@@ -112,7 +124,7 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 	}
 	var approval eligibilityApproval
 	actualJSONDecode(t, approvalPath, &approval)
-	profile := eligibilityJSON(t, map[string]any{"schema": ReplaySchema, "id": "actual-json24-replay", "reducer": "oracle-set-r4", "operation": "evidence-replay", "subject": ReplaySubject{Run: approval.Candidate.Run, Attempt: 1, Platform: "windows/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked}, "identities": map[string]string{"workload": digestHex(req.Profile), "semantics-registration": digestHex(req.Registration), "semantics-run-binding": digestHex(req.RunBinding), "evidence-policy": digestHex(req.Evidence.Policy)}, "records": []string{"c1"}, "members": replayMembers})
+	profile := eligibilityJSON(t, map[string]any{"schema": ReplaySchema, "id": replayID, "reducer": reducer, "operation": "evidence-replay", "subject": ReplaySubject{Run: approval.Candidate.Run, Attempt: 1, Platform: "windows/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked}, "identities": map[string]string{"workload": digestHex(req.Profile), "semantics-registration": digestHex(req.Registration), "semantics-run-binding": digestHex(req.RunBinding), "evidence-policy": digestHex(req.Evidence.Policy)}, "records": []string{"c1"}, "members": replayMembers})
 	actualJSONWrite(t, filepath.Join(out, "replay-profile.json"), profile)
 	replayed, err := Replay(ctx, ReplayRequest{Root: replayRoot, Profile: profile})
 	actualJSONWrite(t, filepath.Join(out, "replay-result.json"), eligibilityJSON(t, replayed))
@@ -131,7 +143,7 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 		switch name {
 		case "owner":
 			changed := binding
-			changed.DriverNode = "oracle-json24"
+			changed.DriverNode = oracleID
 			negative.RunBinding = eligibilityJSON(t, changed)
 		case "slice":
 			var changed eligibilityRegistration
@@ -173,5 +185,5 @@ func TestQuerySemanticsJSONVerify(t *testing.T) {
 			t.Fatalf("negative %s lacks expected %s", name, want)
 		}
 	}
-	t.Log("actual JSON24: absent BLOCKED; caller-bound API/replay PASS; owner/slice FAIL; producer remains BLOCKED")
+	t.Logf("actual %d tuples: absent BLOCKED; caller-bound API/replay PASS; owner/slice FAIL; producer remains BLOCKED", required)
 }

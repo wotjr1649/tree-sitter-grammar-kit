@@ -580,12 +580,12 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		add("JSON_INVALID_UTF8", "manifest", "manifest가 UTF-8이 아니다")
 		return r
 	}
-	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil)
+	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil, OraclePagedSemanticsManifestSchema)
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		add(selectionErr.Code, selectionErr.Path, "manifest revision을 선택하지 못했다")
 		return r
 	}
-	if selected == OracleSemanticsManifestSchema {
+	if semanticManifestSchema(selected) {
 		lim := ReplayOperations()["evidence-replay"]
 		ctx, cancel := context.WithTimeout(context.Background(), lim.Wall+time.Second)
 		defer cancel()
@@ -611,7 +611,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			add(e.Code, e.Path, "manifest 해석 예산을 넘었다")
 			return r
 		}
-		if e := decodeOracleManifestValue(data, &m, v, typed{doc: "manifest", check: run.check}, OracleSemanticsManifestSchema); e != nil {
+		if e := decodeOracleManifestValue(data, &m, v, typed{doc: "manifest", check: run.check}, OracleSemanticsManifestSchema, OraclePagedSemanticsManifestSchema); e != nil {
 			add(e.Code, e.Path, "manifest 형식이 틀렸다")
 			return r
 		}
@@ -671,7 +671,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		dir := map[string]string{"record": "records/", "raw": "raw/"}[mem.Role]
 		validPath := memberPath.MatchString(mem.Path)
-		if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema {
+		if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || semanticManifestSchema(m.Schema) {
 			// the producer names every member by its case's position in cases
 			ordinal, known := caseOrdinals[mem.Case]
 			if mem.Role == "source" {
@@ -680,7 +680,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 				validPath = validPath && known && mem.Path == fmt.Sprintf("%s%05d-%s.json", dir, ordinal, mem.Case)
 			}
 		}
-		if m.Schema == OracleSemanticsManifestSchema {
+		if semanticManifestSchema(m.Schema) {
 			switch mem.Role {
 			case "capture", "stdin-frame", "process", "stdout-frame", "stderr":
 				dir, validPath = "capture/", portable(mem.Path, false) && caseOrdinals[mem.Case] == 0 && len(m.Cases) == 1 && mem.Case == m.Cases[0]
@@ -690,13 +690,16 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 				dir, validPath = "capture/", portable(mem.Path, false) && mem.Case == "" && mem.InputBytes == mem.Bytes && mem.InputSHA256 == mem.SHA256 && mem.ExecutionStatus == StatusCompleted
 			}
 		}
+		if m.Schema == OraclePagedSemanticsManifestSchema && (mem.Role == "grammar-paged-descriptor" || mem.Role == "grammar-paged-part") {
+			dir, validPath = "capture/", portable(mem.Path, false) && mem.Case == "" && mem.InputBytes == mem.Bytes && mem.InputSHA256 == mem.SHA256 && mem.ExecutionStatus == StatusCompleted
+		}
 		if !validPath || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {
 			add("MEMBER_INVALID", mem.Path, "member 경로·역할이 틀렸거나 중복이다")
 			continue
 		}
 		listed[mem.Path] = true
 		limit := uint64(MaxDocumentBytes * 4)
-		if m.Schema == OracleSemanticsManifestSchema {
+		if semanticManifestSchema(m.Schema) {
 			limit = MaxDocumentBytes
 		}
 		if mem.Role == "source" {
@@ -757,7 +760,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		}
 		if mem.Role == "raw" {
 			raws[mem.Case]++
-			if m.Schema != OracleSemanticsManifestSchema {
+			if !semanticManifestSchema(m.Schema) {
 				rawIDs[mem.Case] = responseID(b)
 			}
 		}
@@ -768,7 +771,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			}
 		}
 	}
-	if m.Schema == OracleSemanticsManifestSchema {
+	if semanticManifestSchema(m.Schema) {
 		pins := map[string]OracleMember{}
 		for _, mem := range m.Members {
 			pins[mem.Path] = mem
@@ -802,7 +805,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		if perCase[c] != 1 {
 			add("CASE_RECORD_MISMATCH", "manifest.json", "사례마다 record가 정확히 하나여야 한다: "+c)
 		}
-		if (m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema) && sources[c] != 1 {
+		if (m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || semanticManifestSchema(m.Schema)) && sources[c] != 1 {
 			add("CASE_SOURCE_MISMATCH", "manifest.json", "사례마다 source witness가 정확히 하나여야 한다: "+c)
 		}
 	}
@@ -812,12 +815,12 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 	if m.Schema == OracleAcceptedManifestSchema && accepted == nil {
 		add("REUSE_ACCEPTED_LEDGER_MISSING", "manifest.json", "고정 원장 member가 없다")
 	}
-	if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || m.Schema == OracleSemanticsManifestSchema {
+	if m.Schema == OracleSourceManifestSchema || m.Schema == OracleAcceptedManifestSchema || semanticManifestSchema(m.Schema) {
 		if len(m.Cases) == 0 {
 			add("CASE_SOURCE_EMPTY", "manifest.json", "source witness set에 사례가 없다")
 		}
 		for _, mem := range m.Members {
-			if m.Schema == OracleSemanticsManifestSchema && mem.Case == "" {
+			if semanticManifestSchema(m.Schema) && mem.Case == "" {
 				continue
 			}
 			if m.Schema == OracleAcceptedManifestSchema && mem.Role == "reuse-ledger" {
@@ -883,7 +886,7 @@ func decodeOracleManifestValue(data []byte, m *OracleManifest, v *jv, t typed, a
 	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleAcceptedManifestSchema {
 		keys = slices.Insert(keys, len(keys)-1, "reuse_accepted_policy", "reuse_accepted_ledger_sha256", "operation")
 	}
-	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleSemanticsManifestSchema {
+	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && semanticManifestSchema(s.s) {
 		keys = slices.Insert(keys, len(keys)-1, "query_semantics_registration_sha256", "operation")
 	}
 	if s := jvMember(v, "schema"); s != nil && s.kind == '"' && s.s == OracleBatchManifestSchema {
@@ -904,7 +907,7 @@ func decodeOracleManifestValue(data []byte, m *OracleManifest, v *jv, t typed, a
 	} else {
 		m.Schema = s
 	}
-	if m.Schema == OracleSemanticsManifestSchema {
+	if semanticManifestSchema(m.Schema) {
 		if m.QuerySemanticsRegistrationSHA256, e = hexDigest(t, mm["query_semantics_registration_sha256"]); e != nil {
 			return e
 		}
@@ -1126,7 +1129,7 @@ func decodeOracleManifestValue(data []byte, m *OracleManifest, v *jv, t typed, a
 			return t.bad("REUSE_ACCEPTED_MANIFEST_INVALID", v)
 		}
 	}
-	if m.Schema == OracleSemanticsManifestSchema {
+	if semanticManifestSchema(m.Schema) {
 		if m.Protocol != nativewire.ProtocolR4 || m.Workload["operation"] != "native-query" || m.Workload["output"] != OutputTree || len(m.Cases) != 1 || m.FactPack != nil || !slices.Contains([]string{"windows/amd64", "linux/amd64"}, m.Producer["platform"]) || m.Policy != NativePolicy(*m.Operation, OutputTree, nil) {
 			return t.bad("SEMANTICS_MANIFEST_INVALID", v)
 		}
@@ -1183,7 +1186,7 @@ func checkRecordValueError(t typed, v *jv, mem OracleMember, manifestSchema stri
 	if manifestSchema == OracleAcceptedManifestSchema {
 		schema = OracleAcceptedRecordSchema
 	}
-	if manifestSchema == OracleSemanticsManifestSchema {
+	if semanticManifestSchema(manifestSchema) {
 		schema = OracleSemanticsRecordSchema
 	}
 	if schema == OracleSemanticsRecordSchema {

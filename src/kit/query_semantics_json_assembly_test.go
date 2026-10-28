@@ -29,12 +29,13 @@ type actualJSONAssembly struct {
 	nodes        map[string]EvidenceNode
 	cohortSource map[string]string
 	bound        []semanticBoundMember
+	workload     string
 }
 
 func (a *actualJSONAssembly) node(id, cohort, tool, input, query, protocol, run string, status, assessment string) EvidenceNode {
 	n := EvidenceNode{ID: id, Kind: "run", ExecutionStatus: status, EvidenceMode: ModeNewRun, Assessment: assessment, Identities: map[string]string{
 		"source": a.cohortSource[cohort], "tool": tool, "input": input, "query": query, "policy": digestHex([]byte(eligibilityCatalogueJSON)), "comparator": CaptureCompareScheme,
-		"protocol": protocol, "workload": "json24-reference", "platform": "windows/amd64", "run": run, "attempt": "1"}, Files: []ReplayMember{}, Refs: []EvidenceRef{}}
+		"protocol": protocol, "workload": a.workload, "platform": "windows/amd64", "run": run, "attempt": "1"}, Files: []ReplayMember{}, Refs: []EvidenceRef{}}
 	a.nodes[id] = n
 	return n
 }
@@ -100,6 +101,15 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 			t.Fatal("absolute local input required")
 		}
 	}
+	var semanticReg semanticRegistration
+	actualJSONDecode(t, filepath.Join(root, "plan", "registration.json"), &semanticReg)
+	workload, policyID, expectedReferences := "json24-reference", "actual-json24", 16
+	if semanticReg.Context == semanticPagedContext {
+		if semanticReg.Route != "csharp" || len(semanticReg.Queries) != 1 || len(semanticReg.Required) != 3 {
+			t.Fatal("unsupported manual paged capture")
+		}
+		workload, policyID, expectedReferences = "csharp3-reference", "actual-csharp3", 2
+	}
 	var freshContext, currentContext struct {
 		SourceRevision string `json:"source_revision"`
 		SessionID      string `json:"session_id"`
@@ -129,7 +139,7 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 		} `json:"reference_invocations"`
 	}
 	actualJSONDecode(t, filepath.Join(capture, "final.json"), &captured)
-	if !captured.Passed || len(captured.References) != 16 {
+	if !captured.Passed || len(captured.References) != expectedReferences {
 		t.Fatal("actual capture not completed")
 	}
 	var buildIdentity eligibilityBuildIdentity
@@ -150,21 +160,22 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 			t.Fatal(err)
 		}
 	}
-	a := &actualJSONAssembly{t: t, evidence: evidence, nodes: map[string]EvidenceNode{}, cohortSource: map[string]string{"build": freshContext.SourceRevision, "control": freshContext.SourceRevision, "current": currentContext.SourceRevision},
-		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: "full-input-utf8/r2", CatalogueSHA256: digestHex([]byte(eligibilityCatalogueJSON)), OwnedMembers: []eligibilityMember{}, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, Observations: []eligibilityObservation{}}}
+	a := &actualJSONAssembly{t: t, workload: workload, evidence: evidence, nodes: map[string]EvidenceNode{}, cohortSource: map[string]string{"build": freshContext.SourceRevision, "control": freshContext.SourceRevision, "current": currentContext.SourceRevision},
+		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: semanticReg.Context, CatalogueSHA256: digestHex([]byte(eligibilityCatalogueJSON)), OwnedMembers: []eligibilityMember{}, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, Observations: []eligibilityObservation{}}}
 	a.node("build-static", "build", buildIdentity.Tools["python"], digestHex(eligibilityJSON(t, buildIdentity)), "NOT_APPLICABLE", "tsgk-instrumented-reference-build/r1", "outer-build", StatusCompleted, AssessPass)
 	identity := a.copy("build-static", "build/identity.json", "build-identity", filepath.Join(fresh, "build", "identity.json"))
 	source := a.copy("build-static", "build/source-snapshot.json", "source-snapshot", filepath.Join(fresh, "build", "source-snapshot.json"))
 	vendor := a.copy("build-static", "build/vendor-snapshot.json", "vendor-snapshot", filepath.Join(fresh, "build", "vendor-snapshot.json"))
 	binaryPath := filepath.Join(fresh, "build", "target", buildIdentity.Target, "release", "tsgk-query-reference.exe")
 	binary := a.copy("build-static", "build/reference.exe", "reference-executable", binaryPath)
-	patchPath := filepath.Join("..", "dev", "query-reference", "instrumentation.patch")
-	patch := a.copy("build-static", "build/instrumentation.patch", "patch", patchPath)
-	repo, err := filepath.Abs("../..")
-	if err != nil {
-		t.Fatal(err)
+	var patchRequest eligibilityProcessRequest
+	actualJSONDecode(t, filepath.Join(fresh, "build", "patch-check-request.json"), &patchRequest)
+	if len(patchRequest.Args) != 4 || patchRequest.Args[0] != "apply" || patchRequest.Args[1] != "--unidiff-zero" || patchRequest.Args[2] != "--check" || !filepath.IsAbs(patchRequest.Args[3]) || filepath.Base(patchRequest.Args[3]) != "instrumentation.patch" {
+		t.Fatal("historical patch request helper path")
 	}
-	bp := map[string]string{"B": filepath.Join(fresh, "build"), "H": filepath.Join(repo, "src", "dev", "query-reference"), "S": filepath.Join(fresh, "build", "source"), "T": buildIdentity.Target, "R": binaryPath}
+	patchPath := patchRequest.Args[3]
+	patch := a.copy("build-static", "build/instrumentation.patch", "patch", patchPath)
+	bp := map[string]string{"B": filepath.Join(fresh, "build"), "H": filepath.Dir(patchPath), "S": filepath.Join(fresh, "build", "source"), "T": buildIdentity.Target, "R": binaryPath}
 	a.reg.Build = &eligibilityBuild{CohortID: "build", Paths: bp, Identity: identity, SourceSnapshot: source, VendorSnapshot: vendor, ReferenceBinary: &binary}
 	for _, name := range []string{"cargo", "rustc", "cc", "ar", "git", "supervisor", "python"} {
 		a.reg.Tools = append(a.reg.Tools, eligibilityTool{ID: "build-tool-" + name, CohortID: "build", ToolName: name, PathLiteral: buildIdentity.ToolPaths[name], SubjectSHA256: buildIdentity.Tools[name], IdentityMember: identity, ProvenanceID: "p-build"})
@@ -288,7 +299,7 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 	graph := eligibilityJSON(t, map[string]any{"schema": EvidenceSchema, "nodes": graphNodes})
 	a.reg.Graph = ReplayMember{Path: "evidence.json", Role: "evidence-graph", Bytes: uint64(len(graph)), SHA256: digestHex(graph)}
 	actualJSONWrite(t, filepath.Join(evidence, "evidence.json"), graph)
-	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": "actual-json24", "evidence_sha256": digestHex(graph), "required": required, "carry_forward": []any{}})
+	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": policyID, "evidence_sha256": digestHex(graph), "required": required, "carry_forward": []any{}})
 	actualJSONWrite(t, filepath.Join(caller, "policy.json"), policy)
 	actualJSONWrite(t, filepath.Join(caller, "eligibility-registration.json"), eligibilityJSON(t, a.reg))
 	actualJSONWrite(t, filepath.Join(caller, "binding-members.json"), eligibilityJSON(t, a.bound))
@@ -309,6 +320,17 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 	profile, err := ParseOracleProfile(profileData)
 	if err != nil {
 		t.Fatal(err)
+	}
+	oracleID, libraryID, libraryStage, libraryFile := "oracle-json24", "json-library-build", "json-library", "json.dll"
+	protocol := OracleSemanticsManifestSchema
+	expectedABI := eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 23, FieldCount: 2}
+	if reg.Context == semanticPagedContext {
+		oracleID, libraryID, libraryStage, libraryFile = "oracle-csharp3", "csharp-library-build", "csharp-library", "csharp.dll"
+		protocol = OraclePagedSemanticsManifestSchema
+		actualJSONDecode(t, filepath.Join(root, "plan", "expected-abi.json"), &expectedABI)
+		if expectedABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 654, FieldCount: 26}) {
+			t.Fatal("preregistered C# ABI changed")
+		}
 	}
 	var nativeRequest semanticNativeRequest
 	frame := actualJSONRead(t, filepath.Join(root, "evidence", "oracle", "capture", "00000-c1-stdin.bin"))
@@ -340,7 +362,7 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 	if e2 != nil {
 		t.Fatal(e2)
 	}
-	expected := eligibilityNativeExpected{Protocol: "tsgk-native/r4", RequestID: reg.Case, NodeLimit: reg.Limits.Nodes, API: false, Points: []uint32{}, RuntimeManifestSHA256: digestHex(runtimeManifest), ProducerSHA256: nativeRequest.ObservationProducerSHA256, ExecutableSHA256: digestHex(nativeExe), ProducerABI: eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 23, FieldCount: 2}, ObservationRunID: nativeRequest.ObservationRunID, HistoryStart: 0, Process: expectedProcess}
+	expected := eligibilityNativeExpected{Protocol: "tsgk-native/r4", RequestID: reg.Case, NodeLimit: reg.Limits.Nodes, API: false, Points: []uint32{}, RuntimeManifestSHA256: digestHex(runtimeManifest), ProducerSHA256: nativeRequest.ObservationProducerSHA256, ExecutableSHA256: digestHex(nativeExe), ProducerABI: expectedABI, ObservationRunID: nativeRequest.ObservationRunID, HistoryStart: 0, Process: expectedProcess}
 	witness := eligibilityWitness{QueryWitnessRegistration: reg.QueryWitnessRegistration, Native: expected}
 	witness.Schema = "tsgk-query-witness-registration/r2"
 	witnessData := eligibilityJSON(t, witness)
@@ -350,11 +372,11 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 		SessionID string `json:"session_id"`
 	}
 	actualJSONDecode(t, filepath.Join(capture, "final.json"), &report)
-	a.node("oracle-json24", "current", report.CLISHA256, digestHex(profileData), digestHex(eligibilityJSON(t, profile.Queries)), OracleSemanticsManifestSchema, report.SessionID, StatusCompleted, AssessBlocked)
+	a.node(oracleID, "current", report.CLISHA256, digestHex(profileData), digestHex(eligibilityJSON(t, profile.Queries)), protocol, report.SessionID, StatusCompleted, AssessBlocked)
 	n := a.nodes["native-c1"]
 	n.Identities["policy"] = reg.NativePolicy.SHA256
 	a.nodes[n.ID] = n
-	o := a.nodes["oracle-json24"]
+	o := a.nodes[oracleID]
 	o.Identities["policy"] = reg.NativePolicy.SHA256
 	a.nodes[o.ID] = o
 	set := VerifyOracleSet(os.DirFS(filepath.Join(root, "evidence", "oracle")))
@@ -365,7 +387,7 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 	for _, plan := range reg.PlannedMembers {
 		owner := "native-c1"
 		if plan.Owner == "O" {
-			owner = "oracle-json24"
+			owner = oracleID
 		}
 		pin := a.copy(owner, "oracle/"+plan.Path, plan.Role, filepath.Join(root, "evidence", "oracle", filepath.FromSlash(plan.Path)))
 		a.bound = append(a.bound, semanticBoundMember{Owner: plan.Owner, Local: plan.Path, NodeID: owner, Member: pin.Member})
@@ -388,16 +410,24 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 	build := nativeMembers["capture/build-manifest.txt"]
 	nativeGrammar := map[string]eligibilityMember{}
 	for i, g := range profile.Native.Grammar {
-		nativeGrammar[g.Path] = nativeMembers[fmt.Sprintf("capture/build-input-%05d.bin", 83+i)]
+		path := fmt.Sprintf("capture/build-input-%05d.bin", 83+i)
+		if reg.Context == semanticPagedContext && g.Role == "parser" {
+			path = fmt.Sprintf("capture/build-input-%05d.pages.json", 83+i)
+		}
+		pin, ok := nativeMembers[path]
+		if !ok {
+			t.Fatal("missing native grammar pin", path)
+		}
+		nativeGrammar[g.Path] = pin
 	}
-	// The JSON library compilation is supplementary evidence, not a reference invocation.
+	// Library compilation is supplementary evidence, not a reference invocation.
 	var buildIdentity eligibilityBuildIdentity
 	actualJSONDecode(t, filepath.Join(a.evidence, "build", "identity.json"), &buildIdentity)
-	a.node("json-library-build", "current", buildIdentity.Tools["cc"], digestHex(eligibilityJSON(t, profile.Native.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "json-library", StatusCompleted, AssessPass)
-	library := a.copy("json-library-build", "current/json.dll", "runtime-library", libraryPath)
-	a.copy("json-library-build", "current/library-request.json", "compiler-request", filepath.Join(origin, "json-library", "request.json"))
-	a.copy("json-library-build", "current/library-receipt.json", "compiler-receipt", filepath.Join(origin, "json-library", "receipt.json"))
-	a.reg.Native = &eligibilityNative{InvocationID: "native-c1", Source: nativeSource, BuildManifest: build, ReferenceLibrary: &library, Symbol: "tree_sitter_json", Grammar: nativeGrammar}
+	a.node(libraryID, "current", buildIdentity.Tools["cc"], digestHex(eligibilityJSON(t, profile.Native.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", libraryStage, StatusCompleted, AssessPass)
+	library := a.copy(libraryID, "current/"+libraryFile, "runtime-library", libraryPath)
+	a.copy(libraryID, "current/library-request.json", "compiler-request", filepath.Join(origin, libraryStage, "request.json"))
+	a.copy(libraryID, "current/library-receipt.json", "compiler-receipt", filepath.Join(origin, libraryStage, "receipt.json"))
+	a.reg.Native = &eligibilityNative{InvocationID: "native-c1", Source: nativeSource, BuildManifest: build, ReferenceLibrary: &library, Symbol: profile.Native.Symbol, Grammar: nativeGrammar}
 	request := a.add("native-c1", "current/native-expected-request.json", "native-request", eligibilityJSON(t, expected))
 	process := nativeMembers["capture/00000-c1-process.json"]
 	response := nativeMembers["raw/00000-c1.json"]
@@ -458,5 +488,5 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 	actualJSONWrite(t, filepath.Join(caller, "semantic-registration.json"), regData)
 	actualJSONWrite(t, filepath.Join(caller, "witness.json"), witnessData)
 	actualJSONWrite(t, filepath.Join(caller, "reference-bindings.json"), eligibilityJSON(t, refs))
-	actualJSONWrite(t, filepath.Join(caller, "capture-facts.json"), eligibilityJSON(t, map[string]any{"state": "PENDING_OUTSIDE_CALLER_REVIEW", "native_invocation": "native-c1", "driver_node": "native-c1", "oracle_node": "oracle-json24", "source_revision": a.cohortSource["current"], "current_session": report.SessionID, "origin_capture": origin, "continuation_capture": capture, "source_profile_sha256": digestHex(profileData), "manifest_sha256": nativeMembers["manifest.json"].Member.SHA256}))
+	actualJSONWrite(t, filepath.Join(caller, "capture-facts.json"), eligibilityJSON(t, map[string]any{"state": "PENDING_OUTSIDE_CALLER_REVIEW", "native_invocation": "native-c1", "driver_node": "native-c1", "oracle_node": oracleID, "source_revision": a.cohortSource["current"], "current_session": report.SessionID, "origin_capture": origin, "continuation_capture": capture, "source_profile_sha256": digestHex(profileData), "manifest_sha256": nativeMembers["manifest.json"].Member.SHA256}))
 }
