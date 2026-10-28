@@ -169,3 +169,14 @@ Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리
 [독립 anchor fixture](../../src/testdata/query-semantics/csharp3-anchors.json)는 원래 실행 전 등록에서 필요한 기대값만 보존한다. `class C {}` → `class D {}`의 한 바이트 편집과 `((compilation_unit) @root (#eq? @root "class C {}"))`를 사용한다. 필수 표본은 초기 incremental, 편집 후 incremental·fresh의 세 개이며 structural root는 각각 1개, 평가 capture는 1/0/0이다. ABI 기대값은 15/15/13/654/26이며, fixture의 child anchor는 정적 기대값이다. planner는 이를 별도 파일로 보존하며 수동 assemble·verify 단계는 그 파일을 소비하지 않는다. 이 cohort는 실행 전에 고정한 별도 비교기에서 type/span의 유일성·실제 root→class→identifier 부모 관계와 C/D 원문을 대조했다. 이후 실행도 별도의 독립 대조를 갖춰야 한다. 관측된 child node 번호로 사전 기대값을 만들지 않는다.
 
 로컬 Windows cohort에서 원본 parser 51,472,926바이트를 descriptor와 네 part로 보존하고 native/reference의 전체 7-node CST를 대조했다. 외부의 조건부 `approved-local` 승인 후 API와 `oracle-set-r5` replay는 같은 83,824,089바이트와 여덟 digest를 확인했으며 build9·unit4·control53·assertion36·tuple3을 VERIFIED로 판정했다. 승인 없음은 base PASS·3 BLOCKED, owner·slice 변조는 FAIL이며 원 producer의 COMPLETED/BLOCKED를 보존했다. 이 표본의 API 논리 처리량은 856,861,968바이트로 기존 1 GiB 이내였다. 이는 해당 저장 cohort의 일관성·capacity 관측이며 실행 진위 인증이나 전체26 route·SVC·large·신규 Linux/macOS 의미 검증을 뜻하지 않는다. Native/reference 캡처 소스 `4805c30e`와 이후 offline 조립기 소스 `47dfda68`을 구분하고, 재사용 build의 경로는 원래 영수증의 argv에 결속한다.
+
+
+## #216 Go3 정의 분류의 수동 연결
+
+[Go3 독립 기대값](../../src/testdata/query-semantics/go3-classification-anchors.json)은 원래 Go query 세 개의 정확한 원문·hash, pattern 수4/2/3, 첫 등장 capture 이름, 명시적 predicate 빈 배열을 보존한다. 고정 grammar의 빈 source는 단일 `source_file` root이며, 세 query의 초기 incremental structural/expected captures는 각각 빈 배열이다. ABI 기대값15/15/13/222/35와 CST 12개 필드는 관측 전에 선택한 정적 기대값이다. 다른 route나 SVC·large의 빈 입력·capture에 일반화하지 않는다.
+
+명시적 local helper는 기존 `driverCapture`와 `b.runCase`로 실제 request·plain process·raw frame·build closure를 보존한다. Semantic producer opt-in과 pending leaf는 만들지 않으며, 기존 nonempty predicate 등록 조건을 유지한다. `plan`과 `assemble`은 caller 승인 문서를 생성하지 않는다. 과거 검증된 build/control의 원래 identity·정확한178 member를 보존해 재사용할 수 있지만, 새로운 current cohort와 graph에는 별도 provenance 검토 및 graph 밖의 새 caller 승인이 필요하다. 실행 전 controller·source·fixture·grammar/runtime·도구·시험 binary 및 유한 예산을 고정해야 한다.
+
+`verify`는 기존 eligibility core의 동일 guarded snapshot에서 native와 각 reference response slice의 full CST를 독립 root 기대값에 따로 대조한다. 같은 snapshot의 실제 stdin/source/query/limits/run·build binding, process Spec, stdout frame/raw와 process member도 확인한다. Raw Spec의 null 환경은 보존하고 비교 DTO의 빈 배열만 구분해 처리한다. 별도의 공개 eligibility API 호출은 같은 고정 caller 문서의 counts·digest 판정을 대조한다. 이 두 offline 호출은 각각 기존 small 한도를 가지며 새로운 공개 API·result revision·semantic 한도를 추가하지 않는다.
+
+세 정의가 모두 적격일 때만 별도 수동 결과에 동일한 승인 cohort의 `STRUCTURAL_ONLY`를 기록한다. 이 결과는 caller 승인에 조건부인 저장 일관성이며 실행 진위·서명·EVALUATED 또는 전체 query 슬롯·qualification/fan-in 완료가 아니다. 기본 시험의 수동 helper SKIP도 실제 실행 성공이 아니다. 신규 검증 범위는 Windows Go3로 한정하며 Linux의 새 current 실행과 나머지26 route·SVC·large 의무, macOS 신규 검증 제외를 유지한다.

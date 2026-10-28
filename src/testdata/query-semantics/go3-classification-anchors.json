@@ -1,0 +1,106 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "go",
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "source_file",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_spec name: (type_identifier) @type)\n(method_declaration name: (field_identifier) @method)\n(function_declaration name: (identifier) @function)\n(call_expression function: (selector_expression field: (field_identifier) @call))\n",
+      "sha256": "ce0ace9af2164936693efb63dcc12574cf64eda21fe78a4d9ad1ce7950df15eb",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "type",
+          "method",
+          "function",
+          "call"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v18",
+      "source": "(type_parameter_declaration name: (identifier) @tparam)\n(type_alias name: (type_identifier) @alias)\n",
+      "sha256": "d0bde1d011f6faff3d6ffeff5990639afe92e5f05492b79e60c93466a52a9416",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "tparam",
+          "alias"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v27",
+      "source": "(method_declaration name: (field_identifier) @method)\n(type_parameter_declaration name: (identifier) @tparam)\n(keyed_element key: (literal_element) @key)\n",
+      "sha256": "30695fe32e69f8e31a1d1051b64251a747d2380e151e9fe1af598b6163d6c1d9",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "method",
+          "tparam",
+          "key"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v18",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v27",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 222,
+    "field_count": 35
+  }
+}
