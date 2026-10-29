@@ -26,14 +26,14 @@ func TestQueryClassificationDefinitionExpired(t *testing.T) {
 			called := false
 			var result []byte
 			output := filepath.Join(t.TempDir(), "definition-classification-result.json")
-			err := classificationGoDefinitionDuring(ctx, func() {
-				called = true
-				result = []byte(`{"class":"STRUCTURAL_ONLY"}`)
-				cancel()
+			err := classificationGoDefinitionPublish(t, output, func() ([]byte, error) {
+				err := classificationGoDefinitionDuring(ctx, func() {
+					called = true
+					result = []byte(`{"class":"STRUCTURAL_ONLY"}`)
+					cancel()
+				})
+				return result, err
 			})
-			if err == nil {
-				actualJSONWrite(t, output, result)
-			}
 			if err != context.Canceled || called != (phase == "during") {
 				t.Fatal("expired projection was not rejected", phase, called, err)
 			}

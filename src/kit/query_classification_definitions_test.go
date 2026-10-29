@@ -2,6 +2,7 @@ package kit
 
 import (
 	"bytes"
+	"context"
 	jsontext "encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -657,7 +658,7 @@ func TestQueryClassificationDefinitionProjectionMetadata(t *testing.T) {
 }
 
 func TestQueryClassificationDefinitionCoordinateProjection(t *testing.T) {
-	fixture, _, inventoryData, _, queryData := classificationGoDefinitionFixture(t)
+	fixture, plan, inventoryData, qualificationData, queryData := classificationGoDefinitionFixture(t)
 	got := fixture.inputs.coordinates
 	if got.Cases != 57 || got.Edits != 37 || got.CaseSteps != 94 || got.TreeRoles != 131 || got.Definitions != 3 || got.PotentialQueryTreeRoles != 393 || got.TreeRolesPerDefinition != 131 || got.QualificationInventorySHA256 != classificationGoDefinitionQualificationSHA || got.QuerySlotInventorySHA256 != classificationGoDefinitionInventorySHA || got.QuerySourceFileSHA256 != classificationGoDefinitionQueriesSHA || !hex64.MatchString(got.CoordinatesSHA256) {
 		t.Fatalf("registered query coordinate summary differs: %#v", got)
@@ -679,57 +680,50 @@ func TestQueryClassificationDefinitionCoordinateProjection(t *testing.T) {
 		t.Fatalf("same-count case identity swap did not change the coordinate digest: %#v, %v", changedSummary, err)
 	}
 
-	mutatedQualification, err := jsonv2.Marshal(fixture.inputs.qualification)
+	// Swap only two raw case-ID tokens, preserving all formatting and numeric counts.
+	a, _ := jsonv2.Marshal(fixture.inputs.workload.Cases[0].ID)
+	b, _ := jsonv2.Marshal(fixture.inputs.workload.Cases[1].ID)
+	marker := []byte(`"definition-unit-temporary-token"`)
+	if bytes.Count(qualificationData, a) != 1 || bytes.Count(qualificationData, b) != 1 || bytes.Contains(qualificationData, marker) {
+		t.Fatal("case ID tokens are not unique for the raw-byte counterexample")
+	}
+	mutatedQualification := bytes.Replace(qualificationData, a, marker, 1)
+	mutatedQualification = bytes.Replace(mutatedQualification, b, a, 1)
+	mutatedQualification = bytes.Replace(mutatedQualification, marker, b, 1)
+	if _, err := classificationGoDefinitionLoadInputs(fixture.anchors, plan, inventoryData, mutatedQualification, queryData); err == nil || err.Error() != "qualification inventory pin differs" {
+		t.Fatalf("same-count raw case ID swap passed without the exact qualification source pin: %v", err)
+	}
+	changedPlan := plan
+	changedPlan.Grammar = slices.Clone(plan.Grammar)
+	changedPlan.Grammar[0].SHA256 = strings.Repeat("e", 64)
+	if _, err := classificationGoDefinitionLoadInputs(fixture.anchors, changedPlan, inventoryData, qualificationData, queryData); err == nil || !strings.Contains(err.Error(), "grammar pins differ") {
+		t.Fatal("changed preregistered grammar accepted", err)
+	}
+}
+
+func TestQueryClassificationDefinitionLiveBinding(t *testing.T) {
+	fixture, plan, inventoryData, qualificationData, queryData := classificationGoDefinitionFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer cancel()
+	r, err := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var mutated QualificationInventory
-	if err := jsonv2.Unmarshal(mutatedQualification, &mutated); err != nil {
-		t.Fatal(err)
+	defer r.cancel()
+	core := QueryReferenceEligibilityResult{ResultSchema: QueryReferenceEligibilityResultSchema, Report: Report{ExecutionStatus: StatusCompleted, Assessment: AssessPass}, Complete: true, Tuple: QueryEligibilityCounts{Required: 3, Verified: 3}}
+	owned, other := &semanticNativeCache{ready: true}, &semanticNativeCache{ready: true}
+	owned.record.haveRaw, other.record.haveRaw = true, true
+	session := &eligibilitySession{r: r, res: &core, semantic: owned, bound: true}
+	reader := strings.Repeat("d", 40)
+	if _, err := classificationGoDefinitionProjection(fixture.anchors, plan, session, other, core, inventoryData, qualificationData, queryData, reader); err == nil || !strings.Contains(err.Error(), "live guarded eligibility session") {
+		t.Fatal("foreign live cache accepted", err)
 	}
-	mutated.Routes = slices.Clone(mutated.Routes)
-	var goRoute *QualRoute
-	for i := range mutated.Routes {
-		if mutated.Routes[i].Route == "go" {
-			goRoute = &mutated.Routes[i]
-			break
-		}
+	foreign := core
+	foreign.GraphSHA256 = strings.Repeat("e", 64)
+	if _, err := classificationGoDefinitionProjection(fixture.anchors, plan, session, owned, foreign, inventoryData, qualificationData, queryData, reader); err == nil || !strings.Contains(err.Error(), "same completed guarded result") {
+		t.Fatal("foreign guarded result accepted", err)
 	}
-	if goRoute == nil {
-		t.Fatal("Go route missing in parsed qualification")
-	}
-	goRoute.Workload.Cases = slices.Clone(goRoute.Workload.Cases)
-	for i := range goRoute.Workload.Cases {
-		goRoute.Workload.Cases[i].Edits = slices.Clone(goRoute.Workload.Cases[i].Edits)
-	}
-	pairFound := false
-	for i := 0; i < len(goRoute.Workload.Cases) && !pairFound; i++ {
-		for j := i + 1; j < len(goRoute.Workload.Cases); j++ {
-			if len(goRoute.Workload.Cases[i].Edits) > 0 && len(goRoute.Workload.Cases[i].Edits) == len(goRoute.Workload.Cases[j].Edits) {
-				goRoute.Workload.Cases[i].Edits, goRoute.Workload.Cases[j].Edits = goRoute.Workload.Cases[j].Edits, goRoute.Workload.Cases[i].Edits
-				pairFound = true
-				break
-			}
-		}
-	}
-	if !pairFound {
-		t.Fatal("no equal-count edit pair for the inventory pin counterexample")
-	}
-	editTotal := func(cases []QualCase) int {
-		total := 0
-		for _, c := range cases {
-			total += len(c.Edits)
-		}
-		return total
-	}
-	if editTotal(goRoute.Workload.Cases) != 37 || len(goRoute.Workload.Cases) != 57 {
-		t.Fatal("same-count edit swap changed the registered denominator")
-	}
-	mutatedQualification, err = jsonv2.Marshal(mutated)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := classificationGoDefinitionLoadInputs(fixture.anchors, classificationPlan{Schema: "tsgk-query-classification-plan/r1", AnchorsSHA256: fixture.anchors.sha256, APIAnchorsSHA256: fixture.anchors.apiSHA, Grammar: slices.Clone(fixture.inputs.workload.Grammar)}, inventoryData, mutatedQualification, queryData); err == nil || !strings.Contains(err.Error(), "qualification inventory pin differs") {
-		t.Fatalf("same-count edit swap passed without the exact qualification source pin: %v", err)
+	if _, err := classificationGoDefinitionProjection(fixture.anchors, plan, nil, nil, core, inventoryData, qualificationData, queryData, strings.Repeat("d", 64)); err == nil || !strings.Contains(err.Error(), "reader revision is invalid") {
+		t.Fatal("non-commit reader revision accepted", err)
 	}
 }

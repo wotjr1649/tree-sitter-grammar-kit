@@ -545,6 +545,16 @@ func classificationGoDefinitionDuring(ctx context.Context, project func()) error
 	return ctx.Err()
 }
 
+func classificationGoDefinitionPublish(t *testing.T, output string, produce func() ([]byte, error)) error {
+	t.Helper()
+	data, err := produce()
+	if err != nil {
+		return err
+	}
+	actualJSONWrite(t, output, data)
+	return nil
+}
+
 func classificationGoDefinitionOutput(root, assembly, output string) error {
 	if !filepath.IsAbs(output) {
 		return fmt.Errorf("absolute separate definition output required")
@@ -574,25 +584,29 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 	t.Helper()
 	output := os.Getenv("TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT")
 	reader := os.Getenv("TSGK_QUERY_CLASSIFICATION_READER_REVISION")
-	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "positive-batch" || !eligibilityRevision(reader) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "positive-batch" || !hex40.MatchString(reader) {
 		t.Fatal("definition projection requires the fixed positive profile and separately pinned reader revision")
 	}
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
 		t.Fatal(err)
 	}
-	var result []byte
-	classificationGoVerifyWith(t, root, assembly, approvalPath, func(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult) {
-		record, err := classificationGoDefinitionProjection(anchors, plan, s, cache, core,
-			actualJSONRead(t, "../contracts/query-slot-inventory-r1.json"),
-			actualJSONRead(t, "../contracts/qualification-c1.json"),
-			actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
-		if err != nil {
-			t.Fatal("guarded definition projection", err)
-		}
-		result = eligibilityJSON(t, record)
+	err := classificationGoDefinitionPublish(t, filepath.Join(output, "definition-classification-result.json"), func() ([]byte, error) {
+		var result []byte
+		classificationGoVerifyWith(t, root, assembly, approvalPath, func(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult) {
+			record, err := classificationGoDefinitionProjection(anchors, plan, s, cache, core,
+				actualJSONRead(t, "../contracts/query-slot-inventory-r1.json"),
+				actualJSONRead(t, "../contracts/qualification-c1.json"),
+				actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
+			if err != nil {
+				t.Fatal("guarded definition projection", err)
+			}
+			result = eligibilityJSON(t, record)
+		})
+		return result, nil
 	})
-	// The callback completes in memory. A canceled/expired callback never reaches publication.
-	actualJSONWrite(t, filepath.Join(output, "definition-classification-result.json"), result)
+	if err != nil {
+		t.Fatal("definition publication", err)
+	}
 	t.Log("same guarded snapshot: 3 definitions classified, 393 potential links; no case or semantic completion")
 }
 

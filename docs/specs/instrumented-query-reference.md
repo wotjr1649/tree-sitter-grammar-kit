@@ -8,7 +8,7 @@
 
 이 결과의 분모는 query 정의 3개다. 잠재 좌표 연결은 해당 정의가 원장에 속함을 검증하며 393회 실행, 사례별 CST/API·capture 일치, runtime eligibility 또는 semantic PASS를 뜻하지 않는다. `query-slot-inventory-r1`의 `STRUCTURAL_CANDIDATE`·`compiled_metadata:UNVERIFIED`, `semantic_required:null`·`NOT_ASSESSED`는 그대로다. r10 predicate-probe 등록과 `full_scope_complete=false`·전체 BLOCKED completion gate에도 합치지 않는다. 관측한 source revision/run/platform과 새 reader revision을 별도로 보존하고 grammar/runtime/compiler·reference/library·승인/graph/witness/registration의 결속을 기록한다. 과거 graph의 재검증은 새 native/reference 관측이 아니다.
 
-출력은 projection을 메모리에서 완성하고 원래 guarded run의 만료 전후 검사를 통과한 정상 반환 뒤에만, retained case 및 assembly/snapshot 밖의 새 물리적 caller-owned 빈 디렉터리에 `O_EXCL`로 쓴다. 만료된 callback은 결과 파일을 게시하지 않는다. 이전 approval·V2 실패·V3 snapshot과 결과를 덮어쓰지 않는다. `TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT`과 별도로 고정한 `TSGK_QUERY_CLASSIFICATION_READER_REVISION`은 실제 reader 호출 context에 결속한다. 조건부 저장 일관성이라는 한계와 기존 실행 진위·caller 신뢰 전제는 유지한다.
+출력은 projection을 메모리에서 완성하고 원래 guarded run의 만료 전후 검사를 통과한 정상 반환 뒤에만, retained case 및 assembly/snapshot 밖의 새 물리적 caller-owned 빈 디렉터리에 `O_EXCL`로 쓴다. 만료된 callback은 결과 파일을 게시하지 않는다. 이전 approval·V2 실패·V3 snapshot과 결과를 덮어쓰지 않는다. `TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT`과 `TSGK_QUERY_CLASSIFICATION_READER_REVISION`은 caller가 제공하며 helper의 reader 검사는 40자리 hex 형식만 확인한다. 이 필드 자체는 실행 코드의 인증이 아니다. 결과 채택 시에는 별도의 동결된 reader controller가 실제 commit·source manifest·실행 파일·요청·출력·원 caller return을 외부 pin에 결속해야 한다. 조건부 저장 일관성이라는 한계와 기존 실행 진위·caller 신뢰 전제는 유지한다.
 
 ## Ordinary Go의 첫 single-frame batch probe
 
