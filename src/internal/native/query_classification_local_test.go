@@ -89,14 +89,27 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 	if err != nil || len(entries) != 0 {
 		t.Fatal("capture root must be a new empty caller-owned directory", err)
 	}
-	data, err := os.ReadFile("../../testdata/query-semantics/go3-classification-anchors.json")
-	if err != nil || sha(data) != "096785af5cbd09ece1f649ab7ea41648f11b45c751386636238537787bec0f19" {
+	name, expectedSHA := "go3-classification-anchors.json", "096785af5cbd09ece1f649ab7ea41648f11b45c751386636238537787bec0f19"
+	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
+	if profile == "positive-batch" {
+		name, expectedSHA = "go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288"
+	} else if profile != "" {
+		t.Fatal("unknown closed classification profile", profile)
+	}
+	data, err := os.ReadFile("../../testdata/query-semantics/" + name)
+	if err != nil || sha(data) != expectedSHA {
 		t.Fatal("reviewed Go anchors changed", err)
 	}
 	var anchors struct {
-		Schema string `json:"schema"`
-		Route  string `json:"route"`
-		Source struct {
+		Case       string                `json:"case,omitempty"`
+		API        bool                  `json:"api,omitempty"`
+		Operation  string                `json:"operation,omitempty"`
+		DriverMode string                `json:"driver_mode,omitempty"`
+		Workload   string                `json:"workload,omitempty"`
+		Expect     []kit.StepExpectation `json:"expect,omitempty"`
+		Schema     string                `json:"schema"`
+		Route      string                `json:"route"`
+		Source     struct {
 			UTF8   string `json:"utf8"`
 			Bytes  uint64 `json:"bytes"`
 			SHA256 string `json:"sha256"`
@@ -121,8 +134,17 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 	if err := jsonv2.Unmarshal(data, &anchors, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal(err)
 	}
-	if anchors.Schema != "tsgk-query-classification-anchors/r1" || anchors.Route != "go" || anchors.Source.UTF8 != "" || anchors.Source.Bytes != 0 || anchors.Source.SHA256 != sha(nil) || len(anchors.Edits) != 0 || len(anchors.Nodes) != 1 || len(anchors.Queries) != 3 || len(anchors.Required) != 3 {
+	if anchors.Schema != "tsgk-query-classification-anchors/r1" || anchors.Route != "go" || anchors.Source.Bytes != uint64(len(anchors.Source.UTF8)) || anchors.Source.SHA256 != sha([]byte(anchors.Source.UTF8)) || len(anchors.Edits) != 0 || len(anchors.Queries) != 3 || len(anchors.Required) != 3 {
 		t.Fatal("independent definition denominator or source changed")
+	}
+	if profile == "" {
+		if anchors.Source.Bytes != 0 || len(anchors.Nodes) != 1 || anchors.Case != "" || anchors.API || anchors.Operation != "" || anchors.DriverMode != "" || anchors.Workload != "" || len(anchors.Expect) != 0 {
+			t.Fatal("legacy Go3 profile changed")
+		}
+		anchors.Case, anchors.Operation, anchors.DriverMode, anchors.Workload = "go3", "native-query", "single", "go3-definition-classification"
+		anchors.Expect = []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}
+	} else if anchors.Case != "probe-go-B04-P-6" || !anchors.API || anchors.Operation != "native-query-batch" || anchors.DriverMode != "batch" || anchors.Workload != "go-positive-single-frame-batch" || anchors.Source.Bytes != 50 || len(anchors.Nodes) != 25 || len(anchors.Expect) != 1 {
+		t.Fatal("positive batch profile changed")
 	}
 	prepared := os.Getenv("TSGK_BENCH_PREPARED")
 	if !filepath.IsAbs(prepared) {
@@ -233,16 +255,37 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 		write(file.pin.Path, file.data)
 		pins = append(pins, file.pin)
 	}
-	op := kit.NativeOperations()["native-query"]
-	x := Context{Route: "go", Op: op, Output: kit.OutputTree, PolicyRef: PolicyRef(op, kit.OutputTree), Protocol: ProtocolR4, ObservationRunID: runID, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")}
+	op := kit.NativeOperations()[anchors.Operation]
+	x := Context{Route: "go", Op: op, Output: kit.OutputTree, PolicyRef: PolicyRef(op, kit.OutputTree), Protocol: ProtocolR4, API: anchors.API, ObservationRunID: runID, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT")}
 	for _, q := range anchors.Queries {
 		x.Queries = append(x.Queries, QuerySource{ID: q.ID, Source: []byte(q.Source)})
 	}
-	c := kit.IncrementalCase{ID: "go3", Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "source.bin", Role: "case", Bytes: 0, SHA256: anchors.Source.SHA256}, Edits: []kit.Edit{}, Points: []kit.NativePoint{}, Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
+	c := kit.IncrementalCase{ID: anchors.Case, Encoding: kit.EncodingUTF8, Input: kit.NativeInput{Path: "source.bin", Role: "case", Bytes: anchors.Source.Bytes, SHA256: anchors.Source.SHA256}, Edits: []kit.Edit{}, Points: []kit.NativePoint{}, Expect: anchors.Expect}
 	capture = &driverCapture{}
 	driverAttempted = true
-	result := b.runCase(ctx, x, c, []byte(anchors.Source.UTF8), capture)
-	captured, err := capture.files("capture/go3")
+	var result CaseResult
+	if anchors.DriverMode == "single" {
+		result = b.runCase(ctx, x, c, []byte(anchors.Source.UTF8), capture)
+	} else {
+		// This is one noninteractive frame plus EOF, not OracleRunBatch.
+		x.ObservationProducerSHA256 = b.Identity
+		result = newCaseResult(c)
+		cr, done := b.prepareCase(ctx, x, c, []byte(anchors.Source.UTF8), &result)
+		if done {
+			t.Fatal("positive probe request refused", result.Code)
+		}
+		res, runErr := b.exec(ctx, "batch", Frame(cr.payload), cr.wall, x.Op, x.CgroupParent, capture)
+		result.Process = &res
+		frame, frameErr := SplitFrame(res.Stdout)
+		result.Raw = frame
+		if runErr == nil && frameErr == nil && res.Succeeded() && res.Cleanup.ResidualAfterExit == 0 {
+			b.judgeFrame(x, c, cr, frame, nil, &result)
+			x.observeCase(&result)
+		} else {
+			finishEarly(&result, kit.StatusFailed, kit.AssessNotAssessed, "BATCH_PROBE_INCOMPLETE")
+		}
+	}
+	captured, err := capture.files("capture/" + anchors.Case)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +293,7 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 		write(file.pin.Path, file.data)
 		pins = append(pins, file.pin)
 	}
-	write("raw/go3.json", result.Raw)
+	write("raw/"+anchors.Case+".json", result.Raw)
 	if !classificationNativeComplete(result, capture) {
 		t.Fatalf("native invocation incomplete %s/%s/%s", result.ExecutionStatus, result.Assessment, result.Code)
 	}

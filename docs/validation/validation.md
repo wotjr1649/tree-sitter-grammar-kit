@@ -426,6 +426,8 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 ## #216 Go3 수동 분류 검사
 
+`positive-batch` 수동 profile은 [single-frame batch probe 계약](../specs/instrumented-query-reference.md#ordinary-go의-첫-single-frame-batch-probe)을 따른다. `TestQueryClassificationPositiveBatchRegistration`은 source·무편집·원 syntax/contains/for span과 query 원문을 등록 사례에 연결한다. `TestQueryClassificationBatchFrameBindings`는 정상 batch 요청과 source·API·case·query·run·producer·history·mode 변조, 추가·잘린 stdin/stdout frame을 구분한다. `TestQueryClassificationBatchGuardedCapture`는 member pin이 각각 일치하는 snapshot에서도 stdout/raw·process 교체, witness API·node limit·points, CST와 모순되는 API 행, OS 한도·env·Interactive, descriptor 소유권 및 native node의 policy·workload·tool·input·query 변경을 거부한다. 기존 Go3 등록·compiler·build/driver cleanup과 core의 process cleanup·한도 검사를 유지한다. 실제 native/reference 검증은 명시적 수동 실행과 별도 승인 범위이며 기본 CI의 SKIP으로 대체할 수 없다.
+
 `TestQueryClassificationGoRegistration`은 고정 기대값의 유효한 witness와 다른 route·query 원문·predicate null·필수 tuple 누락을 구분한다. `TestQueryClassificationNativeCompletion`은 r4 FAIL·설명 없는 code·잔여 자식이 있는 응답이 완료 capture로 채택되지 않게 한다. `TestQueryClassificationGoLocal` 및 `TestQueryClassificationGoLocalCapture`는 명시적 환경이 없으면 SKIP이다. 이 SKIP은 실제 compiler/native/reference 검증 근거가 아니다.
 
 실제 수동 실행 전에는 별도 검토한 preregistration과 controller, 전체 source/HEAD·도구 pin을 고정하고 시험 binary를 먼저 빌드해 실행 직전 hash를 확인한다. Heavy 작업은 한 번에 하나, HARD4GiB·유한 timeout·파일 출력으로 순차 실행하고 종료·검증된 자식 정리·잔류0을 확인한다. Native helper는 독립 CST/ABI/세 query metadata와 원문 frame을 대조하며 판정 FAIL을 완료로 기록하지 않는다. 부분 build도 실행된 자식 정리가 확인된 뒤 정리하고, 불명확한 정리는 보존·중단한다. 완료 파일은 성공적인 build 제거 뒤에 쓴다.

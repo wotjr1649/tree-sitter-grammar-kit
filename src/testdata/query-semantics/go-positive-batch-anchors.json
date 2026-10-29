@@ -1,0 +1,658 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "go",
+  "case": "probe-go-B04-P-6",
+  "api": true,
+  "operation": "native-query-batch",
+  "driver_mode": "batch",
+  "workload": "go-positive-single-frame-batch",
+  "source": {
+    "utf8": "package hdr\n\nfunc g(n int) {\n\tfor\n\t{\n\t\tbreak\n\t}\n}\n",
+    "bytes": 50,
+    "sha256": "573c5f1b973e36876d66898821c509db2a1faf67956e25157c64a7e5f300db0e"
+  },
+  "edits": [],
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR",
+      "contains": [
+        "for_statement",
+        "block",
+        "break_statement"
+      ],
+      "anchors": [
+        {
+          "type": "for_statement",
+          "start_byte": 30,
+          "end_byte": 47
+        }
+      ],
+      "declarations": ""
+    }
+  ],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "source_file",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 0,
+      "end_byte": 50,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 8,
+        "column": 0
+      }
+    },
+    {
+      "parent": 0,
+      "type": "package_clause",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 0,
+      "end_byte": 11,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 11
+      }
+    },
+    {
+      "parent": 1,
+      "type": "package",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 0,
+      "end_byte": 7,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 7
+      }
+    },
+    {
+      "parent": 1,
+      "type": "package_identifier",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 8,
+      "end_byte": 11,
+      "start_point": {
+        "row": 0,
+        "column": 8
+      },
+      "end_point": {
+        "row": 0,
+        "column": 11
+      }
+    },
+    {
+      "parent": 0,
+      "type": "function_declaration",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 13,
+      "end_byte": 49,
+      "start_point": {
+        "row": 2,
+        "column": 0
+      },
+      "end_point": {
+        "row": 7,
+        "column": 1
+      }
+    },
+    {
+      "parent": 4,
+      "type": "func",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 13,
+      "end_byte": 17,
+      "start_point": {
+        "row": 2,
+        "column": 0
+      },
+      "end_point": {
+        "row": 2,
+        "column": 4
+      }
+    },
+    {
+      "parent": 4,
+      "type": "identifier",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "name",
+      "start_byte": 18,
+      "end_byte": 19,
+      "start_point": {
+        "row": 2,
+        "column": 5
+      },
+      "end_point": {
+        "row": 2,
+        "column": 6
+      }
+    },
+    {
+      "parent": 4,
+      "type": "parameter_list",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "parameters",
+      "start_byte": 19,
+      "end_byte": 26,
+      "start_point": {
+        "row": 2,
+        "column": 6
+      },
+      "end_point": {
+        "row": 2,
+        "column": 13
+      }
+    },
+    {
+      "parent": 7,
+      "type": "(",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 19,
+      "end_byte": 20,
+      "start_point": {
+        "row": 2,
+        "column": 6
+      },
+      "end_point": {
+        "row": 2,
+        "column": 7
+      }
+    },
+    {
+      "parent": 7,
+      "type": "parameter_declaration",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 20,
+      "end_byte": 25,
+      "start_point": {
+        "row": 2,
+        "column": 7
+      },
+      "end_point": {
+        "row": 2,
+        "column": 12
+      }
+    },
+    {
+      "parent": 9,
+      "type": "identifier",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "name",
+      "start_byte": 20,
+      "end_byte": 21,
+      "start_point": {
+        "row": 2,
+        "column": 7
+      },
+      "end_point": {
+        "row": 2,
+        "column": 8
+      }
+    },
+    {
+      "parent": 9,
+      "type": "type_identifier",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "type",
+      "start_byte": 22,
+      "end_byte": 25,
+      "start_point": {
+        "row": 2,
+        "column": 9
+      },
+      "end_point": {
+        "row": 2,
+        "column": 12
+      }
+    },
+    {
+      "parent": 7,
+      "type": ")",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 25,
+      "end_byte": 26,
+      "start_point": {
+        "row": 2,
+        "column": 12
+      },
+      "end_point": {
+        "row": 2,
+        "column": 13
+      }
+    },
+    {
+      "parent": 4,
+      "type": "block",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "body",
+      "start_byte": 27,
+      "end_byte": 49,
+      "start_point": {
+        "row": 2,
+        "column": 14
+      },
+      "end_point": {
+        "row": 7,
+        "column": 1
+      }
+    },
+    {
+      "parent": 13,
+      "type": "{",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 27,
+      "end_byte": 28,
+      "start_point": {
+        "row": 2,
+        "column": 14
+      },
+      "end_point": {
+        "row": 2,
+        "column": 15
+      }
+    },
+    {
+      "parent": 13,
+      "type": "statement_list",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 30,
+      "end_byte": 48,
+      "start_point": {
+        "row": 3,
+        "column": 1
+      },
+      "end_point": {
+        "row": 7,
+        "column": 0
+      }
+    },
+    {
+      "parent": 15,
+      "type": "for_statement",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 30,
+      "end_byte": 47,
+      "start_point": {
+        "row": 3,
+        "column": 1
+      },
+      "end_point": {
+        "row": 6,
+        "column": 2
+      }
+    },
+    {
+      "parent": 16,
+      "type": "for",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 30,
+      "end_byte": 33,
+      "start_point": {
+        "row": 3,
+        "column": 1
+      },
+      "end_point": {
+        "row": 3,
+        "column": 4
+      }
+    },
+    {
+      "parent": 16,
+      "type": "block",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": "body",
+      "start_byte": 35,
+      "end_byte": 47,
+      "start_point": {
+        "row": 4,
+        "column": 1
+      },
+      "end_point": {
+        "row": 6,
+        "column": 2
+      }
+    },
+    {
+      "parent": 18,
+      "type": "{",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 35,
+      "end_byte": 36,
+      "start_point": {
+        "row": 4,
+        "column": 1
+      },
+      "end_point": {
+        "row": 4,
+        "column": 2
+      }
+    },
+    {
+      "parent": 18,
+      "type": "statement_list",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 39,
+      "end_byte": 45,
+      "start_point": {
+        "row": 5,
+        "column": 2
+      },
+      "end_point": {
+        "row": 6,
+        "column": 0
+      }
+    },
+    {
+      "parent": 20,
+      "type": "break_statement",
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 39,
+      "end_byte": 44,
+      "start_point": {
+        "row": 5,
+        "column": 2
+      },
+      "end_point": {
+        "row": 5,
+        "column": 7
+      }
+    },
+    {
+      "parent": 21,
+      "type": "break",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 39,
+      "end_byte": 44,
+      "start_point": {
+        "row": 5,
+        "column": 2
+      },
+      "end_point": {
+        "row": 5,
+        "column": 7
+      }
+    },
+    {
+      "parent": 18,
+      "type": "}",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 46,
+      "end_byte": 47,
+      "start_point": {
+        "row": 6,
+        "column": 1
+      },
+      "end_point": {
+        "row": 6,
+        "column": 2
+      }
+    },
+    {
+      "parent": 13,
+      "type": "}",
+      "named": false,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "field": null,
+      "start_byte": 48,
+      "end_byte": 49,
+      "start_point": {
+        "row": 7,
+        "column": 0
+      },
+      "end_point": {
+        "row": 7,
+        "column": 1
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_spec name: (type_identifier) @type)\n(method_declaration name: (field_identifier) @method)\n(function_declaration name: (identifier) @function)\n(call_expression function: (selector_expression field: (field_identifier) @call))\n",
+      "sha256": "ce0ace9af2164936693efb63dcc12574cf64eda21fe78a4d9ad1ce7950df15eb",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "type",
+          "method",
+          "function",
+          "call"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v18",
+      "source": "(type_parameter_declaration name: (identifier) @tparam)\n(type_alias name: (type_identifier) @alias)\n",
+      "sha256": "d0bde1d011f6faff3d6ffeff5990639afe92e5f05492b79e60c93466a52a9416",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "tparam",
+          "alias"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v27",
+      "source": "(method_declaration name: (field_identifier) @method)\n(type_parameter_declaration name: (identifier) @tparam)\n(keyed_element key: (literal_element) @key)\n",
+      "sha256": "30695fe32e69f8e31a1d1051b64251a747d2380e151e9fe1af598b6163d6c1d9",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "method",
+          "tparam",
+          "key"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [
+        {
+          "match": 0,
+          "pattern": 2,
+          "capture": 2,
+          "name": "function",
+          "node": 6,
+          "type": "identifier",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 18,
+          "end_byte": 19,
+          "start_point": {
+            "row": 2,
+            "column": 5
+          },
+          "end_point": {
+            "row": 2,
+            "column": 6
+          }
+        }
+      ],
+      "expected": [
+        {
+          "match": 0,
+          "pattern": 2,
+          "capture": 2,
+          "name": "function",
+          "node": 6,
+          "type": "identifier",
+          "named": true,
+          "extra": false,
+          "is_error": false,
+          "has_error": false,
+          "is_missing": false,
+          "start_byte": 18,
+          "end_byte": 19,
+          "start_point": {
+            "row": 2,
+            "column": 5
+          },
+          "end_point": {
+            "row": 2,
+            "column": 6
+          }
+        }
+      ]
+    },
+    {
+      "query": "q.probe-v18",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v27",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 222,
+    "field_count": 35
+  }
+}

@@ -1,5 +1,15 @@
 # 계측 query reference 계약 (#216)
 
+## Ordinary Go의 첫 single-frame batch probe
+
+수동 분류 helper의 `TSGK_QUERY_CLASSIFICATION_PROFILE=positive-batch`는 기존 등록 `go/s06-go/probe-go-B04-P-6`의 50-byte 정상 source, 편집 없음, API 관측, 세 query를 선택한다. 명시적 profile이 없으면 기존 빈 source Go3 정의 검사를 유지하며, 다른 profile은 거부한다. [고정 사전 기대값](../../src/testdata/query-semantics/go-positive-batch-anchors.json)은 수작업 full CST 25개 node, ABI·metadata, `q.structure`의 function capture 하나와 나머지 두 query의 빈 capture를 소유한다. 원 등록의 `NO_ERROR`, `for_statement`·`block`·`break_statement`와 `for_statement` 범위 `30..47`도 검사한다.
+
+이 probe는 `native-query-batch` 한도로 driver의 `Args=["batch"]`를 실행하며 noninteractive `Spec.Stdin`에 정확히 한 r4 frame을 전달한 뒤 정상 종료·검증된 cleanup·잔여0을 요구한다. 같은 guarded eligibility snapshot에서 실제 source·API·query·run·producer·OS 한도·mode, native node identity와 capture descriptor 소유권, stdin 한 frame, stdout 한 frame과 raw의 동일성, process receipt의 동일성을 대조한다. 요청과 witness의 API·node limit·points도 결속하며 응답 API 전체를 [정적 사전 기대값](../../src/testdata/query-semantics/go-positive-batch-api.json)과 대조한다. 기존 interactive `OracleRunBatch` 전체를 재현하거나 producer의 `Batch+SourceWitness` 거부를 완화하지 않는다. r4를 다른 revision으로 재표기하지 않는다.
+
+입력 종료는 고정 runner가 stdin bytes를 쓴 뒤 pipe를 닫고 고정 batch driver가 다음 header 없이 정상 종료한 동작에서 추론한다. Receipt는 Write·Close 성공이나 C stdio의 EOF/읽기 오류를 별도로 증언하지 않으므로 host/pipe 오류까지 배제하는 직접 EOF 인증으로 부르지 않는다. 실제 실행 진위와 정상 고정 도구·pipe 전제는 graph 밖 provenance 검토와 caller 신뢰 범위다.
+
+실제 수집 전 source·controller·도구·시험 binary·preregistration과 독립 사전 검토를 고정한다. 수집 뒤에는 기존 build9/unit4/control53/assertion36 closure, current native/reference full CST와 capture, graph 밖 새 caller 승인 및 provenance 검토가 필요하다. 수동 검사의 기본 SKIP이나 정적 기대값은 실제 실행 근거가 아니다. 성공도 Windows의 이 사례 세 좌표에 대한 조건부 `STRUCTURAL_ONLY`이며 semantic evaluation, Go 전체 57개 사례, 오류 복구 15개 좌표, 전체 #216의 완료를 뜻하지 않는다.
+
 이 도구는 고정 Tree-sitter 0.27.1의 별도 계측 reference다. Stock CLI full-field parity는 계속 **BLOCKED**이며, 이 도구의 빌드·owned 검사 성공은 전체 `query_semantics` qualification 완료가 아니다. 기존 oracle/replay/qualification revision과 보장 범위는 유지한다.
 
 ## 독립성 및 identity
