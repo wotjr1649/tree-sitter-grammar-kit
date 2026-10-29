@@ -1,8 +1,11 @@
 package kit
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/binary"
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -11,6 +14,67 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
+
+func TestQueryClassificationDefinitionExpired(t *testing.T) {
+	for _, phase := range []string{"before", "during"} {
+		t.Run(phase, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if phase == "before" {
+				cancel()
+			}
+			called := false
+			var result []byte
+			output := filepath.Join(t.TempDir(), "definition-classification-result.json")
+			err := classificationGoDefinitionPublish(t, output, func() ([]byte, error) {
+				err := classificationGoDefinitionDuring(ctx, func() {
+					called = true
+					result = []byte(`{"class":"STRUCTURAL_ONLY"}`)
+					cancel()
+				})
+				return result, err
+			})
+			if err != context.Canceled || called != (phase == "during") {
+				t.Fatal("expired projection was not rejected", phase, called, err)
+			}
+			if _, err := os.Lstat(output); !os.IsNotExist(err) {
+				t.Fatal("expired projection published an output", err)
+			}
+		})
+	}
+}
+
+func TestQueryClassificationDefinitionOutput(t *testing.T) {
+	base, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, assembly, output := filepath.Join(base, "retained-case"), filepath.Join(base, "retained-snapshot"), filepath.Join(base, "new-output")
+	for _, path := range []string{root, assembly, output, filepath.Join(root, "child"), filepath.Join(assembly, "child")} {
+		if err := os.MkdirAll(path, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
+		t.Fatal("separate physical output rejected", err)
+	}
+	for _, path := range []string{"relative", filepath.Join(root, "child"), filepath.Join(assembly, "child"), filepath.Join(base, "absent")} {
+		if err := classificationGoDefinitionOutput(root, assembly, path); err == nil {
+			t.Fatal("unsafe output accepted", path)
+		}
+	}
+	retained := filepath.Join(output, "keep.json")
+	if err := os.WriteFile(retained, []byte("retained"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := classificationGoDefinitionOutput(root, assembly, output); err == nil {
+		t.Fatal("occupied output accepted")
+	}
+	data, err := os.ReadFile(retained)
+	if err != nil || string(data) != "retained" {
+		t.Fatal("prior result changed", err)
+	}
+}
 
 func TestQueryClassificationPositiveBatchRegistration(t *testing.T) {
 	t.Setenv("TSGK_QUERY_CLASSIFICATION_PROFILE", "positive-batch")

@@ -1,5 +1,15 @@
 # 계측 query reference 계약 (#216)
 
+## 승인된 Go compiled metadata의 정의 수준 연결
+
+수동 helper의 `TSGK_QUERY_CLASSIFICATION_STAGE=definitions`는 기존 `positive-batch` 검증 본체를 재사용한다. 외부 caller approval과 같은 guarded run/snapshot에서 eligibility, 독립 full CST/API, native/reference metadata, request/frame·library/compiler 결속 및 별도 public API parity를 확인한 뒤에만 test-only typed 정의 레코드를 만든다. 저장된 `classification-result.json`의 PASS를 신뢰 입력으로 읽는 경로는 없다. 새 public API·CLI 또는 별도 provenance 승인 gate는 추가하지 않는다.
+
+정의 세 개의 ID·정확한 UTF-8 원문·재계산 hash와 완전한 `patterns`, 순서 있는 `capture_names`, 명시적 빈 `predicates:[]`가 anchor·witness·native/reference·query fixture·원장의 유일한 `go/s06-go` 그룹에서 일치해야 `STRUCTURAL_ONLY`로 분류한다. 누락·null metadata를 빈 배열로 바꾸지 않으며 nonempty predicate도 이 분류로 받아들이지 않는다. 고정 원장·qualification 등록부의 원문 hash와 grammar 다섯 pin을 대조하고, 원래 case ID 및 편집별 incremental/fresh 역할로 잠재 좌표를 재구성한다. Go 57 cases·37 edits·94 case steps·131 tree roles는 정의당 131개, 합계 393개 잠재 연결을 만든다. 동일 source를 공유하는 query 동반 case도 제거하지 않는다.
+
+이 결과의 분모는 query 정의 3개다. 잠재 좌표 연결은 해당 정의가 원장에 속함을 검증하며 393회 실행, 사례별 CST/API·capture 일치, runtime eligibility 또는 semantic PASS를 뜻하지 않는다. `query-slot-inventory-r1`의 `STRUCTURAL_CANDIDATE`·`compiled_metadata:UNVERIFIED`, `semantic_required:null`·`NOT_ASSESSED`는 그대로다. r10 predicate-probe 등록과 `full_scope_complete=false`·전체 BLOCKED completion gate에도 합치지 않는다. 관측한 source revision/run/platform과 새 reader revision을 별도로 보존하고 grammar/runtime/compiler·reference/library·승인/graph/witness/registration의 결속을 기록한다. 과거 graph의 재검증은 새 native/reference 관측이 아니다.
+
+출력은 projection을 메모리에서 완성하고 원래 guarded run의 만료 전후 검사를 통과한 정상 반환 뒤에만, retained case 및 assembly/snapshot 밖의 새 물리적 caller-owned 빈 디렉터리에 `O_EXCL`로 쓴다. 만료된 callback은 결과 파일을 게시하지 않는다. 이전 approval·V2 실패·V3 snapshot과 결과를 덮어쓰지 않는다. `TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT`과 `TSGK_QUERY_CLASSIFICATION_READER_REVISION`은 caller가 제공하며 helper의 reader 검사는 40자리 hex 형식만 확인한다. 이 필드 자체는 실행 코드의 인증이 아니다. 결과 채택 시에는 별도의 동결된 reader controller가 실제 commit·source manifest·실행 파일·요청·출력·원 caller return을 외부 pin에 결속해야 한다. 조건부 저장 일관성이라는 한계와 기존 실행 진위·caller 신뢰 전제는 유지한다.
+
 ## Ordinary Go의 첫 single-frame batch probe
 
 수동 분류 helper의 `TSGK_QUERY_CLASSIFICATION_PROFILE=positive-batch`는 기존 등록 `go/s06-go/probe-go-B04-P-6`의 50-byte 정상 source, 편집 없음, API 관측, 세 query를 선택한다. 명시적 profile이 없으면 기존 빈 source Go3 정의 검사를 유지하며, 다른 profile은 거부한다. [고정 사전 기대값](../../src/testdata/query-semantics/go-positive-batch-anchors.json)은 수작업 full CST 25개 node, ABI·metadata, `q.structure`의 function capture 하나와 나머지 두 query의 빈 capture를 소유한다. 원 등록의 `NO_ERROR`, `for_statement`·`block`·`break_statement`와 `for_statement` 범위 `30..47`도 검사한다.

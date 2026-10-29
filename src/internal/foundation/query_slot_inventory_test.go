@@ -326,14 +326,14 @@ func TestQuerySlotGoDefinitionLinks(t *testing.T) {
 	if groups != 1 {
 		t.Fatal("Go ordinary group is missing or duplicated")
 	}
-	// Project definition identity only; compiled metadata is a separate historical observation.
+	// Project definition identity only; guarded compiled observations remain separate.
 	check := func(data []byte) error {
 		var anchors anchorDocument
 		if err := jsonv2.Unmarshal(data, &anchors); err != nil {
 			return err
 		}
 		if anchors.Route != "go" || len(anchors.Queries) != 3 {
-			return fmt.Errorf("Go3 definition denominator changed")
+			return fmt.Errorf("Go definition denominator changed")
 		}
 		seen := map[string]bool{}
 		for _, q := range anchors.Queries {
@@ -364,37 +364,41 @@ func TestQuerySlotGoDefinitionLinks(t *testing.T) {
 		}
 		return nil
 	}
-	data := mustRead(t, filepath.Join(root, "src/testdata/query-semantics/go3-classification-anchors.json"))
-	if err := check(data); err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{"route", "missing", "duplicate", "id", "source-and-hash", "hash"} {
-		t.Run(name, func(t *testing.T) {
-			var changed anchorDocument
-			if err := jsonv2.Unmarshal(data, &changed); err != nil {
+	for _, fixture := range []string{"go3-classification-anchors.json", "go-positive-batch-anchors.json"} {
+		t.Run(fixture, func(t *testing.T) {
+			data := mustRead(t, filepath.Join(root, "src/testdata/query-semantics", fixture))
+			if err := check(data); err != nil {
 				t.Fatal(err)
 			}
-			switch name {
-			case "route":
-				changed.Route = "json"
-			case "missing":
-				changed.Queries = changed.Queries[1:]
-			case "duplicate":
-				changed.Queries[1] = changed.Queries[0]
-			case "id":
-				changed.Queries[0].ID = "unregistered"
-			case "source-and-hash":
-				changed.Queries[0].Source += "\n; changed definition"
-				changed.Queries[0].SHA256 = shaHex([]byte(changed.Queries[0].Source))
-			case "hash":
-				changed.Queries[0].SHA256 = strings.Repeat("0", 64)
-			}
-			bad, err := jsonv2.Marshal(changed)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := check(bad); err == nil {
-				t.Fatal("unbound Go3 definition accepted", name)
+			for _, name := range []string{"route", "missing", "duplicate", "id", "source-and-hash", "hash"} {
+				t.Run(name, func(t *testing.T) {
+					var changed anchorDocument
+					if err := jsonv2.Unmarshal(data, &changed); err != nil {
+						t.Fatal(err)
+					}
+					switch name {
+					case "route":
+						changed.Route = "json"
+					case "missing":
+						changed.Queries = changed.Queries[1:]
+					case "duplicate":
+						changed.Queries[1] = changed.Queries[0]
+					case "id":
+						changed.Queries[0].ID = "unregistered"
+					case "source-and-hash":
+						changed.Queries[0].Source += "\n; changed definition"
+						changed.Queries[0].SHA256 = shaHex([]byte(changed.Queries[0].Source))
+					case "hash":
+						changed.Queries[0].SHA256 = strings.Repeat("0", 64)
+					}
+					bad, err := jsonv2.Marshal(changed)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err := check(bad); err == nil {
+						t.Fatal("unbound Go definition accepted", name)
+					}
+				})
 			}
 		})
 	}

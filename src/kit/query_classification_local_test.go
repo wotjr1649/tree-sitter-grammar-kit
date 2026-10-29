@@ -82,6 +82,8 @@ func TestQueryClassificationGoLocal(t *testing.T) {
 		classificationGoAssemble(t, root, os.Getenv("TSGK_QUERY_CLASSIFICATION_DONOR"))
 	case "verify":
 		classificationGoVerify(t, root, os.Getenv("TSGK_QUERY_CLASSIFICATION_ASSEMBLY"), os.Getenv("TSGK_QUERY_CLASSIFICATION_APPROVAL"))
+	case "definitions":
+		classificationGoVerifyDefinitions(t, root, os.Getenv("TSGK_QUERY_CLASSIFICATION_ASSEMBLY"), os.Getenv("TSGK_QUERY_CLASSIFICATION_APPROVAL"))
 	default:
 		t.Fatal("unknown classification stage", stage)
 	}
@@ -443,6 +445,11 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 }
 
 func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
+	classificationGoVerifyWith(t, root, assembly, approvalPath, nil)
+}
+
+// consume runs while the original guarded run and snapshot are still alive.
+func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath string, consume func(classificationAnchors, classificationPlan, *eligibilitySession, *semanticNativeCache, QueryReferenceEligibilityResult)) {
 	for _, p := range []string{assembly, approvalPath} {
 		if !filepath.IsAbs(p) {
 			t.Fatal("absolute caller approval/assembly required")
@@ -513,8 +520,14 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 	publicCtx, publicCancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
 	defer publicCancel()
 	public, err := VerifyQueryReferenceEligibility(publicCtx, req)
-	if err != nil || public.Assessment != AssessPass || !public.Complete || public.Tuple != core.Tuple || public.Build != core.Build || public.Unit != core.Unit || public.Control != core.Control || public.Assertion != core.Assertion || public.WitnessSHA256 != core.WitnessSHA256 || public.RegistrationSHA256 != core.RegistrationSHA256 || public.GraphSHA256 != core.GraphSHA256 {
+	if err != nil || public.Assessment != AssessPass || !public.Complete || public.Tuple != core.Tuple || public.Build != core.Build || public.Unit != core.Unit || public.Control != core.Control || public.Assertion != core.Assertion || public.WitnessSHA256 != core.WitnessSHA256 || public.RegistrationSHA256 != core.RegistrationSHA256 || public.GraphSHA256 != core.GraphSHA256 || public.ApprovalSHA256 != core.ApprovalSHA256 || public.CatalogueSHA256 != core.CatalogueSHA256 || public.ResultSchema != core.ResultSchema || public.ExecutionStatus != core.ExecutionStatus {
 		t.Fatal("public eligibility parity", err)
+	}
+	if consume != nil {
+		if err := classificationGoDefinitionDuring(r.caller, func() { consume(anchors, plan, s, cache, core) }); err != nil {
+			t.Fatal("guarded definition run expired", err)
+		}
+		return
 	}
 	rows := []map[string]any{}
 	for _, q := range anchors.Queries {
@@ -522,6 +535,79 @@ func classificationGoVerify(t *testing.T, root, assembly, approvalPath string) {
 	}
 	actualJSONWrite(t, filepath.Join(caller, "classification-result.json"), eligibilityJSON(t, map[string]any{"schema": "tsgk-query-classification-local-result/r1", "assessment": AssessPass, "required": 3, "verified": 3, "complete": true, "anchors_sha256": anchors.sha256, "registration_sha256": core.RegistrationSHA256, "witness_sha256": core.WitnessSHA256, "approval_sha256": core.ApprovalSHA256, "graph_sha256": core.GraphSHA256, "definitions": rows, "eligibility": public, "independent_native_reference_cst": "PASS", "scope": "caller-approved conditional definition classification; not semantic EVALUATED or inventory completion"}))
 	t.Logf("guarded independent CST and public eligibility3 verified; conditional %s classification only", anchors.Case)
+}
+
+func classificationGoDefinitionDuring(ctx context.Context, project func()) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	project()
+	return ctx.Err()
+}
+
+func classificationGoDefinitionPublish(t *testing.T, output string, produce func() ([]byte, error)) error {
+	t.Helper()
+	data, err := produce()
+	if err != nil {
+		return err
+	}
+	actualJSONWrite(t, output, data)
+	return nil
+}
+
+func classificationGoDefinitionOutput(root, assembly, output string) error {
+	if !filepath.IsAbs(output) {
+		return fmt.Errorf("absolute separate definition output required")
+	}
+	real, err := filepath.EvalSymlinks(output)
+	if err != nil || !strings.EqualFold(filepath.Clean(real), filepath.Clean(output)) {
+		return fmt.Errorf("definition output must be a physical caller-owned directory")
+	}
+	entries, err := os.ReadDir(output)
+	if err != nil || len(entries) != 0 {
+		return fmt.Errorf("definition output must be new and empty")
+	}
+	for _, input := range []string{root, assembly} {
+		physical, err := filepath.EvalSymlinks(input)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(physical, real)
+		if err != nil || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))) {
+			return fmt.Errorf("definition output overlaps retained observation inputs")
+		}
+	}
+	return nil
+}
+
+func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPath string) {
+	t.Helper()
+	output := os.Getenv("TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT")
+	reader := os.Getenv("TSGK_QUERY_CLASSIFICATION_READER_REVISION")
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "positive-batch" || !hex40.MatchString(reader) {
+		t.Fatal("definition projection requires the fixed positive profile and separately pinned reader revision")
+	}
+	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
+		t.Fatal(err)
+	}
+	err := classificationGoDefinitionPublish(t, filepath.Join(output, "definition-classification-result.json"), func() ([]byte, error) {
+		var result []byte
+		classificationGoVerifyWith(t, root, assembly, approvalPath, func(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult) {
+			record, err := classificationGoDefinitionProjection(anchors, plan, s, cache, core,
+				actualJSONRead(t, "../contracts/query-slot-inventory-r1.json"),
+				actualJSONRead(t, "../contracts/qualification-c1.json"),
+				actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
+			if err != nil {
+				t.Fatal("guarded definition projection", err)
+			}
+			result = eligibilityJSON(t, record)
+		})
+		return result, nil
+	})
+	if err != nil {
+		t.Fatal("definition publication", err)
+	}
+	t.Log("same guarded snapshot: 3 definitions classified, 393 potential links; no case or semantic completion")
 }
 
 func classificationGoPlanMatches(data []byte, expectedSHA256 string) bool {
