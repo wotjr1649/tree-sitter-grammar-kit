@@ -20,6 +20,7 @@ import (
 const classificationGoAnchorsSHA = "096785af5cbd09ece1f649ab7ea41648f11b45c751386636238537787bec0f19"
 const classificationPositiveAnchorsSHA = "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288"
 const classificationPositiveAPISHA = "34eaae3b1b620c426fdc3156b746b084c14439fef42e9f0fd505e2d042c86658"
+const classificationCSharpAnchorsSHA = "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b"
 const classificationDonorRegistrationSHA = "4032145988f49f7092830e5f30e759fd41811c41b3a690f3f6a80cfc89c69055"
 
 type classificationAnchors struct {
@@ -53,6 +54,7 @@ type classificationAnchors struct {
 }
 
 type classificationPlan struct {
+	NativeContext           string                    `json:"native_context,omitempty"`
 	APIAnchorsSHA256        string                    `json:"api_anchors_sha256,omitempty"`
 	Schema                  string                    `json:"schema"`
 	SourceRevision          string                    `json:"source_revision"`
@@ -67,6 +69,20 @@ type classificationPlan struct {
 
 // These stages retain caller inputs; neither planning nor assembly issues approval.
 func TestQueryClassificationGoLocal(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") == "csharp15-empty" {
+		t.Skip("C# classification uses its explicit local entry point")
+	}
+	classificationLocal(t)
+}
+
+func TestQueryClassificationCSharpLocal(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "csharp15-empty" {
+		t.Skip("explicit C# classification profile required")
+	}
+	classificationLocal(t)
+}
+
+func classificationLocal(t *testing.T) {
 	stage := os.Getenv("TSGK_QUERY_CLASSIFICATION_STAGE")
 	if stage == "" {
 		t.Skip("explicit preregistered local classification is required")
@@ -93,29 +109,38 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 	t.Helper()
 	name, expectedSHA := "go3-classification-anchors.json", classificationGoAnchorsSHA
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if profile == "positive-batch" {
+	route, definitions := "go", 3
+	switch profile {
+	case "":
+	case "positive-batch":
 		name, expectedSHA = "go-positive-batch-anchors.json", classificationPositiveAnchorsSHA
-	} else if profile != "" {
+	case "csharp15-empty":
+		name, expectedSHA, route, definitions = "csharp15-classification-anchors.json", classificationCSharpAnchorsSHA, "csharp", 15
+	default:
 		t.Fatal("unknown closed classification profile", profile)
 	}
 	data := actualJSONRead(t, "../testdata/query-semantics/"+name)
 	if digestHex(data) != expectedSHA {
-		t.Fatal("reviewed Go anchors changed")
+		t.Fatal("reviewed classification anchors changed")
 	}
 	var a classificationAnchors
 	if err := jsonv2.Unmarshal(data, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal(err)
 	}
-	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != "go" || a.Source.Bytes != uint64(len(a.Source.UTF8)) || a.Source.SHA256 != digestHex([]byte(a.Source.UTF8)) || len(a.Queries) != 3 || len(a.Required) != 3 || len(a.Edits) != 0 {
-		t.Fatal("independent Go definition denominator")
+	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != route || a.Source.Bytes != uint64(len(a.Source.UTF8)) || a.Source.SHA256 != digestHex([]byte(a.Source.UTF8)) || len(a.Queries) != definitions || len(a.Required) != definitions || len(a.Edits) != 0 {
+		t.Fatal("independent definition denominator or source changed")
 	}
 	if profile == "" {
 		if a.Source.Bytes != 0 || len(a.Nodes) != 1 || a.Case != "" || a.API || a.Operation != "" || a.DriverMode != "" || a.Workload != "" || len(a.Expect) != 0 {
 			t.Fatal("legacy Go3 profile changed")
 		}
 		a.Case, a.Operation, a.DriverMode, a.Workload = "go3", "native-query", "single", "go3-definition-classification"
-	} else if a.Case != "probe-go-B04-P-6" || !a.API || a.Operation != "native-query-batch" || a.DriverMode != "batch" || a.Workload != "go-positive-single-frame-batch" || a.Source.Bytes != 50 || len(a.Nodes) != 25 || len(a.Expect) != 1 {
-		t.Fatal("positive batch profile changed")
+	} else if profile == "positive-batch" {
+		if a.Case != "probe-go-B04-P-6" || !a.API || a.Operation != "native-query-batch" || a.DriverMode != "batch" || a.Workload != "go-positive-single-frame-batch" || a.Source.Bytes != 50 || len(a.Nodes) != 25 || len(a.Expect) != 1 {
+			t.Fatal("positive batch profile changed")
+		}
+	} else if a.Case != "csharp15-empty-definitions" || a.API || a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != "csharp15-empty-definition-single-frame" || a.Source.Bytes != 0 || len(a.Nodes) != 1 || len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" {
+		t.Fatal("C# empty single profile changed")
 	}
 	if a.API {
 		apiData := actualJSONRead(t, "../testdata/query-semantics/go-positive-batch-api.json")
@@ -131,8 +156,82 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 	return a, data
 }
 
+func (a classificationAnchors) nativeContext() string {
+	switch a.Route {
+	case "go":
+		return "full-input-utf8/r2"
+	case "csharp":
+		return semanticPagedContext
+	default:
+		return ""
+	}
+}
+
+func (a classificationAnchors) nativeSymbol() string {
+	switch a.Route {
+	case "go":
+		return "tree_sitter_go"
+	case "csharp":
+		return "tree_sitter_c_sharp"
+	default:
+		return ""
+	}
+}
+
+func (a classificationAnchors) libraryName() string { return a.Route + ".dll" }
+
+func classificationPlanContextMatches(a classificationAnchors, plan classificationPlan) bool {
+	if a.Route == "csharp" {
+		return a.sha256 == classificationCSharpAnchorsSHA && plan.NativeContext == semanticPagedContext
+	}
+	return a.Route == "go" && plan.NativeContext == ""
+}
+
+func classificationNativePrefix(a classificationAnchors) string {
+	if a.Route == "csharp" {
+		return "oracle/"
+	}
+	return "current/native/"
+}
+
+func classificationGrammarContext(s *eligibilitySession, a classificationAnchors, plan classificationPlan) error {
+	if s.reg.Native == nil || s.reg.Context != a.nativeContext() || !classificationPlanContextMatches(a, plan) || len(s.reg.Native.Grammar) != len(plan.Grammar) {
+		return fmt.Errorf("classification grammar context differs")
+	}
+	for _, g := range plan.Grammar {
+		pin, exists := s.reg.Native.Grammar[g.Path]
+		inv := s.invocations[s.reg.Native.InvocationID]
+		if !exists || inv == nil || pin.NodeID != inv.Node.ID {
+			return fmt.Errorf("classification grammar owner differs: %s", g.Path)
+		}
+		if a.nativeContext() == semanticPagedContext && g.Role == "parser" {
+			if pin.Member.Role != "grammar-paged-descriptor" {
+				return fmt.Errorf("classification parser descriptor missing")
+			}
+			data, ok, err := s.member(&pin)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return fmt.Errorf("guarded parser descriptor absent")
+			}
+			var d semanticParserDescriptor
+			if err := s.b.decode("classification/parser-descriptor", data, &d, true); err != nil {
+				return err
+			}
+			if d.Schema != "tsgk-query-parser-pages/r1" || d.Owner != "D" || d.Logical.Path != g.Path || d.Logical.Role != "grammar-parser" || d.Logical.Bytes != g.Bytes || d.Logical.SHA256 != g.SHA256 {
+				return fmt.Errorf("classification logical parser pin differs")
+			}
+			// Eligibility already validated descriptor ownership, all parts, and the logical hash in this snapshot.
+		} else if pin.Member.Bytes != g.Bytes || pin.Member.SHA256 != g.SHA256 || pin.Member.Role != "grammar-"+g.Role {
+			return fmt.Errorf("classification grammar pin differs: %s", g.Path)
+		}
+	}
+	return nil
+}
+
 func classificationGoRegistration(a classificationAnchors) QueryWitnessRegistration {
-	w := QueryWitnessRegistration{Schema: queryEligibilityWitnessSchema, Policy: "tsgk-predicates/r1", Case: a.Case, Route: "go", Platform: "windows/amd64", Role: "owned", Encoding: EncodingUTF8, Input: NativeInput{Path: "source.bin", Role: "case", Bytes: a.Source.Bytes, SHA256: a.Source.SHA256}, Edits: []Edit{}, Queries: []QueryWitnessQuery{}, Required: a.Required}
+	w := QueryWitnessRegistration{Schema: queryEligibilityWitnessSchema, Policy: "tsgk-predicates/r1", Case: a.Case, Route: a.Route, Platform: "windows/amd64", Role: "owned", Encoding: EncodingUTF8, Input: NativeInput{Path: "source.bin", Role: "case", Bytes: a.Source.Bytes, SHA256: a.Source.SHA256}, Edits: []Edit{}, Queries: []QueryWitnessQuery{}, Required: a.Required}
 	for _, q := range a.Queries {
 		metadata := q.Metadata
 		w.Queries = append(w.Queries, QueryWitnessQuery{ID: q.ID, Source: q.Source, Metadata: &metadata})
@@ -177,6 +276,9 @@ func classificationGoPlan(t *testing.T, root string) {
 	}
 	anchors, data := classificationGoAnchors(t)
 	plan := classificationPlan{Schema: "tsgk-query-classification-plan/r1", SourceRevision: os.Getenv("TSGK_QUERY_CLASSIFICATION_SOURCE"), RunID: os.Getenv("TSGK_QUERY_CLASSIFICATION_RUN"), AnchorsSHA256: digestHex(data), APIAnchorsSHA256: anchors.apiSHA, DonorRegistrationSHA256: classificationDonorRegistrationSHA}
+	if anchors.Route == "csharp" {
+		plan.NativeContext = anchors.nativeContext()
+	}
 	plan.CompilerSHA256 = os.Getenv("TSGK_QUERY_CLASSIFICATION_COMPILER_SHA256")
 	if err := jsonv2.Unmarshal([]byte(os.Getenv("TSGK_QUERY_CLASSIFICATION_LIBRARY_REQUEST")), &plan.LibraryRequest, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal("preregistered compiler request", err)
@@ -184,8 +286,8 @@ func classificationGoPlan(t *testing.T, root string) {
 	if !hex64.MatchString(plan.CompilerSHA256) || eligibilityValidateRequest(plan.LibraryRequest, "go-library") != nil || !eligibilityAbsolutePath(plan.LibraryRequest.Path, "windows/amd64") || plan.LibraryRequest.Dir != root || !plan.LibraryRequest.Memory.Hard || plan.LibraryRequest.Memory.Bytes != 4<<30 || plan.LibraryRequest.Wall != 120e9 || plan.LibraryRequest.Grace != 2e9 || plan.LibraryRequest.StdoutBytes != 16<<20 || plan.LibraryRequest.StderrBytes != 4<<20 {
 		t.Fatal("compiler preregistration identity or limits")
 	}
-	grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", "go")
-	if !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, []string{"-shared", "-O0", "-std=gnu11", "-I", filepath.Join(grammarRoot, "src"), filepath.Join(grammarRoot, "src", "parser.c"), filepath.Join(grammarRoot, "src", "scanner.c"), "-o", filepath.Join(root, "library", "go.dll")}) {
+	grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
+	if !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, []string{"-shared", "-O0", "-std=gnu11", "-I", filepath.Join(grammarRoot, "src"), filepath.Join(grammarRoot, "src", "parser.c"), filepath.Join(grammarRoot, "src", "scanner.c"), "-o", filepath.Join(root, "library", anchors.libraryName())}) {
 		t.Fatal("compiler grammar inputs or output changed")
 	}
 	if !eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) {
@@ -199,7 +301,7 @@ func classificationGoPlan(t *testing.T, root string) {
 	}
 	actualJSONDecode(t, "../contracts/native-routes.json", &registry)
 	for _, row := range registry.Routes {
-		if row.Route == "go" {
+		if row.Route == anchors.Route {
 			plan.Grammar = row.Files
 		}
 	}
@@ -224,7 +326,7 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 	}
 	anchors, _ := classificationGoAnchors(t)
 	plan := classificationGoReadPlan(t, root)
-	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA {
+	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA || !classificationPlanContextMatches(anchors, plan) {
 		t.Fatal("preregistration changed")
 	}
 	var captured struct {
@@ -259,7 +361,7 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 		}
 	}
 	a := &actualJSONAssembly{t: t, evidence: filepath.Join(assembly, "evidence"), workload: anchors.Workload, nodes: map[string]EvidenceNode{}, cohortSource: map[string]string{"current": plan.SourceRevision},
-		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: "full-input-utf8/r2", CatalogueSHA256: old.CatalogueSHA256, Build: old.Build, Control: old.Control, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, OwnedMembers: []eligibilityMember{}, Observations: []eligibilityObservation{}}}
+		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: anchors.nativeContext(), CatalogueSHA256: old.CatalogueSHA256, Build: old.Build, Control: old.Control, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, OwnedMembers: []eligibilityMember{}, Observations: []eligibilityObservation{}}}
 	oldNodes := map[string]EvidenceNode{}
 	for _, n := range graph.Nodes {
 		oldNodes[n.ID] = n
@@ -314,7 +416,7 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 	a.reg.Graph = ReplayMember{Path: "evidence.json", Role: "evidence-graph", Bytes: uint64(len(data)), SHA256: digestHex(data)}
 	actualJSONWrite(t, filepath.Join(a.evidence, "evidence.json"), data)
 	policyID := "actual-go3-classification"
-	if anchors.DriverMode == "batch" {
+	if anchors.DriverMode == "batch" || anchors.Route == "csharp" {
 		policyID = "actual-" + anchors.Workload
 	}
 	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": policyID, "evidence_sha256": digestHex(data), "required": required, "carry_forward": []any{}})
@@ -327,6 +429,9 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, anchors classificationAnchors, plan classificationPlan) {
 	nativeRoot := filepath.Join(root, "native")
 	var captured struct {
+		Route          string         `json:"route"`
+		Definitions    uint64         `json:"structural_definitions"`
+		SemanticPass   bool           `json:"semantic_pass"`
 		Schema         string         `json:"schema"`
 		AnchorsSHA256  string         `json:"anchors_sha256"`
 		BuildIdentity  string         `json:"build_identity"`
@@ -335,7 +440,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 		RawSHA256      string         `json:"raw_sha256"`
 	}
 	actualJSONDecode(t, filepath.Join(nativeRoot, "native-complete.json"), &captured)
-	if captured.Schema != "tsgk-query-classification-native-capture/r1" || captured.AnchorsSHA256 != anchors.sha256 {
+	if captured.Schema != "tsgk-query-classification-native-capture/r1" || captured.AnchorsSHA256 != anchors.sha256 || captured.Route != anchors.Route || captured.Definitions != uint64(len(anchors.Queries)) || captured.SemanticPass {
 		t.Fatal("native capture not bound to preregistration")
 	}
 	var capture semanticProcessCapture
@@ -347,7 +452,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	if err != nil {
 		t.Fatal(err)
 	}
-	queries := make([]OracleQuery, 0, 3)
+	queries := make([]OracleQuery, 0, len(anchors.Queries))
 	for _, q := range anchors.Queries {
 		queries = append(queries, OracleQuery{ID: q.ID, Source: q.Source})
 	}
@@ -363,7 +468,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 		if uint64(len(data)) != pin.Bytes || digestHex(data) != pin.SHA256 {
 			t.Fatal("native capture pin", pin.Path)
 		}
-		pins[pin.Path] = a.add(n.ID, "current/native/"+pin.Path, pin.Role, data)
+		pins[pin.Path] = a.add(n.ID, classificationNativePrefix(anchors)+pin.Path, pin.Role, data)
 	}
 	raw := actualJSONRead(t, filepath.Join(nativeRoot, "raw", anchors.Case+".json"))
 	if digestHex(raw) != captured.RawSHA256 {
@@ -391,13 +496,21 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	grammar := map[string]eligibilityMember{}
 	for i, row := range build.Closure {
 		if strings.HasPrefix(row.Role, "grammar-") {
-			grammar[row.Path] = pins[fmt.Sprintf("capture/build-input-%05d.bin", i)]
+			name := fmt.Sprintf("capture/build-input-%05d.bin", i)
+			if anchors.nativeContext() == semanticPagedContext && row.Role == "grammar-parser" {
+				name = fmt.Sprintf("capture/build-input-%05d.pages.json", i)
+			}
+			pin, exists := pins[name]
+			if !exists {
+				t.Fatal("native grammar capture member absent", name)
+			}
+			grammar[row.Path] = pin
 		}
 	}
 	requestData := actualJSONRead(t, filepath.Join(root, "library", "request.json"))
 	receiptData := actualJSONRead(t, filepath.Join(root, "library", "receipt.json"))
 	compilerData := actualJSONRead(t, plan.LibraryRequest.Path)
-	libraryData := actualJSONRead(t, filepath.Join(root, "library", "go.dll"))
+	libraryData := actualJSONRead(t, filepath.Join(root, "library", anchors.libraryName()))
 	if err := classificationGoLibrary(semanticTestBudget(t), plan, requestData, receiptData, compilerData, libraryData); err != nil {
 		t.Fatal("library compiler capture", err)
 	}
@@ -406,7 +519,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	a.add("go-library-build", "current/library-request.json", "compiler-request", requestData)
 	a.add("go-library-build", "current/library-receipt.json", "compiler-receipt", receiptData)
 	a.add("go-library-build", "current/library-compiler.bin", "compiler", compilerData)
-	a.reg.Native = &eligibilityNative{InvocationID: n.ID, Source: source, BuildManifest: pins["capture/build-manifest.txt"], ReferenceLibrary: &library, Symbol: "tree_sitter_go", Grammar: grammar}
+	a.reg.Native = &eligibilityNative{InvocationID: n.ID, Source: source, BuildManifest: pins["capture/build-manifest.txt"], ReferenceLibrary: &library, Symbol: anchors.nativeSymbol(), Grammar: grammar}
 	request := a.add(n.ID, "current/native-expected-request.json", "native-request", eligibilityJSON(t, expected))
 	processPin := pins[capture.Process.Path]
 	inv := eligibilityInvocation{ID: n.ID, Kind: "NATIVE_DRIVER", CohortID: "current", CatalogueID: n.ID, Node: QueryReferenceNode{ID: n.ID, Identities: n.Identities}, Request: &request, Response: &response, Process: &processPin, Executable: &executable, ExecutablePath: captured.ExecutablePath, ApprovedRequest: eligibilityJSON(t, expected), Inputs: map[string]eligibilityInput{"source": {Kind: "PINNED", MemberPin: &source, ContentBasis: "PRESERVED_ORIGINAL"}, "library": {Kind: "NOT_APPLICABLE"}}}
@@ -427,7 +540,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 			t.Fatal(err)
 		}
 		ri.ExecutablePath = spec.Path
-		if len(spec.Args) != 6 || spec.Args[1] != "tree_sitter_go" || spec.Args[4] != q.ID || spec.Args[5] != library.Member.SHA256 {
+		if len(spec.Args) != 6 || spec.Args[1] != anchors.nativeSymbol() || spec.Args[4] != q.ID || spec.Args[5] != library.Member.SHA256 {
 			t.Fatal("reference argv changed")
 		}
 		ri.Inputs["library"] = actualJSONPinned(library, 0, spec.Args[0], "PRESERVED_ORIGINAL")
@@ -457,7 +570,7 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	}
 	anchors, _ := classificationGoAnchors(t)
 	plan := classificationGoReadPlan(t, root)
-	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA {
+	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || !classificationPlanContextMatches(anchors, plan) {
 		t.Fatal("classification preregistration changed")
 	}
 	caller := filepath.Join(assembly, "caller")
@@ -472,27 +585,27 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	cache := &semanticNativeCache{}
 	scope := &eligibilityScope{r: r, native: cache}
 	core, err := verifyQueryReferenceEligibilityInRun(r.caller, req, scope)
-	if err != nil || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: 3, Verified: 3}) {
+	if err != nil || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: uint64(len(anchors.Queries)), Verified: uint64(len(anchors.Queries))}) {
 		t.Fatal("eligibility not complete", err, core.Findings)
 	}
 	if !cache.ready || len(cache.checked) != 1 || CompareTrees(cache.checked[0].Incremental.Nodes, anchors.Nodes) != nil {
 		t.Fatal("guarded native independent CST")
 	}
 	s := scope.session
-	if !classificationGoWitnessMatches(anchors, s.witness.QueryWitnessRegistration) || s.witness.Native.ProducerABI != anchors.ABI || s.witness.Native.ObservationRunID != plan.RunID || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.approval.Candidate.SourceRevision != plan.SourceRevision || s.approval.Candidate.Platform != "windows/amd64" || s.approval.Candidate.Run != plan.RunID || s.approval.Candidate.Attempt != 1 || s.reg.Native == nil || s.reg.Native.Symbol != "tree_sitter_go" || len(s.reg.Native.Grammar) != len(plan.Grammar) {
+	if !classificationGoWitnessMatches(anchors, s.witness.QueryWitnessRegistration) || s.witness.Native.ProducerABI != anchors.ABI || s.witness.Native.ObservationRunID != plan.RunID || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.approval.Candidate.SourceRevision != plan.SourceRevision || s.approval.Candidate.Platform != "windows/amd64" || s.approval.Candidate.Run != plan.RunID || s.approval.Candidate.Attempt != 1 || s.reg.Native == nil || s.reg.Native.Symbol != anchors.nativeSymbol() || s.reg.Context != anchors.nativeContext() || len(s.reg.Native.Grammar) != len(plan.Grammar) {
 		t.Fatal("classification of an unrelated approved workload")
 	}
-	for _, g := range plan.Grammar {
-		m, ok := s.reg.Native.Grammar[g.Path]
-		if !ok || m.Member.Bytes != g.Bytes || m.Member.SHA256 != g.SHA256 || m.Member.Role != "grammar-"+g.Role {
-			t.Fatal("classification grammar context", g.Path)
-		}
+	if err := classificationGrammarContext(s, anchors, plan); err != nil {
+		t.Fatal(err)
 	}
 	if err := classificationGoFrames(s, anchors, plan); err != nil {
 		t.Fatal(err)
 	}
 	if !classificationGoLibraryNodeMatches(s.nodes["go-library-build"], plan, anchors.Workload) {
 		t.Fatal("guarded library node contradicts preregistration or compiler receipt")
+	}
+	if !classificationLibraryMatches(s) {
+		t.Fatal("reference library differs from the guarded compiler output")
 	}
 	readLibrary := func(path string) []byte {
 		t.Helper()
@@ -531,10 +644,10 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	}
 	rows := []map[string]any{}
 	for _, q := range anchors.Queries {
-		rows = append(rows, map[string]any{"route": "go", "role": "owned", "platform": "windows/amd64", "query": q.ID, "query_sha256": q.SHA256, "class": "STRUCTURAL_ONLY", "assessment": AssessPass, "semantic_evaluated": false})
+		rows = append(rows, map[string]any{"route": anchors.Route, "role": "owned", "platform": "windows/amd64", "query": q.ID, "query_sha256": q.SHA256, "class": "STRUCTURAL_ONLY", "assessment": AssessPass, "semantic_evaluated": false})
 	}
-	actualJSONWrite(t, filepath.Join(caller, "classification-result.json"), eligibilityJSON(t, map[string]any{"schema": "tsgk-query-classification-local-result/r1", "assessment": AssessPass, "required": 3, "verified": 3, "complete": true, "anchors_sha256": anchors.sha256, "registration_sha256": core.RegistrationSHA256, "witness_sha256": core.WitnessSHA256, "approval_sha256": core.ApprovalSHA256, "graph_sha256": core.GraphSHA256, "definitions": rows, "eligibility": public, "independent_native_reference_cst": "PASS", "scope": "caller-approved conditional definition classification; not semantic EVALUATED or inventory completion"}))
-	t.Logf("guarded independent CST and public eligibility3 verified; conditional %s classification only", anchors.Case)
+	actualJSONWrite(t, filepath.Join(caller, "classification-result.json"), eligibilityJSON(t, map[string]any{"schema": "tsgk-query-classification-local-result/r1", "assessment": AssessPass, "required": len(anchors.Queries), "verified": len(anchors.Queries), "complete": true, "anchors_sha256": anchors.sha256, "registration_sha256": core.RegistrationSHA256, "witness_sha256": core.WitnessSHA256, "approval_sha256": core.ApprovalSHA256, "graph_sha256": core.GraphSHA256, "definitions": rows, "eligibility": public, "independent_native_reference_cst": "PASS", "scope": "caller-approved conditional definition classification; not semantic EVALUATED or inventory completion"}))
+	t.Logf("guarded independent CST and public eligibility%d verified; conditional %s classification only", len(anchors.Queries), anchors.Case)
 }
 
 func classificationGoDefinitionDuring(ctx context.Context, project func()) error {
@@ -584,22 +697,35 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 	t.Helper()
 	output := os.Getenv("TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT")
 	reader := os.Getenv("TSGK_QUERY_CLASSIFICATION_READER_REVISION")
-	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "positive-batch" || !hex40.MatchString(reader) {
-		t.Fatal("definition projection requires the fixed positive profile and separately pinned reader revision")
+	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
+	if (profile != "positive-batch" && profile != "csharp15-empty") || !hex40.MatchString(reader) {
+		t.Fatal("definition projection requires a fixed reviewed profile and separately pinned reader revision")
 	}
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
 		t.Fatal(err)
 	}
+	var definitions, links uint64
 	err := classificationGoDefinitionPublish(t, filepath.Join(output, "definition-classification-result.json"), func() ([]byte, error) {
 		var result []byte
 		classificationGoVerifyWith(t, root, assembly, approvalPath, func(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult) {
-			record, err := classificationGoDefinitionProjection(anchors, plan, s, cache, core,
-				actualJSONRead(t, "../contracts/query-slot-inventory-r1.json"),
-				actualJSONRead(t, "../contracts/qualification-c1.json"),
-				actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
+			inventoryData := actualJSONRead(t, "../contracts/query-slot-inventory-r1.json")
+			qualificationData := actualJSONRead(t, "../contracts/qualification-c1.json")
+			var record classificationGoDefinitionProjectionResult
+			var err error
+			if anchors.Route == "csharp" {
+				inputs := classificationCSharpDefinitionQueryInputs{QueryFile: actualJSONRead(t, "../testdata/native/queries/csharp.json"), FactQueryPack: actualJSONRead(t, "../contracts/fact-query-pack.json")}
+				queryData, encodeErr := jsonv2.Marshal(inputs)
+				if encodeErr != nil {
+					t.Fatal(encodeErr)
+				}
+				record, err = classificationCSharpDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, reader)
+			} else {
+				record, err = classificationGoDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
+			}
 			if err != nil {
 				t.Fatal("guarded definition projection", err)
 			}
+			definitions, links = record.Inventory.Definitions, record.Inventory.PotentialQueryTreeRoles
 			result = eligibilityJSON(t, record)
 		})
 		return result, nil
@@ -607,7 +733,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 	if err != nil {
 		t.Fatal("definition publication", err)
 	}
-	t.Log("same guarded snapshot: 3 definitions classified, 393 potential links; no case or semantic completion")
+	t.Logf("same guarded snapshot: %d definitions classified, %d potential links; no case or semantic completion", definitions, links)
 }
 
 func classificationGoPlanMatches(data []byte, expectedSHA256 string) bool {
@@ -682,7 +808,7 @@ func TestQueryClassificationFrozenBindings(t *testing.T) {
 }
 
 func classificationGoRequestMatches(request semanticNativeRequest, args []string, a classificationAnchors, plan classificationPlan, producer string) bool {
-	if request.Protocol != "tsgk-native/r4" || request.ID != a.Case || !slices.Equal(args, []string{a.DriverMode}) || request.Encoding != EncodingUTF8 || request.Output != OutputTree || request.Limits != semanticLimitsFor(NativeOperations()[a.Operation]) || request.API != a.API || !bytes.Equal(request.source, []byte(a.Source.UTF8)) || len(request.edits) != 0 || len(request.Points) != 0 || len(request.Declarations) != 0 || len(request.Ranges) != 0 || len(request.queries) != 3 || request.ReuseObservation != reuseobs.Policy || request.ObservationRunID != plan.RunID || request.ObservationProducerSHA256 != producer || request.ObservationHistoryStart != 0 {
+	if request.Protocol != "tsgk-native/r4" || request.ID != a.Case || !slices.Equal(args, []string{a.DriverMode}) || request.Encoding != EncodingUTF8 || request.Output != OutputTree || request.Limits != semanticLimitsFor(NativeOperations()[a.Operation]) || request.API != a.API || !bytes.Equal(request.source, []byte(a.Source.UTF8)) || len(request.edits) != 0 || len(request.Points) != 0 || len(request.Declarations) != 0 || len(request.Ranges) != 0 || len(request.queries) != len(a.Queries) || request.ReuseObservation != reuseobs.Policy || request.ObservationRunID != plan.RunID || request.ObservationProducerSHA256 != producer || request.ObservationHistoryStart != 0 {
 		return false
 	}
 	for i, q := range a.Queries {
@@ -707,8 +833,49 @@ func classificationGoNativeNodeMatches(node EvidenceNode, a classificationAnchor
 	return node.ID == id && node.Kind == "run" && node.ExecutionStatus == StatusCompleted && node.Assessment == AssessPass && node.EvidenceMode == ModeNewRun && reflect.DeepEqual(node.Identities, identities)
 }
 
+func classificationLibraryMatches(s *eligibilitySession) bool {
+	if s == nil || s.reg.Native == nil || s.reg.Native.ReferenceLibrary == nil {
+		return false
+	}
+	library, exists := s.owned["current/go.dll"]
+	return exists && library.NodeID == "go-library-build" && library.Member.Role == "runtime-library" && *s.reg.Native.ReferenceLibrary == library
+}
+
+func classificationCaptureStderr(a classificationAnchors, capture semanticProcessCapture, process eligibilityExecution, read func(*ReplayMember) ([]byte, error)) error {
+	if capture.Stderr == nil {
+		if a.Route == "csharp" || process.StderrBytes != 0 {
+			return fmt.Errorf("guarded stderr member missing")
+		}
+		return nil
+	}
+	if capture.Stderr.Role != "stderr" || capture.Stderr.Bytes != process.StderrBytes {
+		return fmt.Errorf("guarded stderr pin differs from process byte count")
+	}
+	data, err := read(capture.Stderr)
+	if err != nil || uint64(len(data)) != process.StderrBytes {
+		return fmt.Errorf("guarded stderr member differs from process: %v", err)
+	}
+	return nil
+}
+
+func classificationNativeInvocation(s *eligibilitySession, a classificationAnchors) (*eligibilityInvocation, error) {
+	id := "native-" + a.Case
+	if s == nil || s.reg.Native == nil || s.reg.Native.InvocationID != id {
+		return nil, fmt.Errorf("guarded native invocation differs from profile")
+	}
+	inv := s.invocations[id]
+	if inv == nil || inv.ID != id || inv.Node.ID != id || inv.Kind != "NATIVE_DRIVER" {
+		return nil, fmt.Errorf("guarded native invocation differs from profile")
+	}
+	return inv, nil
+}
+
 func classificationGoFrames(s *eligibilitySession, a classificationAnchors, plan classificationPlan) error {
 	label, id := a.Case, "native-"+a.Case
+	inv, err := classificationNativeInvocation(s, a)
+	if err != nil {
+		return err
+	}
 	w, op := s.witness.Native, NativeOperations()[a.Operation]
 	if w.Protocol != "tsgk-native/r4" || w.RequestID != a.Case || w.API != a.API || w.NodeLimit != op.Nodes || len(w.Points) != 0 || w.HistoryStart != 0 {
 		return fmt.Errorf("guarded native expectation differs from profile")
@@ -719,7 +886,7 @@ func classificationGoFrames(s *eligibilitySession, a classificationAnchors, plan
 	if !classificationGoNativeNodeMatches(s.nodes[id], a, plan, w.ExecutableSHA256) {
 		return fmt.Errorf("guarded native node differs from profile")
 	}
-	path := "current/native/capture/" + label + ".json"
+	path := classificationNativePrefix(a) + "capture/" + label + ".json"
 	pin, exists := s.owned[path]
 	if !exists || pin.NodeID != id || pin.Member.Role != "capture" {
 		return fmt.Errorf("guarded process capture owner differs")
@@ -734,7 +901,7 @@ func classificationGoFrames(s *eligibilitySession, a classificationAnchors, plan
 	}
 	read := func(pin *ReplayMember) ([]byte, error) {
 		mapped := *pin
-		mapped.Path = "current/native/" + mapped.Path
+		mapped.Path = classificationNativePrefix(a) + mapped.Path
 		data, ok, e := s.member(&eligibilityMember{NodeID: "native-" + a.Case, Member: mapped})
 		if e != nil || !ok {
 			return nil, fmt.Errorf("guarded frame member %s: %v", mapped.Path, e)
@@ -767,8 +934,7 @@ func classificationGoFrames(s *eligibilitySession, a classificationAnchors, plan
 	if e != nil {
 		return e
 	}
-	inv := s.invocations["native-"+a.Case]
-	if inv == nil || inv.Response == nil || inv.Process == nil {
+	if inv.Response == nil || inv.Process == nil {
 		return fmt.Errorf("native invocation absent")
 	}
 	raw, ok, e := s.member(inv.Response)
@@ -783,7 +949,7 @@ func classificationGoFrames(s *eligibilitySession, a classificationAnchors, plan
 	if e != nil || !ok || !bytes.Equal(process, capturedProcess) {
 		return fmt.Errorf("guarded process differs from invocation: %v", e)
 	}
-	return nil
+	return classificationCaptureStderr(a, capture, s.semantic.record.process, read)
 }
 
 func classificationGoProcessSpec(capture semanticCaptureSpec) (eligibilityProcessRequest, error) {

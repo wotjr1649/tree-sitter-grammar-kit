@@ -204,12 +204,13 @@ func TestQueryClassificationBatchFrameBindings(t *testing.T) {
 
 func TestQueryClassificationBatchGuardedCapture(t *testing.T) {
 	t.Setenv("TSGK_QUERY_CLASSIFICATION_PROFILE", "positive-batch")
-	for _, mismatch := range []string{"", "stdout", "process", "witness-api", "witness-node-limit", "witness-points", "api-child-count", "api-row-order", "api-missing", "memory", "wall", "grace", "stdout-limit", "stderr-limit", "env", "interactive", "descriptor-owner", "node-policy", "node-workload", "node-tool", "node-input", "node-query", "node-source", "node-comparator", "node-protocol", "node-platform", "node-run", "node-attempt"} {
+	for _, mismatch := range []string{"", "stdout", "process", "witness-api", "witness-node-limit", "witness-points", "api-child-count", "api-row-order", "api-missing", "memory", "wall", "grace", "stdout-limit", "stderr-limit", "env", "interactive", "descriptor-owner", "node-policy", "node-workload", "node-tool", "node-input", "node-query", "node-source", "node-comparator", "node-protocol", "node-platform", "node-run", "node-attempt", "selected-same-count", "selected-other-count", "invocation-id", "invocation-node", "invocation-kind"} {
 		t.Run(mismatch, func(t *testing.T) {
 			a, plan, producer, request := classificationBatchRequest(t)
 			b := semanticTestBudget(t)
 			s := &eligibilitySession{r: b.r, b: b, res: &QueryReferenceEligibilityResult{}, owned: map[string]eligibilityMember{}, owners: map[string]string{}, snapshot: &evidenceSnapshot{files: map[string][]byte{}, verifiedMembers: map[string]ReplayMember{}}, invocations: map[string]*eligibilityInvocation{}}
 			id := "native-" + a.Case
+			s.reg.Native = &eligibilityNative{InvocationID: id}
 			add := func(path, role string, data []byte) eligibilityMember {
 				pin := eligibilityMember{NodeID: id, Member: ReplayMember{Path: path, Role: role, Bytes: uint64(len(data)), SHA256: digestHex(data)}}
 				s.owned[path], s.owners[path] = pin, id
@@ -291,13 +292,30 @@ func TestQueryClassificationBatchGuardedCapture(t *testing.T) {
 			}
 			response := add("current/native/raw.json", "raw", raw)
 			process := add("current/native/process.json", "process", receipt)
-			s.invocations[id] = &eligibilityInvocation{ID: id, Response: &response, Process: &process}
+			s.invocations[id] = &eligibilityInvocation{ID: id, Kind: "NATIVE_DRIVER", Node: QueryReferenceNode{ID: id}, Response: &response, Process: &process}
+			switch mismatch {
+			case "selected-same-count", "selected-other-count":
+				_, _, completePrimary := classificationBatchCompleteSelectionPair(t, s, a, request, producer, raw, &capture, mismatch)
+				capture = completePrimary
+			case "invocation-id":
+				s.invocations[id].ID = "another-id"
+			case "invocation-node":
+				s.invocations[id].Node.ID = "another-node"
+			case "invocation-kind":
+				s.invocations[id].Kind = "REFERENCE"
+			}
 			descriptor := add("current/native/capture/"+a.Case+".json", "capture", eligibilityJSON(t, capture))
 			if mismatch == "descriptor-owner" {
 				descriptor.NodeID = "other-owner"
 				s.owned[descriptor.Member.Path], s.owners[descriptor.Member.Path] = descriptor, "other-owner"
 			}
 			err := classificationGoFrames(s, a, plan)
+			if strings.HasPrefix(mismatch, "selected-") || strings.HasPrefix(mismatch, "invocation-") {
+				if err == nil || err.Error() != "guarded native invocation differs from profile" {
+					t.Fatal("native selection mismatch did not fail at its invocation binding", mismatch, err)
+				}
+				return
+			}
 			if mismatch == "" {
 				if err != nil {
 					t.Fatal("matching guarded snapshot rejected", err)

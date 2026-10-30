@@ -1,0 +1,449 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "csharp",
+  "case": "csharp15-empty-definitions",
+  "api": false,
+  "operation": "native-query",
+  "driver_mode": "single",
+  "workload": "csharp15-empty-definition-single-frame",
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR"
+    }
+  ],
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "compilation_unit",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(record_declaration name: (identifier) @record)\n(enum_declaration name: (identifier) @enum)\n(class_declaration name: (identifier) @class)\n(method_declaration name: (identifier) @method)\n",
+      "sha256": "3b7d516c6ab1ab1eb5c9d913b22c86d486ac8b15250a2d2644bc221184257f1f",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "record",
+          "enum",
+          "class",
+          "method"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-B02",
+      "source": "(nullable_type) @nullable\n(array_type) @array\n(pointer_type) @pointer\n(tuple_type) @tuple\n(generic_name) @generic\n",
+      "sha256": "246b031e0c9b66f4b3156e97a8f2e4b861c41778e9ca2bd4200c8009585855a6",
+      "metadata": {
+        "patterns": 5,
+        "capture_names": [
+          "nullable",
+          "array",
+          "pointer",
+          "tuple",
+          "generic"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-B03",
+      "source": "(from_clause name: (identifier) @range)\n(where_clause) @where\n(select_clause) @select\n(lambda_expression) @lambda\n(anonymous_object_creation_expression) @anonymous\n",
+      "sha256": "3a3bc698fc26d0f0ff218f6fdbccbb0f61325cdad8118ec65ddac8b1efb46f7b",
+      "metadata": {
+        "patterns": 5,
+        "capture_names": [
+          "range",
+          "where",
+          "select",
+          "lambda",
+          "anonymous"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V73",
+      "source": "(type_parameter_constraint) @constraint\n(attribute_target_specifier) @target\n(ref_expression) @ref\n",
+      "sha256": "4edae94ce8a6a065380bee3ab92b6a83e7919d7daf2691f5c6896543ce91e873",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "constraint",
+          "target",
+          "ref"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V08",
+      "source": "(switch_expression_arm) @arm\n(range_expression) @range\n",
+      "sha256": "bd23b9f6887d31348c0f1ee918c12faf6f40067d61d0c1033ebdf4c3058a5ea6",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "arm",
+          "range"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V10",
+      "source": "(using_directive) @using\n(file_scoped_namespace_declaration name: (qualified_name) @namespace)\n(record_declaration name: (identifier) @record)\n(lambda_expression type: (predefined_type) @lambda_return)\n",
+      "sha256": "3baa19f32357bc7d3f37adb3e5a5e94dedcc059edd57bdc3786d125fae4b9777",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "using",
+          "namespace",
+          "record",
+          "lambda_return"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V11",
+      "source": "(raw_string_literal) @raw\n(list_pattern) @list\n(slice_pattern) @slice\n",
+      "sha256": "338d5c82dd5a0b1add4e367eff308e8389be6596c1fb347e887188c0569afa08",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "raw",
+          "list",
+          "slice"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V12",
+      "source": "(using_directive name: (identifier) @alias)\n(class_declaration name: (identifier) @class (parameter_list) @primary)\n(collection_expression) @collection\n(spread_element) @spread\n",
+      "sha256": "b7e172079e66843334b9b35887b3ff1219ef71df13e07939e13ed27e024a42dc",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "alias",
+          "class",
+          "primary",
+          "collection",
+          "spread"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V13",
+      "source": "(indexer_declaration (modifier) @indexer_modifier)\n(escape_sequence) @escape\n(type_parameter_constraints_clause) @where\n",
+      "sha256": "39ee7a69cf656fd7528d7a0af4c7a4a9e2a7d92c48863f134415829daa66971b",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "indexer_modifier",
+          "escape",
+          "where"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V14a",
+      "source": "(receiver_parameter) @receiver\n(assignment_expression left: (conditional_access_expression) @target)\n",
+      "sha256": "747800b442389fc7b3db2caef6dc8d62e45414f76193c7ef7bc584e3afb80ace",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "receiver",
+          "target"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-V14b",
+      "source": "(constructor_declaration name: (identifier) @ctor)\n(event_declaration name: (identifier) @event)\n(accessor_declaration body: (arrow_expression_clause) @field_accessor)\n(operator_declaration operator: _ @op)\n",
+      "sha256": "e9505d002fef25a6895165a3532cf5dbabd9045ae7ccebe5bb22b0a34b125024",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "ctor",
+          "event",
+          "field_accessor",
+          "op"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.issue152-name",
+      "source": "(variable_declarator name: (identifier) @name)",
+      "sha256": "01df7a8b868b88c4f6bb650924118ba96095c65cee321629fb0917c10227d5b1",
+      "metadata": {
+        "patterns": 1,
+        "capture_names": [
+          "name"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.issue153-eof",
+      "source": "(preproc_define) @define\n(preproc_if) @conditional",
+      "sha256": "c40403f570069875add4a3eab115c280673f9048c286426338ac0e5419ff92e3",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "define",
+          "conditional"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "facts.declarations",
+      "source": "(class_declaration) @c.0.0.0\n(class_declaration name: _ @c.0.1.1) @c.0.1.0\n(struct_declaration) @c.1.0.0\n(struct_declaration name: _ @c.1.1.1) @c.1.1.0\n(interface_declaration) @c.2.0.0\n(interface_declaration name: _ @c.2.1.1) @c.2.1.0\n(enum_declaration) @c.3.0.0\n(enum_declaration name: _ @c.3.1.1) @c.3.1.0\n(record_declaration) @c.4.0.0\n(record_declaration name: _ @c.4.1.1) @c.4.1.0\n(delegate_declaration) @c.5.0.0\n(delegate_declaration name: _ @c.5.1.1) @c.5.1.0\n(namespace_declaration) @c.6.0.0\n(namespace_declaration name: _ @c.6.1.1) @c.6.1.0\n(file_scoped_namespace_declaration) @c.7.0.0\n(file_scoped_namespace_declaration name: _ @c.7.1.1) @c.7.1.0\n(method_declaration) @c.8.0.0\n(method_declaration name: _ @c.8.1.1) @c.8.1.0\n(constructor_declaration) @c.9.0.0\n(constructor_declaration name: _ @c.9.1.1) @c.9.1.0\n(destructor_declaration) @c.10.0.0\n(destructor_declaration name: _ @c.10.1.1) @c.10.1.0\n(property_declaration) @c.11.0.0\n(property_declaration name: _ @c.11.1.1) @c.11.1.0\n(event_declaration) @c.12.0.0\n(event_declaration name: _ @c.12.1.1) @c.12.1.0\n(enum_member_declaration) @c.13.0.0\n(enum_member_declaration name: _ @c.13.1.1) @c.13.1.0\n(field_declaration) @c.14.0.0\n(field_declaration (variable_declaration) @c.14.1.1) @c.14.1.0\n(field_declaration (variable_declaration (variable_declarator name: _ @c.14.3.3) @c.14.3.2) @c.14.3.1)\n(event_field_declaration) @c.15.0.0\n(event_field_declaration (variable_declaration) @c.15.1.1) @c.15.1.0\n(event_field_declaration (variable_declaration (variable_declarator name: _ @c.15.3.3) @c.15.3.2) @c.15.3.1)\n(indexer_declaration) @c.16.0.0\n(operator_declaration) @c.17.0.0\n(operator_declaration operator: _ @c.17.1.1) @c.17.1.0\n(conversion_operator_declaration) @c.18.0.0\n(conversion_operator_declaration type: _ @c.18.1.1) @c.18.1.0\n(extension_declaration) @c.19.0.0\n",
+      "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b",
+      "metadata": {
+        "patterns": 40,
+        "capture_names": [
+          "c.0.0.0",
+          "c.0.1.1",
+          "c.0.1.0",
+          "c.1.0.0",
+          "c.1.1.1",
+          "c.1.1.0",
+          "c.2.0.0",
+          "c.2.1.1",
+          "c.2.1.0",
+          "c.3.0.0",
+          "c.3.1.1",
+          "c.3.1.0",
+          "c.4.0.0",
+          "c.4.1.1",
+          "c.4.1.0",
+          "c.5.0.0",
+          "c.5.1.1",
+          "c.5.1.0",
+          "c.6.0.0",
+          "c.6.1.1",
+          "c.6.1.0",
+          "c.7.0.0",
+          "c.7.1.1",
+          "c.7.1.0",
+          "c.8.0.0",
+          "c.8.1.1",
+          "c.8.1.0",
+          "c.9.0.0",
+          "c.9.1.1",
+          "c.9.1.0",
+          "c.10.0.0",
+          "c.10.1.1",
+          "c.10.1.0",
+          "c.11.0.0",
+          "c.11.1.1",
+          "c.11.1.0",
+          "c.12.0.0",
+          "c.12.1.1",
+          "c.12.1.0",
+          "c.13.0.0",
+          "c.13.1.1",
+          "c.13.1.0",
+          "c.14.0.0",
+          "c.14.1.1",
+          "c.14.1.0",
+          "c.14.3.3",
+          "c.14.3.2",
+          "c.14.3.1",
+          "c.15.0.0",
+          "c.15.1.1",
+          "c.15.1.0",
+          "c.15.3.3",
+          "c.15.3.2",
+          "c.15.3.1",
+          "c.16.0.0",
+          "c.17.0.0",
+          "c.17.1.1",
+          "c.17.1.0",
+          "c.18.0.0",
+          "c.18.1.1",
+          "c.18.1.0",
+          "c.19.0.0"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "facts.dynamic_sql",
+      "source": "(object_creation_expression type: _ @oc.type) @oc\n(object_creation_expression arguments: (argument_list . (argument) @oc.arg)) @oc.a\n(argument (_) @arg.expr) @arg\n(qualified_name name: _ @qn.name) @qn\n(alias_qualified_name name: _ @aq.name) @aq\n(generic_name . (identifier) @gn.name) @gn\n(initializer_expression (assignment_expression left: (identifier) @ini.left right: _ @ini.right) @ini.as)\n(assignment_expression left: (member_access_expression name: (identifier) @ma.name) right: _ @ma.right) @ma.as\n(binary_expression operator: _ @bin.op) @bin\n",
+      "sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812",
+      "metadata": {
+        "patterns": 9,
+        "capture_names": [
+          "oc.type",
+          "oc",
+          "oc.arg",
+          "oc.a",
+          "arg.expr",
+          "arg",
+          "qn.name",
+          "qn",
+          "aq.name",
+          "aq",
+          "gn.name",
+          "gn",
+          "ini.left",
+          "ini.right",
+          "ini.as",
+          "ma.name",
+          "ma.right",
+          "ma.as",
+          "bin.op",
+          "bin"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-B02",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-B03",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V73",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V08",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V10",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V11",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V12",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V13",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V14a",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-V14b",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.issue152-name",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.issue153-eof",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "facts.declarations",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "facts.dynamic_sql",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 654,
+    "field_count": 26
+  }
+}
