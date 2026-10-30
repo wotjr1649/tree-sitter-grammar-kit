@@ -589,9 +589,18 @@ func classificationCSharpDefinitionRows(a classificationAnchors, inputs classifi
 }
 
 func classificationDefinitionRows(a classificationAnchors, inputs classificationGoDefinitionInputs, witnessQueries []QueryWitnessQuery, nativeQueries []querywire.Query, references []*instrumentedReference, language string, sourceFiles []string) ([]classificationGoDefinition, error) {
-	want := 3
-	if language == "C#" {
+	want := 0
+	switch language {
+	case "Go":
+		want = 3
+	case "C", "Rust":
+		want = 4
+	case "Java":
+		want = 5
+	case "C#":
 		want = 15
+	default:
+		return nil, fmt.Errorf("unsupported closed definition language %q", language)
 	}
 	if len(a.Queries) != want || len(inputs.queryFile.Queries) != want || len(inputs.slotGroup.Queries) != want || len(inputs.workload.Queries) != want || len(witnessQueries) != want || len(nativeQueries) != want || len(references) != want || len(sourceFiles) != want {
 		return nil, fmt.Errorf("%s definition query set is incomplete", language)

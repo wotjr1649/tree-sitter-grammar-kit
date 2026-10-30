@@ -69,8 +69,9 @@ type classificationPlan struct {
 
 // These stages retain caller inputs; neither planning nor assembly issues approval.
 func TestQueryClassificationGoLocal(t *testing.T) {
-	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") == "csharp15-empty" {
-		t.Skip("C# classification uses its explicit local entry point")
+	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
+	if profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" {
+		t.Skip("non-Go classification profiles use their explicit local entry point")
 	}
 	classificationLocal(t)
 }
@@ -78,6 +79,14 @@ func TestQueryClassificationGoLocal(t *testing.T) {
 func TestQueryClassificationCSharpLocal(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "csharp15-empty" {
 		t.Skip("explicit C# classification profile required")
+	}
+	classificationLocal(t)
+}
+
+func TestQueryClassificationCJRLocal(t *testing.T) {
+	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
+	if profile != "c4-empty" && profile != "java5-empty" && profile != "rust4-empty" {
+		t.Skip("explicit C/Java/Rust definition profile required")
 	}
 	classificationLocal(t)
 }
@@ -116,6 +125,12 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		name, expectedSHA = "go-positive-batch-anchors.json", classificationPositiveAnchorsSHA
 	case "csharp15-empty":
 		name, expectedSHA, route, definitions = "csharp15-classification-anchors.json", classificationCSharpAnchorsSHA, "csharp", 15
+	case "c4-empty", "java5-empty", "rust4-empty":
+		cjrProfile, err := classificationCJRProfileForName(profile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name, expectedSHA, route, definitions = cjrProfile.AnchorFile, cjrProfile.AnchorSHA, cjrProfile.Route, cjrProfile.QueryCount
 	default:
 		t.Fatal("unknown closed classification profile", profile)
 	}
@@ -127,20 +142,32 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 	if err := jsonv2.Unmarshal(data, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal(err)
 	}
+	a.sha256 = expectedSHA
 	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != route || a.Source.Bytes != uint64(len(a.Source.UTF8)) || a.Source.SHA256 != digestHex([]byte(a.Source.UTF8)) || len(a.Queries) != definitions || len(a.Required) != definitions || len(a.Edits) != 0 {
 		t.Fatal("independent definition denominator or source changed")
 	}
-	if profile == "" {
+	switch profile {
+	case "":
 		if a.Source.Bytes != 0 || len(a.Nodes) != 1 || a.Case != "" || a.API || a.Operation != "" || a.DriverMode != "" || a.Workload != "" || len(a.Expect) != 0 {
 			t.Fatal("legacy Go3 profile changed")
 		}
 		a.Case, a.Operation, a.DriverMode, a.Workload = "go3", "native-query", "single", "go3-definition-classification"
-	} else if profile == "positive-batch" {
+	case "positive-batch":
 		if a.Case != "probe-go-B04-P-6" || !a.API || a.Operation != "native-query-batch" || a.DriverMode != "batch" || a.Workload != "go-positive-single-frame-batch" || a.Source.Bytes != 50 || len(a.Nodes) != 25 || len(a.Expect) != 1 {
 			t.Fatal("positive batch profile changed")
 		}
-	} else if a.Case != "csharp15-empty-definitions" || a.API || a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != "csharp15-empty-definition-single-frame" || a.Source.Bytes != 0 || len(a.Nodes) != 1 || len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" {
-		t.Fatal("C# empty single profile changed")
+	case "csharp15-empty":
+		if a.Case != "csharp15-empty-definitions" || a.API || a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != "csharp15-empty-definition-single-frame" || a.Source.Bytes != 0 || len(a.Nodes) != 1 || len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" {
+			t.Fatal("C# empty single profile changed")
+		}
+	case "c4-empty", "java5-empty", "rust4-empty":
+		cjrProfile, ok := classificationCJRProfileForRoute(a.Route)
+		if !ok {
+			t.Fatal("closed C/Java/Rust profile route missing", a.Route)
+		}
+		if err := classificationCJRAnchorsValid(cjrProfile, a); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if a.API {
 		apiData := actualJSONRead(t, "../testdata/query-semantics/go-positive-batch-api.json")
@@ -152,13 +179,12 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		}
 		a.apiSHA = classificationPositiveAPISHA
 	}
-	a.sha256 = expectedSHA
 	return a, data
 }
 
 func (a classificationAnchors) nativeContext() string {
 	switch a.Route {
-	case "go":
+	case "go", "c", "java", "rust":
 		return "full-input-utf8/r2"
 	case "csharp":
 		return semanticPagedContext
@@ -171,6 +197,12 @@ func (a classificationAnchors) nativeSymbol() string {
 	switch a.Route {
 	case "go":
 		return "tree_sitter_go"
+	case "c":
+		return "tree_sitter_c"
+	case "java":
+		return "tree_sitter_java"
+	case "rust":
+		return "tree_sitter_rust"
 	case "csharp":
 		return "tree_sitter_c_sharp"
 	default:
@@ -181,17 +213,28 @@ func (a classificationAnchors) nativeSymbol() string {
 func (a classificationAnchors) libraryName() string { return a.Route + ".dll" }
 
 func classificationPlanContextMatches(a classificationAnchors, plan classificationPlan) bool {
-	if a.Route == "csharp" {
+	switch a.Route {
+	case "csharp":
 		return a.sha256 == classificationCSharpAnchorsSHA && plan.NativeContext == semanticPagedContext
+	case "c", "java", "rust":
+		profile, ok := classificationCJRProfileForRoute(a.Route)
+		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
+	case "go":
+		return plan.NativeContext == ""
+	default:
+		return false
 	}
-	return a.Route == "go" && plan.NativeContext == ""
 }
 
 func classificationNativePrefix(a classificationAnchors) string {
-	if a.Route == "csharp" {
+	switch a.Route {
+	case "csharp":
 		return "oracle/"
+	case "go", "c", "java", "rust":
+		return "current/native/"
+	default:
+		return ""
 	}
-	return "current/native/"
 }
 
 func classificationGrammarContext(s *eligibilitySession, a classificationAnchors, plan classificationPlan) error {
@@ -276,7 +319,7 @@ func classificationGoPlan(t *testing.T, root string) {
 	}
 	anchors, data := classificationGoAnchors(t)
 	plan := classificationPlan{Schema: "tsgk-query-classification-plan/r1", SourceRevision: os.Getenv("TSGK_QUERY_CLASSIFICATION_SOURCE"), RunID: os.Getenv("TSGK_QUERY_CLASSIFICATION_RUN"), AnchorsSHA256: digestHex(data), APIAnchorsSHA256: anchors.apiSHA, DonorRegistrationSHA256: classificationDonorRegistrationSHA}
-	if anchors.Route == "csharp" {
+	if anchors.Route != "go" {
 		plan.NativeContext = anchors.nativeContext()
 	}
 	plan.CompilerSHA256 = os.Getenv("TSGK_QUERY_CLASSIFICATION_COMPILER_SHA256")
@@ -287,12 +330,6 @@ func classificationGoPlan(t *testing.T, root string) {
 		t.Fatal("compiler preregistration identity or limits")
 	}
 	grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
-	if !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, []string{"-shared", "-O0", "-std=gnu11", "-I", filepath.Join(grammarRoot, "src"), filepath.Join(grammarRoot, "src", "parser.c"), filepath.Join(grammarRoot, "src", "scanner.c"), "-o", filepath.Join(root, "library", anchors.libraryName())}) {
-		t.Fatal("compiler grammar inputs or output changed")
-	}
-	if !eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) {
-		t.Fatal("separate source revision and observation run preregistration required")
-	}
 	var registry struct {
 		Routes []struct {
 			Route string        `json:"route"`
@@ -300,13 +337,22 @@ func classificationGoPlan(t *testing.T, root string) {
 		} `json:"routes"`
 	}
 	actualJSONDecode(t, "../contracts/native-routes.json", &registry)
+	routeMatches := 0
 	for _, row := range registry.Routes {
 		if row.Route == anchors.Route {
+			routeMatches++
 			plan.Grammar = row.Files
 		}
 	}
-	if len(plan.Grammar) != 5 {
-		t.Fatal("Go grammar closure missing")
+	if routeMatches != 1 {
+		t.Fatal("native grammar route is missing or duplicated", anchors.Route, routeMatches)
+	}
+	wantArgs, err := classificationGoCompilerArgs(anchors.Route, grammarRoot, filepath.Join(root, "library", anchors.libraryName()), plan.Grammar)
+	if err != nil || !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, wantArgs) {
+		t.Fatal("compiler grammar inputs or output changed", err)
+	}
+	if !eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) {
+		t.Fatal("separate source revision and observation run preregistration required")
 	}
 	runtimeData := actualJSONRead(t, "../drivers/native-c/runtime-manifest.json")
 	plan.RuntimeManifestSHA256 = digestHex(runtimeData)
@@ -416,7 +462,7 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 	a.reg.Graph = ReplayMember{Path: "evidence.json", Role: "evidence-graph", Bytes: uint64(len(data)), SHA256: digestHex(data)}
 	actualJSONWrite(t, filepath.Join(a.evidence, "evidence.json"), data)
 	policyID := "actual-go3-classification"
-	if anchors.DriverMode == "batch" || anchors.Route == "csharp" {
+	if anchors.DriverMode == "batch" || anchors.Route != "go" {
 		policyID = "actual-" + anchors.Workload
 	}
 	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": policyID, "evidence_sha256": digestHex(data), "required": required, "carry_forward": []any{}})
@@ -698,7 +744,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 	output := os.Getenv("TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT")
 	reader := os.Getenv("TSGK_QUERY_CLASSIFICATION_READER_REVISION")
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if (profile != "positive-batch" && profile != "csharp15-empty") || !hex40.MatchString(reader) {
+	if (profile != "positive-batch" && profile != "csharp15-empty" && profile != "c4-empty" && profile != "java5-empty" && profile != "rust4-empty") || !hex40.MatchString(reader) {
 		t.Fatal("definition projection requires a fixed reviewed profile and separately pinned reader revision")
 	}
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
@@ -712,15 +758,25 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 			qualificationData := actualJSONRead(t, "../contracts/qualification-c1.json")
 			var record classificationGoDefinitionProjectionResult
 			var err error
-			if anchors.Route == "csharp" {
+			switch anchors.Route {
+			case "csharp":
 				inputs := classificationCSharpDefinitionQueryInputs{QueryFile: actualJSONRead(t, "../testdata/native/queries/csharp.json"), FactQueryPack: actualJSONRead(t, "../contracts/fact-query-pack.json")}
 				queryData, encodeErr := jsonv2.Marshal(inputs)
 				if encodeErr != nil {
 					t.Fatal(encodeErr)
 				}
 				record, err = classificationCSharpDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, reader)
-			} else {
+			case "go":
 				record, err = classificationGoDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, "../testdata/native/queries/go.json"), reader)
+			case "c", "java", "rust":
+				cjrProfile, ok := classificationCJRProfileForRoute(anchors.Route)
+				if !ok {
+					t.Fatal("unknown C/Java/Rust definition profile", anchors.Route)
+				}
+				queryPath := filepath.Join("..", filepath.FromSlash(strings.TrimPrefix(cjrProfile.QueryFile, "src/")))
+				record, err = classificationCJRDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, queryPath), reader)
+			default:
+				t.Fatal("unknown guarded definition route", anchors.Route)
 			}
 			if err != nil {
 				t.Fatal("guarded definition projection", err)
@@ -842,8 +898,16 @@ func classificationLibraryMatches(s *eligibilitySession) bool {
 }
 
 func classificationCaptureStderr(a classificationAnchors, capture semanticProcessCapture, process eligibilityExecution, read func(*ReplayMember) ([]byte, error)) error {
+	strictZeroMember := false
+	switch a.Route {
+	case "go":
+	case "csharp", "c", "java", "rust":
+		strictZeroMember = true
+	default:
+		return fmt.Errorf("unknown classification stderr route")
+	}
 	if capture.Stderr == nil {
-		if a.Route == "csharp" || process.StderrBytes != 0 {
+		if strictZeroMember || process.StderrBytes != 0 {
 			return fmt.Errorf("guarded stderr member missing")
 		}
 		return nil

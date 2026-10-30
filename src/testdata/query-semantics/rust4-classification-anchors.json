@@ -1,0 +1,140 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "rust",
+  "case": "rust4-empty-definitions",
+  "api": false,
+  "operation": "native-query",
+  "driver_mode": "single",
+  "workload": "rust4-empty-definition-single-frame",
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR"
+    }
+  ],
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "source_file",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(struct_item name: (type_identifier) @struct)\n(enum_item name: (type_identifier) @enum)\n(trait_item name: (type_identifier) @trait)\n(function_item name: (identifier) @function)\n",
+      "sha256": "e3bddbcb1621ba8a3c546d30532ff349d0073b2a2728972d291f1a3b5d9c56a2",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "struct",
+          "enum",
+          "trait",
+          "function"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-rust-B02",
+      "source": "(token_binding_pattern name: (metavariable) @meta)\n(closure_parameters (parameter pattern: (identifier) @param))\n(macro_invocation macro: (identifier) @macro)\n",
+      "sha256": "138adb98d09e76d140e5895c158c948c5eacfe53577f8cd297bb190d8ff8d2b9",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "meta",
+          "param",
+          "macro"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-rust-V18",
+      "source": "(const_parameter name: (identifier) @constparam)\n(async_block) @async\n(const_block) @const\n(let_declaration alternative: (block) @else)\n",
+      "sha256": "39db79528b589ba56f1e88a5797302065732f5e87d5b5d72c095ba780e6407bb",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "constparam",
+          "async",
+          "const",
+          "else"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-rust-V24",
+      "source": "(use_bounds (lifetime) @captured)\n(use_bounds (type_identifier) @captured)\n(fragment_specifier) @frag\n(let_chain (let_condition pattern: (tuple_struct_pattern) @letpat))\n",
+      "sha256": "5297a5811821401bc11f7881d439c135076abc6760147b56223bc496701d16f2",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "captured",
+          "frag",
+          "letpat"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-rust-B02",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-rust-V18",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-rust-V24",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 360,
+    "field_count": 31
+  }
+}

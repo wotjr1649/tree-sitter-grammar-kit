@@ -37,6 +37,99 @@ type classificationCaptureProfile struct {
 	paged                                bool
 }
 
+type classificationCJRQuerySpec struct {
+	id, sha256 string
+	patterns   uint32
+	captures   []string
+}
+
+type classificationCJRGrammarFile struct {
+	path, role, sha256 string
+	bytes              uint64
+}
+
+type classificationCJRSpec struct {
+	anchorFile, anchorSHA, route, symbol  string
+	caseID, workload, rootType            string
+	queryFile, querySHA                   string
+	queryBytes, languageVersion           int
+	runtimeLanguageVersion, minCompatible int
+	symbolCount, fieldCount, grammarCount int
+	querySpecs                            []classificationCJRQuerySpec
+	grammarFiles                          []classificationCJRGrammarFile
+}
+
+func classificationCJRSpecFor(name string) (classificationCJRSpec, bool) {
+	switch name {
+	case "c4-empty":
+		return classificationCJRSpec{
+			anchorFile: "c4-classification-anchors.json", anchorSHA: "c4a8b34393c268a0ca479a9f82e99617d0946e795fa7e35bdf24ad2437e04f2d",
+			route: "c", symbol: "tree_sitter_c", caseID: "c4-empty-definitions", workload: "c4-empty-definition-single-frame", rootType: "translation_unit",
+			queryFile: "c.json", queryBytes: 6204, querySHA: "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd",
+			languageVersion: 15, runtimeLanguageVersion: 15, minCompatible: 13, symbolCount: 403, fieldCount: 40, grammarCount: 4,
+			querySpecs: []classificationCJRQuerySpec{
+				{id: "q.structure", sha256: "e9eba020e1b34816c5f12c21545fbea0b895e03996974593562cb23e1ff911a7", patterns: 3, captures: []string{"type", "function", "call"}},
+				{id: "q.probe-c-V11", sha256: "d3930fba7799c448bbe5fdf9a75fb102d7b5ffd896228600d140dfea3202a0e3", patterns: 3, captures: []string{"align", "alignof", "assoc"}},
+				{id: "q.probe-c-V23", sha256: "0d001ee87956853e839787e05f3da182b14d8a06777426fb984d7dfea2c0b757", patterns: 4, captures: []string{"attr", "true", "false", "null"}},
+				{id: "q.probe-c-L01", sha256: "6e33506bbd6c2914ca580874e90c3ec8fe65a70f26e2b9a1beb8b66f58656f1f", patterns: 2, captures: []string{"param", "decl"}},
+			},
+			grammarFiles: []classificationCJRGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 5611460, sha256: "e18ba3335e75a2d029ced1b302b8ecb50bd2539c7b0c4394f9abbfdb1719cd5b"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
+	case "java5-empty":
+		return classificationCJRSpec{
+			anchorFile: "java5-classification-anchors.json", anchorSHA: "41b3011c129007a7ab582e666e3f857fca12cfd756271e5c02358fbff30e451b",
+			route: "java", symbol: "tree_sitter_java", caseID: "java5-empty-definitions", workload: "java5-empty-definition-single-frame", rootType: "program",
+			queryFile: "java.json", queryBytes: 5565, querySHA: "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42",
+			languageVersion: 15, runtimeLanguageVersion: 15, minCompatible: 13, symbolCount: 323, fieldCount: 40, grammarCount: 4,
+			querySpecs: []classificationCJRQuerySpec{
+				{id: "q.structure", sha256: "6b31aaa0626f4d2ef8e0e542cfcd3e3102581f267e6ac3482c5265616b478d01", patterns: 4, captures: []string{"class", "interface", "record", "method"}},
+				{id: "q.probe-v9", sha256: "956f820c26bf247d5877cc8450aa7c639496ee332b34217c85edc318c1916bf6", patterns: 2, captures: []string{"module", "requires"}},
+				{id: "q.probe-v21", sha256: "e163eac14537175162a1865aeb315fd470d2ac2e215de2d491abfc908ee16763", patterns: 2, captures: []string{"record", "guard"}},
+				{id: "q.probe-v25-compact", sha256: "bd65786741e63b7da62527a2241064c04583045523824f0d4adb963c4d533dff", patterns: 1, captures: []string{"method"}},
+				{id: "q.probe-v25-ctor", sha256: "30c5ee77cc3d50b374cdaf7ad8faaa13f0154fa8dc169d1f7deec57a67250280", patterns: 1, captures: []string{"invocation"}},
+			},
+			grammarFiles: []classificationCJRGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 2600326, sha256: "7c427c9538452461d5d658a93eff64b5e375049b244614a12563ef6adac8e8e6"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
+	case "rust4-empty":
+		return classificationCJRSpec{
+			anchorFile: "rust4-classification-anchors.json", anchorSHA: "46cbfe87a0caf2d8ebc43aaca341cfde77e6eda5ae78b0f4909064c1e2cd8569",
+			route: "rust", symbol: "tree_sitter_rust", caseID: "rust4-empty-definitions", workload: "rust4-empty-definition-single-frame", rootType: "source_file",
+			queryFile: "rust.json", queryBytes: 5349, querySHA: "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5",
+			languageVersion: 15, runtimeLanguageVersion: 15, minCompatible: 13, symbolCount: 360, fieldCount: 31, grammarCount: 5,
+			querySpecs: []classificationCJRQuerySpec{
+				{id: "q.structure", sha256: "e3bddbcb1621ba8a3c546d30532ff349d0073b2a2728972d291f1a3b5d9c56a2", patterns: 4, captures: []string{"struct", "enum", "trait", "function"}},
+				{id: "q.probe-rust-B02", sha256: "138adb98d09e76d140e5895c158c948c5eacfe53577f8cd297bb190d8ff8d2b9", patterns: 3, captures: []string{"meta", "param", "macro"}},
+				{id: "q.probe-rust-V18", sha256: "39db79528b589ba56f1e88a5797302065732f5e87d5b5d72c095ba780e6407bb", patterns: 4, captures: []string{"constparam", "async", "const", "else"}},
+				{id: "q.probe-rust-V24", sha256: "5297a5811821401bc11f7881d439c135076abc6760147b56223bc496701d16f2", patterns: 4, captures: []string{"captured", "frag", "letpat"}},
+			},
+			grammarFiles: []classificationCJRGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 7448615, sha256: "be00454d4938a698e56f0c00a42b7e40ed761a2fe3d5c01533380b1e5b21ea5b"},
+				{path: "src/scanner.c", role: "scanner", bytes: 12532, sha256: "caecbcba33fa87f7a75d56a0c47aa2938744bae5cd358db7911ec0d97b141cae"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
+	default:
+		return classificationCJRSpec{}, false
+	}
+}
+
+func classificationCJRProfile(name string) bool {
+	_, ok := classificationCJRSpecFor(name)
+	return ok
+}
+
 type classificationLocalAnchors struct {
 	Case       string                `json:"case,omitempty"`
 	API        bool                  `json:"api,omitempty"`
@@ -78,8 +171,98 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 	case "csharp15-empty":
 		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
 	default:
+		if spec, ok := classificationCJRSpecFor(name); ok {
+			return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, false}, nil
+		}
 		return classificationCaptureProfile{}, fmt.Errorf("unknown closed classification profile %q", name)
 	}
+}
+
+func classificationCJRAnchorsValid(profileName string, a classificationLocalAnchors) error {
+	spec, ok := classificationCJRSpecFor(profileName)
+	if !ok {
+		return fmt.Errorf("unknown closed C/Java/Rust classification profile %q", profileName)
+	}
+	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != spec.route || a.Case != spec.caseID || a.API || a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != spec.workload ||
+		a.Source.UTF8 != "" || a.Source.Bytes != 0 || a.Source.SHA256 != sha(nil) || a.Edits == nil || len(a.Edits) != 0 || len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" || len(a.Queries) != len(spec.querySpecs) || len(a.Required) != len(spec.querySpecs) {
+		return fmt.Errorf("%s empty-source definition profile changed", profileName)
+	}
+	wantRoot := []kit.TreeNode{{Parent: -1, Type: spec.rootType, Named: true}}
+	if !reflect.DeepEqual(a.Nodes, wantRoot) || a.ABI.LanguageVersion != uint32(spec.languageVersion) || a.ABI.RuntimeLanguageVersion != uint32(spec.runtimeLanguageVersion) || a.ABI.RuntimeMinCompatible != uint32(spec.minCompatible) || a.ABI.SymbolCount != uint32(spec.symbolCount) || a.ABI.FieldCount != uint32(spec.fieldCount) {
+		return fmt.Errorf("%s ABI or independent empty-source CST changed", profileName)
+	}
+	seen := make(map[string]bool, len(a.Queries))
+	for i, q := range a.Queries {
+		want := spec.querySpecs[i]
+		if q.ID != want.id || seen[q.ID] || q.SHA256 != want.sha256 || q.SHA256 != sha([]byte(q.Source)) || q.Metadata.Patterns != want.patterns || q.Metadata.CaptureNames == nil || !reflect.DeepEqual(q.Metadata.CaptureNames, want.captures) || q.Metadata.Predicates == nil || len(q.Metadata.Predicates) != 0 {
+			return fmt.Errorf("%s query source or complete predicate-free metadata changed at %d", profileName, i)
+		}
+		seen[q.ID] = true
+		tuple := a.Required[i]
+		if tuple.Query != q.ID || tuple.Step != 0 || tuple.TreeRole != "incremental" || tuple.Structural == nil || len(tuple.Structural) != 0 || tuple.Expected == nil || len(tuple.Expected) != 0 {
+			return fmt.Errorf("%s denominator or empty capture anchors changed at %d", profileName, i)
+		}
+	}
+	return nil
+}
+
+func classificationCJRQueryRegistryValid(profileName string, a classificationLocalAnchors) error {
+	spec, ok := classificationCJRSpecFor(profileName)
+	if !ok {
+		return fmt.Errorf("unknown closed C/Java/Rust classification profile %q", profileName)
+	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "native", "queries", spec.queryFile))
+	if err != nil {
+		return fmt.Errorf("read pinned %s query registry: %w", profileName, err)
+	}
+	return classificationCJRQueryRegistryBytesValid(profileName, a, data)
+}
+
+func classificationCJRQueryRegistryBytesValid(profileName string, a classificationLocalAnchors, data []byte) error {
+	spec, ok := classificationCJRSpecFor(profileName)
+	if !ok {
+		return fmt.Errorf("unknown closed C/Java/Rust classification profile %q", profileName)
+	}
+	if len(data) != spec.queryBytes || sha(data) != spec.querySHA {
+		return fmt.Errorf("%s query registry file pin changed", profileName)
+	}
+	var registry struct {
+		Schema  string `json:"schema"`
+		Route   string `json:"route"`
+		Queries []struct {
+			ID     string `json:"id"`
+			Source string `json:"source"`
+		} `json:"queries"`
+	}
+	if err := json.Unmarshal(data, &registry); err != nil {
+		return fmt.Errorf("decode %s query registry: %w", profileName, err)
+	}
+	if registry.Schema != "tsgk-native-query-cases/r1" || registry.Route != spec.route || len(registry.Queries) != len(spec.querySpecs) || len(a.Queries) != len(spec.querySpecs) {
+		return fmt.Errorf("%s query registry profile changed", profileName)
+	}
+	for i, query := range registry.Queries {
+		if query.ID != spec.querySpecs[i].id || query.ID != a.Queries[i].ID || query.Source != a.Queries[i].Source {
+			return fmt.Errorf("%s query registry source/order differs at %d", profileName, i)
+		}
+	}
+	return nil
+}
+
+func classificationCJRGrammarValid(profileName string, grammar []kit.NativeInput) bool {
+	spec, ok := classificationCJRSpecFor(profileName)
+	if !ok || len(grammar) != len(spec.grammarFiles) || len(grammar) != spec.grammarCount {
+		return false
+	}
+	for i, file := range grammar {
+		want := spec.grammarFiles[i]
+		if file.Path != want.path || file.Role != want.role || file.Bytes != want.bytes || file.SHA256 != want.sha256 {
+			return false
+		}
+		if file.Role == "parser" && file.Bytes > 16<<20 {
+			return false
+		}
+	}
+	return true
 }
 
 func classificationCSharpAnchorsValid(a classificationLocalAnchors) error {
@@ -228,8 +411,12 @@ func TestQueryClassificationNativeCompletion(t *testing.T) {
 
 // This explicit local capture records structural metadata, never a semantic PASS.
 func TestQueryClassificationGoLocalCapture(t *testing.T) {
-	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") == "csharp15-empty" {
+	profileName := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
+	if profileName == "csharp15-empty" {
 		t.Skip("C# 15 uses the dedicated local capture entry")
+	}
+	if _, ok := classificationCJRSpecFor(profileName); ok {
+		t.Skip("C/Java/Rust use the dedicated local capture entry")
 	}
 	classificationNativeLocalCapture(t)
 }
@@ -237,6 +424,13 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 func TestQueryClassificationCSharpLocalCapture(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "csharp15-empty" {
 		t.Skip("explicit C# 15 local capture profile is required")
+	}
+	classificationNativeLocalCapture(t)
+}
+
+func TestQueryClassificationCJRLocalCapture(t *testing.T) {
+	if _, ok := classificationCJRSpecFor(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")); !ok {
+		t.Skip("explicit C/Java/Rust empty-definition profile is required")
 	}
 	classificationNativeLocalCapture(t)
 }
@@ -288,6 +482,13 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCSharpAnchorsValid(anchors); err != nil {
 			t.Fatal(err)
 		}
+	case "c4-empty", "java5-empty", "rust4-empty":
+		if err := classificationCJRAnchorsValid(profileName, anchors); err != nil {
+			t.Fatal(err)
+		}
+		if err := classificationCJRQueryRegistryValid(profileName, anchors); err != nil {
+			t.Fatal(err)
+		}
 	}
 	prepared := os.Getenv("TSGK_BENCH_PREPARED")
 	if !filepath.IsAbs(prepared) {
@@ -318,6 +519,9 @@ func classificationNativeLocalCapture(t *testing.T) {
 	}
 	if routeMatches != 1 || len(grammar) != profile.grammarCount {
 		t.Fatal("registered grammar closure missing or duplicated", profile.route, len(grammar))
+	}
+	if _, ok := classificationCJRSpecFor(profileName); ok && !classificationCJRGrammarValid(profileName, grammar) {
+		t.Fatal("C/Java/Rust grammar roles or paths differ from the closed unpaged profile", profile.route)
 	}
 	write := func(path string, value []byte) {
 		t.Helper()
@@ -438,7 +642,7 @@ func classificationNativeLocalCapture(t *testing.T) {
 			finishEarly(&result, kit.StatusFailed, kit.AssessNotAssessed, "BATCH_PROBE_INCOMPLETE")
 		}
 	}
-	if profileName == "csharp15-empty" {
+	if profileName == "csharp15-empty" || classificationCJRProfile(profileName) {
 		// The driver capture owns a clone, so preserve the explicit empty stream in both records.
 		classificationCSharpEmptyStderr(result.Process)
 		if capture != nil {
