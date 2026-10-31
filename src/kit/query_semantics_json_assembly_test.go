@@ -33,9 +33,8 @@ func TestQueryReferenceBuildControlAssembleLocal(t *testing.T) {
 			t.Fatal("absolute local static input required")
 		}
 	}
-	entries, err := os.ReadDir(root)
-	if err != nil || len(entries) != 0 {
-		t.Fatal("static assembly root must be a new empty caller-owned directory", err)
+	if err := classificationGoDefinitionOutput(fresh, fresh, root); err != nil {
+		t.Fatal("static assembly output must be physical and separate from retained inputs", err)
 	}
 	a, _, _ := actualJSONAssembleStatic(t, root, fresh, "full-input-utf8/r2", "reference-build-control", actualJSONFreshSource(t, fresh))
 	if a.reg.Build == nil || a.reg.Control == nil || a.reg.Native != nil || len(a.reg.Observations) != 0 || len(a.reg.Invocations) != 62 || len(a.reg.Tools) != 10 || len(a.reg.OwnedMembers) != 178 {
