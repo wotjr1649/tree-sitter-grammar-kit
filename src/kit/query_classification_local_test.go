@@ -70,7 +70,7 @@ type classificationPlan struct {
 // These stages retain caller inputs; neither planning nor assembly issues approval.
 func TestQueryClassificationGoLocal(t *testing.T) {
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" {
+	if profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" {
 		t.Skip("non-Go classification profiles use their explicit local entry point")
 	}
 	classificationLocal(t)
@@ -87,6 +87,13 @@ func TestQueryClassificationCJRLocal(t *testing.T) {
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
 	if profile != "c4-empty" && profile != "java5-empty" && profile != "rust4-empty" {
 		t.Skip("explicit C/Java/Rust definition profile required")
+	}
+	classificationLocal(t)
+}
+
+func TestQueryClassificationCPP4Local(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "cpp4-empty" {
+		t.Skip("explicit CPP4 classification profile required")
 	}
 	classificationLocal(t)
 }
@@ -131,6 +138,9 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 			t.Fatal(err)
 		}
 		name, expectedSHA, route, definitions = cjrProfile.AnchorFile, cjrProfile.AnchorSHA, cjrProfile.Route, cjrProfile.QueryCount
+	case "cpp4-empty":
+		cppProfile := classificationCPP4DefinitionProfile()
+		name, expectedSHA, route, definitions = cppProfile.AnchorFile, cppProfile.AnchorSHA, cppProfile.Route, cppProfile.QueryCount
 	default:
 		t.Fatal("unknown closed classification profile", profile)
 	}
@@ -168,6 +178,10 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		if err := classificationCJRAnchorsValid(cjrProfile, a); err != nil {
 			t.Fatal(err)
 		}
+	case "cpp4-empty":
+		if err := classificationCPP4AnchorsValid(a); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if a.API {
 		apiData := actualJSONRead(t, "../testdata/query-semantics/go-positive-batch-api.json")
@@ -186,7 +200,7 @@ func (a classificationAnchors) nativeContext() string {
 	switch a.Route {
 	case "go", "c", "java", "rust":
 		return "full-input-utf8/r2"
-	case "csharp":
+	case "csharp", "cpp":
 		return semanticPagedContext
 	default:
 		return ""
@@ -205,6 +219,8 @@ func (a classificationAnchors) nativeSymbol() string {
 		return "tree_sitter_rust"
 	case "csharp":
 		return "tree_sitter_c_sharp"
+	case "cpp":
+		return "tree_sitter_cpp"
 	default:
 		return ""
 	}
@@ -216,6 +232,8 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 	switch a.Route {
 	case "csharp":
 		return a.sha256 == classificationCSharpAnchorsSHA && plan.NativeContext == semanticPagedContext
+	case "cpp":
+		return a.sha256 == classificationCPP4AnchorsSHA && plan.NativeContext == semanticPagedContext
 	case "c", "java", "rust":
 		profile, ok := classificationCJRProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
@@ -228,7 +246,7 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 
 func classificationNativePrefix(a classificationAnchors) string {
 	switch a.Route {
-	case "csharp":
+	case "csharp", "cpp":
 		return "oracle/"
 	case "go", "c", "java", "rust":
 		return "current/native/"
@@ -326,7 +344,7 @@ func classificationGoPlan(t *testing.T, root string) {
 	if err := jsonv2.Unmarshal([]byte(os.Getenv("TSGK_QUERY_CLASSIFICATION_LIBRARY_REQUEST")), &plan.LibraryRequest, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal("preregistered compiler request", err)
 	}
-	if !hex64.MatchString(plan.CompilerSHA256) || eligibilityValidateRequest(plan.LibraryRequest, "go-library") != nil || !eligibilityAbsolutePath(plan.LibraryRequest.Path, "windows/amd64") || plan.LibraryRequest.Dir != root || !plan.LibraryRequest.Memory.Hard || plan.LibraryRequest.Memory.Bytes != 4<<30 || plan.LibraryRequest.Wall != 120e9 || plan.LibraryRequest.Grace != 2e9 || plan.LibraryRequest.StdoutBytes != 16<<20 || plan.LibraryRequest.StderrBytes != 4<<20 {
+	if anchors.Route != "cpp" && (!hex64.MatchString(plan.CompilerSHA256) || eligibilityValidateRequest(plan.LibraryRequest, "go-library") != nil || !eligibilityAbsolutePath(plan.LibraryRequest.Path, "windows/amd64") || plan.LibraryRequest.Dir != root || !plan.LibraryRequest.Memory.Hard || plan.LibraryRequest.Memory.Bytes != 4<<30 || plan.LibraryRequest.Wall != 120e9 || plan.LibraryRequest.Grace != 2e9 || plan.LibraryRequest.StdoutBytes != 16<<20 || plan.LibraryRequest.StderrBytes != 4<<20) {
 		t.Fatal("compiler preregistration identity or limits")
 	}
 	grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
@@ -347,9 +365,18 @@ func classificationGoPlan(t *testing.T, root string) {
 	if routeMatches != 1 {
 		t.Fatal("native grammar route is missing or duplicated", anchors.Route, routeMatches)
 	}
-	wantArgs, err := classificationGoCompilerArgs(anchors.Route, grammarRoot, filepath.Join(root, "library", anchors.libraryName()), plan.Grammar)
-	if err != nil || !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, wantArgs) {
-		t.Fatal("compiler grammar inputs or output changed", err)
+	if anchors.Route == "cpp" && !classificationCPP4GrammarValid(plan.Grammar) {
+		t.Fatal("CPP4 exact paged grammar closure changed")
+	}
+	if anchors.Route == "cpp" {
+		if err := classificationCPP4LibraryRequestValid(plan, root, grammarRoot); err != nil {
+			t.Fatal("CPP4 compiler request contract changed", err)
+		}
+	} else {
+		wantArgs, err := classificationGoCompilerArgs(anchors.Route, grammarRoot, filepath.Join(root, "library", anchors.libraryName()), plan.Grammar)
+		if err != nil || !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, wantArgs) {
+			t.Fatal("compiler grammar inputs or output changed", err)
+		}
 	}
 	if !eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) {
 		t.Fatal("separate source revision and observation run preregistration required")
@@ -619,6 +646,14 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || !classificationPlanContextMatches(anchors, plan) {
 		t.Fatal("classification preregistration changed")
 	}
+	if anchors.Route == "cpp" {
+		if plan.LibraryRequest.Dir != root {
+			t.Fatal("CPP4 compiler request is not owned by the selected plan root")
+		}
+		if err := classificationCPP4DefinitionPlanValid(anchors, plan); err != nil {
+			t.Fatal("CPP4 fixed compiler request or paged source pin changed", err)
+		}
+	}
 	caller := filepath.Join(assembly, "caller")
 	req := QueryReferenceEligibilityRequest{Evidence: EvidenceRequest{Root: filepath.Join(assembly, "evidence"), Policy: actualJSONRead(t, filepath.Join(caller, "policy.json"))}, Approval: actualJSONRead(t, approvalPath), Registration: actualJSONRead(t, filepath.Join(caller, "eligibility-registration.json")), WitnessRegistration: actualJSONRead(t, filepath.Join(caller, "witness.json"))}
 	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
@@ -665,14 +700,26 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	if err := classificationGoLibrary(s.b, plan, readLibrary("current/library-request.json"), readLibrary("current/library-receipt.json"), readLibrary("current/library-compiler.bin"), readLibrary("current/go.dll")); err != nil {
 		t.Fatal("guarded library compiler capture", err)
 	}
+	var cppReferenceIDs map[string]string
+	if anchors.Route == "cpp" {
+		cppReferenceIDs = make(map[string]string, len(anchors.Required))
+	}
 	for _, tuple := range anchors.Required {
 		o, ok := s.observation(tuple)
-		if !ok {
+		if !ok || anchors.Route == "cpp" && (o.Query != tuple.Query || o.QueryID != tuple.Query) {
 			t.Fatal("guarded reference observation absent")
+		}
+		if anchors.Route == "cpp" {
+			cppReferenceIDs[tuple.Query] = o.InvocationID
 		}
 		out := s.outputs[o.InvocationID]
 		if out == nil || o.ResponseOrdinal >= uint64(len(out.responses)) || out.responses[o.ResponseOrdinal] == nil || CompareTrees(out.responses[o.ResponseOrdinal].Tree.Nodes, anchors.Nodes) != nil || digestHex(out.rows[o.ResponseOrdinal]) != o.SHA256 {
 			t.Fatal("guarded reference independent CST")
+		}
+	}
+	if anchors.Route == "cpp" {
+		if _, err := classificationCPP4OrderedReferenceIDs(anchors, cppReferenceIDs); err != nil {
+			t.Fatal("CPP4 requires one distinct guarded reference invocation per query", err)
 		}
 	}
 	// This second API operation checks its public wrapper; anchors use the retained core snapshot above.
@@ -744,7 +791,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 	output := os.Getenv("TSGK_QUERY_CLASSIFICATION_DEFINITION_OUTPUT")
 	reader := os.Getenv("TSGK_QUERY_CLASSIFICATION_READER_REVISION")
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if (profile != "positive-batch" && profile != "csharp15-empty" && profile != "c4-empty" && profile != "java5-empty" && profile != "rust4-empty") || !hex40.MatchString(reader) {
+	if (profile != "positive-batch" && profile != "csharp15-empty" && profile != "c4-empty" && profile != "java5-empty" && profile != "rust4-empty" && profile != "cpp4-empty") || !hex40.MatchString(reader) {
 		t.Fatal("definition projection requires a fixed reviewed profile and separately pinned reader revision")
 	}
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
@@ -775,6 +822,8 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 				}
 				queryPath := filepath.Join("..", filepath.FromSlash(strings.TrimPrefix(cjrProfile.QueryFile, "src/")))
 				record, err = classificationCJRDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, queryPath), reader)
+			case "cpp":
+				record, err = classificationCPP4DefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, "../testdata/native/queries/cpp.json"), reader)
 			default:
 				t.Fatal("unknown guarded definition route", anchors.Route)
 			}
@@ -901,7 +950,7 @@ func classificationCaptureStderr(a classificationAnchors, capture semanticProces
 	strictZeroMember := false
 	switch a.Route {
 	case "go":
-	case "csharp", "c", "java", "rust":
+	case "csharp", "c", "java", "rust", "cpp":
 		strictZeroMember = true
 	default:
 		return fmt.Errorf("unknown classification stderr route")

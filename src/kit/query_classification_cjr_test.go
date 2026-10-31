@@ -117,7 +117,7 @@ func classificationCJRAnchorsValid(profile classificationCJRDefinitionProfile, a
 func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []NativeInput) ([]string, error) {
 	withScanner := false
 	switch route {
-	case "go", "csharp", "rust":
+	case "go", "csharp", "rust", "cpp":
 		withScanner = true
 	case "c", "java":
 	default:

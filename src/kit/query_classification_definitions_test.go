@@ -593,7 +593,7 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 	switch language {
 	case "Go":
 		want = 3
-	case "C", "Rust":
+	case "C", "C++", "Rust":
 		want = 4
 	case "Java":
 		want = 5

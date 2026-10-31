@@ -1,0 +1,137 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "cpp",
+  "case": "cpp4-empty-definitions",
+  "api": false,
+  "operation": "native-query",
+  "driver_mode": "single",
+  "workload": "cpp4-empty-definition-single-frame",
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR"
+    }
+  ],
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "translation_unit",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(namespace_definition name: (namespace_identifier) @namespace)\n(struct_specifier name: (type_identifier) @struct)\n(concept_definition name: (identifier) @concept)\n(class_specifier name: (type_identifier) @class)\n",
+      "sha256": "2a57e6e5cb3c6136878e5d27ced7c7a090d491ec2e9e5e3d51f6305c6227945e",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "namespace",
+          "struct",
+          "concept",
+          "class"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-cpp-V14",
+      "source": "(lambda_capture_initializer left: (identifier) @init)\n(template_declaration (declaration declarator: (init_declarator declarator: (identifier) @vartemplate)))\n(number_literal) @num\n",
+      "sha256": "1077f4c6e42da4eb404eb4a819b5338f3c2aeeabbfeb1605678e3a4dd3d28f31",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "init",
+          "vartemplate",
+          "num"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-cpp-V17",
+      "source": "(nested_namespace_specifier (namespace_identifier) @ns)\n(structured_binding_declarator (identifier) @binding)\n",
+      "sha256": "29e660f47b5bb900c4321ea914fe6ea74f94d4662912773075e3aac7bf744c49",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "ns",
+          "binding"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-cpp-V23",
+      "source": "(explicit_object_parameter_declaration (this) @self)\n(subscript_argument_list (number_literal) @index)\n",
+      "sha256": "fde3be27ac5b9a89fa6e366ed03a24f035e1f21d0ea4434a80e1d666aef3a467",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "self",
+          "index"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-cpp-V14",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-cpp-V17",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-cpp-V23",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 621,
+    "field_count": 53
+  }
+}

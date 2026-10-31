@@ -170,6 +170,9 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		return classificationCaptureProfile{"go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288", "go", "tree_sitter_go", 3, 5, false}, nil
 	case "csharp15-empty":
 		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
+	case "cpp4-empty":
+		spec, _ := classificationCPPProfileSpecFor(name)
+		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
 		if spec, ok := classificationCJRSpecFor(name); ok {
 			return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, false}, nil
@@ -412,8 +415,8 @@ func TestQueryClassificationNativeCompletion(t *testing.T) {
 // This explicit local capture records structural metadata, never a semantic PASS.
 func TestQueryClassificationGoLocalCapture(t *testing.T) {
 	profileName := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if profileName == "csharp15-empty" {
-		t.Skip("C# 15 uses the dedicated local capture entry")
+	if profileName == "csharp15-empty" || profileName == "cpp4-empty" {
+		t.Skip("C# 15 and CPP4 use dedicated local capture entries")
 	}
 	if _, ok := classificationCJRSpecFor(profileName); ok {
 		t.Skip("C/Java/Rust use the dedicated local capture entry")
@@ -424,6 +427,13 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 func TestQueryClassificationCSharpLocalCapture(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "csharp15-empty" {
 		t.Skip("explicit C# 15 local capture profile is required")
+	}
+	classificationNativeLocalCapture(t)
+}
+
+func TestQueryClassificationCPPLocalCapture(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "cpp4-empty" {
+		t.Skip("explicit CPP4 empty-definition profile is required")
 	}
 	classificationNativeLocalCapture(t)
 }
@@ -482,6 +492,13 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCSharpAnchorsValid(anchors); err != nil {
 			t.Fatal(err)
 		}
+	case "cpp4-empty":
+		if err := classificationCPPAnchorsValid(anchors); err != nil {
+			t.Fatal(err)
+		}
+		if err := classificationCPPQueryRegistryValid(anchors); err != nil {
+			t.Fatal(err)
+		}
 	case "c4-empty", "java5-empty", "rust4-empty":
 		if err := classificationCJRAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
@@ -522,6 +539,9 @@ func classificationNativeLocalCapture(t *testing.T) {
 	}
 	if _, ok := classificationCJRSpecFor(profileName); ok && !classificationCJRGrammarValid(profileName, grammar) {
 		t.Fatal("C/Java/Rust grammar roles or paths differ from the closed unpaged profile", profile.route)
+	}
+	if profileName == "cpp4-empty" && !classificationCPPGrammarValid(grammar) {
+		t.Fatal("CPP grammar roles or paths differ from the closed paged profile", profile.route)
 	}
 	write := func(path string, value []byte) {
 		t.Helper()
@@ -642,7 +662,7 @@ func classificationNativeLocalCapture(t *testing.T) {
 			finishEarly(&result, kit.StatusFailed, kit.AssessNotAssessed, "BATCH_PROBE_INCOMPLETE")
 		}
 	}
-	if profileName == "csharp15-empty" || classificationCJRProfile(profileName) {
+	if profileName == "csharp15-empty" || profileName == "cpp4-empty" || classificationCJRProfile(profileName) {
 		// The driver capture owns a clone, so preserve the explicit empty stream in both records.
 		classificationCSharpEmptyStderr(result.Process)
 		if capture != nil {
