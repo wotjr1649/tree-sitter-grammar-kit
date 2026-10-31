@@ -1,0 +1,138 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "c",
+  "case": "c4-empty-definitions",
+  "api": false,
+  "operation": "native-query",
+  "driver_mode": "single",
+  "workload": "c4-empty-definition-single-frame",
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR"
+    }
+  ],
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "translation_unit",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(type_definition declarator: (type_identifier) @type)\n(function_definition declarator: (function_declarator declarator: (identifier) @function))\n(call_expression function: (identifier) @call)\n",
+      "sha256": "e9eba020e1b34816c5f12c21545fbea0b895e03996974593562cb23e1ff911a7",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "type",
+          "function",
+          "call"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-c-V11",
+      "source": "(alignas_qualifier (number_literal) @align)\n(alignof_expression type: (type_descriptor type: (primitive_type) @alignof))\n(generic_expression (type_descriptor type: (primitive_type) @assoc))\n",
+      "sha256": "d3930fba7799c448bbe5fdf9a75fb102d7b5ffd896228600d140dfea3202a0e3",
+      "metadata": {
+        "patterns": 3,
+        "capture_names": [
+          "align",
+          "alignof",
+          "assoc"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-c-V23",
+      "source": "(attribute_declaration (attribute name: (identifier) @attr))\n(true) @true\n(false) @false\n(null) @null\n",
+      "sha256": "0d001ee87956853e839787e05f3da182b14d8a06777426fb984d7dfea2c0b757",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "attr",
+          "true",
+          "false",
+          "null"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-c-L01",
+      "source": "(function_definition declarator: (function_declarator parameters: (parameter_list (identifier) @param)))\n(function_definition (declaration declarator: (identifier) @decl))\n",
+      "sha256": "6e33506bbd6c2914ca580874e90c3ec8fe65a70f26e2b9a1beb8b66f58656f1f",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "param",
+          "decl"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-c-V11",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-c-V23",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-c-L01",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 403,
+    "field_count": 40
+  }
+}

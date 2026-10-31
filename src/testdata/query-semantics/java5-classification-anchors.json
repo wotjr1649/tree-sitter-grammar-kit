@@ -1,0 +1,154 @@
+{
+  "schema": "tsgk-query-classification-anchors/r1",
+  "route": "java",
+  "case": "java5-empty-definitions",
+  "api": false,
+  "operation": "native-query",
+  "driver_mode": "single",
+  "workload": "java5-empty-definition-single-frame",
+  "expect": [
+    {
+      "step": 0,
+      "syntax": "NO_ERROR"
+    }
+  ],
+  "source": {
+    "utf8": "",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "edits": [],
+  "nodes_each_version": [
+    {
+      "parent": -1,
+      "type": "program",
+      "field": null,
+      "named": true,
+      "extra": false,
+      "is_error": false,
+      "has_error": false,
+      "is_missing": false,
+      "start_byte": 0,
+      "end_byte": 0,
+      "start_point": {
+        "row": 0,
+        "column": 0
+      },
+      "end_point": {
+        "row": 0,
+        "column": 0
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "q.structure",
+      "source": "(class_declaration name: (identifier) @class)\n(interface_declaration name: (identifier) @interface)\n(record_declaration name: (identifier) @record)\n(method_declaration name: (identifier) @method)\n",
+      "sha256": "6b31aaa0626f4d2ef8e0e542cfcd3e3102581f267e6ac3482c5265616b478d01",
+      "metadata": {
+        "patterns": 4,
+        "capture_names": [
+          "class",
+          "interface",
+          "record",
+          "method"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v9",
+      "source": "(module_declaration name: (_) @module)\n(requires_module_directive module: (_) @requires)\n",
+      "sha256": "956f820c26bf247d5877cc8450aa7c639496ee332b34217c85edc318c1916bf6",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "module",
+          "requires"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v21",
+      "source": "(record_pattern (identifier) @record)\n(guard) @guard\n",
+      "sha256": "e163eac14537175162a1865aeb315fd470d2ac2e215de2d491abfc908ee16763",
+      "metadata": {
+        "patterns": 2,
+        "capture_names": [
+          "record",
+          "guard"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v25-compact",
+      "source": "(program (method_declaration name: (identifier) @method))\n",
+      "sha256": "bd65786741e63b7da62527a2241064c04583045523824f0d4adb963c4d533dff",
+      "metadata": {
+        "patterns": 1,
+        "capture_names": [
+          "method"
+        ],
+        "predicates": []
+      }
+    },
+    {
+      "id": "q.probe-v25-ctor",
+      "source": "(constructor_body (explicit_constructor_invocation constructor: (_) @invocation))\n",
+      "sha256": "30c5ee77cc3d50b374cdaf7ad8faaa13f0154fa8dc169d1f7deec57a67250280",
+      "metadata": {
+        "patterns": 1,
+        "capture_names": [
+          "invocation"
+        ],
+        "predicates": []
+      }
+    }
+  ],
+  "required": [
+    {
+      "query": "q.structure",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v9",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v21",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v25-compact",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    },
+    {
+      "query": "q.probe-v25-ctor",
+      "step": 0,
+      "tree_role": "incremental",
+      "structural": [],
+      "expected": []
+    }
+  ],
+  "expected_producer_abi": {
+    "language_version": 15,
+    "runtime_language_version": 15,
+    "runtime_min_compatible": 13,
+    "symbol_count": 323,
+    "field_count": 40
+  }
+}
