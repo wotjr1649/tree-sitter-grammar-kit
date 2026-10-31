@@ -72,7 +72,7 @@ CPP 전용 ordinary loader는 `cpp.json`의 정확한 원문·hash·query 순서
 
 ## 독립성 및 identity
 
-Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f3a`다. [instrumentation.patch](../../src/dev/query-reference/instrumentation.patch)는 Rust binding에 읽기 전용 query pointer와 별도 raw capture iterator만 추가한다. 기존 iterator의 기본값은 predicate 평가를 유지한다. 별도 iterator는 predicate 탈락 match를 제거하지 않으며, emitter가 변경하지 않은 upstream `QueryMatch::satisfies_text_predicates`에 원래 전체 match와 원 source를 넘긴다. Kit 평가기를 호출하거나 kit 결과를 읽지 않는다.
+Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f3a`다. [instrumentation.patch](../../src/dev/query-reference/instrumentation.patch)는 Rust binding에 읽기 전용 query pointer와 별도 raw capture iterator만 추가한다. 기존 iterator의 기본값은 predicate 평가를 유지한다. 별도 iterator는 predicate 탈락 match를 제거하지 않으며, emitter가 변경하지 않은 upstream `QueryMatch::satisfies_text_predicates`에 iterator가 반환한 원래 match와 원 source를 advance 전에 넘긴다. Upstream은 predicate에 사용되는 capture 단계를 indefinite로 표시하고 선행 단계에 전파한다. Emitter도 각 반환 snapshot에서 지원하는 모든 `ONE` operand의 실제 occurrence가 정확히 하나인지 확인한 뒤 평가한다. Predicate와 무관한 뒤쪽 capture까지 처음 반환 시 이미 모두 발견됐다고 가정하지 않는다. Kit 평가기를 호출하거나 kit 결과를 읽지 않는다.
 
 원본 workspace·library manifest를 유지하고 emitter member 하나를 더한다. 원본 lock의 기존 package·version·checksum·dependency를 바꾸지 않는다. `build.py`는 새 package 하나만 추가됐는지 확인한 뒤 `--offline --frozen`으로 선택 package만 빌드한다. 전체 CLI·WASM·bindgen 빌드는 이 경로에 포함하지 않는다. 실제 selected dependency/features의 전체 `selected-tree.json` receipt hash와 종료 전 불변성, metadata, 실행 요청·결과, 원본 archive·patch·emitter·manifest·lock·도구·binary hash를 별도로 보존한다. Build 도구 목록은 실제 Python interpreter의 절대 경로·파일 hash·`sys.version`도 포함하며 build 전후 hash가 같아야 한다. Cargo offline은 의존성 취득 방식이며 network sandbox를 뜻하지 않는다.
 
@@ -94,7 +94,7 @@ Emitter 인자는 절대 library path, symbol, source path, query path, query ID
 - 원 runtime match ID와 최초 structural 등장 순서의 match 번호 mapping. Predicate 탈락 뒤 번호를 다시 매기지 않는다.
 - 실제 사용 한도, cursor 종료·match-limit 초과 여부 및 `complete`.
 
-각 match의 전체 capture signature·pattern·predicate 결정이 재등장 때 같아야 한다. 각 capture **occurrence index**는 정확히 한 번 반환돼야 하며, 종료 시 누락이 있으면 실패한다. 서로 다른 occurrence의 동일한 capture 값은 보존한다. 단순 개수 합계나 정렬·중복 제거로 이 검사를 대체하지 않는다.
+Raw capture iterator는 아직 완료되지 않은 definite match의 capture를 먼저 반환할 수 있다. 따라서 같은 runtime match ID의 capture signature는 기존 prefix를 그대로 보존하며 뒤에 새 occurrence를 추가할 수 있다. Prefix의 변경·축소와 pattern·upstream predicate 결정 변경은 거부한다. 새 tail만 group capture 한도에 더하고 occurrence 상태를 확장한다. 각 capture **occurrence index**는 정확히 한 번 반환돼야 하며, cursor 종료 시 누락이 있으면 실패한다. 서로 다른 occurrence의 동일한 capture 값은 보존한다. 원 stream의 순서와 최초 등장에 따른 match 번호를 유지하며 단순 개수 합계나 정렬·중복 제거로 이 검사를 대체하지 않는다.
 
 성공은 모든 검사가 끝났고 cursor가 소진됐으며 한도를 넘지 않았을 때만 `COMPLETED`, `complete: true`다. 100,000 node·50,000 stream capture·200,000 group capture·100,000 match·내부 wall 3초를 유지한다. Predicate는 `eq?`, `not-eq?`, `any-of?`, `not-any-of?`의 지원 operand 형태와 `ONE` capture만 허용한다. 그 밖의 연산·directive·quantifier·encoding은 이 기준의 부적격이며 범위를 넓혀 통과시키지 않는다. 원본 C query cursor의 기본 range가 byte0에서 끝나는 capture를 제외하는 동작은 빈 source 대조에 반영한다.
 

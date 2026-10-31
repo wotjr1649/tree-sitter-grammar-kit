@@ -105,6 +105,25 @@ struct MatchGroup {
 }
 
 impl MatchGroup {
+    fn extend(
+        &mut self,
+        pattern: usize,
+        signature: Vec<(u32, usize)>,
+        keep: bool,
+        remaining: usize,
+    ) -> Result<usize, String> {
+        if self.pattern != pattern || self.keep != keep || !signature.starts_with(&self.signature) {
+            return Err("MATCH_GROUP_CHANGED".into());
+        }
+        let added = signature.len() - self.signature.len();
+        if added > remaining {
+            return Err("MATCH_GROUP_LIMIT".into());
+        }
+        self.seen.resize(signature.len(), false);
+        self.signature = signature;
+        Ok(added)
+    }
+
     fn observe(&mut self, at: usize) -> Result<(), String> {
         let seen = self.seen.get_mut(at).ok_or("CAPTURE_INDEX")?;
         if *seen {
@@ -120,6 +139,12 @@ impl MatchGroup {
         }
         Ok(())
     }
+}
+
+fn predicate_captures_complete(required: &[u32], signature: &[(u32, usize)]) -> bool {
+    required
+        .iter()
+        .all(|id| signature.iter().filter(|capture| capture.0 == *id).count() == 1)
 }
 
 fn hash(bytes: &[u8]) -> String {
@@ -187,8 +212,9 @@ fn capture_doc(
 }
 
 // These are compiled predicate steps, not a second predicate evaluator.
-fn predicates(query: &Query) -> Result<Vec<Value>, String> {
+fn predicates(query: &Query) -> Result<(Vec<Value>, Vec<Vec<u32>>), String> {
     let mut result = Vec::new();
+    let mut capture_ids = vec![Vec::new(); query.pattern_count()];
     let raw = query.tsgk_raw();
     let mut total_steps = 0usize;
     for pattern in 0..query.pattern_count() {
@@ -243,6 +269,7 @@ fn predicates(query: &Query) -> Result<Vec<Value>, String> {
                     {
                         return Err("PREDICATE_QUANTIFIER_OUTSIDE_REFERENCE_SUBSET".into());
                     }
+                    capture_ids[pattern].push(step.value_id);
                     group.push(json!({"kind":"capture","value":name,"quantifier":"ONE"}));
                 }
                 ffi::TSQueryPredicateStepTypeString => {
@@ -267,8 +294,10 @@ fn predicates(query: &Query) -> Result<Vec<Value>, String> {
         if !group.is_empty() {
             return Err("PREDICATE_UNTERMINATED".into());
         }
+        capture_ids[pattern].sort_unstable();
+        capture_ids[pattern].dedup();
     }
-    Ok(result)
+    Ok((result, capture_ids))
 }
 
 #[cfg(windows)]
@@ -441,7 +470,7 @@ fn run(
         let query_bytes = read(Path::new(&request[3]), 65_536)?;
         let query_source = std::str::from_utf8(&query_bytes).map_err(|_| "QUERY_UTF8")?;
         let query = Query::new(&language, query_source).map_err(|_| "QUERY_COMPILE")?;
-        let metadata = predicates(&query)?;
+        let (metadata, predicate_captures) = predicates(&query)?;
         let mut query_cursor = QueryCursor::new();
         query_cursor.set_match_limit(MATCH_LIMIT);
         let mut raw = Vec::<Value>::new();
@@ -485,16 +514,22 @@ fn run(
                             .ok_or("CAPTURE_NODE_UNMAPPED".to_string())
                     })
                     .collect::<Result<Vec<_>, _>>()?;
-                // Evaluate the original complete QueryMatch before advancing the raw cursor.
+                // The raw cursor can append captures to a definite match between events.
+                let required = predicate_captures
+                    .get(m.pattern_index)
+                    .ok_or("PREDICATE_CAPTURE")?;
+                if !predicate_captures_complete(required, &signature) {
+                    return Err("PREDICATE_OPERANDS".into());
+                }
                 let keep =
                     m.satisfies_text_predicates(&query, &mut buffer1, &mut buffer2, &mut text);
                 let match_id = if let Some(group) = groups.get_mut(&m.id()) {
-                    if group.pattern != m.pattern_index
-                        || group.signature != signature
-                        || group.keep != keep
-                    {
-                        return Err("MATCH_GROUP_CHANGED".into());
-                    }
+                    group_captures += group.extend(
+                        m.pattern_index,
+                        signature,
+                        keep,
+                        MAX_GROUP_CAPTURES - group_captures,
+                    )?;
                     group.observe(*at)?;
                     group.index
                 } else {
@@ -696,6 +731,45 @@ mod tests {
             assert!(group.observe(1).is_ok());
             assert!(group.finish().is_ok());
         }
+        for keep in [true, false] {
+            let mut group = MatchGroup {
+                index: 0,
+                pattern: 1,
+                signature: vec![(1, 2)],
+                keep,
+                seen: vec![false],
+            };
+            assert!(group.observe(0).is_ok());
+            assert_eq!(
+                group.extend(1, vec![(1, 2), (0, 4)], keep, 0).unwrap_err(),
+                "MATCH_GROUP_LIMIT"
+            );
+            assert_eq!(group.signature, vec![(1, 2)]);
+            assert_eq!(group.seen, vec![true]);
+            assert_eq!(group.extend(1, vec![(1, 2), (0, 4)], keep, 1), Ok(1));
+            assert_eq!(group.finish().unwrap_err(), "MATCH_GROUP_INCOMPLETE");
+            assert!(group.observe(1).is_ok());
+            assert!(group.finish().is_ok());
+            assert_eq!(group.extend(1, vec![(1, 2), (0, 4)], keep, 0), Ok(0));
+            for (pattern, signature, decision) in [
+                (1, vec![(1, 2)], keep),
+                (1, vec![(1, 3), (0, 4)], keep),
+                (2, vec![(1, 2), (0, 4)], keep),
+                (1, vec![(1, 2), (0, 4)], !keep),
+            ] {
+                assert_eq!(
+                    group.extend(pattern, signature, decision, 1).unwrap_err(),
+                    "MATCH_GROUP_CHANGED"
+                );
+            }
+            assert_eq!(group.signature, vec![(1, 2), (0, 4)]);
+            assert_eq!(group.seen, vec![true, true]);
+            assert_eq!(group.observe(1).unwrap_err(), "CAPTURE_DUPLICATED");
+        }
+        assert!(predicate_captures_complete(&[], &[(1, 2)]));
+        assert!(!predicate_captures_complete(&[0], &[(1, 2)]));
+        assert!(predicate_captures_complete(&[0, 1], &[(1, 2), (0, 4)]));
+        assert!(!predicate_captures_complete(&[0], &[(0, 4), (0, 5)]));
     }
 }
 
