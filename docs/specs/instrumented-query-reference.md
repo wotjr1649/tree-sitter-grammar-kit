@@ -30,6 +30,14 @@ Go와 C#의 공통 수동 guard는 reference가 사용한 library가 compiler �
 
 수동 환경이 없는 helper는 SKIP이며 실제 Windows native/reference 관측은 별도로 동결·검토한 bounded 실행에서만 채택한다. 이 구현과 정적 회귀 자체는 새 실행을 관측하지 않았으며 Linux/macOS 관측이나 원래 batch 사례별·semantic 완료를 만들지 않는다. r1의 `STRUCTURAL_CANDIDATE`·`UNVERIFIED`·`NOT_ASSESSED`·`semantic_required:null`, r10의 `full_scope_complete=false`와 전체 BLOCKED는 유지한다. C++4는 이 닫힌 profile에 포함하지 않는다.
 
+## C++ 4개 정의의 별도 parser paging 분류
+
+닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=cpp4-empty`는 [CPP4 사전 기대값](../../src/testdata/query-semantics/cpp4-classification-anchors.json)의 빈 UTF-8 source·편집 없음·API=false·`native-query`·`Args=["single"]`을 선택한다. Step0은 `NO_ERROR`, named `translation_unit` root 하나와 query별 빈 structural/expected capture를 요구한다. ABI 기대값은15/15/13/621/53이고, 원래 query4개의 metadata는 합계11 patterns·11 capture-name 항목·명시적 `predicates:[]`다. 이 기대값과 helper의 기본 SKIP은 실제 compile/native/reference 관측을 대신하지 않는다.
+
+CPP parser 원문49,598,509바이트는 기존 `full-input-utf8-paged-parser/r1`으로 보존한다. Parser에만16,777,216·16,777,216·16,044,077바이트의3 parts를 사용하며 logical 원문 hash, descriptor와 모든 part·owner를 같은 guarded eligibility snapshot에서 대조한다. Scanner와 header3개의 원문 pin·순서, compiler argv 및 출력 `cpp.dll`도 고정한다. `oracle/` namespace와 기존 opaque `go-library-build`·`current/go.dll` evidence ID를 재사용하되 CPP 정체성은 route·symbol·ABI·grammar 원문과 사전등록으로 검증한다. CPP는 CJR의 닫힌 C/Java/Rust map과 별도이며, 그 map의 CPP 거부와 `full-input-utf8/r2` parser16MiB 한도를 완화하지 않는다. 다른 입력·library·문서·출력·시간·memory 한도도 늘리지 않는다.
+
+CPP 전용 ordinary loader는 `cpp.json`의 정확한 원문·hash·query 순서와 원장의 유일한 `cpp/s06-cpp` 그룹을 대조한다. C# fact-query-pack loader를 복제하지 않는다. 원래77 cases·13 edits·90 case steps·103 tree roles는4개 정의와412 potential links를 만든다. 이는 빈 입력 관측412회나 원래 사례별 CST/API·capture·runtime/semantic 완료를 뜻하지 않는다. `definitions`는 새 graph 밖 caller 승인, 같은 guarded snapshot의 eligibility·독립 CST·request/frame·compiler/library·native/reference metadata 및 별도 public API parity를 통과한 뒤에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 네 query는 각각 서로 다른 reference invocation에 연결되며, 한 invocation의 batch 응답 여러 개를4회 실행으로 세지 않는다. Invocation ID 자체는 opaque identifier다. 실제 native stderr가0바이트이면 명시적 빈 member를 보존하며, 비어 있지 않은 stderr도 같은 native owner·process byte count와 결속한다. 출력 소유권·관측/reader revision 구분·완료/정리 검사는 기존 분류 guard를 유지한다. r1의 미검증 상태와 r10 `full_scope_complete=false`·전체 BLOCKED, 전체 #216/#195 OPEN은 이 부분 분류로 바뀌지 않는다.
+
 ## Ordinary Go의 첫 single-frame batch probe
 
 수동 분류 helper의 `TSGK_QUERY_CLASSIFICATION_PROFILE=positive-batch`는 기존 등록 `go/s06-go/probe-go-B04-P-6`의 50-byte 정상 source, 편집 없음, API 관측, 세 query를 선택한다. 명시적 profile이 없으면 기존 빈 source Go3 정의 검사를 유지한다. 별도 C# profile은 위 계약으로 선택하며 미등록 profile은 거부한다. [고정 사전 기대값](../../src/testdata/query-semantics/go-positive-batch-anchors.json)은 수작업 full CST 25개 node, ABI·metadata, `q.structure`의 function capture 하나와 나머지 두 query의 빈 capture를 소유한다. 원 등록의 `NO_ERROR`, `for_statement`·`block`·`break_statement`와 `for_statement` 범위 `30..47`도 검사한다.
