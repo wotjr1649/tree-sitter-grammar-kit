@@ -1,5 +1,25 @@
 # 계측 query reference 계약 (#216)
 
+## Small17 단일 frame 정의 분류
+
+별도 닫힌 profile 다섯 개는 다음 사전 기대값을 선택한다. 모두 UTF-8, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`다. 표의 CST·ABI·query metadata는 정적 사전등록이며 실제 parser·compiler·query 관측을 대신하지 않는다.
+
+| Profile / anchor | Source | 전체 CST nodes | 정의 | ABI symbol/field |
+|---|---|---:|---:|---:|
+| `json1-tiny` / [JSON1](../../src/testdata/query-semantics/json1-classification-anchors.json) | `null` | 2 | 1 | 23/2 |
+| `yaml1-empty` / [YAML1](../../src/testdata/query-semantics/yaml1-classification-anchors.json) | 빈 source | 1 | 1 | 301/2 |
+| `xml2-tiny` / [XML2](../../src/testdata/query-semantics/xml2-classification-anchors.json) | `<r/>` | 6 | 2 | 142/2 |
+| `html2-empty` / [HTML2](../../src/testdata/query-semantics/html2-classification-anchors.json) | 빈 source | 1 | 2 | 48/0 |
+| `css11-empty` / [CSS11](../../src/testdata/query-semantics/css11-classification-anchors.json) | 빈 source | 1 | 11 | 204/0 |
+
+JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는 `document`와 named `null` 두 노드다. XML은 `document`의 `root` field에 `element`가 있고 그 아래 `EmptyElemTag`, anonymous `<`, named `Name`, anonymous `/>`를 포함한다. 모든 node의 parent·field·flags·byte/point span을 고정한다. XML fact query의 pattern1은 바깥 `element` capture(ID1, node2, bytes0..4) 뒤 `element.name`(ID0, node4, bytes1..2)을 기대한다. 다른 query의 structural/expected capture는 빈 배열이다. YAML·HTML·CSS root는 각각 `stream`, `document`, `stylesheet`다. ABI language/runtime/min-compatible은15/15/13이며 CSS symbol204는 generated `SYMBOL_COUNT=199`와 `ALIAS_COUNT=5`를 합하는 고정 runtime API의 기대값이다.
+
+17개 query의 사전 metadata 합계는44 patterns·46개의 query별 unique capture-name 항목이고 predicate 목록은 모두 명시적 `[]`다. 원문 occurrence의 중복 capture 이름을 compiled name ID의 중복으로 세지 않는다. 각 ordinary query 원본 파일의 전체 bytes·SHA와 ID·원문·순서를 따로 결속하고, XML의 `facts.xml_structure`는 `fact-query-pack.json`의 정확한 별도 원본과 연결한다. Null metadata·source alias 교환·누락·중복·다른 predicate는 거부한다.
+
+다섯 route는 기존 `full-input-utf8/r2`만 사용하며 parser paging이나16MiB 물리 파일 한도를 넓히지 않는다. Grammar closure는 JSON4·YAML8·XML6·HTML6·CSS5, 총29개의 고정 role/path/bytes/SHA다. JSON은 scanner가 없다. YAML의 schema C 파일3개와 HTML의 `src/tag.h`는 header closure로 보존하며 확장자만 보고 별도 compile source에 넣지 않는다. XML의 `xml/src/`와 `common/scanner.h` 경로를 평탄화하지 않는다. Compiler argv는 parser/scanner role과 정확한 route 경로·include·출력·한도에 결속한다. 기존 CJR 폐쇄 목록과 C#/CPP parser-only paging 경로는 유지한다.
+
+`definitions`는 새 graph의 외부 caller approval과 같은 guarded snapshot에서 eligibility·full CST·query별 서로 다른 reference invocation의 순서·metadata·request/frame·compiler/library·stderr owner 및 별도 공개 API parity를 모두 확인한 뒤에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원래 inventory/qualification의 case·edit·tree-role 좌표는 정적 잠재 연결이며 이번 단일 frame 실행 횟수가 아니다. 기존 r1/r10 상태와 semantic/per-case·Windows/Linux·SVC/large·replay/fan-in 미완료를 유지하고 관측 source와 reader revision을 구분한다. 출력 보호·만료·원 caller return 결속은 기존 정의 분류와 같다.
+
 ## 승인된 Go compiled metadata의 정의 수준 연결
 
 수동 helper의 `TSGK_QUERY_CLASSIFICATION_STAGE=definitions`는 기존 `positive-batch` 검증 본체를 재사용한다. 외부 caller approval과 같은 guarded run/snapshot에서 eligibility, 독립 full CST/API, native/reference metadata, request/frame·library/compiler 결속 및 별도 public API parity를 확인한 뒤에만 test-only typed 정의 레코드를 만든다. 저장된 `classification-result.json`의 PASS를 신뢰 입력으로 읽는 경로는 없다. 새 public API·CLI 또는 별도 provenance 승인 gate는 추가하지 않는다.

@@ -115,6 +115,25 @@ func classificationCJRAnchorsValid(profile classificationCJRDefinitionProfile, a
 }
 
 func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []NativeInput) ([]string, error) {
+	if profile, ok := classificationSmall17ProfileForRoute(route); ok {
+		want := profile.GrammarShape
+		if len(grammar) != len(want) {
+			return nil, fmt.Errorf("%s exact parser/scanner/header closure changed", route)
+		}
+		for i, pin := range grammar {
+			if pin.Path != want[i].Path || pin.Role != want[i].Role || pin.Bytes == 0 || !hex64.MatchString(pin.SHA256) {
+				return nil, fmt.Errorf("%s exact parser/scanner/header closure changed", route)
+			}
+		}
+		args := []string{"-shared", "-O0", "-std=gnu11"}
+		for _, dir := range profile.CompilerIncludeDirs {
+			args = append(args, "-I", filepath.Join(grammarRoot, filepath.FromSlash(dir)))
+		}
+		for _, source := range profile.CompilerSourceFiles {
+			args = append(args, filepath.Join(grammarRoot, filepath.FromSlash(source)))
+		}
+		return append(args, "-o", output), nil
+	}
 	withScanner := false
 	switch route {
 	case "go", "csharp", "rust", "cpp":

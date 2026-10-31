@@ -1,5 +1,13 @@
 # Validation and merge contract
 
+## #216 Small17 닫힌 profile 검증
+
+JSON1·YAML1·XML2·HTML2·CSS11의 별도 수동 profile은 [Small17 계약](../specs/instrumented-query-reference.md#small17-단일-frame-정의-분류)을 따른다. Focused 검사는 다섯 anchor의 정확한 source·full CST/flags/span·ABI(특히 CSS alias 포함204), query 순서·원문·완전한 metadata, raw ordinary source5개와 XML fact pack의 별도 결속을 검사한다. 같은 총계의 ID 교환, metadata nil/null·predicate 추가, XML source alias·capture 순서, grammar role/path/byte/SHA와 nested 경로, compiler argv·출력·한도, 중복 reference invocation을 거부해야 한다. 기존 Go/C#/CJR/CPP guard와 공개 API parity를 유지한다.
+
+Grammar29개와 원본 query6개, native registry·inventory·qualification의 고정 pin을 대조하며 YAML schema C 파일3개는 header로 유지한다. JSON은 `null`, XML은 `<r/>`, 나머지 세 profile은 빈 source의 단일 frame 사전 기대값이다. 정적 시험·합성 반례나 수동 helper의 SKIP은 실제 compile/native/reference PASS가 아니다. 원래 case/step/tree-role 및 potential links와 이번 정의17개 분모를 구분한다.
+
+새 Windows 수집 전 source commit·입력·controller·도구·시험 binary·사전등록과 유한 예산을 고정하고 독립 pre-query 검토를 마친다. 수집 후 실제 종료·검증된 cleanup·raw bytes·전후 pin·독립 provenance/security 검토·새 외부 caller approval·같은 guarded snapshot과 API parity를 확인한다. 기존 실행·승인을 재사용해 새 관측으로 세지 않는다. 후보와 actual main의 필수 CI·공식 artifact·finding 처분은 별도이며, 이 계약은 새 Linux/macOS reference·dispatch·release 발행 권한을 추가하지 않는다.
+
 ## #216 CPP4 parser-only paging 분류 검증
 
 별도 닫힌 `cpp4-empty` 수동 profile은 [계측 reference 계약](../specs/instrumented-query-reference.md#c-4개-정의의-별도-parser-paging-분류)을 따른다. Focused 회귀는 CPP4 anchor·원문 query/순서·metadata·빈 CST/ABI·ordinary 분모, parser/scanner/header 폐쇄와 compiler argv, CPP paged context·기존 CJR CPP 거부/16MiB guard의 분리를 확인해야 한다. 기존 Go/C#·CJR profile과 guarded eligibility·public API parity·request/frame·library/compiler·stderr owner 결속을 유지하고, 관련 정상·변조·경계 반례 및 공식 vet를 선택한다. 수동 환경이 없는 capture/driver entry의 SKIP은 actual compile/native/reference PASS가 아니다.
