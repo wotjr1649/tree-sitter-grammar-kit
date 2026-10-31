@@ -168,6 +168,7 @@ func actualJSONFreshSource(t *testing.T, fresh string) string {
 	t.Helper()
 	var freshContext struct {
 		SourceRevision string `json:"source_revision"`
+		SessionID      string `json:"session_id"`
 	}
 	actualJSONDecode(t, filepath.Join(fresh, "context-before.json"), &freshContext)
 	for _, stage := range []string{"outer-build", "outer-controls"} {
