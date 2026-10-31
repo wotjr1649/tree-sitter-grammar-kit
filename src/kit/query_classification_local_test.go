@@ -844,6 +844,11 @@ func classificationGoDefinitionOutput(root, assembly, output string) error {
 	if !filepath.IsAbs(output) {
 		return fmt.Errorf("absolute separate definition output required")
 	}
+	for _, component := range strings.Split(filepath.ToSlash(output), "/") {
+		if component == ".." {
+			return fmt.Errorf("definition output must not contain parent path components")
+		}
+	}
 	for component := filepath.Clean(output); ; component = filepath.Dir(component) {
 		info, err := os.Lstat(component)
 		if err != nil || info.Mode()&os.ModeType != os.ModeDir {

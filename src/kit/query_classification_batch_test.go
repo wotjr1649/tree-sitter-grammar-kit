@@ -61,7 +61,8 @@ func TestQueryClassificationDefinitionOutput(t *testing.T) {
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
 		t.Fatal("separate physical output rejected", err)
 	}
-	for _, path := range []string{"relative", filepath.Join(root, "child"), filepath.Join(assembly, "child"), filepath.Join(base, "absent")} {
+	parentPath := root + string(filepath.Separator) + "child" + string(filepath.Separator) + ".." + string(filepath.Separator) + ".." + string(filepath.Separator) + "new-output"
+	for _, path := range []string{"relative", filepath.Join(root, "child"), filepath.Join(assembly, "child"), filepath.Join(base, "absent"), parentPath} {
 		if err := classificationGoDefinitionOutput(root, assembly, path); err == nil {
 			t.Fatal("unsafe output accepted", path)
 		}
@@ -80,7 +81,7 @@ func TestQueryClassificationDefinitionOutput(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			script := "$ErrorActionPreference='Stop'; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
+			script := "$ErrorActionPreference='Stop'; if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
 			cmd := exec.CommandContext(ctx, command, "-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
 			cmd.Dir = filepath.Dir(name)
 			cmd.Stdin = strings.NewReader(string(eligibilityJSON(t, map[string]string{"name": filepath.Base(name), "target": target})))
