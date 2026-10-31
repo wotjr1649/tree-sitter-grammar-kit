@@ -498,8 +498,15 @@ func classificationSmall17LibraryRequestValid(profile classificationSmall17Defin
 		!eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) || !hex64.MatchString(plan.RuntimeManifestSHA256) || !hex64.MatchString(plan.CompilerSHA256) ||
 		!filepath.IsAbs(root) || !filepath.IsAbs(grammarRoot) || request.Dir != root || !eligibilityAbsolutePath(request.Path, "windows/amd64") ||
 		eligibilityValidateRequest(request, "go-library") != nil || request.StdoutBytes != 16<<20 || request.StderrBytes != 4<<20 || request.Wall != 120e9 || request.Grace != 2e9 ||
-		request.Memory.Bytes != 4<<30 || !request.Memory.Hard || len(request.Env) != 0 || request.CgroupParent != "" {
+		request.Memory.Bytes != 4<<30 || !request.Memory.Hard || len(request.Env) != 9 || request.CgroupParent != "" {
 		return fmt.Errorf("%s compiler request identity, ownership, or limits differ", profile.Name)
+	}
+	wantEnvNames := []string{"COMSPEC", "PATH", "PATHEXT", "SystemDrive", "SystemRoot", "TEMP", "TMP", "TMPDIR", "WINDIR"}
+	for i, env := range request.Env {
+		name, value, ok := strings.Cut(env, "=")
+		if !ok || name != wantEnvNames[i] || value == "" {
+			return fmt.Errorf("%s compiler environment differs from the explicit Windows allowlist", profile.Name)
+		}
 	}
 	wantArgs, err := classificationGoCompilerArgs(profile.Route, grammarRoot, output, plan.Grammar)
 	if err != nil {
@@ -699,7 +706,17 @@ func classificationSmall17StaticFixtureForTest(t *testing.T, name string) classi
 		Schema: "tsgk-query-classification-plan/r1", SourceRevision: strings.Repeat("a", 40), RunID: "small17-static-plan",
 		AnchorsSHA256: profile.AnchorSHA, RuntimeManifestSHA256: strings.Repeat("b", 64), CompilerSHA256: strings.Repeat("c", 64),
 		NativeContext: "full-input-utf8/r2", Grammar: grammar,
-		LibraryRequest: eligibilityProcessRequest{Path: filepath.FromSlash("C:/toolchain/cc.exe"), Args: args, Dir: root, Env: []string{}, StdoutBytes: 16 << 20, StderrBytes: 4 << 20, Wall: 120e9, Grace: 2e9},
+		LibraryRequest: eligibilityProcessRequest{Path: filepath.FromSlash("C:/toolchain/cc.exe"), Args: args, Dir: root, Env: []string{
+			"COMSPEC=C:/Windows/System32/cmd.exe",
+			"PATH=C:/Windows/System32;C:/Windows",
+			"PATHEXT=.COM;.EXE;.BAT;.CMD",
+			"SystemDrive=C:",
+			"SystemRoot=C:/Windows",
+			"TEMP=C:/Temp",
+			"TMP=C:/Temp",
+			"TMPDIR=C:/Temp",
+			"WINDIR=C:/Windows",
+		}, StdoutBytes: 16 << 20, StderrBytes: 4 << 20, Wall: 120e9, Grace: 2e9},
 	}
 	plan.LibraryRequest.Memory.Bytes, plan.LibraryRequest.Memory.Hard = 4<<30, true
 	if err := classificationSmall17LibraryRequestValid(profile, plan, root, grammarRoot); err != nil {
@@ -901,6 +918,29 @@ func TestQueryClassificationSmall17RejectsAliasAndEmptyEvidence(t *testing.T) {
 	badCompilerPath.LibraryRequest.Path = "compiler.exe"
 	if err := classificationSmall17LibraryRequestValid(fixture.profile, badCompilerPath, badCompilerPath.LibraryRequest.Dir, fixture.grammarRoot); err == nil {
 		t.Fatal("relative compiler path accepted")
+	}
+	for _, test := range []struct {
+		name   string
+		mutate func([]string) []string
+	}{
+		{name: "empty", mutate: func([]string) []string { return []string{} }},
+		{name: "unknown-name", mutate: func(env []string) []string { env[len(env)-1] = "ZZZ=C:/Temp"; return env }},
+		{name: "missing-PATH", mutate: func(env []string) []string { return append(env[:1], env[2:]...) }},
+		{name: "duplicate-name", mutate: func(env []string) []string { env[len(env)-1] = env[len(env)-2]; return env }},
+		{name: "case-variant", mutate: func(env []string) []string {
+			env[0] = strings.Replace(env[0], "COMSPEC", "ComSpec", 1)
+			slices.Sort(env)
+			return env
+		}},
+		{name: "empty-value", mutate: func(env []string) []string { env[1] = "PATH="; return env }},
+	} {
+		t.Run("compiler-env-"+test.name, func(t *testing.T) {
+			badPlan := fixture.plan
+			badPlan.LibraryRequest.Env = test.mutate(slices.Clone(fixture.plan.LibraryRequest.Env))
+			if err := classificationSmall17LibraryRequestValid(fixture.profile, badPlan, badPlan.LibraryRequest.Dir, fixture.grammarRoot); err == nil {
+				t.Fatal("compiler environment outside the explicit nine-name allowlist accepted")
+			}
+		})
 	}
 	registry := actualJSONRead(t, "../contracts/native-routes.json")
 	registry[0] ^= 1

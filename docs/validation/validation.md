@@ -2,7 +2,7 @@
 
 ## #216 Small17 닫힌 profile 검증
 
-JSON1·YAML1·XML2·HTML2·CSS11의 별도 수동 profile은 [Small17 계약](../specs/instrumented-query-reference.md#small17-단일-frame-정의-분류)을 따른다. Focused 검사는 다섯 anchor의 정확한 source·full CST/flags/span·ABI(특히 CSS alias 포함204), query 순서·원문·완전한 metadata, raw ordinary source5개와 XML fact pack의 별도 결속을 검사한다. 같은 총계의 ID 교환, metadata nil/null·predicate 추가, XML source alias·capture 순서, grammar role/path/byte/SHA와 nested 경로, compiler argv·출력·한도, 중복 reference invocation을 거부해야 한다. 기존 Go/C#/CJR/CPP guard와 공개 API parity를 유지한다.
+JSON1·YAML1·XML2·HTML2·CSS11의 별도 수동 profile은 [Small17 계약](../specs/instrumented-query-reference.md#small17-단일-frame-정의-분류)을 따른다. Focused 검사는 다섯 anchor의 정확한 source·full CST/flags/span·ABI(특히 CSS alias 포함204), query 순서·원문·완전한 metadata, raw ordinary source5개와 XML fact pack의 별도 결속을 검사한다. 같은 총계의 ID 교환, metadata nil/null·predicate 추가, XML source alias·capture 순서, grammar role/path/byte/SHA와 nested 경로, compiler argv·출력·한도, 정렬된 9-name compiler environment의 누락·별칭·중복·빈 값, 중복 reference invocation을 거부해야 한다. 실제 compiler environment 값은 preregistration과 observed request에 동일하게 결속한다. 기존 Go/C#/CJR/CPP guard와 공개 API parity를 유지한다.
 
 Grammar29개와 원본 query6개, native registry·inventory·qualification의 고정 pin을 대조하며 YAML schema C 파일3개는 header로 유지한다. JSON은 `null`, XML은 `<r/>`, 나머지 세 profile은 빈 source의 단일 frame 사전 기대값이다. 정적 시험·합성 반례나 수동 helper의 SKIP은 실제 compile/native/reference PASS가 아니다. 원래 case/step/tree-role 및 potential links와 이번 정의17개 분모를 구분한다.
 
