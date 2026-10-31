@@ -70,25 +70,38 @@ func TestQueryClassificationDefinitionOutput(t *testing.T) {
 		t.Helper()
 		if err := os.Symlink(target, name); err == nil {
 			t.Log("owned directory symlink created")
-			return
-		} else if runtime.GOOS != "windows" {
-			t.Fatal(err)
+		} else {
+			if runtime.GOOS != "windows" {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			command, err := exec.LookPath("pwsh")
+			if err != nil {
+				t.Fatal(err)
+			}
+			script := "$ErrorActionPreference='Stop'; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
+			cmd := exec.CommandContext(ctx, command, "-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
+			cmd.Dir = filepath.Dir(name)
+			cmd.Stdin = strings.NewReader(string(eligibilityJSON(t, map[string]string{"name": filepath.Base(name), "target": target})))
+			data, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatal("create owned test junction", err, string(data))
+			}
+			t.Log("owned directory junction created with PowerShell 7")
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		command, err := exec.LookPath("pwsh")
+		alias, err := os.Lstat(name)
+		if err != nil || alias.Mode()&(os.ModeSymlink|os.ModeIrregular) == 0 {
+			t.Fatal("owned alias is not a real directory link", err)
+		}
+		linked, err := os.Stat(name)
 		if err != nil {
 			t.Fatal(err)
 		}
-		script := "$ErrorActionPreference='Stop'; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Value $item.target|Out-Null"
-		cmd := exec.CommandContext(ctx, command, "-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
-		cmd.Dir = filepath.Dir(name)
-		cmd.Stdin = strings.NewReader(string(eligibilityJSON(t, map[string]string{"name": filepath.Base(name), "target": target})))
-		data, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatal("create owned test junction", err, string(data))
+		original, err := os.Stat(target)
+		if err != nil || !linked.IsDir() || !original.IsDir() || !os.SameFile(linked, original) {
+			t.Fatal("owned directory link target differs", err)
 		}
-		t.Log("owned directory junction created with PowerShell 7")
 	}
 	t.Run("link", func(t *testing.T) {
 		alias := filepath.Join(base, "output-link")
