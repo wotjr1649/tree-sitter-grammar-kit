@@ -844,6 +844,15 @@ func classificationGoDefinitionOutput(root, assembly, output string) error {
 	if !filepath.IsAbs(output) {
 		return fmt.Errorf("absolute separate definition output required")
 	}
+	for component := filepath.Clean(output); ; component = filepath.Dir(component) {
+		info, err := os.Lstat(component)
+		if err != nil || info.Mode()&os.ModeType != os.ModeDir {
+			return fmt.Errorf("definition output must have plain physical directory components")
+		}
+		if filepath.Dir(component) == component {
+			break
+		}
+	}
 	real, err := filepath.EvalSymlinks(output)
 	if err != nil || !strings.EqualFold(filepath.Clean(real), filepath.Clean(output)) {
 		return fmt.Errorf("definition output must be a physical caller-owned directory")
