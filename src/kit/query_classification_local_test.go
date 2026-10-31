@@ -21,7 +21,7 @@ const classificationGoAnchorsSHA = "096785af5cbd09ece1f649ab7ea41648f11b45c75138
 const classificationPositiveAnchorsSHA = "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288"
 const classificationPositiveAPISHA = "34eaae3b1b620c426fdc3156b746b084c14439fef42e9f0fd505e2d042c86658"
 const classificationCSharpAnchorsSHA = "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b"
-const classificationDonorRegistrationSHA = "4032145988f49f7092830e5f30e759fd41811c41b3a690f3f6a80cfc89c69055"
+const classificationDonorRegistrationSHA = "05008567cd8085fa81ecafcaeedd222befe054238ac104b13e9d3dc9b634af57"
 
 type classificationAnchors struct {
 	Case        string            `json:"case,omitempty"`
