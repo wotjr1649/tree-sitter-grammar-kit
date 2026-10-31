@@ -62,9 +62,11 @@ Graph는 70 nodes, 299 owned members, 67 invocations, 10 tools다. 기존 Window
 
 입력 read lease 1,180개, 내부 원본 산출물 9개, 외부 정의 결과 1개의 총 1,190개를 사후 hash/physical 대조하고 해제했다. Root 자기 image lease도 해제했다. Retained case 440개와 graph 304개를 바꾸지 않고 외부 새 directory에 10,475 bytes의 결과 하나만 생성했다. Root return의 `RETURNED_PENDING_ORIGINAL_TOOL_CHECK` 상태는 원문 그대로 두고, 동일 session의 별도 original-tool exit 0과 함께 채택했다.
 
-결과의 guarded tuple은 required 4 / verified 4 / failed 0 / blocked 0 / unprocessed 0이다. 네 row는 조건부 `STRUCTURAL_ONLY`이고 정적 inventory의 `STRUCTURAL_CANDIDATE`·`UNVERIFIED`·`NOT_ASSESSED`는 유지한다. 기존 Go3·C#15·CJR13과 이번 CPP4를 중복 없이 합친 35/130개는 서로 다른 profile 실행과 source/reader revision에서 얻은 조건부 분류의 역사적 누계다. Go의 source/reader는 각각 `2b1e6814`/`671ab226`, C#는 `18eb5736`/`18eb5736`, CJR은 `4eff1259`/`4eff1259`, 이번 CPP4만 `b8598772`/`b8598772`다. 공통 고정 inventory를 쓰지만 하나의 입력 실행이나 하나의 source revision에서 35개를 검증한 결과는 아니다. 나머지 95개 및 전체 ordinary 사례·semantic 평가 완료는 주장하지 않는다.
+결과의 guarded tuple은 required 4 / verified 4 / failed 0 / blocked 0 / unprocessed 0이다. 네 row는 조건부 `STRUCTURAL_ONLY`이고 정적 inventory의 `STRUCTURAL_CANDIDATE`·`UNVERIFIED`·`NOT_ASSESSED`는 유지한다. 기존 Go 3개 정의(positive-batch/native-query-batch)·C#15·CJR13과 이번 CPP4를 중복 없이 합친 35/130개는 서로 다른 profile 실행과 source/reader revision에서 얻은 조건부 분류의 역사적 누계다. 이 Go 실행은 기존 빈 입력 Go3 보고서의 source `4f7c67a7`과 별개이며, source/reader는 각각 `2b1e6814`/`671ab226`, C#는 `18eb5736`/`18eb5736`, CJR은 `4eff1259`/`4eff1259`, 이번 CPP4만 `b8598772`/`b8598772`다. 공통 고정 inventory를 쓰지만 하나의 입력 실행이나 하나의 source revision에서 35개를 검증한 결과는 아니다. 나머지 95개 및 전체 ordinary 사례·semantic 평가 완료는 주장하지 않는다.
 
 실제 결과의 독립 검토는 B0/M0/Minor0, 별도 보안 검토는 B0/M0/Minor1로 완료했다. 보안 검토는 실행 전 graph/approval 검토와 별개로 실제 결과·원본 종료·request/receipt·좌표·보존 파일 맵을 대조했다. Minor는 독립 검토 보고서의 `public_api_parity_run:false`가 읽기 전용 검토에서 재실행하지 않았다는 뜻임을 분명히 하라는 표기 지적이다. 원 실행은 공개 API parity를 검사한 뒤 projection하는 경로를 SKIP 없이 PASS했으며, 이 보고서의 parity 설명은 그 원 실행에 한정한다. 검토자가 parity를 새로 실행한 것으로 해석하지 않는다.
+
+Graph·승인·결과 hash의 원본은 미추적 로컬 보존 증거다. 추적 보고서와 hosted CI만으로 해당 원본을 직접 대조하거나 당시 관측을 독립 재구성·재승인할 수 없다.
 
 ## 검증과 보존 한계
 
