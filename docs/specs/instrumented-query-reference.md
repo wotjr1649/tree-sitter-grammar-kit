@@ -2,6 +2,8 @@
 
 ## Web16 단일 frame 정의 분류
 
+Windows의 source/reader `fc0a7433fb2b5fd27cf6e41f1d166b1a23c66fa6`에서 네 profile의 실제 관측·외부 caller approval·guarded 정의 projection과 공개 API parity를 확인한 범위는 [Web16 보고서](../reports/issue-216-web16-classification.md)에 기록한다. 이번16개는 조건부 구조 분류이며 원장의 미검증 metadata·semantic 미평가와 전체 #216/#195 미완료를 유지한다. 후속 보고서/PR/merge revision을 당시 실행 source로 표시하지 않는다.
+
 Web16은 기존 Small17과 별도로 닫힌 네 profile이다. 모두 빈 UTF-8 source, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`를 사전등록한다. 기대값은 관측 전에 고정한 후보이며 실제 compile·native/reference 실행을 대신하지 않는다.
 
 좌표를 가져오는 기존 ordinary qualification workload의 `API=true`는 유지한다. 이는 이번 빈 anchor의 `API=false`와 다른 입력 경계이며, 좌표 연결이 기존 API workload의 실행이나 검증을 뜻하지 않는다.
