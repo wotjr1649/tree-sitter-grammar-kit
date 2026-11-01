@@ -20,6 +20,8 @@ JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는
 
 `definitions`는 새 graph의 외부 caller approval과 같은 guarded snapshot에서 eligibility·full CST·query별 서로 다른 reference invocation의 순서·metadata·request/frame·compiler/library·stderr owner 및 별도 공개 API parity를 모두 확인한 뒤에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원래 inventory/qualification의 case·edit·tree-role 좌표는 정적 잠재 연결이며 이번 단일 frame 실행 횟수가 아니다. 기존 r1/r10 상태와 semantic/per-case·Windows/Linux·SVC/large·replay/fan-in 미완료를 유지하고 관측 source와 reader revision을 구분한다. 출력 보호·만료·원 caller return 결속은 기존 정의 분류와 같다.
 
+[Windows Small17 실제 관측 보고서](../reports/issue-216-small17-classification.md)는 source/reader `59deb3c`에서 정의17개의 새 수집·외부 승인·guarded projection과 공개 API parity를 기록한다. 기존 역사적35개와 합친52/130은 서로 다른 source/profile 실행의 조건부 분류 누계이며, 원래 사례·semantic·전체 원장 완료를 뜻하지 않는다. PR CI·공식 artifact 및 실제 main 검증은 별도 통합 gate다.
+
 ## 승인된 Go compiled metadata의 정의 수준 연결
 
 수동 helper의 `TSGK_QUERY_CLASSIFICATION_STAGE=definitions`는 기존 `positive-batch` 검증 본체를 재사용한다. 외부 caller approval과 같은 guarded run/snapshot에서 eligibility, 독립 full CST/API, native/reference metadata, request/frame·library/compiler 결속 및 별도 public API parity를 확인한 뒤에만 test-only typed 정의 레코드를 만든다. 저장된 `classification-result.json`의 PASS를 신뢰 입력으로 읽는 경로는 없다. 새 public API·CLI 또는 별도 provenance 승인 gate는 추가하지 않는다.
