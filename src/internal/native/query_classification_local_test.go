@@ -174,6 +174,10 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
+		if spec, ok := classificationSmall17ProfileFor(name); ok {
+			grammar, _ := classificationSmall17GrammarPins(spec.route)
+			return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.queries), len(grammar), false}, nil
+		}
 		if spec, ok := classificationCJRSpecFor(name); ok {
 			return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, false}, nil
 		}
@@ -421,6 +425,9 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 	if _, ok := classificationCJRSpecFor(profileName); ok {
 		t.Skip("C/Java/Rust use the dedicated local capture entry")
 	}
+	if _, ok := classificationSmall17ProfileFor(profileName); ok {
+		t.Skip("Small17 profiles use the dedicated local capture entry")
+	}
 	classificationNativeLocalCapture(t)
 }
 
@@ -441,6 +448,13 @@ func TestQueryClassificationCPPLocalCapture(t *testing.T) {
 func TestQueryClassificationCJRLocalCapture(t *testing.T) {
 	if _, ok := classificationCJRSpecFor(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")); !ok {
 		t.Skip("explicit C/Java/Rust empty-definition profile is required")
+	}
+	classificationNativeLocalCapture(t)
+}
+
+func TestQueryClassificationSmall17LocalCapture(t *testing.T) {
+	if _, ok := classificationSmall17ProfileFor(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")); !ok {
+		t.Skip("explicit Small17 profile is required")
 	}
 	classificationNativeLocalCapture(t)
 }
@@ -506,6 +520,15 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCJRQueryRegistryValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
+	default:
+		if _, ok := classificationSmall17ProfileFor(profileName); ok {
+			if err := classificationSmall17AnchorsValid(profileName, anchors); err != nil {
+				t.Fatal(err)
+			}
+			if err := classificationSmall17QuerySourcesValid(profileName, anchors); err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
 	prepared := os.Getenv("TSGK_BENCH_PREPARED")
 	if !filepath.IsAbs(prepared) {
@@ -542,6 +565,11 @@ func classificationNativeLocalCapture(t *testing.T) {
 	}
 	if profileName == "cpp4-empty" && !classificationCPPGrammarValid(grammar) {
 		t.Fatal("CPP grammar roles or paths differ from the closed paged profile", profile.route)
+	}
+	if _, ok := classificationSmall17ProfileFor(profileName); ok {
+		if err := classificationSmall17GrammarValid(profileName, registryData, profile.route, profile.symbol, grammar); err != nil {
+			t.Fatal(err)
+		}
 	}
 	write := func(path string, value []byte) {
 		t.Helper()
@@ -662,7 +690,8 @@ func classificationNativeLocalCapture(t *testing.T) {
 			finishEarly(&result, kit.StatusFailed, kit.AssessNotAssessed, "BATCH_PROBE_INCOMPLETE")
 		}
 	}
-	if profileName == "csharp15-empty" || profileName == "cpp4-empty" || classificationCJRProfile(profileName) {
+	_, small17Profile := classificationSmall17ProfileFor(profileName)
+	if profileName == "csharp15-empty" || profileName == "cpp4-empty" || classificationCJRProfile(profileName) || small17Profile {
 		// The driver capture owns a clone, so preserve the explicit empty stream in both records.
 		classificationCSharpEmptyStderr(result.Process)
 		if capture != nil {

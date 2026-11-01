@@ -1,5 +1,27 @@
 # 계측 query reference 계약 (#216)
 
+## Small17 단일 frame 정의 분류
+
+별도 닫힌 profile 다섯 개는 다음 사전 기대값을 선택한다. 모두 UTF-8, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`다. 표의 CST·ABI·query metadata는 정적 사전등록이며 실제 parser·compiler·query 관측을 대신하지 않는다.
+
+| Profile / anchor | Source | 전체 CST nodes | 정의 | ABI symbol/field |
+|---|---|---:|---:|---:|
+| `json1-tiny` / [JSON1](../../src/testdata/query-semantics/json1-classification-anchors.json) | `null` | 2 | 1 | 23/2 |
+| `yaml1-empty` / [YAML1](../../src/testdata/query-semantics/yaml1-classification-anchors.json) | 빈 source | 1 | 1 | 301/2 |
+| `xml2-tiny` / [XML2](../../src/testdata/query-semantics/xml2-classification-anchors.json) | `<r/>` | 6 | 2 | 142/2 |
+| `html2-empty` / [HTML2](../../src/testdata/query-semantics/html2-classification-anchors.json) | 빈 source | 1 | 2 | 48/0 |
+| `css11-empty` / [CSS11](../../src/testdata/query-semantics/css11-classification-anchors.json) | 빈 source | 1 | 11 | 204/0 |
+
+JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는 `document`와 named `null` 두 노드다. XML은 `document`의 `root` field에 `element`가 있고 그 아래 `EmptyElemTag`, anonymous `<`, named `Name`, anonymous `/>`를 포함한다. 모든 node의 parent·field·flags·byte/point span을 고정한다. XML fact query의 pattern1은 바깥 `element` capture(ID1, node2, bytes0..4) 뒤 `element.name`(ID0, node4, bytes1..2)을 기대한다. 다른 query의 structural/expected capture는 빈 배열이다. YAML·HTML·CSS root는 각각 `stream`, `document`, `stylesheet`다. ABI language/runtime/min-compatible은15/15/13이며 CSS symbol204는 generated `SYMBOL_COUNT=199`와 `ALIAS_COUNT=5`를 합하는 고정 runtime API의 기대값이다.
+
+17개 query의 사전 metadata 합계는44 patterns·46개의 query별 unique capture-name 항목이고 predicate 목록은 모두 명시적 `[]`다. 원문 occurrence의 중복 capture 이름을 compiled name ID의 중복으로 세지 않는다. 각 ordinary query 원본 파일의 전체 bytes·SHA와 ID·원문·순서를 따로 결속하고, XML의 `facts.xml_structure`는 `fact-query-pack.json`의 정확한 별도 원본과 연결한다. Null metadata·source alias 교환·누락·중복·다른 predicate는 거부한다.
+
+다섯 route는 기존 `full-input-utf8/r2`만 사용하며 parser paging이나16MiB 물리 파일 한도를 넓히지 않는다. Grammar closure는 JSON4·YAML8·XML6·HTML6·CSS5, 총29개의 고정 role/path/bytes/SHA다. JSON은 scanner가 없다. YAML의 schema C 파일3개와 HTML의 `src/tag.h`는 header closure로 보존하며 확장자만 보고 별도 compile source에 넣지 않는다. XML의 `xml/src/`와 `common/scanner.h` 경로를 평탄화하지 않는다. Compiler argv는 parser/scanner role과 정확한 route 경로·include·출력·한도에 결속한다. Compiler environment는 `COMSPEC`, `PATH`, `PATHEXT`, `SystemDrive`, `SystemRoot`, `TEMP`, `TMP`, `TMPDIR`, `WINDIR`의 아홉 이름만 이 정렬 순서로 허용하며 각 값은 비어 있지 않아야 한다. Controller가 실제 값을 사전등록 compiler request에 고정하고 observed request를 그 request와 대조한다. 임의 inherited compiler variables는 허용하지 않는다. 기존 CJR 폐쇄 목록과 C#/CPP parser-only paging 경로는 유지한다.
+
+`definitions`는 새 graph의 외부 caller approval과 같은 guarded snapshot에서 eligibility·full CST·query별 서로 다른 reference invocation의 순서·metadata·request/frame·compiler/library·stderr owner 및 별도 공개 API parity를 모두 확인한 뒤에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원래 inventory/qualification의 case·edit·tree-role 좌표는 정적 잠재 연결이며 이번 단일 frame 실행 횟수가 아니다. 기존 r1/r10 상태와 semantic/per-case·Windows/Linux·SVC/large·replay/fan-in 미완료를 유지하고 관측 source와 reader revision을 구분한다. 출력 보호·만료·원 caller return 결속은 기존 정의 분류와 같다.
+
+[Windows Small17 실제 관측 보고서](../reports/issue-216-small17-classification.md)는 source/reader `59deb3c`에서 정의17개의 새 수집·외부 승인·guarded projection과 공개 API parity를 기록한다. 기존 역사적35개와 합친52/130은 서로 다른 source/profile 실행의 조건부 분류 누계이며, 원래 사례·semantic·전체 원장 완료를 뜻하지 않는다. PR CI·공식 artifact 및 실제 main 검증은 별도 통합 gate다.
+
 ## 승인된 Go compiled metadata의 정의 수준 연결
 
 수동 helper의 `TSGK_QUERY_CLASSIFICATION_STAGE=definitions`는 기존 `positive-batch` 검증 본체를 재사용한다. 외부 caller approval과 같은 guarded run/snapshot에서 eligibility, 독립 full CST/API, native/reference metadata, request/frame·library/compiler 결속 및 별도 public API parity를 확인한 뒤에만 test-only typed 정의 레코드를 만든다. 저장된 `classification-result.json`의 PASS를 신뢰 입력으로 읽는 경로는 없다. 새 public API·CLI 또는 별도 provenance 승인 gate는 추가하지 않는다.
@@ -52,7 +74,7 @@ CPP 전용 ordinary loader는 `cpp.json`의 정확한 원문·hash·query 순서
 
 ## 독립성 및 identity
 
-Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f3a`다. [instrumentation.patch](../../src/dev/query-reference/instrumentation.patch)는 Rust binding에 읽기 전용 query pointer와 별도 raw capture iterator만 추가한다. 기존 iterator의 기본값은 predicate 평가를 유지한다. 별도 iterator는 predicate 탈락 match를 제거하지 않으며, emitter가 변경하지 않은 upstream `QueryMatch::satisfies_text_predicates`에 원래 전체 match와 원 source를 넘긴다. Kit 평가기를 호출하거나 kit 결과를 읽지 않는다.
+Upstream은 `tree-sitter/tree-sitter`의 `10eb5ac119eec9cb4267a8e035066473983f5f3a`다. [instrumentation.patch](../../src/dev/query-reference/instrumentation.patch)는 Rust binding에 읽기 전용 query pointer와 별도 raw capture iterator만 추가한다. 기존 iterator의 기본값은 predicate 평가를 유지한다. 별도 iterator는 predicate 탈락 match를 제거하지 않으며, emitter가 변경하지 않은 upstream `QueryMatch::satisfies_text_predicates`에 iterator가 반환한 원래 match와 원 source를 advance 전에 넘긴다. Upstream은 predicate에 사용되는 capture 단계를 indefinite로 표시하고 선행 단계에 전파한다. Emitter도 각 반환 snapshot에서 지원하는 모든 `ONE` operand의 실제 occurrence가 정확히 하나인지 확인한 뒤 평가한다. Predicate와 무관한 뒤쪽 capture까지 처음 반환 시 이미 모두 발견됐다고 가정하지 않는다. Kit 평가기를 호출하거나 kit 결과를 읽지 않는다.
 
 원본 workspace·library manifest를 유지하고 emitter member 하나를 더한다. 원본 lock의 기존 package·version·checksum·dependency를 바꾸지 않는다. `build.py`는 새 package 하나만 추가됐는지 확인한 뒤 `--offline --frozen`으로 선택 package만 빌드한다. 전체 CLI·WASM·bindgen 빌드는 이 경로에 포함하지 않는다. 실제 selected dependency/features의 전체 `selected-tree.json` receipt hash와 종료 전 불변성, metadata, 실행 요청·결과, 원본 archive·patch·emitter·manifest·lock·도구·binary hash를 별도로 보존한다. Build 도구 목록은 실제 Python interpreter의 절대 경로·파일 hash·`sys.version`도 포함하며 build 전후 hash가 같아야 한다. Cargo offline은 의존성 취득 방식이며 network sandbox를 뜻하지 않는다.
 
@@ -74,7 +96,7 @@ Emitter 인자는 절대 library path, symbol, source path, query path, query ID
 - 원 runtime match ID와 최초 structural 등장 순서의 match 번호 mapping. Predicate 탈락 뒤 번호를 다시 매기지 않는다.
 - 실제 사용 한도, cursor 종료·match-limit 초과 여부 및 `complete`.
 
-각 match의 전체 capture signature·pattern·predicate 결정이 재등장 때 같아야 한다. 각 capture **occurrence index**는 정확히 한 번 반환돼야 하며, 종료 시 누락이 있으면 실패한다. 서로 다른 occurrence의 동일한 capture 값은 보존한다. 단순 개수 합계나 정렬·중복 제거로 이 검사를 대체하지 않는다.
+Raw capture iterator는 아직 완료되지 않은 definite match의 capture를 먼저 반환할 수 있다. 따라서 같은 runtime match ID의 capture signature는 기존 prefix를 그대로 보존하며 뒤에 새 occurrence를 추가할 수 있다. Prefix의 변경·축소와 pattern·upstream predicate 결정 변경은 거부한다. 새 tail만 group capture 한도에 더하고 occurrence 상태를 확장한다. 각 capture **occurrence index**는 정확히 한 번 반환돼야 하며, cursor 종료 시 누락이 있으면 실패한다. 서로 다른 occurrence의 동일한 capture 값은 보존한다. 원 stream의 순서와 최초 등장에 따른 match 번호를 유지하며 단순 개수 합계나 정렬·중복 제거로 이 검사를 대체하지 않는다.
 
 성공은 모든 검사가 끝났고 cursor가 소진됐으며 한도를 넘지 않았을 때만 `COMPLETED`, `complete: true`다. 100,000 node·50,000 stream capture·200,000 group capture·100,000 match·내부 wall 3초를 유지한다. Predicate는 `eq?`, `not-eq?`, `any-of?`, `not-any-of?`의 지원 operand 형태와 `ONE` capture만 허용한다. 그 밖의 연산·directive·quantifier·encoding은 이 기준의 부적격이며 범위를 넓혀 통과시키지 않는다. 원본 C query cursor의 기본 range가 byte0에서 끝나는 capture를 제외하는 동작은 빈 source 대조에 반영한다.
 

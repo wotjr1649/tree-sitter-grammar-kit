@@ -5,11 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
@@ -58,11 +61,71 @@ func TestQueryClassificationDefinitionOutput(t *testing.T) {
 	if err := classificationGoDefinitionOutput(root, assembly, output); err != nil {
 		t.Fatal("separate physical output rejected", err)
 	}
-	for _, path := range []string{"relative", filepath.Join(root, "child"), filepath.Join(assembly, "child"), filepath.Join(base, "absent")} {
+	parentPath := root + string(filepath.Separator) + "child" + string(filepath.Separator) + ".." + string(filepath.Separator) + ".." + string(filepath.Separator) + "new-output"
+	for _, path := range []string{"relative", filepath.Join(root, "child"), filepath.Join(assembly, "child"), filepath.Join(base, "absent"), parentPath} {
 		if err := classificationGoDefinitionOutput(root, assembly, path); err == nil {
 			t.Fatal("unsafe output accepted", path)
 		}
 	}
+	link := func(t *testing.T, target, name string) {
+		t.Helper()
+		if err := os.Symlink(target, name); err == nil {
+			t.Log("owned directory symlink created")
+		} else {
+			if runtime.GOOS != "windows" {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			command, err := exec.LookPath("pwsh")
+			if err != nil {
+				t.Fatal(err)
+			}
+			script := "$ErrorActionPreference='Stop'; if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
+			cmd := exec.CommandContext(ctx, command, "-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
+			cmd.Dir = filepath.Dir(name)
+			cmd.Stdin = strings.NewReader(string(eligibilityJSON(t, map[string]string{"name": filepath.Base(name), "target": target})))
+			data, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatal("create owned test junction", err, string(data))
+			}
+			t.Log("owned directory junction created with PowerShell 7")
+		}
+		alias, err := os.Lstat(name)
+		if err != nil || alias.Mode()&(os.ModeSymlink|os.ModeIrregular) == 0 {
+			t.Fatal("owned alias is not a real directory link", err)
+		}
+		linked, err := os.Stat(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		original, err := os.Stat(target)
+		if err != nil || !linked.IsDir() || !original.IsDir() || !os.SameFile(linked, original) {
+			t.Fatal("owned directory link target differs", err)
+		}
+	}
+	t.Run("link", func(t *testing.T) {
+		alias := filepath.Join(base, "output-link")
+		link(t, output, alias)
+		if err := classificationGoDefinitionOutput(root, assembly, alias); err == nil {
+			t.Fatal("linked output accepted")
+		}
+	})
+	t.Run("case-only-link", func(t *testing.T) {
+		target, alias := filepath.Join(base, "CaseTarget"), filepath.Join(base, "casetarget")
+		if err := os.Mkdir(target, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Lstat(alias); err == nil {
+			t.Skip("case-insensitive filesystem cannot represent the case-only link")
+		} else if !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		link(t, target, alias)
+		if err := classificationGoDefinitionOutput(root, assembly, alias); err == nil {
+			t.Fatal("case-only linked output accepted")
+		}
+	})
 	retained := filepath.Join(output, "keep.json")
 	if err := os.WriteFile(retained, []byte("retained"), 0600); err != nil {
 		t.Fatal(err)

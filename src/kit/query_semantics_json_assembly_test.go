@@ -22,9 +22,32 @@ func TestQuerySemanticsJSONAssemble(t *testing.T) {
 	actualJSONAssemble(t, os.Getenv("TSGK_QUERY_JSON_LOCAL_ROOT"), os.Getenv("TSGK_QUERY_JSON_FRESH_REFERENCE"), os.Getenv("TSGK_QUERY_JSON_CAPTURE"))
 }
 
+// This manual stage assembles preserved build/control evidence without starting tools.
+func TestQueryReferenceBuildControlAssembleLocal(t *testing.T) {
+	root, fresh := os.Getenv("TSGK_QUERY_REFERENCE_STATIC_ROOT"), os.Getenv("TSGK_QUERY_REFERENCE_STATIC_FRESH")
+	if root == "" && fresh == "" {
+		t.Skip("explicit local reference build/control assembly is required")
+	}
+	for _, p := range []string{root, fresh} {
+		if !filepath.IsAbs(p) {
+			t.Fatal("absolute local static input required")
+		}
+	}
+	if err := classificationGoDefinitionOutput(fresh, fresh, root); err != nil {
+		t.Fatal("static assembly output must be physical and separate from retained inputs", err)
+	}
+	a, _, _ := actualJSONAssembleStatic(t, root, fresh, "full-input-utf8/r2", "reference-build-control", actualJSONFreshSource(t, fresh))
+	if a.reg.Build == nil || a.reg.Control == nil || a.reg.Native != nil || len(a.reg.Observations) != 0 || len(a.reg.Invocations) != 62 || len(a.reg.Tools) != 10 || len(a.reg.OwnedMembers) != 178 {
+		t.Fatal("static build/control closure incomplete")
+	}
+	actualJSONFinish(a, "actual-reference-build-control")
+	t.Log("static build/control candidate only; current capture, caller approval and eligibility are absent")
+}
+
 type actualJSONAssembly struct {
 	t            *testing.T
 	evidence     string
+	caller       string
 	reg          eligibilityRegistration
 	nodes        map[string]EvidenceNode
 	cohortSource map[string]string
@@ -110,18 +133,11 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 		}
 		workload, policyID, expectedReferences = "csharp3-reference", "actual-csharp3", 2
 	}
-	var freshContext, currentContext struct {
+	var currentContext struct {
 		SourceRevision string `json:"source_revision"`
 		SessionID      string `json:"session_id"`
 	}
-	actualJSONDecode(t, filepath.Join(fresh, "context-before.json"), &freshContext)
-	for _, stage := range []string{"outer-build", "outer-controls"} {
-		var receipt eligibilityReceipt
-		actualJSONDecode(t, filepath.Join(fresh, stage, "receipt.json"), &receipt)
-		if receipt.Execution.Status != StatusCompleted || receipt.Execution.ExitCode != 0 || !receipt.Execution.Cleanup.Verified || receipt.Execution.Cleanup.ResidualAfterExit != 0 {
-			t.Fatal("static capture operation", stage)
-		}
-	}
+	freshSource := actualJSONFreshSource(t, fresh)
 	actualJSONDecode(t, filepath.Join(capture, "context-before.json"), &currentContext)
 	var captured struct {
 		Passed              bool   `json:"passed"`
@@ -142,6 +158,31 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 	if !captured.Passed || len(captured.References) != expectedReferences {
 		t.Fatal("actual capture not completed")
 	}
+	a, binary, binaryPath := actualJSONAssembleStatic(t, root, fresh, semanticReg.Context, workload, freshSource)
+	a.cohortSource["current"] = currentContext.SourceRevision
+	actualJSONAssembleCurrent(t, a, root, a.caller, capture, captured.NativeCaptureOrigin, captured.Library.Path, binary, binaryPath)
+	actualJSONFinish(a, policyID)
+}
+
+func actualJSONFreshSource(t *testing.T, fresh string) string {
+	t.Helper()
+	var freshContext struct {
+		SourceRevision string `json:"source_revision"`
+		SessionID      string `json:"session_id"`
+	}
+	actualJSONDecode(t, filepath.Join(fresh, "context-before.json"), &freshContext)
+	for _, stage := range []string{"outer-build", "outer-controls"} {
+		var receipt eligibilityReceipt
+		actualJSONDecode(t, filepath.Join(fresh, stage, "receipt.json"), &receipt)
+		if receipt.Execution.Status != StatusCompleted || receipt.Execution.ExitCode != 0 || !receipt.Execution.Cleanup.Verified || receipt.Execution.Cleanup.ResidualAfterExit != 0 {
+			t.Fatal("static capture operation", stage)
+		}
+	}
+	return freshContext.SourceRevision
+}
+
+func actualJSONAssembleStatic(t *testing.T, root, fresh, contextID, workload, freshSource string) (*actualJSONAssembly, eligibilityMember, string) {
+	t.Helper()
 	var buildIdentity eligibilityBuildIdentity
 	actualJSONDecode(t, filepath.Join(fresh, "build", "identity.json"), &buildIdentity)
 	var cat eligibilityCatalogue
@@ -160,8 +201,8 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 			t.Fatal(err)
 		}
 	}
-	a := &actualJSONAssembly{t: t, workload: workload, evidence: evidence, nodes: map[string]EvidenceNode{}, cohortSource: map[string]string{"build": freshContext.SourceRevision, "control": freshContext.SourceRevision, "current": currentContext.SourceRevision},
-		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: semanticReg.Context, CatalogueSHA256: digestHex([]byte(eligibilityCatalogueJSON)), OwnedMembers: []eligibilityMember{}, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, Observations: []eligibilityObservation{}}}
+	a := &actualJSONAssembly{t: t, workload: workload, evidence: evidence, caller: caller, nodes: map[string]EvidenceNode{}, cohortSource: map[string]string{"build": freshSource, "control": freshSource},
+		reg: eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, Context: contextID, CatalogueSHA256: digestHex([]byte(eligibilityCatalogueJSON)), OwnedMembers: []eligibilityMember{}, Tools: []eligibilityTool{}, Invocations: []eligibilityInvocation{}, Observations: []eligibilityObservation{}}}
 	a.node("build-static", "build", buildIdentity.Tools["python"], digestHex(eligibilityJSON(t, buildIdentity)), "NOT_APPLICABLE", "tsgk-instrumented-reference-build/r1", "outer-build", StatusCompleted, AssessPass)
 	identity := a.copy("build-static", "build/identity.json", "build-identity", filepath.Join(fresh, "build", "identity.json"))
 	source := a.copy("build-static", "build/source-snapshot.json", "source-snapshot", filepath.Join(fresh, "build", "source-snapshot.json"))
@@ -283,7 +324,12 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 			inv.Inputs[slot] = actualJSONPinned(q, k, req.Args[k], "PRESERVED_ORIGINAL")
 		}
 	}
-	actualJSONAssembleCurrent(t, a, root, caller, capture, captured.NativeCaptureOrigin, captured.Library.Path, binary, binaryPath)
+	return a, binary, binaryPath
+}
+
+func actualJSONFinish(a *actualJSONAssembly, policyID string) {
+	t := a.t
+	t.Helper()
 	graphNodes := make([]EvidenceNode, 0, len(a.nodes))
 	ids := make([]string, 0, len(a.nodes))
 	for id := range a.nodes {
@@ -298,15 +344,15 @@ func actualJSONAssemble(t *testing.T, root, fresh, capture string) {
 	}
 	graph := eligibilityJSON(t, map[string]any{"schema": EvidenceSchema, "nodes": graphNodes})
 	a.reg.Graph = ReplayMember{Path: "evidence.json", Role: "evidence-graph", Bytes: uint64(len(graph)), SHA256: digestHex(graph)}
-	actualJSONWrite(t, filepath.Join(evidence, "evidence.json"), graph)
+	actualJSONWrite(t, filepath.Join(a.evidence, "evidence.json"), graph)
 	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": policyID, "evidence_sha256": digestHex(graph), "required": required, "carry_forward": []any{}})
-	actualJSONWrite(t, filepath.Join(caller, "policy.json"), policy)
-	actualJSONWrite(t, filepath.Join(caller, "eligibility-registration.json"), eligibilityJSON(t, a.reg))
-	actualJSONWrite(t, filepath.Join(caller, "binding-members.json"), eligibilityJSON(t, a.bound))
+	actualJSONWrite(t, filepath.Join(a.caller, "policy.json"), policy)
+	actualJSONWrite(t, filepath.Join(a.caller, "eligibility-registration.json"), eligibilityJSON(t, a.reg))
+	actualJSONWrite(t, filepath.Join(a.caller, "binding-members.json"), eligibilityJSON(t, a.bound))
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	result, e := VerifyEvidence(ctx, EvidenceRequest{Root: evidence, Policy: policy})
-	actualJSONWrite(t, filepath.Join(caller, "evidence-result.json"), eligibilityJSON(t, result))
+	result, e := VerifyEvidence(ctx, EvidenceRequest{Root: a.evidence, Policy: policy})
+	actualJSONWrite(t, filepath.Join(a.caller, "evidence-result.json"), eligibilityJSON(t, result))
 	if e != nil || result.ExecutionStatus != StatusCompleted || result.Assessment != AssessPass {
 		t.Fatal("actual graph integrity", e, result.Findings)
 	}

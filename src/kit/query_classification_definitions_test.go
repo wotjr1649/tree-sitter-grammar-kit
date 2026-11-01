@@ -599,6 +599,12 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 5
 	case "C#":
 		want = 15
+	case "JSON", "YAML":
+		want = 1
+	case "XML", "HTML":
+		want = 2
+	case "CSS":
+		want = 11
 	default:
 		return nil, fmt.Errorf("unsupported closed definition language %q", language)
 	}
