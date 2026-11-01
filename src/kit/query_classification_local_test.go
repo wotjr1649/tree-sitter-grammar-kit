@@ -70,10 +70,15 @@ type classificationPlan struct {
 // These stages retain caller inputs; neither planning nor assembly issues approval.
 func TestQueryClassificationGoLocal(t *testing.T) {
 	profile := os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")
-	if profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" || classificationSmall17ProfileName(profile) {
+	if classificationGoLocalSkipsProfile(profile) {
 		t.Skip("non-Go classification profiles use their explicit local entry point")
 	}
 	classificationLocal(t)
+}
+
+func classificationGoLocalSkipsProfile(profile string) bool {
+	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" ||
+		classificationSmall17ProfileName(profile) || classificationWeb16ProfileName(profile)
 }
 
 func TestQueryClassificationCSharpLocal(t *testing.T) {
@@ -101,6 +106,13 @@ func TestQueryClassificationCPP4Local(t *testing.T) {
 func TestQueryClassificationSmall17Local(t *testing.T) {
 	if !classificationSmall17ProfileName(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")) {
 		t.Skip("explicit closed Small17 classification profile required")
+	}
+	classificationLocal(t)
+}
+
+func TestQueryClassificationWeb16Local(t *testing.T) {
+	if !classificationWeb16ProfileName(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")) {
+		t.Skip("explicit closed Web16 classification profile required")
 	}
 	classificationLocal(t)
 }
@@ -154,6 +166,12 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 			t.Fatal(err)
 		}
 		name, expectedSHA, route, definitions = small17Profile.AnchorFile, small17Profile.AnchorSHA, small17Profile.Route, small17Profile.QueryCount
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty":
+		web16Profile, err := classificationWeb16ProfileForName(profile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name, expectedSHA, route, definitions = web16Profile.AnchorFile, web16Profile.AnchorSHA, web16Profile.Route, web16Profile.QueryCount
 	default:
 		t.Fatal("unknown closed classification profile", profile)
 	}
@@ -203,6 +221,14 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		if err := classificationSmall17AnchorsValid(small17Profile, a); err != nil {
 			t.Fatal(err)
 		}
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty":
+		web16Profile, err := classificationWeb16ProfileForName(profile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := classificationWeb16AnchorsValid(web16Profile, a); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if a.API {
 		apiData := actualJSONRead(t, "../testdata/query-semantics/go-positive-batch-api.json")
@@ -221,7 +247,7 @@ func (a classificationAnchors) nativeContext() string {
 	switch a.Route {
 	case "go", "c", "java", "rust":
 		return "full-input-utf8/r2"
-	case "json", "yaml", "xml", "html", "css":
+	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx":
 		return "full-input-utf8/r2"
 	case "csharp", "cpp":
 		return semanticPagedContext
@@ -254,6 +280,14 @@ func (a classificationAnchors) nativeSymbol() string {
 		return "tree_sitter_html"
 	case "css":
 		return "tree_sitter_css"
+	case "javascript":
+		return "tree_sitter_javascript"
+	case "jsx":
+		return "tree_sitter_javascript"
+	case "typescript":
+		return "tree_sitter_typescript"
+	case "tsx":
+		return "tree_sitter_tsx"
 	default:
 		return ""
 	}
@@ -273,6 +307,9 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 	case "json", "yaml", "xml", "html", "css":
 		profile, ok := classificationSmall17ProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
+	case "javascript", "jsx", "typescript", "tsx":
+		profile, ok := classificationWeb16ProfileForRoute(a.Route)
+		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
 	case "go":
 		return plan.NativeContext == ""
 	default:
@@ -286,7 +323,7 @@ func classificationNativePrefix(a classificationAnchors) string {
 		return "oracle/"
 	case "go", "c", "java", "rust":
 		return "current/native/"
-	case "json", "yaml", "xml", "html", "css":
+	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx":
 		return "current/native/"
 	default:
 		return ""
@@ -402,6 +439,14 @@ func classificationGoPlan(t *testing.T, root string) {
 			t.Fatal("Small17 native route source pin changed", err)
 		}
 	}
+	var web16NativeGrammar []NativeInput
+	if web16Profile, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		var err error
+		web16NativeGrammar, err = classificationWeb16NativeRoutePins(nativeRoutesData, web16Profile)
+		if err != nil {
+			t.Fatal("Web16 native route source pin changed", err)
+		}
+	}
 	if err := jsonv2.Unmarshal(nativeRoutesData, &registry); err != nil {
 		t.Fatal(err)
 	}
@@ -418,12 +463,20 @@ func classificationGoPlan(t *testing.T, root string) {
 	if small17NativeGrammar != nil && !reflect.DeepEqual(plan.Grammar, small17NativeGrammar) {
 		t.Fatal("Small17 grammar input pins differ from the frozen native-routes row")
 	}
+	if web16NativeGrammar != nil && !reflect.DeepEqual(plan.Grammar, web16NativeGrammar) {
+		t.Fatal("Web16 grammar input pins differ from the frozen native-routes row")
+	}
 	if anchors.Route == "cpp" && !classificationCPP4GrammarValid(plan.Grammar) {
 		t.Fatal("CPP4 exact paged grammar closure changed")
 	}
 	if anchors.Route == "cpp" {
 		if err := classificationCPP4LibraryRequestValid(plan, root, grammarRoot); err != nil {
 			t.Fatal("CPP4 compiler request contract changed", err)
+		}
+	} else if web16Profile, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		wantArgs, err := classificationWeb16CompilerArgs(web16Profile, grammarRoot, filepath.Join(root, "library", anchors.libraryName()), plan.Grammar)
+		if err != nil || !filepath.IsAbs(grammarRoot) || !reflect.DeepEqual(plan.LibraryRequest.Args, wantArgs) {
+			t.Fatal("Web16 compiler grammar inputs or output changed", err)
 		}
 	} else {
 		wantArgs, err := classificationGoCompilerArgs(anchors.Route, grammarRoot, filepath.Join(root, "library", anchors.libraryName()), plan.Grammar)
@@ -440,6 +493,12 @@ func classificationGoPlan(t *testing.T, root string) {
 		grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
 		if err := classificationSmall17LibraryRequestValid(small17Profile, plan, root, grammarRoot); err != nil {
 			t.Fatal("Small17 fixed compiler request contract changed", err)
+		}
+	}
+	if web16Profile, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
+		if err := classificationWeb16LibraryRequestValid(web16Profile, plan, root, grammarRoot); err != nil {
+			t.Fatal("Web16 fixed compiler request contract changed", err)
 		}
 	}
 	for _, dir := range []string{"plan", "native", "library", "references"} {
@@ -724,6 +783,17 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 			t.Fatal("Small17 fixed compiler request changed", err)
 		}
 	}
+	if web16Profile, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		grammarRoot := filepath.Join(os.Getenv("TSGK_BENCH_PREPARED"), "routes", anchors.Route)
+		nativeRoutesData := actualJSONRead(t, "../contracts/native-routes.json")
+		nativeGrammar, err := classificationWeb16NativeRoutePins(nativeRoutesData, web16Profile)
+		if err != nil || !reflect.DeepEqual(plan.Grammar, nativeGrammar) {
+			t.Fatal("Web16 frozen native route grammar closure differs", err)
+		}
+		if err := classificationWeb16LibraryRequestValid(web16Profile, plan, root, grammarRoot); err != nil {
+			t.Fatal("Web16 fixed compiler request changed", err)
+		}
+	}
 	caller := filepath.Join(assembly, "caller")
 	req := QueryReferenceEligibilityRequest{Evidence: EvidenceRequest{Root: filepath.Join(assembly, "evidence"), Policy: actualJSONRead(t, filepath.Join(caller, "policy.json"))}, Approval: actualJSONRead(t, approvalPath), Registration: actualJSONRead(t, filepath.Join(caller, "eligibility-registration.json")), WitnessRegistration: actualJSONRead(t, filepath.Join(caller, "witness.json"))}
 	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
@@ -774,6 +844,9 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	if _, ok := classificationSmall17ProfileForRoute(anchors.Route); ok {
 		needsUniqueReferences = true
 	}
+	if _, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		needsUniqueReferences = true
+	}
 	var uniqueReferenceIDs map[string]string
 	if needsUniqueReferences {
 		uniqueReferenceIDs = make(map[string]string, len(anchors.Required))
@@ -799,6 +872,11 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	if _, ok := classificationSmall17ProfileForRoute(anchors.Route); ok {
 		if _, err := classificationSmall17OrderedReferenceIDs(anchors, uniqueReferenceIDs); err != nil {
 			t.Fatal("Small17 requires one distinct guarded reference invocation per query", err)
+		}
+	}
+	if _, ok := classificationWeb16ProfileForRoute(anchors.Route); ok {
+		if _, err := classificationWeb16OrderedReferenceIDs(anchors, uniqueReferenceIDs); err != nil {
+			t.Fatal("Web16 requires one distinct guarded reference invocation per query", err)
 		}
 	}
 	// This second API operation checks its public wrapper; anchors use the retained core snapshot above.
@@ -929,6 +1007,14 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 					factPackData = actualJSONRead(t, "../contracts/fact-query-pack.json")
 				}
 				record, err = classificationSmall17DefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, factPackData, reader)
+			case "javascript", "jsx", "typescript", "tsx":
+				profile, ok := classificationWeb16ProfileForRoute(anchors.Route)
+				if !ok {
+					t.Fatal("unknown closed Web16 definition profile", anchors.Route)
+				}
+				queryPath := filepath.Join("..", filepath.FromSlash(strings.TrimPrefix(profile.QueryFile, "src/")))
+				queryData := actualJSONRead(t, queryPath)
+				record, err = classificationWeb16DefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, reader)
 			default:
 				t.Fatal("unknown guarded definition route", anchors.Route)
 			}
@@ -948,7 +1034,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 
 func classificationGoDefinitionProfileAllowed(profile string) bool {
 	switch profile {
-	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty":
+	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty":
 		return true
 	default:
 		return classificationSmall17ProfileName(profile)
@@ -1064,7 +1150,7 @@ func classificationCaptureStderr(a classificationAnchors, capture semanticProces
 	strictZeroMember := false
 	switch a.Route {
 	case "go":
-	case "csharp", "c", "java", "rust", "cpp", "json", "yaml", "xml", "html", "css":
+	case "csharp", "c", "java", "rust", "cpp", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx":
 		strictZeroMember = true
 	default:
 		return fmt.Errorf("unknown classification stderr route")

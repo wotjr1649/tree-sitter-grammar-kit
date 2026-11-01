@@ -423,20 +423,16 @@ func classificationSmall17DefinitionLoadInputs(a classificationAnchors, plan cla
 		}
 	}
 	sourceFiles := make([]string, profile.QueryCount)
-	queryIDs := make([]string, profile.QueryCount)
 	for i, anchor := range a.Queries {
-		query, registered, slot := combined[i], w.Queries[i], out.slotGroup.Queries[i]
-		sourceFile := profile.QueryFile
+		sourceFiles[i] = profile.QueryFile
 		if profile.Route == "xml" && anchor.ID == "facts.xml_structure" {
-			sourceFile = "src/contracts/fact-query-pack.json"
+			sourceFiles[i] = "src/contracts/fact-query-pack.json"
 		}
-		sha := digestHex([]byte(anchor.Source))
-		if !classificationGoDefinitionMetadataValid(anchor.Metadata) || anchor.SHA256 != sha || query.ID != anchor.ID || query.Source != anchor.Source ||
-			registered.ID != anchor.ID || registered.SHA256 != sha || slot.ID != anchor.ID || slot.SHA256 != sha || slot.SourceFile != sourceFile ||
-			slot.Class != "STRUCTURAL_CANDIDATE" || slot.CompiledMetadata != "UNVERIFIED" {
-			return out, nil, fmt.Errorf("%s query %s is not bound to its exact ordered raw source/inventory row", profile.Name, anchor.ID)
-		}
-		sourceFiles[i], queryIDs[i] = sourceFile, anchor.ID
+	}
+	combinedQueryFile := classificationGoDefinitionQueryFile{Schema: "tsgk-native-query-cases/r1", Route: profile.Route, Queries: combined}
+	queryIDs, err := classificationGoDefinitionQueryBindings(a, combinedQueryFile, w, out.slotGroup, sourceFiles)
+	if err != nil {
+		return out, nil, fmt.Errorf("%s query source binding: %w", profile.Name, err)
 	}
 	coordinates, err := classificationGoDefinitionCoordinateProjection(qualification.SHA256, profile.Set, w, queryIDs)
 	if err != nil {
@@ -450,7 +446,7 @@ func classificationSmall17DefinitionLoadInputs(a classificationAnchors, plan cla
 		return out, nil, fmt.Errorf("%s query-coordinate denominator differs", profile.Name)
 	}
 	out.qualification, out.workload, out.coordinates = qualification, w, coordinates
-	out.queryFile = classificationGoDefinitionQueryFile{Schema: "tsgk-native-query-cases/r1", Route: profile.Route, Queries: combined}
+	out.queryFile = combinedQueryFile
 	return out, sourceFiles, nil
 }
 
@@ -844,12 +840,12 @@ func TestQueryClassificationSmall17ProfilesAndCompilerClosure(t *testing.T) {
 }
 
 func TestQueryClassificationDefinitionProfileAdmission(t *testing.T) {
-	for _, profile := range []string{"positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "json1-tiny", "yaml1-empty", "xml2-tiny", "html2-empty", "css11-empty"} {
+	for _, profile := range []string{"positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "json1-tiny", "yaml1-empty", "xml2-tiny", "html2-empty", "css11-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty"} {
 		if !classificationGoDefinitionProfileAllowed(profile) {
 			t.Fatalf("exact reviewed definition profile %q rejected", profile)
 		}
 	}
-	for _, profile := range []string{"", "json", "json1-tiny-", "json1-tiny ", "yaml1-empty-alias", "xml2-tin", "html2-empty2", "css11"} {
+	for _, profile := range []string{"", "json", "json1-tiny-", "json1-tiny ", "yaml1-empty-alias", "xml2-tin", "html2-empty2", "css11", "javascript", "javascript4-empty-alias", "jsx3-empty ", "typescript7-empty2", "tsx2"} {
 		if classificationGoDefinitionProfileAllowed(profile) {
 			t.Fatalf("unknown or near-alias definition profile %q accepted", profile)
 		}

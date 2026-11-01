@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #216 Web16 닫힌 profile 검증
+
+JavaScript4·JSX3·TypeScript7·TSX2의 수동 profile은 [Web16 계약](../specs/instrumented-query-reference.md#web16-단일-frame-정의-분류)을 따른다. Native·kit의 focused 검사는 네 anchor의 정확한 빈 source·공개 `program` CST/flags/span·ABI,16개 query의 순서·원문·SHA·51 patterns·54개의 query별 capture-name 항목과 명시적 빈 predicate 목록을 검사한다. JavaScript/JSX의 같은 grammar/symbol을 근거로 route·query·anchor를 교환하거나 Small17/CJR profile에 새 이름을 허용하지 않는다. Grammar role/path/bytes/SHA, TypeScript/TSX 중첩 경로·공통 scanner header, compiler argv·출력·한도와 정렬된9-name environment의 누락·별칭·중복·빈 값, 중복 reference invocation, null metadata와 guarded session 없는 projection을 거부해야 한다.
+
+실제 Windows 관측은 source·binary·controller·도구·preregistration·각 단계의 유한 예약을 동결하고 독립 검토한 뒤 HARD4GiB·검증된 정리·잔류0으로 순차 수행한다. 네 profile의 최대 compiler/native/reference 예약을 단일 Root900초에 합쳐 성공한다고 가정하지 않는다. 한도 부족·partial·시작/정리 미확인은 결과와 원본을 보존한 채 BLOCKED로 남기고 중복 실행하지 않는다. 실제 ABI·CST·compiled metadata와 tuple을 확인하기 전 기본 source-only 검사나 수동 gate의 SKIP을 실행 PASS로 세지 않는다. 새 graph의 외부 caller approval과 같은 guarded bytes의 정의 projection·공개 API parity를 요구한다. 새 Linux/macOS 수동 실행이나 기존 small 한도 완화는 이 단위의 권한에 포함되지 않는다.
+
 ## #216 Small17 닫힌 profile 검증
 
 JSON1·YAML1·XML2·HTML2·CSS11의 별도 수동 profile은 [Small17 계약](../specs/instrumented-query-reference.md#small17-단일-frame-정의-분류)을 따른다. Focused 검사는 다섯 anchor의 정확한 source·full CST/flags/span·ABI(특히 CSS alias 포함204), query 순서·원문·완전한 metadata, raw ordinary source5개와 XML fact pack의 별도 결속을 검사한다. 같은 총계의 ID 교환, metadata nil/null·predicate 추가, XML source alias·capture 순서, grammar role/path/byte/SHA와 nested 경로, compiler argv·출력·한도, 정렬된 9-name compiler environment의 누락·별칭·중복·빈 값, 중복 reference invocation을 거부해야 한다. 실제 compiler environment 값은 preregistration과 observed request에 동일하게 결속한다. 기존 Go/C#/CJR/CPP guard와 공개 API parity를 유지한다.
