@@ -443,13 +443,13 @@ func TestQueryClassificationWeb16EmptyStderrCaptureMembers(t *testing.T) {
 			}
 
 			stderr := []byte{0x41, 0x42}
-			processResult = &runner.Result{StderrBytes: uint64(len(stderr)), Stderr: slices.Clone(stderr)}
-			ownerResult = &runner.Result{StderrBytes: uint64(len(stderr)), Stderr: slices.Clone(stderr)}
+			processResult = &runner.Result{StderrBytes: int64(len(stderr)), Stderr: slices.Clone(stderr)}
+			ownerResult = &runner.Result{StderrBytes: int64(len(stderr)), Stderr: slices.Clone(stderr)}
 			result = &CaseResult{Process: processResult}
 			capture = &driverCapture{stage: "RUN_RETURNED", spec: &runner.Spec{}, result: ownerResult}
 			classificationNormalizeCaptureStderr(profile, result, capture)
 			if !slices.Equal(processResult.Stderr, stderr) || !slices.Equal(ownerResult.Stderr, stderr) ||
-				processResult.StderrBytes != uint64(len(stderr)) || ownerResult.StderrBytes != uint64(len(stderr)) {
+				processResult.StderrBytes != int64(len(stderr)) || ownerResult.StderrBytes != int64(len(stderr)) {
 				t.Fatal("Web16 nonempty stderr was rewritten")
 			}
 			files, err = capture.files("capture/" + profile + "-nonempty-stderr")
