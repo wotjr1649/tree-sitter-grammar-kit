@@ -1,5 +1,26 @@
 # 계측 query reference 계약 (#216)
 
+## Script17 단일 frame 정의 분류
+
+Python8·Ruby4·R3·Bash2는 Web16과 이름 집합이 겹치지 않는 닫힌 수동 profile이다. 기존 empty-profile descriptor와 compiler·원장·guarded projection 검증을 공유하며, 기존 Web16·Small17·CJR 진입에 새 이름을 허용하지 않는다. 다음 값은 관측 전에 고정한 독립 사전 기대값이며 실제 parse·compile·query match 또는 caller 승인 실적이 아니다.
+
+| Profile / anchor | 공개 CST | 정의 | ABI symbol/field |
+|---|---|---:|---:|
+| `python8-empty` / [Python8](../../src/testdata/query-semantics/python8-classification-anchors.json) | `module` root 1개 | 8 | 284/32 |
+| `ruby4-empty` / [Ruby4](../../src/testdata/query-semantics/ruby4-classification-anchors.json) | `program` root 1개 | 4 | 354/32 |
+| `r3-empty` / [R3](../../src/testdata/query-semantics/r3-classification-anchors.json) | `program` root 1개 | 3 | 144/20 |
+| `bash2-empty` / [Bash2](../../src/testdata/query-semantics/bash2-classification-anchors.json) | `program` root 1개 | 2 | 293/19 |
+
+네 profile은 빈 UTF-8 source·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 요구한다. Root는 parent=-1, field=null, named=true, 나머지 flag=false, byte span0..0과 양쪽 point(0,0)이며 공개 자식은 없다. ABI language/runtime/min-compatible은15/15/13이고 symbol 수는 generated symbol과 alias의 합이다. 고정 runtime은 초기 stack state1에서 시작한다. Python·Ruby·Bash의 초기 EOF reduction과 R의 zero-width invisible `_start` 뒤 EOF reduction을 소스에서 검토해 root 후보를 도출했으며, 실제 scanner/parse 결과에서 full CST와 모든 공개 필드를 다시 대조해야 한다. Raw grammar root 규칙 확인은 C2 전체 regeneration closure 증명이 아니다.
+
+고정 원문17개의 ID·정확한 UTF-8 bytes·SHA·순서를 결속한다. 사전 metadata는52 patterns·59개의 query별 capture-name 항목·전역 고유 이름47개다. 각 query의 첫 등장 이름 순서와 명시적 `predicates:[]`를 유지하고 nil/null·순서·중복/누락·nonempty predicate를 거부한다. 하위 wildcard와 R의 quoted backslash·`"|>"`를 predicate나 최상위 wildcard로 세지 않는다. 빈 root 아래 필요한 construct가 없다는 근거로 structural/expected tuple은 빈 배열 후보이며, 원래 비어 있지 않은 workload의 의미론을 증명하지 않는다.
+
+각 grammar는 parser1·scanner1·header3개의 정확한 role/path/bytes/SHA와 compiler source/include·출력·한도·정렬된9-name environment를 고정한다. Ruby parser16,268,990 bytes는16MiB보다508,226 bytes 작아 기존 plain-input 경계를 사용한다. 개별 physical file 한도와 JSON 문서 한도는 별개이며 parser bytes/base64를 JSON에 합치거나 네 closure의 합계를16MiB 안이라고 주장하지 않는다. 기존 `full-input-utf8/r2`, small 한도, Go/C#/CPP paging 및 다른 닫힌 profile 경계는 유지한다.
+
+원래 ordinary qualification의 API=true와 이번 anchor의 API=false를 구분한다. Python49/60/109/169/1,352, Ruby30/34/64/98/392, R17/28/45/73/219, Bash31/18/49/67/134는 각각 cases/edits/case steps/tree roles/potential query-tree-role 좌표다. 합계127/140/267/407/2,097은 이번 빈 입력의 실행 횟수가 아니다.
+
+새 profile마다 case·current graph·query별 서로 다른 reference invocation·provenance와 새 외부 caller approval을 별도로 보존한다. 같은 guarded snapshot에서 eligibility·full CST/metadata·request/frame·compiler/library·stderr owner와 별도 공개 API parity를 통과해야 조건부 `STRUCTURAL_ONLY`를 기록한다. 관측 source/reader와 후속 report/merge revision은 구분한다. 원장 `STRUCTURAL_CANDIDATE/UNVERIFIED`, semantic `NOT_ASSESSED`, `semantic_required:null`, 전체 #216/#195와 per-case·Windows/Linux·SVC69·large4·replay/inventory/fan-in 미완료는 이 단위로 바꾸지 않는다.
+
 ## Web16 단일 frame 정의 분류
 
 Windows의 source/reader `fc0a7433fb2b5fd27cf6e41f1d166b1a23c66fa6`에서 네 profile의 실제 관측·외부 caller approval·guarded 정의 projection과 공개 API parity를 확인한 범위는 [Web16 보고서](../reports/issue-216-web16-classification.md)에 기록한다. 이번16개는 조건부 구조 분류이며 원장의 미검증 metadata·semantic 미평가와 전체 #216/#195 미완료를 유지한다. 후속 보고서/PR/merge revision을 당시 실행 source로 표시하지 않는다.

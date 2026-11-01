@@ -20,34 +20,34 @@ const (
 	classificationWeb16NativeRoutesSHA   = "7be36efe4cafcefa460c8841c8698a0d055cb25d6f86a5bed8561d601c093ad2"
 )
 
-type classificationWeb16QuerySpec struct {
+type classificationEmptyQuerySpec struct {
 	id, sha256 string
 	patterns   uint32
 	captures   []string
 }
 
-type classificationWeb16Profile struct {
-	name, anchorFile, anchorSHA, route, symbol, caseID, workload string
-	queryFile, querySHA                                          string
-	anchorBytes, queryBytes, grammarCount                        int
-	languageVersion, runtimeLanguageVersion, minCompatible       uint32
-	symbolCount, fieldCount                                      uint32
-	queries                                                      []classificationWeb16QuerySpec
+type classificationEmptyProfile struct {
+	name, anchorFile, anchorSHA, route, symbol, caseID, workload, rootType string
+	queryFile, querySHA                                                    string
+	anchorBytes, queryBytes, grammarCount                                  int
+	languageVersion, runtimeLanguageVersion, minCompatible                 uint32
+	symbolCount, fieldCount                                                uint32
+	queries                                                                []classificationEmptyQuerySpec
 }
 
-func classificationWeb16ProfileFor(name string) (classificationWeb16Profile, bool) {
+func classificationWeb16ProfileFor(name string) (classificationEmptyProfile, bool) {
 	abi := func(symbols, fields uint32) (uint32, uint32, uint32, uint32, uint32) {
 		return 15, 15, 13, symbols, fields
 	}
 	switch name {
 	case "javascript4-empty":
 		language, runtime, compatible, symbols, fields := abi(291, 36)
-		return classificationWeb16Profile{
+		return classificationEmptyProfile{
 			name: "javascript4-empty", anchorFile: "javascript4-classification-anchors.json", anchorSHA: "b49741060ebc83441982a46b5b4187ed00fdb836d472d8e89ae9a2d44c301c33",
-			route: "javascript", symbol: "tree_sitter_javascript", caseID: "javascript4-empty-definitions", workload: "javascript4-empty-definition-single-frame",
+			route: "javascript", rootType: "program", symbol: "tree_sitter_javascript", caseID: "javascript4-empty-definitions", workload: "javascript4-empty-definition-single-frame",
 			queryFile: "src/testdata/native/queries/javascript.json", queryBytes: 6270, querySHA: "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505",
 			anchorBytes: 2914, grammarCount: 5, languageVersion: language, runtimeLanguageVersion: runtime, minCompatible: compatible, symbolCount: symbols, fieldCount: fields,
-			queries: []classificationWeb16QuerySpec{
+			queries: []classificationEmptyQuerySpec{
 				{id: "q.structure", sha256: "d5c47480683d350ed43669b6cd07d1aec567d585093237d5f96c1f405a35a2bd", patterns: 4, captures: []string{"source", "function", "class", "method"}},
 				{id: "q.probe-v16", sha256: "68b529ff3343a0b6d713e6a37c50a335fb7e6bb46e51576dcd6d71d5aac4aa48", patterns: 5, captures: []string{"rest", "await", "base", "exponent", "catch_body", "spread"}},
 				{id: "q.probe-v20", sha256: "f29a1a2a4be3ea9faff06653dca56216af779280e97939cf7a183ee2d8a75791", patterns: 4, captures: []string{"fallback", "big_name", "big", "target", "value", "meta"}},
@@ -56,12 +56,12 @@ func classificationWeb16ProfileFor(name string) (classificationWeb16Profile, boo
 		}, true
 	case "jsx3-empty":
 		language, runtime, compatible, symbols, fields := abi(291, 36)
-		return classificationWeb16Profile{
+		return classificationEmptyProfile{
 			name: "jsx3-empty", anchorFile: "jsx3-classification-anchors.json", anchorSHA: "dfee37f1794e2128a46d01c3b5d8b4fd78809a3a4d8d9cfa92f45b19f1a8a979",
-			route: "jsx", symbol: "tree_sitter_javascript", caseID: "jsx3-empty-definitions", workload: "jsx3-empty-definition-single-frame",
+			route: "jsx", rootType: "program", symbol: "tree_sitter_javascript", caseID: "jsx3-empty-definitions", workload: "jsx3-empty-definition-single-frame",
 			queryFile: "src/testdata/native/queries/jsx.json", queryBytes: 4366, querySHA: "036457f6bba87231d75fb55d768adef9ab8f03c8e2d43231da093aa18f8ffb62",
 			anchorBytes: 2024, grammarCount: 5, languageVersion: language, runtimeLanguageVersion: runtime, minCompatible: compatible, symbolCount: symbols, fieldCount: fields,
-			queries: []classificationWeb16QuerySpec{
+			queries: []classificationEmptyQuerySpec{
 				{id: "q.structure", sha256: "8704313cbd2b50ca5899acab82b2da3a193a0ba12c4efca916cb2581650f5416", patterns: 3, captures: []string{"open", "close", "self_closing"}},
 				{id: "q.probe-b02", sha256: "99c375a77d619da22005303b03932f8e01007c4feb464756dbd8ea1de7c3c55d", patterns: 2, captures: []string{"attr_name", "spread_attr"}},
 				{id: "q.probe-b03", sha256: "b4d71bd30038f1ca36248ea80ebb0d6947d8a9625ed62b52966ff59c93f5d4fd", patterns: 2, captures: []string{"spread_child", "entity"}},
@@ -69,12 +69,12 @@ func classificationWeb16ProfileFor(name string) (classificationWeb16Profile, boo
 		}, true
 	case "typescript7-empty":
 		language, runtime, compatible, symbols, fields := abi(388, 40)
-		return classificationWeb16Profile{
+		return classificationEmptyProfile{
 			name: "typescript7-empty", anchorFile: "typescript7-classification-anchors.json", anchorSHA: "1f658bca74082dd8cfd387eea2c73777e00b2128d1f58a9e690c1b40d83e31e1",
-			route: "typescript", symbol: "tree_sitter_typescript", caseID: "typescript7-empty-definitions", workload: "typescript7-empty-definition-single-frame",
+			route: "typescript", rootType: "program", symbol: "tree_sitter_typescript", caseID: "typescript7-empty-definitions", workload: "typescript7-empty-definition-single-frame",
 			queryFile: "src/testdata/native/queries/typescript.json", queryBytes: 7706, querySHA: "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067",
 			anchorBytes: 3545, grammarCount: 6, languageVersion: language, runtimeLanguageVersion: runtime, minCompatible: compatible, symbolCount: symbols, fieldCount: fields,
-			queries: []classificationWeb16QuerySpec{
+			queries: []classificationEmptyQuerySpec{
 				{id: "q.structure", sha256: "94b718ea5696901a19e30582397afe6037fe0ebf65855f6a765a83ba41022a2f", patterns: 4, captures: []string{"interface", "type", "enum", "method"}},
 				{id: "q.probe-V28", sha256: "d9a7639fba1f7cf108bdca789ab6800702f8bc38b57c3c7c362865b6a6837255", patterns: 3, captures: []string{"conditional", "infer", "mapping"}},
 				{id: "q.probe-V3", sha256: "a8b2f1c046976f9f6b5cc20776ed8b8377ec0421618ef1a8aa2c6a472a7ce9ef", patterns: 4, captures: []string{"tuple", "optional", "rest", "asserts"}},
@@ -86,22 +86,22 @@ func classificationWeb16ProfileFor(name string) (classificationWeb16Profile, boo
 		}, true
 	case "tsx2-empty":
 		language, runtime, compatible, symbols, fields := abi(408, 43)
-		return classificationWeb16Profile{
+		return classificationEmptyProfile{
 			name: "tsx2-empty", anchorFile: "tsx2-classification-anchors.json", anchorSHA: "da0fc57ba374c6a937ab793e023f7aed8459f73ebeb0ea680f37336148060eab",
-			route: "tsx", symbol: "tree_sitter_tsx", caseID: "tsx2-empty-definitions", workload: "tsx2-empty-definition-single-frame",
+			route: "tsx", rootType: "program", symbol: "tree_sitter_tsx", caseID: "tsx2-empty-definitions", workload: "tsx2-empty-definition-single-frame",
 			queryFile: "src/testdata/native/queries/tsx.json", queryBytes: 2814, querySHA: "9ff203465bdcda7bcee4ab553e92aff327da72ed23d03ed559dd9b5d5fd72374",
 			anchorBytes: 1721, grammarCount: 6, languageVersion: language, runtimeLanguageVersion: runtime, minCompatible: compatible, symbolCount: symbols, fieldCount: fields,
-			queries: []classificationWeb16QuerySpec{
+			queries: []classificationEmptyQuerySpec{
 				{id: "q.structure", sha256: "9c7ac03567566d0b379fda0303f5db461cea457732bc8104e76101a118c44064", patterns: 4, captures: []string{"type", "interface", "function", "component"}},
 				{id: "q.probe-B02", sha256: "29f60a58af9943e2c546263bebc105379ee5cd82d41c9709cc6c3d5fb9a9ae19", patterns: 3, captures: []string{"type_params", "as", "tag"}},
 			},
 		}, true
 	default:
-		return classificationWeb16Profile{}, false
+		return classificationEmptyProfile{}, false
 	}
 }
 
-func classificationWeb16ProfileForRoute(route string) (classificationWeb16Profile, bool) {
+func classificationWeb16ProfileForRoute(route string) (classificationEmptyProfile, bool) {
 	switch route {
 	case "javascript":
 		return classificationWeb16ProfileFor("javascript4-empty")
@@ -112,7 +112,7 @@ func classificationWeb16ProfileForRoute(route string) (classificationWeb16Profil
 	case "tsx":
 		return classificationWeb16ProfileFor("tsx2-empty")
 	default:
-		return classificationWeb16Profile{}, false
+		return classificationEmptyProfile{}, false
 	}
 }
 
@@ -121,7 +121,7 @@ func classificationWeb16ProfileName(name string) bool {
 	return ok
 }
 
-func classificationWeb16GrammarPins(profile classificationWeb16Profile) []kit.NativeInput {
+func classificationEmptyGrammarPins(profile classificationEmptyProfile) []kit.NativeInput {
 	sharedHeaders := func(prefix string) []kit.NativeInput {
 		return []kit.NativeInput{
 			{Path: prefix + "alloc.h", Role: "header", Bytes: 985, SHA256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
@@ -151,28 +151,52 @@ func classificationWeb16GrammarPins(profile classificationWeb16Profile) []kit.Na
 			{Path: "tsx/src/scanner.c", Role: "scanner", Bytes: 538, SHA256: "d563cd30b2f39718c9ae4292795c5ce03a2ad01954ba3a86ef84c2781a736673"},
 		}
 		return append(files, sharedHeaders("tsx/src/tree_sitter/")...)
+	case "python":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 3797134, SHA256: "5f91970298858b745730783d9c7063fd87aababe81f4214689e2554dbe8189c4"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 17885, SHA256: "899c800d80ef85fe0e9978607e4a3f622942e479d439f78db4e38dacffe21c7b"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
+	case "ruby":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 16268990, SHA256: "42b9c0f15b2b3ab44282b3428ff0cdd5e323473a4b898ae249811ce5b0f7260e"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 38674, SHA256: "bb703322baf000e97640392d9fb4a1803cf1bcba011768cd387b1b386acf392f"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
+	case "r":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 4035569, SHA256: "01500bdc75697611e436f2746e1340c41ff80b82e85d7a8447ed185653e821e2"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 32040, SHA256: "7452b0420d474808710749c21541cdc40200562025e432d2030428f25477c042"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
+	case "bash":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 11527793, SHA256: "47c390de497085a147eccd7115e80ae378bf373aedffea45686b1727d38e6db2"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 51153, SHA256: "c53690b749988bb728f5cbd3b4e83e76af225c632da977da1b7f9f5eeaf4c663"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
 	default:
 		return nil
 	}
 }
 
-func classificationWeb16AnchorsValid(profileName string, a classificationLocalAnchors) error {
-	profile, ok := classificationWeb16ProfileFor(profileName)
+func classificationEmptyAnchorsValid(profileName string, a classificationLocalAnchors) error {
+	profile, ok := classificationEmptyProfileFor(profileName)
 	if !ok {
-		return fmt.Errorf("unknown closed Web16 profile %q", profileName)
+		return fmt.Errorf("unknown closed empty-profile profile %q", profileName)
 	}
 	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != profile.route || a.Case != profile.caseID || a.API ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != profile.workload ||
 		a.Source.UTF8 != "" || a.Source.Bytes != 0 || a.Source.SHA256 != sha(nil) || a.Edits == nil || len(a.Edits) != 0 ||
 		len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" ||
 		len(a.Nodes) != 1 || len(a.Queries) != len(profile.queries) || len(a.Required) != len(profile.queries) {
-		return fmt.Errorf("%s Web16 empty-source profile changed", profileName)
+		return fmt.Errorf("%s empty-profile empty-source profile changed", profileName)
 	}
-	wantRoot := []kit.TreeNode{{Parent: -1, Type: "program", Named: true}}
+	wantRoot := []kit.TreeNode{{Parent: -1, Type: profile.rootType, Named: true}}
 	if !reflect.DeepEqual(a.Nodes, wantRoot) ||
 		a.ABI.LanguageVersion != profile.languageVersion || a.ABI.RuntimeLanguageVersion != profile.runtimeLanguageVersion ||
 		a.ABI.RuntimeMinCompatible != profile.minCompatible || a.ABI.SymbolCount != profile.symbolCount || a.ABI.FieldCount != profile.fieldCount {
-		return fmt.Errorf("%s Web16 ABI or independent empty-source CST changed", profileName)
+		return fmt.Errorf("%s empty-profile ABI or independent empty-source CST changed", profileName)
 	}
 	seen := make(map[string]bool, len(profile.queries))
 	for i, q := range a.Queries {
@@ -180,37 +204,37 @@ func classificationWeb16AnchorsValid(profileName string, a classificationLocalAn
 		if q.ID != want.id || seen[q.ID] || q.SHA256 != want.sha256 || q.SHA256 != sha([]byte(q.Source)) ||
 			q.Metadata.Patterns != want.patterns || q.Metadata.CaptureNames == nil || !reflect.DeepEqual(q.Metadata.CaptureNames, want.captures) ||
 			q.Metadata.Predicates == nil || len(q.Metadata.Predicates) != 0 {
-			return fmt.Errorf("%s Web16 query source or complete predicate-free metadata changed at %d", profileName, i)
+			return fmt.Errorf("%s empty-profile query source or complete predicate-free metadata changed at %d", profileName, i)
 		}
 		seen[q.ID] = true
 		tuple := a.Required[i]
 		if tuple.Query != q.ID || tuple.Step != 0 || tuple.TreeRole != "incremental" || tuple.Structural == nil || len(tuple.Structural) != 0 || tuple.Expected == nil || len(tuple.Expected) != 0 {
-			return fmt.Errorf("%s Web16 denominator or empty capture anchors changed at %d", profileName, i)
+			return fmt.Errorf("%s empty-profile denominator or empty capture anchors changed at %d", profileName, i)
 		}
 	}
 	return nil
 }
 
-func classificationWeb16QueryRegistryValid(profileName string, a classificationLocalAnchors) error {
-	profile, ok := classificationWeb16ProfileFor(profileName)
+func classificationEmptyQueryRegistryValid(profileName string, a classificationLocalAnchors) error {
+	profile, ok := classificationEmptyProfileFor(profileName)
 	if !ok {
-		return fmt.Errorf("unknown closed Web16 profile %q", profileName)
+		return fmt.Errorf("unknown closed empty-profile profile %q", profileName)
 	}
 	queryPath := filepath.Join("..", "..", filepath.FromSlash(strings.TrimPrefix(profile.queryFile, "src/")))
 	data, err := os.ReadFile(queryPath)
 	if err != nil {
 		return fmt.Errorf("read pinned %s query registry: %w", profileName, err)
 	}
-	return classificationWeb16QueryRegistryBytesValid(profileName, a, data)
+	return classificationEmptyQueryRegistryBytesValid(profileName, a, data)
 }
 
-func classificationWeb16QueryRegistryBytesValid(profileName string, a classificationLocalAnchors, data []byte) error {
-	profile, ok := classificationWeb16ProfileFor(profileName)
+func classificationEmptyQueryRegistryBytesValid(profileName string, a classificationLocalAnchors, data []byte) error {
+	profile, ok := classificationEmptyProfileFor(profileName)
 	if !ok {
-		return fmt.Errorf("unknown closed Web16 profile %q", profileName)
+		return fmt.Errorf("unknown closed empty-profile profile %q", profileName)
 	}
 	if len(data) != profile.queryBytes || sha(data) != profile.querySHA || len(a.Queries) != len(profile.queries) {
-		return fmt.Errorf("%s Web16 query registry file pin changed", profileName)
+		return fmt.Errorf("%s empty-profile query registry file pin changed", profileName)
 	}
 	var registry struct {
 		Schema  string `json:"schema"`
@@ -221,38 +245,38 @@ func classificationWeb16QueryRegistryBytesValid(profileName string, a classifica
 		} `json:"queries"`
 	}
 	if err := json.Unmarshal(data, &registry); err != nil {
-		return fmt.Errorf("decode %s Web16 query registry: %w", profileName, err)
+		return fmt.Errorf("decode %s empty-profile query registry: %w", profileName, err)
 	}
 	if registry.Schema != "tsgk-native-query-cases/r1" || registry.Route != profile.route || len(registry.Queries) != len(profile.queries) {
-		return fmt.Errorf("%s Web16 query registry profile changed", profileName)
+		return fmt.Errorf("%s empty-profile query registry profile changed", profileName)
 	}
 	for i, query := range registry.Queries {
 		if query.ID != profile.queries[i].id || query.ID != a.Queries[i].ID || query.Source != a.Queries[i].Source || sha([]byte(query.Source)) != profile.queries[i].sha256 {
-			return fmt.Errorf("%s Web16 query registry source/order differs at %d", profileName, i)
+			return fmt.Errorf("%s empty-profile query registry source/order differs at %d", profileName, i)
 		}
 	}
 	return nil
 }
 
-func classificationWeb16GrammarValid(profileName string, registryData []byte, route, symbol string, grammar []kit.NativeInput) error {
-	profile, ok := classificationWeb16ProfileFor(profileName)
+func classificationEmptyGrammarValid(profileName string, registryData []byte, route, symbol string, grammar []kit.NativeInput) error {
+	profile, ok := classificationEmptyProfileFor(profileName)
 	if !ok {
-		return fmt.Errorf("unknown closed Web16 profile %q", profileName)
+		return fmt.Errorf("unknown closed empty-profile profile %q", profileName)
 	}
-	want := classificationWeb16GrammarPins(profile)
+	want := classificationEmptyGrammarPins(profile)
 	parserCount := 0
 	for _, file := range want {
 		if file.Role == "parser" {
 			parserCount++
 			if file.Bytes == 0 || file.Bytes > 16<<20 {
-				return fmt.Errorf("%s Web16 parser exceeds the plain-input bound", profileName)
+				return fmt.Errorf("%s empty-profile parser exceeds the plain-input bound", profileName)
 			}
 		}
 	}
 	if len(registryData) != classificationWeb16NativeRoutesBytes || sha(registryData) != classificationWeb16NativeRoutesSHA ||
 		route != profile.route || symbol != profile.symbol || parserCount != 1 || len(want) != profile.grammarCount ||
 		len(grammar) != len(want) || !reflect.DeepEqual(grammar, want) {
-		return fmt.Errorf("%s exact registered Web16 native grammar closure changed", profileName)
+		return fmt.Errorf("%s exact registered empty-profile native grammar closure changed", profileName)
 	}
 	return nil
 }
@@ -292,10 +316,10 @@ func TestQueryClassificationWeb16StaticProfilesAndPins(t *testing.T) {
 			if err := jsonv2.Unmarshal(anchorData, &anchors, jsonv2.RejectUnknownMembers(true)); err != nil {
 				t.Fatal(err)
 			}
-			if err := classificationWeb16AnchorsValid(name, anchors); err != nil {
+			if err := classificationEmptyAnchorsValid(name, anchors); err != nil {
 				t.Fatal(err)
 			}
-			if err := classificationWeb16QueryRegistryValid(name, anchors); err != nil {
+			if err := classificationEmptyQueryRegistryValid(name, anchors); err != nil {
 				t.Fatal(err)
 			}
 			var routeMatches int
@@ -310,7 +334,7 @@ func TestQueryClassificationWeb16StaticProfilesAndPins(t *testing.T) {
 			if routeMatches != 1 {
 				t.Fatal("Web16 native route missing or duplicated", routeMatches)
 			}
-			if err := classificationWeb16GrammarValid(name, registryData, profile.route, symbol, grammar); err != nil {
+			if err := classificationEmptyGrammarValid(name, registryData, profile.route, symbol, grammar); err != nil {
 				t.Fatal(err)
 			}
 			capture, err := classificationCaptureProfileFor(name)
@@ -332,19 +356,19 @@ func TestQueryClassificationWeb16StaticProfilesAndPins(t *testing.T) {
 
 			wrongRoute := anchors
 			wrongRoute.Route = map[string]string{"javascript": "jsx", "jsx": "javascript", "typescript": "tsx", "tsx": "typescript"}[profile.route]
-			if classificationWeb16AnchorsValid(name, wrongRoute) == nil {
+			if classificationEmptyAnchorsValid(name, wrongRoute) == nil {
 				t.Fatal("shared parser route alias accepted")
 			}
 			wrongOrder := anchors
 			wrongOrder.Queries = slices.Clone(anchors.Queries)
 			wrongOrder.Queries[0], wrongOrder.Queries[1] = wrongOrder.Queries[1], wrongOrder.Queries[0]
-			if classificationWeb16AnchorsValid(name, wrongOrder) == nil {
+			if classificationEmptyAnchorsValid(name, wrongOrder) == nil {
 				t.Fatal("reordered Web16 queries accepted")
 			}
 			wrongMetadata := anchors
 			wrongMetadata.Queries = slices.Clone(anchors.Queries)
 			wrongMetadata.Queries[0].Metadata.Predicates = nil
-			if classificationWeb16AnchorsValid(name, wrongMetadata) == nil {
+			if classificationEmptyAnchorsValid(name, wrongMetadata) == nil {
 				t.Fatal("nil predicates accepted as the explicit empty predicate list")
 			}
 			wrongCaptureOrder := anchors
@@ -352,19 +376,19 @@ func TestQueryClassificationWeb16StaticProfilesAndPins(t *testing.T) {
 			wrongCaptureOrder.Queries[0].Metadata.CaptureNames = slices.Clone(anchors.Queries[0].Metadata.CaptureNames)
 			wrongCaptureOrder.Queries[0].Metadata.CaptureNames[0], wrongCaptureOrder.Queries[0].Metadata.CaptureNames[1] =
 				wrongCaptureOrder.Queries[0].Metadata.CaptureNames[1], wrongCaptureOrder.Queries[0].Metadata.CaptureNames[0]
-			if classificationWeb16AnchorsValid(name, wrongCaptureOrder) == nil {
+			if classificationEmptyAnchorsValid(name, wrongCaptureOrder) == nil {
 				t.Fatal("reordered Web16 capture names accepted")
 			}
 			nonemptyPredicates := anchors
 			nonemptyPredicates.Queries = slices.Clone(anchors.Queries)
 			nonemptyPredicates.Queries[0].Metadata.Predicates = []kit.QueryPredicate{{}}
-			if classificationWeb16AnchorsValid(name, nonemptyPredicates) == nil {
+			if classificationEmptyAnchorsValid(name, nonemptyPredicates) == nil {
 				t.Fatal("nonempty Web16 predicates accepted")
 			}
 			wrongTuple := anchors
 			wrongTuple.Required = slices.Clone(anchors.Required)
 			wrongTuple.Required[0].Expected = nil
-			if classificationWeb16AnchorsValid(name, wrongTuple) == nil {
+			if classificationEmptyAnchorsValid(name, wrongTuple) == nil {
 				t.Fatal("nil expected tuple accepted as an explicit empty array")
 			}
 			queryPath := filepath.Join("..", "..", filepath.FromSlash(strings.TrimPrefix(profile.queryFile, "src/")))
@@ -372,17 +396,17 @@ func TestQueryClassificationWeb16StaticProfilesAndPins(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if classificationWeb16QueryRegistryBytesValid(name, anchors, append(slices.Clone(queryData), ' ')) == nil {
+			if classificationEmptyQueryRegistryBytesValid(name, anchors, append(slices.Clone(queryData), ' ')) == nil {
 				t.Fatal("changed Web16 query file accepted")
 			}
 			badRegistry := slices.Clone(registryData)
 			badRegistry = append(badRegistry, ' ')
-			if classificationWeb16GrammarValid(name, badRegistry, profile.route, profile.symbol, grammar) == nil {
+			if classificationEmptyGrammarValid(name, badRegistry, profile.route, profile.symbol, grammar) == nil {
 				t.Fatal("changed native route registry accepted")
 			}
 			badGrammar := slices.Clone(grammar)
 			badGrammar[0].SHA256 = strings.Repeat("0", 64)
-			if classificationWeb16GrammarValid(name, registryData, profile.route, profile.symbol, badGrammar) == nil {
+			if classificationEmptyGrammarValid(name, registryData, profile.route, profile.symbol, badGrammar) == nil {
 				t.Fatal("changed Web16 grammar closure accepted")
 			}
 		})

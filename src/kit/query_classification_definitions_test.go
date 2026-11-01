@@ -616,7 +616,7 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 	switch language {
 	case "Go":
 		want = 3
-	case "C", "C++", "Rust":
+	case "C", "C++", "Rust", "Ruby":
 		want = 4
 	case "Java":
 		want = 5
@@ -630,12 +630,14 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 11
 	case "JavaScript":
 		want = 4
-	case "JSX":
+	case "JSX", "R":
 		want = 3
 	case "TypeScript":
 		want = 7
-	case "TSX":
+	case "TSX", "Bash":
 		want = 2
+	case "Python":
+		want = 8
 	default:
 		return nil, fmt.Errorf("unsupported closed definition language %q", language)
 	}
