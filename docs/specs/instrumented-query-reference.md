@@ -4,6 +4,8 @@
 
 Web16은 기존 Small17과 별도로 닫힌 네 profile이다. 모두 빈 UTF-8 source, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`를 사전등록한다. 기대값은 관측 전에 고정한 후보이며 실제 compile·native/reference 실행을 대신하지 않는다.
 
+좌표를 가져오는 기존 ordinary qualification workload의 `API=true`는 유지한다. 이는 이번 빈 anchor의 `API=false`와 다른 입력 경계이며, 좌표 연결이 기존 API workload의 실행이나 검증을 뜻하지 않는다.
+
 | Profile / anchor | 공개 CST | 정의 | ABI symbol/field |
 |---|---|---:|---:|
 | `javascript4-empty` / [JavaScript4](../../src/testdata/query-semantics/javascript4-classification-anchors.json) | `program` root 1개 | 4 | 291/36 |

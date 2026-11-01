@@ -21,6 +21,8 @@ JavaScript4·JSX3·TypeScript7·TSX2를 별도 닫힌 네 profile로 다룬다. 
 
 JavaScript/JSX는 grammar pin과 symbol이 같아도 다른 route·query·anchor·승인 identity다. TypeScript/TSX의 중첩 parser/scanner 경로와 공통 scanner header도 각각 정확한 closure로 결속한다. 원래 ordinary workload의268 cases·112 edits·380 case steps·492 tree roles·2,039 potential query/tree-role 좌표를 이번16개 정의의 실행 분모로 사용하지 않는다.
 
+기존 ordinary qualification workload는 `API=true`이고, 이번 빈 관측 anchor는 `API=false`다. Helper는 두 입력의 값을 각각 검사하며, 좌표 메타데이터를 연결하는 것으로 기존 API workload를 검증했다고 세지 않는다.
+
 ## 검증 및 잔여 작업
 
 Source-only focused 회귀, 두 관점의 독립 검토, frozen Windows 관측의 profile별 유한 예산과 원본 종료·정리 증거, 외부 caller approval, 같은 guarded snapshot의 정의 projection과 별도 공개 API parity가 필요하다. PR·필수 CI·공식 artifact와 실제 main 통합 검증도 아직 후속 단계다. 실행 실패·불충분한 한도·partial·정리 미확인은 원본을 보존하고 완료로 세지 않는다.

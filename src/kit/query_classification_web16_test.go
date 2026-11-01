@@ -296,8 +296,9 @@ func classificationWeb16DefinitionLoadInputs(a classificationAnchors, plan class
 		return out, nil, fmt.Errorf("%s qualification route is missing or duplicated", profile.Name)
 	}
 	workload := route.Workload
+	// The ordinary qualification workload keeps API=true; the empty observation anchor uses API=false.
 	if workload.Route != profile.Route || workload.Set != profile.Set || workload.Profile != profile.Set || workload.Operation != "native-query-batch" || workload.Output != "tree" || workload.Symbol != profile.Symbol ||
-		workload.API || workload.FactPack != nil || len(workload.Grammar) != len(plan.Grammar) || !reflect.DeepEqual(workload.Grammar, plan.Grammar) || len(workload.Queries) != profile.QueryCount {
+		!workload.API || workload.FactPack != nil || len(workload.Grammar) != len(plan.Grammar) || !reflect.DeepEqual(workload.Grammar, plan.Grammar) || len(workload.Queries) != profile.QueryCount {
 		return out, nil, fmt.Errorf("%s qualification workload differs from the fixed profile", profile.Name)
 	}
 	for _, extra := range qualification.ExtraRoles {
@@ -644,7 +645,7 @@ func TestQueryClassificationWeb16ProfilesAndCompilerClosure(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			fixture := classificationWeb16StaticFixtureForTest(t, name)
 			profile, anchors := fixture.profile, fixture.anchors
-			if anchors.Source.Bytes != 0 || anchors.Source.UTF8 != "" || len(anchors.Nodes) != 1 || anchors.Nodes[0].Type != "program" ||
+			if !fixture.inputs.workload.API || anchors.API || anchors.Source.Bytes != 0 || anchors.Source.UTF8 != "" || len(anchors.Nodes) != 1 || anchors.Nodes[0].Type != "program" ||
 				anchors.nativeContext() != "full-input-utf8/r2" || anchors.nativeSymbol() != profile.Symbol || anchors.libraryName() != profile.Route+".dll" || classificationNativePrefix(anchors) != "current/native/" ||
 				!classificationPlanContextMatches(anchors, fixture.plan) {
 				t.Fatalf("%s empty full-input source or native route binding differs", profile.Name)
