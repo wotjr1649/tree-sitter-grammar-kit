@@ -219,6 +219,29 @@ func classificationGoDefinitionCloneMetadata(meta QueryWitnessMetadata) QueryWit
 	return QueryWitnessMetadata{Patterns: meta.Patterns, CaptureNames: slices.Clone(meta.CaptureNames), Predicates: slices.Clone(meta.Predicates)}
 }
 
+func classificationGoDefinitionQueryBindings(a classificationAnchors, queryFile classificationGoDefinitionQueryFile, workload QualWorkload, slotGroup classificationGoDefinitionSlotGroup, sourceFiles []string) ([]string, error) {
+	count := len(a.Queries)
+	if count == 0 || queryFile.Schema != "tsgk-native-query-cases/r1" || queryFile.Route != a.Route || len(queryFile.Queries) != count || len(workload.Queries) != count || len(slotGroup.Queries) != count || len(sourceFiles) != count || len(a.Required) != count {
+		return nil, fmt.Errorf("%s definition query source/inventory denominator differs", a.Route)
+	}
+	queryIDs := make([]string, count)
+	seen := make(map[string]bool, count)
+	for i, anchor := range a.Queries {
+		query, registered, slot := queryFile.Queries[i], workload.Queries[i], slotGroup.Queries[i]
+		sourceSHA := digestHex([]byte(anchor.Source))
+		if !validID(anchor.ID) || seen[anchor.ID] || anchor.SHA256 != sourceSHA || !classificationGoDefinitionMetadataValid(anchor.Metadata) {
+			return nil, fmt.Errorf("%s query anchor %d has duplicate identity or invalid predicate-free metadata", a.Route, i)
+		}
+		seen[anchor.ID] = true
+		if a.Required[i].Query != anchor.ID || query.ID != anchor.ID || query.Source != anchor.Source || registered.ID != anchor.ID || registered.SHA256 != sourceSHA ||
+			slot.ID != anchor.ID || slot.SHA256 != sourceSHA || slot.SourceFile != sourceFiles[i] || slot.Class != "STRUCTURAL_CANDIDATE" || slot.CompiledMetadata != "UNVERIFIED" {
+			return nil, fmt.Errorf("%s query %s is not bound to its exact ordered raw source/inventory row", a.Route, anchor.ID)
+		}
+		queryIDs[i] = anchor.ID
+	}
+	return queryIDs, nil
+}
+
 func classificationGoDefinitionCoordinateProjection(qualificationSHA, set string, workload QualWorkload, queryIDs []string) (classificationGoDefinitionCoordinateSummary, error) {
 	var summary classificationGoDefinitionCoordinateSummary
 	if !hex64.MatchString(qualificationSHA) || set == "" || workload.Set != set || len(queryIDs) == 0 {
@@ -605,6 +628,14 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 2
 	case "CSS":
 		want = 11
+	case "JavaScript":
+		want = 4
+	case "JSX":
+		want = 3
+	case "TypeScript":
+		want = 7
+	case "TSX":
+		want = 2
 	default:
 		return nil, fmt.Errorf("unsupported closed definition language %q", language)
 	}

@@ -1,5 +1,28 @@
 # 계측 query reference 계약 (#216)
 
+## Web16 단일 frame 정의 분류
+
+Windows의 source/reader `fc0a7433fb2b5fd27cf6e41f1d166b1a23c66fa6`에서 네 profile의 실제 관측·외부 caller approval·guarded 정의 projection과 공개 API parity를 확인한 범위는 [Web16 보고서](../reports/issue-216-web16-classification.md)에 기록한다. 이번16개는 조건부 구조 분류이며 원장의 미검증 metadata·semantic 미평가와 전체 #216/#195 미완료를 유지한다. 후속 보고서/PR/merge revision을 당시 실행 source로 표시하지 않는다.
+
+Web16은 기존 Small17과 별도로 닫힌 네 profile이다. 모두 빈 UTF-8 source, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`를 사전등록한다. 기대값은 관측 전에 고정한 후보이며 실제 compile·native/reference 실행을 대신하지 않는다.
+
+좌표를 가져오는 기존 ordinary qualification workload의 `API=true`는 유지한다. 이는 이번 빈 anchor의 `API=false`와 다른 입력 경계이며, 좌표 연결이 기존 API workload의 실행이나 검증을 뜻하지 않는다.
+
+| Profile / anchor | 공개 CST | 정의 | ABI symbol/field |
+|---|---|---:|---:|
+| `javascript4-empty` / [JavaScript4](../../src/testdata/query-semantics/javascript4-classification-anchors.json) | `program` root 1개 | 4 | 291/36 |
+| `jsx3-empty` / [JSX3](../../src/testdata/query-semantics/jsx3-classification-anchors.json) | `program` root 1개 | 3 | 291/36 |
+| `typescript7-empty` / [TypeScript7](../../src/testdata/query-semantics/typescript7-classification-anchors.json) | `program` root 1개 | 7 | 388/40 |
+| `tsx2-empty` / [TSX2](../../src/testdata/query-semantics/tsx2-classification-anchors.json) | `program` root 1개 | 2 | 408/43 |
+
+고정 parser의 초기 EOF reduction·goto·accept와 해당 external scanner state를 검토해 빈 `program`을 도출했다. 공개 root는 parent=-1, field=null, named=true, extra/error/missing=false, byte span0..0, 양쪽 point(0,0)이다. 공개 API에서 보이는 자식 수0과 runtime 내부의 숨겨진 EOF subtree를 혼동하지 않는다. ABI language/runtime/min-compatible은15/15/13이며 symbol 수는 generated symbol과 alias의 합이다. 이 값과 full CST의 모든 공개 필드는 현재 candidate의 실제 관측에서 다시 확인해야 한다.
+
+네 query 원본의 ID·UTF-8 bytes·SHA·순서를 각각 결속한다. 16개 정의의 사전 metadata는51 patterns·54개의 query별 unique capture-name 항목이며 전역 고유 이름 수는48이다. 각 query의 첫 등장 이름 순서와 명시적 `predicates:[]`를 고정하고 nil/null·다른 predicate·중복/누락·순서 변경을 거부한다. 원문의 `!parameter`, 하위 `(_)`, 문자열 `"**"`·`"??"`는 predicate나 최상위 wildcard로 세지 않는다. 모든 pattern이 `program` 이외의 시작 node를 요구하므로 위 빈 CST의 structural/expected tuple은 빈 배열 후보다. 이 무매치 경로는 비어 있지 않은 원래 workload의 query 의미론을 증명하지 않는다.
+
+기존 `full-input-utf8/r2`와 small 한도를 유지한다. JavaScript/JSX의 grammar pin과 symbol이 같아도 route·query·anchor·graph·승인 identity는 별개다. TypeScript/TSX의 중첩 parser/scanner 경로와 `common/scanner.h`를 평탄화하지 않는다. 각 route의 정확한 role/path/bytes/SHA closure와 compiler source/include·출력·한도·정렬된9-name environment를 사전 request 및 관측 request에 결속한다. Small17 closed5/17, CJR closed3/13, Go와 C#/CPP paging 경계를 넓히지 않는다.
+
+새 cohort의 provenance 검토·외부 caller approval 뒤 같은 guarded snapshot에서 eligibility·독립 full CST·완전한 metadata·query별 서로 다른 reference invocation·request/frame·compiler/library·stderr owner와 공개 API parity를 확인해야 조건부 `STRUCTURAL_ONLY`를 기록한다. 원장의 `STRUCTURAL_CANDIDATE`, `compiled_metadata:UNVERIFIED`, `semantic_evaluated:false`와 `semantic_required:null`은 이 부분 분류로 승격하지 않는다. 네 ordinary workload의268 cases·112 edits·380 case steps·492 tree roles·2,039 potential query/tree-role 좌표는16개 정의의 실행 횟수가 아니다. 실제 source/reader revision과 후속 report/merge revision을 구분하며 전체 #216/#195·per-case/semantic·Windows/Linux·SVC/large·replay/fan-in 미완료를 보존한다.
+
 ## Small17 단일 frame 정의 분류
 
 별도 닫힌 profile 다섯 개는 다음 사전 기대값을 선택한다. 모두 UTF-8, 편집 없음, API=false, `native-query`, `Args=["single"]`, step0 `NO_ERROR`다. 표의 CST·ABI·query metadata는 정적 사전등록이며 실제 parser·compiler·query 관측을 대신하지 않는다.
