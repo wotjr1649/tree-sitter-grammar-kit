@@ -544,7 +544,7 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCJRQueryRegistryValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
-	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty", "dart7-empty", "php5-empty":
 		if err := classificationEmptyAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}

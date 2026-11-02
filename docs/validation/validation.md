@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #216 DartPHP12 닫힌 profile 검증
+
+Dart7·PHP5의 [사전 기대값과 폐쇄 경계](../specs/instrumented-query-reference.md#dartphp12-단일-frame-정의-분류)를 따른다. Native의 `TestQueryClassificationDartPHP12StaticProfilesAndPins`와 kit의 `TestQueryClassificationDartPHP12ProfilesAndClosure`는 새 이름의 dispatch·다른 family와의 분리·anchor2개·query12개의 원문/순서/metadata·빈 source/full CST/ABI·ordinary API=true와 잠재 좌표를 검사한다. PHP 중첩 경로·여섯 번째 공통 scanner header의 path/role과 compiler argv를 고정하고 별칭·누락·경로 평탄화 및 live guarded session 없는 projection을 거부한다. 기존 공통 source/API/CST/metadata·compiler/environment·reference 고유성·stderr owner 반례도 유지한다.
+
+실제 Windows 관측 전 source·도구·시험 binary·controller·사전등록을 동결하고 독립 pre-query 검토를 완료한다. Heavy1·HARD4GiB·유한 예약·원본 회수·strict cleanup/residual0·모든 lease 반환을 각 단계에서 확인하며, 정리 불명·partial 결과는 보존하고 중복 실행하지 않는다. 프로세스 정리는 이 저장소 귀속 작업으로 한정한다. 실제 ABI/CST/compiled metadata와 tuple·새 외부 approval·같은 guarded snapshot의 정의 projection·공개 API parity 전에 분류 PASS로 채택하지 않는다. Source-only 시험이나 수동 entry SKIP은 실제 관측이 아니다. 새 Linux/macOS 수동 실행·reference 취득·dispatch·rerun·release 또는 한도 완화 권한은 추가하지 않는다.
+
 ## #216 Script17 닫힌 profile 검증
 
 Python8·Ruby4·R3·Bash2의 사전 기대값과 경계는 [Script17 계약](../specs/instrumented-query-reference.md#script17-단일-frame-정의-분류)을 따른다. Native의 `TestQueryClassificationScript17StaticProfilesAndPins`·`TestQueryClassificationScript17EmptyStderrCaptureMembers`, kit의 공통 `TestQueryClassificationCJRStderrBinding`과 `TestQueryClassificationScript17EntrySelectionIsDisjoint`·`TestQueryClassificationScript17ProfilesAndCompilerClosure`·`TestQueryClassificationScript17RejectsSourceAliasesAndReusedReferences`는 닫힌 이름·anchor4개·빈 source/full CST/ABI·query17개 원문/순서/SHA/metadata와 원래 qualification API=true·잠재 좌표를 검사한다. Web16·Small17·CJR의 기존 선택과 거부를 유지하며 alias·다른 route/root·CST flag/span·API·ABI·nil/null 및 nonempty predicate·순서·grammar/scanner path/role·compiler argv/env·중복 reference와 live guard 없는 projection을 거부한다.

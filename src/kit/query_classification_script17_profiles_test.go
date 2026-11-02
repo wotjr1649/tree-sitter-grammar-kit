@@ -29,14 +29,20 @@ func classificationEmptyProfileForName(name string) (classificationEmptyDefiniti
 	if profile, err := classificationWeb16ProfileForName(name); err == nil {
 		return profile, nil
 	}
-	return classificationScript17ProfileForName(name)
+	if profile, err := classificationScript17ProfileForName(name); err == nil {
+		return profile, nil
+	}
+	return classificationDartPHP12ProfileForName(name)
 }
 
 func classificationEmptyProfileForRoute(route string) (classificationEmptyDefinitionProfile, bool) {
 	if profile, ok := classificationWeb16ProfileForRoute(route); ok {
 		return profile, true
 	}
-	return classificationScript17ProfileForRoute(route)
+	if profile, ok := classificationScript17ProfileForRoute(route); ok {
+		return profile, true
+	}
+	return classificationDartPHP12ProfileForRoute(route)
 }
 
 func classificationScript17ProfileForRoute(route string) (classificationEmptyDefinitionProfile, bool) {

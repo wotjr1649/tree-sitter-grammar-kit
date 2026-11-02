@@ -78,7 +78,7 @@ func TestQueryClassificationGoLocal(t *testing.T) {
 
 func classificationGoLocalSkipsProfile(profile string) bool {
 	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" ||
-		classificationSmall17ProfileName(profile) || classificationWeb16ProfileName(profile) || classificationScript17ProfileName(profile)
+		classificationSmall17ProfileName(profile) || classificationWeb16ProfileName(profile) || classificationScript17ProfileName(profile) || classificationDartPHP12ProfileName(profile)
 }
 
 func TestQueryClassificationCSharpLocal(t *testing.T) {
@@ -173,7 +173,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 			t.Fatal(err)
 		}
 		name, expectedSHA, route, definitions = small17Profile.AnchorFile, small17Profile.AnchorSHA, small17Profile.Route, small17Profile.QueryCount
-	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty", "dart7-empty", "php5-empty":
 		emptyProfile, err := classificationEmptyProfileForName(profile)
 		if err != nil {
 			t.Fatal(err)
@@ -228,7 +228,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		if err := classificationSmall17AnchorsValid(small17Profile, a); err != nil {
 			t.Fatal(err)
 		}
-	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty", "dart7-empty", "php5-empty":
 		emptyProfile, err := classificationEmptyProfileForName(profile)
 		if err != nil {
 			t.Fatal(err)
@@ -254,7 +254,7 @@ func (a classificationAnchors) nativeContext() string {
 	switch a.Route {
 	case "go", "c", "java", "rust":
 		return "full-input-utf8/r2"
-	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash":
+	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		return "full-input-utf8/r2"
 	case "csharp", "cpp":
 		return semanticPagedContext
@@ -303,6 +303,8 @@ func (a classificationAnchors) nativeSymbol() string {
 		return "tree_sitter_r"
 	case "bash":
 		return "tree_sitter_bash"
+	case "dart", "php":
+		return "tree_sitter_" + a.Route
 	default:
 		return ""
 	}
@@ -322,7 +324,7 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 	case "json", "yaml", "xml", "html", "css":
 		profile, ok := classificationSmall17ProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
-	case "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash":
+	case "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		profile, ok := classificationEmptyProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
 	case "go":
@@ -338,7 +340,7 @@ func classificationNativePrefix(a classificationAnchors) string {
 		return "oracle/"
 	case "go", "c", "java", "rust":
 		return "current/native/"
-	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash":
+	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		return "current/native/"
 	default:
 		return ""
@@ -1022,7 +1024,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 					factPackData = actualJSONRead(t, "../contracts/fact-query-pack.json")
 				}
 				record, err = classificationSmall17DefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, factPackData, reader)
-			case "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash":
+			case "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 				profile, ok := classificationEmptyProfileForRoute(anchors.Route)
 				if !ok {
 					t.Fatal("unknown closed empty definition profile", anchors.Route)
@@ -1052,7 +1054,7 @@ func classificationGoDefinitionProfileAllowed(profile string) bool {
 	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
 		return true
 	default:
-		return classificationSmall17ProfileName(profile)
+		return classificationSmall17ProfileName(profile) || classificationDartPHP12ProfileName(profile)
 	}
 }
 
@@ -1165,7 +1167,7 @@ func classificationCaptureStderr(a classificationAnchors, capture semanticProces
 	strictZeroMember := false
 	switch a.Route {
 	case "go":
-	case "csharp", "c", "java", "rust", "cpp", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash":
+	case "csharp", "c", "java", "rust", "cpp", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		strictZeroMember = true
 	default:
 		return fmt.Errorf("unknown classification stderr route")

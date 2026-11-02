@@ -578,7 +578,7 @@ func TestQueryClassificationCJRDefinitionBindings(t *testing.T) {
 }
 
 func TestQueryClassificationCJRStderrBinding(t *testing.T) {
-	for _, route := range []string{"c", "java", "rust", "python", "ruby", "r", "bash"} {
+	for _, route := range []string{"c", "java", "rust", "python", "ruby", "r", "bash", "dart", "php"} {
 		for _, mismatch := range []string{"", "nonzero-present", "missing-zero", "missing-nonzero", "owner", "count", "role"} {
 			t.Run(route+"/"+mismatch, func(t *testing.T) {
 				a := classificationAnchors{Route: route}
