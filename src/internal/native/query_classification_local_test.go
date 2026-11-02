@@ -174,7 +174,7 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
-		if spec, ok := classificationWeb16ProfileFor(name); ok {
+		if spec, ok := classificationEmptyProfileFor(name); ok {
 			return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.queries), spec.grammarCount, false}, nil
 		}
 		if spec, ok := classificationSmall17ProfileFor(name); ok {
@@ -307,7 +307,7 @@ func classificationCSharpEmptyStderr(result *runner.Result) {
 func classificationNormalizeCaptureStderr(profileName string, result *CaseResult, capture *driverCapture) {
 	_, small17Profile := classificationSmall17ProfileFor(profileName)
 	if profileName != "csharp15-empty" && profileName != "cpp4-empty" && !classificationCJRProfile(profileName) &&
-		!small17Profile && !classificationWeb16ProfileName(profileName) {
+		!small17Profile && !classificationEmptyProfileName(profileName) {
 		return
 	}
 	if result != nil {
@@ -452,7 +452,7 @@ func classificationGoCaptureEntrySkipsProfile(profileName string) bool {
 	if _, ok := classificationSmall17ProfileFor(profileName); ok {
 		return true
 	}
-	return classificationWeb16ProfileName(profileName)
+	return classificationEmptyProfileName(profileName)
 }
 
 func TestQueryClassificationCSharpLocalCapture(t *testing.T) {
@@ -544,11 +544,11 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCJRQueryRegistryValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
-	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty":
-		if err := classificationWeb16AnchorsValid(profileName, anchors); err != nil {
+	case "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+		if err := classificationEmptyAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
-		if err := classificationWeb16QueryRegistryValid(profileName, anchors); err != nil {
+		if err := classificationEmptyQueryRegistryValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
 	default:
@@ -597,8 +597,8 @@ func classificationNativeLocalCapture(t *testing.T) {
 	if profileName == "cpp4-empty" && !classificationCPPGrammarValid(grammar) {
 		t.Fatal("CPP grammar roles or paths differ from the closed paged profile", profile.route)
 	}
-	if _, ok := classificationWeb16ProfileFor(profileName); ok {
-		if err := classificationWeb16GrammarValid(profileName, registryData, profile.route, profile.symbol, grammar); err != nil {
+	if _, ok := classificationEmptyProfileFor(profileName); ok {
+		if err := classificationEmptyGrammarValid(profileName, registryData, profile.route, profile.symbol, grammar); err != nil {
 			t.Fatal(err)
 		}
 	}

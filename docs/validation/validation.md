@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #216 Script17 닫힌 profile 검증
+
+Python8·Ruby4·R3·Bash2의 사전 기대값과 경계는 [Script17 계약](../specs/instrumented-query-reference.md#script17-단일-frame-정의-분류)을 따른다. Native의 `TestQueryClassificationScript17StaticProfilesAndPins`·`TestQueryClassificationScript17EmptyStderrCaptureMembers`, kit의 공통 `TestQueryClassificationCJRStderrBinding`과 `TestQueryClassificationScript17EntrySelectionIsDisjoint`·`TestQueryClassificationScript17ProfilesAndCompilerClosure`·`TestQueryClassificationScript17RejectsSourceAliasesAndReusedReferences`는 닫힌 이름·anchor4개·빈 source/full CST/ABI·query17개 원문/순서/SHA/metadata와 원래 qualification API=true·잠재 좌표를 검사한다. Web16·Small17·CJR의 기존 선택과 거부를 유지하며 alias·다른 route/root·CST flag/span·API·ABI·nil/null 및 nonempty predicate·순서·grammar/scanner path/role·compiler argv/env·중복 reference와 live guard 없는 projection을 거부한다.
+
+Ruby parser가16MiB plain-input 한도에 들어간다는 판단을 aggregate JSON/context 한도의 증명으로 확대하지 않는다. 실제 Windows 수집 전 source·도구·controller·시험 binary·preregistration을 동결하고 독립 pre-query 검토를 완료한다. Heavy1·HARD4GiB·유한 예약·원본 종료·strict cleanup/residual0·입력 및 caller lease 반환을 profile별로 확인한다. 네 profile의 최대 예약을 하나의 Root900초에 합쳐 성공한다고 가정하지 않는다. Partial·시작/정리 불명은 보존·중단하고 중복 실행하지 않는다. 새 외부 approval과 같은 guarded snapshot의 정의 projection·공개 API parity 전에는 실제 분류 PASS를 채택하지 않는다. Source-only 회귀와 기본 수동 helper SKIP은 관측이 아니다. 새 Linux/macOS 수동 실행·reference 취득·dispatch·release 권한 또는 한도 완화는 추가하지 않는다.
+
 ## #216 Web16 닫힌 profile 검증
 
 JavaScript4·JSX3·TypeScript7·TSX2의 수동 profile은 [Web16 계약](../specs/instrumented-query-reference.md#web16-단일-frame-정의-분류)을 따른다. Native·kit의 focused 검사는 네 anchor의 정확한 빈 source·공개 `program` CST/flags/span·ABI,16개 query의 순서·원문·SHA·51 patterns·54개의 query별 capture-name 항목과 명시적 빈 predicate 목록을 검사한다. JavaScript/JSX의 같은 grammar/symbol을 근거로 route·query·anchor를 교환하거나 Small17/CJR profile에 새 이름을 허용하지 않는다. Grammar role/path/bytes/SHA, TypeScript/TSX 중첩 경로·공통 scanner header, compiler argv·출력·한도와 정렬된9-name environment의 누락·별칭·중복·빈 값, 중복 reference invocation, null metadata와 guarded session 없는 projection을 거부해야 한다.

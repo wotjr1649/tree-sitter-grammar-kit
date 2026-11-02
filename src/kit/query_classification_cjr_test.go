@@ -578,7 +578,7 @@ func TestQueryClassificationCJRDefinitionBindings(t *testing.T) {
 }
 
 func TestQueryClassificationCJRStderrBinding(t *testing.T) {
-	for _, route := range []string{"c", "java", "rust"} {
+	for _, route := range []string{"c", "java", "rust", "python", "ruby", "r", "bash"} {
 		for _, mismatch := range []string{"", "nonzero-present", "missing-zero", "missing-nonzero", "owner", "count", "role"} {
 			t.Run(route+"/"+mismatch, func(t *testing.T) {
 				a := classificationAnchors{Route: route}
@@ -618,7 +618,7 @@ func TestQueryClassificationCJRStderrBinding(t *testing.T) {
 				err := classificationCaptureStderr(a, capture, process, read)
 				wantPass := mismatch == "" || mismatch == "nonzero-present"
 				if (err == nil) != wantPass {
-					t.Fatalf("C/Java/Rust stderr binding %s/%s: %v", route, mismatch, err)
+					t.Fatalf("closed-profile stderr binding %s/%s: %v", route, mismatch, err)
 				}
 			})
 		}
