@@ -8,11 +8,32 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+// rewriteExecutedFile replaces a driver image that a finished runCase launched. Linux may still
+// report ETXTBSY while a task maps the old image (seen once under ASan, #320); the wait is bounded.
+func rewriteExecutedFile(t *testing.T, path string, data []byte, perm os.FileMode) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for retries := 0; ; retries++ {
+		err := os.WriteFile(path, data, perm)
+		if err == nil {
+			if retries > 0 {
+				t.Logf("rewrite of executed driver needed %d ETXTBSY retries", retries)
+			}
+			return
+		}
+		if !errors.Is(err, syscall.ETXTBSY) || time.Now().After(deadline) {
+			t.Fatal(err)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
 
 func TestBuildCache(t *testing.T) {
 	t.Parallel()
@@ -79,9 +100,7 @@ func TestBuildCache(t *testing.T) {
 	if err := os.WriteFile(sharedExe, launchBytes, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(second.Executable, append(launchBytes, 0), 0o700); err != nil {
-		t.Fatal(err)
-	}
+	rewriteExecutedFile(t, second.Executable, append(launchBytes, 0), 0o700)
 	refused := runCase(t, second, "tampered", kit.EncodingUTF8, plainSource, nil)
 	if refused.Process != nil || refused.Code != "EXECUTABLE_MISMATCH" {
 		t.Fatal("tampered private executable was launched")
