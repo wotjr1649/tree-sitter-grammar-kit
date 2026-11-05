@@ -93,24 +93,34 @@ func workflowPeak(text string) (int, error) {
 
 func TestWorkflowSharedHeavyLane(t *testing.T) {
 	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
-	if peak, err := workflowPeak(text); err != nil || peak != 3 {
+	if peak, err := workflowPeak(text); err != nil || peak != 4 {
 		t.Fatalf("shared heavy lane peak=%d: %v", peak, err)
 	}
 	// Scope the mutation to native-routes; the race matrix also has width 2.
-	marker := "      # Windows/Linux share the width-3 lane with Mac, then large-api after Mac.\n      max-parallel: 2\n"
+	marker := "      # Windows/Linux share the width-4 lane with Mac and large-api, which start together.\n      max-parallel: 2\n"
 	if strings.Count(text, marker) != 1 {
 		t.Fatal("native route control scope is not unique")
 	}
+	// Each control edits one job only; the same needs line is shared by three jobs.
+	inJob := func(name, old, replacement string) string {
+		body := workflowJobBody(text, name)
+		if strings.Count(body, old) != 1 {
+			t.Fatalf("%s control anchor is not unique: %q", name, old)
+		}
+		return strings.Replace(text, body, strings.Replace(body, old, replacement, 1), 1)
+	}
 	controls := map[string]string{
-		"excess_route_width": strings.Replace(text, marker, strings.Replace(marker, "max-parallel: 2", "max-parallel: 3", 1), 1),
-		"early_large":        strings.Replace(text, "needs: [native-prepare, native-routes-macos]", "needs: native-prepare", 1),
-		"early_diagnostics":  strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]", "needs: native-routes"),
+		"excess_route_width":     strings.Replace(text, marker, strings.Replace(marker, "max-parallel: 2", "max-parallel: 3", 1), 1),
+		"excess_mac_width":       inJob("native-routes-macos", "      max-parallel: 1\n", "      max-parallel: 2\n"),
+		"routes_skip_foundation": inJob("native-routes", "    needs: [foundation, native-prepare]\n", "    needs: native-prepare\n"),
+		"large_waits_mode_only":  inJob("large-api", "    needs: [foundation, native-prepare]\n", "    needs: mode\n"),
+		"early_diagnostics":      strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]", "needs: native-prepare"),
 	}
 	for name, broken := range controls {
 		if broken == text {
 			t.Fatalf("%s control did not mutate scheduler", name)
 		}
-		if peak, err := workflowPeak(broken); err != nil || peak <= 3 {
+		if peak, err := workflowPeak(broken); err != nil || peak <= 4 {
 			t.Fatalf("%s overlap missed: peak=%d: %v", name, peak, err)
 		}
 	}
@@ -139,7 +149,7 @@ func routeSchedulePolicy(text string) error {
 		if !ok || actual != matrix {
 			return fmt.Errorf("route platform coverage: %s", name)
 		}
-		for _, required := range []string{"    name: native routes (${{ matrix.os }})\n", "    needs: native-prepare\n", "      fail-fast: false\n", "    runs-on: ${{ matrix.os }}\n", "    timeout-minutes: 60\n", "    defaults:\n      run:\n        shell: pwsh\n"} {
+		for _, required := range []string{"    name: native routes (${{ matrix.os }})\n", "    needs: [foundation, native-prepare]\n", "      fail-fast: false\n", "    runs-on: ${{ matrix.os }}\n", "    timeout-minutes: 60\n", "    defaults:\n      run:\n        shell: pwsh\n"} {
 			if !strings.Contains(body, required) {
 				return fmt.Errorf("route execution contract: %s", name)
 			}
@@ -154,8 +164,8 @@ func routeSchedulePolicy(text string) error {
 		return fmt.Errorf("route steps must share one definition")
 	}
 	large := workflowJobBody(text, "large-api")
-	if !strings.Contains(large, "    needs: [native-prepare, native-routes-macos]\n") || regexp.MustCompile(`(?m)^    if:`).MatchString(large) {
-		return fmt.Errorf("large audit must wait for successful preparation and Mac")
+	if !strings.Contains(large, "    needs: [foundation, native-prepare]\n") || regexp.MustCompile(`(?m)^    if:`).MatchString(large) {
+		return fmt.Errorf("large audit must wait for the foundation and successful preparation, not for Mac")
 	}
 	qualification := workflowJobBody(text, "qualification")
 	if !strings.Contains(qualification, "    needs: [native-routes, native-routes-macos]\n") ||
@@ -172,12 +182,15 @@ func TestWorkflowRouteSchedulePolicy(t *testing.T) {
 	}
 	mac := workflowJobBody(text, "native-routes-macos")
 	for name, broken := range map[string]string{
-		"missing-linux":         strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
-		"duplicate-mac":         strings.Replace(text, mac, strings.Replace(mac, "os: macos-15\n            goos: darwin\n            goarch: arm64", "os: windows-2025\n            goos: windows\n            goarch: amd64", 1), 1),
-		"wrong-alias":           strings.Replace(text, "steps: *native-route-steps", "steps: *other-steps", 1),
-		"early-large":           strings.Replace(text, "needs: [native-prepare, native-routes-macos]", "needs: native-prepare", 1),
-		"partial-qualification": strings.Replace(text, "needs: [native-routes, native-routes-macos]", "needs: native-routes", 1),
-		"conditional-large":     strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
+		"missing-linux":          strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
+		"duplicate-mac":          strings.Replace(text, mac, strings.Replace(mac, "os: macos-15\n            goos: darwin\n            goarch: arm64", "os: windows-2025\n            goos: windows\n            goarch: amd64", 1), 1),
+		"wrong-alias":            strings.Replace(text, "steps: *native-route-steps", "steps: *other-steps", 1),
+		"large-skips-foundation": strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: native-prepare\n", 1),
+		"large-waits-mac":        strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: [foundation, native-prepare, native-routes-macos]\n", 1),
+		"routes-skip-foundation": strings.Replace(text, "    name: native routes (${{ matrix.os }})\n    needs: [foundation, native-prepare]\n", "    name: native routes (${{ matrix.os }})\n    needs: native-prepare\n", 1),
+		"mac-skips-foundation":   strings.Replace(text, mac, strings.Replace(mac, "    needs: [foundation, native-prepare]\n", "    needs: native-prepare\n", 1), 1),
+		"partial-qualification":  strings.Replace(text, "needs: [native-routes, native-routes-macos]", "needs: native-routes", 1),
+		"conditional-large":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || routeSchedulePolicy(broken) == nil {
@@ -196,8 +209,13 @@ func integrationPolicy(text string) error {
 		return fmt.Errorf("large API configuration must be retained before the audit can fail")
 	}
 	needs := "    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]\n"
-	eventRule := `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}` + "\n"
-	for _, name := range []string{"race", "macos-regenerate"} {
+	// #317: the race runs on nightly and dispatch only, also when a duplicate nightly skipped
+	// the foundation; the regeneration keeps push and the duplicate skip.
+	rules := map[string]string{
+		"race":             `    if: ${{ !cancelled() && contains(fromJSON('["schedule","workflow_dispatch"]'), github.event_name) }}` + "\n",
+		"macos-regenerate": `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}` + "\n",
+	}
+	for name, eventRule := range rules {
 		body := workflowJobBody(text, name)
 		if !strings.Contains(body, needs) || !strings.Contains(body, eventRule) || !strings.Contains(body, "      - name: 진단 실패 전파\n        if: always()\n") || !strings.Contains(body, "if ($outcome -ne 'success') { throw '") {
 			return fmt.Errorf("diagnostic release/failure policy: %s", name)
@@ -232,13 +250,17 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 	for name, broken := range map[string]string{
 		"late-large-config":        strings.Replace(text, large, lateConfig, 1),
 		"wrong-large-config-name":  strings.Replace(text, "name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}", "name: wrong-config", 1),
-		"PR-diagnostic":            strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request","push","schedule","workflow_dispatch"]`),
-		"PR-target-diagnostic":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
+		"PR-regenerate":            strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request","push","schedule","workflow_dispatch"]`),
+		"PR-target-regenerate":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
+		"PR-race":                  strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["pull_request","schedule","workflow_dispatch"]'`),
+		"push-race":                strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["push","schedule","workflow_dispatch"]'`),
+		"race-skips-on-duplicate":  strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'), github.event_name) }}`, `'["schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}`),
+		"race-misses-dispatch":     strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["schedule"]'`),
 		"missing-large-dependency": strings.ReplaceAll(text, "native-routes-macos, large-api, qualification]", "native-routes-macos, qualification]"),
 		"missing-Mac-dependency":   strings.ReplaceAll(text, "native-routes, native-routes-macos, large-api", "native-routes, large-api"),
 		"gate-not-always":          strings.Replace(text, "    if: ${{ always() && !(", "    if: ${{ success() && !(", 1),
 		"gate-skips-off-schedule":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
-		"diagnostics-on-duplicate": strings.ReplaceAll(text, " && needs.foundation.result != 'skipped' }}", " }}"),
+		"regenerate-on-duplicate":  strings.ReplaceAll(text, " && needs.foundation.result != 'skipped' }}", " }}"),
 		"swallowed-fetch":          strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "Write-Warning 'download failed'", 1),
 		"swallowed-diagnostic":     strings.ReplaceAll(text, "if ($outcome -ne 'success') { throw '", "if ($outcome -ne 'success') { Write-Warning '"),
 		"diagnostics-success-only": strings.ReplaceAll(text, "!cancelled() && contains", "success() && contains"),
@@ -281,8 +303,9 @@ func lightModePolicy(text string) error {
 		return fmt.Errorf("mode checks out code, hides failures or has another light path")
 	}
 	prepare := workflowJobBody(text, "native-prepare")
-	if !strings.Contains(prepare, "    needs: [foundation, mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' }}\n") {
-		return fmt.Errorf("native-prepare must start only on a full mode")
+	// #317: it starts beside the foundation and consults the duplicate nightly skip itself
+	if !strings.Contains(prepare, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}\n") {
+		return fmt.Errorf("native-prepare must start only on a full mode, beside the foundation")
 	}
 	for _, name := range []string{"native-routes", "native-routes-macos", "large-api", "qualification", "integration-gate", "race", "macos-regenerate"} {
 		if strings.Contains(workflowJobBody(text, name), "mode") {
@@ -298,16 +321,19 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, broken := range map[string]string{
-		"unconditional-skip":     strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", "    if: ${{ false }}\n", 1),
-		"light-on-main":          strings.Replace(text, "          if ($env:EVENT -eq 'pull_request') {\n", "          if ($true) {\n", 1),
-		"default-light":          strings.Replace(text, "          $heavy = 'true'\n", "          $heavy = 'false'\n", 1),
-		"failed-lookup-light":    strings.Replace(text, "if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light')", "if ($LASTEXITCODE -ne 0 -or $labels -contains 'ci:light')", 1),
-		"gate-skips-light":       strings.Replace(text, "    name: integration gate\n", "    name: integration gate\n    # mode\n", 1),
-		"route-skips-light":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    # mode\n", 1),
-		"lookup-exit-fails-mode": strings.Replace(text, "          exit 0 # a failed lookup", "          # a failed lookup", 1),
-		"label-trigger":          strings.Replace(text, "  pull_request:\n    branches: [main]\n", "  pull_request:\n    types: [opened, synchronize, reopened, labeled, unlabeled]\n    branches: [main]\n", 1),
-		"payload-labels":         strings.Replace(text, `@(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')`, `@($env:LABELS -split ',')`, 1),
-		"mode-checkout":          strings.Replace(text, "    steps:\n      - id: mode\n", "    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n      - id: mode\n", 1),
+		"unconditional-skip":        strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ false }}\n", 1),
+		"prepare-after-foundation":  strings.Replace(text, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy", "    needs: [foundation, mode]\n    if: ${{ needs.mode.outputs.heavy", 1),
+		"prepare-ignores-duplicate": strings.Replace(text, " && needs.mode.outputs.duplicate != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", " }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", 1),
+		"prepare-ignores-light":     strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate", "    if: ${{ needs.mode.outputs.duplicate", 1),
+		"light-on-main":             strings.Replace(text, "          if ($env:EVENT -eq 'pull_request') {\n", "          if ($true) {\n", 1),
+		"default-light":             strings.Replace(text, "          $heavy = 'true'\n", "          $heavy = 'false'\n", 1),
+		"failed-lookup-light":       strings.Replace(text, "if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light')", "if ($LASTEXITCODE -ne 0 -or $labels -contains 'ci:light')", 1),
+		"gate-skips-light":          strings.Replace(text, "    name: integration gate\n", "    name: integration gate\n    # mode\n", 1),
+		"route-skips-light":         strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    # mode\n", 1),
+		"lookup-exit-fails-mode":    strings.Replace(text, "          exit 0 # a failed lookup", "          # a failed lookup", 1),
+		"label-trigger":             strings.Replace(text, "  pull_request:\n    branches: [main]\n", "  pull_request:\n    types: [opened, synchronize, reopened, labeled, unlabeled]\n    branches: [main]\n", 1),
+		"payload-labels":            strings.Replace(text, `@(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')`, `@($env:LABELS -split ',')`, 1),
+		"mode-checkout":             strings.Replace(text, "    steps:\n      - id: mode\n", "    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n      - id: mode\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || lightModePolicy(broken) == nil {
@@ -317,22 +343,37 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 	}
 }
 
-// nightlyDuplicatePolicy is #257: a schedule run skips the foundation, and with it every
-// job, only when a successful push or dispatch run of the same main commit finished in the
-// last 24 hours; a nightly success never counts and a failed lookup runs in full. The gate
-// and the diagnostics skip only on that skipped foundation, and the gate only on a schedule,
+// requiredRunJobs are the ten jobs of a complete earlier run (#317): the three foundation
+// legs, the preparation, the three route hosts, the large audit, the qualification and the
+// gate. The diagnostics are not among them.
+var requiredRunJobs = []string{"foundation (windows-2025)", "foundation (ubuntu-24.04)", "foundation (macos-15)", "native prepare (ubuntu-24.04)",
+	"native routes (windows-2025)", "native routes (ubuntu-24.04)", "native routes (macos-15)", "large API (windows-2025)", "qualification (ubuntu-24.04)", "integration gate"}
+
+// nightlyDuplicatePolicy is #257/#317: a schedule run skips the foundation, and with it every
+// job but the diagnostics, only when a push or dispatch run of the same main commit finished
+// in the last 24 hours and its latest attempt holds each required job once with conclusion
+// success; the diagnostics' result does not count, a nightly run never counts and a failed
+// lookup runs in full. The gate skips only on that skipped foundation, and only on a schedule,
 // so a pull_request or push run can never leave its required gate skipped.
 func nightlyDuplicatePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
 	for _, required := range []string{"      duplicate: ${{ steps.mode.outputs.duplicate }}\n", "          SHA: ${{ github.sha }}\n",
-		"          $duplicate = 'false'\n          if ($env:EVENT -eq 'schedule') {\n            try {\n",
-		`/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100" --jq '.workflow_runs[] | [.id, .event, .head_branch, .conclusion, .updated_at] | @tsv')` + "\n",
+		"          $duplicate = 'false'\n          $required = @('" + strings.Join(requiredRunJobs, "', '") + "')\n          if ($env:EVENT -eq 'schedule') {\n            try {\n",
+		`/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_branch, .updated_at] | @tsv')` + "\n",
 		"              if ($LASTEXITCODE -eq 0) {\n                $since = [DateTimeOffset]::UtcNow.AddHours(-24)\n",
-		// the fields bind in order and the one duplicate assignment sits inside the whole condition
-		"                  $id, $trigger, $branch, $conclusion, $updated = $row -split \"`t\"\n" +
-			"                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and\n" +
+		// the fields bind in order; the job lookup of that attempt and the one duplicate
+		// assignment sit inside the whole condition and the exact-once success check
+		"                  $id, $attempt, $trigger, $branch, $updated = $row -split \"`t\"\n" +
+			"                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and\n" +
 			"                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n" +
-			"                    $duplicate = 'true'\n",
+			`                    $jobs = @(gh api "repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')` + "\n" +
+			"                    $complete = $LASTEXITCODE -eq 0\n" +
+			"                    foreach ($name in $required) {\n" +
+			"                      $named = @($jobs | Where-Object { ($_ -split \"`t\")[0] -eq $name })\n" +
+			"                      if ($named.Count -ne 1 -or ($named[0] -split \"`t\")[1] -ne 'success') { $complete = $false }\n" +
+			"                    }\n" +
+			"                    if ($complete) {\n" +
+			"                      $duplicate = 'true'\n",
 		"            } catch {\n              $duplicate = 'false'\n            }\n", `          "duplicate=$duplicate" >> $env:GITHUB_OUTPUT` + "\n"} {
 		if !strings.Contains(mode, required) {
 			return fmt.Errorf("nightly duplicate policy missing: %q", required)
@@ -356,17 +397,27 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 	for name, broken := range map[string]string{
 		"any-event":          strings.Replace(text, "          if ($env:EVENT -eq 'schedule') {\n            try {\n", "          if ($true) {\n            try {\n", 1),
 		"nightly-counts":     strings.Replace(text, "@('push', 'workflow_dispatch')", "@('push', 'workflow_dispatch', 'schedule')", 1),
-		"no-window":          strings.Replace(text, " -and $conclusion -eq 'success' -and\n                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n", ") {\n", 1),
+		"no-window":          strings.Replace(text, " -and\n                    [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n", ") {\n", 1),
 		"any-branch":         strings.Replace(text, " -and $branch -eq 'main'", "", 1),
-		"default-duplicate":  strings.Replace(text, "          $duplicate = 'false'\n          if ($env:EVENT", "          $duplicate = 'true'\n          if ($env:EVENT", 1),
+		"default-duplicate":  strings.Replace(text, "          $duplicate = 'false'\n          $required", "          $duplicate = 'true'\n          $required", 1),
 		"failed-lookup":      strings.Replace(text, "              if ($LASTEXITCODE -eq 0) {\n                $since", "              if ($true) {\n                $since", 1),
 		"error-duplicate":    strings.Replace(text, "            } catch {\n              $duplicate = 'false'\n", "            } catch {\n              $duplicate = 'true'\n", 1),
 		"foundation-always":  strings.Replace(text, "    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ needs.mode.outputs.heavy == 'true' }}\n", 1),
 		"gate-skips-on-pr":   strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
-		"event-constant":     strings.Replace(text, "[.id, .event, .head_branch,", `[.id, "push", .head_branch,`, 1),
-		"branch-constant":    strings.Replace(text, "[.id, .event, .head_branch,", `[.id, .event, "main",`, 1),
-		"fields-swapped":     strings.Replace(text, "$id, $trigger, $branch, $conclusion, $updated =", "$id, $branch, $trigger, $conclusion, $updated =", 1),
-		"assignment-outside": strings.Replace(text, " -ge $since) {\n                    $duplicate = 'true'\n", " -ge $since) {\n                  }\n                  $duplicate = 'true'\n                  {\n", 1),
+		"event-constant":     strings.Replace(text, ".run_attempt, .event, .head_branch,", `.run_attempt, "push", .head_branch,`, 1),
+		"branch-constant":    strings.Replace(text, ".event, .head_branch,", `.event, "main",`, 1),
+		"fields-swapped":     strings.Replace(text, "$id, $attempt, $trigger, $branch, $updated =", "$id, $attempt, $branch, $trigger, $updated =", 1),
+		"assignment-outside": strings.Replace(text, "                    if ($complete) {\n                      $duplicate = 'true'\n", "                    if ($complete) {\n                    }\n                    $duplicate = 'true'\n                    if ($true) {\n", 1),
+		// #317: the run conclusion is not the criterion, the ten jobs of the latest attempt are
+		"run-conclusion-only": strings.Replace(text, "&status=completed&per_page=100\"", "&status=success&per_page=100\"", 1),
+		"no-job-check":        strings.Replace(text, "                    if ($complete) {\n", "                    if ($true) {\n", 1),
+		"job-missing":         strings.Replace(text, ", 'integration gate')", ")", 1),
+		"prepare-missing":     strings.Replace(text, " 'native prepare (ubuntu-24.04)',", "", 1),
+		"no-conclusion":       strings.Replace(text, " -or ($named[0] -split \"`t\")[1] -ne 'success'", "", 1),
+		"at-least-one":        strings.Replace(text, "$named.Count -ne 1 -or", "$named.Count -lt 1 -or", 1),
+		"attempt-constant":    strings.Replace(text, "/attempts/$attempt/jobs", "/attempts/1/jobs", 1),
+		"jobs-lookup-failed":  strings.Replace(text, "$complete = $LASTEXITCODE -eq 0", "$complete = $true", 1),
+		"required-unchecked":  strings.Replace(text, "foreach ($name in $required) {", "foreach ($name in @()) {", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || nightlyDuplicatePolicy(broken) == nil {
@@ -386,6 +437,9 @@ func TestWorkflowNightlyDuplicatePolicy(t *testing.T) {
 // below are accepted outside whole-line comments, and a line that runs one of these commands
 // may carry no inline comment, so a # inside a string can never hide code; any other form
 // of these commands fails.
+const cacheSaveCondition = "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'"
+const cacheRestoreCondition = "        if: github.event_name == 'pull_request' || github.event_name == 'push'"
+
 func foundationBudget(text string, read func(string) (string, error)) error {
 	uncomment := regexp.MustCompile(`(?m)^\s*#.*$`)
 	// A witness pattern must match exactly count times in the uncommented script; its first
@@ -496,11 +550,12 @@ func foundationBudget(text string, read func(string) (string, error)) error {
 			return fmt.Errorf("step %s: inner deadlines %ds exceed %d minutes", name, inner, minutes)
 		}
 		conditions := regexp.MustCompile(`(?m)^        if: .*$`).FindAllString(step, -1)
-		if len(conditions) > 1 || len(conditions) == 1 && !host.MatchString(conditions[0]) {
+		if len(conditions) > 1 || len(conditions) == 1 && !host.MatchString(conditions[0]) && conditions[0] != cacheSaveCondition && conditions[0] != cacheRestoreCondition {
 			return fmt.Errorf("step %s: unrecognized step condition", name)
 		}
 		for h := range sum {
-			if len(conditions) == 0 || host.FindStringSubmatch(conditions[0])[1] == h {
+			// the cache steps run on every host of their events, so they count for each of them
+			if len(conditions) == 0 || conditions[0] == cacheSaveCondition || conditions[0] == cacheRestoreCondition || host.FindStringSubmatch(conditions[0])[1] == h {
 				sum[h] += minutes
 			}
 		}
@@ -529,7 +584,12 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		t.Fatal("comment rejected: ", err)
 	}
 	for name, broken := range map[string]string{
-		"job-below-sum":     strings.Replace(text, "    timeout-minutes: 57\n", "    timeout-minutes: 15\n", 1),
+		"job-below-sum": strings.Replace(text, "    timeout-minutes: 62\n", "    timeout-minutes: 15\n", 1),
+		// Linux runs 61 minutes of steps plus the one minute allowance
+		"job-one-below":     strings.Replace(text, "    timeout-minutes: 62\n", "    timeout-minutes: 61\n", 1),
+		"cache-save-grows":  strings.Replace(text, "      - name: Go build cache 저장\n        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n        timeout-minutes: 2\n", "      - name: Go build cache 저장\n        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n        timeout-minutes: 4\n", 1),
+		"cache-unbounded":   strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        env:", "        continue-on-error: true\n        env:", 1),
+		"cache-save-always": strings.Replace(text, "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n", "        if: github.event_name == 'push'\n", 1),
 		"unbounded-step":    strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n", 1),
 		"native-outlasts":   strings.Replace(text, "go test $nativePackage -count=1 -v -timeout 420s", "go test $nativePackage -count=1 -v -timeout 480s", 1),
 		"frame-outlasts":    strings.Replace(text, "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 6\n", "      - name: frame 상태와 native cancellation 반복 시험 (#65)\n        timeout-minutes: 4\n", 1),
@@ -578,6 +638,93 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 			}
 			if foundationBudget(text, changed) == nil {
 				t.Fatal("script deadline change not rejected")
+			}
+		})
+	}
+}
+
+// foundationCachePolicy is #317: every foundation leg restores the content-addressed Go build
+// cache and only a push to main saves it, from commit-pinned actions of one version. Tests keep
+// -count=1, so no test result is ever reused.
+func foundationCachePolicy(text string) error {
+	body := workflowJobBody(text, "foundation")
+	step := func(name string) string {
+		_, s, _ := strings.Cut(body, "      - name: "+name+"\n")
+		s, _, _ = strings.Cut(s, "\n      - ")
+		return "\n" + s + "\n"
+	}
+	key := "go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-"
+	pins := regexp.MustCompile(`(?m)^        uses: actions/cache/(restore|save)@([0-9a-f]{40}) # (v[0-9]+\.[0-9]+\.[0-9]+)$`).FindAllStringSubmatch(text, -1)
+	if strings.Count(text, "actions/cache") != 2 || len(pins) != 2 || pins[0][1] != "restore" || pins[1][1] != "save" || pins[0][2] != pins[1][2] || pins[0][3] != pins[1][3] {
+		return fmt.Errorf("the build cache needs one commit-pinned restore and one save of the same version")
+	}
+	path := step("Go build cache 경로")
+	restore, save := step("Go build cache 복원"), step("Go build cache 저장")
+	for _, required := range []string{"        id: gocache\n", "$path = go env GOCACHE", `"path=$path" >> $env:GITHUB_OUTPUT`} {
+		if !strings.Contains(path, required) {
+			return fmt.Errorf("cache path step missing: %q", required)
+		}
+	}
+	// the cache is an optional optimization: only these two steps may fail without failing the job
+	if strings.Count(body, "continue-on-error:") != 2 || strings.Count(restore, "\n        continue-on-error: true\n") != 1 || strings.Count(save, "\n        continue-on-error: true\n") != 1 {
+		return fmt.Errorf("continue-on-error belongs to the two cache steps only")
+	}
+	with := "          path: ${{ steps.gocache.outputs.path }}\n          key: " + key + "${{ github.sha }}\n"
+	if !strings.Contains(restore, "uses: actions/cache/restore@") || !strings.Contains(restore, with+"          restore-keys: |\n            "+key+"\n") ||
+		!strings.Contains(restore, "\n"+cacheRestoreCondition+"\n") || !strings.Contains(restore, "\n        env:\n          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '1'\n") {
+		return fmt.Errorf("only pull_request and push restore the cache, with a bounded download, by the epoch and sha key and the sha-free prefix")
+	}
+	if !strings.Contains(save, "uses: actions/cache/save@") || !strings.Contains(save, "\n"+cacheSaveCondition+"\n") || !strings.Contains(save, with) || strings.Contains(save, "restore-keys") {
+		return fmt.Errorf("only a push to main saves the cache by the epoch and sha key")
+	}
+	// every executed go test, except a build-only go test -c, bypasses the test result cache
+	code := regexp.MustCompile(`(?m)^\s*#.*$`).ReplaceAllString(body, "")
+	count := regexp.MustCompile(` -count=[1-9][0-9]*( |$)`)
+	for _, line := range regexp.MustCompile(`\bgo\s+test\b[^\n]*`).FindAllString(code, -1) {
+		if !strings.HasPrefix(line, "go test -c ") && !count.MatchString(line) {
+			return fmt.Errorf("a go test line without -count keeps the test result cache: %s", line)
+		}
+	}
+	for _, kept := range []string{"go test @otherPackages -count=1 -v -timeout 300s", "go test $nativePackage -count=1 -v -timeout 420s"} {
+		if !strings.Contains(body, kept) {
+			return fmt.Errorf("the test result cache must stay off: %q", kept)
+		}
+	}
+	return nil
+}
+
+func TestWorkflowFoundationCachePolicy(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	if err := foundationCachePolicy(text); err != nil {
+		t.Fatal(err)
+	}
+	pin := regexp.MustCompile(`actions/cache/save@[0-9a-f]{40} # v[0-9.]+`).FindString(text)
+	runner := "          go test ./src/internal/runner -count=20 -failfast -timeout 180s -run"
+	for name, broken := range map[string]string{
+		"tag-pin":            strings.Replace(text, pin, "actions/cache/save@v6 # v6.1.0", 1),
+		"mixed-versions":     strings.Replace(text, pin, pin[:len(pin)-1]+"9", 1),
+		"combined-action":    strings.Replace(text, "actions/cache/restore@", "actions/cache@", 1),
+		"save-everywhere":    strings.Replace(text, "\n"+cacheSaveCondition+"\n", "\n", 1),
+		"save-on-pr":         strings.Replace(text, "github.event_name == 'push' && github.ref", "github.event_name != 'x' && github.ref", 1),
+		"restore-no-sha":     strings.Replace(text, "${{ hashFiles('go.sum') }}-${{ github.sha }}\n          restore-keys", "${{ hashFiles('go.sum') }}\n          restore-keys", 1),
+		"restore-any-hash":   strings.Replace(text, "          restore-keys: |\n            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-\n", "          restore-keys: |\n            go-build-\n", 1),
+		"no-epoch":           strings.ReplaceAll(text, "go-build-v1-", "go-build-"),
+		"epoch-mismatch":     strings.Replace(text, "            go-build-v1-", "            go-build-v2-", 1),
+		"restore-always":     strings.Replace(text, "\n"+cacheRestoreCondition+"\n", "\n", 1),
+		"restore-on-nightly": strings.Replace(text, "github.event_name == 'pull_request' || github.event_name == 'push'", "github.event_name != 'workflow_dispatch'", 1),
+		"restore-unbounded":  strings.Replace(text, "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '1'\n", "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '60'\n", 1),
+		"restore-fails-job":  strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        env:", "        timeout-minutes: 2\n        env:", 1),
+		"save-fails-job":     strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        uses: actions/cache/save@", "        timeout-minutes: 2\n        uses: actions/cache/save@", 1),
+		"error-spreads":      strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n        continue-on-error: true\n", 1),
+		"test-cache-on":      strings.Replace(text, "go test @otherPackages -count=1 -v", "go test @otherPackages -v", 1),
+		"count-dropped":      strings.Replace(text, runner, "          go test ./src/internal/runner -failfast -timeout 180s -run", 1),
+		"count-zero":         strings.Replace(text, runner, "          go test ./src/internal/runner -count=0 -failfast -timeout 180s -run", 1),
+		"added-cached-test":  strings.Replace(text, "          go vet ./src/...\n", "          go test ./src/kit -timeout 60s\n          go vet ./src/...\n", 1),
+		"cache-elsewhere":    strings.Replace(text, "  mode:\n", "  mode:\n    # uses: actions/cache/save@0000000000000000000000000000000000000000 # v6.1.0\n", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || foundationCachePolicy(broken) == nil {
+				t.Fatal("foundation cache control not rejected")
 			}
 		})
 	}
