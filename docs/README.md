@@ -62,6 +62,7 @@ The current implementation consists of repository foundation checks, the Session
 | #216 Web16의 Windows 관측·외부 승인과 조건부 정의 분류 | [Web16 보고서](reports/issue-216-web16-classification.md) |
 | #216 Python8·Ruby4·R3·Bash2의 닫힌 profile과 독립 사전 기대값 | [Script17 계약](specs/instrumented-query-reference.md#script17-단일-frame-정의-분류) |
 | #216 Dart7·PHP5의 닫힌 profile과 독립 사전 기대값 | [DartPHP12 계약](specs/instrumented-query-reference.md#dartphp12-단일-frame-정의-분류) |
+| #216 Kotlin5의 닫힌 paged profile과 독립 사전 기대값 | [Kotlin5 계약](specs/instrumented-query-reference.md#kotlin-5개-정의의-parser-paging-분류) |
 | #233 C# lexical producer의 네 directive 오판·실제 ERROR 보존 | [교정 보고서](reports/issue-233-csharp-lexical-recovery.md) |
 | #233 kit 내부 identity 채택 경로·replay subject platform 결속 | [검증 경로와 반례](reports/issue-233-identity-paths.md) |
 | Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |

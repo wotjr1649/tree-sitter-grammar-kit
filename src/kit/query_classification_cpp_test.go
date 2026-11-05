@@ -24,6 +24,8 @@ type classificationCPP4QuerySpec struct {
 }
 
 type classificationCPP4Profile struct {
+	Label, ScopeName      string
+	Language              string
 	AnchorFile, AnchorSHA string
 	Route, Case, Workload string
 	QueryFile, QuerySHA   string
@@ -38,6 +40,7 @@ type classificationCPP4Profile struct {
 
 func classificationCPP4DefinitionProfile() classificationCPP4Profile {
 	return classificationCPP4Profile{
+		Label: "CPP4", ScopeName: "CPP", Language: "C++",
 		AnchorFile: "cpp4-classification-anchors.json", AnchorSHA: classificationCPP4AnchorsSHA,
 		Route: "cpp", Case: "cpp4-empty-definitions", Workload: "cpp4-empty-definition-single-frame",
 		QueryFile: "src/testdata/native/queries/cpp.json", QuerySHA: "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766",
@@ -64,80 +67,77 @@ func classificationCPP4GrammarPins() []NativeInput {
 	}
 }
 
-func classificationCPP4GrammarValid(grammar []NativeInput) bool {
-	return reflect.DeepEqual(grammar, classificationCPP4GrammarPins())
+func classificationPagedGrammarValid(p classificationCPP4Profile, grammar []NativeInput) bool {
+	return reflect.DeepEqual(grammar, p.Grammar)
 }
 
-func classificationCPP4AnchorsValid(a classificationAnchors) error {
-	p := classificationCPP4DefinitionProfile()
+func classificationPagedAnchorsValid(p classificationCPP4Profile, a classificationAnchors) error {
 	if a.sha256 != p.AnchorSHA || a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != p.Route || a.Case != p.Case || a.Workload != p.Workload ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.Bytes != 0 || a.Source.UTF8 != "" || a.Source.SHA256 != digestHex(nil) ||
 		a.Edits == nil || len(a.Edits) != 0 || len(a.Queries) != p.QueryCount || len(a.Required) != p.QueryCount || len(a.Nodes) != 1 ||
 		!reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != p.ABI {
-		return fmt.Errorf("CPP4 empty single-frame anchor changed")
+		return fmt.Errorf("%s empty single-frame anchor changed", p.Label)
 	}
 	if !reflect.DeepEqual(a.Nodes, []TreeNode{{Parent: -1, Type: p.RootType, Named: true}}) {
-		return fmt.Errorf("CPP4 independent empty-source root changed")
+		return fmt.Errorf("%s independent empty-source root changed", p.Label)
 	}
 	seen := make(map[string]bool, p.QueryCount)
 	for i, query := range a.Queries {
 		want := p.Queries[i]
 		if query.ID != want.id || seen[query.ID] || query.SHA256 != want.sha256 || query.SHA256 != digestHex([]byte(query.Source)) ||
 			query.Metadata.Patterns != want.patterns || !reflect.DeepEqual(query.Metadata.CaptureNames, want.captures) || !classificationGoDefinitionMetadataValid(query.Metadata) {
-			return fmt.Errorf("CPP4 query source, order, or compiled-metadata expectation changed at %d", i)
+			return fmt.Errorf("%s query source, order, or compiled-metadata expectation changed at %d", p.Label, i)
 		}
 		seen[query.ID] = true
 		tuple := a.Required[i]
 		if tuple.Query != query.ID || tuple.Step != 0 || tuple.TreeRole != "incremental" || tuple.Structural == nil || len(tuple.Structural) != 0 || tuple.Expected == nil || len(tuple.Expected) != 0 {
-			return fmt.Errorf("CPP4 empty capture denominator changed at %d", i)
+			return fmt.Errorf("%s empty capture denominator changed at %d", p.Label, i)
 		}
 	}
 	return nil
 }
 
-func classificationCPP4DefinitionPlanValid(a classificationAnchors, plan classificationPlan) error {
-	p := classificationCPP4DefinitionProfile()
-	if err := classificationCPP4AnchorsValid(a); err != nil {
+func classificationPagedDefinitionPlanValid(p classificationCPP4Profile, a classificationAnchors, plan classificationPlan) error {
+	if err := classificationPagedAnchorsValid(p, a); err != nil {
 		return err
 	}
 	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != p.AnchorSHA || plan.APIAnchorsSHA256 != "" || plan.NativeContext != semanticPagedContext ||
 		!eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) || !hex64.MatchString(plan.RuntimeManifestSHA256) || !hex64.MatchString(plan.CompilerSHA256) ||
-		!classificationCPP4GrammarValid(plan.Grammar) {
-		return fmt.Errorf("CPP4 preregistration differs from its closed paged profile")
+		!classificationPagedGrammarValid(p, plan.Grammar) {
+		return fmt.Errorf("%s preregistration differs from its closed paged profile", p.Label)
 	}
 	preparedRoot := os.Getenv("TSGK_BENCH_PREPARED")
 	if !filepath.IsAbs(preparedRoot) {
-		return fmt.Errorf("CPP4 prepared grammar root must be absolute")
+		return fmt.Errorf("%s prepared grammar root must be absolute", p.Label)
 	}
-	return classificationCPP4LibraryRequestValid(plan, plan.LibraryRequest.Dir, filepath.Join(preparedRoot, "routes", p.Route))
+	return classificationPagedLibraryRequestValid(p, plan, plan.LibraryRequest.Dir, filepath.Join(preparedRoot, "routes", p.Route))
 }
 
-func classificationCPP4LibraryRequestValid(plan classificationPlan, root, grammarRoot string) error {
+func classificationPagedLibraryRequestValid(p classificationCPP4Profile, plan classificationPlan, root, grammarRoot string) error {
 	request := plan.LibraryRequest
-	output := filepath.Join(root, "library", "cpp.dll")
+	output := filepath.Join(root, "library", p.Route+".dll")
 	if !hex64.MatchString(plan.CompilerSHA256) || !filepath.IsAbs(root) || !filepath.IsAbs(grammarRoot) || request.Dir != root || !eligibilityAbsolutePath(request.Path, "windows/amd64") ||
 		eligibilityValidateRequest(request, "go-library") != nil ||
 		request.Memory.Bytes != 4<<30 || !request.Memory.Hard || request.Wall != 120e9 || request.Grace != 2e9 || request.StdoutBytes != 16<<20 || request.StderrBytes != 4<<20 {
-		return fmt.Errorf("CPP4 compiler request path or bounded limits differ")
+		return fmt.Errorf("%s compiler request path or bounded limits differ", p.Label)
 	}
-	wantArgs, err := classificationGoCompilerArgs("cpp", grammarRoot, output, plan.Grammar)
+	wantArgs, err := classificationGoCompilerArgs(p.Route, grammarRoot, output, plan.Grammar)
 	if err != nil || !reflect.DeepEqual(request.Args, wantArgs) {
-		return fmt.Errorf("CPP4 canonical compiler argv differs: %v", err)
+		return fmt.Errorf("%s canonical compiler argv differs: %v", p.Label, err)
 	}
 	return nil
 }
 
-func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classificationPlan, inventoryData, qualificationData, queryData []byte) (classificationGoDefinitionInputs, error) {
+func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a classificationAnchors, plan classificationPlan, inventoryData, qualificationData, queryData []byte) (classificationGoDefinitionInputs, error) {
 	var out classificationGoDefinitionInputs
-	p := classificationCPP4DefinitionProfile()
-	if err := classificationCPP4DefinitionPlanValid(a, plan); err != nil {
+	if err := classificationPagedDefinitionPlanValid(p, a, plan); err != nil {
 		return out, err
 	}
 	if digestHex(inventoryData) != classificationGoDefinitionInventorySHA || digestHex(qualificationData) != classificationGoDefinitionQualificationSHA {
 		return out, fmt.Errorf("query slot or qualification inventory pin differs")
 	}
 	if len(queryData) != p.QueryBytes || digestHex(queryData) != p.QuerySHA {
-		return out, fmt.Errorf("CPP4 ordinary query source file pin differs")
+		return out, fmt.Errorf("%s ordinary query source file pin differs", p.Label)
 	}
 	var slots classificationGoDefinitionSlotInventory
 	if err := jsonv2.Unmarshal(inventoryData, &slots, jsonv2.RejectUnknownMembers(true)); err != nil {
@@ -152,10 +152,10 @@ func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classi
 		return out, fmt.Errorf("slot qualification pin differs")
 	}
 	if err := jsonv2.Unmarshal(queryData, &out.queryFile, jsonv2.RejectUnknownMembers(true)); err != nil {
-		return out, fmt.Errorf("CPP4 query file shape: %w", err)
+		return out, fmt.Errorf("%s query file shape: %w", p.Label, err)
 	}
 	if out.queryFile.Schema != "tsgk-native-query-cases/r1" || out.queryFile.Route != p.Route || len(out.queryFile.Queries) != p.QueryCount {
-		return out, fmt.Errorf("CPP4 query file identity differs")
+		return out, fmt.Errorf("%s query file identity differs", p.Label)
 	}
 	inv, err := ParseQualificationInventory(qualificationData)
 	if err != nil {
@@ -173,17 +173,17 @@ func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classi
 		}
 	}
 	if routeCount != 1 || route == nil {
-		return out, fmt.Errorf("CPP4 qualification route is missing or duplicated")
+		return out, fmt.Errorf("%s qualification route is missing or duplicated", p.Label)
 	}
 	w := route.Workload
 	if w.Set != p.Set || w.Profile != p.Set || w.Route != p.Route || w.Operation != "native-query-batch" || w.Output != "tree" || w.Symbol != p.Symbol ||
 		!w.API || w.FactPack != nil || len(w.Grammar) != len(p.Grammar) || len(w.Queries) != p.QueryCount || !reflect.DeepEqual(w.Grammar, plan.Grammar) {
-		return out, fmt.Errorf("CPP4 ordinary qualification workload differs")
+		return out, fmt.Errorf("%s ordinary qualification workload differs", p.Label)
 	}
 	for _, extra := range inv.ExtraRoles {
 		for _, workload := range extra.Workloads {
 			if workload.Route == p.Route && workload.Set == p.Set {
-				return out, fmt.Errorf("CPP4 workload is duplicated in an extra role")
+				return out, fmt.Errorf("%s workload is duplicated in an extra role", p.Label)
 			}
 		}
 	}
@@ -191,26 +191,26 @@ func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classi
 	for _, group := range slots.Ordinary {
 		if group.Route == p.Route || group.Set == p.Set {
 			if group.Route != p.Route || group.Set != p.Set || group.Profile != p.Set {
-				return out, fmt.Errorf("CPP4 slot group is aliased under another route or profile")
+				return out, fmt.Errorf("%s slot group is aliased under another route or profile", p.Label)
 			}
 			groupMatches++
 			out.slotGroup = group
 		}
 	}
 	if groupMatches != 1 || out.slotGroup.Profile != p.Set || out.slotGroup.Operation != "native-query-batch" || len(out.slotGroup.Queries) != p.QueryCount || out.slotGroup.Counts != p.Counts {
-		return out, fmt.Errorf("CPP4 ordinary query group or fixed counts differ")
+		return out, fmt.Errorf("%s ordinary query group or fixed counts differ", p.Label)
 	}
 	sourcePinMatches := 0
 	for _, pin := range slots.QuerySources {
 		if pin.Path == p.QueryFile {
 			sourcePinMatches++
 			if pin.Bytes != uint64(p.QueryBytes) || pin.SHA256 != p.QuerySHA {
-				return out, fmt.Errorf("CPP4 query source inventory pin differs")
+				return out, fmt.Errorf("%s query source inventory pin differs", p.Label)
 			}
 		}
 	}
 	if sourcePinMatches != 1 {
-		return out, fmt.Errorf("CPP4 query source inventory pin is missing or duplicated")
+		return out, fmt.Errorf("%s query source inventory pin is missing or duplicated", p.Label)
 	}
 	queryIDs := make([]string, p.QueryCount)
 	for i, anchor := range a.Queries {
@@ -220,7 +220,7 @@ func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classi
 		sha := digestHex([]byte(anchor.Source))
 		if !classificationGoDefinitionMetadataValid(anchor.Metadata) || anchor.SHA256 != sha || query.ID != anchor.ID || query.Source != anchor.Source || digestHex([]byte(query.Source)) != sha ||
 			registered.ID != anchor.ID || registered.SHA256 != sha || slot.ID != anchor.ID || slot.SHA256 != sha || slot.SourceFile != p.QueryFile || slot.Class != "STRUCTURAL_CANDIDATE" || slot.CompiledMetadata != "UNVERIFIED" {
-			return out, fmt.Errorf("CPP4 query %s is not linked in the exact registered order", anchor.ID)
+			return out, fmt.Errorf("%s query %s is not linked in the exact registered order", p.Label, anchor.ID)
 		}
 		queryIDs[i] = anchor.ID
 	}
@@ -232,34 +232,33 @@ func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classi
 	coordinates.QuerySourceFileSHA256 = p.QuerySHA
 	if coordinates.Cases != p.Counts.Cases || coordinates.Edits != p.Counts.Edits || coordinates.CaseSteps != p.Counts.CaseSteps || coordinates.TreeRoles != p.Counts.TreeRoles ||
 		coordinates.Definitions != uint64(p.QueryCount) || coordinates.PotentialQueryTreeRoles != p.Counts.PotentialQueryTreeRoles || coordinates.TreeRolesPerDefinition != p.Counts.TreeRoles {
-		return out, fmt.Errorf("CPP4 query coordinate denominator differs")
+		return out, fmt.Errorf("%s query coordinate denominator differs", p.Label)
 	}
 	out.qualification, out.workload, out.coordinates = inv, w, coordinates
 	return out, nil
 }
 
-func classificationCPP4DefinitionRows(a classificationAnchors, inputs classificationGoDefinitionInputs, witnessQueries []QueryWitnessQuery, nativeQueries []querywire.Query, references []*instrumentedReference) ([]classificationGoDefinition, error) {
-	if err := classificationCPP4AnchorsValid(a); err != nil {
+func classificationPagedDefinitionRows(p classificationCPP4Profile, a classificationAnchors, inputs classificationGoDefinitionInputs, witnessQueries []QueryWitnessQuery, nativeQueries []querywire.Query, references []*instrumentedReference) ([]classificationGoDefinition, error) {
+	if err := classificationPagedAnchorsValid(p, a); err != nil {
 		return nil, err
 	}
-	p := classificationCPP4DefinitionProfile()
 	sourceFiles := make([]string, p.QueryCount)
 	for i := range sourceFiles {
 		sourceFiles[i] = p.QueryFile
 	}
-	return classificationDefinitionRows(a, inputs, witnessQueries, nativeQueries, references, "C++", sourceFiles)
+	return classificationDefinitionRows(a, inputs, witnessQueries, nativeQueries, references, p.Language, sourceFiles)
 }
 
-func classificationCPP4OrderedReferenceIDs(a classificationAnchors, referenceIDs map[string]string) ([]string, error) {
-	if len(a.Queries) != 4 || len(referenceIDs) != len(a.Queries) {
-		return nil, fmt.Errorf("CPP4 reference invocation denominator differs")
+func classificationPagedOrderedReferenceIDs(p classificationCPP4Profile, a classificationAnchors, referenceIDs map[string]string) ([]string, error) {
+	if len(a.Queries) != p.QueryCount || len(referenceIDs) != len(a.Queries) {
+		return nil, fmt.Errorf("%s reference invocation denominator differs", p.Label)
 	}
 	ordered := make([]string, len(a.Queries))
 	seen := make(map[string]bool, len(a.Queries))
 	for i, query := range a.Queries {
 		id := referenceIDs[query.ID]
 		if !validID(id) || seen[id] {
-			return nil, fmt.Errorf("CPP4 reference invocation is missing, invalid, or reused: %s", query.ID)
+			return nil, fmt.Errorf("%s reference invocation is missing, invalid, or reused: %s", p.Label, query.ID)
 		}
 		seen[id] = true
 		ordered[i] = id
@@ -269,9 +268,9 @@ func classificationCPP4OrderedReferenceIDs(a classificationAnchors, referenceIDs
 
 // This projection is called only from the callback after classificationGoVerifyWith has
 // completed the guarded eligibility, paged grammar, native frame, compiler, and public parity checks.
-func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult, inventoryData, qualificationData, queryData []byte, readerRevision string) (classificationGoDefinitionProjectionResult, error) {
+func classificationPagedDefinitionProjection(p classificationCPP4Profile, anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult, inventoryData, qualificationData, queryData []byte, readerRevision string) (classificationGoDefinitionProjectionResult, error) {
 	var result classificationGoDefinitionProjectionResult
-	inputs, err := classificationCPP4DefinitionLoadInputs(anchors, plan, inventoryData, qualificationData, queryData)
+	inputs, err := classificationPagedDefinitionLoadInputs(p, anchors, plan, inventoryData, qualificationData, queryData)
 	if err != nil {
 		return result, err
 	}
@@ -279,35 +278,34 @@ func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan 
 		return result, fmt.Errorf("separately pinned reader revision is invalid")
 	}
 	if s == nil || cache == nil || s.res == nil || s.r == nil || s.semantic != cache || !s.bound || !cache.ready || !cache.record.haveRaw {
-		return result, fmt.Errorf("CPP4 definition projection requires the live guarded eligibility session")
+		return result, fmt.Errorf("%s definition projection requires the live guarded eligibility session", p.Label)
 	}
 	if err := s.r.check(); err != nil {
 		return result, err
 	}
-	wantTuple := QueryEligibilityCounts{Required: 4, Verified: 4}
+	wantTuple := QueryEligibilityCounts{Required: uint64(p.QueryCount), Verified: uint64(p.QueryCount)}
 	if core.ResultSchema != QueryReferenceEligibilityResultSchema || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != wantTuple ||
 		s.res.ResultSchema != core.ResultSchema || s.res.ExecutionStatus != core.ExecutionStatus || s.res.Assessment != core.Assessment || s.res.Complete != core.Complete || s.res.Tuple != wantTuple ||
 		s.res.ApprovalSHA256 != core.ApprovalSHA256 || s.res.RegistrationSHA256 != core.RegistrationSHA256 || s.res.WitnessSHA256 != core.WitnessSHA256 || s.res.CatalogueSHA256 != core.CatalogueSHA256 || s.res.GraphSHA256 != core.GraphSHA256 {
-		return result, fmt.Errorf("CPP4 definition projection requires the same completed 4-tuple guarded result")
+		return result, fmt.Errorf("%s definition projection requires the same completed %d-tuple guarded result", p.Label, p.QueryCount)
 	}
 	if !classificationLibraryMatches(s) {
-		return result, fmt.Errorf("CPP4 reference library differs from guarded compiler output")
+		return result, fmt.Errorf("%s reference library differs from guarded compiler output", p.Label)
 	}
-	p := classificationCPP4DefinitionProfile()
 	if plan.NativeContext != semanticPagedContext || s.reg.Context != semanticPagedContext || s.reg.Native == nil || s.reg.Native.Symbol != p.Symbol || s.reg.Native.InvocationID != "native-"+anchors.Case ||
 		s.witness.Schema != queryEligibilityWitnessSchema || s.witness.Policy != "tsgk-predicates/r1" || s.witness.Case != anchors.Case || s.witness.Route != p.Route || s.witness.Role != "owned" || s.witness.Encoding != EncodingUTF8 ||
 		s.witness.Platform != s.approval.Candidate.Platform || s.witness.Input.Path != "source.bin" || s.witness.Input.Bytes != 0 || s.witness.Input.SHA256 != anchors.Source.SHA256 || s.witness.Input.Role != "case" ||
 		s.witness.Native.RequestID != anchors.Case || s.witness.Native.API || s.witness.Native.ProducerABI != p.ABI || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.witness.Native.ObservationRunID != plan.RunID || len(s.witness.Native.Points) != 0 ||
 		plan.SourceRevision != s.approval.Candidate.SourceRevision || plan.RunID != s.approval.Candidate.Run || s.approval.Candidate.Platform != "windows/amd64" || s.approval.Candidate.Attempt != 1 ||
 		!reflect.DeepEqual(s.witness.Required, anchors.Required) || !reflect.DeepEqual(s.witness.Edits, []Edit{}) || len(s.witness.Queries) != p.QueryCount || len(s.reg.Native.Grammar) != len(plan.Grammar) {
-		return result, fmt.Errorf("CPP4 guarded candidate, paged context, or witness differs from the fixed anchor")
+		return result, fmt.Errorf("%s guarded candidate, paged context, or witness differs from the fixed anchor", p.Label)
 	}
 	if err := classificationGrammarContext(s, anchors, plan); err != nil {
-		return result, fmt.Errorf("CPP4 guarded logical grammar pin differs: %w", err)
+		return result, fmt.Errorf("%s guarded logical grammar pin differs: %w", p.Label, err)
 	}
 	if len(cache.checked) != 1 || cache.checked[0].Step.Step != 0 || cache.checked[0].Step.SourceBytes != 0 || cache.checked[0].Step.SourceSHA256 != anchors.Source.SHA256 ||
 		cache.checked[0].Step.Edit != nil || cache.checked[0].Fresh != nil || CompareTrees(cache.checked[0].Incremental.Nodes, anchors.Nodes) != nil || len(cache.checked[0].Incremental.Queries) != p.QueryCount {
-		return result, fmt.Errorf("guarded CPP4 paged-parser single-frame result differs from the fixed definition scope")
+		return result, fmt.Errorf("guarded %s paged-parser single-frame result differs from the fixed definition scope", p.Label)
 	}
 	references := make(map[string]*instrumentedReference, len(anchors.Required))
 	referenceIDs := make(map[string]string, len(anchors.Required))
@@ -315,28 +313,28 @@ func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan 
 	for _, tuple := range anchors.Required {
 		observation, ok := s.observation(tuple)
 		if !ok || observation.Query != tuple.Query || observation.QueryID != tuple.Query || observation.Step != 0 || observation.TreeRole != "incremental" || observation.SourceBytes != 0 || observation.SourceSHA256 != anchors.Source.SHA256 {
-			return result, fmt.Errorf("CPP4 guarded reference observation differs: %s", tuple.Query)
+			return result, fmt.Errorf("%s guarded reference observation differs: %s", p.Label, tuple.Query)
 		}
 		out := s.outputs[observation.InvocationID]
 		if out == nil || observation.ResponseOrdinal >= uint64(len(out.responses)) || observation.ResponseOrdinal >= uint64(len(out.rows)) || out.responses[observation.ResponseOrdinal] == nil {
-			return result, fmt.Errorf("CPP4 guarded reference response is missing: %s", tuple.Query)
+			return result, fmt.Errorf("%s guarded reference response is missing: %s", p.Label, tuple.Query)
 		}
 		response, row := out.responses[observation.ResponseOrdinal], out.rows[observation.ResponseOrdinal]
 		if response.Schema != instrumentedReferenceSchema || response.Status != StatusCompleted || response.Code != "" || response.Input.Encoding != EncodingUTF8 || response.Input.Bytes != 0 || response.Input.SHA256 != anchors.Source.SHA256 ||
 			response.Grammar.Symbol != p.Symbol || CompareTrees(response.Tree.Nodes, anchors.Nodes) != nil || uint64(len(row)) != observation.ByteLength || digestHex(row) != observation.SHA256 {
-			return result, fmt.Errorf("CPP4 guarded reference source frame or complete CST differs: %s", tuple.Query)
+			return result, fmt.Errorf("%s guarded reference source frame or complete CST differs: %s", p.Label, tuple.Query)
 		}
 		invocation := s.invocations[observation.InvocationID]
 		if invocation == nil || invocation.Executable == nil {
-			return result, fmt.Errorf("CPP4 guarded reference executable is missing: %s", tuple.Query)
+			return result, fmt.Errorf("%s guarded reference executable is missing: %s", p.Label, tuple.Query)
 		}
 		if referenceExecutableSHA == "" {
 			referenceExecutableSHA = invocation.Executable.Member.SHA256
 		} else if referenceExecutableSHA != invocation.Executable.Member.SHA256 {
-			return result, fmt.Errorf("CPP4 reference executable bindings differ")
+			return result, fmt.Errorf("%s reference executable bindings differ", p.Label)
 		}
 		if !hex64.MatchString(referenceExecutableSHA) {
-			return result, fmt.Errorf("CPP4 reference executable pin is invalid")
+			return result, fmt.Errorf("%s reference executable pin is invalid", p.Label)
 		}
 		references[tuple.Query], referenceIDs[tuple.Query] = response, observation.InvocationID
 	}
@@ -344,14 +342,14 @@ func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan 
 	for i, query := range anchors.Queries {
 		orderedReferences[i] = references[query.ID]
 		if orderedReferences[i] == nil {
-			return result, fmt.Errorf("CPP4 guarded reference query is missing: %s", query.ID)
+			return result, fmt.Errorf("%s guarded reference query is missing: %s", p.Label, query.ID)
 		}
 	}
-	orderedReferenceIDs, err := classificationCPP4OrderedReferenceIDs(anchors, referenceIDs)
+	orderedReferenceIDs, err := classificationPagedOrderedReferenceIDs(p, anchors, referenceIDs)
 	if err != nil {
 		return result, err
 	}
-	definitions, err := classificationCPP4DefinitionRows(anchors, inputs, s.witness.Queries, cache.checked[0].Incremental.Queries, orderedReferences)
+	definitions, err := classificationPagedDefinitionRows(p, anchors, inputs, s.witness.Queries, cache.checked[0].Incremental.Queries, orderedReferences)
 	if err != nil {
 		return result, err
 	}
@@ -361,22 +359,22 @@ func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan 
 	}
 	libraryPin, libraryOK := s.owned["current/go.dll"]
 	if nativeInvocation == nil || nativeInvocation.ID != "native-"+anchors.Case || nativeInvocation.Executable == nil || nativeInvocation.Executable.Member.SHA256 != s.witness.Native.ExecutableSHA256 || !hex64.MatchString(nativeInvocation.Executable.Member.SHA256) {
-		return result, fmt.Errorf("guarded CPP4 native driver executable is missing or mismatched")
+		return result, fmt.Errorf("guarded %s native driver executable is missing or mismatched", p.Label)
 	}
 	if !libraryOK || libraryPin.NodeID != "go-library-build" || libraryPin.Member.Role != "runtime-library" || !hex64.MatchString(libraryPin.Member.SHA256) || s.reg.Build == nil || s.reg.Native.ReferenceLibrary == nil || !hex64.MatchString(s.reg.Native.ReferenceLibrary.Member.SHA256) {
-		return result, fmt.Errorf("guarded CPP4 build or route library binding is missing")
+		return result, fmt.Errorf("guarded %s build or route library binding is missing", p.Label)
 	}
 	libraryNode, ok := s.nodes["go-library-build"]
 	if !ok || !classificationGoLibraryNodeMatches(libraryNode, plan, anchors.Workload) || libraryNode.Identities["tool"] != plan.CompilerSHA256 {
-		return result, fmt.Errorf("guarded CPP4 compiler node differs from preregistration")
+		return result, fmt.Errorf("guarded %s compiler node differs from preregistration", p.Label)
 	}
 	for _, pin := range []string{s.reg.Build.Identity.Member.SHA256, s.reg.Build.SourceSnapshot.Member.SHA256, s.reg.Build.VendorSnapshot.Member.SHA256} {
 		if !hex64.MatchString(pin) {
-			return result, fmt.Errorf("guarded CPP4 build identity pin is invalid")
+			return result, fmt.Errorf("guarded %s build identity pin is invalid", p.Label)
 		}
 	}
 	result = classificationGoDefinitionProjectionResult{
-		Scope: "conditional historical classification of 4 predicate-free CPP definitions and 412 potential s06-cpp links; one empty-source paged-parser native-query frame is the guard, not per-case or semantic completion",
+		Scope: fmt.Sprintf("conditional historical classification of %d predicate-free %s definitions and %d potential %s links; one empty-source paged-parser native-query frame is the guard, not per-case or semantic completion", p.QueryCount, p.ScopeName, p.Counts.PotentialQueryTreeRoles, p.Set),
 		Guard: classificationGoDefinitionGuardBinding{
 			ReaderRevision: readerRevision, NativeContext: plan.NativeContext, ObservationSourceRevision: plan.SourceRevision, ObservationRunID: plan.RunID,
 			ObservationAttempt: s.approval.Candidate.Attempt, ObservationPlatform: s.approval.Candidate.Platform,
@@ -395,6 +393,35 @@ func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan 
 		Inventory: inputs.coordinates, Definitions: definitions,
 	}
 	return result, nil
+}
+
+// CPP4 wrappers keep the original closed-profile entry points; shared paged helpers take the profile.
+func classificationCPP4GrammarValid(grammar []NativeInput) bool {
+	return classificationPagedGrammarValid(classificationCPP4DefinitionProfile(), grammar)
+}
+
+func classificationCPP4AnchorsValid(a classificationAnchors) error {
+	return classificationPagedAnchorsValid(classificationCPP4DefinitionProfile(), a)
+}
+
+func classificationCPP4DefinitionPlanValid(a classificationAnchors, plan classificationPlan) error {
+	return classificationPagedDefinitionPlanValid(classificationCPP4DefinitionProfile(), a, plan)
+}
+
+func classificationCPP4DefinitionLoadInputs(a classificationAnchors, plan classificationPlan, inventoryData, qualificationData, queryData []byte) (classificationGoDefinitionInputs, error) {
+	return classificationPagedDefinitionLoadInputs(classificationCPP4DefinitionProfile(), a, plan, inventoryData, qualificationData, queryData)
+}
+
+func classificationCPP4DefinitionRows(a classificationAnchors, inputs classificationGoDefinitionInputs, witnessQueries []QueryWitnessQuery, nativeQueries []querywire.Query, references []*instrumentedReference) ([]classificationGoDefinition, error) {
+	return classificationPagedDefinitionRows(classificationCPP4DefinitionProfile(), a, inputs, witnessQueries, nativeQueries, references)
+}
+
+func classificationCPP4OrderedReferenceIDs(a classificationAnchors, referenceIDs map[string]string) ([]string, error) {
+	return classificationPagedOrderedReferenceIDs(classificationCPP4DefinitionProfile(), a, referenceIDs)
+}
+
+func classificationCPP4DefinitionProjection(anchors classificationAnchors, plan classificationPlan, s *eligibilitySession, cache *semanticNativeCache, core QueryReferenceEligibilityResult, inventoryData, qualificationData, queryData []byte, readerRevision string) (classificationGoDefinitionProjectionResult, error) {
+	return classificationPagedDefinitionProjection(classificationCPP4DefinitionProfile(), anchors, plan, s, cache, core, inventoryData, qualificationData, queryData, readerRevision)
 }
 
 type classificationCPP4RowsFixture struct {
