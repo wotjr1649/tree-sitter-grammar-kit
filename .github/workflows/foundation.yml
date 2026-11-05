@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 
-# One lane for every run keeps the heavy width at 3 (D12). queue: max keeps up to 100
+# One lane for every run keeps the heavy width at 4 (#317, was 3 under D12). queue: max keeps up to 100
 # pending runs instead of letting a newly queued run cancel the pending one (#252), which
 # once dropped a main post-merge run; superseded PR runs are cancelled by procedure.
 concurrency:
@@ -50,8 +50,8 @@ jobs:
             goarch: arm64
     runs-on: ${{ matrix.os }}
     # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
-    # the step sum of the slowest host (Linux 56 minutes) plus a runner allowance
-    timeout-minutes: 57
+    # the step sum of the slowest host (Linux 61 minutes) plus a runner allowance
+    timeout-minutes: 62
     defaults:
       run:
         shell: pwsh
@@ -77,6 +77,29 @@ jobs:
           & src/dev/ci-gate/modules.ps1
           go mod verify
           if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
+      - name: Go build cache 경로
+        id: gocache
+        timeout-minutes: 1
+        run: |
+          # #317: only the content-addressed build cache is restored; tests still run with -count=1.
+          $path = go env GOCACHE
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($path)) { throw 'go env GOCACHE failed' }
+          "path=$path" >> $env:GITHUB_OUTPUT
+      - name: Go build cache 복원
+        # Only pull_request and push restore; schedule and dispatch build cold, an independent check.
+        # The cache is an optimization: a failed or slow restore (1 minute segment limit) falls through to a cold build.
+        # Suspected poisoning: raise the v<N> epoch in the keys or delete the caches.
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        timeout-minutes: 2
+        continue-on-error: true
+        env:
+          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '1'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.gocache.outputs.path }}
+          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-
       - name: Verify clean validation input
         timeout-minutes: 1
         run: |
@@ -255,6 +278,14 @@ jobs:
             $cgroup = "$base/jobs"
           }
           & src/dev/s04-reproduce/ci-owned.ps1 -Destination $dest -Platform $env:PLATFORM -CgroupParent $cgroup
+      - name: Go build cache 저장
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.gocache.outputs.path }}
+          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-${{ github.sha }}
       - name: Margin 실행 구성 기록
         timeout-minutes: 1
         env:
@@ -280,10 +311,13 @@ jobs:
   race:
     # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
     # CGO-free foundation gate above stays the required core check and is not relaxed.
-    # Diagnostics wait for native/large validation and qualification; their width is 3.
+    # Diagnostics wait for native/large validation and qualification; their width is 2 and
+    # stays within 4. #317: nightly and dispatch only, also on a duplicate nightly whose other
+    # jobs are skipped. It covers the main HEAD at nightly time and the dispatched commit;
+    # a commit pushed and superseded within a day is not raced.
     name: race diagnostic (${{ matrix.os }})
     needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
+    if: ${{ !cancelled() && contains(fromJSON('["schedule","workflow_dispatch"]'), github.event_name) }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -521,21 +555,32 @@ jobs:
             $labels = @(gh api --paginate "repos/$env:REPOSITORY/issues/$env:PR/labels" --jq '.[].name')
             if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }
           }
-          # #257: only a successful main push or dispatch run of this commit that finished in the
-          # 24 hours before the lookup makes a nightly run a duplicate (then only this job runs);
-          # a nightly success, skipped or not, never counts, and a failed lookup runs in full
+          # #257/#317: a nightly run is a duplicate (then only this job and the diagnostics run)
+          # only when a main push or dispatch run of this commit finished in the 24 hours before
+          # the lookup and its latest attempt holds each of the ten required jobs exactly once
+          # with conclusion success; the diagnostics do not count, so a failed race no longer
+          # blocks it. A nightly run never counts, and a failed lookup runs in full
           $duplicate = 'false'
+          $required = @('foundation (windows-2025)', 'foundation (ubuntu-24.04)', 'foundation (macos-15)', 'native prepare (ubuntu-24.04)', 'native routes (windows-2025)', 'native routes (ubuntu-24.04)', 'native routes (macos-15)', 'large API (windows-2025)', 'qualification (ubuntu-24.04)', 'integration gate')
           if ($env:EVENT -eq 'schedule') {
             try {
-              $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=success&per_page=100" --jq '.workflow_runs[] | [.id, .event, .head_branch, .conclusion, .updated_at] | @tsv')
+              $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_branch, .updated_at] | @tsv')
               if ($LASTEXITCODE -eq 0) {
                 $since = [DateTimeOffset]::UtcNow.AddHours(-24)
                 foreach ($row in $rows) {
-                  $id, $trigger, $branch, $conclusion, $updated = $row -split "`t"
-                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and $conclusion -eq 'success' -and
+                  $id, $attempt, $trigger, $branch, $updated = $row -split "`t"
+                  if ($trigger -in @('push', 'workflow_dispatch') -and $branch -eq 'main' -and
                     [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
-                    $duplicate = 'true'
-                    "CI mode: run $id already passed $env:SHA"
+                    $jobs = @(gh api "repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')
+                    $complete = $LASTEXITCODE -eq 0
+                    foreach ($name in $required) {
+                      $named = @($jobs | Where-Object { ($_ -split "`t")[0] -eq $name })
+                      if ($named.Count -ne 1 -or ($named[0] -split "`t")[1] -ne 'success') { $complete = $false }
+                    }
+                    if ($complete) {
+                      $duplicate = 'true'
+                      "CI mode: run $id attempt $attempt already passed $env:SHA"
+                    }
                   }
                 }
               }
@@ -554,8 +599,10 @@ jobs:
     # without patches, C2-REGENERATE-r1); every file is hash-checked against
     # src/contracts/native-routes.json before it is handed on.
     name: native prepare (ubuntu-24.04)
-    needs: [foundation, mode]
-    if: ${{ needs.mode.outputs.heavy == 'true' }}
+    # #317: it starts with the foundation, not after it; its duplicate nightly skip is explicit
+    # because a skipped foundation no longer skips it through needs.
+    needs: [mode]
+    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -641,10 +688,10 @@ jobs:
     # existing compiler. The large C# fixtures (real-world-source-r3, native-query-large)
     # run on windows/amd64 only and are NOT_APPLICABLE elsewhere (C1-REAL-WORLD-SOURCE-WINDOWS-R3).
     name: native routes (${{ matrix.os }})
-    needs: native-prepare
+    needs: [foundation, native-prepare]
     strategy:
       fail-fast: false
-      # Windows/Linux share the width-3 lane with Mac, then large-api after Mac.
+      # Windows/Linux share the width-4 lane with Mac and large-api, which start together.
       max-parallel: 2
       matrix:
         include:
@@ -862,7 +909,7 @@ jobs:
 
   native-routes-macos:
     name: native routes (${{ matrix.os }})
-    needs: native-prepare
+    needs: [foundation, native-prepare]
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -881,7 +928,7 @@ jobs:
   large-api:
     # #147: independent workloads keep their existing limits and complete evidence.
     name: large API (windows-2025)
-    needs: [native-prepare, native-routes-macos]
+    needs: [foundation, native-prepare]
     runs-on: windows-2025
     timeout-minutes: 60
     defaults:
