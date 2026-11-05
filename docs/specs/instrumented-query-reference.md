@@ -1,5 +1,24 @@
 # 계측 query reference 계약 (#216)
 
+## DartPHP12 단일 frame 정의 분류
+
+Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.
+
+| Profile / anchor | 공개 CST | 정의 | ABI symbol/field |
+|---|---|---:|---:|
+| `dart7-empty` / [Dart7](../../src/testdata/query-semantics/dart7-classification-anchors.json) | `program` root 1개 | 7 | 533/22 |
+| `php5-empty` / [PHP5](../../src/testdata/query-semantics/php5-classification-anchors.json) | `program` root 1개 | 5 | 437/31 |
+
+두 profile은 빈 UTF-8·편집 없음·API=false·`native-query`·단일 frame·step0 `NO_ERROR`를 요구한다. Root는 parent=-1, field=null, named=true, 나머지 flag=false, byte span0..0과 양쪽 point(0,0)이며 공개 자식이 없다. ABI language/runtime/min-compatible은15/15/13이고 Dart symbol533은 generated532와 alias1의 합이다. 두 pinned parser의 state1 EOF action은 zero-child `program` reduction이며 원본 grammar의 nullable root와 일치한다. Scanner·실제 CST와 모든 공개 필드는 관측에서 다시 확인한다. C2 전체 regeneration closure를 증명하지 않는다.
+
+원문 query12개의 ID·순서·UTF-8 bytes·SHA를 고정한다. 사전 metadata는42 patterns·43개의 query별 capture-name 항목·전역 고유 이름38개다. Dart의 마지막 query는 두 pattern에서 같은 `default` capture를 사용하므로 capture-name 목록은 하나다. 각 query의 첫 등장 이름 순서와 명시적 `predicates:[]`를 유지한다. 빈 root에 대상 construct가 없다는 근거로 structural/expected tuple은 빈 배열 후보이며 원래 비어 있지 않은 workload의 의미론을 증명하지 않는다.
+
+Dart는 parser·scanner·header3개, PHP는 `common/scanner.h`와 `php/src/parser.c`·`php/src/scanner.c`·`php/src/tree_sitter/` header3개로 정확한 role/path/bytes/SHA를 고정한다. PHP include는 `php/src`와 `common`이며 경로를 평탄화하거나 공통 header를 생략하지 않는다. Parser 크기7,872,952/8,115,395 bytes는 각16MiB plain-input 한도 안이다. 개별 physical file 한도와 aggregate JSON/context 한도는 별개다. 기존 small 한도·정렬된9-name compiler environment·`full-input-utf8/r2`와 다른 profile 경계를 유지한다.
+
+원래 ordinary qualification의 API=true 및 Dart53/24/77/101/707, PHP48/46/94/140/700은 각각 cases/edits/case steps/tree roles/potential query-tree-role 좌표다. 합계101/70/171/241/1,407은 이번 정의12개의 실행 분모가 아니다. PowerShell의 patched root는 nonnullable이므로 이 빈 소스 집합에 포함하지 않는다. 별도의 유효 최소 소스와 CST 기대값을 먼저 확인해야 한다.
+
+각 profile의 새 current graph·서로 다른 query별 reference invocation·provenance·외부 caller approval과 같은 guarded snapshot의 정의 projection·공개 API parity 후에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원장 `STRUCTURAL_CANDIDATE/UNVERIFIED`, semantic `NOT_ASSESSED`, `semantic_required:null`과 전체 #216/#195의 미완료는 유지한다. 이후 보고서/merge revision을 관측 source/reader로 표시하지 않는다.
+
 ## Script17 단일 frame 정의 분류
 
 Python8·Ruby4·R3·Bash2는 Web16과 이름 집합이 겹치지 않는 닫힌 수동 profile이다. 기존 empty-profile descriptor와 compiler·원장·guarded projection 검증을 공유하며, 기존 Web16·Small17·CJR 진입에 새 이름을 허용하지 않는다. 다음 값은 관측 전에 고정한 독립 사전 기대값이며 실제 parse·compile·query match 또는 caller 승인 실적이 아니다.

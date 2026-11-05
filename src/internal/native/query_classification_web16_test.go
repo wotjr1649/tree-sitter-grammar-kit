@@ -151,6 +151,19 @@ func classificationEmptyGrammarPins(profile classificationEmptyProfile) []kit.Na
 			{Path: "tsx/src/scanner.c", Role: "scanner", Bytes: 538, SHA256: "d563cd30b2f39718c9ae4292795c5ce03a2ad01954ba3a86ef84c2781a736673"},
 		}
 		return append(files, sharedHeaders("tsx/src/tree_sitter/")...)
+	case "dart":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 7872952, SHA256: "a246324fd0a090bb4640c51ad4022e18bfe0d7e708b864a8a1346e94c4f1bf43"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 3839, SHA256: "07a7b7818b175e9460523e705dd88d20f7b5141bac95c593d4426e6d52284996"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
+	case "php":
+		files = []kit.NativeInput{
+			{Path: "common/scanner.h", Role: "header", Bytes: 19725, SHA256: "6a5bc955ec2610f94a3fccb26ad0d6400cf4f462a04d7854d1ee43fe0d8285c1"},
+			{Path: "php/src/parser.c", Role: "parser", Bytes: 8115395, SHA256: "2a57b3e51fc97f543cca681f3ee551005638d094eff7a9d348f71469ac698373"},
+			{Path: "php/src/scanner.c", Role: "scanner", Bytes: 595, SHA256: "58c92cafe4ebda509c3ad3864fa6fc0e9877bbac26e17a03d23ea2101c291ad5"},
+		}
+		return append(files, sharedHeaders("php/src/tree_sitter/")...)
 	case "python":
 		files = []kit.NativeInput{
 			{Path: "src/parser.c", Role: "parser", Bytes: 3797134, SHA256: "5f91970298858b745730783d9c7063fd87aababe81f4214689e2554dbe8189c4"},
