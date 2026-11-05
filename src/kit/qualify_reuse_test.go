@@ -33,6 +33,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		c["reuse_observation_claim"], c["assessment"], c["code"] = claimBlocked, AssessBlocked, "REUSE_OBSERVATION_LIMIT"
 	}
 	t.Run("collection-limit", func(t *testing.T) {
+		t.Parallel()
 		f := newQfx(t)
 		r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
 			if set == "s06-fxa" {
@@ -109,6 +110,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			f := newQfx(t)
 			f.inv.ExtraRoles[0].Workloads[0].Cases[0].ExpectStatus = StatusResourceLimit // a registered limit ending
 			r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {record: func(set string, records []map[string]any) {
@@ -148,6 +150,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		}
 	})
 	t.Run("record-beyond-limit", func(t *testing.T) {
+		t.Parallel()
 		f := newQfx(t)
 		limit := QualificationLimits().FileBytes
 		var record string
@@ -448,6 +451,7 @@ func TestQualificationMandatoryObservation(t *testing.T) {
 		{name: "no-run", code: "OBSERVATION_RUN_UNBOUND", manifest: func(m map[string]any) { delete(m["producer"].(map[string]string), "observation_run_id") }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			f := newQfx(t)
 			mut := qfxMut{record: func(set string, records []map[string]any) {
 				if set == "s06-fxa" && tc.record != nil {

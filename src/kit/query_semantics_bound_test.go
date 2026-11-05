@@ -508,6 +508,7 @@ func TestSemanticBoundPublicAPIAndReplay(t *testing.T) {
 func TestSemanticBoundRehashedProjectionCannotReplaceRaw(t *testing.T) {
 	for _, mutation := range []string{"route", "declarations", "producer", "summary-tree", "record-claim", "projection-verdict", "projection-code"} {
 		t.Run(mutation, func(t *testing.T) {
+			t.Parallel()
 			req, f, binding := semanticBoundFixture(t, 0)
 			projectionPath := "oracle/projection/00000-" + f.witness.Case + ".json"
 			recordPath := "oracle/records/00000-" + f.witness.Case + ".json"
@@ -591,6 +592,7 @@ func TestSemanticBoundRehashedProjectionCannotReplaceRaw(t *testing.T) {
 func TestSemanticProducerFoldRejectsMatchingInvalidVerdict(t *testing.T) {
 	for _, status := range []string{StatusFailed, "FORGED"} {
 		t.Run(status, func(t *testing.T) {
+			t.Parallel()
 			_, f, _ := semanticBoundFixture(t, 0)
 			name := "00000-" + f.witness.Case + ".json"
 			projectionPath, recordPath := "projection/"+name, "records/"+name
@@ -841,6 +843,7 @@ func TestSemanticBoundSparseProjection(t *testing.T) {
 func TestSemanticEmptyQueriesClaimsAPIReplayStored(t *testing.T) {
 	for _, missing := range []bool{false, true} {
 		t.Run(strconv.FormatBool(missing), func(t *testing.T) {
+			t.Parallel()
 			req, f, binding := semanticBoundFixtureQueries(t, 0, false)
 			if missing {
 				for _, role := range []string{"projection", "records"} {
