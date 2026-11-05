@@ -79,6 +79,11 @@ func TestBuildCache(t *testing.T) {
 	if err := os.WriteFile(sharedExe, launchBytes, 0o600); err != nil {
 		t.Fatal(err)
 	}
+	// Replace instead of rewriting in place: Linux refuses writes to an exec'd inode until its last
+	// exec reference is released (ETXTBSY, #320). Verify checks the path's content, so the tamper is the same.
+	if err := os.Remove(second.Executable); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(second.Executable, append(launchBytes, 0), 0o700); err != nil {
 		t.Fatal(err)
 	}
