@@ -816,6 +816,7 @@ func TestQueryReferenceEligibilityAdversarial(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			tc.mutate(f)
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1106,6 +1107,7 @@ func TestQueryReferenceEligibilityReview33(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			tc.change(f)
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1328,6 +1330,7 @@ func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
 func TestQueryReferenceEligibilityReview35(t *testing.T) {
 	for _, kind := range []string{"source", "library", "source-metadata", "source-present-mismatch"} {
 		t.Run("current-"+kind, func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			for i := range f.reg.Invocations {
 				inv := &f.reg.Invocations[i]
@@ -1369,6 +1372,7 @@ func TestQueryReferenceEligibilityReview35(t *testing.T) {
 		for _, bad := range []string{"truncated", "duplicate", "unknown", "type"} {
 			for _, prior := range []bool{false, true} {
 				t.Run(fmt.Sprintf("%s-%s-prior-%v", id, bad, prior), func(t *testing.T) {
+					t.Parallel()
 					f := newEligibilityFixture(t)
 					f.stdoutMutation(id, func(data []byte) []byte {
 						switch bad {
@@ -1400,6 +1404,7 @@ func TestQueryReferenceEligibilityReview35(t *testing.T) {
 	for _, id := range []string{"build-patch-check", "control-structural-0"} {
 		for _, malformed := range []bool{false, true} {
 			t.Run(fmt.Sprintf("binding-%s-malformed-%v", id, malformed), func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				for i := range f.reg.Invocations {
 					inv := &f.reg.Invocations[i]
@@ -1446,6 +1451,7 @@ func TestQueryReferenceEligibilityBindingInterruption(t *testing.T) {
 	for _, id := range []string{"build-patch-check", "control-structural-0"} {
 		for _, kind := range []string{"cancel", "wall", "work"} {
 			t.Run(id+"-"+kind, func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				f.request()
 				caller, cancel := context.WithCancel(ctxT(t))
@@ -1554,6 +1560,7 @@ func TestQueryReferenceEligibilityTupleBindingFailure(t *testing.T) {
 func TestQueryReferenceEligibilityReview36(t *testing.T) {
 	for mask := 1; mask < 8; mask++ {
 		t.Run(fmt.Sprintf("missing-groups-%d", mask), func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			if mask&1 != 0 {
 				f.reg.Build = nil
@@ -1573,6 +1580,7 @@ func TestQueryReferenceEligibilityReview36(t *testing.T) {
 	}
 	for _, id := range []string{"current-ref-0", "current-ref-1"} {
 		t.Run("missing-observation-"+id, func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			f.reg.Observations = slices.DeleteFunc(f.reg.Observations, func(o eligibilityObservation) bool { return o.InvocationID == id })
 			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
@@ -1589,6 +1597,7 @@ func TestQueryReferenceEligibilityReview36(t *testing.T) {
 		for _, bad := range []string{"unknown", "type", "null", "missing"} {
 			for _, prior := range []bool{false, true} {
 				t.Run(fmt.Sprintf("nested-%s-%s-prior-%v", part, bad, prior), func(t *testing.T) {
+					t.Parallel()
 					f := newEligibilityFixture(t)
 					var raw nativewire.Response
 					if err := jsonv2.Unmarshal(f.files["native/response.json"], &raw); err != nil {
@@ -1666,6 +1675,7 @@ func TestQueryReferenceEligibilityReview36(t *testing.T) {
 		}
 	}
 	t.Run("capture-type-amplification", func(t *testing.T) {
+		t.Parallel()
 		r, e := startRun(ctxT(t), 30*time.Second)
 		if e != nil {
 			t.Fatal(e)
@@ -1941,6 +1951,7 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 		for _, missing := range []bool{false, true} {
 			for _, prior := range []bool{false, true} {
 				t.Run(fmt.Sprintf("outer-%s-source-missing-%v-prior-%v", bad, missing, prior), func(t *testing.T) {
+					t.Parallel()
 					f := newEligibilityFixture(t)
 					f.nativeMutation(func(data []byte) []byte {
 						var raw map[string]any
@@ -1980,6 +1991,7 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 	for _, anchor := range []bool{false, true} {
 		for _, bad := range []string{"index-only", "metadata", "identity", "summary-index"} {
 			t.Run(fmt.Sprintf("cst-%s-anchor-%v", bad, anchor), func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				if !anchor {
 					f.witness.Required[0].Structural = nil
@@ -2058,6 +2070,7 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 	for _, required := range []bool{false, true} {
 		for _, kind := range []string{"point", "eof"} {
 			t.Run(fmt.Sprintf("native-%s-required-%v", kind, required), func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				if !required {
 					f.witness.Required = f.witness.Required[:1]
@@ -2237,6 +2250,7 @@ func TestQueryReferenceEligibilityReview42(t *testing.T) {
 					continue
 				}
 				t.Run(fmt.Sprintf("extra-%v-%s-prior-%v", extra, bad, prior), func(t *testing.T) {
+					t.Parallel()
 					f := newEligibilityFixture(t)
 					index := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == "native-current" })
 					if extra {
@@ -2949,6 +2963,7 @@ func TestQueryReferenceEligibilityReview60(t *testing.T) {
 				continue
 			}
 			t.Run(fmt.Sprintf("reference-batch-%v/%s", batch, name), func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				i := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == "current-ref-0" })
 				inv := &f.reg.Invocations[i]
@@ -3026,6 +3041,7 @@ func TestQueryReferenceEligibilityReview60(t *testing.T) {
 	for _, id := range []string{"build-cargo-version", "control-compile", "current-ref-0", "native-current"} {
 		for _, parent := range []string{"/delegated", "", "relative", `C:\delegated`, "/delegated\x00bad"} {
 			t.Run(id+"/cgroup-"+parent, func(t *testing.T) {
+				t.Parallel()
 				f := newEligibilityFixture(t)
 				i := slices.IndexFunc(f.reg.Invocations, func(inv eligibilityInvocation) bool { return inv.ID == id })
 				if i < 0 {
@@ -3062,6 +3078,7 @@ func TestQueryReferenceEligibilityReview60(t *testing.T) {
 	}
 	for _, mutation := range []string{"valid", "unknown-node", "undeclared", "wrong-owner", "hash", "role", "missing-file", "no-groups-hash"} {
 		t.Run("unused-tool/"+mutation, func(t *testing.T) {
+			t.Parallel()
 			f := newEligibilityFixture(t)
 			tool := f.reg.Tools[0]
 			tool.IdentityMember = f.member("current-ref-0", "extra-tool/identity.json", "identity", slices.Clone(f.files[tool.IdentityMember.Member.Path]))
