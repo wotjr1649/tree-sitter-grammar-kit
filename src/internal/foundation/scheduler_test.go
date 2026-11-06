@@ -721,6 +721,8 @@ func TestWorkflowFoundationCachePolicy(t *testing.T) {
 
 // concurrencyPolicy is #252/#290: one workflow-level lane that never cancels a running run and
 // keeps the queue instead of replacing the pending run; no job may set its own concurrency.
+// supersede.yml (#334) is the one deliberate exception: it starts no heavy workload and must not
+// wait behind the runs it cancels, so TestWorkflowSupersedePolicy pins its separate group instead.
 func concurrencyPolicy(text string) error {
 	policy := `(?m)^concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n\n(?:env|jobs):\n`
 	keys := regexp.MustCompile(`(?m)^[\t ]*(?:concurrency|'concurrency'|"concurrency")[\t ]*:`).FindAllStringIndex(text, -1)
