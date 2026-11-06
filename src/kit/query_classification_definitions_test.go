@@ -618,7 +618,7 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 3
 	case "C", "C++", "Rust", "Ruby":
 		want = 4
-	case "Java", "PHP":
+	case "Java", "PHP", "Kotlin":
 		want = 5
 	case "C#":
 		want = 15

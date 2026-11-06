@@ -25,6 +25,7 @@ type classificationCPPGrammarFile struct {
 }
 
 type classificationCPPProfileSpec struct {
+	label, registryLabel                 string
 	anchorFile, anchorSHA, route, symbol string
 	caseID, workload, rootType           string
 	queryFile, querySHA                  string
@@ -36,47 +37,88 @@ type classificationCPPProfileSpec struct {
 	grammarFiles                         []classificationCPPGrammarFile
 }
 
+// Closed paged-parser profiles share these validators; each name keeps its own pins.
 func classificationCPPProfileSpecFor(name string) (classificationCPPProfileSpec, bool) {
-	if name != "cpp4-empty" {
+	switch name {
+	case "cpp4-empty":
+		return classificationCPPProfileSpec{
+			label: "CPP4", registryLabel: "CPP",
+			anchorFile:      "cpp4-classification-anchors.json",
+			anchorSHA:       "e807345cb9a528facbaddaae3b914027acc4c99c8148f65f365e83f4b58ee5b4",
+			route:           "cpp",
+			symbol:          "tree_sitter_cpp",
+			caseID:          "cpp4-empty-definitions",
+			workload:        "cpp4-empty-definition-single-frame",
+			rootType:        "translation_unit",
+			queryFile:       "cpp.json",
+			queryBytes:      4734,
+			querySHA:        "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766",
+			languageVersion: 15, runtimeVersion: 15, minCompatible: 13,
+			symbolCount: 621, fieldCount: 53, grammarCount: 5,
+			querySpecs: []classificationCPPQuerySpec{
+				{id: "q.structure", sha256: "2a57e6e5cb3c6136878e5d27ced7c7a090d491ec2e9e5e3d51f6305c6227945e", patterns: 4, captures: []string{"namespace", "struct", "concept", "class"}},
+				{id: "q.probe-cpp-V14", sha256: "1077f4c6e42da4eb404eb4a819b5338f3c2aeeabbfeb1605678e3a4dd3d28f31", patterns: 3, captures: []string{"init", "vartemplate", "num"}},
+				{id: "q.probe-cpp-V17", sha256: "29e660f47b5bb900c4321ea914fe6ea74f94d4662912773075e3aac7bf744c49", patterns: 2, captures: []string{"ns", "binding"}},
+				{id: "q.probe-cpp-V23", sha256: "fde3be27ac5b9a89fa6e366ed03a24f035e1f21d0ea4434a80e1d666aef3a467", patterns: 2, captures: []string{"self", "index"}},
+			},
+			grammarFiles: []classificationCPPGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 49598509, sha256: "3856d51ead4b6ecf5d4e1ec3fd39c52c9ba0cb535e69ea1785822280c45b75fc"},
+				{path: "src/scanner.c", role: "scanner", bytes: 6772, sha256: "55b66d60ce5551e354112bc0c050237e786402764d59893d0296ac5f88176546"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
+	case "kotlin5-empty":
+		return classificationCPPProfileSpec{
+			label: "Kotlin5", registryLabel: "Kotlin5",
+			anchorFile:      "kotlin5-classification-anchors.json",
+			anchorSHA:       "ffd6d41c2a784900d328e0d6b34c3608ca57262a65f987972c40f889019ce591",
+			route:           "kotlin",
+			symbol:          "tree_sitter_kotlin",
+			caseID:          "kotlin5-empty-definitions",
+			workload:        "kotlin5-empty-definition-single-frame",
+			rootType:        "source_file",
+			queryFile:       "kotlin.json",
+			queryBytes:      7135,
+			querySHA:        "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55",
+			languageVersion: 15, runtimeVersion: 15, minCompatible: 13,
+			symbolCount: 304, fieldCount: 9, grammarCount: 5,
+			querySpecs: []classificationCPPQuerySpec{
+				{id: "q.structure", sha256: "3948d9b3b28919dc7d78644ed99c383b8a0d0287b499393fe87719c08026a2cc", patterns: 2, captures: []string{"class", "function"}},
+				{id: "q.probe-b02", sha256: "22d934886244d3623cabdf879e9dd38c1be8e93496a25a60a4f639bc86ae3104", patterns: 2, captures: []string{"condition", "catch_var"}},
+				{id: "q.probe-v14", sha256: "ea6b48fdac43474737477653de739b92c41d28282adf63e711c7763429f8af19", patterns: 4, captures: []string{"class", "object", "dnn", "range"}},
+				{id: "q.probe-v22", sha256: "01e3fc670a0c7656a4e5c516e7cf150ce2a2018c2bc7529a9288c436a5d0c916", patterns: 3, captures: []string{"class", "object", "alias"}},
+				{id: "q.probe-v24", sha256: "d4f39e572fa9004ae8b3e7f0eb62c68a511e143e013127ca0617076baa99036e", patterns: 3, captures: []string{"class", "function", "property"}},
+			},
+			grammarFiles: []classificationCPPGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 33870017, sha256: "c13a776638ead65def356f8feeda4f612121cc96485fb4c78eed80757d906097"},
+				{path: "src/scanner.c", role: "scanner", bytes: 25985, sha256: "8b51cea2bd9560201c1d681f56a329f3e637495eac2aaafba3622600c8abdf83"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
+	default:
 		return classificationCPPProfileSpec{}, false
 	}
-	return classificationCPPProfileSpec{
-		anchorFile:      "cpp4-classification-anchors.json",
-		anchorSHA:       "e807345cb9a528facbaddaae3b914027acc4c99c8148f65f365e83f4b58ee5b4",
-		route:           "cpp",
-		symbol:          "tree_sitter_cpp",
-		caseID:          "cpp4-empty-definitions",
-		workload:        "cpp4-empty-definition-single-frame",
-		rootType:        "translation_unit",
-		queryFile:       "cpp.json",
-		queryBytes:      4734,
-		querySHA:        "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766",
-		languageVersion: 15, runtimeVersion: 15, minCompatible: 13,
-		symbolCount: 621, fieldCount: 53, grammarCount: 5,
-		querySpecs: []classificationCPPQuerySpec{
-			{id: "q.structure", sha256: "2a57e6e5cb3c6136878e5d27ced7c7a090d491ec2e9e5e3d51f6305c6227945e", patterns: 4, captures: []string{"namespace", "struct", "concept", "class"}},
-			{id: "q.probe-cpp-V14", sha256: "1077f4c6e42da4eb404eb4a819b5338f3c2aeeabbfeb1605678e3a4dd3d28f31", patterns: 3, captures: []string{"init", "vartemplate", "num"}},
-			{id: "q.probe-cpp-V17", sha256: "29e660f47b5bb900c4321ea914fe6ea74f94d4662912773075e3aac7bf744c49", patterns: 2, captures: []string{"ns", "binding"}},
-			{id: "q.probe-cpp-V23", sha256: "fde3be27ac5b9a89fa6e366ed03a24f035e1f21d0ea4434a80e1d666aef3a467", patterns: 2, captures: []string{"self", "index"}},
-		},
-		grammarFiles: []classificationCPPGrammarFile{
-			{path: "src/parser.c", role: "parser", bytes: 49598509, sha256: "3856d51ead4b6ecf5d4e1ec3fd39c52c9ba0cb535e69ea1785822280c45b75fc"},
-			{path: "src/scanner.c", role: "scanner", bytes: 6772, sha256: "55b66d60ce5551e354112bc0c050237e786402764d59893d0296ac5f88176546"},
-			{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
-			{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
-			{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
-		},
-	}, true
 }
 
 func classificationCPPAnchorsValid(a classificationLocalAnchors) error {
-	spec, _ := classificationCPPProfileSpecFor("cpp4-empty")
+	return classificationPagedAnchorsValid("cpp4-empty", a)
+}
+
+func classificationPagedAnchorsValid(name string, a classificationLocalAnchors) error {
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok {
+		return fmt.Errorf("unknown closed paged profile %q", name)
+	}
 	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != spec.route || a.Case != spec.caseID || a.API ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != spec.workload ||
 		a.Source.UTF8 != "" || a.Source.Bytes != 0 || a.Source.SHA256 != sha(nil) ||
 		a.Edits == nil || len(a.Edits) != 0 || len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" ||
 		len(a.Queries) != len(spec.querySpecs) || len(a.Required) != len(spec.querySpecs) {
-		return fmt.Errorf("CPP4 empty-source profile changed")
+		return fmt.Errorf("%s empty-source profile changed", spec.label)
 	}
 	wantRoot := []kit.TreeNode{{Parent: -1, Type: spec.rootType, Named: true}}
 	if !reflect.DeepEqual(a.Nodes, wantRoot) ||
@@ -85,7 +127,7 @@ func classificationCPPAnchorsValid(a classificationLocalAnchors) error {
 		a.ABI.RuntimeMinCompatible != uint32(spec.minCompatible) ||
 		a.ABI.SymbolCount != uint32(spec.symbolCount) ||
 		a.ABI.FieldCount != uint32(spec.fieldCount) {
-		return fmt.Errorf("CPP4 ABI or independent empty-source CST changed")
+		return fmt.Errorf("%s ABI or independent empty-source CST changed", spec.label)
 	}
 	seen := make(map[string]bool, len(a.Queries))
 	for i, q := range a.Queries {
@@ -94,32 +136,46 @@ func classificationCPPAnchorsValid(a classificationLocalAnchors) error {
 			q.Metadata.Patterns != want.patterns || q.Metadata.CaptureNames == nil ||
 			!reflect.DeepEqual(q.Metadata.CaptureNames, want.captures) ||
 			q.Metadata.Predicates == nil || len(q.Metadata.Predicates) != 0 {
-			return fmt.Errorf("CPP4 query identity or predicate-free metadata changed at %d", i)
+			return fmt.Errorf("%s query identity or predicate-free metadata changed at %d", spec.label, i)
 		}
 		seen[q.ID] = true
 		tuple := a.Required[i]
 		if tuple.Query != q.ID || tuple.Step != 0 || tuple.TreeRole != "incremental" ||
 			tuple.Structural == nil || len(tuple.Structural) != 0 ||
 			tuple.Expected == nil || len(tuple.Expected) != 0 {
-			return fmt.Errorf("CPP4 empty capture tuple changed at %d", i)
+			return fmt.Errorf("%s empty capture tuple changed at %d", spec.label, i)
 		}
 	}
 	return nil
 }
 
 func classificationCPPQueryRegistryValid(a classificationLocalAnchors) error {
-	spec, _ := classificationCPPProfileSpecFor("cpp4-empty")
+	return classificationPagedQueryRegistryValid("cpp4-empty", a)
+}
+
+func classificationPagedQueryRegistryValid(name string, a classificationLocalAnchors) error {
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok {
+		return fmt.Errorf("unknown closed paged profile %q", name)
+	}
 	data, err := os.ReadFile("../../testdata/native/queries/" + spec.queryFile)
 	if err != nil {
 		return err
 	}
-	return classificationCPPQueryRegistryBytesValid(a, data)
+	return classificationPagedQueryRegistryBytesValid(name, a, data)
 }
 
 func classificationCPPQueryRegistryBytesValid(a classificationLocalAnchors, data []byte) error {
-	spec, _ := classificationCPPProfileSpecFor("cpp4-empty")
+	return classificationPagedQueryRegistryBytesValid("cpp4-empty", a, data)
+}
+
+func classificationPagedQueryRegistryBytesValid(name string, a classificationLocalAnchors, data []byte) error {
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok {
+		return fmt.Errorf("unknown closed paged profile %q", name)
+	}
 	if len(data) != spec.queryBytes || sha(data) != spec.querySHA {
-		return fmt.Errorf("CPP query registry file pin changed")
+		return fmt.Errorf("%s query registry file pin changed", spec.registryLabel)
 	}
 	var registry struct {
 		Schema  string `json:"schema"`
@@ -130,24 +186,28 @@ func classificationCPPQueryRegistryBytesValid(a classificationLocalAnchors, data
 		} `json:"queries"`
 	}
 	if err := json.Unmarshal(data, &registry); err != nil {
-		return fmt.Errorf("decode CPP query registry: %w", err)
+		return fmt.Errorf("decode %s query registry: %w", spec.registryLabel, err)
 	}
 	if registry.Schema != "tsgk-native-query-cases/r1" || registry.Route != spec.route ||
 		len(registry.Queries) != len(spec.querySpecs) || len(a.Queries) != len(spec.querySpecs) {
-		return fmt.Errorf("CPP query registry profile changed")
+		return fmt.Errorf("%s query registry profile changed", spec.registryLabel)
 	}
 	for i, query := range registry.Queries {
 		if query.ID != spec.querySpecs[i].id || query.ID != a.Queries[i].ID ||
 			query.Source != a.Queries[i].Source || sha([]byte(query.Source)) != spec.querySpecs[i].sha256 {
-			return fmt.Errorf("CPP query registry source/order differs at %d", i)
+			return fmt.Errorf("%s query registry source/order differs at %d", spec.registryLabel, i)
 		}
 	}
 	return nil
 }
 
 func classificationCPPGrammarValid(files []kit.NativeInput) bool {
-	spec, _ := classificationCPPProfileSpecFor("cpp4-empty")
-	if len(files) != len(spec.grammarFiles) || len(files) != spec.grammarCount {
+	return classificationPagedGrammarValid("cpp4-empty", files)
+}
+
+func classificationPagedGrammarValid(name string, files []kit.NativeInput) bool {
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok || len(files) != len(spec.grammarFiles) || len(files) != spec.grammarCount {
 		return false
 	}
 	for i, file := range files {
@@ -192,13 +252,21 @@ func classificationCPPRouteFiles(t *testing.T, route string) (string, []kit.Nati
 
 func classificationCPPReadAnchors(t *testing.T) ([]byte, classificationLocalAnchors) {
 	t.Helper()
-	spec, _ := classificationCPPProfileSpecFor("cpp4-empty")
+	return classificationPagedReadAnchors(t, "cpp4-empty")
+}
+
+func classificationPagedReadAnchors(t *testing.T, name string) ([]byte, classificationLocalAnchors) {
+	t.Helper()
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok {
+		t.Fatalf("unknown closed paged profile %q", name)
+	}
 	data, err := os.ReadFile("../../testdata/query-semantics/" + spec.anchorFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if sha(data) != spec.anchorSHA {
-		t.Fatal("pinned CPP4 anchors changed")
+		t.Fatalf("pinned %s anchors changed", spec.label)
 	}
 	var anchors classificationLocalAnchors
 	if err := jsonv2.Unmarshal(data, &anchors, jsonv2.RejectUnknownMembers(true)); err != nil {

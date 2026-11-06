@@ -170,7 +170,7 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		return classificationCaptureProfile{"go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288", "go", "tree_sitter_go", 3, 5, false}, nil
 	case "csharp15-empty":
 		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
-	case "cpp4-empty":
+	case "cpp4-empty", "kotlin5-empty":
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
@@ -306,7 +306,7 @@ func classificationCSharpEmptyStderr(result *runner.Result) {
 
 func classificationNormalizeCaptureStderr(profileName string, result *CaseResult, capture *driverCapture) {
 	_, small17Profile := classificationSmall17ProfileFor(profileName)
-	if profileName != "csharp15-empty" && profileName != "cpp4-empty" && !classificationCJRProfile(profileName) &&
+	if _, pagedProfile := classificationCPPProfileSpecFor(profileName); profileName != "csharp15-empty" && !pagedProfile && !classificationCJRProfile(profileName) &&
 		!small17Profile && !classificationEmptyProfileName(profileName) {
 		return
 	}
@@ -443,7 +443,7 @@ func TestQueryClassificationGoLocalCapture(t *testing.T) {
 }
 
 func classificationGoCaptureEntrySkipsProfile(profileName string) bool {
-	if profileName == "csharp15-empty" || profileName == "cpp4-empty" {
+	if _, ok := classificationCPPProfileSpecFor(profileName); profileName == "csharp15-empty" || ok {
 		return true
 	}
 	if _, ok := classificationCJRSpecFor(profileName); ok {
@@ -465,6 +465,13 @@ func TestQueryClassificationCSharpLocalCapture(t *testing.T) {
 func TestQueryClassificationCPPLocalCapture(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "cpp4-empty" {
 		t.Skip("explicit CPP4 empty-definition profile is required")
+	}
+	classificationNativeLocalCapture(t)
+}
+
+func TestQueryClassificationKotlin5LocalCapture(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "kotlin5-empty" {
+		t.Skip("explicit Kotlin5 empty-definition profile is required")
 	}
 	classificationNativeLocalCapture(t)
 }
@@ -530,11 +537,11 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCSharpAnchorsValid(anchors); err != nil {
 			t.Fatal(err)
 		}
-	case "cpp4-empty":
-		if err := classificationCPPAnchorsValid(anchors); err != nil {
+	case "cpp4-empty", "kotlin5-empty":
+		if err := classificationPagedAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
-		if err := classificationCPPQueryRegistryValid(anchors); err != nil {
+		if err := classificationPagedQueryRegistryValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
 	case "c4-empty", "java5-empty", "rust4-empty":
@@ -594,8 +601,8 @@ func classificationNativeLocalCapture(t *testing.T) {
 	if _, ok := classificationCJRSpecFor(profileName); ok && !classificationCJRGrammarValid(profileName, grammar) {
 		t.Fatal("C/Java/Rust grammar roles or paths differ from the closed unpaged profile", profile.route)
 	}
-	if profileName == "cpp4-empty" && !classificationCPPGrammarValid(grammar) {
-		t.Fatal("CPP grammar roles or paths differ from the closed paged profile", profile.route)
+	if spec, ok := classificationCPPProfileSpecFor(profileName); ok && !classificationPagedGrammarValid(profileName, grammar) {
+		t.Fatal(spec.registryLabel+" grammar roles or paths differ from the closed paged profile", profile.route)
 	}
 	if _, ok := classificationEmptyProfileFor(profileName); ok {
 		if err := classificationEmptyGrammarValid(profileName, registryData, profile.route, profile.symbol, grammar); err != nil {
