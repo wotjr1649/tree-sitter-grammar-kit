@@ -243,6 +243,7 @@ func TestQueryReferenceStoredEmitterResponse(t *testing.T) {
 }
 
 func TestQueryReferenceConnectionContradictions(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, code string
 		mutate     func(*referenceFixture)
@@ -347,6 +348,7 @@ func TestQueryReferenceConnectionContradictions(t *testing.T) {
 }
 
 func TestQueryReferenceConnectionEveryIdentityRole(t *testing.T) {
+	t.Parallel()
 	for _, role := range EvidenceRoles {
 		t.Run(role, func(t *testing.T) {
 			f := newReferenceFixture(t)
@@ -365,6 +367,7 @@ func TestQueryReferenceConnectionEveryIdentityRole(t *testing.T) {
 }
 
 func TestQueryReferenceConnectionSharedContextCounts(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"policy", "native-identity", "reference-identity", "native-mode", "reference-mode", "native-status", "reference-status", "native-assessment", "reference-assessment", "witness-platform", "graph-anchor", "native-duplicate", "reference-duplicate", "native-recorded", "reference-recorded"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newReferenceFixture(t)
@@ -464,6 +467,7 @@ func TestQueryReferenceConnectionSourceIdentityKeepsOtherCounts(t *testing.T) {
 }
 
 func TestQueryReferenceConnectionCanonicalNodeConstraints(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"policy-identity", "policy-kind", "policy-eligibility", "run-duplicate", "unresolved-ref", "selected-cycle", "two-cycles", "unrelated-cycle", "missing-node-unrelated-cycle", "capped-policy", "capped-run"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newReferenceFixture(t)
@@ -604,6 +608,7 @@ func TestQueryReferenceConnectionReferenceFailureCodes(t *testing.T) {
 }
 
 func TestQueryReferenceEmitterFailureCodeContract(t *testing.T) {
+	t.Parallel()
 	data, e := os.ReadFile("../dev/query-reference/main.rs")
 	if e != nil {
 		t.Fatal(e)

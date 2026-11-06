@@ -511,6 +511,7 @@ func TestSteplessEnds(t *testing.T) {
 // An API payload is a full tree's answer to an API workload only: one on a workload without
 // API observations is unrequested, as live checkAPI rejects it (review on #250).
 func TestQualificationRawAPIUnrequested(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	f.inv.Routes[0].Workload.API = false
 	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {profile: func(set string, prof map[string]any) {
@@ -529,6 +530,7 @@ func TestQualificationRawAPIUnrequested(t *testing.T) {
 // A raw API payload answers the registered case's API points, one row at each point's byte,
 // and the tree form binds as decoded, as live Check reads them (Codex A217L).
 func TestQualificationRawAPIPoints(t *testing.T) {
+	t.Parallel()
 	answered := []any{[]int64{0, 0, 0, 0}}
 	for _, tc := range []struct {
 		name string
@@ -563,6 +565,7 @@ func TestQualificationRawAPIPoints(t *testing.T) {
 // A completed raw tree counts its nodes within the operation's limit, as live checkTree
 // requires; the control keeps the count (review on #250).
 func TestQualificationRawCountLimit(t *testing.T) {
+	t.Parallel()
 	for _, over := range []bool{false, true} {
 		f := newQfx(t)
 		f.inv.Routes[0].Workload.API = false // no API payload, so only the count bound judges it
@@ -604,6 +607,7 @@ const qfxHistoricalManifest = "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5
 // later step precedes a live-rule failure of an earlier one, which the response records at
 // its end (#251, Codex PLAN251B).
 func TestQualificationRawPriority(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
 		if set == "s06-fxa" && raw["id"] == "c2" {
@@ -622,6 +626,7 @@ func TestQualificationRawPriority(t *testing.T) {
 // TestQualificationRawFirstRouteType keeps a present but unreadable route on the first step a
 // projection mismatch first, never an absent route (Codex A251C).
 func TestQualificationRawFirstRouteType(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	r := f.run(t, f.all(t, map[string]qfxMut{"windows-amd64": {raw: func(set string, raw map[string]any) {
 		if set == "s06-fxa" && raw["id"] == "c1" {

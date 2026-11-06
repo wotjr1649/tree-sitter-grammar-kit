@@ -155,6 +155,7 @@ func TestSemanticSelectionPreservesTypesAndUTF8(t *testing.T) {
 }
 
 func TestSemanticPreflightPreservesStandaloneSparseApproval(t *testing.T) {
+	t.Parallel()
 	for _, inside := range []bool{false, true} {
 		t.Run(strconv.FormatBool(inside), func(t *testing.T) {
 			f := newEligibilityFixture(t)

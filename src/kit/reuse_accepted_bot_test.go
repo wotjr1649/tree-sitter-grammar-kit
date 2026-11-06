@@ -270,6 +270,7 @@ func TestQualifyReuseAcceptedOmitMissingRoute(t *testing.T) {
 }
 
 func TestQualifyReuseAcceptedOmitFailureBeforeDepthLimit(t *testing.T) {
+	t.Parallel()
 	for _, damage := range []string{"none", "source", "fresh-count"} {
 		t.Run(damage, func(t *testing.T) {
 			root, _ := acceptedReplayFixture(t, func(files map[string][]byte, top map[string]any) {
@@ -851,6 +852,7 @@ func TestReuseAcceptedCompletedHeaderCount(t *testing.T) {
 }
 
 func TestReuseAcceptedPartialHeader(t *testing.T) {
+	t.Parallel()
 	for _, damage := range []string{"valid", "count", "code", "status", "late-invalid", "late-invalid-code", "zero-code", "last-target-valid", "last-target-code", "last-malformed", "last-malformed-code", "last-wire-invalid", "last-wire-invalid-code"} {
 		t.Run(damage, func(t *testing.T) {
 			req, raw, projection := acceptedFixture(t, 0)

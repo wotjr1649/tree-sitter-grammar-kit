@@ -17,6 +17,7 @@ func TestQueryClassificationDartPHP12Local(t *testing.T) {
 }
 
 func TestQueryClassificationDartPHP12ProfilesAndClosure(t *testing.T) {
+	t.Parallel()
 	var definitions, patterns, entries, cases, edits, steps, roles, links uint64
 	names := make(map[string]bool)
 	for _, name := range []string{"dart7-empty", "php5-empty"} {

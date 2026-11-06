@@ -26,6 +26,7 @@ func benchmarkTree(n int) []TreeNode {
 }
 
 func TestBenchmarkFixtures(t *testing.T) {
+	t.Parallel()
 	for _, n := range []int{64, 1024, 16384} {
 		a := benchmarkTree(n)
 		if err := ValidateTree(a, uint64(n)); err != nil {

@@ -29,6 +29,7 @@ func TestQueryClassificationScript17EntrySelectionIsDisjoint(t *testing.T) {
 }
 
 func TestQueryClassificationScript17ProfilesAndCompilerClosure(t *testing.T) {
+	t.Parallel()
 	var definitions, patterns, captureEntries uint64
 	var cases, edits, steps, roles, links uint64
 	allCaptureNames := make(map[string]bool)
@@ -112,6 +113,7 @@ func TestQueryClassificationScript17ProfilesAndCompilerClosure(t *testing.T) {
 }
 
 func TestQueryClassificationScript17RejectsSourceAliasesAndReusedReferences(t *testing.T) {
+	t.Parallel()
 	inventory := actualJSONRead(t, "../contracts/query-slot-inventory-r1.json")
 	qualification := actualJSONRead(t, "../contracts/qualification-c1.json")
 	for _, name := range []string{"python8-empty", "ruby4-empty", "r3-empty", "bash2-empty"} {
