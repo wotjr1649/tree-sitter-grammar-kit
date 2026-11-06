@@ -238,3 +238,7 @@ merge commit `8b93110`의 post-merge run 37145206819(attempt 1)에서 foundation
 * 동적 SQL known miss 중 `;` 없는 문장 뒤의 범위는 다음 EXEC까지로만 제한된다. schema가 `sys`가 아닌 첫 호출은 탐지하지 않는다(mapping 정의상 `sp_executesql`이 아님).
 * query 시간 상한에서 runtime이 멈추지 않는 경로는 부분 capture를 남기지 않는다.
 * 비공개 corpus는 이번 세션에서 실행하지 않았다(S06 범위 밖).
+
+## 삭제된 로컬 증거
+
+이 보고서가 인용한 untracked 로컬 경로(`.work/session-05/`, `.work/session-06/`, `.work/session-06-postmerge/`, `.work/orchestrator/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. 결론의 근거는 이 보고서 본문, 해당 PR·commit, CI 기록이다. 인용한 hash와 개수는 당시 관측 기록으로 남기며, 로컬 파일로 다시 확인할 수는 없다.

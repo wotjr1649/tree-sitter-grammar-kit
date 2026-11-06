@@ -163,3 +163,7 @@ general-purpose subagent 두 개가 각각 따로 리뷰했다(GitHub approval �
 * 실행 identity는 run이 스스로 쓴 주장이며 진위는 artifact 경로와 hash로만 보장한다(게시자 인증 없음).
 * `go test -race`는 실행하지 않았다(CGO 없는 build).
 * BrightScript maintained·historical, Cooklang audit 행은 `NOT_RUN`이다(bundle 미준비, 다운로드 없음).
+
+## 삭제된 로컬 증거
+
+이 보고서가 인용한 untracked 로컬 경로(`.work/session-08/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. 결론의 근거는 이 보고서 본문, 해당 PR·commit, CI 기록이다. 인용한 hash와 개수는 당시 관측 기록으로 남기며, 로컬 파일로 다시 확인할 수는 없다.
