@@ -19,14 +19,14 @@ func TestQueryClassificationKotlin5StaticProfile(t *testing.T) {
 		profile.queryCount != 5 || profile.grammarCount != 5 || !profile.paged {
 		t.Fatalf("Kotlin5 profile is not closed and paged: %#v, %v", profile, err)
 	}
-	for _, name := range []string{"", "positive-batch", "c4-empty", "java5-empty", "rust4-empty", "csharp15-empty", "cpp4-empty", "dart7-empty", "php5-empty", "javascript4-empty"} {
+	for _, name := range []string{"", "positive-batch", "c4-empty", "java5-empty", "rust4-empty", "csharp15-empty", "cpp4-empty", "swift8-empty", "dart7-empty", "php5-empty", "javascript4-empty"} {
 		other, err := classificationCaptureProfileFor(name)
-		wantPaged := name == "csharp15-empty" || name == "cpp4-empty"
+		wantPaged := name == "csharp15-empty" || name == "cpp4-empty" || name == "swift8-empty"
 		if err != nil || other.paged != wantPaged {
 			t.Fatalf("Kotlin5 paging changed another profile: %q, %#v, %v", name, other, err)
 		}
 	}
-	for _, alias := range []string{"kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "swift8-empty"} {
+	for _, alias := range []string{"kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "swift8"} {
 		if _, ok := classificationCPPProfileSpecFor(alias); ok {
 			t.Fatalf("near-alias paged profile %q accepted", alias)
 		}

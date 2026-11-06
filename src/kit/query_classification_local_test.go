@@ -77,7 +77,7 @@ func TestQueryClassificationGoLocal(t *testing.T) {
 }
 
 func classificationGoLocalSkipsProfile(profile string) bool {
-	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" || profile == "kotlin5-empty" ||
+	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" || profile == "kotlin5-empty" || profile == "swift8-empty" ||
 		classificationSmall17ProfileName(profile) || classificationWeb16ProfileName(profile) || classificationScript17ProfileName(profile) || classificationDartPHP12ProfileName(profile)
 }
 
@@ -106,6 +106,13 @@ func TestQueryClassificationCPP4Local(t *testing.T) {
 func TestQueryClassificationKotlin5Local(t *testing.T) {
 	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "kotlin5-empty" {
 		t.Skip("explicit Kotlin5 classification profile required")
+	}
+	classificationLocal(t)
+}
+
+func TestQueryClassificationSwift8Local(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "swift8-empty" {
+		t.Skip("explicit Swift8 classification profile required")
 	}
 	classificationLocal(t)
 }
@@ -171,7 +178,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 			t.Fatal(err)
 		}
 		name, expectedSHA, route, definitions = cjrProfile.AnchorFile, cjrProfile.AnchorSHA, cjrProfile.Route, cjrProfile.QueryCount
-	case "cpp4-empty", "kotlin5-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty":
 		pagedProfile, _ := classificationPagedProfileForName(profile)
 		name, expectedSHA, route, definitions = pagedProfile.AnchorFile, pagedProfile.AnchorSHA, pagedProfile.Route, pagedProfile.QueryCount
 	case "json1-tiny", "yaml1-empty", "xml2-tiny", "html2-empty", "css11-empty":
@@ -223,7 +230,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		if err := classificationCJRAnchorsValid(cjrProfile, a); err != nil {
 			t.Fatal(err)
 		}
-	case "cpp4-empty", "kotlin5-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty":
 		pagedProfile, _ := classificationPagedProfileForName(profile)
 		if err := classificationPagedAnchorsValid(pagedProfile, a); err != nil {
 			t.Fatal(err)
@@ -264,7 +271,7 @@ func (a classificationAnchors) nativeContext() string {
 		return "full-input-utf8/r2"
 	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		return "full-input-utf8/r2"
-	case "csharp", "cpp", "kotlin":
+	case "csharp", "cpp", "kotlin", "swift":
 		return semanticPagedContext
 	default:
 		return ""
@@ -287,6 +294,8 @@ func (a classificationAnchors) nativeSymbol() string {
 		return "tree_sitter_cpp"
 	case "kotlin":
 		return "tree_sitter_kotlin"
+	case "swift":
+		return "tree_sitter_swift"
 	case "json":
 		return "tree_sitter_json"
 	case "yaml":
@@ -326,7 +335,7 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 	switch a.Route {
 	case "csharp":
 		return a.sha256 == classificationCSharpAnchorsSHA && plan.NativeContext == semanticPagedContext
-	case "cpp", "kotlin":
+	case "cpp", "kotlin", "swift":
 		profile, ok := classificationPagedProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == semanticPagedContext
 	case "c", "java", "rust":
@@ -347,7 +356,7 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 
 func classificationNativePrefix(a classificationAnchors) string {
 	switch a.Route {
-	case "csharp", "cpp", "kotlin":
+	case "csharp", "cpp", "kotlin", "swift":
 		return "oracle/"
 	case "go", "c", "java", "rust":
 		return "current/native/"
@@ -1021,7 +1030,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 				}
 				queryPath := filepath.Join("..", filepath.FromSlash(strings.TrimPrefix(cjrProfile.QueryFile, "src/")))
 				record, err = classificationCJRDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, queryPath), reader)
-			case "cpp", "kotlin":
+			case "cpp", "kotlin", "swift":
 				pagedProfile, ok := classificationPagedProfileForRoute(anchors.Route)
 				if !ok {
 					t.Fatal("unknown closed paged definition profile", anchors.Route)
@@ -1067,7 +1076,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 
 func classificationGoDefinitionProfileAllowed(profile string) bool {
 	switch profile {
-	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "kotlin5-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "kotlin5-empty", "swift8-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
 		return true
 	default:
 		return classificationSmall17ProfileName(profile) || classificationDartPHP12ProfileName(profile)
@@ -1183,7 +1192,7 @@ func classificationCaptureStderr(a classificationAnchors, capture semanticProces
 	strictZeroMember := false
 	switch a.Route {
 	case "go":
-	case "csharp", "c", "java", "rust", "cpp", "kotlin", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
+	case "csharp", "c", "java", "rust", "cpp", "kotlin", "swift", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php":
 		strictZeroMember = true
 	default:
 		return fmt.Errorf("unknown classification stderr route")

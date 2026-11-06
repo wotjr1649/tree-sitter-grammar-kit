@@ -170,7 +170,7 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		return classificationCaptureProfile{"go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288", "go", "tree_sitter_go", 3, 5, false}, nil
 	case "csharp15-empty":
 		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
-	case "cpp4-empty", "kotlin5-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty":
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
@@ -476,6 +476,13 @@ func TestQueryClassificationKotlin5LocalCapture(t *testing.T) {
 	classificationNativeLocalCapture(t)
 }
 
+func TestQueryClassificationSwift8LocalCapture(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "swift8-empty" {
+		t.Skip("explicit Swift8 empty-definition profile is required")
+	}
+	classificationNativeLocalCapture(t)
+}
+
 func TestQueryClassificationCJRLocalCapture(t *testing.T) {
 	if _, ok := classificationCJRSpecFor(os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE")); !ok {
 		t.Skip("explicit C/Java/Rust empty-definition profile is required")
@@ -537,7 +544,7 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCSharpAnchorsValid(anchors); err != nil {
 			t.Fatal(err)
 		}
-	case "cpp4-empty", "kotlin5-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty":
 		if err := classificationPagedAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}

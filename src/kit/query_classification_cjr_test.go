@@ -136,7 +136,7 @@ func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []N
 	}
 	withScanner := false
 	switch route {
-	case "go", "csharp", "rust", "cpp", "kotlin":
+	case "go", "csharp", "rust", "cpp", "kotlin", "swift":
 		withScanner = true
 	case "c", "java":
 	default:
