@@ -108,7 +108,8 @@ func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenc
 		defer r.cancel()
 	}
 	b := r.eligibility
-	if b == nil {
+	owner := b == nil
+	if owner {
 		b = &eligibilityBudget{r: r}
 		r.eligibility = b
 	}
@@ -183,6 +184,10 @@ func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenc
 	}
 	if e := s.validate(req); e != nil {
 		return res, e
+	}
+	// Selected once, before any evidence read, from the approval-bound registration only; inherited ledgers keep their cap.
+	if owner && s.bound && eligibilityPagedContext(s.reg.Context) {
+		b.logicalLimit = eligibilityPagedLogicalLimit
 	}
 	wanted, approved, wantedNodes := map[string]bool{}, map[string]ReplayMember{}, map[string]bool{}
 	approved[s.reg.Graph.Path] = s.reg.Graph

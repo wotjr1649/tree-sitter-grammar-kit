@@ -50,7 +50,7 @@ Grammar29개와 원본 query6개, native registry·inventory·qualification의 �
 
 새 Windows 수집 전에 source commit·전체 입력·controller·도구·시험 binary·사전등록·유한 예산과 독립 pre-query 검토를 고정한다. 빈 입력의 실제 root나 ABI가 사전 기대값과 다르면 anchor를 사후 수정하지 않고 관측을 기록한 뒤 별도 profile로 다시 사전등록한다. native driver 실행 파일과 case library는 각각 16 MiB 이하여야 하고 eligibility의 logical 1 GiB 한도도 넘지 않아야 하므로, 이를 넘기면 이 계약 안에서 완화하지 않고 별도 계약 변경으로 다룬다. 이 profile은 빈 입력 관측과 조건부 구조 분류만 다루며 사례별 CST/API·capture·semantic 완료나 전체 #216/#195 완료를 뜻하지 않는다.
 
-이 profile의 guarded 분류는 현재 eligibility logical 한도(1 GiB)에서 `RESOURCE_LIMIT`로 끝난다([계약의 알려진 한계](../specs/instrumented-query-reference.md#postgresql-9개-정의의-parser-paging-분류)). 실패 receipt의 kit stdout에 남는 `eligibility ledger at exit` 줄로 core 원장 초과와 시험 쪽 charge 초과를 구분하며, 같은 입력으로 재실행하지 않는다.
+이 profile의 첫 guarded 분류는 당시 eligibility logical 한도(1 GiB)에서 `RESOURCE_LIMIT`로 끝났다. 이후 paged context의 eligibility 한도는 1.5 GiB로 바뀌었으며(#216, 원장을 직접 시작한 eligibility 검증에 한함) 분류는 새 source revision에서 처음부터 다시 실행한다. 한도 선택은 `query_eligibility_paged_limit_test.go`가 검증한다. 일반 route·결속되지 않은 paged 요청·상속 원장이 1 GiB에 머무는지, 선택 지점이 `validate` 뒤·evidence 읽기 앞 한 곳뿐인지, 1 GiB+1은 일반 원장에서 실패하고 paged 원장에서 통과하며 1.5 GiB+1은 실패하는지 본다. 당시 실패는 [계약의 알려진 한계](../specs/instrumented-query-reference.md#postgresql-9개-정의의-parser-paging-분류)에 기록돼 있다. 그 실패 receipt의 kit stdout에 남는 `eligibility ledger at exit` 줄로 core 원장 초과와 시험 쪽 charge 초과를 구분하며, 같은 입력으로 재실행하지 않는다.
 
 ## #216 PowerShell3 닫힌 1-byte profile 검증
 

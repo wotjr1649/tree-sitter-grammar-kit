@@ -18,7 +18,7 @@
 
 run-binding/r1은 profile·manifest·semantic 등록·eligibility 승인/등록·witness·policy·graph digest와 완전한 사전 member 순서를 고정한다. 각 member는 D/O 논리 owner, Oracle-local 이름, 실제 graph node, 정확한 `oracle/` 경로·role·bytes·SHA-256을 함께 가진다. native invocation의 plain `process`와 current reference invocation별 `references[].receipt`를 구분한다. native/r1 eligibility DTO의 `Receipt == nil` 계약은 유지한다. 같은 hash의 다른 경로나 owner로 대신할 수 없다. 파일·디렉터리의 물리 동일성도 같은 pass의 metadata와 held child root로 대조한다.
 
-small 예산은 파일당 16 MiB, 총 256 MiB, 10,000 files, wall 120초, work 32,000,000, logical allocation 1 GiB다. frame 한도에는 4-byte header가 포함된다. 이 값은 기존 reference/replay 한도를 올리지 않는다. `complete`는 offline 평가가 끝났다는 뜻이며, 조건부 저장 일관성 PASS가 실행 진위를 인증하지 않는다. 재계산하지 않은 기존 API/fact/dynamic claim은 base PASS의 근거로 채택하지 않는다. 전체 route·SVC·large·replay/qualification 통합과 실제 main 확인은 별도 완료 조건이다.
+small 예산은 파일당 16 MiB, 총 256 MiB, 10,000 files, wall 120초, work 32,000,000, logical allocation 1 GiB다(eligibility 검증이 직접 시작한 원장이 approval에 결속된 paged-parser context일 때만 1.5 GiB). frame 한도에는 4-byte header가 포함된다. 이 값은 기존 reference/replay 한도를 올리지 않는다. `complete`는 offline 평가가 끝났다는 뜻이며, 조건부 저장 일관성 PASS가 실행 진위를 인증하지 않는다. 재계산하지 않은 기존 API/fact/dynamic claim은 base PASS의 근거로 채택하지 않는다. 전체 route·SVC·large·replay/qualification 통합과 실제 main 확인은 별도 완료 조건이다.
 
 ## S01 함수와 소유권
 
