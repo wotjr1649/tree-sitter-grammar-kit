@@ -202,6 +202,8 @@ func integrationPolicy(text string) error {
 		return fmt.Errorf("large API configuration must be retained before the audit can fail")
 	}
 	needs := "    needs: [foundation, native-prepare, native-routes, large-api, qualification]\n"
+	// #335: the gate also needs the mode, whose pr_verified output is the only way it may skip
+	gateNeeds := "    needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]\n"
 	// #317: the race runs on nightly and dispatch only, also when a duplicate nightly skipped
 	// the foundation.
 	rules := map[string]string{
@@ -214,7 +216,7 @@ func integrationPolicy(text string) error {
 		}
 	}
 	body := workflowJobBody(text, "integration-gate")
-	for _, required := range []string{needs, "    name: integration gate\n", "    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}\n", "    timeout-minutes: 15\n", "      contents: read\n      actions: read\n", "PRODUCER_RESULTS: ${{ toJSON(needs) }}", "GH_TOKEN: ${{ github.token }}", "& src/dev/ci-gate/fetch.ps1 -Gate ", " verify -expected ", "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "if ($LASTEXITCODE -ne 0) { throw 'integration gate failed' }"} {
+	for _, required := range []string{gateNeeds, "    name: integration gate\n", "    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') && !(github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true') }}\n", "    timeout-minutes: 15\n", "      contents: read\n      actions: read\n", "PRODUCER_RESULTS: ${{ toJSON(needs) }}", "GH_TOKEN: ${{ github.token }}", "& src/dev/ci-gate/fetch.ps1 -Gate ", " verify -expected ", "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "if ($LASTEXITCODE -ne 0) { throw 'integration gate failed' }"} {
 		if !strings.Contains(body, required) {
 			return fmt.Errorf("integration gate policy missing: %s", required)
 		}
@@ -250,6 +252,11 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 		"missing-route-dependency": strings.ReplaceAll(text, "native-prepare, native-routes, large-api", "native-prepare, large-api"),
 		"gate-not-always":          strings.Replace(text, "    if: ${{ always() && !(", "    if: ${{ success() && !(", 1),
 		"gate-skips-off-schedule":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
+		// #335: a skipped required gate reports success, so only a reused main push may skip it
+		"gate-skips-on-pr-event":   strings.Replace(text, " && !(github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true') }}", " && !(needs.mode.outputs.pr_verified == 'true') }}", 1),
+		"gate-skips-on-light":      strings.Replace(text, "github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true'", "github.event_name == 'push' && needs.mode.outputs.heavy != 'true'", 1),
+		"gate-skips-any-push":      strings.Replace(text, "github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true'", "github.event_name == 'push'", 1),
+		"gate-without-mode-need":   strings.Replace(text, "    needs: [mode, foundation, native-prepare,", "    needs: [foundation, native-prepare,", 1),
 		"swallowed-fetch":          strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "Write-Warning 'download failed'", 1),
 		"swallowed-diagnostic":     strings.ReplaceAll(text, "if ($outcome -ne 'success') { throw '", "if ($outcome -ne 'success') { Write-Warning '"),
 		"diagnostics-success-only": strings.ReplaceAll(text, "!cancelled() && contains", "success() && contains"),
@@ -265,12 +272,12 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 	}
 }
 
-// lightModePolicy is #252: only native-prepare consults the run-time mode, which is light
-// only for a pull_request carrying ci:light and full otherwise or on a failed lookup; the
-// integration gate neither needs mode nor skips, so a light run cannot pass it.
+// lightModePolicy is #252: native-prepare and the foundation consult the run-time mode, which is
+// light only for a pull_request carrying ci:light and full otherwise or on a failed lookup; the
+// integration gate reads it only to skip a reused main push (#335), so a light run cannot pass it.
 func lightModePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
-	for _, required := range []string{"    name: CI mode\n", "    runs-on: ubuntu-24.04\n", "    timeout-minutes: 5\n", "    permissions:\n      pull-requests: read\n      actions: read\n    outputs:\n",
+	for _, required := range []string{"    name: CI mode (${{ github.sha }})\n", "    runs-on: ubuntu-24.04\n", "    timeout-minutes: 5\n", "    permissions:\n      pull-requests: read\n      actions: read\n      contents: read\n    outputs:\n",
 		"      heavy: ${{ steps.mode.outputs.heavy }}\n", "          $heavy = 'true'\n", "          if ($env:EVENT -eq 'pull_request') {\n",
 		"            if ($LASTEXITCODE -eq 0 -and $labels -contains 'ci:light') { $heavy = 'false' }\n", `          "heavy=$heavy" >> $env:GITHUB_OUTPUT` + "\n", "          exit 0 # a failed lookup already chose full"} {
 		if !strings.Contains(mode, required) {
@@ -293,13 +300,18 @@ func lightModePolicy(text string) error {
 	}
 	prepare := workflowJobBody(text, "native-prepare")
 	// #317: it starts beside the foundation and consults the duplicate nightly skip itself
-	if !strings.Contains(prepare, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}\n") {
+	// #335: and not on a main push that reused same-tree PR evidence
+	if !strings.Contains(prepare, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' && needs.mode.outputs.pr_verified != 'true' }}\n") {
 		return fmt.Errorf("native-prepare must start only on a full mode, beside the foundation")
 	}
-	for _, name := range []string{"native-routes", "large-api", "qualification", "integration-gate", "race"} {
+	for _, name := range []string{"native-routes", "large-api", "qualification", "race"} {
 		if strings.Contains(workflowJobBody(text, name), "mode") {
 			return fmt.Errorf("only native-prepare and the foundation consult the mode: %s", name)
 		}
+	}
+	// the gate names the mode exactly twice: its needs line and the push-only skip in its if
+	if strings.Count(workflowJobBody(text, "integration-gate"), "mode") != 2 {
+		return fmt.Errorf("the integration gate may consult the mode only to skip a reused push")
 	}
 	return nil
 }
@@ -310,9 +322,10 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, broken := range map[string]string{
-		"unconditional-skip":        strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}\n", "    if: ${{ false }}\n", 1),
+		"unconditional-skip":        strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' && needs.mode.outputs.pr_verified != 'true' }}\n", "    if: ${{ false }}\n", 1),
 		"prepare-after-foundation":  strings.Replace(text, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy", "    needs: [foundation, mode]\n    if: ${{ needs.mode.outputs.heavy", 1),
-		"prepare-ignores-duplicate": strings.Replace(text, " && needs.mode.outputs.duplicate != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", " }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", 1),
+		"prepare-ignores-duplicate": strings.Replace(text, " && needs.mode.outputs.duplicate != 'true' && needs.mode.outputs.pr_verified != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", " && needs.mode.outputs.pr_verified != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", 1),
+		"prepare-ignores-reuse":     strings.Replace(text, " && needs.mode.outputs.pr_verified != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", " }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", 1),
 		"prepare-ignores-light":     strings.Replace(text, "    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate", "    if: ${{ needs.mode.outputs.duplicate", 1),
 		"light-on-main":             strings.Replace(text, "          if ($env:EVENT -eq 'pull_request') {\n", "          if ($true) {\n", 1),
 		"default-light":             strings.Replace(text, "          $heavy = 'true'\n", "          $heavy = 'false'\n", 1),
@@ -343,7 +356,7 @@ var requiredRunJobs = []string{"foundation (windows-2025)", "foundation (ubuntu-
 // in the last 24 hours and its latest attempt holds each required job once with conclusion
 // success; the diagnostics' result does not count, a nightly run never counts and a failed
 // lookup runs in full. The gate skips only on that skipped foundation, and only on a schedule,
-// so a pull_request or push run can never leave its required gate skipped.
+// or on a reused main push (#335), so a pull_request run can never leave its required gate skipped.
 func nightlyDuplicatePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
 	for _, required := range []string{"      duplicate: ${{ steps.mode.outputs.duplicate }}\n", "          SHA: ${{ github.sha }}\n",
@@ -721,6 +734,8 @@ func TestWorkflowFoundationCachePolicy(t *testing.T) {
 
 // concurrencyPolicy is #252/#290: one workflow-level lane that never cancels a running run and
 // keeps the queue instead of replacing the pending run; no job may set its own concurrency.
+// supersede.yml (#334) is the one deliberate exception: it starts no heavy workload and must not
+// wait behind the runs it cancels, so TestWorkflowSupersedePolicy pins its separate group instead.
 func concurrencyPolicy(text string) error {
 	policy := `(?m)^concurrency:\n  group: tsgk-campaign-heavy\n  cancel-in-progress: false\n  queue: max\n\n(?:env|jobs):\n`
 	keys := regexp.MustCompile(`(?m)^[\t ]*(?:concurrency|'concurrency'|"concurrency")[\t ]*:`).FindAllStringIndex(text, -1)
