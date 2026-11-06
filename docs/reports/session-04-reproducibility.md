@@ -110,3 +110,7 @@ PR #63 최종 후보 CI run 37106058599 attempt 1에서 `foundation (ubuntu-24.0
 * 비채택 20 route의 기준 drift(이전 CLI 생성물)는 기록만 했다. 채택 route의 `grammar.json`·`node-types.json`·`alloc.h`·`array.h` 기준은 PREPARE 기록에 없어 `NOT_CLAIMED`다.
 * 저장 용량 상한은 실행 뒤 작업 공간 합계로 관측하며 실행 중 quota가 아니다. macOS 메모리는 sampled이고 hard cap이 아니다. process-group backend는 그룹을 떠난 하위 process를 포함하지 못한다. 그런 process가 출력 pipe를 잡고 있으면 cleanup은 verified가 아니지만, pipe를 잡지 않으면 관측되지 않으므로 verified의 범위는 `cleanup.scope=PROCESS_GROUP`(group만)으로 표시한다(`TestEscapedQuietDescendant`). 이 backend들은 적대적 native code 격리가 아니다.
 * runner의 driver 쪽 60초 progress callback과 allocator hook은 S05 범위다. `go test -race`는 CGO 조건이 맞지 않아 실행하지 않았다.
+
+## 삭제된 로컬 증거
+
+이 보고서가 인용한 untracked 로컬 경로(`.work/session-04/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. `artifacts/` 아래 보존 증거(mutant 결과, receipt 등)는 그대로 남아 있다. 삭제된 경로의 파일에만 기대던 hash와 개수는 당시 관측 기록으로 남기며, 그 파일로 다시 확인할 수는 없다.

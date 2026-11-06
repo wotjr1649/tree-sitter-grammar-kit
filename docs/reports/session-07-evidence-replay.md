@@ -121,3 +121,7 @@ S06의 Windows ci-sim 출력 29개 기록 set(26 route, csharp-svc, 대용량 �
 * registration의 member bytes와 일부 identity는 S07에서 처음 결속했다. 이전 receipt가 그 bytes의 hash를 남기지 않았기 때문이다. 무결성은 그 시점 이후만 보장한다.
 * memory는 in-process이며 강제하지 않는다(파일·record·합계 한도로 묶는다).
 * evidence graph는 무결성·관계·자격만 검사하며 게시자 인증은 없다.
+
+## 삭제된 로컬 증거
+
+이 보고서가 인용한 untracked 로컬 경로(`.work/session-07/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. `artifacts/` 아래 보존 증거(mutant 결과, receipt 등)는 그대로 남아 있다. 삭제된 경로의 파일에만 기대던 hash와 개수는 당시 관측 기록으로 남기며, 그 파일로 다시 확인할 수는 없다.
