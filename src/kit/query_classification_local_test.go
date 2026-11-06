@@ -849,6 +849,11 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		t.Fatal(e)
 	}
 	defer r.cancel()
+	defer func() { // runs after t.Fatal too: the whole ledger (core plus test-side charges) at exit
+		if b := r.eligibility; b != nil {
+			t.Logf("eligibility ledger at exit work=%d/%d logical=%d/%d", b.work, eligibilityWorkLimit, b.logical, eligibilityLogicalLimit)
+		}
+	}()
 	cache := &semanticNativeCache{}
 	scope := &eligibilityScope{r: r, native: cache}
 	core, err := verifyQueryReferenceEligibilityInRun(r.caller, req, scope)
@@ -859,7 +864,7 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		t.Fatal("guarded native independent CST")
 	}
 	s := scope.session
-	if s != nil && s.b != nil { // margin record against the eligibility work/logical limits (diagnostic log only)
+	if s != nil && s.b != nil { // core eligibility ledger only; the deferred exit line adds test-side charges (diagnostic log only)
 		t.Logf("eligibility work=%d/%d logical=%d/%d", s.b.work, eligibilityWorkLimit, s.b.logical, eligibilityLogicalLimit)
 	}
 	if !classificationGoWitnessMatches(anchors, s.witness.QueryWitnessRegistration) || s.witness.Native.ProducerABI != anchors.ABI || s.witness.Native.ObservationRunID != plan.RunID || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.approval.Candidate.SourceRevision != plan.SourceRevision || s.approval.Candidate.Platform != "windows/amd64" || s.approval.Candidate.Run != plan.RunID || s.approval.Candidate.Attempt != 1 || s.reg.Native == nil || s.reg.Native.Symbol != anchors.nativeSymbol() || s.reg.Context != anchors.nativeContext() || len(s.reg.Native.Grammar) != len(plan.Grammar) {
