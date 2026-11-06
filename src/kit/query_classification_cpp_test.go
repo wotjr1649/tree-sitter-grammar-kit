@@ -36,6 +36,57 @@ type classificationCPP4Profile struct {
 	ABI                   eligibilityProducerABI
 	Counts                classificationGoDefinitionSlotCounts
 	Queries               []classificationCPP4QuerySpec
+	// FactQueries lists the trailing anchor query ids whose source lives in the fact query pack, not QueryFile.
+	FactQueries []string
+}
+
+const (
+	classificationPagedFactQueryPackPath  = "src/contracts/fact-query-pack.json"
+	classificationPagedFactQueryPackBytes = 9702
+)
+
+// classificationPagedQuerySourceFiles gives the exact raw source file of each anchor query in order.
+func classificationPagedQuerySourceFiles(p classificationCPP4Profile) []string {
+	files := make([]string, p.QueryCount)
+	for i := range files {
+		files[i] = p.QueryFile
+		if i >= p.QueryCount-len(p.FactQueries) {
+			files[i] = classificationPagedFactQueryPackPath
+		}
+	}
+	return files
+}
+
+// classificationPagedFactQueries decodes the pinned fact pack and returns the profile route's fact queries in registered order.
+func classificationPagedFactQueries(p classificationCPP4Profile, factPackData []byte) ([]OracleQuery, error) {
+	var pack classificationCSharpDefinitionFactQueryPack
+	if err := jsonv2.Unmarshal(factPackData, &pack, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return nil, fmt.Errorf("%s fact query pack shape: %w", p.Label, err)
+	}
+	if pack.Schema != "tsgk-fact-query-pack/r1" || pack.Revision != "fact-queries-r1" || pack.Mapping != "declaration-facts-r1" || pack.DynamicSQL != "dynamic-sql-r1" || pack.XMLStructure != "xml-structure-r1" || len(pack.Routes) != 4 {
+		return nil, fmt.Errorf("%s fact query pack identity differs", p.Label)
+	}
+	routeCount := 0
+	var facts []OracleQuery
+	for _, route := range pack.Routes {
+		if route.Route != p.Route {
+			continue
+		}
+		routeCount++
+		if len(route.Queries) != len(p.FactQueries) {
+			return nil, fmt.Errorf("%s fact query route is reordered or incomplete", p.Label)
+		}
+		for j, query := range route.Queries {
+			if query.ID != p.FactQueries[j] || query.Facts != strings.TrimPrefix(query.ID, "facts.") {
+				return nil, fmt.Errorf("%s fact query route is reordered or incomplete", p.Label)
+			}
+			facts = append(facts, OracleQuery{ID: query.ID, Source: query.Source})
+		}
+	}
+	if routeCount != 1 {
+		return nil, fmt.Errorf("%s fact query route is missing or duplicated", p.Label)
+	}
+	return facts, nil
 }
 
 func classificationCPP4DefinitionProfile() classificationCPP4Profile {
@@ -136,7 +187,19 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 	if digestHex(inventoryData) != classificationGoDefinitionInventorySHA || digestHex(qualificationData) != classificationGoDefinitionQualificationSHA {
 		return out, fmt.Errorf("query slot or qualification inventory pin differs")
 	}
-	if len(queryData) != p.QueryBytes || digestHex(queryData) != p.QuerySHA {
+	// Fact profiles receive one envelope with both exact raw source files; other profiles receive the raw query file.
+	queryFileData, factPackData := queryData, []byte(nil)
+	if len(p.FactQueries) > 0 {
+		var envelope classificationCSharpDefinitionQueryInputs
+		if err := jsonv2.Unmarshal(queryData, &envelope, jsonv2.RejectUnknownMembers(true)); err != nil {
+			return out, fmt.Errorf("%s query source envelope shape: %w", p.Label, err)
+		}
+		if envelope.QueryFile == nil || envelope.FactQueryPack == nil || len(envelope.FactQueryPack) != classificationPagedFactQueryPackBytes || digestHex(envelope.FactQueryPack) != classificationCSharpFactQueryPackSHA {
+			return out, fmt.Errorf("%s exact fact query pack pin differs", p.Label)
+		}
+		queryFileData, factPackData = envelope.QueryFile, envelope.FactQueryPack
+	}
+	if len(queryFileData) != p.QueryBytes || digestHex(queryFileData) != p.QuerySHA {
 		return out, fmt.Errorf("%s ordinary query source file pin differs", p.Label)
 	}
 	var slots classificationGoDefinitionSlotInventory
@@ -151,11 +214,20 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 	if slots.Qualification.Path != "src/contracts/qualification-c1.json" || slots.Qualification.Bytes != uint64(len(qualificationData)) || slots.Qualification.SHA256 != classificationGoDefinitionQualificationSHA {
 		return out, fmt.Errorf("slot qualification pin differs")
 	}
-	if err := jsonv2.Unmarshal(queryData, &out.queryFile, jsonv2.RejectUnknownMembers(true)); err != nil {
+	if err := jsonv2.Unmarshal(queryFileData, &out.queryFile, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return out, fmt.Errorf("%s query file shape: %w", p.Label, err)
 	}
-	if out.queryFile.Schema != "tsgk-native-query-cases/r1" || out.queryFile.Route != p.Route || len(out.queryFile.Queries) != p.QueryCount {
+	if out.queryFile.Schema != "tsgk-native-query-cases/r1" || out.queryFile.Route != p.Route || len(out.queryFile.Queries) != p.QueryCount-len(p.FactQueries) {
 		return out, fmt.Errorf("%s query file identity differs", p.Label)
+	}
+	sourcePins := []classificationGoDefinitionQuerySourcePin{{Path: p.QueryFile, Bytes: uint64(p.QueryBytes), SHA256: p.QuerySHA}}
+	if len(p.FactQueries) > 0 {
+		facts, err := classificationPagedFactQueries(p, factPackData)
+		if err != nil {
+			return out, err
+		}
+		out.queryFile.Queries = append(out.queryFile.Queries, facts...)
+		sourcePins = append(sourcePins, classificationGoDefinitionQuerySourcePin{Path: classificationPagedFactQueryPackPath, Bytes: classificationPagedFactQueryPackBytes, SHA256: classificationCSharpFactQueryPackSHA})
 	}
 	inv, err := ParseQualificationInventory(qualificationData)
 	if err != nil {
@@ -177,7 +249,7 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 	}
 	w := route.Workload
 	if w.Set != p.Set || w.Profile != p.Set || w.Route != p.Route || w.Operation != "native-query-batch" || w.Output != "tree" || w.Symbol != p.Symbol ||
-		!w.API || w.FactPack != nil || len(w.Grammar) != len(p.Grammar) || len(w.Queries) != p.QueryCount || !reflect.DeepEqual(w.Grammar, plan.Grammar) {
+		!w.API || (w.FactPack != nil) != (len(p.FactQueries) > 0) || len(w.Grammar) != len(p.Grammar) || len(w.Queries) != p.QueryCount || !reflect.DeepEqual(w.Grammar, plan.Grammar) {
 		return out, fmt.Errorf("%s ordinary qualification workload differs", p.Label)
 	}
 	for _, extra := range inv.ExtraRoles {
@@ -186,6 +258,9 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 				return out, fmt.Errorf("%s workload is duplicated in an extra role", p.Label)
 			}
 		}
+	}
+	if w.FactPack != nil && (w.FactPack.Route != p.Route || w.FactPack.Revision != "fact-queries-r1" || w.FactPack.SHA256 != classificationCSharpFactQueryPackSHA) {
+		return out, fmt.Errorf("%s ordinary qualification fact pack differs", p.Label)
 	}
 	groupMatches := 0
 	for _, group := range slots.Ordinary {
@@ -200,18 +275,21 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 	if groupMatches != 1 || out.slotGroup.Profile != p.Set || out.slotGroup.Operation != "native-query-batch" || len(out.slotGroup.Queries) != p.QueryCount || out.slotGroup.Counts != p.Counts {
 		return out, fmt.Errorf("%s ordinary query group or fixed counts differ", p.Label)
 	}
-	sourcePinMatches := 0
-	for _, pin := range slots.QuerySources {
-		if pin.Path == p.QueryFile {
-			sourcePinMatches++
-			if pin.Bytes != uint64(p.QueryBytes) || pin.SHA256 != p.QuerySHA {
-				return out, fmt.Errorf("%s query source inventory pin differs", p.Label)
+	for _, want := range sourcePins {
+		sourcePinMatches := 0
+		for _, pin := range slots.QuerySources {
+			if pin.Path == want.Path {
+				sourcePinMatches++
+				if pin != want {
+					return out, fmt.Errorf("%s query source inventory pin differs", p.Label)
+				}
 			}
 		}
+		if sourcePinMatches != 1 {
+			return out, fmt.Errorf("%s query source inventory pin is missing or duplicated", p.Label)
+		}
 	}
-	if sourcePinMatches != 1 {
-		return out, fmt.Errorf("%s query source inventory pin is missing or duplicated", p.Label)
-	}
+	sourceFiles := classificationPagedQuerySourceFiles(p)
 	queryIDs := make([]string, p.QueryCount)
 	for i, anchor := range a.Queries {
 		query := out.queryFile.Queries[i]
@@ -219,7 +297,7 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 		slot := out.slotGroup.Queries[i]
 		sha := digestHex([]byte(anchor.Source))
 		if !classificationGoDefinitionMetadataValid(anchor.Metadata) || anchor.SHA256 != sha || query.ID != anchor.ID || query.Source != anchor.Source || digestHex([]byte(query.Source)) != sha ||
-			registered.ID != anchor.ID || registered.SHA256 != sha || slot.ID != anchor.ID || slot.SHA256 != sha || slot.SourceFile != p.QueryFile || slot.Class != "STRUCTURAL_CANDIDATE" || slot.CompiledMetadata != "UNVERIFIED" {
+			registered.ID != anchor.ID || registered.SHA256 != sha || slot.ID != anchor.ID || slot.SHA256 != sha || slot.SourceFile != sourceFiles[i] || slot.Class != "STRUCTURAL_CANDIDATE" || slot.CompiledMetadata != "UNVERIFIED" {
 			return out, fmt.Errorf("%s query %s is not linked in the exact registered order", p.Label, anchor.ID)
 		}
 		queryIDs[i] = anchor.ID
@@ -229,7 +307,11 @@ func classificationPagedDefinitionLoadInputs(p classificationCPP4Profile, a clas
 		return out, err
 	}
 	coordinates.QuerySlotInventorySHA256 = classificationGoDefinitionInventorySHA
-	coordinates.QuerySourceFileSHA256 = p.QuerySHA
+	if len(p.FactQueries) > 0 {
+		coordinates.QuerySourceFiles = slices.Clone(sourcePins)
+	} else {
+		coordinates.QuerySourceFileSHA256 = p.QuerySHA
+	}
 	if coordinates.Cases != p.Counts.Cases || coordinates.Edits != p.Counts.Edits || coordinates.CaseSteps != p.Counts.CaseSteps || coordinates.TreeRoles != p.Counts.TreeRoles ||
 		coordinates.Definitions != uint64(p.QueryCount) || coordinates.PotentialQueryTreeRoles != p.Counts.PotentialQueryTreeRoles || coordinates.TreeRolesPerDefinition != p.Counts.TreeRoles {
 		return out, fmt.Errorf("%s query coordinate denominator differs", p.Label)
@@ -242,11 +324,7 @@ func classificationPagedDefinitionRows(p classificationCPP4Profile, a classifica
 	if err := classificationPagedAnchorsValid(p, a); err != nil {
 		return nil, err
 	}
-	sourceFiles := make([]string, p.QueryCount)
-	for i := range sourceFiles {
-		sourceFiles[i] = p.QueryFile
-	}
-	return classificationDefinitionRows(a, inputs, witnessQueries, nativeQueries, references, p.Language, sourceFiles)
+	return classificationDefinitionRows(a, inputs, witnessQueries, nativeQueries, references, p.Language, classificationPagedQuerySourceFiles(p))
 }
 
 func classificationPagedOrderedReferenceIDs(p classificationCPP4Profile, a classificationAnchors, referenceIDs map[string]string) ([]string, error) {

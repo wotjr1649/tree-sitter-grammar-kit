@@ -83,9 +83,9 @@ func TestSemanticPagedParserValidation(t *testing.T) {
 	}
 }
 
-// Part-count boundaries: exactly 16 MiB is not paged; 2x16 MiB and 2x16 MiB+n (the Kotlin5 shape) are.
+// Part-count boundaries: exactly 16 MiB is not paged; 2 parts (2x16 MiB, 16 MiB+n Swift8), 3 parts (2x16 MiB+n Kotlin5), and 7 parts (6x16 MiB+n PostgreSQL9) are.
 func TestSemanticPagedParserPartBoundaries(t *testing.T) {
-	const tail, swiftTail = 315585, 13858951 // Kotlin5 3-part and Swift8 2-part parser tails
+	const tail, swiftTail, pgTail = 315585, 13858951, 3622435 // Kotlin5 3-part, Swift8 2-part, and PostgreSQL9 7-part parser tails
 	type built struct {
 		input semanticBuildInput
 		d     semanticParserDescriptor
@@ -137,6 +137,9 @@ func TestSemanticPagedParserPartBoundaries(t *testing.T) {
 		{"three-parts-extra-part", 2*MaxDocumentBytes + tail, "extra-part", true, false},
 		{"three-parts-short-last", 2*MaxDocumentBytes + tail, "short-last", true, false},
 		{"three-parts-offset-last", 2*MaxDocumentBytes + tail, "offset-last", true, false},
+		{"seven-parts-partial-tail", 6*MaxDocumentBytes + pgTail, "", true, true},
+		{"seven-parts-drop-last", 6*MaxDocumentBytes + pgTail, "drop-last", true, false},
+		{"seven-parts-short-last", 6*MaxDocumentBytes + pgTail, "short-last", true, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			b := build(test.size)
@@ -155,7 +158,7 @@ func TestSemanticPagedParserPartBoundaries(t *testing.T) {
 				extra.Index, extra.Offset = extra.Index+1, extra.Offset+extra.Bytes
 				d.Parts = append(d.Parts, extra)
 			case "short-last":
-				supplied[d.Parts[last].Path] = supplied[d.Parts[last].Path][:tail-1]
+				supplied[d.Parts[last].Path] = supplied[d.Parts[last].Path][:d.Parts[last].Bytes-1]
 			case "offset-last":
 				d.Parts[last].Offset--
 			}
@@ -176,6 +179,39 @@ func TestSemanticPagedParserPartBoundaries(t *testing.T) {
 				t.Fatalf("good=%v want=%v reads=%d err=%v", ok, test.good, reads, e)
 			}
 		})
+	}
+}
+
+// A logical parser above BuildFileBytes is rejected from the declared size alone: no 100 MiB allocation and no part read.
+func TestSemanticPagedParserBuildFileCeiling(t *testing.T) {
+	const size = BuildFileBytes + 1
+	input := semanticBuildInput{Role: "grammar-parser", Path: "parser.c", Bytes: size, SHA256: digestHex([]byte("ceiling"))}
+	d := semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}
+	d.Logical.ClosureIndex, d.Logical.Role, d.Logical.Path, d.Logical.Bytes, d.Logical.SHA256 = 7, input.Role, input.Path, input.Bytes, input.SHA256
+	for i := range uint64(7) { // ceil((BuildFileBytes+1)/16 MiB) is 7, so the part count itself is consistent
+		offset := i * MaxDocumentBytes
+		d.Parts = append(d.Parts, struct {
+			Index  uint64 `json:"index"`
+			Offset uint64 `json:"offset"`
+			Path   string `json:"path"`
+			Bytes  uint64 `json:"bytes"`
+			SHA256 string `json:"sha256"`
+		}{i, offset, fmt.Sprintf("capture/build-input-00007.part-%05d.bin", i), min(uint64(MaxDocumentBytes), size-offset), digestHex(nil)})
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	r, e := startRun(ctx, time.Minute)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer r.cancel()
+	reads := 0
+	ok, e := (&eligibilityBudget{r: r}).semanticPagedParser(eligibilityJSON(t, d), input, 7, func(ReplayMember) ([]byte, bool, *Error) {
+		reads++
+		return nil, false, nil
+	})
+	if e != nil || ok || reads != 0 {
+		t.Fatalf("parser above BuildFileBytes: good=%v reads=%d err=%v", ok, reads, e)
 	}
 }
 

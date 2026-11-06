@@ -52,6 +52,8 @@ func classificationPagedProfileForRoute(route string) (classificationCPP4Profile
 		return classificationKotlin5DefinitionProfile(), true
 	case "swift":
 		return classificationSwift8DefinitionProfile(), true
+	case "postgresql-sql":
+		return classificationPostgreSQL9DefinitionProfile(), true
 	default:
 		return classificationCPP4Profile{}, false
 	}
@@ -65,6 +67,8 @@ func classificationPagedProfileForName(name string) (classificationCPP4Profile, 
 		return classificationKotlin5DefinitionProfile(), true
 	case "swift8-empty":
 		return classificationSwift8DefinitionProfile(), true
+	case "postgresql9-empty":
+		return classificationPostgreSQL9DefinitionProfile(), true
 	default:
 		return classificationCPP4Profile{}, false
 	}

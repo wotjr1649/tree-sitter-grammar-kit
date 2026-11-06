@@ -131,6 +131,10 @@ func classificationEmptyAnchorsValid(profile classificationEmptyDefinitionProfil
 	if wantNodes == nil {
 		wantNodes = []TreeNode{{Parent: -1, Type: profile.RootType, Named: true}}
 	}
+	// A nonempty source must name its full CST; the root-only default is valid for the empty source alone.
+	if profile.SourceUTF8 != "" && profile.Nodes == nil {
+		return fmt.Errorf("%s nonempty source lacks an explicit CST", profile.Name)
+	}
 	if a.sha256 != profile.AnchorSHA || a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != profile.Route || a.Case != profile.Case || a.Workload != profile.Workload ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.UTF8 != profile.SourceUTF8 || a.Source.Bytes != uint64(len(profile.SourceUTF8)) ||
 		a.Source.SHA256 != digestHex([]byte(profile.SourceUTF8)) || a.Edits == nil || len(a.Edits) != 0 || len(a.Queries) != profile.QueryCount || len(a.Required) != profile.QueryCount ||

@@ -146,9 +146,34 @@ func TestQueryClassificationPowerShell3RejectsSourceAndCSTMutations(t *testing.T
 	}
 }
 
+// classificationUnpagedEmptyProfileNames lists every unpaged empty-family profile (Web16, Script17, DartPHP12) through the
+// route-keyed family lookup, so a profile added to a family is covered without editing this list.
+func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
+	t.Helper()
+	var names []string
+	for _, route := range []string{"javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php"} {
+		profile, ok := classificationEmptyProfileForRoute(route)
+		if !ok {
+			t.Fatalf("empty-family route %q has no closed profile", route)
+		}
+		names = append(names, profile.Name)
+	}
+	return names
+}
+
+// A nonempty source needs an explicit CST: the empty-source root-only default must not apply to it.
+func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testing.T) {
+	fixture := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
+	profile := fixture.profile
+	profile.Nodes = nil
+	if err := classificationEmptyAnchorsValid(profile, fixture.anchors); err == nil {
+		t.Fatal("nonempty source without an explicit CST accepted")
+	}
+}
+
 func TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles(t *testing.T) {
 	powershell := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
-	for _, name := range []string{"dart7-empty", "php5-empty", "javascript4-empty", "python8-empty"} {
+	for _, name := range classificationUnpagedEmptyProfileNames(t) {
 		t.Run(name, func(t *testing.T) {
 			empty := classificationEmptyStaticFixtureForTest(t, name)
 			if empty.profile.SourceUTF8 != "" || empty.profile.Nodes != nil {

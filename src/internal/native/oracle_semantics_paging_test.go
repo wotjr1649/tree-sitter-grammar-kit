@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/json/jsontext"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -101,6 +102,45 @@ func TestSemanticCapturePlanPreflight(t *testing.T) {
 	cancel()
 	if _, err := semanticCaptureRegistration(ctx, []byte(valid)); !errors.Is(err, context.Canceled) {
 		t.Fatalf("preflight cancel: %v", err)
+	}
+}
+
+// The PostgreSQL9 parser (104,285,731 B) is the largest shape: seven planned parts, still within BuildFileBytes.
+func TestSemanticCapturePlanParserShapeBounds(t *testing.T) {
+	plan := func(parts int) *semanticCapturePlan {
+		t.Helper()
+		var b strings.Builder
+		b.WriteString(`{"schema":"tsgk-query-semantics-registration/r1","context":"full-input-utf8-paged-parser/r1","planned_members":[{"owner":"O","path":"manifest.json","role":"manifest"},{"owner":"D","path":"capture/build-input-00007.pages.json","role":"grammar-paged-descriptor"}`)
+		for i := range parts {
+			fmt.Fprintf(&b, `,{"owner":"D","path":"capture/build-input-00007.part-%05d.bin","role":"grammar-paged-part"}`, i)
+		}
+		b.WriteString(`]}`)
+		p, err := semanticCaptureRegistration(context.Background(), []byte(b.String()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	parser := func(size uint64) []kit.NativeInput { return []kit.NativeInput{{Role: "parser", Bytes: size}} }
+	if err := plan(7).parserShape(parser(104285731)); err != nil {
+		t.Fatalf("seven planned parts rejected for the 104,285,731 B parser: %v", err)
+	}
+	if err := plan(7).parserShape(parser(kit.BuildFileBytes)); err != nil {
+		t.Fatalf("seven planned parts rejected at exactly BuildFileBytes: %v", err)
+	}
+	for name, test := range map[string]struct {
+		parts   int
+		grammar []kit.NativeInput
+	}{
+		"six-parts-for-seven":    {6, parser(104285731)},
+		"eight-parts-for-seven":  {8, parser(104285731)},
+		"above-build-file-bytes": {7, parser(kit.BuildFileBytes + 1)},
+		"two-paged-parsers":      {2, []kit.NativeInput{{Role: "parser", Bytes: kit.MaxDocumentBytes + 1}, {Role: "parser", Bytes: kit.MaxDocumentBytes + 1}}},
+		"no-paged-parser":        {1, parser(kit.MaxDocumentBytes)},
+	} {
+		if err := plan(test.parts).parserShape(test.grammar); err == nil {
+			t.Fatalf("%s accepted", name)
+		}
 	}
 }
 
