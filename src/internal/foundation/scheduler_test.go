@@ -44,10 +44,10 @@ func workflowPeak(text string) (int, error) {
 			needs[i] = strings.FieldsFunc(m[1], func(r rune) bool { return r == '[' || r == ']' || r == ',' || r == ' ' })
 		}
 	}
-	if len(names) != 10 {
+	if len(names) != 8 {
 		return 0, fmt.Errorf("review newly added or missing jobs")
 	}
-	for _, name := range []string{"foundation", "mode", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification", "race", "macos-regenerate", "integration-gate"} {
+	for _, name := range []string{"foundation", "mode", "native-prepare", "native-routes", "large-api", "qualification", "race", "integration-gate"} {
 		if _, ok := names[name]; !ok {
 			return 0, fmt.Errorf("missing job: %s", name)
 		}
@@ -93,11 +93,11 @@ func workflowPeak(text string) (int, error) {
 
 func TestWorkflowSharedHeavyLane(t *testing.T) {
 	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
-	if peak, err := workflowPeak(text); err != nil || peak != 4 {
+	if peak, err := workflowPeak(text); err != nil || peak != 3 {
 		t.Fatalf("shared heavy lane peak=%d: %v", peak, err)
 	}
-	// Scope the mutation to native-routes; the race matrix also has width 2.
-	marker := "      # Windows/Linux share the width-4 lane with Mac and large-api, which start together.\n      max-parallel: 2\n"
+	// Scope the mutation to native-routes; the foundation matrix also has width 2.
+	marker := "      # Windows/Linux share the width-3 lane with large-api, which starts together.\n      max-parallel: 2\n"
 	if strings.Count(text, marker) != 1 {
 		t.Fatal("native route control scope is not unique")
 	}
@@ -111,16 +111,16 @@ func TestWorkflowSharedHeavyLane(t *testing.T) {
 	}
 	controls := map[string]string{
 		"excess_route_width":     strings.Replace(text, marker, strings.Replace(marker, "max-parallel: 2", "max-parallel: 3", 1), 1),
-		"excess_mac_width":       inJob("native-routes-macos", "      max-parallel: 1\n", "      max-parallel: 2\n"),
+		"excess_race_width":      inJob("race", "      max-parallel: 1\n", "      max-parallel: 4\n"),
 		"routes_skip_foundation": inJob("native-routes", "    needs: [foundation, native-prepare]\n", "    needs: native-prepare\n"),
 		"large_waits_mode_only":  inJob("large-api", "    needs: [foundation, native-prepare]\n", "    needs: mode\n"),
-		"early_diagnostics":      strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]", "needs: native-prepare"),
+		"early_diagnostics":      strings.ReplaceAll(text, "needs: [foundation, native-prepare, native-routes, large-api, qualification]", "needs: [foundation, native-prepare]"),
 	}
 	for name, broken := range controls {
 		if broken == text {
 			t.Fatalf("%s control did not mutate scheduler", name)
 		}
-		if peak, err := workflowPeak(broken); err != nil || peak <= 4 {
+		if peak, err := workflowPeak(broken); err != nil || peak <= 3 {
 			t.Fatalf("%s overlap missed: peak=%d: %v", name, peak, err)
 		}
 	}
@@ -138,38 +138,32 @@ func workflowJobBody(text, name string) string {
 }
 
 func routeSchedulePolicy(text string) error {
-	matrices := map[string]string{
-		"native-routes":       "          - os: windows-2025\n            goos: windows\n            goarch: amd64\n          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n",
-		"native-routes-macos": "          - os: macos-15\n            goos: darwin\n            goarch: arm64\n",
+	// #332: macOS is out of CI; no route job targets darwin
+	matrix := "          - os: windows-2025\n            goos: windows\n            goarch: amd64\n          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n"
+	body := workflowJobBody(text, "native-routes")
+	_, actual, ok := strings.Cut(body, "      matrix:\n        include:\n")
+	actual, _, _ = strings.Cut(actual, "    runs-on:")
+	if !ok || actual != matrix {
+		return fmt.Errorf("route platform coverage")
 	}
-	for name, matrix := range matrices {
-		body := workflowJobBody(text, name)
-		_, actual, ok := strings.Cut(body, "      matrix:\n        include:\n")
-		actual, _, _ = strings.Cut(actual, "    runs-on:")
-		if !ok || actual != matrix {
-			return fmt.Errorf("route platform coverage: %s", name)
-		}
-		for _, required := range []string{"    name: native routes (${{ matrix.os }})\n", "    needs: [foundation, native-prepare]\n", "      fail-fast: false\n", "    runs-on: ${{ matrix.os }}\n", "    timeout-minutes: 60\n", "    defaults:\n      run:\n        shell: pwsh\n"} {
-			if !strings.Contains(body, required) {
-				return fmt.Errorf("route execution contract: %s", name)
-			}
-		}
-		if strings.Contains(body, "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
-			return fmt.Errorf("route job override: %s", name)
+	for _, required := range []string{"    name: native routes (${{ matrix.os }})\n", "    needs: [foundation, native-prepare]\n", "      fail-fast: false\n", "    runs-on: ${{ matrix.os }}\n", "    timeout-minutes: 60\n", "    defaults:\n      run:\n        shell: pwsh\n"} {
+		if !strings.Contains(body, required) {
+			return fmt.Errorf("route execution contract")
 		}
 	}
-	if strings.Count(text, "    steps: &native-route-steps\n") != 1 ||
-		!strings.Contains(workflowJobBody(text, "native-routes"), "    steps: &native-route-steps\n") ||
-		!strings.HasSuffix(strings.TrimSpace(workflowJobBody(text, "native-routes-macos")), "steps: *native-route-steps") {
-		return fmt.Errorf("route steps must share one definition")
+	if strings.Contains(body, "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
+		return fmt.Errorf("route job override")
+	}
+	if strings.Contains(text, "native-routes-macos") || strings.Contains(text, "macos-15") || strings.Contains(text, "native-route-steps") {
+		return fmt.Errorf("macOS jobs must stay out of the workflow")
 	}
 	large := workflowJobBody(text, "large-api")
 	if !strings.Contains(large, "    needs: [foundation, native-prepare]\n") || regexp.MustCompile(`(?m)^    if:`).MatchString(large) {
-		return fmt.Errorf("large audit must wait for the foundation and successful preparation, not for Mac")
+		return fmt.Errorf("large audit must wait for the foundation and successful preparation")
 	}
 	qualification := workflowJobBody(text, "qualification")
-	if !strings.Contains(qualification, "    needs: [native-routes, native-routes-macos]\n") ||
-		!strings.Contains(qualification, "    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' && needs.native-routes-macos.result != 'skipped' }}\n") {
+	if !strings.Contains(qualification, "    needs: [native-routes]\n") ||
+		!strings.Contains(qualification, "    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}\n") {
 		return fmt.Errorf("qualification must wait for all route hosts")
 	}
 	return nil
@@ -180,16 +174,15 @@ func TestWorkflowRouteSchedulePolicy(t *testing.T) {
 	if err := routeSchedulePolicy(text); err != nil {
 		t.Fatal(err)
 	}
-	mac := workflowJobBody(text, "native-routes-macos")
 	for name, broken := range map[string]string{
 		"missing-linux":          strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
-		"duplicate-mac":          strings.Replace(text, mac, strings.Replace(mac, "os: macos-15\n            goos: darwin\n            goarch: arm64", "os: windows-2025\n            goos: windows\n            goarch: amd64", 1), 1),
-		"wrong-alias":            strings.Replace(text, "steps: *native-route-steps", "steps: *other-steps", 1),
+		"mac-matrix":             strings.Replace(text, "    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", "          - os: macos-15\n            goos: darwin\n            goarch: arm64\n    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", 1),
+		"mac-job":                text + "\n  native-routes-macos:\n    runs-on: macos-15\n",
 		"large-skips-foundation": strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: native-prepare\n", 1),
-		"large-waits-mac":        strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: [foundation, native-prepare, native-routes-macos]\n", 1),
+		"large-waits-routes":     strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: [foundation, native-prepare, native-routes]\n", 1),
 		"routes-skip-foundation": strings.Replace(text, "    name: native routes (${{ matrix.os }})\n    needs: [foundation, native-prepare]\n", "    name: native routes (${{ matrix.os }})\n    needs: native-prepare\n", 1),
-		"mac-skips-foundation":   strings.Replace(text, mac, strings.Replace(mac, "    needs: [foundation, native-prepare]\n", "    needs: native-prepare\n", 1), 1),
-		"partial-qualification":  strings.Replace(text, "needs: [native-routes, native-routes-macos]", "needs: native-routes", 1),
+		"partial-qualification":  strings.Replace(text, "needs: [native-routes]\n", "needs: native-prepare\n", 1),
+		"qual-runs-skipped":      strings.Replace(text, " && needs.native-routes.result != 'skipped' }}", " }}", 1),
 		"conditional-large":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -208,12 +201,11 @@ func integrationPolicy(text string) error {
 	if config < 0 || upload <= config || audit <= upload || !strings.Contains(large[upload:audit], "name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}") {
 		return fmt.Errorf("large API configuration must be retained before the audit can fail")
 	}
-	needs := "    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]\n"
+	needs := "    needs: [foundation, native-prepare, native-routes, large-api, qualification]\n"
 	// #317: the race runs on nightly and dispatch only, also when a duplicate nightly skipped
-	// the foundation; the regeneration keeps push and the duplicate skip.
+	// the foundation.
 	rules := map[string]string{
-		"race":             `    if: ${{ !cancelled() && contains(fromJSON('["schedule","workflow_dispatch"]'), github.event_name) }}` + "\n",
-		"macos-regenerate": `    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}` + "\n",
+		"race": `    if: ${{ !cancelled() && contains(fromJSON('["schedule","workflow_dispatch"]'), github.event_name) }}` + "\n",
 	}
 	for name, eventRule := range rules {
 		body := workflowJobBody(text, name)
@@ -250,17 +242,14 @@ func TestWorkflowIntegrationPolicy(t *testing.T) {
 	for name, broken := range map[string]string{
 		"late-large-config":        strings.Replace(text, large, lateConfig, 1),
 		"wrong-large-config-name":  strings.Replace(text, "name: ci-config-large-api-windows-${{ github.run_id }}-${{ github.run_attempt }}", "name: wrong-config", 1),
-		"PR-regenerate":            strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request","push","schedule","workflow_dispatch"]`),
-		"PR-target-regenerate":     strings.ReplaceAll(text, `["push","schedule","workflow_dispatch"]`, `["pull_request_target","push","schedule","workflow_dispatch"]`),
 		"PR-race":                  strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["pull_request","schedule","workflow_dispatch"]'`),
 		"push-race":                strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["push","schedule","workflow_dispatch"]'`),
 		"race-skips-on-duplicate":  strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'), github.event_name) }}`, `'["schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}`),
 		"race-misses-dispatch":     strings.ReplaceAll(text, `'["schedule","workflow_dispatch"]'`, `'["schedule"]'`),
-		"missing-large-dependency": strings.ReplaceAll(text, "native-routes-macos, large-api, qualification]", "native-routes-macos, qualification]"),
-		"missing-Mac-dependency":   strings.ReplaceAll(text, "native-routes, native-routes-macos, large-api", "native-routes, large-api"),
+		"missing-large-dependency": strings.ReplaceAll(text, "native-routes, large-api, qualification]", "native-routes, qualification]"),
+		"missing-route-dependency": strings.ReplaceAll(text, "native-prepare, native-routes, large-api", "native-prepare, large-api"),
 		"gate-not-always":          strings.Replace(text, "    if: ${{ always() && !(", "    if: ${{ success() && !(", 1),
 		"gate-skips-off-schedule":  strings.Replace(text, "github.event_name == 'schedule' && needs.foundation.result == 'skipped'", "needs.foundation.result == 'skipped'", 1),
-		"regenerate-on-duplicate":  strings.ReplaceAll(text, " && needs.foundation.result != 'skipped' }}", " }}"),
 		"swallowed-fetch":          strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }", "Write-Warning 'download failed'", 1),
 		"swallowed-diagnostic":     strings.ReplaceAll(text, "if ($outcome -ne 'success') { throw '", "if ($outcome -ne 'success') { Write-Warning '"),
 		"diagnostics-success-only": strings.ReplaceAll(text, "!cancelled() && contains", "success() && contains"),
@@ -307,7 +296,7 @@ func lightModePolicy(text string) error {
 	if !strings.Contains(prepare, "    needs: [mode]\n    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}\n") {
 		return fmt.Errorf("native-prepare must start only on a full mode, beside the foundation")
 	}
-	for _, name := range []string{"native-routes", "native-routes-macos", "large-api", "qualification", "integration-gate", "race", "macos-regenerate"} {
+	for _, name := range []string{"native-routes", "large-api", "qualification", "integration-gate", "race"} {
 		if strings.Contains(workflowJobBody(text, name), "mode") {
 			return fmt.Errorf("only native-prepare and the foundation consult the mode: %s", name)
 		}
@@ -343,11 +332,11 @@ func TestWorkflowLightModePolicy(t *testing.T) {
 	}
 }
 
-// requiredRunJobs are the ten jobs of a complete earlier run (#317): the three foundation
-// legs, the preparation, the three route hosts, the large audit, the qualification and the
+// requiredRunJobs are the eight jobs of a complete earlier run (#317, #332): the two foundation
+// legs, the preparation, the two route hosts, the large audit, the qualification and the
 // gate. The diagnostics are not among them.
-var requiredRunJobs = []string{"foundation (windows-2025)", "foundation (ubuntu-24.04)", "foundation (macos-15)", "native prepare (ubuntu-24.04)",
-	"native routes (windows-2025)", "native routes (ubuntu-24.04)", "native routes (macos-15)", "large API (windows-2025)", "qualification (ubuntu-24.04)", "integration gate"}
+var requiredRunJobs = []string{"foundation (windows-2025)", "foundation (ubuntu-24.04)", "native prepare (ubuntu-24.04)",
+	"native routes (windows-2025)", "native routes (ubuntu-24.04)", "large API (windows-2025)", "qualification (ubuntu-24.04)", "integration gate"}
 
 // nightlyDuplicatePolicy is #257/#317: a schedule run skips the foundation, and with it every
 // job but the diagnostics, only when a push or dispatch run of the same main commit finished
@@ -486,8 +475,8 @@ func foundationBudget(text string, read func(string) (string, error)) error {
 	goTimeout := regexp.MustCompile(` -timeout ([1-9][0-9]*)s( |\)|$)`)
 	wrapper := regexp.MustCompile(`(^|[ &])timeout --kill-after=([1-9][0-9]*)s ([1-9][0-9]*)s `)
 	call := regexp.MustCompile(`& (src/[^ '"\n]+\.ps1)([^\n]*)`)
-	host := regexp.MustCompile(`^        if: runner\.os == '(Windows|Linux|macOS)'$`)
-	sum := map[string]int{"Windows": 1, "Linux": 1, "macOS": 1}
+	host := regexp.MustCompile(`^        if: runner\.os == '(Windows|Linux)'$`)
+	sum := map[string]int{"Windows": 1, "Linux": 1}
 	for _, step := range strings.Split(steps, "\n      - ")[1:] {
 		name, _, _ := strings.Cut(step, "\n")
 		m := regexp.MustCompile(`(?m)^        timeout-minutes: ([0-9]+)$`).FindStringSubmatch(step)

@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 
-# One lane for every run keeps the heavy width at 4 (#317, was 3 under D12). queue: max keeps up to 100
+# One lane for every run keeps the heavy width at 3 (#332: macOS is out of CI for now; 4 under #317, 3 under D12). queue: max keeps up to 100
 # pending runs instead of letting a newly queued run cancel the pending one (#252), which
 # once dropped a main post-merge run; superseded PR runs are cancelled by procedure.
 concurrency:
@@ -36,7 +36,7 @@ jobs:
     if: ${{ needs.mode.outputs.duplicate != 'true' }}
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 2
       matrix:
         include:
           - os: windows-2025
@@ -45,9 +45,6 @@ jobs:
           - os: ubuntu-24.04
             goos: linux
             goarch: amd64
-          - os: macos-15
-            goos: darwin
-            goarch: arm64
     runs-on: ${{ matrix.os }}
     # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
     # the step sum of the slowest host (Linux 61 minutes) plus a runner allowance
@@ -311,18 +308,18 @@ jobs:
   race:
     # Optional data-race diagnostic (#72). It needs cgo, so it is a separate lane: the
     # CGO-free foundation gate above stays the required core check and is not relaxed.
-    # Diagnostics wait for native/large validation and qualification; their width is 2 and
-    # stays within 4. #317: nightly and dispatch only, also on a duplicate nightly whose other
+    # Diagnostics wait for native/large validation and qualification; their width is 1 and
+    # stays within 3. #317: nightly and dispatch only, also on a duplicate nightly whose other
     # jobs are skipped. It covers the main HEAD at nightly time and the dispatched commit;
     # a commit pushed and superseded within a day is not raced.
     name: race diagnostic (${{ matrix.os }})
-    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
+    needs: [foundation, native-prepare, native-routes, large-api, qualification]
     if: ${{ !cancelled() && contains(fromJSON('["schedule","workflow_dispatch"]'), github.event_name) }}
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 1
       matrix:
-        os: [ubuntu-24.04, macos-15]
+        os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     env:
@@ -333,20 +330,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         id: checkout
-        continue-on-error: ${{ matrix.os == 'macos-15' }}
         with:
           persist-credentials: false
           set-safe-directory: false
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         id: setup
-        continue-on-error: ${{ matrix.os == 'macos-15' }}
         with:
           go-version: '1.27.2'
           cache: false
       - name: 고정 Go module 취득
         id: modules
-        continue-on-error: ${{ matrix.os == 'macos-15' }}
         env:
           GOPROXY: https://proxy.golang.org
           GOSUMDB: sum.golang.org
@@ -358,7 +352,6 @@ jobs:
       - name: go test -race (진단, CGO)
         id: diagnostic
         if: ${{ steps.checkout.outcome == 'success' && steps.setup.outcome == 'success' && steps.modules.outcome == 'success' }}
-        continue-on-error: ${{ matrix.os == 'macos-15' }}
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
@@ -372,7 +365,7 @@ jobs:
           if ($cgo -ne '1') { throw 'race diagnostic needs CGO_ENABLED=1' }
           Write-Output "$goIdentity cgo=$cgo checkout_sha=$checkoutSha run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
           if ($IsLinux) {
-            # Same delegated cgroup v2 as foundation; macOS uses its process group backend.
+            # Same delegated cgroup v2 as foundation.
             $base = "/sys/fs/cgroup/tsgk-race-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
             sudo mkdir -p "$base/supervisor" "$base/jobs"
             if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
@@ -424,106 +417,6 @@ jobs:
             if ($outcome -ne 'success') { throw 'race diagnostic did not succeed' }
           }
 
-  macos-regenerate:
-    # Optional #108 lane. Alongside the two race jobs, at most three heavy jobs run.
-    name: regenerate diagnostic (macos-15)
-    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
-    if: ${{ !cancelled() && contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) && needs.foundation.result != 'skipped' }}
-    runs-on: macos-15
-    timeout-minutes: 30
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        id: checkout
-        continue-on-error: true
-        with:
-          persist-credentials: false
-          set-safe-directory: false
-          clean: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        id: setup
-        continue-on-error: true
-        with:
-          go-version: '1.27.2'
-          cache: false
-      - name: 고정 Go module 취득
-        id: modules
-        continue-on-error: true
-        env:
-          GOPROXY: https://proxy.golang.org
-          GOSUMDB: sum.golang.org
-        run: |
-          & src/dev/ci-gate/modules.ps1
-          go mod verify
-          if ($LASTEXITCODE -ne 0) { throw 'module verification failed' }
-      - name: Verify clean validation input
-        id: input
-        continue-on-error: true
-        env:
-          EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
-        run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
-          $state = git status --porcelain=v1 --untracked-files=all --ignored=matching
-          if ($LASTEXITCODE -ne 0 -or $state) { throw 'clean worktree check failed' }
-          $sha = git rev-parse HEAD
-          if ($LASTEXITCODE -ne 0 -or $sha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
-      - name: macOS 26 route 재생성 (등록 출력 대조)
-        id: diagnostic
-        if: ${{ steps.checkout.outcome == 'success' && steps.setup.outcome == 'success' && steps.modules.outcome == 'success' && steps.input.outcome == 'success' }}
-        continue-on-error: true
-        run: |
-          $dest = Join-Path $env:RUNNER_TEMP "s05-macos-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform darwin/arm64
-          if ($LASTEXITCODE -ne 0) { throw 'macOS regeneration failed' }
-          $state = git status --porcelain=v1 --untracked-files=all --ignored=matching
-          if ($LASTEXITCODE -ne 0 -or $state) { throw 'clean worktree check failed' }
-      - name: 진단 outcome과 실행 identity 기록
-        if: always()
-        env:
-          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
-          PRIOR_JOB_STATUS: ${{ job.status }}
-          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
-          GO_SETUP_OUTCOME: ${{ steps.setup.outcome }}
-          MODULES_OUTCOME: ${{ steps.modules.outcome }}
-          INPUT_OUTCOME: ${{ steps.input.outcome }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          $dest = Join-Path $env:RUNNER_TEMP "macos-regeneration-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          New-Item -ItemType Directory -Path $dest | Out-Null
-          [ordered]@{ schema = 'tsgk-ci-diagnostic/r1'; outcome = $env:DIAGNOSTIC_OUTCOME; prior_job_status = $env:PRIOR_JOB_STATUS; cgo_enabled = $env:CGO_ENABLED; preparation_outcomes = [ordered]@{ checkout = $env:CHECKOUT_OUTCOME; setup = $env:GO_SETUP_OUTCOME; modules = $env:MODULES_OUTCOME; input = $env:INPUT_OUTCOME } } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $dest 'diagnostic.json') -Encoding utf8NoBOM
-          if ($env:CHECKOUT_OUTCOME -eq 'success' -and $env:GO_SETUP_OUTCOME -eq 'success') {
-            & src/dev/s08-qualify/run-identity.ps1 -Destination $dest -HeadSHA $env:PR_HEAD_SHA
-          } else {
-            Write-Warning 'run identity unavailable: checkout or Go setup did not succeed'
-          }
-      - name: macOS 재생성 근거 보관
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: s05-macos-regeneration-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/macos-regeneration-${{ github.run_id }}-${{ github.run_attempt }}/*.json
-            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/prepared.json
-            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/profiles/*.json
-            ${{ runner.temp }}/s05-macos-prepared-${{ github.run_id }}-${{ github.run_attempt }}/repro/*/result.json
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 6
-      - name: 진단 실패 전파
-        if: always()
-        env:
-          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
-          SETUP_OUTCOME: ${{ steps.setup.outcome }}
-          MODULES_OUTCOME: ${{ steps.modules.outcome }}
-          INPUT_OUTCOME: ${{ steps.input.outcome }}
-          DIAGNOSTIC_OUTCOME: ${{ steps.diagnostic.outcome }}
-        run: |
-          foreach ($outcome in @($env:CHECKOUT_OUTCOME, $env:SETUP_OUTCOME, $env:MODULES_OUTCOME, $env:INPUT_OUTCOME, $env:DIAGNOSTIC_OUTCOME)) {
-            if ($outcome -ne 'success') { throw 'regeneration diagnostic did not succeed' }
-          }
-
   mode:
     # #252: a PR iteration labelled ci:light runs only the foundation; the heavy evidence
     # starts at native-prepare and is skipped, so the always() integration gate fails and
@@ -557,11 +450,11 @@ jobs:
           }
           # #257/#317: a nightly run is a duplicate (then only this job and the diagnostics run)
           # only when a main push or dispatch run of this commit finished in the 24 hours before
-          # the lookup and its latest attempt holds each of the ten required jobs exactly once
+          # the lookup and its latest attempt holds each of the eight required jobs exactly once
           # with conclusion success; the diagnostics do not count, so a failed race no longer
           # blocks it. A nightly run never counts, and a failed lookup runs in full
           $duplicate = 'false'
-          $required = @('foundation (windows-2025)', 'foundation (ubuntu-24.04)', 'foundation (macos-15)', 'native prepare (ubuntu-24.04)', 'native routes (windows-2025)', 'native routes (ubuntu-24.04)', 'native routes (macos-15)', 'large API (windows-2025)', 'qualification (ubuntu-24.04)', 'integration gate')
+          $required = @('foundation (windows-2025)', 'foundation (ubuntu-24.04)', 'native prepare (ubuntu-24.04)', 'native routes (windows-2025)', 'native routes (ubuntu-24.04)', 'large API (windows-2025)', 'qualification (ubuntu-24.04)', 'integration gate')
           if ($env:EVENT -eq 'schedule') {
             try {
               $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$env:SHA&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_branch, .updated_at] | @tsv')
@@ -691,7 +584,7 @@ jobs:
     needs: [foundation, native-prepare]
     strategy:
       fail-fast: false
-      # Windows/Linux share the width-4 lane with Mac and large-api, which start together.
+      # Windows/Linux share the width-3 lane with large-api, which starts together.
       max-parallel: 2
       matrix:
         include:
@@ -706,7 +599,7 @@ jobs:
     defaults:
       run:
         shell: pwsh
-    steps: &native-route-steps
+    steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -907,24 +800,6 @@ jobs:
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
 
-  native-routes-macos:
-    name: native routes (${{ matrix.os }})
-    needs: [foundation, native-prepare]
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        include:
-          - os: macos-15
-            goos: darwin
-            goarch: arm64
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    defaults:
-      run:
-        shell: pwsh
-    steps: *native-route-steps
-
   large-api:
     # #147: independent workloads keep their existing limits and complete evidence.
     name: large API (windows-2025)
@@ -1009,13 +884,13 @@ jobs:
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
 
   qualification:
-    # S08: aggregates the three native-routes hosts of this run and attempt into the
-    # 26 route x 3 platform cells and the extra-role rows (tsgk qualify). Read-only and
+    # S08: aggregates the two native-routes hosts of this run and attempt into the
+    # 26 route x 2 platform cells and the extra-role rows (tsgk qualify, #332). Read-only and
     # tool-free; it fails on the kit gate (completeness, cohort, eligibility, mechanism,
     # cross-platform comparison) and records grammar requirement results for disposition.
     name: qualification (ubuntu-24.04)
-    needs: [native-routes, native-routes-macos]
-    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' && needs.native-routes-macos.result != 'skipped' }}
+    needs: [native-routes]
+    if: ${{ !cancelled() && needs.native-routes.result != 'skipped' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
@@ -1047,24 +922,24 @@ jobs:
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
-      - name: 세 host 근거 받기
+      - name: 두 host 근거 받기
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: s05-routes-*-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/qualification-hosts
-      - name: 세 host 근거 목록 지연 확인
+      - name: 두 host 근거 목록 지연 확인
         id: hosts
-        if: ${{ needs.native-routes.result == 'success' && needs.native-routes-macos.result == 'success' }}
+        if: ${{ needs.native-routes.result == 'success' }}
         run: |
           # The producers succeeded, but the artifact listing can trail them; wait once before qualify.
           $hosts = Join-Path $env:RUNNER_TEMP 'qualification-hosts'
-          $missing = @('windows', 'linux', 'darwin') | Where-Object { -not (Test-Path -LiteralPath (Join-Path $hosts "s05-routes-$_-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT")) }
+          $missing = @('windows', 'linux') | Where-Object { -not (Test-Path -LiteralPath (Join-Path $hosts "s05-routes-$_-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT")) }
           if ($missing) {
             Write-Output "artifact listing missing $($missing -join ','); retrying once after 60 s"
             Start-Sleep -Seconds 60
           }
           "missing=$($missing -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-      - name: 세 host 근거 다시 받기
+      - name: 두 host 근거 다시 받기
         if: ${{ steps.hosts.outputs.missing != '' && steps.hosts.outcome == 'success' }}
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -1081,16 +956,20 @@ jobs:
             $retry = Join-Path (Join-Path $env:RUNNER_TEMP 'qualification-hosts-retry') $name
             if (Test-Path -LiteralPath $retry) { Move-Item -LiteralPath $retry -Destination (Join-Path (Join-Path $env:RUNNER_TEMP 'qualification-hosts') $name) } else { Write-Output "host evidence still missing: $os" }
           }
-      - name: 78칸 qualification 집계
+      - name: 52칸 qualification 집계
         env:
           CANDIDATE: ${{ github.sha }}
         run: |
           $cli = Join-Path $env:RUNNER_TEMP "tsgk-qualify-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           go build -o $cli ./src/cmd/tsgk
           if ($LASTEXITCODE -ne 0) { throw 'CLI build failed' }
+          # #332: macOS is out of CI; the gate derives the same inventory (committed file minus darwin-arm64) from the committed one
+          $inventory = Join-Path $env:RUNNER_TEMP "qualification-inventory-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+          go run ./src/dev/ci-gate inventory -out $inventory
+          if ($LASTEXITCODE -ne 0) { throw 'CI inventory derivation failed' }
           $hosts = Join-Path $env:RUNNER_TEMP 'qualification-hosts'
-          $cliArgs = @('qualify', '--inventory', 'src/contracts/qualification-c1.json', '--candidate', $env:CANDIDATE)
-          foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'), @('darwin', 'darwin-arm64'))) {
+          $cliArgs = @('qualify', '--inventory', $inventory, '--candidate', $env:CANDIDATE)
+          foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'))) {
             $dir = Join-Path $hosts "s05-routes-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
             if (Test-Path -LiteralPath $dir) { $cliArgs += @('--host', "$($p[1])=$dir") } else { Write-Output "host evidence missing: $($p[1])" }
           }
@@ -1128,7 +1007,7 @@ jobs:
 
   integration-gate:
     name: integration gate
-    needs: [foundation, native-prepare, native-routes, native-routes-macos, large-api, qualification]
+    needs: [foundation, native-prepare, native-routes, large-api, qualification]
     if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1178,7 +1057,7 @@ jobs:
           $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/ci-gate/fetch.ps1 -Gate (Join-Path $work 'ci-gate') -Expected (Join-Path $work 'run-identity.json') -Work $work
           if ($LASTEXITCODE -ne 0) { throw 'current-run artifact download failed' }
-      - name: 필수 producer와 raw 78칸 및 large 근거 확인
+      - name: 필수 producer와 raw 52칸 및 large 근거 확인
         run: |
           $work = Join-Path $env:RUNNER_TEMP "integration-gate-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & (Join-Path $work 'ci-gate') verify -expected (Join-Path $work 'run-identity.json') -artifacts (Join-Path $work 'artifacts') -needs (Join-Path $work 'needs.json') -out (Join-Path $work 'result.json')
