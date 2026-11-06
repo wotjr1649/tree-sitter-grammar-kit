@@ -38,7 +38,7 @@ func TestStrictJSON(t *testing.T) {
 
 func TestNeedsFailClosed(t *testing.T) {
 	good := map[string]any{}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification"} {
+	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
 		good[name] = map[string]any{"result": "success", "outputs": map[string]string{}}
 	}
 	if e := checkNeeds(encoded(t, good)); e != nil {
@@ -71,9 +71,27 @@ func TestNeedsFailClosed(t *testing.T) {
 	}
 }
 
+// qualificationFixture is the passing result of the inventory this CI gates: the committed
+// one minus droppedPlatforms (#332).
 func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.QualificationInventory) {
 	t.Helper()
+	return qualificationFixtureFor(t, droppedPlatforms)
+}
+
+// fullQualificationFixture is the committed three-platform inventory with its deferred rows;
+// the gate checks stay platform-generic, so they must keep rejecting forged deferred claims.
+func fullQualificationFixture(t *testing.T) (kit.QualificationResult, kit.QualificationInventory) {
+	t.Helper()
+	return qualificationFixtureFor(t, nil)
+}
+
+func qualificationFixtureFor(t *testing.T, drop []string) (kit.QualificationResult, kit.QualificationInventory) {
+	t.Helper()
 	data, e := os.ReadFile(filepath.Join("..", "..", "contracts", "qualification-c1.json"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	data, e = derivedInventory(data, drop)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -84,8 +102,9 @@ func qualificationFixture(t *testing.T) (kit.QualificationResult, kit.Qualificat
 	r := expectation()
 	q := kit.QualificationResult{ResultSchema: kit.QualificationResultSchema, Run: &r, Candidate: r.Checkout, Completeness: "PASS", MechanismGate: "PASS", SupportClaim: "SUPPORTED", PlatformClaims: map[string]string{}}
 	q.Assessment = kit.AssessPass
-	q.Totals.Cells = 78
-	q.Totals.Status = map[string]int{"PASS": 78}
+	cells := len(inv.Routes) * len(inv.Platforms)
+	q.Totals.Cells = cells
+	q.Totals.Status = map[string]int{"PASS": cells}
 	for _, route := range inv.Routes {
 		for _, p := range inv.Platforms {
 			cell := kit.QualCell{Route: route.Route, Platform: p.ID, Status: "PASS", Mechanism: "PASS", Requirement: "PASS", Comparison: "PASS", Checks: "PASS"}
@@ -151,10 +170,14 @@ func TestQualificationRejectsIncompleteAndForeignEvidence(t *testing.T) {
 		t.Fatal(e)
 	}
 	mutations := map[string]func(*kit.QualificationResult){
-		"sha":                  func(q *kit.QualificationResult) { q.Candidate = strings.Repeat("c", 40) },
-		"run":                  func(q *kit.QualificationResult) { q.Run.RunID = "124" },
-		"attempt":              func(q *kit.QualificationResult) { q.Run.RunAttempt = "1" },
-		"missing_cell":         func(q *kit.QualificationResult) { q.Cells = q.Cells[:77] },
+		"sha":          func(q *kit.QualificationResult) { q.Candidate = strings.Repeat("c", 40) },
+		"run":          func(q *kit.QualificationResult) { q.Run.RunID = "124" },
+		"attempt":      func(q *kit.QualificationResult) { q.Run.RunAttempt = "1" },
+		"missing_cell": func(q *kit.QualificationResult) { q.Cells = q.Cells[:len(q.Cells)-1] },
+		"darwin_cell": func(q *kit.QualificationResult) {
+			q.Cells = append(q.Cells, kit.QualCell{Route: q.Cells[0].Route, Platform: "darwin-arm64"})
+		},
+		"darwin_claim":         func(q *kit.QualificationResult) { q.PlatformClaims["darwin-arm64"] = "SUPPORTED" },
 		"duplicate_cell":       func(q *kit.QualificationResult) { q.Cells[0] = q.Cells[1] },
 		"foreign_cell":         func(q *kit.QualificationResult) { q.Cells[0].Route = "unregistered" },
 		"internal_gate":        func(q *kit.QualificationResult) { q.MechanismGate = "FAIL" },
@@ -163,7 +186,7 @@ func TestQualificationRejectsIncompleteAndForeignEvidence(t *testing.T) {
 		"empty_case":           func(q *kit.QualificationResult) { q.Cells[0].Obligations[0].Cases = nil },
 		"zero_obligations":     func(q *kit.QualificationResult) { q.Totals.Obligations.Obligations = 0; q.Totals.Obligations.Pass = 0 },
 		"finding":              func(q *kit.QualificationResult) { q.Findings = append(q.Findings, kit.Finding{Code: "CONTROL"}) },
-		// #218: the symbol role rows, executed on Windows and Linux and deferred on darwin
+		// #218: the symbol role rows, executed on Windows and Linux
 		"role_row_missing": func(q *kit.QualificationResult) { q.ExtraRoles = slices.Delete(q.ExtraRoles, 0, 1) },
 		"role_row_failed": func(q *kit.QualificationResult) {
 			q.ExtraRoles[roleRow(q, "csharp-symbols", "linux-amd64")].Status = "FAIL"
@@ -171,13 +194,10 @@ func TestQualificationRejectsIncompleteAndForeignEvidence(t *testing.T) {
 		"role_row_axis": func(q *kit.QualificationResult) {
 			q.ExtraRoles[roleRow(q, "csharp-symbols", "windows-amd64")].Checks = "BLOCKED"
 		},
-		"deferred_executed": func(q *kit.QualificationResult) {
-			q.ExtraRoles[roleRow(q, "csharp-symbols", "darwin-arm64")].Status = "PASS"
-		},
-		"deferred_axis": func(q *kit.QualificationResult) {
-			q.ExtraRoles[roleRow(q, "csharp-symbols", "darwin-arm64")].Mechanism = "PASS"
-		},
 		"role_row_twice": func(q *kit.QualificationResult) { q.ExtraRoles = append(q.ExtraRoles, q.ExtraRoles[0]) },
+		"deferred_row_unregistered": func(q *kit.QualificationResult) {
+			q.ExtraRoles = append(q.ExtraRoles, kit.QualRoleRow{ID: "csharp-symbols", Role: "owned", Platform: "darwin-arm64", Status: kit.RoleDeferred})
+		},
 	}
 	for name, mutate := range mutations {
 		t.Run(name, func(t *testing.T) {

@@ -85,11 +85,13 @@ func TestMarginJobsSettled(t *testing.T) {
 	if !marginJobsSettled(jobsData) || cli(jobsData) != 0 {
 		t.Fatal("settled snapshot rejected")
 	}
+	// the last two measured producers; CI mode and the gate follow them in the fixture
+	a, b := len(marginJobs)-2, len(marginJobs)-1
 	for name, mutate := range map[string]func(jobs []marginAPIJob) []marginAPIJob{
-		"job-running":  func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Status, jobs[7].End = "in_progress", ""; return jobs },
-		"job-no-end":   func(jobs []marginAPIJob) []marginAPIJob { jobs[8].End = ""; return jobs },
-		"step-running": func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Steps[0].Status = "in_progress"; return jobs },
-		"step-missing": func(jobs []marginAPIJob) []marginAPIJob { jobs[7].Steps = nil; return jobs },
+		"job-running":  func(jobs []marginAPIJob) []marginAPIJob { jobs[a].Status, jobs[a].End = "in_progress", ""; return jobs },
+		"job-no-end":   func(jobs []marginAPIJob) []marginAPIJob { jobs[b].End = ""; return jobs },
+		"step-running": func(jobs []marginAPIJob) []marginAPIJob { jobs[a].Steps[0].Status = "in_progress"; return jobs },
+		"step-missing": func(jobs []marginAPIJob) []marginAPIJob { jobs[a].Steps = nil; return jobs },
 		"job-missing":  func(jobs []marginAPIJob) []marginAPIJob { return jobs[1:] },
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -166,7 +168,8 @@ func TestMarginThresholdAndIndependentRuns(t *testing.T) {
 
 func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 	r, jobs, core := marginFixture(t, "900")
-	if len(r.Metrics) != 17 {
+	if len(r.Metrics) != 14 { // 17 with the three darwin metrics before #332
+
 		t.Fatalf("metrics=%d", len(r.Metrics))
 	}
 	a, _, _ := marginFixture(t, "1")
@@ -442,14 +445,8 @@ func TestMarginWorkflowLimitsAndCollection(t *testing.T) {
 		if len(m) != 2 || m[1] != strconv.FormatInt(j.minutes, 10) {
 			t.Fatalf("job limit drift %s", j.name)
 		}
-		if j.job == "native-routes-macos" {
-			if !strings.Contains(s, "    steps: *native-route-steps\n") {
-				t.Fatal("Mac route step alias missing")
-			}
-			s = body("native-routes")
-		}
 		configName := "name: ci-config-" + j.job + "-"
-		if j.job == "native-routes" || j.job == "native-routes-macos" {
+		if j.job == "native-routes" {
 			configName = "name: ci-config-${{ github.job }}-"
 			if !strings.Contains(s, "path: ${{ runner.temp }}/ci-config-${{ github.job }}-${{ runner.os }}-") {
 				t.Fatal("route configuration path lost actual job identity")
@@ -538,7 +535,7 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				j := marginJobs[i]
 				z := zipBytes(t, zipEntry{"config.json", string(encoded(t, c)), 0600})
 				rows = append(rows, makeArtifact(uint64(i+10), configName(j, current.Run), current.Run, z))
-				if j.job == "native-routes" || j.job == "native-routes-macos" {
+				if j.job == "native-routes" {
 					dir := filepath.Join(root, "s05-routes-"+j.goos+"-900-2")
 					put(filepath.Join(dir, "run-identity.json"), encoded(t, c.Run))
 					put(filepath.Join(dir, "summary.json"), encoded(t, map[string]any{"compiler": c.Compiler}))
@@ -621,8 +618,8 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 	}
 }
 
-// The workflow has 11 jobs on a PR (nine producers, CI mode, the gate) and 14 with the
-// three main diagnostics (#252); other totals are not the current workflow.
+// The workflow has 9 jobs on a PR (seven producers, CI mode, the gate) and 10 with the
+// nightly race diagnostic (#252, #332); other totals are not the current workflow.
 func TestMarginWorkflowJobCount(t *testing.T) {
 	r, jobsData, core := marginFixture(t, "123")
 	var jobs struct {
@@ -634,7 +631,7 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 	diagnostic := func(name string) marginAPIJob {
 		return marginAPIJob{marginStep: marginStep{Name: name, Status: "completed", Conclusion: "success"}}
 	}
-	main := append(slices.Clone(jobs.Jobs), diagnostic("race diagnostic (ubuntu-24.04)"), diagnostic("race diagnostic (macos-15)"), diagnostic("regenerate diagnostic (macos-15)"))
+	main := append(slices.Clone(jobs.Jobs), diagnostic("race diagnostic (ubuntu-24.04)"))
 	noMode := slices.DeleteFunc(slices.Clone(jobs.Jobs), func(j marginAPIJob) bool { return j.Name == "CI mode" })
 	for name, tc := range map[string]struct {
 		jobs []marginAPIJob

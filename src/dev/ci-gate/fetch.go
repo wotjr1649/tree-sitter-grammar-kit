@@ -138,8 +138,8 @@ func makePlan(expected kit.RunIdentity, runBytes []byte, pages [][]byte) (downlo
 	if listed != total {
 		return result, errors.New("artifact listing incomplete")
 	}
-	// the margin plan reads this same listing, so its nine producer configs must be listed
-	// before the plan stops listing again; it still selects only the five core artifacts
+	// the margin plan reads this same listing, so its producer configs must be listed
+	// before the plan stops listing again; it still selects only the core artifacts
 	missing := []string{}
 	for _, spec := range artifacts(expected) {
 		if _, ok := selected[spec.name]; !ok {
@@ -194,11 +194,11 @@ func unpack(ctx context.Context, expected kit.RunIdentity, root, planPath string
 		return e
 	}
 	var plan downloadPlan
-	if decode(data, &plan) != nil || plan.Schema != "tsgk-ci-download-plan/r1" || !sameRun(&plan.Run, expected) || len(plan.Artifacts) != 5 {
+	if decode(data, &plan) != nil || plan.Schema != "tsgk-ci-download-plan/r1" || !sameRun(&plan.Run, expected) || len(plan.Artifacts) != len(artifacts(expected)) {
 		return errors.New("download plan invalid")
 	}
 	entries, e := os.ReadDir(root)
-	if e != nil || len(entries) != 5 {
+	if e != nil || len(entries) != len(artifacts(expected)) {
 		return errors.New("ZIP input count invalid")
 	}
 	specs := artifacts(expected)
@@ -438,11 +438,11 @@ func checkDownloaded(root string, expected kit.RunIdentity) error {
 		return err
 	}
 	var receipt downloadReceipt
-	if decode(b, &receipt) != nil || receipt.Schema != "tsgk-ci-download/r1" || !sameRun(&receipt.Run, expected) || len(receipt.Artifacts) != 5 {
+	if decode(b, &receipt) != nil || receipt.Schema != "tsgk-ci-download/r1" || !sameRun(&receipt.Run, expected) || len(receipt.Artifacts) != len(artifacts(expected)) {
 		return errors.New("download receipt invalid")
 	}
 	entries, err := os.ReadDir(root)
-	if err != nil || len(entries) != 11 {
+	if err != nil || len(entries) != 2*len(artifacts(expected))+1 {
 		return errors.New("unexpected download root entries")
 	}
 	seen := map[string]bool{}
