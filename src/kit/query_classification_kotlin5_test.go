@@ -214,6 +214,68 @@ func TestQueryClassificationKotlin5ProfileAndPagedContext(t *testing.T) {
 			t.Fatal("Kotlin5 query source mutation accepted")
 		}
 	}
+	grammarRoot, output := filepath.Join("prepared", "routes", "kotlin"), filepath.Join("library", "kotlin.dll")
+	args, err := classificationGoCompilerArgs("kotlin", grammarRoot, output, classificationKotlin5GrammarPins())
+	if err != nil || !slices.Contains(args, filepath.Join(grammarRoot, "src", "scanner.c")) || args[len(args)-2] != "-o" || args[len(args)-1] != output {
+		t.Fatalf("Kotlin5 scanner or compiler output closure differs: %v %v", args, err)
+	}
+	for name, mutate := range map[string]func(*eligibilityProcessRequest){
+		"compiler-path": func(request *eligibilityProcessRequest) { request.Path = "cc.exe" },
+		"output":        func(request *eligibilityProcessRequest) { request.Args[len(request.Args)-1] += ".other" },
+		"scanner-argv": func(request *eligibilityProcessRequest) {
+			request.Args[6] = filepath.Join(grammarRoot, "src", "other.c")
+		},
+		"wall":   func(request *eligibilityProcessRequest) { request.Wall++ },
+		"memory": func(request *eligibilityProcessRequest) { request.Memory.Hard = false },
+		"stdout": func(request *eligibilityProcessRequest) { request.StdoutBytes-- },
+		"stderr": func(request *eligibilityProcessRequest) { request.StderrBytes-- },
+	} {
+		badRequest := plan
+		badRequest.LibraryRequest.Args = slices.Clone(plan.LibraryRequest.Args)
+		badRequest.LibraryRequest.Env = slices.Clone(plan.LibraryRequest.Env)
+		mutate(&badRequest.LibraryRequest)
+		if classificationPagedDefinitionPlanValid(p, a, badRequest) == nil {
+			t.Fatalf("Kotlin5 noncanonical compiler request %s accepted", name)
+		}
+	}
+	badConsumerPlan := plan
+	badConsumerPlan.LibraryRequest.Args = slices.Clone(plan.LibraryRequest.Args)
+	badConsumerPlan.LibraryRequest.Args[len(badConsumerPlan.LibraryRequest.Args)-1] += ".preapproved-alias"
+	if _, err := classificationPagedDefinitionLoadInputs(p, a, badConsumerPlan, f.inventoryData, f.qualificationData, f.queryData); err == nil {
+		t.Fatal("Kotlin5 consumer accepted a noncanonical pre-fixed compiler output plan")
+	}
+	badABI := a
+	badABI.ABI.FieldCount++
+	badRoot := a
+	badRoot.Nodes = slices.Clone(a.Nodes)
+	badRoot.Nodes[0].Type = "program"
+	badOrder := a
+	badOrder.Queries = slices.Clone(a.Queries)
+	badOrder.Queries[0], badOrder.Queries[1] = badOrder.Queries[1], badOrder.Queries[0]
+	badRequired := a
+	badRequired.Required = slices.Clone(a.Required)
+	badRequired.Required[0].Structural = nil
+	for name, changed := range map[string]classificationAnchors{"abi": badABI, "root": badRoot, "query-order": badOrder, "required-null": badRequired} {
+		if classificationPagedAnchorsValid(p, changed) == nil {
+			t.Fatalf("changed Kotlin5 %s anchor accepted", name)
+		}
+	}
+	for _, test := range []struct {
+		name                            string
+		query, inventory, qualification []byte
+	}{
+		{"inventory-bytes", f.queryData, append(slices.Clone(f.inventoryData), ' '), f.qualificationData},
+		{"qualification-bytes", f.queryData, f.inventoryData, append(slices.Clone(f.qualificationData), ' ')},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := classificationPagedDefinitionLoadInputs(p, a, plan, test.inventory, test.qualification, test.query); err == nil {
+				t.Fatal("changed Kotlin5 source inventory input accepted")
+			}
+		})
+	}
+	if _, err := classificationPagedDefinitionProjection(p, a, plan, nil, nil, QueryReferenceEligibilityResult{}, f.inventoryData, f.qualificationData, f.queryData, strings.Repeat("d", 40)); err == nil || !strings.Contains(err.Error(), "live guarded eligibility session") {
+		t.Fatalf("ungrounded Kotlin5 projection accepted: %v", err)
+	}
 }
 
 func TestQueryClassificationKotlin5ClosedNames(t *testing.T) {

@@ -83,6 +83,99 @@ func TestSemanticPagedParserValidation(t *testing.T) {
 	}
 }
 
+// Part-count boundaries: exactly 16 MiB is not paged; 2x16 MiB and 2x16 MiB+n (the Kotlin5 shape) are.
+func TestSemanticPagedParserPartBoundaries(t *testing.T) {
+	const tail = 315585
+	type built struct {
+		input semanticBuildInput
+		d     semanticParserDescriptor
+		parts map[string][]byte
+	}
+	cache := map[int]built{}
+	build := func(size int) built {
+		if b, ok := cache[size]; ok {
+			return b
+		}
+		data := bytes.Repeat([]byte("p"), size)
+		b := built{input: semanticBuildInput{Role: "grammar-parser", Path: "parser.c", Bytes: uint64(size), SHA256: digestHex(data)}, d: semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}, parts: map[string][]byte{}}
+		b.d.Logical.ClosureIndex = 7
+		b.d.Logical.Role = b.input.Role
+		b.d.Logical.Path = b.input.Path
+		b.d.Logical.Bytes = b.input.Bytes
+		b.d.Logical.SHA256 = b.input.SHA256
+		for i, offset := 0, 0; offset < size; i++ {
+			n := min(MaxDocumentBytes, size-offset)
+			name := fmt.Sprintf("capture/build-input-00007.part-%05d.bin", i)
+			part := data[offset : offset+n]
+			b.parts[name] = part
+			b.d.Parts = append(b.d.Parts, struct {
+				Index  uint64 `json:"index"`
+				Offset uint64 `json:"offset"`
+				Path   string `json:"path"`
+				Bytes  uint64 `json:"bytes"`
+				SHA256 string `json:"sha256"`
+			}{uint64(i), uint64(offset), name, uint64(n), digestHex(part)})
+			offset += n
+		}
+		cache[size] = b
+		return b
+	}
+	for _, test := range []struct {
+		name     string
+		size     int
+		mutation string
+		paged    bool
+		good     bool
+	}{
+		{"single-part-exactly-16MiB", MaxDocumentBytes, "", false, false},
+		{"two-full-parts", 2 * MaxDocumentBytes, "", true, true},
+		{"three-parts", 2*MaxDocumentBytes + tail, "", true, true},
+		{"three-parts-drop-last", 2*MaxDocumentBytes + tail, "drop-last", true, false},
+		{"three-parts-extra-part", 2*MaxDocumentBytes + tail, "extra-part", true, false},
+		{"three-parts-short-last", 2*MaxDocumentBytes + tail, "short-last", true, false},
+		{"three-parts-offset-last", 2*MaxDocumentBytes + tail, "offset-last", true, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			b := build(test.size)
+			d := b.d
+			d.Parts = append(d.Parts[:0:0], b.d.Parts...)
+			supplied := map[string][]byte{}
+			for p, data := range b.parts {
+				supplied[p] = data
+			}
+			last := len(d.Parts) - 1
+			switch test.mutation {
+			case "drop-last":
+				d.Parts = d.Parts[:last]
+			case "extra-part":
+				extra := d.Parts[last]
+				extra.Index, extra.Offset = extra.Index+1, extra.Offset+extra.Bytes
+				d.Parts = append(d.Parts, extra)
+			case "short-last":
+				supplied[d.Parts[last].Path] = supplied[d.Parts[last].Path][:tail-1]
+			case "offset-last":
+				d.Parts[last].Offset--
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			r, e := startRun(ctx, time.Minute)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			reads := 0
+			ok, e := (&eligibilityBudget{r: r}).semanticPagedParser(eligibilityJSON(t, d), b.input, 7, func(pin ReplayMember) ([]byte, bool, *Error) {
+				reads++
+				data, found := supplied[pin.Path]
+				return data, found, nil
+			})
+			if e != nil || ok != test.good || (!test.paged && reads != 0) {
+				t.Fatalf("good=%v want=%v reads=%d err=%v", ok, test.good, reads, e)
+			}
+		})
+	}
+}
+
 func TestSemanticPagedPublicAPIAndReplay(t *testing.T) {
 	req, f, binding := semanticBoundFixtureMode(t, 0, true, true)
 	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
