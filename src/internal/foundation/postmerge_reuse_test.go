@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -58,7 +59,7 @@ const reuseBlock = "" +
 	"              }\n" +
 	"              if (Wait-Job -Job $reuseJob -Timeout $reuseSeconds) {\n" +
 	"                if ($reuseJob.State -eq 'Completed') {\n" +
-	"                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction Stop)\n" +
+	"                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction SilentlyContinue)\n" +
 	"                  if ($proof.Count -eq 1) { $prVerified = 'true'; $proof[0] }\n" +
 	"                }\n" +
 	"              } else {\n" +
@@ -68,7 +69,9 @@ const reuseBlock = "" +
 	"              $prVerified = 'false'\n" +
 	"            } finally {\n" +
 	"              # Stop the lookup thread; the Actions runner cleans up any remaining gh children when the job ends.\n" +
-	"              if ($null -ne $reuseJob) { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob }\n" +
+	"              if ($null -ne $reuseJob) {\n" +
+	"                try { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob -Force } catch { }\n" +
+	"              }\n" +
 	"            }\n" +
 	"          }\n" +
 	"          \"heavy=$heavy\" >> $env:GITHUB_OUTPUT\n" +
@@ -167,6 +170,8 @@ func TestWorkflowPostMergeReusePolicy(t *testing.T) {
 		{"deadline-unbounded", "$reuseSeconds -le 0 -or $reuseSeconds -gt 150", "$false", true},
 		{"no-early-return", "                            return\n", "", true},
 		{"no-stop", "Stop-Job -Job $reuseJob; ", "", true},
+		{"receive-stops-on-stderr", "Receive-Job -Job $reuseJob -ErrorAction SilentlyContinue", "Receive-Job -Job $reuseJob -ErrorAction Stop", true},
+		{"cleanup-uncaught", "try { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob -Force } catch { }", "Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob -Force", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			broken := text
@@ -234,6 +239,7 @@ function gh {
     # only the latest attempt (2) exists; any other attempt is an unknown call
     if ($Matches[2] -ne '2') { $global:LASTEXITCODE = 2; return }
     $broken = (Get-Fx 'BREAK_RUNS' '301').Split(',') -contains $Matches[1]
+    if ($broken -and $env:BREAK -eq 'stderr') { Write-Error 'gh lookup failed' -ErrorAction Continue; $global:LASTEXITCODE = 1; return }
     $rows = @($fxJobs | ForEach-Object { "$_${tab}success" })
     if ($broken -and $env:BREAK -eq 'failure') { $rows[0] = "$($fxJobs[0])${tab}failure" }
     if ($broken -and $env:BREAK -eq 'skipped') { $rows[7] = "$($fxJobs[7])${tab}skipped" }
@@ -259,12 +265,6 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
 	script, err := modeScript(text)
 	if err != nil {
-		t.Fatal(err)
-	}
-	// Install the same gh stub in the worker runspace; the decision and timeout code stay intact.
-	script = strings.Replace(script, "Start-ThreadJob -ArgumentList", "Start-ThreadJob -InitializationScript {"+reuseStub+"} -ArgumentList", 1)
-	file := filepath.Join(t.TempDir(), "mode.ps1")
-	if err := os.WriteFile(file, []byte(reuseStub+script), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	synth, tree := strings.Repeat("c", 40), strings.Repeat("1", 40)
@@ -296,24 +296,49 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 		{"run-of-another-event", []string{"RUN_EVENT=push"}, "false", false, false},
 		{"run-of-another-head", []string{"RUN_HEAD=" + other}, "false", false, false},
 		{"second-run-passes", []string{"RUNS=302,301", "BREAK=failure", "BREAK_RUNS=302"}, "true", false, false},
+		{"second-run-passes-after-stderr", []string{"RUNS=302,301", "BREAK=stderr", "BREAK_RUNS=302"}, "true", false, false},
 		{"later-failing-run-keeps-verdict", []string{"RUNS=301,302", "BREAK=failure", "BREAK_RUNS=302"}, "true", false, false},
 		{"pull-request-event", []string{"EVENT=pull_request"}, "false", true, false},
 		{"schedule-event", []string{"EVENT=schedule"}, "false", true, false},
 		{"dispatch-event", []string{"EVENT=workflow_dispatch"}, "false", true, false},
 		{"push-to-another-branch", []string{"REF=refs/heads/feature"}, "false", true, false},
 		{"unresponsive-lookup", []string{"HANG=merge", "REUSE_TIMEOUT_SECONDS=1"}, "false", false, true},
-		{"slow-candidates-exhaust-budget", []string{"RUNS=301,302,303,304,305,306,307,308,309,310", "BREAK=failure", "BREAK_RUNS=301,302,303,304,305,306,307,308,309,310", "JOB_DELAY_MS=700", "REUSE_TIMEOUT_SECONDS=3"}, "false", false, false},
-		{"verified-before-hanging-candidate", []string{"RUNS=301,302", "HANG_RUN=302", "REUSE_TIMEOUT_SECONDS=3"}, "true", false, false},
+		{"unresponsive-native-gh", []string{"REUSE_TIMEOUT_SECONDS=1"}, "false", false, true},
+		{"slow-candidates-exhaust-budget", []string{"RUNS=301,302,303,304,305,306,307,308,309,310", "BREAK=failure", "BREAK_RUNS=301,302,303,304,305,306,307,308,309,310", "JOB_DELAY_MS=1500", "REUSE_TIMEOUT_SECONDS=8"}, "false", false, false},
+		{"verified-before-hanging-candidate", []string{"RUNS=301,302", "HANG_RUN=302", "REUSE_TIMEOUT_SECONDS=10"}, "true", false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
 			calls, output := filepath.Join(dir, "calls.log"), filepath.Join(dir, "output.txt")
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			caseScript := "$ErrorActionPreference = 'stop'\n" + script
+			limit := 2 * time.Minute
+			if tc.name == "unresponsive-native-gh" {
+				limit = 15 * time.Second
+				nativeName, nativeScript := "gh", "#!/bin/sh\nprintf 'native-gh\\n' >> \"$CALLS\"\nexec sleep 30\n"
+				if runtime.GOOS == "windows" {
+					nativeName, nativeScript = "gh.cmd", "@echo off\r\n>>\"%CALLS%\" echo native-gh\r\n:hang\r\ngoto hang\r\n"
+				}
+				if err := os.WriteFile(filepath.Join(dir, nativeName), []byte(nativeScript), 0o700); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				// Install the same gh stub in both runspaces; keep the decision and timeout code intact.
+				caseScript = "$ErrorActionPreference = 'stop'\n" + reuseStub + strings.Replace(script, "Start-ThreadJob -ArgumentList", "Start-ThreadJob -InitializationScript {"+reuseStub+"} -ArgumentList", 1)
+			}
+			file := filepath.Join(dir, "mode.ps1")
+			if err := os.WriteFile(file, []byte(caseScript), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), limit)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-File", file)
+			cmd.WaitDelay = time.Second // Bound inherited output pipes if a native child survives pwsh.
 			cmd.Env = append(os.Environ(), "GH_TOKEN=unused", "REPOSITORY=o/r", "EVENT=push", "REF=refs/heads/main", "PR=12", "SHA="+strings.Repeat("e", 40),
 				"GITHUB_OUTPUT="+output, "CALLS="+calls, "REUSE_TIMEOUT_SECONDS=10")
 			cmd.Env = append(cmd.Env, tc.env...)
+			if tc.name == "unresponsive-native-gh" {
+				cmd.Env = append(cmd.Env, "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+			}
 			started := time.Now()
 			out, runErr := cmd.CombinedOutput()
 			elapsed := time.Since(started)
@@ -329,10 +354,13 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 			if tc.noGit && strings.Contains(string(log), "git/commits/") || tc.noRun && strings.Contains(string(log), "actions/workflows/") {
 				t.Fatalf("lookups that the case must not reach:\n%s", log)
 			}
-			if tc.name == "unresponsive-lookup" || tc.name == "slow-candidates-exhaust-budget" {
+			if tc.name == "unresponsive-lookup" || tc.name == "unresponsive-native-gh" || tc.name == "slow-candidates-exhaust-budget" {
 				if elapsed >= 15*time.Second || !strings.Contains(string(out), "running in full") {
 					t.Fatalf("lookup budget did not return full promptly (%v):\n%s", elapsed, out)
 				}
+			}
+			if tc.name == "unresponsive-native-gh" && !strings.Contains(string(log), "native-gh") {
+				t.Fatalf("the native gh on PATH was not reached:\n%s\n%s", out, log)
 			}
 			if tc.name == "slow-candidates-exhaust-budget" {
 				if n := strings.Count(string(log), "/attempts/2/jobs"); n < 2 || n >= 10 {
