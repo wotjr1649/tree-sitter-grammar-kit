@@ -859,6 +859,9 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		t.Fatal("guarded native independent CST")
 	}
 	s := scope.session
+	if s != nil && s.b != nil { // margin record against the eligibility work/logical limits (diagnostic log only)
+		t.Logf("eligibility work=%d/%d logical=%d/%d", s.b.work, eligibilityWorkLimit, s.b.logical, eligibilityLogicalLimit)
+	}
 	if !classificationGoWitnessMatches(anchors, s.witness.QueryWitnessRegistration) || s.witness.Native.ProducerABI != anchors.ABI || s.witness.Native.ObservationRunID != plan.RunID || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.approval.Candidate.SourceRevision != plan.SourceRevision || s.approval.Candidate.Platform != "windows/amd64" || s.approval.Candidate.Run != plan.RunID || s.approval.Candidate.Attempt != 1 || s.reg.Native == nil || s.reg.Native.Symbol != anchors.nativeSymbol() || s.reg.Context != anchors.nativeContext() || len(s.reg.Native.Grammar) != len(plan.Grammar) {
 		t.Fatal("classification of an unrelated approved workload")
 	}
