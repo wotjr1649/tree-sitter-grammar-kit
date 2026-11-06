@@ -2,7 +2,7 @@
 
 설계 대상은 Windows Native amd64, Linux amd64, macOS Apple Silicon arm64다. WSL은 선행 조건이 아니다. macOS Intel·Windows ARM64·다른 배포판을 자동으로 포함하지 않는다.
 
-**macOS CI 일시 제외 (#332).** macOS(darwin/arm64)는 2026-11-07 사용자 결정으로 CI에서 일시 제외했다. 설계 대상 platform은 그대로이고, 제품의 darwin backend 코드도 유지하지만 CI가 검증하지 않는다. 세 OS qualification SUPPORTED 판정의 역사적 pin은 `8038e8f`(#103)다. 이 문서를 쓴 시점에 확인한 마지막 macOS 필수 CI 성공은 main `96a4792`의 post-merge run 42219388722(attempt 1)이며(제외 PR 병합 때 제외 직전 main의 post-merge run으로 갱신한다), 그 뒤 macOS 실행 근거는 없다(NOT_RUN). 아래 표와 본문에서 macOS의 근거로 든 run·관측은 이 제외 이전의 역사적 근거이고 제외 뒤에 다시 검증하지 않았다. 제외 뒤 CI의 qualification은 커밋된 inventory에서 `darwin-arm64`를 뺀 26 × 2 = 52칸의 파생 inventory로 계산하며([validation](../validation/validation.md)), 이는 3-platform 판정이 아니다. 재활성화 절차도 그곳에 있다.
+**macOS CI 일시 제외 (#332).** macOS(darwin/arm64)는 2026-11-07 사용자 결정으로 CI에서 일시 제외했다. 설계 대상 platform은 그대로이고, 제품의 darwin backend 코드도 유지하지만 CI가 검증하지 않는다. 세 OS qualification SUPPORTED 판정의 역사적 pin은 `8038e8f`(#103)다. 제외 직전 main `96a4792`의 post-merge run 42219388722(attempt 1)가 macOS 필수 job이 모두 success인 마지막 run이며, 그 뒤 macOS 실행 근거는 없다(NOT_RUN). 아래 표와 본문에서 macOS의 근거로 든 run·관측은 이 제외 이전의 역사적 근거이고 제외 뒤에 다시 검증하지 않았다. 제외 뒤 CI의 qualification은 커밋된 inventory에서 `darwin-arm64`를 뺀 26 × 2 = 52칸의 파생 inventory로 계산하며([validation](../validation/validation.md)), 이는 3-platform 판정이 아니다. 재활성화 절차도 그곳에 있다.
 
 Campaign 01은 이 세 조합 모두에서 core/공개 offline API와 [26개 route](../validation/language-feature-scope.md)의 등록 native workload를 필수로 검증한다(CI 범위는 #332 이후 Windows·Linux). `26 × 3 = 78` 요약 칸은 각 route의 feature·fixture·query·edit·source/tool/policy/comparator 근거를 참조한다. compiler version이나 cross-build만으로 native 실행 칸을 채우지 않는다. 미지원 필수 capability는 전체 지원 완료를 막으며 OS 행을 삭제하는 사유가 아니다.
 
