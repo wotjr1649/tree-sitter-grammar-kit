@@ -143,7 +143,7 @@ Swift ordinary loader는 `swift.json`의 정확한 원문·hash·query 순서와
 
 닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=powershell3-tiny`는 [PowerShell3 사전 기대값](../../src/testdata/query-semantics/powershell3-classification-anchors.json)의 UTF-8 source `;`(1 byte, SHA-256 `41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4`)·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 선택한다. 이름의 `-tiny`는 빈 source가 아님을 뜻한다. PowerShell root `program`은 nonnullable이라 빈 입력은 error 경로로 가므로 빈 입력 profile이 존재할 수 없고, 가장 작은 유효 입력 중 query 대상 node를 만들지 않는 `;`를 고정한다.
 
-아래 CST는 **관측 전 사전 기대값**이다. 근거는 고정 `parser.c`의 lex·parse table·action을 읽은 정적 도출이며(`;` shift 뒤 EOF에서 `empty_statement`→`statement_list`→`program` reduce와 accept), 실제 runtime parse는 아직 관측하지 않았다. 세 reduce는 production 0이라 모든 field는 null이고 scanner는 이 경로에서 호출되지 않는다.
+아래 CST는 **관측 전 사전 기대값**이다. 근거는 고정 `parser.c`의 lex·parse table·action을 읽은 정적 도출이며(`;` shift 뒤 EOF에서 `empty_statement`→`statement_list`→`program` reduce와 accept), 실제 runtime parse는 아직 관측하지 않았다. 세 reduce는 production 0이라 모든 field는 null이고 scanner는 이 경로에서 호출되지 않는 것으로 추정한다(시작 상태에는 external lex 상태가 없지만 `;` shift 뒤 상태는 정적으로 확인하지 않았다).
 
 | # | parent | type | named | byte span |
 |---:|---:|---|---|---|
