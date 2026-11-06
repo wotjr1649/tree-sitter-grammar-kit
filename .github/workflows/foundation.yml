@@ -447,6 +447,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
+          REUSE_TIMEOUT_SECONDS: '150'
         run: |
           $heavy = 'true'
           if ($env:EVENT -eq 'pull_request') {
@@ -491,38 +492,56 @@ jobs:
           # commit's tree and PR head; anything else, including a failed lookup, runs in full
           $prVerified = 'false'
           if ($env:EVENT -eq 'push' -and $env:REF -eq 'refs/heads/main') {
+            $reuseJob = $null
             try {
-              $merge = @(gh api "repos/$env:REPOSITORY/git/commits/$env:SHA" --jq '.tree.sha, (.parents | length), .parents[1].sha')
-              if ($LASTEXITCODE -eq 0 -and $merge.Count -eq 3 -and $merge[1] -eq '2') {
-                $tree, $prHead = $merge[0], $merge[2]
-                $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$prHead&event=pull_request&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_sha, .updated_at] | @tsv')
-                if ($LASTEXITCODE -eq 0) {
-                  $since = [DateTimeOffset]::UtcNow.AddHours(-24)
-                  foreach ($row in $rows) {
-                    $id, $attempt, $trigger, $runHead, $updated = $row -split "`t"
-                    if ($trigger -ceq 'pull_request' -and $runHead -ceq $prHead -and
-                      [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
-                      $jobs = @(gh api "repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')
-                      $complete = $LASTEXITCODE -eq 0
-                      foreach ($name in $required) {
-                        $named = @($jobs | Where-Object { ($_ -split "`t")[0] -eq $name })
-                        if ($named.Count -ne 1 -or ($named[0] -split "`t")[1] -ne 'success') { $complete = $false }
-                      }
-                      $modes = @($jobs | Where-Object { ($_ -split "`t")[0] -cmatch '^CI mode \([0-9a-f]{40}\)$' })
-                      if ($complete -and $modes.Count -eq 1 -and ($modes[0] -split "`t")[1] -ceq 'success') {
-                        $synthetic = [regex]::Match($modes[0], '^CI mode \(([0-9a-f]{40})\)').Groups[1].Value
-                        $verified = @(gh api "repos/$env:REPOSITORY/git/commits/$synthetic" --jq '.tree.sha, (.parents | length), .parents[1].sha')
-                        if ($LASTEXITCODE -eq 0 -and $verified.Count -eq 3 -and $verified[0] -ceq $tree -and $verified[1] -eq '2' -and $verified[2] -ceq $prHead) {
-                          $prVerified = 'true'
-                          "CI mode: run $id attempt $attempt verified synthetic $synthetic with the tree $tree of $env:SHA"
+              $reuseSeconds = [int]$env:REUSE_TIMEOUT_SECONDS
+              if ($reuseSeconds -le 0 -or $reuseSeconds -gt 150) { throw 'invalid reuse deadline' }
+              $reuseJob = Start-ThreadJob -ArgumentList (,$required) -ScriptBlock {
+                param($required)
+                $ErrorActionPreference = 'Stop'
+                $merge = @(gh api "repos/$env:REPOSITORY/git/commits/$env:SHA" --jq '.tree.sha, (.parents | length), .parents[1].sha')
+                if ($LASTEXITCODE -eq 0 -and $merge.Count -eq 3 -and $merge[1] -eq '2') {
+                  $tree, $prHead = $merge[0], $merge[2]
+                  $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$prHead&event=pull_request&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_sha, .updated_at] | @tsv')
+                  if ($LASTEXITCODE -eq 0) {
+                    $since = [DateTimeOffset]::UtcNow.AddHours(-24)
+                    foreach ($row in $rows) {
+                      $id, $attempt, $trigger, $runHead, $updated = $row -split "`t"
+                      if ($trigger -ceq 'pull_request' -and $runHead -ceq $prHead -and
+                        [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
+                        $jobs = @(gh api "repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')
+                        $complete = $LASTEXITCODE -eq 0
+                        foreach ($name in $required) {
+                          $named = @($jobs | Where-Object { ($_ -split "`t")[0] -eq $name })
+                          if ($named.Count -ne 1 -or ($named[0] -split "`t")[1] -ne 'success') { $complete = $false }
+                        }
+                        $modes = @($jobs | Where-Object { ($_ -split "`t")[0] -cmatch '^CI mode \([0-9a-f]{40}\)$' })
+                        if ($complete -and $modes.Count -eq 1 -and ($modes[0] -split "`t")[1] -ceq 'success') {
+                          $synthetic = [regex]::Match($modes[0], '^CI mode \(([0-9a-f]{40})\)').Groups[1].Value
+                          $verified = @(gh api "repos/$env:REPOSITORY/git/commits/$synthetic" --jq '.tree.sha, (.parents | length), .parents[1].sha')
+                          if ($LASTEXITCODE -eq 0 -and $verified.Count -eq 3 -and $verified[0] -ceq $tree -and $verified[1] -eq '2' -and $verified[2] -ceq $prHead) {
+                            "CI mode: run $id attempt $attempt verified synthetic $synthetic with the tree $tree of $env:SHA"
+                            return
+                          }
                         }
                       }
                     }
                   }
                 }
               }
+              if (Wait-Job -Job $reuseJob -Timeout $reuseSeconds) {
+                if ($reuseJob.State -eq 'Completed') {
+                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction Stop)
+                  if ($proof.Count -eq 1) { $prVerified = 'true'; $proof[0] }
+                }
+              } else {
+                "CI mode: PR evidence lookup exceeded ${reuseSeconds}s; running in full"
+              }
             } catch {
               $prVerified = 'false'
+            } finally {
+              # Stop the lookup thread; the Actions runner cleans up any remaining gh children when the job ends.
+              if ($null -ne $reuseJob) { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob }
             }
           }
           "heavy=$heavy" >> $env:GITHUB_OUTPUT

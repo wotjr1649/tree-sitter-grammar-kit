@@ -19,38 +19,56 @@ import (
 const reuseBlock = "" +
 	"          $prVerified = 'false'\n" +
 	"          if ($env:EVENT -eq 'push' -and $env:REF -eq 'refs/heads/main') {\n" +
+	"            $reuseJob = $null\n" +
 	"            try {\n" +
-	"              $merge = @(gh api \"repos/$env:REPOSITORY/git/commits/$env:SHA\" --jq '.tree.sha, (.parents | length), .parents[1].sha')\n" +
-	"              if ($LASTEXITCODE -eq 0 -and $merge.Count -eq 3 -and $merge[1] -eq '2') {\n" +
-	"                $tree, $prHead = $merge[0], $merge[2]\n" +
-	"                $rows = @(gh api \"repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$prHead&event=pull_request&status=completed&per_page=100\" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_sha, .updated_at] | @tsv')\n" +
-	"                if ($LASTEXITCODE -eq 0) {\n" +
-	"                  $since = [DateTimeOffset]::UtcNow.AddHours(-24)\n" +
-	"                  foreach ($row in $rows) {\n" +
-	"                    $id, $attempt, $trigger, $runHead, $updated = $row -split \"`t\"\n" +
-	"                    if ($trigger -ceq 'pull_request' -and $runHead -ceq $prHead -and\n" +
-	"                      [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n" +
-	"                      $jobs = @(gh api \"repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100\" --jq '.jobs[] | [.name, .conclusion] | @tsv')\n" +
-	"                      $complete = $LASTEXITCODE -eq 0\n" +
-	"                      foreach ($name in $required) {\n" +
-	"                        $named = @($jobs | Where-Object { ($_ -split \"`t\")[0] -eq $name })\n" +
-	"                        if ($named.Count -ne 1 -or ($named[0] -split \"`t\")[1] -ne 'success') { $complete = $false }\n" +
-	"                      }\n" +
-	"                      $modes = @($jobs | Where-Object { ($_ -split \"`t\")[0] -cmatch '^CI mode \\([0-9a-f]{40}\\)$' })\n" +
-	"                      if ($complete -and $modes.Count -eq 1 -and ($modes[0] -split \"`t\")[1] -ceq 'success') {\n" +
-	"                        $synthetic = [regex]::Match($modes[0], '^CI mode \\(([0-9a-f]{40})\\)').Groups[1].Value\n" +
-	"                        $verified = @(gh api \"repos/$env:REPOSITORY/git/commits/$synthetic\" --jq '.tree.sha, (.parents | length), .parents[1].sha')\n" +
-	"                        if ($LASTEXITCODE -eq 0 -and $verified.Count -eq 3 -and $verified[0] -ceq $tree -and $verified[1] -eq '2' -and $verified[2] -ceq $prHead) {\n" +
-	"                          $prVerified = 'true'\n" +
-	"                          \"CI mode: run $id attempt $attempt verified synthetic $synthetic with the tree $tree of $env:SHA\"\n" +
+	"              $reuseSeconds = [int]$env:REUSE_TIMEOUT_SECONDS\n" +
+	"              if ($reuseSeconds -le 0 -or $reuseSeconds -gt 150) { throw 'invalid reuse deadline' }\n" +
+	"              $reuseJob = Start-ThreadJob -ArgumentList (,$required) -ScriptBlock {\n" +
+	"                param($required)\n" +
+	"                $ErrorActionPreference = 'Stop'\n" +
+	"                $merge = @(gh api \"repos/$env:REPOSITORY/git/commits/$env:SHA\" --jq '.tree.sha, (.parents | length), .parents[1].sha')\n" +
+	"                if ($LASTEXITCODE -eq 0 -and $merge.Count -eq 3 -and $merge[1] -eq '2') {\n" +
+	"                  $tree, $prHead = $merge[0], $merge[2]\n" +
+	"                  $rows = @(gh api \"repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$prHead&event=pull_request&status=completed&per_page=100\" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_sha, .updated_at] | @tsv')\n" +
+	"                  if ($LASTEXITCODE -eq 0) {\n" +
+	"                    $since = [DateTimeOffset]::UtcNow.AddHours(-24)\n" +
+	"                    foreach ($row in $rows) {\n" +
+	"                      $id, $attempt, $trigger, $runHead, $updated = $row -split \"`t\"\n" +
+	"                      if ($trigger -ceq 'pull_request' -and $runHead -ceq $prHead -and\n" +
+	"                        [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {\n" +
+	"                        $jobs = @(gh api \"repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100\" --jq '.jobs[] | [.name, .conclusion] | @tsv')\n" +
+	"                        $complete = $LASTEXITCODE -eq 0\n" +
+	"                        foreach ($name in $required) {\n" +
+	"                          $named = @($jobs | Where-Object { ($_ -split \"`t\")[0] -eq $name })\n" +
+	"                          if ($named.Count -ne 1 -or ($named[0] -split \"`t\")[1] -ne 'success') { $complete = $false }\n" +
+	"                        }\n" +
+	"                        $modes = @($jobs | Where-Object { ($_ -split \"`t\")[0] -cmatch '^CI mode \\([0-9a-f]{40}\\)$' })\n" +
+	"                        if ($complete -and $modes.Count -eq 1 -and ($modes[0] -split \"`t\")[1] -ceq 'success') {\n" +
+	"                          $synthetic = [regex]::Match($modes[0], '^CI mode \\(([0-9a-f]{40})\\)').Groups[1].Value\n" +
+	"                          $verified = @(gh api \"repos/$env:REPOSITORY/git/commits/$synthetic\" --jq '.tree.sha, (.parents | length), .parents[1].sha')\n" +
+	"                          if ($LASTEXITCODE -eq 0 -and $verified.Count -eq 3 -and $verified[0] -ceq $tree -and $verified[1] -eq '2' -and $verified[2] -ceq $prHead) {\n" +
+	"                            \"CI mode: run $id attempt $attempt verified synthetic $synthetic with the tree $tree of $env:SHA\"\n" +
+	"                            return\n" +
+	"                          }\n" +
 	"                        }\n" +
 	"                      }\n" +
 	"                    }\n" +
 	"                  }\n" +
 	"                }\n" +
 	"              }\n" +
+	"              if (Wait-Job -Job $reuseJob -Timeout $reuseSeconds) {\n" +
+	"                if ($reuseJob.State -eq 'Completed') {\n" +
+	"                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction Stop)\n" +
+	"                  if ($proof.Count -eq 1) { $prVerified = 'true'; $proof[0] }\n" +
+	"                }\n" +
+	"              } else {\n" +
+	"                \"CI mode: PR evidence lookup exceeded ${reuseSeconds}s; running in full\"\n" +
+	"              }\n" +
 	"            } catch {\n" +
 	"              $prVerified = 'false'\n" +
+	"            } finally {\n" +
+	"              # Stop the lookup thread; the Actions runner cleans up any remaining gh children when the job ends.\n" +
+	"              if ($null -ne $reuseJob) { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob }\n" +
 	"            }\n" +
 	"          }\n" +
 	"          \"heavy=$heavy\" >> $env:GITHUB_OUTPUT\n" +
@@ -83,7 +101,7 @@ func postMergeReusePolicy(text string) error {
 	mode := workflowJobBody(text, "mode")
 	for _, required := range []string{"    name: CI mode (${{ github.sha }})\n",
 		"    permissions:\n      pull-requests: read\n      actions: read\n      contents: read\n    outputs:\n",
-		"      pr_verified: ${{ steps.mode.outputs.pr_verified }}\n", "          REF: ${{ github.ref }}\n", reuseBlock} {
+		"      pr_verified: ${{ steps.mode.outputs.pr_verified }}\n", "          REF: ${{ github.ref }}\n", "          REUSE_TIMEOUT_SECONDS: '150'\n", reuseBlock} {
 		if !strings.Contains(mode, required) {
 			return fmt.Errorf("post-merge reuse policy missing: %q", required)
 		}
@@ -121,8 +139,8 @@ func TestWorkflowPostMergeReusePolicy(t *testing.T) {
 		{"default-true", "$prVerified = 'false'\n          if", "$prVerified = 'true'\n          if", false},
 		{"catch-true", "} catch {\n              $prVerified = 'false'", "} catch {\n              $prVerified = 'true'", true},
 		{"single-parent", " -and $merge[1] -eq '2')", ")", true},
-		{"run-lookup-ignored", "if ($LASTEXITCODE -eq 0) {\n                  $since", "if ($true) {\n                  $since", true},
-		{"no-window", " -and\n                      [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {", ") {", true},
+		{"run-lookup-ignored", "if ($LASTEXITCODE -eq 0) {\n                    $since", "if ($true) {\n                    $since", true},
+		{"no-window", " -and\n                        [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {", ") {", true},
 		{"event-unchecked", "$trigger -ceq 'pull_request' -and ", "", true},
 		{"head-unchecked", "-and $runHead -ceq $prHead -and", "-and", true},
 		{"attempt-constant", "/attempts/$attempt/jobs", "/attempts/1/jobs", true},
@@ -137,13 +155,18 @@ func TestWorkflowPostMergeReusePolicy(t *testing.T) {
 		{"no-tree", " -and $verified[0] -ceq $tree", "", true},
 		{"head-tree", "git/commits/$synthetic", "git/commits/$prHead", true},
 		{"no-parent-bind", " -and $verified[2] -ceq $prHead", "", true},
-		{"assignment-outside", "                        if ($LASTEXITCODE -eq 0 -and $verified.Count", "                        $prVerified = 'true'\n                        if ($LASTEXITCODE -eq 0 -and $verified.Count", true},
+		{"assignment-outside", "                          if ($LASTEXITCODE -eq 0 -and $verified.Count", "                          $prVerified = 'true'\n                          if ($LASTEXITCODE -eq 0 -and $verified.Count", true},
 		{"foundation-skips", "    needs: mode\n    if: ${{ needs.mode.outputs.duplicate != 'true' }}\n", "    needs: mode\n    if: ${{ needs.mode.outputs.duplicate != 'true' && needs.mode.outputs.pr_verified != 'true' }}\n", false},
 		{"prepare-ignores", " && needs.mode.outputs.pr_verified != 'true' }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", " }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 30\n", false},
 		{"gate-skips-on-pr", "!(github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true')", "!(needs.mode.outputs.pr_verified == 'true')", false},
 		{"nightly-reuses", "if ($env:EVENT -eq 'schedule') {\n            try {", "if ($env:EVENT -eq 'schedule' -or $env:EVENT -eq 'push') {\n            try {", false},
 		{"write-scope", "      contents: read\n    outputs:\n      heavy:", "      contents: read\n      actions: write\n    outputs:\n      heavy:", false},
 		{"name-without-sha", "    name: CI mode (${{ github.sha }})\n", "    name: CI mode\n", false},
+		{"deadline-removed", "Wait-Job -Job $reuseJob -Timeout $reuseSeconds", "Wait-Job -Job $reuseJob", true},
+		{"deadline-expanded", "REUSE_TIMEOUT_SECONDS: '150'", "REUSE_TIMEOUT_SECONDS: '300'", false},
+		{"deadline-unbounded", "$reuseSeconds -le 0 -or $reuseSeconds -gt 150", "$false", true},
+		{"no-early-return", "                            return\n", "", true},
+		{"no-stop", "Stop-Job -Job $reuseJob; ", "", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			broken := text
@@ -182,6 +205,7 @@ function gh {
   Add-Content -LiteralPath $env:CALLS -Value $path
   $global:LASTEXITCODE = 0
   if ($path -like 'issues/*/labels') { return }
+  if ($env:HANG -eq 'merge' -and $path -eq "git/commits/$env:SHA") { Start-Sleep -Seconds 30 }
   if ($path -eq "git/commits/$env:SHA") {
     if ($env:FAIL -eq 'merge') { $global:LASTEXITCODE = 1; return }
     $fxTree
@@ -204,6 +228,8 @@ function gh {
     return
   }
   if ($path -match '^actions/runs/(\d+)/attempts/(\d+)/jobs') {
+    if ($env:HANG_RUN -eq $Matches[1]) { Start-Sleep -Seconds 30 }
+    if ($env:JOB_DELAY_MS) { Start-Sleep -Milliseconds ([int]$env:JOB_DELAY_MS) }
     if ($env:FAIL -eq 'jobs') { $global:LASTEXITCODE = 1; return }
     # only the latest attempt (2) exists; any other attempt is an unknown call
     if ($Matches[2] -ne '2') { $global:LASTEXITCODE = 2; return }
@@ -235,6 +261,8 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Install the same gh stub in the worker runspace; the decision and timeout code stay intact.
+	script = strings.Replace(script, "Start-ThreadJob -ArgumentList", "Start-ThreadJob -InitializationScript {"+reuseStub+"} -ArgumentList", 1)
 	file := filepath.Join(t.TempDir(), "mode.ps1")
 	if err := os.WriteFile(file, []byte(reuseStub+script), 0o600); err != nil {
 		t.Fatal(err)
@@ -273,6 +301,9 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 		{"schedule-event", []string{"EVENT=schedule"}, "false", true, false},
 		{"dispatch-event", []string{"EVENT=workflow_dispatch"}, "false", true, false},
 		{"push-to-another-branch", []string{"REF=refs/heads/feature"}, "false", true, false},
+		{"unresponsive-lookup", []string{"HANG=merge", "REUSE_TIMEOUT_SECONDS=1"}, "false", false, true},
+		{"slow-candidates-exhaust-budget", []string{"RUNS=301,302,303,304,305,306,307,308,309,310", "BREAK=failure", "BREAK_RUNS=301,302,303,304,305,306,307,308,309,310", "JOB_DELAY_MS=700", "REUSE_TIMEOUT_SECONDS=3"}, "false", false, false},
+		{"verified-before-hanging-candidate", []string{"RUNS=301,302", "HANG_RUN=302", "REUSE_TIMEOUT_SECONDS=3"}, "true", false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -281,9 +312,11 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 			defer cancel()
 			cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-File", file)
 			cmd.Env = append(os.Environ(), "GH_TOKEN=unused", "REPOSITORY=o/r", "EVENT=push", "REF=refs/heads/main", "PR=12", "SHA="+strings.Repeat("e", 40),
-				"GITHUB_OUTPUT="+output, "CALLS="+calls)
+				"GITHUB_OUTPUT="+output, "CALLS="+calls, "REUSE_TIMEOUT_SECONDS=10")
 			cmd.Env = append(cmd.Env, tc.env...)
+			started := time.Now()
 			out, runErr := cmd.CombinedOutput()
+			elapsed := time.Since(started)
 			if runErr != nil {
 				t.Fatalf("the mode job must not fail on any lookup: %v\n%s", runErr, out)
 			}
@@ -295,6 +328,19 @@ func TestWorkflowPostMergeReuseDecision(t *testing.T) {
 			}
 			if tc.noGit && strings.Contains(string(log), "git/commits/") || tc.noRun && strings.Contains(string(log), "actions/workflows/") {
 				t.Fatalf("lookups that the case must not reach:\n%s", log)
+			}
+			if tc.name == "unresponsive-lookup" || tc.name == "slow-candidates-exhaust-budget" {
+				if elapsed >= 15*time.Second || !strings.Contains(string(out), "running in full") {
+					t.Fatalf("lookup budget did not return full promptly (%v):\n%s", elapsed, out)
+				}
+			}
+			if tc.name == "slow-candidates-exhaust-budget" {
+				if n := strings.Count(string(log), "/attempts/2/jobs"); n < 2 || n >= 10 {
+					t.Fatalf("budget must span multiple candidates and stop before the list ends:\n%s", log)
+				}
+			}
+			if tc.name == "verified-before-hanging-candidate" && strings.Contains(string(log), "actions/runs/302/") {
+				t.Fatalf("a verified run must end the search:\n%s", log)
 			}
 			verified := "CI mode: run 301 attempt 2 verified synthetic " + synth + " with the tree " + tree + " of " + strings.Repeat("e", 40)
 			if tc.name == "verified" && !strings.Contains(string(out), verified) {
