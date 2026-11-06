@@ -19,7 +19,7 @@
 | D5 | [CLI/profile](../specs/cli-and-profile.md), identity | 명령별 parser.c 필요성, source/grammar/closure 구분 |
 | D6 | [feature 범위](../validation/language-feature-scope.md), [기계 정의](../../src/contracts/campaign-01.json) | 정확한 26 route, 네 fixture 역할 |
 | D7 | feature 범위, [workload](../validation/workload-matrix.md) | 공식 syntax fact·검토된 구조·선택 보조 parser |
-| D8 | feature 범위, [validation](../validation/validation.md) | S01 전 scope/feature 채택; 상세 bytes는 담당 단계 |
+| D8 | feature 범위, [campaign 계약](#campaign-specific-acceptance-and-execution) | S01 전 scope/feature 채택; 상세 bytes는 담당 단계 |
 | D9 | trust, [provenance](../provenance/upstream-sources.md) | 기존 공통 도구 우선, SDK/DB 일괄 설치 제외 |
 | D10 | [platform](../specs/platform-support.md), workload | 26×3=78, 실제 세 host core/API/native |
 | D11 | [roadmap](../roadmap.md), tree/protocol, Session #6~#9 | S01 E0/S04 runner/S05 최소 driver/S06 확장/S07 replay |
