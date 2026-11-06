@@ -241,4 +241,4 @@ merge commit `8b93110`의 post-merge run 37145206819(attempt 1)에서 foundation
 
 ## 삭제된 로컬 증거
 
-이 보고서가 인용한 untracked 로컬 경로(`.work/session-05/`, `.work/session-06/`, `.work/session-06-postmerge/`, `.work/orchestrator/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. 결론의 근거는 이 보고서 본문, 해당 PR·commit, CI 기록이다. 인용한 hash와 개수는 당시 관측 기록으로 남기며, 로컬 파일로 다시 확인할 수는 없다.
+이 보고서가 인용한 untracked 로컬 경로(`.work/session-05/`, `.work/session-06/`, `.work/session-06-postmerge/`, `.work/orchestrator/`)는 2026-11-06 저장소 용량 정리에서 삭제되어 더는 존재하지 않는다. `artifacts/` 아래 보존 증거(mutant 결과, receipt 등)는 그대로 남아 있다. 삭제된 경로의 파일에만 기대던 hash와 개수는 당시 관측 기록으로 남기며, 그 파일로 다시 확인할 수는 없다.
