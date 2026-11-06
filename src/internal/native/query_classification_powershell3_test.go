@@ -5,6 +5,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
@@ -191,7 +192,7 @@ func TestQueryClassificationPowerShell3AnchorGuards(t *testing.T) {
 }
 
 // classificationUnpagedEmptyProfileNames lists every unpaged empty-family profile (Web16, Script17, DartPHP12) through the
-// family route lookups, so a profile added to a family is covered without editing this list.
+// family route lookups. The route list and the DartPHP12 names are manual: a new route must be added here.
 func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
 	t.Helper()
 	var names []string
@@ -215,8 +216,10 @@ func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testin
 		t.Fatal(err)
 	}
 	profile.nodes = nil
-	if err := classificationEmptyProfileAnchorsValid(profile, classificationPowerShell3Profile, anchors); err == nil {
-		t.Fatal("nonempty source without an explicit CST accepted")
+	// Root-only anchor matches the empty-source default, so only the nonempty-source assertion can reject.
+	anchors.Nodes = []kit.TreeNode{{Parent: -1, Type: profile.rootType, Named: true}}
+	if err := classificationEmptyProfileAnchorsValid(profile, classificationPowerShell3Profile, anchors); err == nil || !strings.Contains(err.Error(), "nonempty source lacks an explicit CST") {
+		t.Fatalf("nonempty source without an explicit CST: %v", err)
 	}
 }
 

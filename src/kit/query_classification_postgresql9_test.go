@@ -259,8 +259,9 @@ func TestQueryClassificationPostgreSQL9ProfileAndPagedContext(t *testing.T) {
 		return append(append(slices.Clone(data[:index]), replacement...), data[index+len(old):]...)
 	}
 	for name, bad := range map[string][]byte{
-		"route-missing":     replaceNth(factPack, `"route": "postgresql-sql"`, 1, `"route": "postgresql-sqx"`),
-		"route-duplicated":  replaceNth(factPack, `"route": "xml"`, 1, `"route": "postgresql-sql"`),
+		"route-missing": replaceNth(factPack, `"route": "postgresql-sql"`, 1, `"route": "postgresql-sqx"`),
+		"route-duplicated": replaceNth(replaceNth(replaceNth(factPack, `"route": "xml"`, 1, `"route": "postgresql-sql"`),
+			`"id": "facts.xml_structure"`, 1, `"id": "facts.declarations"`), `"facts": "xml_structure"`, 1, `"facts": "declarations"`),
 		"fact-id-changed":   replaceNth(factPack, `"id": "facts.declarations"`, 3, `"id": "facts.declaration"`),
 		"facts-key-changed": replaceNth(factPack, `"facts": "declarations"`, 3, `"facts": "dynamic_sql"`),
 		"revision-changed":  replaceNth(factPack, `fact-queries-r1`, 1, `fact-queries-r2`),

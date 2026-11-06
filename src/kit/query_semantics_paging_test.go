@@ -183,35 +183,42 @@ func TestSemanticPagedParserPartBoundaries(t *testing.T) {
 }
 
 // A logical parser above BuildFileBytes is rejected from the declared size alone: no 100 MiB allocation and no part read.
+// Exactly BuildFileBytes passes the size check and reaches the first part read.
 func TestSemanticPagedParserBuildFileCeiling(t *testing.T) {
-	const size = BuildFileBytes + 1
-	input := semanticBuildInput{Role: "grammar-parser", Path: "parser.c", Bytes: size, SHA256: digestHex([]byte("ceiling"))}
-	d := semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}
-	d.Logical.ClosureIndex, d.Logical.Role, d.Logical.Path, d.Logical.Bytes, d.Logical.SHA256 = 7, input.Role, input.Path, input.Bytes, input.SHA256
-	for i := range uint64(7) { // ceil((BuildFileBytes+1)/16 MiB) is 7, so the part count itself is consistent
-		offset := i * MaxDocumentBytes
-		d.Parts = append(d.Parts, struct {
-			Index  uint64 `json:"index"`
-			Offset uint64 `json:"offset"`
-			Path   string `json:"path"`
-			Bytes  uint64 `json:"bytes"`
-			SHA256 string `json:"sha256"`
-		}{i, offset, fmt.Sprintf("capture/build-input-00007.part-%05d.bin", i), min(uint64(MaxDocumentBytes), size-offset), digestHex(nil)})
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	r, e := startRun(ctx, time.Minute)
-	if e != nil {
-		t.Fatal(e)
-	}
-	defer r.cancel()
-	reads := 0
-	ok, e := (&eligibilityBudget{r: r}).semanticPagedParser(eligibilityJSON(t, d), input, 7, func(ReplayMember) ([]byte, bool, *Error) {
-		reads++
-		return nil, false, nil
-	})
-	if e != nil || ok || reads != 0 {
-		t.Fatalf("parser above BuildFileBytes: good=%v reads=%d err=%v", ok, reads, e)
+	for _, c := range []struct {
+		size  uint64
+		reads int
+	}{{BuildFileBytes + 1, 0}, {BuildFileBytes, 1}} {
+		size := c.size
+		input := semanticBuildInput{Role: "grammar-parser", Path: "parser.c", Bytes: size, SHA256: digestHex([]byte("ceiling"))}
+		d := semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}
+		d.Logical.ClosureIndex, d.Logical.Role, d.Logical.Path, d.Logical.Bytes, d.Logical.SHA256 = 7, input.Role, input.Path, input.Bytes, input.SHA256
+		for i := range uint64(7) { // ceil(size/16 MiB) is 7 for both sizes, so the part count itself is consistent
+			offset := i * MaxDocumentBytes
+			d.Parts = append(d.Parts, struct {
+				Index  uint64 `json:"index"`
+				Offset uint64 `json:"offset"`
+				Path   string `json:"path"`
+				Bytes  uint64 `json:"bytes"`
+				SHA256 string `json:"sha256"`
+			}{i, offset, fmt.Sprintf("capture/build-input-00007.part-%05d.bin", i), min(uint64(MaxDocumentBytes), size-offset), digestHex(nil)})
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		r, e := startRun(ctx, time.Minute)
+		if e != nil {
+			cancel()
+			t.Fatal(e)
+		}
+		reads := 0
+		ok, e := (&eligibilityBudget{r: r}).semanticPagedParser(eligibilityJSON(t, d), input, 7, func(ReplayMember) ([]byte, bool, *Error) {
+			reads++
+			return nil, false, nil
+		})
+		r.cancel()
+		cancel()
+		if e != nil || ok || reads != c.reads {
+			t.Fatalf("parser of %d bytes: good=%v reads=%d want %d err=%v", size, ok, reads, c.reads, e)
+		}
 	}
 }
 

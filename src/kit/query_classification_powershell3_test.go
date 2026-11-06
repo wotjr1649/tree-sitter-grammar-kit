@@ -147,7 +147,7 @@ func TestQueryClassificationPowerShell3RejectsSourceAndCSTMutations(t *testing.T
 }
 
 // classificationUnpagedEmptyProfileNames lists every unpaged empty-family profile (Web16, Script17, DartPHP12) through the
-// route-keyed family lookup, so a profile added to a family is covered without editing this list.
+// route-keyed family lookup. The route list is manual: a new route must be added here; renamed profiles follow the lookup.
 func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
 	t.Helper()
 	var names []string
@@ -166,8 +166,11 @@ func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testin
 	fixture := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
 	profile := fixture.profile
 	profile.Nodes = nil
-	if err := classificationEmptyAnchorsValid(profile, fixture.anchors); err == nil {
-		t.Fatal("nonempty source without an explicit CST accepted")
+	anchors := fixture.anchors
+	// Root-only anchor matches the empty-source default, so only the nonempty-source assertion can reject.
+	anchors.Nodes = []TreeNode{{Parent: -1, Type: profile.RootType, Named: true}}
+	if err := classificationEmptyAnchorsValid(profile, anchors); err == nil || !strings.Contains(err.Error(), "nonempty source lacks an explicit CST") {
+		t.Fatalf("nonempty source without an explicit CST: %v", err)
 	}
 }
 
