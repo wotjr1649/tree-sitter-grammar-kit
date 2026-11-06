@@ -5,6 +5,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
@@ -176,6 +177,7 @@ func TestQueryClassificationPowerShell3AnchorGuards(t *testing.T) {
 		{"query-count", func(a *classificationLocalAnchors) { a.Queries = a.Queries[:2] }},
 		{"required", func(a *classificationLocalAnchors) { a.Required = a.Required[:2] }},
 		{"required-structural-nil", func(a *classificationLocalAnchors) { a.Required[0].Structural = nil }},
+		{"required-expected-nil", func(a *classificationLocalAnchors) { a.Required[0].Expected = nil }},
 		{"expect", func(a *classificationLocalAnchors) { a.Expect = nil }},
 	} {
 		t.Run(mutate.name, func(t *testing.T) {
@@ -189,9 +191,41 @@ func TestQueryClassificationPowerShell3AnchorGuards(t *testing.T) {
 	}
 }
 
+// classificationUnpagedEmptyProfileNames lists every unpaged empty-family profile (Web16, Script17, DartPHP12) through the
+// family route lookups. The route list and the DartPHP12 names are manual: a new route must be added here.
+func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
+	t.Helper()
+	var names []string
+	for _, route := range []string{"javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash"} {
+		profile, ok := classificationWeb16ProfileForRoute(route)
+		if !ok {
+			profile, ok = classificationScript17ProfileForRoute(route)
+		}
+		if !ok {
+			t.Fatalf("empty-family route %q has no closed profile", route)
+		}
+		names = append(names, profile.name)
+	}
+	return append(names, "dart7-empty", "php5-empty")
+}
+
+// A nonempty source needs an explicit CST: the empty-source root-only default must not apply to it.
+func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testing.T) {
+	profile, _, anchors := classificationPowerShell3ReadAnchors(t, classificationPowerShell3Profile)
+	if err := classificationEmptyProfileAnchorsValid(profile, classificationPowerShell3Profile, anchors); err != nil {
+		t.Fatal(err)
+	}
+	profile.nodes = nil
+	// Root-only anchor matches the empty-source default, so only the nonempty-source assertion can reject.
+	anchors.Nodes = []kit.TreeNode{{Parent: -1, Type: profile.rootType, Named: true}}
+	if err := classificationEmptyProfileAnchorsValid(profile, classificationPowerShell3Profile, anchors); err == nil || !strings.Contains(err.Error(), "nonempty source lacks an explicit CST") {
+		t.Fatalf("nonempty source without an explicit CST: %v", err)
+	}
+}
+
 func TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles(t *testing.T) {
 	_, _, powershell := classificationPowerShell3ReadAnchors(t, classificationPowerShell3Profile)
-	for _, name := range []string{"dart7-empty", "php5-empty", "javascript4-empty", "python8-empty", "bash2-empty"} {
+	for _, name := range classificationUnpagedEmptyProfileNames(t) {
 		t.Run(name, func(t *testing.T) {
 			profile, _, anchors := classificationPowerShell3ReadAnchors(t, name)
 			if profile.source != "" || profile.nodes != nil {

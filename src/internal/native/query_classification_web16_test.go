@@ -208,6 +208,14 @@ func classificationEmptyAnchorsValid(profileName string, a classificationLocalAn
 	if !ok {
 		return fmt.Errorf("unknown closed empty-profile profile %q", profileName)
 	}
+	return classificationEmptyProfileAnchorsValid(profile, profileName, a)
+}
+
+func classificationEmptyProfileAnchorsValid(profile classificationEmptyProfile, profileName string, a classificationLocalAnchors) error {
+	// A nonempty source must name its full CST; the root-only default is valid for the empty source alone.
+	if profile.source != "" && profile.nodes == nil {
+		return fmt.Errorf("%s nonempty source lacks an explicit CST", profileName)
+	}
 	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != profile.route || a.Case != profile.caseID || a.API ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != profile.workload ||
 		a.Source.UTF8 != profile.source || a.Source.Bytes != uint64(len(profile.source)) || a.Source.SHA256 != sha([]byte(profile.source)) || a.Edits == nil || len(a.Edits) != 0 ||

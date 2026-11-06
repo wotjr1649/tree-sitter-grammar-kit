@@ -134,22 +134,24 @@ func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []N
 		}
 		return append(args, "-o", output), nil
 	}
-	withScanner := false
+	withScanner, prefix := false, "" // prefix is the grammar directory inside the route checkout
 	switch route {
 	case "go", "csharp", "rust", "cpp", "kotlin", "swift":
 		withScanner = true
+	case "postgresql-sql":
+		withScanner, prefix = true, "postgres/"
 	case "c", "java":
 	default:
 		return nil, fmt.Errorf("unsupported closed classification compiler route %q", route)
 	}
-	want := []NativeInput{{Path: "src/parser.c", Role: "parser"}}
+	want := []NativeInput{{Path: prefix + "src/parser.c", Role: "parser"}}
 	if withScanner {
-		want = append(want, NativeInput{Path: "src/scanner.c", Role: "scanner"})
+		want = append(want, NativeInput{Path: prefix + "src/scanner.c", Role: "scanner"})
 	}
 	want = append(want,
-		NativeInput{Path: "src/tree_sitter/alloc.h", Role: "header"},
-		NativeInput{Path: "src/tree_sitter/array.h", Role: "header"},
-		NativeInput{Path: "src/tree_sitter/parser.h", Role: "header"},
+		NativeInput{Path: prefix + "src/tree_sitter/alloc.h", Role: "header"},
+		NativeInput{Path: prefix + "src/tree_sitter/array.h", Role: "header"},
+		NativeInput{Path: prefix + "src/tree_sitter/parser.h", Role: "header"},
 	)
 	if len(grammar) != len(want) {
 		return nil, fmt.Errorf("%s exact parser/scanner/header closure changed", route)
@@ -159,9 +161,10 @@ func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []N
 			return nil, fmt.Errorf("%s exact parser/scanner/header closure changed", route)
 		}
 	}
-	args := []string{"-shared", "-O0", "-std=gnu11", "-I", filepath.Join(grammarRoot, "src"), filepath.Join(grammarRoot, "src", "parser.c")}
+	src := filepath.Join(grammarRoot, filepath.FromSlash(prefix+"src"))
+	args := []string{"-shared", "-O0", "-std=gnu11", "-I", src, filepath.Join(src, "parser.c")}
 	if withScanner {
-		args = append(args, filepath.Join(grammarRoot, "src", "scanner.c"))
+		args = append(args, filepath.Join(src, "scanner.c"))
 	}
 	return append(args, "-o", output), nil
 }

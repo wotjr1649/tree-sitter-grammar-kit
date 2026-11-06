@@ -146,9 +146,37 @@ func TestQueryClassificationPowerShell3RejectsSourceAndCSTMutations(t *testing.T
 	}
 }
 
+// classificationUnpagedEmptyProfileNames lists every unpaged empty-family profile (Web16, Script17, DartPHP12) through the
+// route-keyed family lookup. The route list is manual: a new route must be added here; renamed profiles follow the lookup.
+func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
+	t.Helper()
+	var names []string
+	for _, route := range []string{"javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php"} {
+		profile, ok := classificationEmptyProfileForRoute(route)
+		if !ok {
+			t.Fatalf("empty-family route %q has no closed profile", route)
+		}
+		names = append(names, profile.Name)
+	}
+	return names
+}
+
+// A nonempty source needs an explicit CST: the empty-source root-only default must not apply to it.
+func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testing.T) {
+	fixture := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
+	profile := fixture.profile
+	profile.Nodes = nil
+	anchors := fixture.anchors
+	// Root-only anchor matches the empty-source default, so only the nonempty-source assertion can reject.
+	anchors.Nodes = []TreeNode{{Parent: -1, Type: profile.RootType, Named: true}}
+	if err := classificationEmptyAnchorsValid(profile, anchors); err == nil || !strings.Contains(err.Error(), "nonempty source lacks an explicit CST") {
+		t.Fatalf("nonempty source without an explicit CST: %v", err)
+	}
+}
+
 func TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles(t *testing.T) {
 	powershell := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
-	for _, name := range []string{"dart7-empty", "php5-empty", "javascript4-empty", "python8-empty"} {
+	for _, name := range classificationUnpagedEmptyProfileNames(t) {
 		t.Run(name, func(t *testing.T) {
 			empty := classificationEmptyStaticFixtureForTest(t, name)
 			if empty.profile.SourceUTF8 != "" || empty.profile.Nodes != nil {

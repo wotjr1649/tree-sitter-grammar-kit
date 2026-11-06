@@ -33,6 +33,7 @@ type classificationCPPProfileSpec struct {
 	languageVersion, runtimeVersion      int
 	minCompatible, symbolCount           int
 	fieldCount                           int
+	factQueries                          int // trailing querySpecs whose source is in the fact query pack, not queryFile
 	querySpecs                           []classificationCPPQuerySpec
 	grammarFiles                         []classificationCPPGrammarFile
 }
@@ -132,6 +133,42 @@ func classificationCPPProfileSpecFor(name string) (classificationCPPProfileSpec,
 				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
 			},
 		}, true
+	case "postgresql9-empty":
+		return classificationCPPProfileSpec{
+			label: "PostgreSQL9", registryLabel: "PostgreSQL9",
+			anchorFile:      "postgresql9-classification-anchors.json",
+			anchorSHA:       "9a6f0bd033a757e761d6321e58a9361397b97f3defeee93f844ef1b55ca2b9a6",
+			route:           "postgresql-sql",
+			symbol:          "tree_sitter_postgres",
+			caseID:          "postgresql9-empty-definitions",
+			workload:        "postgresql9-empty-definition-single-frame",
+			rootType:        "source_file",
+			queryFile:       "postgresql-sql.json",
+			queryBytes:      8110,
+			querySHA:        "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd",
+			languageVersion: 15, runtimeVersion: 15, minCompatible: 13,
+			symbolCount: 1280, fieldCount: 0, grammarCount: 5, factQueries: 1,
+			querySpecs: []classificationCPPQuerySpec{
+				{id: "q.structure", sha256: "35e55e9d63eafae23dfd6fd23e9f52018574905884d99d78227fa7abad0a0a4e", patterns: 4, captures: []string{"table", "column", "cte", "function"}},
+				{id: "q.probe-b01-strings", sha256: "9004103236ba4fdcb76b71442a6c2ba5a3b14ec031416f313633b974e92253fa", patterns: 4, captures: []string{"dollar", "escape", "bit", "hex"}},
+				{id: "q.probe-b04-utility", sha256: "b4264eb4db18dd8c652f890dce53b1b07a82b628b80c583b0a73c8b4d7e080c7", patterns: 3, captures: []string{"listen_channel", "notify_channel", "prepared_name"}},
+				{id: "q.probe-v10-partition", sha256: "01d1260c7c90dd7c0ee0286f4f6bbb850a84a903314ba94db7207dd10ca54da2", patterns: 2, captures: []string{"partition_spec", "partition_bound"}},
+				{id: "q.probe-v13-merge", sha256: "b5e10f700059e1cfc7712a3dd2ca091ea3b76f152dc50d23894015946239c1ad", patterns: 1, captures: []string{"merge_when"}},
+				{id: "q.probe-v16-json-table", sha256: "37e8d705152701242987e07600c6aff590be3f2b6ae9b75f907e179999175f8f", patterns: 1, captures: []string{"jt_column"}},
+				{id: "q.probe-v18-returning", sha256: "0fbedd7084e35b58bd9f50c787e3015d3049c8b62dc145cdb548ef632199a6f3", patterns: 1, captures: []string{"returning_alias"}},
+				{id: "q.probe-l01-oids", sha256: "b72a313c2f8e47b0fa1022d89a26983808000413e8634fb5bffc9143667d334d", patterns: 1, captures: []string{"opt_with"}},
+				{id: "facts.declarations", sha256: "1f2284ae901d05903ec6fc8418420a9a459806e2e15ea9d1e45033aeeba528aa", patterns: 16, captures: []string{
+					"c.0.0.0", "c.0.1.1", "c.0.1.0", "c.1.0.0", "c.1.1.1", "c.1.1.0", "c.2.0.0", "c.2.1.1", "c.2.1.0", "c.3.0.0", "c.3.1.1", "c.3.1.0",
+					"c.4.0.0", "c.4.1.1", "c.4.1.0", "c.5.0.0", "c.5.1.1", "c.5.1.0", "c.6.0.0", "c.6.1.1", "c.6.1.0", "c.7.0.0", "c.7.1.1", "c.7.1.0"}},
+			},
+			grammarFiles: []classificationCPPGrammarFile{
+				{path: "postgres/src/parser.c", role: "parser", bytes: 104285731, sha256: "0db8885c7e1f6c57d3c9dabf066f1397b4d3ec41e934079d02aa74998fc2882e"},
+				{path: "postgres/src/scanner.c", role: "scanner", bytes: 4855, sha256: "ccbf351fc4e04def876cd2ae07ff081c860f4c2f53265723855d1c36729849a7"},
+				{path: "postgres/src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "postgres/src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "postgres/src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
 	default:
 		return classificationCPPProfileSpec{}, false
 	}
@@ -195,7 +232,62 @@ func classificationPagedQueryRegistryValid(name string, a classificationLocalAnc
 	if err != nil {
 		return err
 	}
-	return classificationPagedQueryRegistryBytesValid(name, a, data)
+	if err := classificationPagedQueryRegistryBytesValid(name, a, data); err != nil || spec.factQueries == 0 {
+		return err
+	}
+	factData, err := os.ReadFile(classificationSmall17FactPackPath)
+	if err != nil {
+		return err
+	}
+	return classificationPagedFactPackValid(name, a, factData)
+}
+
+// classificationPagedFactPackValid binds the trailing fact anchors to the pinned fact query pack.
+func classificationPagedFactPackValid(name string, a classificationLocalAnchors, data []byte) error {
+	spec, ok := classificationCPPProfileSpecFor(name)
+	if !ok || spec.factQueries == 0 {
+		return fmt.Errorf("profile %q has no fact query pack", name)
+	}
+	if len(data) != classificationSmall17FactPackBytes || sha(data) != classificationSmall17FactPackSHA {
+		return fmt.Errorf("%s fact query pack pin changed", spec.registryLabel)
+	}
+	var pack struct {
+		Schema string `json:"schema"`
+		Routes []struct {
+			Route   string `json:"route"`
+			Queries []struct {
+				ID     string `json:"id"`
+				Facts  string `json:"facts"`
+				Source string `json:"source"`
+			} `json:"queries"`
+		} `json:"routes"`
+	}
+	if err := json.Unmarshal(data, &pack); err != nil {
+		return fmt.Errorf("decode %s fact query pack: %w", spec.registryLabel, err)
+	}
+	if pack.Schema != "tsgk-fact-query-pack/r1" || len(a.Queries) != len(spec.querySpecs) {
+		return fmt.Errorf("%s fact query pack identity changed", spec.registryLabel)
+	}
+	ordinary, routes := len(spec.querySpecs)-spec.factQueries, 0
+	for _, route := range pack.Routes {
+		if route.Route != spec.route {
+			continue
+		}
+		routes++
+		if len(route.Queries) != spec.factQueries {
+			return fmt.Errorf("%s fact query route is reordered or incomplete", spec.registryLabel)
+		}
+		for j, query := range route.Queries {
+			want, anchor := spec.querySpecs[ordinary+j], a.Queries[ordinary+j]
+			if query.ID != want.id || query.ID != anchor.ID || query.Facts != strings.TrimPrefix(query.ID, "facts.") || query.Source != anchor.Source || sha([]byte(query.Source)) != want.sha256 {
+				return fmt.Errorf("%s fact query source/order differs at %d", spec.registryLabel, ordinary+j)
+			}
+		}
+	}
+	if routes != 1 {
+		return fmt.Errorf("%s fact query route is missing or duplicated", spec.registryLabel)
+	}
+	return nil
 }
 
 func classificationCPPQueryRegistryBytesValid(a classificationLocalAnchors, data []byte) error {
@@ -222,7 +314,7 @@ func classificationPagedQueryRegistryBytesValid(name string, a classificationLoc
 		return fmt.Errorf("decode %s query registry: %w", spec.registryLabel, err)
 	}
 	if registry.Schema != "tsgk-native-query-cases/r1" || registry.Route != spec.route ||
-		len(registry.Queries) != len(spec.querySpecs) || len(a.Queries) != len(spec.querySpecs) {
+		len(registry.Queries) != len(spec.querySpecs)-spec.factQueries || len(a.Queries) != len(spec.querySpecs) {
 		return fmt.Errorf("%s query registry profile changed", spec.registryLabel)
 	}
 	for i, query := range registry.Queries {
