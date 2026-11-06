@@ -68,7 +68,7 @@ The current implementation consists of repository foundation checks, the Session
 | #216 PowerShell3의 닫힌 1-byte profile과 관측 전 사전 기대값 | [PowerShell3 계약](specs/instrumented-query-reference.md#powershell3-단일-byte-frame-정의-분류) |
 | #233 C# lexical producer의 네 directive 오판·실제 ERROR 보존 | [교정 보고서](reports/issue-233-csharp-lexical-recovery.md) |
 | #233 kit 내부 identity 채택 경로·replay subject platform 결속 | [검증 경로와 반례](reports/issue-233-identity-paths.md) |
-| Campaign preparation adoption and unresolved inputs | [preparation report](reports/campaign-01-2026-09-29-preparation.md) |
+| Explicitly assigned Campaign 01 acceptance, Session rules, and preparation history | [campaign contract and preparation report](reports/campaign-01-2026-09-29-preparation.md#campaign-specific-acceptance-and-execution) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
 
