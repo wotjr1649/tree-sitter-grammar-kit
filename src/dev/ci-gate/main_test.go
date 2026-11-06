@@ -41,8 +41,20 @@ func TestNeedsFailClosed(t *testing.T) {
 	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
 		good[name] = map[string]any{"result": "success", "outputs": map[string]string{}}
 	}
+	good["mode"] = map[string]any{"result": "success", "outputs": map[string]string{"heavy": "true", "duplicate": "false", "pr_verified": "false"}}
 	if e := checkNeeds(encoded(t, good)); e != nil {
 		t.Fatal(e)
+	}
+	// #335: a gate that ran next to reused evidence, or next to a mode without the output, fails.
+	for _, outputs := range []map[string]string{{"pr_verified": "true"}, {"pr_verified": ""}, {"pr_verified": "False"}, {"heavy": "true", "duplicate": "false"}, nil} {
+		bad := map[string]any{}
+		for k, v := range good {
+			bad[k] = v
+		}
+		bad["mode"] = map[string]any{"result": "success", "outputs": outputs}
+		if checkNeeds(encoded(t, bad)) == nil {
+			t.Fatalf("mode outputs %v accepted", outputs)
+		}
 	}
 	for producer := range good {
 		for _, status := range []any{"failure", "skipped", "cancelled", "", nil, true, "unknown"} {

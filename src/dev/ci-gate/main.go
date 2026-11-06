@@ -103,8 +103,12 @@ func checkNeeds(data []byte) error {
 		Result  string            `json:"result"`
 		Outputs map[string]string `json:"outputs"`
 	}
-	if decode(data, &needs) != nil || len(needs) != 5 {
+	if decode(data, &needs) != nil || len(needs) != 6 {
 		return errors.New("required producer results unavailable")
+	}
+	// #335: a gate that runs must not stand in for reused evidence; only an explicit "false" passes.
+	if needs["mode"].Result != "success" || needs["mode"].Outputs["pr_verified"] != "false" {
+		return errors.New("CI mode did not choose current-run evidence")
 	}
 	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
 		if needs[name].Result != "success" {
