@@ -52,7 +52,7 @@ func supersedePolicy(text string) error {
 		"    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}\n    runs-on: ubuntu-24.04\n    timeout-minutes: 25\n",
 		"    defaults:\n      run:\n        shell: pwsh\n    steps:\n      - name: 같은 PR의 이전 head run 취소\n        env:\n" +
 			"          GH_TOKEN: ${{ github.token }}\n          REPOSITORY: ${{ github.repository }}\n          REPOSITORY_ID: ${{ github.repository_id }}\n" +
-			"          PR: ${{ github.event.pull_request.number }}\n          HEAD_REF: ${{ github.event.pull_request.head.ref }}\n        run: |\n",
+			"          PR: ${{ github.event.pull_request.number }}\n          HEAD_REF: ${{ github.event.pull_request.head.ref }}\n          EVENT_HEAD: ${{ github.event.pull_request.head.sha }}\n        run: |\n",
 	} {
 		if !strings.Contains(job, required) {
 			return fmt.Errorf("supersede job missing: %q", required)
@@ -79,7 +79,8 @@ func supersedePolicy(text string) error {
 		return fmt.Errorf("supersede must call the API six times with one cancel request")
 	}
 	for _, required := range []string{
-		"if ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$') { throw 'PR lookup failed' }\nif ($state -cne 'open') { \"PR $env:PR is $state; nothing cancelled\"; exit 0 }\n",
+		"if ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$') { throw 'PR lookup failed' }\nif ($state -cne 'open') { \"PR $env:PR is $state; nothing cancelled\"; exit 0 }\n" +
+			"if ($head -cne $env:EVENT_HEAD) { \"PR head $head is not this event's head; the newer push's run handles it\"; exit 0 }\n",
 		"$branch = [uri]::EscapeDataString($env:HEAD_REF)\n",
 		"$rows = @(gh api --paginate \"repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?event=pull_request&branch=$branch&per_page=100\" --jq '.workflow_runs[] | [.id, .event, .status, .head_repository.id, .head_branch, .head_sha, ([.pull_requests[].number | tostring] | join(\",\"))] | @tsv')\n" +
 			"if ($LASTEXITCODE -ne 0) { throw 'run lookup failed' }\n",
@@ -89,7 +90,7 @@ func supersedePolicy(text string) error {
 		"$now = gh api \"repos/$env:REPOSITORY/pulls/$env:PR\" --jq '.head.sha'\nif ($LASTEXITCODE -ne 0) { throw 'PR recheck failed' }\n" +
 			"$trigger, $status, $runHead = (gh api \"repos/$env:REPOSITORY/actions/runs/$id\" --jq '[.event, .status, .head_sha] | @tsv') -split \"`t\"\n" +
 			"if ($LASTEXITCODE -ne 0) { throw \"run $id recheck failed\" }\n" +
-			"if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now) { \"run $id left as is\"; continue }\n" +
+			"if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now -or $runHead -ceq $env:EVENT_HEAD) { \"run $id left as is\"; continue }\n" +
 			"gh api -X POST \"repos/$env:REPOSITORY/actions/runs/$id/cancel\" | Out-Null\n" +
 			"if ($LASTEXITCODE -ne 0) { throw \"run $id cancel request failed\" }\n",
 		"$deadline = [DateTimeOffset]::UtcNow.AddMinutes(20)\n",
@@ -112,7 +113,7 @@ func TestWorkflowSupersedePolicy(t *testing.T) {
 	if concurrencyPolicy(text) == nil {
 		t.Fatal("supersede.yml must stay outside the shared heavy lane")
 	}
-	recheck := "            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now) { \"run $id left as is\"; continue }\n"
+	recheck := "            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now -or $runHead -ceq $env:EVENT_HEAD) { \"run $id left as is\"; continue }\n"
 	for _, tc := range []struct{ name, from, to string }{
 		{"push-trigger", "on:\n  pull_request:", "on:\n  push:\n  pull_request:"},
 		{"target-trigger", "  pull_request:\n    types", "  pull_request_target:\n    types"},
@@ -132,7 +133,10 @@ func TestWorkflowSupersedePolicy(t *testing.T) {
 		{"current-head", " -or $runHead -ceq $head) { continue }", ") { continue }"},
 		{"completed-too", "-or $status -ceq 'completed' -or $repo -cne", "-or $repo -cne"},
 		{"no-recheck", recheck, ""},
-		{"stale-recheck", "$runHead -ceq $now)", "$runHead -ceq $head)"},
+		{"stale-recheck", "$runHead -ceq $now -or", "$runHead -ceq $head -or"},
+		{"no-event-guard", "if ($head -cne $env:EVENT_HEAD) {", "if ($false) {"},
+		{"event-head-run", " -or $runHead -ceq $env:EVENT_HEAD)", ")"},
+		{"no-event-head", "          EVENT_HEAD: ${{ github.event.pull_request.head.sha }}\n", ""},
 		{"force", `/cancel"`, `/force-cancel"`},
 		{"swallowed", "    steps:\n      - name: 같은 PR의 이전 head run 취소\n", "    steps:\n      - name: 같은 PR의 이전 head run 취소\n        continue-on-error: true\n"},
 		{"no-poll", "throw \"run $id not terminal within 20 minutes; cancel it manually\"", "break"},
@@ -232,13 +236,15 @@ func TestWorkflowSupersedeSelection(t *testing.T) {
 		{"list-fails", []string{"LISTFAIL=1"}, true, nil},
 		{"cancel-fails", []string{"POSTFAIL=1"}, true, []int{201}},
 		{"closed-pr", []string{"PRSTATE=closed"}, false, nil},
+		// SR-1: the PR API still returns the head before this event's push
+		{"lagging-pr-api", []string{"EVENT_HEAD=" + strings.Repeat("d", 40)}, false, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			calls := filepath.Join(t.TempDir(), "calls.log")
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-File", file)
-			cmd.Env = append(os.Environ(), "GH_TOKEN=unused", "REPOSITORY=o/r", "REPOSITORY_ID=100", "PR=12", "HEAD_REF=feat/x", "PRSTATE=open", "CALLS="+calls)
+			cmd.Env = append(os.Environ(), "GH_TOKEN=unused", "REPOSITORY=o/r", "REPOSITORY_ID=100", "PR=12", "HEAD_REF=feat/x", "EVENT_HEAD="+strings.Repeat("c", 40), "PRSTATE=open", "CALLS="+calls)
 			cmd.Env = append(cmd.Env, tc.env...)
 			out, runErr := cmd.CombinedOutput()
 			if (runErr != nil) != tc.failure {

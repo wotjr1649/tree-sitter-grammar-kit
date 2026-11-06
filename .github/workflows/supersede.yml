@@ -33,10 +33,12 @@ jobs:
           REPOSITORY_ID: ${{ github.repository_id }}
           PR: ${{ github.event.pull_request.number }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           $state, $head = (gh api "repos/$env:REPOSITORY/pulls/$env:PR" --jq '[.state, .head.sha] | @tsv') -split "`t"
           if ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$') { throw 'PR lookup failed' }
           if ($state -cne 'open') { "PR $env:PR is $state; nothing cancelled"; exit 0 }
+          if ($head -cne $env:EVENT_HEAD) { "PR head $head is not this event's head; the newer push's run handles it"; exit 0 }
           $branch = [uri]::EscapeDataString($env:HEAD_REF)
           $rows = @(gh api --paginate "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?event=pull_request&branch=$branch&per_page=100" --jq '.workflow_runs[] | [.id, .event, .status, .head_repository.id, .head_branch, .head_sha, ([.pull_requests[].number | tostring] | join(","))] | @tsv')
           if ($LASTEXITCODE -ne 0) { throw 'run lookup failed' }
@@ -51,7 +53,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'PR recheck failed' }
             $trigger, $status, $runHead = (gh api "repos/$env:REPOSITORY/actions/runs/$id" --jq '[.event, .status, .head_sha] | @tsv') -split "`t"
             if ($LASTEXITCODE -ne 0) { throw "run $id recheck failed" }
-            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now) { "run $id left as is"; continue }
+            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now -or $runHead -ceq $env:EVENT_HEAD) { "run $id left as is"; continue }
             gh api -X POST "repos/$env:REPOSITORY/actions/runs/$id/cancel" | Out-Null
             if ($LASTEXITCODE -ne 0) { throw "run $id cancel request failed" }
             "cancel requested: run $id head $runHead, PR head $now"
