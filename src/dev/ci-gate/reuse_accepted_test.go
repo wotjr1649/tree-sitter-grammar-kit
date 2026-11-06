@@ -83,6 +83,9 @@ func TestQualificationAcceptedAxis(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			q, inv := qualificationFixture(t)
+			if tc.name == "deferred-claim" { // the deferred row exists only in the full three-platform inventory
+				q, inv = fullQualificationFixture(t)
+			}
 			tc.edit(&q)
 			if err := checkQualification(q, expectation(), inv); (err == nil) != (tc.name == "valid") {
 				t.Fatalf("gate %s: %v", tc.name, err)
