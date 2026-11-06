@@ -85,7 +85,7 @@ func TestSemanticPagedParserValidation(t *testing.T) {
 
 // Part-count boundaries: exactly 16 MiB is not paged; 2x16 MiB and 2x16 MiB+n (the Kotlin5 shape) are.
 func TestSemanticPagedParserPartBoundaries(t *testing.T) {
-	const tail = 315585
+	const tail, swiftTail = 315585, 13858951 // Kotlin5 3-part and Swift8 2-part parser tails
 	type built struct {
 		input semanticBuildInput
 		d     semanticParserDescriptor
@@ -129,6 +129,9 @@ func TestSemanticPagedParserPartBoundaries(t *testing.T) {
 	}{
 		{"single-part-exactly-16MiB", MaxDocumentBytes, "", false, false},
 		{"two-full-parts", 2 * MaxDocumentBytes, "", true, true},
+		{"two-parts-partial-tail", MaxDocumentBytes + swiftTail, "", true, true},
+		{"two-parts-partial-tail-drop-last", MaxDocumentBytes + swiftTail, "drop-last", true, false},
+		{"two-parts-partial-tail-short-last", MaxDocumentBytes + swiftTail, "short-last", true, false},
 		{"three-parts", 2*MaxDocumentBytes + tail, "", true, true},
 		{"three-parts-drop-last", 2*MaxDocumentBytes + tail, "drop-last", true, false},
 		{"three-parts-extra-part", 2*MaxDocumentBytes + tail, "extra-part", true, false},
