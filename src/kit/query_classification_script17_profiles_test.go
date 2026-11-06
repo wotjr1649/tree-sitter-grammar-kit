@@ -32,7 +32,10 @@ func classificationEmptyProfileForName(name string) (classificationEmptyDefiniti
 	if profile, err := classificationScript17ProfileForName(name); err == nil {
 		return profile, nil
 	}
-	return classificationDartPHP12ProfileForName(name)
+	if profile, err := classificationDartPHP12ProfileForName(name); err == nil {
+		return profile, nil
+	}
+	return classificationPowerShell3ProfileForName(name)
 }
 
 func classificationEmptyProfileForRoute(route string) (classificationEmptyDefinitionProfile, bool) {
@@ -42,7 +45,10 @@ func classificationEmptyProfileForRoute(route string) (classificationEmptyDefini
 	if profile, ok := classificationScript17ProfileForRoute(route); ok {
 		return profile, true
 	}
-	return classificationDartPHP12ProfileForRoute(route)
+	if profile, ok := classificationDartPHP12ProfileForRoute(route); ok {
+		return profile, true
+	}
+	return classificationPowerShell3ProfileForRoute(route)
 }
 
 func classificationScript17ProfileForRoute(route string) (classificationEmptyDefinitionProfile, bool) {

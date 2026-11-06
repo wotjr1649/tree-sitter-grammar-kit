@@ -38,6 +38,10 @@ type classificationEmptyDefinitionProfile struct {
 	GrammarShape                []classificationEmptyGrammarFile
 	CompilerIncludeDirs         []string
 	CompilerSourceFiles         []string
+
+	// SourceUTF8 and Nodes pin a non-empty single-frame source and its full CST; zero values keep the empty-source root-only profile.
+	SourceUTF8 string
+	Nodes      []TreeNode
 }
 
 func classificationWeb16ProfileName(name string) bool {
@@ -123,12 +127,16 @@ func classificationWeb16ProfileForRoute(route string) (classificationEmptyDefini
 }
 
 func classificationEmptyAnchorsValid(profile classificationEmptyDefinitionProfile, a classificationAnchors) error {
+	wantNodes := profile.Nodes
+	if wantNodes == nil {
+		wantNodes = []TreeNode{{Parent: -1, Type: profile.RootType, Named: true}}
+	}
 	if a.sha256 != profile.AnchorSHA || a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != profile.Route || a.Case != profile.Case || a.Workload != profile.Workload ||
-		a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.UTF8 != "" || a.Source.Bytes != 0 || a.Source.SHA256 != digestHex(nil) ||
-		a.Edits == nil || len(a.Edits) != 0 || len(a.Queries) != profile.QueryCount || len(a.Required) != profile.QueryCount || len(a.Nodes) != 1 ||
-		!reflect.DeepEqual(a.Nodes, []TreeNode{{Parent: -1, Type: profile.RootType, Named: true}}) ||
+		a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.UTF8 != profile.SourceUTF8 || a.Source.Bytes != uint64(len(profile.SourceUTF8)) ||
+		a.Source.SHA256 != digestHex([]byte(profile.SourceUTF8)) || a.Edits == nil || len(a.Edits) != 0 || len(a.Queries) != profile.QueryCount || len(a.Required) != profile.QueryCount ||
+		!reflect.DeepEqual(a.Nodes, wantNodes) || ValidateTree(a.Nodes, a.Source.Bytes) != nil ||
 		!reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != profile.ABI {
-		return fmt.Errorf("%s fixed empty-source single-frame anchors differ", profile.Name)
+		return fmt.Errorf("%s fixed single-frame source or CST anchors differ", profile.Name)
 	}
 	seenIDs := make(map[string]bool, profile.QueryCount)
 	seenNames := make(map[string]bool, profile.UniqueCaptureNames)
@@ -452,7 +460,7 @@ func classificationEmptyDefinitionProjection(anchors classificationAnchors, plan
 	if len(cache.checked) != 1 || cache.checked[0].Step.Step != 0 || cache.checked[0].Step.SourceBytes != anchors.Source.Bytes ||
 		cache.checked[0].Step.SourceSHA256 != anchors.Source.SHA256 || cache.checked[0].Step.Edit != nil || cache.checked[0].Fresh != nil ||
 		CompareTrees(cache.checked[0].Incremental.Nodes, anchors.Nodes) != nil || len(cache.checked[0].Incremental.Queries) != profile.QueryCount {
-		return result, fmt.Errorf("empty-profile guarded empty-source root CST or query count differs")
+		return result, fmt.Errorf("empty-profile guarded source frame CST or query count differs")
 	}
 	references := make(map[string]*instrumentedReference, profile.QueryCount)
 	referenceIDs := make(map[string]string, profile.QueryCount)

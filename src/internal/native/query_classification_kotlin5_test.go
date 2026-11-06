@@ -19,7 +19,7 @@ func TestQueryClassificationKotlin5StaticProfile(t *testing.T) {
 		profile.queryCount != 5 || profile.grammarCount != 5 || !profile.paged {
 		t.Fatalf("Kotlin5 profile is not closed and paged: %#v, %v", profile, err)
 	}
-	for _, name := range []string{"", "positive-batch", "c4-empty", "java5-empty", "rust4-empty", "csharp15-empty", "cpp4-empty", "swift8-empty", "dart7-empty", "php5-empty", "javascript4-empty"} {
+	for _, name := range []string{"", "positive-batch", "c4-empty", "java5-empty", "rust4-empty", "csharp15-empty", "cpp4-empty", "swift8-empty", "dart7-empty", "php5-empty", "javascript4-empty", "powershell3-tiny"} {
 		other, err := classificationCaptureProfileFor(name)
 		wantPaged := name == "csharp15-empty" || name == "cpp4-empty" || name == "swift8-empty"
 		if err != nil || other.paged != wantPaged {

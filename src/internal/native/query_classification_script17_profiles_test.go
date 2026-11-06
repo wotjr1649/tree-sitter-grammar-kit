@@ -7,7 +7,10 @@ func classificationEmptyProfileFor(name string) (classificationEmptyProfile, boo
 	if profile, ok := classificationScript17ProfileFor(name); ok {
 		return profile, true
 	}
-	return classificationDartPHP12ProfileFor(name)
+	if profile, ok := classificationDartPHP12ProfileFor(name); ok {
+		return profile, true
+	}
+	return classificationPowerShell3ProfileFor(name)
 }
 
 func classificationEmptyProfileName(name string) bool {
