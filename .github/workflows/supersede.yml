@@ -1,0 +1,72 @@
+name: Supersede
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [main]
+
+permissions:
+  actions: write
+  pull-requests: read
+
+# Not the heavy lane: it starts no native or compiler workload, and inside that lane it would wait
+# behind the very runs it cancels. A newer push to the same PR replaces a running supersede run.
+concurrency:
+  group: tsgk-supersede-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cancel:
+    name: cancel superseded PR runs
+    # A fork PR gets a read-only token; its stale runs stay with the manual procedure.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: 같은 PR의 이전 head run 취소
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $state, $head = (gh api "repos/$env:REPOSITORY/pulls/$env:PR" --jq '[.state, .head.sha] | @tsv') -split "`t"
+          if ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$') { throw 'PR lookup failed' }
+          if ($state -cne 'open') { "PR $env:PR is $state; nothing cancelled"; exit 0 }
+          if ($head -cne $env:EVENT_HEAD) { "PR head $head is not this event's head; the newer push's run handles it"; exit 0 }
+          $branch = [uri]::EscapeDataString($env:HEAD_REF)
+          $rows = @(gh api --paginate "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?event=pull_request&branch=$branch&per_page=100" --jq '.workflow_runs[] | [.id, .event, .status, .head_repository.id, .head_branch, .head_sha, ([.pull_requests[].number | tostring] | join(","))] | @tsv')
+          if ($LASTEXITCODE -ne 0) { throw 'run lookup failed' }
+          $cancelled = @()
+          foreach ($row in $rows) {
+            $id, $trigger, $status, $repo, $runBranch, $runHead, $prs = $row -split "`t"
+            # Only this PR's unfinished pull_request runs of another head; main, nightly, dispatch and other PRs never match.
+            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $repo -cne $env:REPOSITORY_ID -or
+              $runBranch -cne $env:HEAD_REF -or ($prs -split ',') -notcontains $env:PR -or $runHead -ceq $head) { continue }
+            # Recheck right before the request: the PR head may have moved, the run may have finished.
+            $now = gh api "repos/$env:REPOSITORY/pulls/$env:PR" --jq '.head.sha'
+            if ($LASTEXITCODE -ne 0) { throw 'PR recheck failed' }
+            $trigger, $status, $runHead = (gh api "repos/$env:REPOSITORY/actions/runs/$id" --jq '[.event, .status, .head_sha] | @tsv') -split "`t"
+            if ($LASTEXITCODE -ne 0) { throw "run $id recheck failed" }
+            if ($trigger -cne 'pull_request' -or $status -ceq 'completed' -or $runHead -ceq $now -or $runHead -ceq $env:EVENT_HEAD) { "run $id left as is"; continue }
+            gh api -X POST "repos/$env:REPOSITORY/actions/runs/$id/cancel" | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "run $id cancel request failed" }
+            "cancel requested: run $id head $runHead, PR head $now"
+            $cancelled += $id
+          }
+          # always() jobs (the integration gate) keep running after a cancel; the server ends the rest within 5 minutes.
+          $deadline = [DateTimeOffset]::UtcNow.AddMinutes(20)
+          foreach ($id in $cancelled) {
+            while ($true) {
+              $status, $conclusion = (gh api "repos/$env:REPOSITORY/actions/runs/$id" --jq '[.status, (.conclusion // "")] | @tsv') -split "`t"
+              if ($LASTEXITCODE -ne 0) { throw "run $id status lookup failed" }
+              if ($status -ceq 'completed') { "run $id completed: $conclusion"; break }
+              if ([DateTimeOffset]::UtcNow -gt $deadline) { throw "run $id not terminal within 20 minutes; cancel it manually" }
+              Start-Sleep -Seconds 20
+            }
+          }

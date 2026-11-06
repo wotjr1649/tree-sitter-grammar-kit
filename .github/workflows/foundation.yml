@@ -14,7 +14,7 @@ permissions:
 
 # One lane for every run keeps the heavy width at 3 (#332: macOS is out of CI for now; 4 under #317, 3 under D12). queue: max keeps up to 100
 # pending runs instead of letting a newly queued run cancel the pending one (#252), which
-# once dropped a main post-merge run; superseded PR runs are cancelled by procedure.
+# once dropped a main post-merge run; superseded PR runs are cancelled by supersede.yml (#334; by hand when it fails).
 concurrency:
   group: tsgk-campaign-heavy
   cancel-in-progress: false
@@ -422,15 +422,19 @@ jobs:
     # starts at native-prepare and is skipped, so the always() integration gate fails and
     # only a full run integrates. The label is read at run time, not from the event, so a
     # whole-run re-run after removing it is full; a failed lookup falls back to full.
-    name: CI mode
+    # #335: on a main push, heavy evidence is reused only from a completed pull_request run whose
+    # synthetic merge (recorded in its CI mode job name) has this merge commit's tree.
+    name: CI mode (${{ github.sha }})
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       pull-requests: read
       actions: read
+      contents: read
     outputs:
       heavy: ${{ steps.mode.outputs.heavy }}
       duplicate: ${{ steps.mode.outputs.duplicate }}
+      pr_verified: ${{ steps.mode.outputs.pr_verified }}
     defaults:
       run:
         shell: pwsh
@@ -438,10 +442,12 @@ jobs:
       - id: mode
         env:
           EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
           PR: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
           SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
+          REUSE_TIMEOUT_SECONDS: '150'
         run: |
           $heavy = 'true'
           if ($env:EVENT -eq 'pull_request') {
@@ -481,9 +487,67 @@ jobs:
               $duplicate = 'false'
             }
           }
+          # #335: a main push run reuses the heavy evidence of a pull_request run only when that run's latest
+          # attempt passed the eight required jobs and its one CI mode job names a synthetic merge with this
+          # commit's tree and PR head; anything else, including a failed lookup, runs in full
+          $prVerified = 'false'
+          if ($env:EVENT -eq 'push' -and $env:REF -eq 'refs/heads/main') {
+            $reuseJob = $null
+            try {
+              $reuseSeconds = [int]$env:REUSE_TIMEOUT_SECONDS
+              if ($reuseSeconds -le 0 -or $reuseSeconds -gt 150) { throw 'invalid reuse deadline' }
+              $reuseJob = Start-ThreadJob -ArgumentList (,$required) -ScriptBlock {
+                param($required)
+                $ErrorActionPreference = 'Stop'
+                $merge = @(gh api "repos/$env:REPOSITORY/git/commits/$env:SHA" --jq '.tree.sha, (.parents | length), .parents[1].sha')
+                if ($LASTEXITCODE -eq 0 -and $merge.Count -eq 3 -and $merge[1] -eq '2') {
+                  $tree, $prHead = $merge[0], $merge[2]
+                  $rows = @(gh api "repos/$env:REPOSITORY/actions/workflows/foundation.yml/runs?head_sha=$prHead&event=pull_request&status=completed&per_page=100" --jq '.workflow_runs[] | [.id, .run_attempt, .event, .head_sha, .updated_at] | @tsv')
+                  if ($LASTEXITCODE -eq 0) {
+                    $since = [DateTimeOffset]::UtcNow.AddHours(-24)
+                    foreach ($row in $rows) {
+                      $id, $attempt, $trigger, $runHead, $updated = $row -split "`t"
+                      if ($trigger -ceq 'pull_request' -and $runHead -ceq $prHead -and
+                        [DateTimeOffset]::Parse($updated, [Globalization.CultureInfo]::InvariantCulture) -ge $since) {
+                        $jobs = @(gh api "repos/$env:REPOSITORY/actions/runs/$id/attempts/$attempt/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')
+                        $complete = $LASTEXITCODE -eq 0
+                        foreach ($name in $required) {
+                          $named = @($jobs | Where-Object { ($_ -split "`t")[0] -eq $name })
+                          if ($named.Count -ne 1 -or ($named[0] -split "`t")[1] -ne 'success') { $complete = $false }
+                        }
+                        $modes = @($jobs | Where-Object { ($_ -split "`t")[0] -cmatch '^CI mode \([0-9a-f]{40}\)$' })
+                        if ($complete -and $modes.Count -eq 1 -and ($modes[0] -split "`t")[1] -ceq 'success') {
+                          $synthetic = [regex]::Match($modes[0], '^CI mode \(([0-9a-f]{40})\)').Groups[1].Value
+                          $verified = @(gh api "repos/$env:REPOSITORY/git/commits/$synthetic" --jq '.tree.sha, (.parents | length), .parents[1].sha')
+                          if ($LASTEXITCODE -eq 0 -and $verified.Count -eq 3 -and $verified[0] -ceq $tree -and $verified[1] -eq '2' -and $verified[2] -ceq $prHead) {
+                            "CI mode: run $id attempt $attempt verified synthetic $synthetic with the tree $tree of $env:SHA"
+                            return
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              if (Wait-Job -Job $reuseJob -Timeout $reuseSeconds) {
+                if ($reuseJob.State -eq 'Completed') {
+                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction Stop)
+                  if ($proof.Count -eq 1) { $prVerified = 'true'; $proof[0] }
+                }
+              } else {
+                "CI mode: PR evidence lookup exceeded ${reuseSeconds}s; running in full"
+              }
+            } catch {
+              $prVerified = 'false'
+            } finally {
+              # Stop the lookup thread; the Actions runner cleans up any remaining gh children when the job ends.
+              if ($null -ne $reuseJob) { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob }
+            }
+          }
           "heavy=$heavy" >> $env:GITHUB_OUTPUT
           "duplicate=$duplicate" >> $env:GITHUB_OUTPUT
-          "CI mode: heavy=$heavy duplicate=$duplicate"
+          "pr_verified=$prVerified" >> $env:GITHUB_OUTPUT
+          "CI mode: heavy=$heavy duplicate=$duplicate pr_verified=$prVerified"
           exit 0 # a failed lookup already chose full; its exit code must not fail the job
 
   native-prepare:
@@ -493,9 +557,10 @@ jobs:
     # src/contracts/native-routes.json before it is handed on.
     name: native prepare (ubuntu-24.04)
     # #317: it starts with the foundation, not after it; its duplicate nightly skip is explicit
-    # because a skipped foundation no longer skips it through needs.
+    # because a skipped foundation no longer skips it through needs. #335: a same-tree main push
+    # reuse skips it too; route, large API and qualification follow through needs.
     needs: [mode]
-    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' }}
+    if: ${{ needs.mode.outputs.heavy == 'true' && needs.mode.outputs.duplicate != 'true' && needs.mode.outputs.pr_verified != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -1007,8 +1072,10 @@ jobs:
 
   integration-gate:
     name: integration gate
-    needs: [foundation, native-prepare, native-routes, large-api, qualification]
-    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') }}
+    # #335: skipped required checks report success, so only a main push that reused same-tree PR
+    # evidence may skip it; a pull_request run never does.
+    needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]
+    if: ${{ always() && !(github.event_name == 'schedule' && needs.foundation.result == 'skipped') && !(github.event_name == 'push' && needs.mode.outputs.pr_verified == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
