@@ -17,6 +17,12 @@ import (
 const eligibilityWorkLimit uint64 = 32000000
 const eligibilityLogicalLimit uint64 = 1 << 30
 
+// 1.5 GiB: only for ledgers started by an eligibility verify bound to an approved paged-parser context.
+const eligibilityPagedLogicalLimit uint64 = 3 << 29
+
+// Fixed approved-context predicate; never derived from evidence, descriptors or sizes.
+func eligibilityPagedContext(context string) bool { return context == semanticPagedContext }
+
 // Legacy headers need no AST; reserve decoder/error buffers and typed values before decoding.
 func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
 	if b == nil {
@@ -60,7 +66,15 @@ func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
 type eligibilityBudget struct {
 	r             *run
 	work, logical uint64
+	logicalLimit  uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
 	err           *Error
+}
+
+func (b *eligibilityBudget) logicalCap() uint64 {
+	if b.logicalLimit != 0 {
+		return b.logicalLimit
+	}
+	return eligibilityLogicalLimit
 }
 
 func (b *eligibilityBudget) charge(work, logical uint64, at string) *Error {
@@ -70,7 +84,7 @@ func (b *eligibilityBudget) charge(work, logical uint64, at string) *Error {
 	if e := b.r.check(); e != nil {
 		return e
 	}
-	if work > eligibilityWorkLimit-b.work || logical > eligibilityLogicalLimit-b.logical {
+	if work > eligibilityWorkLimit-b.work || logical > b.logicalCap()-b.logical {
 		b.err = fail(KindResourceLimit, "ELIGIBILITY_WORK_LIMIT", at, nil)
 		return b.err
 	}
