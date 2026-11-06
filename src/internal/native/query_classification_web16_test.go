@@ -33,6 +33,10 @@ type classificationEmptyProfile struct {
 	languageVersion, runtimeLanguageVersion, minCompatible                 uint32
 	symbolCount, fieldCount                                                uint32
 	queries                                                                []classificationEmptyQuerySpec
+
+	// source and nodes pin a non-empty single-frame source and its full CST; zero values keep the empty-source root-only profile.
+	source string
+	nodes  []kit.TreeNode
 }
 
 func classificationWeb16ProfileFor(name string) (classificationEmptyProfile, bool) {
@@ -188,6 +192,12 @@ func classificationEmptyGrammarPins(profile classificationEmptyProfile) []kit.Na
 			{Path: "src/scanner.c", Role: "scanner", Bytes: 51153, SHA256: "c53690b749988bb728f5cbd3b4e83e76af225c632da977da1b7f9f5eeaf4c663"},
 		}
 		return append(files, sharedHeaders("src/tree_sitter/")...)
+	case "powershell":
+		files = []kit.NativeInput{
+			{Path: "src/parser.c", Role: "parser", Bytes: 6290093, SHA256: "f4e94eb6e43095b7ccf626b6bad17f98b2eba5757efb73b9a31d9ae482eb5644"},
+			{Path: "src/scanner.c", Role: "scanner", Bytes: 3607, SHA256: "96b4f68773813c25de43b10d23cdbc1bae5009d46f077a5919a7294474939ad0"},
+		}
+		return append(files, sharedHeaders("src/tree_sitter/")...)
 	default:
 		return nil
 	}
@@ -200,16 +210,19 @@ func classificationEmptyAnchorsValid(profileName string, a classificationLocalAn
 	}
 	if a.Schema != "tsgk-query-classification-anchors/r1" || a.Route != profile.route || a.Case != profile.caseID || a.API ||
 		a.Operation != "native-query" || a.DriverMode != "single" || a.Workload != profile.workload ||
-		a.Source.UTF8 != "" || a.Source.Bytes != 0 || a.Source.SHA256 != sha(nil) || a.Edits == nil || len(a.Edits) != 0 ||
+		a.Source.UTF8 != profile.source || a.Source.Bytes != uint64(len(profile.source)) || a.Source.SHA256 != sha([]byte(profile.source)) || a.Edits == nil || len(a.Edits) != 0 ||
 		len(a.Expect) != 1 || a.Expect[0].Step != 0 || a.Expect[0].Syntax != "NO_ERROR" ||
-		len(a.Nodes) != 1 || len(a.Queries) != len(profile.queries) || len(a.Required) != len(profile.queries) {
-		return fmt.Errorf("%s empty-profile empty-source profile changed", profileName)
+		len(a.Queries) != len(profile.queries) || len(a.Required) != len(profile.queries) {
+		return fmt.Errorf("%s empty-profile fixed source profile changed", profileName)
 	}
-	wantRoot := []kit.TreeNode{{Parent: -1, Type: profile.rootType, Named: true}}
-	if !reflect.DeepEqual(a.Nodes, wantRoot) ||
+	wantNodes := profile.nodes
+	if wantNodes == nil {
+		wantNodes = []kit.TreeNode{{Parent: -1, Type: profile.rootType, Named: true}}
+	}
+	if !reflect.DeepEqual(a.Nodes, wantNodes) || kit.ValidateTree(a.Nodes, a.Source.Bytes) != nil ||
 		a.ABI.LanguageVersion != profile.languageVersion || a.ABI.RuntimeLanguageVersion != profile.runtimeLanguageVersion ||
 		a.ABI.RuntimeMinCompatible != profile.minCompatible || a.ABI.SymbolCount != profile.symbolCount || a.ABI.FieldCount != profile.fieldCount {
-		return fmt.Errorf("%s empty-profile ABI or independent empty-source CST changed", profileName)
+		return fmt.Errorf("%s empty-profile ABI or independent source CST changed", profileName)
 	}
 	seen := make(map[string]bool, len(profile.queries))
 	for i, q := range a.Queries {

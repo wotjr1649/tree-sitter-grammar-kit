@@ -15,7 +15,7 @@ Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 �
 
 Dart는 parser·scanner·header3개, PHP는 `common/scanner.h`와 `php/src/parser.c`·`php/src/scanner.c`·`php/src/tree_sitter/` header3개로 정확한 role/path/bytes/SHA를 고정한다. PHP include는 `php/src`와 `common`이며 경로를 평탄화하거나 공통 header를 생략하지 않는다. Parser 크기7,872,952/8,115,395 bytes는 각16MiB plain-input 한도 안이다. 개별 physical file 한도와 aggregate JSON/context 한도는 별개다. 기존 small 한도·정렬된9-name compiler environment·`full-input-utf8/r2`와 다른 profile 경계를 유지한다.
 
-원래 ordinary qualification의 API=true 및 Dart53/24/77/101/707, PHP48/46/94/140/700은 각각 cases/edits/case steps/tree roles/potential query-tree-role 좌표다. 합계101/70/171/241/1,407은 이번 정의12개의 실행 분모가 아니다. PowerShell의 patched root는 nonnullable이므로 이 빈 소스 집합에 포함하지 않는다. 별도의 유효 최소 소스와 CST 기대값을 먼저 확인해야 한다.
+원래 ordinary qualification의 API=true 및 Dart53/24/77/101/707, PHP48/46/94/140/700은 각각 cases/edits/case steps/tree roles/potential query-tree-role 좌표다. 합계101/70/171/241/1,407은 이번 정의12개의 실행 분모가 아니다. PowerShell의 patched root는 nonnullable이므로 이 빈 소스 집합에 포함하지 않고, [PowerShell3 절](#powershell3-단일-byte-frame-정의-분류)의 별도 1-byte profile로 다룬다.
 
 각 profile의 새 current graph·서로 다른 query별 reference invocation·provenance·외부 caller approval과 같은 guarded snapshot의 정의 projection·공개 API parity 후에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원장 `STRUCTURAL_CANDIDATE/UNVERIFIED`, semantic `NOT_ASSESSED`, `semantic_required:null`과 전체 #216/#195의 미완료는 유지한다. 이후 보고서/merge revision을 관측 source/reader로 표시하지 않는다.
 
@@ -138,6 +138,27 @@ Kotlin ordinary loader는 `kotlin.json`의 정확한 원문·hash·query 순서�
 Swift parser 원문30,636,167바이트는 CPP4·Kotlin5와 같은 `full-input-utf8-paged-parser/r1`으로 보존한다. Parser에만16,777,216·13,858,951바이트의2 parts를 사용하고, scanner와 header3개의 원문 pin·순서, compiler argv 및 출력 `swift.dll`을 고정한다. `oracle/` namespace와 기존 opaque `go-library-build`·`current/go.dll` evidence ID를 재사용하되 Swift 정체성은 route·symbol·ABI·grammar 원문과 사전등록으로 검증한다. CPP4·Kotlin5·Swift8은 profile별 pin을 가진 하나의 닫힌 paged 검증기를 공유하며 서로의 anchor·plan·grammar closure를 거부한다. Swift는 CJR의 닫힌 map·empty-profile 계열과 별도이고 `full-input-utf8/r2` parser16MiB 한도를 완화하지 않는다. 다른 입력·library·문서·출력·시간·memory 한도도 늘리지 않는다.
 
 Swift ordinary loader는 `swift.json`의 정확한 원문·hash·query 순서와 원장의 유일한 `swift/s06-swift` 그룹을 대조한다. 원래76 cases·62 edits·138 case steps·200 tree roles는8개 정의와1,600 potential links를 만든다. 이는 빈 입력 관측1,600회나 사례별 CST/API·capture·runtime/semantic 완료를 뜻하지 않는다. `definitions`는 graph 밖 caller 승인, 같은 guarded snapshot의 eligibility·독립 CST·request/frame·compiler/library·native/reference metadata 및 별도 public API parity를 통과한 뒤에만 조건부 `STRUCTURAL_ONLY`를 기록하며, 여덟 query는 각각 서로 다른 reference invocation에 연결된다. 실제 native stderr가0바이트이면 명시적 빈 member를 보존하며, 비어 있지 않은 stderr도 같은 native owner·process byte count와 결속한다. r1의 미검증 상태와 r10 `full_scope_complete=false`·전체 BLOCKED, 전체 #216/#195 OPEN은 이 부분 분류로 바뀌지 않는다.
+
+## PowerShell3 단일 byte frame 정의 분류
+
+닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=powershell3-tiny`는 [PowerShell3 사전 기대값](../../src/testdata/query-semantics/powershell3-classification-anchors.json)의 UTF-8 source `;`(1 byte, SHA-256 `41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4`)·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 선택한다. 이름의 `-tiny`는 빈 source가 아님을 뜻한다. PowerShell root `program`은 nonnullable이라 빈 입력은 error 경로로 가므로 빈 입력 profile이 존재할 수 없고, 가장 작은 유효 입력 중 query 대상 node를 만들지 않는 `;`를 고정한다.
+
+아래 CST는 **관측 전 사전 기대값**이다. 근거는 고정 `parser.c`의 lex·parse table·action을 읽은 정적 도출이며(`;` shift 뒤 EOF에서 `empty_statement`→`statement_list`→`program` reduce와 accept), 실제 runtime parse는 아직 관측하지 않았다. 세 reduce는 production 0이라 모든 field는 null이고 scanner는 이 경로에서 호출되지 않는다.
+
+| # | parent | type | named | byte span |
+|---:|---:|---|---|---|
+| 0 | -1 | `program` | true | 0..1 |
+| 1 | 0 | `statement_list` | true | 0..1 |
+| 2 | 1 | `empty_statement` | true | 0..1 |
+| 3 | 2 | `;` | false | 0..1 |
+
+모든 node의 field는 null이고 extra·is_error·has_error·is_missing은 false이며 point는 (0,0)..(0,1)이다. ABI 기대값은15/15/13/445/16이고 symbol 445는 `SYMBOL_COUNT 445`와 `ALIAS_COUNT 0`의 합이다. 세 query(`q.structure`·`q.probe-v7-chain`·`q.probe-v7-blocks`)의 metadata는 합계6 patterns·6 capture-name 항목·전역 고유 이름6개와 명시적 `predicates:[]`이며, CST에 `enum_statement`·`class_statement`·`function_statement`·`command`·`pipeline_chain_tail`·`named_block`이 없으므로 structural/expected tuple은 빈 배열 후보다. 실제 parse·compile·query 결과, native ABI, reference의 같은 source frame과 CST, stderr 0바이트 member는 별도 관측으로 확인한다. **관측한 CST·ABI·capture가 이 기대값과 다르면 anchor를 사후 수정하지 않고 관측을 기록한 뒤 별도 profile로 다시 사전등록한다.**
+
+Parser `src/parser.c` 6,290,093바이트는 16MiB plain-input 한도 안이라 paging 없이 `full-input-utf8/r2`를 사용한다. Grammar 폐쇄는 `src/parser.c`·`src/scanner.c`(3,607바이트, registry origin `patched`)·`src/tree_sitter/` header3개의 5개 file이며 include는 `src`, 출력은 `powershell.dll`이다. 원래 ordinary qualification의 API=true와 cases/edits/case steps/tree roles/potential query-tree-role 39/24/63/87/261은 이번 정의3개의 실행 분모가 아니다.
+
+이 profile은 unpaged empty-profile 검증기를 공유한다. 검증기는 profile이 고정한 정확한 source bytes(기본값은 빈 source)와 전체 CST(기본값은 root 1개)만 허용하도록 일반화됐다. 기존 empty profile은 새 필드를 비워 두므로 빈 source·root 1개 요구가 그대로 유지되고, 임의의 유효 source나 다른 profile의 CST는 어느 profile에서도 거부된다.
+
+이후 절차는 다른 닫힌 profile과 같다. 실제 parse가 사전 기대값과 일치하는 새 current graph·서로 다른 query별 reference invocation·provenance·외부 caller approval과 같은 guarded snapshot의 정의 projection·공개 API parity 후에만 조건부 `STRUCTURAL_ONLY`를 기록한다. 원장 `STRUCTURAL_CANDIDATE/UNVERIFIED`, semantic `NOT_ASSESSED`, `semantic_required:null`과 전체 #216/#195의 미완료는 유지한다.
 
 ## Ordinary Go의 첫 single-frame batch probe
 
