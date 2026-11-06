@@ -13,7 +13,7 @@
 - 공개 API 정적 대조는 추가21·변경9·제거0이다. experimental struct 필드 추가와 SVC r1→r2는 소비자의 명시적 검토가 필요하다. 이 수치는 behavior/wire 호환성 보증이 아니다.
 - Go1.27.2·CGO_ENABLED=0에서 과거 PR 후보 `77e3414`와 #208 포함 로컬 문서 후보 `1e127a8`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 각각 확인했다. 이 근거는 해당 후보에만 결속한다. module/CI 기준은 Go1.27.1이며 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
 - C# 조건부 fragment 문맥, T-SQL recovery 사례의 route BLOCKED, query host subset, macOS SAMPLED/NOT_CONTAINED 제약을 유지한다. 실사용 소비자 성능과 전체26언어 정확도는 미측정이다.
-- eligibility 검증이 직접 시작한 원장의 논리 처리량 한도를, approval에 결속된 `full-input-utf8-paged-parser/r1` context에 한해 1 GiB에서 1.5 GiB로 올렸다(#216). 다른 context·결속되지 않은 요청·semantic/replay/qualification run의 원장은 1 GiB 그대로이며 caller가 값을 지정하는 옵션은 없다. paged context의 public API 논리 처리량 최악 상한이 1.5 GiB로 바뀐다. PostgreSQL9 분류는 새 revision에서 다시 실행하기 전까지 채택하지 않는다.
+- eligibility 검증이 직접 시작한 원장의 논리 처리량 한도를, approval에 결속된 `full-input-utf8-paged-parser/r1` context에 한해 1 GiB에서 1.5 GiB로 올렸다(#216). 다른 context·결속되지 않은 요청·semantic/replay/qualification run의 원장은 1 GiB 그대로이며 caller가 값을 지정하는 옵션은 없다. paged context의 public API 논리 처리량 최악 상한이 1.5 GiB로 바뀐다. 이 상향만으로 PostgreSQL9 분류를 채택하지 않으며, 분류는 새 source revision에서 처음부터 다시 실행해 [계약](docs/specs/instrumented-query-reference.md#postgresql-9개-정의의-parser-paging-분류)에 기록한다.
 
 ## v0.2.0 — 2026-10-06
 
