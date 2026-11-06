@@ -52,7 +52,10 @@ type marginJob struct {
 	compiler              bool
 }
 
-var marginJobs = []marginJob{
+// marginFormerJobs is the job list before macOS left CI (#332). A historical report may still
+// carry it; the current list is it without the darwin hosts. Re-enabling macOS makes the two
+// lists equal again, and the 2-platform reports become the former shape.
+var marginFormerJobs = []marginJob{
 	{"foundation (windows-2025)", "foundation", "windows", "amd64", 62, true},
 	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 62, true},
 	{"foundation (macos-15)", "foundation", "darwin", "arm64", 62, true},
@@ -63,6 +66,8 @@ var marginJobs = []marginJob{
 	{"large API (windows-2025)", "large-api", "windows", "amd64", 60, true},
 	{"qualification (ubuntu-24.04)", "qualification", "linux", "amd64", 15, false},
 }
+
+var marginJobs = slices.DeleteFunc(slices.Clone(marginFormerJobs), func(j marginJob) bool { return j.goos == "darwin" })
 
 func configName(j marginJob, r kit.RunIdentity) string {
 	return "ci-config-" + j.job + "-" + j.goos + "-" + r.RunID + "-" + r.RunAttempt
@@ -298,7 +303,7 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 		Large json.RawMessage `json:"large"`
 	}
 	if decode(core, &rawCore) != nil || requiredFields(rawCore.Large, "max_page_wall_ms") != nil ||
-		decode(jobsData, &jobs) != nil || jobs.Total != len(jobs.Jobs) || jobs.Total < 11 || jobs.Total > 14 ||
+		decode(jobsData, &jobs) != nil || jobs.Total != len(jobs.Jobs) || jobs.Total < len(marginJobs)+2 || jobs.Total > len(marginJobs)+3 ||
 		decode(core, &gate) != nil || gate.Assessment != "PASS" || !sameRun(&gate.Run, expected) ||
 		len(configs) != len(marginJobs) {
 		return nil, errors.New("margin current evidence invalid")
@@ -363,13 +368,18 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, jobsData, 
 }
 
 func validateMarginReport(r marginReport, historical bool) error {
-	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(marginJobs) || !marginToolchain(r.Run.GoVersion, historical) {
+	// a past report may have the job list from before macOS left CI (#332); a current one never
+	jobList := marginJobs
+	if historical && len(r.Configs) == len(marginFormerJobs) {
+		jobList = marginFormerJobs
+	}
+	if r.Schema != marginSchema || !hex64.MatchString(r.CoreSHA) || len(r.Configs) != len(jobList) || !marginToolchain(r.Run.GoVersion, historical) {
 		return errors.New("margin report shape")
 	}
 	expected := map[string]string{}
 	limits := map[string]int64{}
 	configs := map[string]marginConfig{}
-	for i, j := range marginJobs {
+	for i, j := range jobList {
 		c := r.Configs[i]
 		// Historical r1 reports retain the former Mac matrix job and its exact keys.
 		if historical && j.job == "native-routes-macos" && c.Run.Job == "native-routes" {
@@ -436,6 +446,10 @@ func evaluateMargins(current *marginReport, history []marginReport) (bool, error
 			if c.Run.Job == "native-routes" && c.Run.GOOS == "darwin" && c.Source == current.Configs[0].Source {
 				return false, errors.New("legacy margin identity claims current configuration")
 			}
+		}
+		// #332: the source binds the workflow, so one source has one job list
+		if len(r.Configs) != len(current.Configs) && r.Configs[0].Source == current.Configs[0].Source {
+			return false, errors.New("former margin job list claims current configuration")
 		}
 		// #260: the source binds the workflow and the limit table, so one source has one limit set
 		for _, m := range r.Metrics {
