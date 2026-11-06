@@ -26,7 +26,7 @@ func TestQueryClassificationKotlin5StaticProfile(t *testing.T) {
 			t.Fatalf("Kotlin5 paging changed another profile: %q, %#v, %v", name, other, err)
 		}
 	}
-	for _, alias := range []string{"kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "swift8-empty"} {
+	for _, alias := range []string{"kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "swift8"} {
 		if _, ok := classificationCPPProfileSpecFor(alias); ok {
 			t.Fatalf("near-alias paged profile %q accepted", alias)
 		}

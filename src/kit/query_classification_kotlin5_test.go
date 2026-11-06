@@ -50,6 +50,8 @@ func classificationPagedProfileForRoute(route string) (classificationCPP4Profile
 		return classificationCPP4DefinitionProfile(), true
 	case "kotlin":
 		return classificationKotlin5DefinitionProfile(), true
+	case "swift":
+		return classificationSwift8DefinitionProfile(), true
 	default:
 		return classificationCPP4Profile{}, false
 	}
@@ -61,6 +63,8 @@ func classificationPagedProfileForName(name string) (classificationCPP4Profile, 
 		return classificationCPP4DefinitionProfile(), true
 	case "kotlin5-empty":
 		return classificationKotlin5DefinitionProfile(), true
+	case "swift8-empty":
+		return classificationSwift8DefinitionProfile(), true
 	default:
 		return classificationCPP4Profile{}, false
 	}
@@ -288,12 +292,12 @@ func TestQueryClassificationKotlin5ClosedNames(t *testing.T) {
 	if !classificationGoDefinitionProfileAllowed("kotlin5-empty") || !classificationGoLocalSkipsProfile("kotlin5-empty") {
 		t.Fatal("kotlin5-empty is not admitted by the closed definition and local-skip entries")
 	}
-	for _, alias := range []string{"", "kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "kotlin5-empty-alias", "kotlin8-empty", "swift8-empty"} {
+	for _, alias := range []string{"", "kotlin", "kotlin5", "kotlin5-empty ", "KOTLIN5-empty", "kotlin5-empty-alias", "kotlin8-empty", "swift8"} {
 		if _, ok := classificationPagedProfileForName(alias); ok || classificationGoDefinitionProfileAllowed(alias) {
 			t.Fatalf("near-alias paged profile %q accepted", alias)
 		}
 	}
-	for _, route := range []string{"", "Kotlin", "kotlin ", "swift", "java", "csharp"} {
+	for _, route := range []string{"", "Kotlin", "kotlin ", "Swift", "swift ", "java", "csharp"} {
 		if classificationPagedRoute(route) {
 			t.Fatalf("route %q entered the closed paged set", route)
 		}

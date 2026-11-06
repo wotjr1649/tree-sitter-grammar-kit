@@ -99,6 +99,39 @@ func classificationCPPProfileSpecFor(name string) (classificationCPPProfileSpec,
 				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
 			},
 		}, true
+	case "swift8-empty":
+		return classificationCPPProfileSpec{
+			label: "Swift8", registryLabel: "Swift8",
+			anchorFile:      "swift8-classification-anchors.json",
+			anchorSHA:       "d5a5ef3d5189a2e7e0e6c2dbb18431ab8a66144e4824392374facf8b480e43b6",
+			route:           "swift",
+			symbol:          "tree_sitter_swift",
+			caseID:          "swift8-empty-definitions",
+			workload:        "swift8-empty-definition-single-frame",
+			rootType:        "source_file",
+			queryFile:       "swift.json",
+			queryBytes:      9390,
+			querySHA:        "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c",
+			languageVersion: 15, runtimeVersion: 15, minCompatible: 13,
+			symbolCount: 596, fieldCount: 48, grammarCount: 5,
+			querySpecs: []classificationCPPQuerySpec{
+				{id: "q.structure", sha256: "6d88d7735d57a8811212c5b2a1530bb38edba699c2410fe88e776df4c5bb1459", patterns: 4, captures: []string{"type", "protocol", "requirement", "function"}},
+				{id: "q.probe-b02", sha256: "633bb081a17c16f86332a6342d67f80fa14a1d6800ca6e5f1e118ff094dc490b", patterns: 2, captures: []string{"capture", "keypath"}},
+				{id: "q.probe-v51", sha256: "593535bc4f0c3366d2cbfca37ae26365609b21e0f8e0fa51a595e6258d03728e", patterns: 3, captures: []string{"opaque", "raw", "trailing_label"}},
+				{id: "q.probe-v55", sha256: "be22a5c1e67ccf88e9c21ff5ec8a9d3e87fede0c98d7e2107ff56724f95618db", patterns: 2, captures: []string{"actor", "existential"}},
+				{id: "q.probe-v59", sha256: "3fd8897fa2284fb0e46e430ed8eb25e4db523756ec5dfa49ae53d43a6a0c2088", patterns: 3, captures: []string{"macro", "thrown", "expansion"}},
+				{id: "q.probe-v61", sha256: "1053aec87985bcc9739a03cc87e6d5f2d54e9a77432d345d0b2ea401a6ef2018", patterns: 3, captures: []string{"extension", "tparam", "capture"}},
+				{id: "q.probe-v62", sha256: "ff3f2f1a325e9f09f80b6ef9a6184e764ddbb132f2eff2708f7ad58eaa7d5a37", patterns: 2, captures: []string{"attr", "unsafe"}},
+				{id: "q.probe-v64", sha256: "aa4d6b32c8c84ce015800e49dc64f07132b5fe695ce8096c537112c6eff44745", patterns: 2, captures: []string{"optional", "attr"}},
+			},
+			grammarFiles: []classificationCPPGrammarFile{
+				{path: "src/parser.c", role: "parser", bytes: 30636167, sha256: "512ac3affb50c25a5f7b3106c4c1577aaa28e03e68f268fe4f037759af9e0ae4"},
+				{path: "src/scanner.c", role: "scanner", bytes: 39994, sha256: "aee1af6476556021d0ff0cbad064818e21fde836eea3a8b919f31a2a326cdd9d"},
+				{path: "src/tree_sitter/alloc.h", role: "header", bytes: 985, sha256: "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea"},
+				{path: "src/tree_sitter/array.h", role: "header", bytes: 13453, sha256: "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2"},
+				{path: "src/tree_sitter/parser.h", role: "header", bytes: 7624, sha256: "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2"},
+			},
+		}, true
 	default:
 		return classificationCPPProfileSpec{}, false
 	}

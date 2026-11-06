@@ -636,7 +636,7 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 7
 	case "TSX", "Bash":
 		want = 2
-	case "Python":
+	case "Python", "Swift":
 		want = 8
 	default:
 		return nil, fmt.Errorf("unsupported closed definition language %q", language)
