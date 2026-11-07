@@ -66,7 +66,25 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 	if e != nil {
 		return record, e
 	}
-	if inv.Executable == nil || inv.Executable.Member.SHA256 != a.ExecutableSHA256 || !hex64.MatchString(a.ExecutableSHA256) {
+	executableSHA := ""
+	if inv.Executable != nil {
+		executableSHA = inv.Executable.Member.SHA256
+		if inv.Executable.Member.Role == "driver-paged-descriptor" {
+			executableSHA = ""
+			if s.reg.Context == semanticPagedBinariesContext {
+				logical, ok, e := s.nativePagedDriver(inv)
+				if e != nil {
+					return record, e
+				}
+				if !ok {
+					s.finding("ELIGIBILITY_NATIVE_DRIVER_PAGES", inv.ID, true)
+				} else {
+					executableSHA = logical.SHA256
+				}
+			}
+		}
+	}
+	if inv.Executable == nil || executableSHA != a.ExecutableSHA256 || !hex64.MatchString(a.ExecutableSHA256) {
 		s.finding("ELIGIBILITY_NATIVE_EXECUTABLE", inv.ID, true)
 	}
 	if a.Process.Path != inv.ExecutablePath {

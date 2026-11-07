@@ -324,13 +324,13 @@ func (s *eligibilitySession) counts(complete bool) {
 func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Error {
 	a, g := s.approval, s.reg
 	bad := func(at string) *Error { return fail(KindInvalidInput, "ELIGIBILITY_REGISTRATION_INVALID", at, nil) }
-	if a.Schema != QueryReferenceEligibilityApprovalSchema || g.Schema != QueryReferenceEligibilityRegistrationSchema || (g.Context != "full-input-utf8/r2" && g.Context != semanticPagedContext) {
+	if a.Schema != QueryReferenceEligibilityApprovalSchema || g.Schema != QueryReferenceEligibilityRegistrationSchema || (g.Context != "full-input-utf8/r2" && !semanticParserPagingContext(g.Context)) {
 		return fail(KindUnsupported, "SCHEMA_UNSUPPORTED", "eligibility", nil)
 	}
-	if g.Context == semanticPagedContext && g.Native == nil {
+	if semanticParserPagingContext(g.Context) && g.Native == nil {
 		return bad("native-paged-parser-required")
 	}
-	if g.Context == semanticPagedContext && a.Candidate.Platform != "windows/amd64" && a.Candidate.Platform != "linux/amd64" {
+	if semanticParserPagingContext(g.Context) && a.Candidate.Platform != "windows/amd64" && a.Candidate.Platform != "linux/amd64" {
 		return fail(KindUnsupported, "ELIGIBILITY_CONTEXT_UNSUPPORTED", "candidate", nil)
 	}
 	if !eligibilityRevision(a.Candidate.SourceRevision) || !slices.Contains([]string{"windows/amd64", "linux/amd64", "darwin/arm64"}, a.Candidate.Platform) || !eligibilityString(a.Candidate.Run) || a.Candidate.Attempt == 0 || a.Candidate.Attempt > maxJSONInteger {

@@ -14,6 +14,10 @@ const (
 	semanticBinaryLogicalMax           uint64 = 64 << 20
 )
 
+func semanticParserPagingContext(c string) bool {
+	return c == semanticPagedContext || c == semanticPagedBinariesContext
+}
+
 func semanticManifestSchema(schema string) bool {
 	return schema == OracleSemanticsManifestSchema || schema == OraclePagedSemanticsManifestSchema
 }

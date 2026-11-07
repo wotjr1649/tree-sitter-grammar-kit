@@ -17,11 +17,13 @@ import (
 const eligibilityWorkLimit uint64 = 32000000
 const eligibilityLogicalLimit uint64 = 1 << 30
 
-// 1.5 GiB: only for ledgers started by an eligibility verify bound to an approved paged-parser context.
+// 1.5 GiB: only for ledgers started by an eligibility verify bound to an approved paged context.
 const eligibilityPagedLogicalLimit uint64 = 3 << 29
 
 // Fixed approved-context predicate; never derived from evidence, descriptors or sizes.
-func eligibilityPagedContext(context string) bool { return context == semanticPagedContext }
+func eligibilityPagedContext(context string) bool {
+	return context == semanticPagedContext || context == semanticPagedBinariesContext
+}
 
 // Legacy headers need no AST; reserve decoder/error buffers and typed values before decoding.
 func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
