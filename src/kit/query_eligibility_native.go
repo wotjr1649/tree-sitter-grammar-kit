@@ -45,6 +45,14 @@ func (s *eligibilitySession) verifyNative() *Error {
 		}
 		s.failItem = func() { s.failInvocation(inv) }
 		nativeReady = s.ready[inv.ID] && eligibilityAllVerified(s.build, 9) && eligibilityAllVerified(s.units, 4) && eligibilityAllVerified(s.control, 53) && eligibilityAllVerified(s.assertions, 36)
+		pagedBinary := n.ReferenceLibrary != nil && n.ReferenceLibrary.Member.Role == "library-paged-descriptor"
+		if inv.Executable != nil && inv.Executable.Member.Role == "driver-paged-descriptor" {
+			pagedBinary = true
+		}
+		if s.reg.Context == semanticPagedBinariesContext && !pagedBinary {
+			s.finding("ELIGIBILITY_NATIVE_BINARY_PAGES", "native", true)
+			nativeReady = false
+		}
 
 		source, haveSource, e := s.member(&n.Source)
 
@@ -525,14 +533,6 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	expectedSteps = append(expectedSteps, "driver", "shim", "link")
 	if s.reg.Context == semanticPagedContext && pagedParsers != 1 || s.reg.Context == semanticPagedBinariesContext && pagedParsers > 1 {
 		s.finding("ELIGIBILITY_NATIVE_PARSER_PAGES", "native", true)
-		good = false
-	}
-	pagedBinary := n.ReferenceLibrary != nil && n.ReferenceLibrary.Member.Role == "library-paged-descriptor"
-	if inv := s.invocations[n.InvocationID]; inv != nil && inv.Executable != nil && inv.Executable.Member.Role == "driver-paged-descriptor" {
-		pagedBinary = true
-	}
-	if s.reg.Context == semanticPagedBinariesContext && !pagedBinary {
-		s.finding("ELIGIBILITY_NATIVE_BINARY_PAGES", "native", true)
 		good = false
 	}
 	if parsers != 1 || len(grammar) != len(n.Grammar) || !slices.Equal(steps, expectedSteps) {

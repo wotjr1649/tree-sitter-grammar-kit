@@ -5,6 +5,8 @@ import (
 	jsonv2 "encoding/json/v2"
 	"slices"
 	"testing"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 func binaryDriverApproval(f *eligibilityFixture, sha string) {
@@ -95,11 +97,72 @@ func TestEligibilityBinaryPagedDriver(t *testing.T) {
 
 func TestEligibilityBinaryPagesRequired(t *testing.T) {
 	t.Parallel()
-	f := newEligibilityFixture(t)
-	f.reg.Context = semanticPagedBinariesContext
-	got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
-	if err != nil || !eligibilityFinding(got, "ELIGIBILITY_NATIVE_BINARY_PAGES") {
-		t.Fatalf("err=%v findings=%+v", err, got.Findings)
+	for _, name := range []string{"current-runtime", "historical-runtime"} {
+		t.Run(name, func(t *testing.T) {
+			f := newEligibilityFixture(t)
+			f.reg.Context = semanticPagedBinariesContext
+			if name == "historical-runtime" {
+				historical := "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+				f.witness.Native.RuntimeManifestSHA256 = historical
+				binaryDriverApproval(f, f.witness.Native.ExecutableSHA256)
+				f.replace("native/response.json", bytes.ReplaceAll(f.files["native/response.json"], []byte(reuseobs.RuntimeManifestSHA256), []byte(historical)))
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if err != nil || got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_NATIVE_BINARY_PAGES") {
+				t.Fatalf("err=%v assessment=%s findings=%+v", err, got.Assessment, got.Findings)
+			}
+			if name == "historical-runtime" && !eligibilityFinding(got, "ELIGIBILITY_NATIVE_HISTORICAL_RUNTIME") {
+				t.Fatalf("historical runtime path not reached: %+v", got.Findings)
+			}
+		})
+	}
+}
+
+func TestEligibilityBinaryLibraryRoleOnly(t *testing.T) {
+	t.Parallel()
+	for _, name := range []string{"ordinary-library", "descriptor"} {
+		t.Run(name, func(t *testing.T) {
+			var f *eligibilityFixture
+			if name == "descriptor" {
+				f = binaryLibraryFixture(t, func(desc eligibilityMember, logical string) string { return desc.Member.SHA256 })
+			} else {
+				f = newEligibilityFixtureLibrary(t, func(f *eligibilityFixture) (eligibilityMember, string) {
+					pin := f.member("control-compile", "current/library.bin", "library-paged-descriptor", []byte("synthetic library; never loaded"))
+					return pin, pin.Member.SHA256
+				})
+				f.reg.Context = semanticPagedBinariesContext
+			}
+			got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+			if err != nil || got.Assessment != AssessFail || !eligibilityFinding(got, "ELIGIBILITY_CURRENT_LIBRARY_ARGV") {
+				t.Fatalf("err=%v assessment=%s findings=%+v", err, got.Assessment, got.Findings)
+			}
+		})
+	}
+}
+
+func TestEligibilityBinaryReservedRoles(t *testing.T) {
+	t.Parallel()
+	for _, context := range []string{"full-input-utf8/r2", semanticPagedContext} {
+		t.Run(context, func(t *testing.T) {
+			for _, kind := range []string{"driver", "library"} {
+				t.Run(kind, func(t *testing.T) {
+					var f *eligibilityFixture
+					code := "ELIGIBILITY_NATIVE_EXECUTABLE"
+					if kind == "driver" {
+						f = binaryDriverFixture(t, MaxDocumentBytes+1)
+						binaryDriverApproval(f, digestHex(f.files["oracle/capture/driver.pages.json"]))
+					} else {
+						f = binaryLibraryFixture(t, func(desc eligibilityMember, logical string) string { return desc.Member.SHA256 })
+						code = "ELIGIBILITY_CURRENT_LIBRARY_ARGV"
+					}
+					f.reg.Context = context
+					got, err := VerifyQueryReferenceEligibility(ctxT(t), f.request())
+					if err != nil || got.Assessment != AssessFail || !eligibilityFinding(got, code) {
+						t.Fatalf("err=%v assessment=%s missing=%s findings=%+v", err, got.Assessment, code, got.Findings)
+					}
+				})
+			}
+		})
 	}
 }
 
