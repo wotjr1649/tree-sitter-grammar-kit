@@ -531,7 +531,7 @@ jobs:
               }
               if (Wait-Job -Job $reuseJob -Timeout $reuseSeconds) {
                 if ($reuseJob.State -eq 'Completed') {
-                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction Stop)
+                  $proof = @(Receive-Job -Job $reuseJob -ErrorAction SilentlyContinue)
                   if ($proof.Count -eq 1) { $prVerified = 'true'; $proof[0] }
                 }
               } else {
@@ -541,7 +541,9 @@ jobs:
               $prVerified = 'false'
             } finally {
               # Stop the lookup thread; the Actions runner cleans up any remaining gh children when the job ends.
-              if ($null -ne $reuseJob) { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob }
+              if ($null -ne $reuseJob) {
+                try { Stop-Job -Job $reuseJob; Remove-Job -Job $reuseJob -Force } catch { }
+              }
             }
           }
           "heavy=$heavy" >> $env:GITHUB_OUTPUT
