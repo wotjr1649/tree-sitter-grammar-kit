@@ -27,7 +27,11 @@ const repository = "wotjr1649/tree-sitter-grammar-kit"
 var hex40 = regexp.MustCompile(`^[0-9a-f]{40}$`)
 var hex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
 var positive = regexp.MustCompile(`^[1-9][0-9]{0,19}$`)
-var platforms = []struct{ os, id string }{{"windows", "windows-amd64"}, {"linux", "linux-amd64"}, {"darwin", "darwin-arm64"}}
+
+// platforms are the hosts this CI runs: the committed three minus droppedPlatforms (#332).
+// verify requires the derived inventory to register exactly these.
+var platforms = slices.DeleteFunc([]struct{ os, id string }{{"windows", "windows-amd64"}, {"linux", "linux-amd64"}, {"darwin", "darwin-arm64"}},
+	func(p struct{ os, id string }) bool { return slices.Contains(droppedPlatforms, p.id) })
 
 func digest(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
 
@@ -102,7 +106,11 @@ func checkNeeds(data []byte) error {
 	if decode(data, &needs) != nil || len(needs) != 6 {
 		return errors.New("required producer results unavailable")
 	}
-	for _, name := range []string{"foundation", "native-prepare", "native-routes", "native-routes-macos", "large-api", "qualification"} {
+	// #335: a gate that runs must not stand in for reused evidence; only an explicit "false" passes.
+	if needs["mode"].Result != "success" || needs["mode"].Outputs["pr_verified"] != "false" {
+		return errors.New("CI mode did not choose current-run evidence")
+	}
+	for _, name := range []string{"foundation", "native-prepare", "native-routes", "large-api", "qualification"} {
 		if needs[name].Result != "success" {
 			return errors.New("required producer did not succeed")
 		}
@@ -135,6 +143,16 @@ func outside(path, root string) bool {
 	return err == nil && (rel == ".." || len(rel) > 3 && rel[:3] == ".."+string(os.PathSeparator))
 }
 
+// checkGateHosts requires the inventory to register exactly the hosts whose artifacts the gate reads.
+func checkGateHosts(inventory kit.QualificationInventory) error {
+	if len(inventory.Platforms) != len(platforms) || slices.ContainsFunc(inventory.Platforms, func(p kit.QualPlatform) bool {
+		return !slices.ContainsFunc(platforms, func(h struct{ os, id string }) bool { return h.id == p.ID && h.os == p.GOOS })
+	}) {
+		return errors.New("inventory platforms differ from the gate hosts")
+	}
+	return nil
+}
+
 func verify(ctx context.Context, expected kit.RunIdentity, root string) (map[string]any, error) {
 	if err := checkDownloaded(root, expected); err != nil {
 		return nil, err
@@ -143,13 +161,20 @@ func verify(ctx context.Context, expected kit.RunIdentity, root string) (map[str
 	for _, p := range platforms {
 		hosts = append(hosts, kit.QualifyHost{Platform: p.id, Root: filepath.Join(root, "s05-routes-"+p.os+"-"+expected.RunID+"-"+expected.RunAttempt)})
 	}
-	inv, err := readFile("src/contracts/qualification-c1.json", 16777216)
+	committed, err := readFile(qualificationInventoryPath, 16777216)
+	if err != nil {
+		return nil, err
+	}
+	inv, err := derivedInventory(committed, droppedPlatforms)
 	if err != nil {
 		return nil, err
 	}
 	inventory, err := kit.ParseQualificationInventory(inv)
 	if err != nil {
 		return nil, errors.New("qualification inventory invalid")
+	}
+	if err := checkGateHosts(inventory); err != nil {
+		return nil, err
 	}
 	q, qerr := kit.Qualify(ctx, kit.QualifyRequest{Inventory: inv, Candidate: expected.Checkout, Hosts: hosts})
 	if qerr != nil {
@@ -194,6 +219,7 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 			assessment, support = kit.AssessBlocked, "BLOCKED"
 		}
 	}
+	cells := len(inventory.Routes) * len(inventory.Platforms)
 	want := map[string]map[string]bool{}
 	obligationCount := 0
 	for _, r := range inventory.Routes {
@@ -210,9 +236,9 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 	}
 	if q.ResultSchema != kit.QualificationResultSchema || !sameRun(q.Run, expected) || q.Candidate != expected.Checkout ||
 		q.Assessment != assessment || q.Completeness != "PASS" || q.MechanismGate != "PASS" || q.SupportClaim != support || len(q.Findings) != 0 ||
-		len(q.Cells) != 78 || q.Totals.Cells != 78 || len(q.Totals.Status) != 1 || q.Totals.Status["PASS"] != 78 ||
-		len(want) != 78 || obligationCount <= 0 || q.Totals.Obligations.Obligations != obligationCount || q.Totals.Obligations.Pass != q.Totals.Obligations.Obligations ||
-		q.Totals.Obligations.Fail != 0 || q.Totals.Obligations.Blocked != 0 || q.Totals.Obligations.NotCovered != 0 || len(q.PlatformClaims) != 3 {
+		cells == 0 || len(q.Cells) != cells || q.Totals.Cells != cells || len(q.Totals.Status) != 1 || q.Totals.Status["PASS"] != cells ||
+		len(want) != cells || obligationCount <= 0 || q.Totals.Obligations.Obligations != obligationCount || q.Totals.Obligations.Pass != q.Totals.Obligations.Obligations ||
+		q.Totals.Obligations.Fail != 0 || q.Totals.Obligations.Blocked != 0 || q.Totals.Obligations.NotCovered != 0 || len(q.PlatformClaims) != len(inventory.Platforms) {
 		return errors.New("qualification gate incomplete or unsuccessful")
 	}
 	seen := map[string]bool{}
@@ -233,12 +259,12 @@ func checkQualification(q kit.QualificationResult, expected kit.RunIdentity, inv
 			seenObligations[id] = true
 		}
 	}
-	for _, p := range platforms {
+	for _, p := range inventory.Platforms {
 		wantClaim := "SUPPORTED"
-		if cstBlocked[p.id] {
+		if cstBlocked[p.ID] {
 			wantClaim = "BLOCKED"
 		}
-		if q.PlatformClaims[p.id] != wantClaim {
+		if q.PlatformClaims[p.ID] != wantClaim {
 			return errors.New("unsupported platform")
 		}
 	}
@@ -286,8 +312,8 @@ func checkRoles(rows []kit.QualRoleRow, inventory kit.QualificationInventory) er
 func main() { os.Exit(run(os.Args[1:], os.Stderr)) }
 
 func run(args []string, stderr io.Writer) int {
-	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify", "config", "margin-settled", "margin-discover", "margin-plan", "margin"}, args[0]) {
-		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack, verify, config, margin-settled, margin-discover, margin-plan or margin")
+	if len(args) == 0 || !slices.Contains([]string{"plan", "unpack", "verify", "config", "margin-settled", "margin-discover", "margin-plan", "margin", "inventory"}, args[0]) {
+		fmt.Fprintln(stderr, "ci-gate: expected plan, unpack, verify, config, inventory, margin-settled, margin-discover, margin-plan or margin")
 		return 2
 	}
 	fs := flag.NewFlagSet("ci-gate", flag.ContinueOnError)
@@ -301,8 +327,19 @@ func run(args []string, stderr io.Writer) int {
 	history := fs.String("history", "", "bounded margin metadata and ZIP root")
 	core := fs.String("core", "", "successful current-run core result")
 	compiler := fs.String("compiler", "", "selected producer compiler")
-	if fs.Parse(args[1:]) != nil || fs.NArg() != 0 || *expectPath == "" {
+	if fs.Parse(args[1:]) != nil || fs.NArg() != 0 || (*expectPath == "") != (args[0] == "inventory") {
 		return 2
+	}
+	if args[0] == "inventory" {
+		// the CI qualification inventory; the qualification job passes it to tsgk qualify
+		if *out == "" {
+			return 2
+		}
+		if err := writeDerivedInventory(*out); err != nil {
+			fmt.Fprintln(stderr, "ci-gate:", err)
+			return 1
+		}
+		return 0
 	}
 	if args[0] == "config" {
 		if *out == "" {

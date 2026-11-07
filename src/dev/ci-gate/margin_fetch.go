@@ -173,7 +173,7 @@ func selectMarginArtifact(rows []artifactMetadata, name string, expected kit.Run
 
 func makeMarginPlan(expected kit.RunIdentity, metadata, history string) (marginPlan, error) {
 	result := marginPlan{Current: []artifactMetadata{}, History: []marginHistory{}, Excluded: []string{}}
-	// Reuse full current-run listing validation, including all pages and 5 core ZIPs.
+	// Reuse full current-run listing validation, including all pages and the core ZIPs.
 	corePlan, err := planFiles(expected, metadata)
 	if err != nil {
 		return result, err

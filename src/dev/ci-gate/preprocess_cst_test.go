@@ -8,7 +8,13 @@ import (
 
 // Keep the original four-detector counterexamples after the current producer is corrected.
 func historicalCSTFixture(t *testing.T) (kit.QualificationResult, kit.QualificationInventory) {
-	q, inv := qualificationFixture(t)
+	return historicalCSTFixtureFor(t, nil)
+}
+
+// historicalCSTFixtureFor builds it for the inventory minus drop: nil is the committed three
+// platforms with the deferred darwin rows, droppedPlatforms the inventory this CI gates (#332).
+func historicalCSTFixtureFor(t *testing.T, drop []string) (kit.QualificationResult, kit.QualificationInventory) {
+	q, inv := qualificationFixtureFor(t, drop)
 	anchors := map[string]uint32{"directive-string-no-escape": 25, "razor-comment-lines": 9, "dollars-two-quotes-raw": 37, "nested-string-open-no-runaway": 62}
 	for i := range inv.ExtraRoles {
 		r := &inv.ExtraRoles[i]
@@ -75,6 +81,14 @@ func TestQualificationCSTBlockedIsExact(t *testing.T) {
 		t.Fatal("CST mismatch promoted support or changed deferred scope")
 	}
 	if err := checkQualification(q, expectation(), inv); err != nil {
+		t.Fatal(err)
+	}
+	// the inventory this CI gates has no deferred platform: every claim is the blocked symbol role's
+	q2, inv2 := historicalCSTFixtureFor(t, droppedPlatforms)
+	if q2.PlatformClaims["windows-amd64"] != "BLOCKED" || q2.PlatformClaims["linux-amd64"] != "BLOCKED" || len(q2.PlatformClaims) != 2 {
+		t.Fatal("two-platform claims changed")
+	}
+	if err := checkQualification(q2, expectation(), inv2); err != nil {
 		t.Fatal(err)
 	}
 	for name, mutate := range map[string]func(*kit.QualRoleRow, *kit.QualificationResult){

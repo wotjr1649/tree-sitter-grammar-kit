@@ -191,6 +191,7 @@ func TestArchiveNormalLayouts(t *testing.T) {
 // S02-A06/A07: structural, integrity and name attacks end with a typed error and no
 // completed inventory.
 func TestArchiveRejects(t *testing.T) {
+	t.Parallel()
 	ok := func(name string) rz { return file(name, "x\n") }
 	with := func(e rz, f func(*rz)) rz { f(&e); return e }
 	big := bytes.Repeat([]byte("abcdefgh"), 4096)

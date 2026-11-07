@@ -43,7 +43,7 @@ function Get-CIMarginEvidence {
   if ($LASTEXITCODE -ne 0) { throw 'margin history plan failed' }
   $plan = [IO.File]::ReadAllText($planPath) | ConvertFrom-Json -AsHashtable
   $artifacts = @($plan.current) + @($plan.history | ForEach-Object { $_.artifact })
-  if ($artifacts.Count -lt 9 -or $artifacts.Count -gt 69) { throw 'margin artifact count invalid' }
+  if ($artifacts.Count -lt 7 -or $artifacts.Count -gt 67) { throw 'margin artifact count invalid' }
   $zips = Join-Path $root 'zips'
   New-Item -ItemType Directory -Path $zips | Out-Null
   foreach ($artifact in $artifacts) {

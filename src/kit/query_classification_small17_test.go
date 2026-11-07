@@ -753,6 +753,7 @@ func classificationSmall17RowsFixture(a classificationAnchors) ([]QueryWitnessQu
 }
 
 func TestQueryClassificationSmall17ProfilesAndCompilerClosure(t *testing.T) {
+	t.Parallel()
 	names := []string{"json1-tiny", "yaml1-empty", "xml2-tiny", "html2-empty", "css11-empty"}
 	var totalDefinitions, totalPatterns, totalCaptureNames uint64
 	for _, name := range names {
@@ -853,6 +854,7 @@ func TestQueryClassificationDefinitionProfileAdmission(t *testing.T) {
 }
 
 func TestQueryClassificationSmall17RejectsAliasAndEmptyEvidence(t *testing.T) {
+	t.Parallel()
 	fixture := classificationSmall17StaticFixtureForTest(t, "xml2-tiny")
 	a := fixture.anchors
 	if _, err := classificationSmall17OrderedReferenceIDs(a, map[string]string{"q.structure": "ref-0", "facts.xml_structure": "ref-0"}); err == nil {

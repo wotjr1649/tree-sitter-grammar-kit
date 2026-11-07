@@ -784,6 +784,7 @@ func TestQueryWitnessStepBindingExcludesOnlyAffectedTuple(t *testing.T) {
 }
 
 func TestReplayQueryWitness(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"complete", "blocked", "forged-projection", "stale-platform", "wrong-subject", "wrong-records", "old-reducer", "unlisted", "registration-value-limit", "registration-malformed", "empty-source-mismatch"} {
 		t.Run(kind, func(t *testing.T) {
 			req, witness, raw, projection := witnessFixture(t)

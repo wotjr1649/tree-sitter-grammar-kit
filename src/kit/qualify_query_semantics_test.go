@@ -37,6 +37,7 @@ func qualificationProbeBaseline(t *testing.T) QualifyRequest {
 }
 
 func TestQualifySemanticMissingInputsAndLegacyBytes(t *testing.T) {
+	t.Parallel()
 	req := qualificationProbeBaseline(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -189,6 +190,7 @@ func TestQualifySemanticExpectedHostIdentity(t *testing.T) {
 }
 
 func TestQualifySemanticPlatformIDRequiresActualPair(t *testing.T) {
+	t.Parallel()
 	req := qualificationProbeBaseline(t)
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(req.Inventory, &raw); err != nil {

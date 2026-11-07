@@ -187,6 +187,7 @@ func TestQualifyReuseAcceptedRestoreIsIdempotent(t *testing.T) {
 }
 
 func TestQualifyReuseAcceptedIntrinsicResource(t *testing.T) {
+	t.Parallel()
 	for _, member := range []string{"raw", "projection"} {
 		for _, mismatch := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/source-mismatch=%t", member, mismatch), func(t *testing.T) {
@@ -358,6 +359,7 @@ func TestQualifyReuseAcceptedCountsPreserveFailure(t *testing.T) {
 }
 
 func TestQualifyRoleFailureSurvivesMissingSet(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	w := f.inv.ExtraRoles[0].Workloads[0]
 	w.Set, w.Profile = "missing-history", "missing-history"
@@ -379,6 +381,7 @@ func TestQualifyRoleFailureSurvivesMissingSet(t *testing.T) {
 
 // One original isolates the guarded reader; public registration separately fixes all 15.
 func TestQualifyReuseAcceptedReader(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"complete", "legacy-route-fail", "profile-missing", "stored-proof-mismatch", "file-limit", "host-rejected"} {
 		t.Run(name, func(t *testing.T) {
 			root, _ := acceptedReplayFixture(t, func(files map[string][]byte, top map[string]any) {

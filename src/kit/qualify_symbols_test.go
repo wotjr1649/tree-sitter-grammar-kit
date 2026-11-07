@@ -163,6 +163,7 @@ func TestQualificationCSTRequiredMembers(t *testing.T) {
 }
 
 func TestSelectionOutcomeRegistration(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile(filepath.Join("..", "contracts", "qualification-c1.json"))
 	if err != nil {
 		t.Fatal(err)

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -31,9 +32,64 @@ func TestMarginFixedMainHistory(t *testing.T) {
 	}
 }
 
+// formerMarginFixture is a report of the nine-job list from before macOS left CI (#332).
+func formerMarginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
+	t.Helper()
+	saved := marginJobs
+	marginJobs = marginFormerJobs
+	defer func() { marginJobs = saved }()
+	return marginFixture(t, id)
+}
+
+// #332: a past nine-job report stays valid history of its own configuration; the current
+// report is seven jobs, and one source never has two job lists.
+func TestMarginFormerJobList(t *testing.T) {
+	current, _, _ := marginFixture(t, "900")
+	if len(current.Configs) != 7 || slices.ContainsFunc(current.Configs, func(c marginConfig) bool { return c.Run.GOOS == "darwin" }) {
+		t.Fatal("current margin job list still has a macOS job")
+	}
+	former := func(id, source string, keep int) marginReport {
+		r, _, _ := formerMarginFixture(t, id)
+		r.Configs = r.Configs[:keep]
+		for i := range r.Configs {
+			r.Configs[i].Source = source
+		}
+		for i := range r.Metrics {
+			m := &r.Metrics[i]
+			for _, c := range r.Configs {
+				if strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+					m.Config = marginKey(c, m.ID, m.Limit)
+				}
+			}
+		}
+		return r
+	}
+	past := former("1", strings.Repeat("e", 64), 9)
+	if len(past.Configs) != 9 {
+		t.Fatal("former fixture must have nine jobs")
+	}
+	if failed, err := evaluateMargins(&current, []marginReport{past}); err != nil || failed {
+		t.Fatalf("former nine-job history rejected: failed=%v err=%v", failed, err)
+	}
+	for _, m := range current.Metrics {
+		if m.Samples != 1 {
+			t.Fatal("former job-list report increased current samples")
+		}
+	}
+	if _, err := evaluateMargins(&past, nil); err == nil {
+		t.Fatal("nine-job report accepted as current evidence")
+	}
+	if _, err := evaluateMargins(&current, []marginReport{former("2", current.Configs[0].Source, 9)}); err == nil {
+		t.Fatal("nine-job report of the current source accepted")
+	}
+	if _, err := evaluateMargins(&current, []marginReport{former("3", strings.Repeat("e", 64), 8)}); err == nil {
+		t.Fatal("report of another job count accepted as history")
+	}
+}
+
 func TestMarginMacLegacyHistory(t *testing.T) {
 	current, _, _ := marginFixture(t, "900")
-	legacy, jobs, core := marginFixture(t, "1")
+	legacy, jobs, core := formerMarginFixture(t, "1")
 	for i := range legacy.Configs {
 		c := &legacy.Configs[i]
 		c.Source = strings.Repeat("e", 64)
@@ -101,7 +157,7 @@ func TestMarginMacLegacyHistory(t *testing.T) {
 }
 
 func TestMarginMacHostBinding(t *testing.T) {
-	r, _, _ := marginFixture(t, "900")
+	r, _, _ := formerMarginFixture(t, "900")
 	c := r.Configs[6]
 	if c.Run.Job != "native-routes-macos" || c.Run.GOOS != "darwin" || c.Compiler == nil {
 		t.Fatal("Mac fixture must use the actual producer job and compiler")
