@@ -292,8 +292,8 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 	}
 	var semanticCaptureErr error
 	if semantics && berr == nil {
-		files, err := semanticBuildFiles(runCtx, b, capturePlan.Context == semanticPagedContext)
-		if err == nil && capturePlan.Context == semanticPagedContext && !capturePlan.matches(files, true) {
+		files, err := semanticBuildFilesIn(runCtx, b, capturePlan.Context)
+		if err == nil && capturePlan.paged() && !capturePlan.matches(files, true) {
 			err = refuse(kit.KindInvalidInput, "SEMANTICS_MEMBER_PLAN", nil)
 		}
 		if err != nil {
@@ -504,7 +504,7 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			recordCleanupFailure(&res.Report, &resultErr, "BUILD_CLEANUP_FAILED", err)
 		}
 	}
-	if semantics && capturePlan.Context == semanticPagedContext {
+	if semantics && capturePlan.paged() {
 		actual := make([]captureFile, 0, len(members))
 		for _, m := range members {
 			actual = append(actual, captureFile{pin: kit.ReplayMember{Path: m.Path, Role: m.Role}})
@@ -530,6 +530,8 @@ func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr
 			m.Schema, m.QuerySemanticsRegistrationSHA256, m.Operation = kit.OracleSemanticsManifestSchema, prof.QuerySemanticsRegistrationSHA256, &op
 			if capturePlan.Context == semanticPagedContext {
 				m.Schema = kit.OraclePagedSemanticsManifestSchema
+			} else if capturePlan.binaries() {
+				m.Schema = kit.OraclePagedBinariesSemanticsManifestSchema
 			}
 		}
 		if ledger != nil {

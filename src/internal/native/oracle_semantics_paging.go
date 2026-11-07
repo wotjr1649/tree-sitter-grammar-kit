@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 
@@ -21,6 +22,7 @@ import (
 
 const semanticPagedContext = "full-input-utf8-paged-parser/r1"
 const semanticPagedBinariesContext = "full-input-utf8-paged-binaries/r1"
+const semanticBinaryLogicalMax = 64 << 20
 
 type semanticCaptureMember struct {
 	Owner string `json:"owner"`
@@ -320,39 +322,15 @@ func semanticParserFiles(ctx context.Context, root *os.Root, pin ClosureFile, in
 			resultErr = errors.Join(resultErr, fmt.Errorf("close parser capture: %w", err))
 		}
 	}()
-	before, err := f.Stat()
-	if err != nil || !before.Mode().IsRegular() || before.Size() != pin.Bytes {
-		return nil, fmt.Errorf("semantic parser identity mismatch")
-	}
 	d := semanticParserPages{Schema: "tsgk-query-parser-pages/r1", Owner: "D", Parts: []semanticParserPart{}}
 	d.Logical.ClosureIndex = index
 	d.Logical.Role = pin.Role
 	d.Logical.Path = pin.Path
 	d.Logical.Bytes = pin.Bytes
 	d.Logical.SHA256 = pin.SHA256
-	h := sha256.New()
-	for offset := int64(0); offset < pin.Bytes; {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		size := min(int64(kit.MaxDocumentBytes), pin.Bytes-offset)
-		data := make([]byte, int(size))
-		if _, err := io.ReadFull(f, data); err != nil {
-			return nil, err
-		}
-		_, _ = h.Write(data)
-		i := len(d.Parts)
-		name := fmt.Sprintf("capture/build-input-%05d.part-%05d.bin", index, i)
-		digest := sha(data)
-		d.Parts = append(d.Parts, semanticParserPart{Index: i, Offset: offset, Path: name, Bytes: size, SHA256: digest})
-		files = append(files, captureFile{pin: kit.ReplayMember{Path: name, Role: "grammar-paged-part", Bytes: uint64(size), SHA256: digest}, data: data})
-		offset += size
-	}
-	var extra [1]byte
-	n, readErr := f.Read(extra[:])
-	after, statErr := f.Stat()
-	if n != 0 || readErr != io.EOF || statErr != nil || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) || hex.EncodeToString(h.Sum(nil)) != pin.SHA256 {
-		return nil, fmt.Errorf("semantic parser bytes mismatch")
+	files, d.Parts, err = semanticPageFiles(ctx, f, pin.Bytes, pin.SHA256, fmt.Sprintf("capture/build-input-%05d", index), "grammar-paged-part", "parser")
+	if err != nil {
+		return nil, err
 	}
 	data, err := json.Marshal(d)
 	if err != nil {
@@ -360,6 +338,86 @@ func semanticParserFiles(ctx context.Context, root *os.Root, pin ClosureFile, in
 	}
 	files = append(files, captureFile{pin: kit.ReplayMember{Path: fmt.Sprintf("capture/build-input-%05d.pages.json", index), Role: "grammar-paged-descriptor", Bytes: uint64(len(data)), SHA256: sha(data)}, data: data})
 	return files, nil
+}
+
+type semanticBinaryPages struct {
+	Schema  string `json:"schema"`
+	Owner   string `json:"owner"`
+	Logical struct {
+		Kind   string `json:"kind"`
+		Path   string `json:"path"`
+		Bytes  int64  `json:"bytes"`
+		SHA256 string `json:"sha256"`
+	} `json:"logical"`
+	Parts []semanticParserPart `json:"parts"`
+}
+
+func semanticDriverFiles(ctx context.Context, root *os.Root, b *Build) (files []captureFile, resultErr error) {
+	if b.ExecutableBytes <= kit.MaxDocumentBytes || b.ExecutableBytes > semanticBinaryLogicalMax {
+		return nil, refuse(kit.KindResourceLimit, "SEMANTICS_MEMBER_LIMIT", nil)
+	}
+	f, err := root.Open(filepath.Base(b.Executable))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			files = nil
+			resultErr = errors.Join(resultErr, fmt.Errorf("close driver capture: %w", err))
+		}
+	}()
+	d := semanticBinaryPages{Schema: "tsgk-query-binary-pages/r1", Owner: "D"}
+	d.Logical.Kind = "driver"
+	d.Logical.Path = "capture/driver.bin"
+	d.Logical.Bytes = b.ExecutableBytes
+	d.Logical.SHA256 = b.ExecutableSHA256
+	files, d.Parts, err = semanticPageFiles(ctx, f, b.ExecutableBytes, b.ExecutableSHA256, "capture/driver", "driver-paged-part", "driver")
+	if err != nil {
+		return nil, err
+	}
+	data, err := json.Marshal(d)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, captureFile{pin: kit.ReplayMember{Path: "capture/driver.pages.json", Role: "driver-paged-descriptor", Bytes: uint64(len(data)), SHA256: sha(data)}, data: data})
+	return files, nil
+}
+
+func semanticPageFiles(ctx context.Context, f interface {
+	io.Reader
+	Stat() (os.FileInfo, error)
+}, size int64, digest, prefix, role, kind string) ([]captureFile, []semanticParserPart, error) {
+	before, err := f.Stat()
+	if err != nil || !before.Mode().IsRegular() || before.Size() != size {
+		return nil, nil, fmt.Errorf("semantic %s identity mismatch", kind)
+	}
+	var files []captureFile
+	parts := []semanticParserPart{}
+	h := sha256.New()
+	for offset := int64(0); offset < size; {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
+		partSize := min(int64(kit.MaxDocumentBytes), size-offset)
+		data := make([]byte, int(partSize))
+		if _, err := io.ReadFull(f, data); err != nil {
+			return nil, nil, err
+		}
+		_, _ = h.Write(data)
+		i := len(parts)
+		name := fmt.Sprintf("%s.part-%05d.bin", prefix, i)
+		digest := sha(data)
+		parts = append(parts, semanticParserPart{Index: i, Offset: offset, Path: name, Bytes: partSize, SHA256: digest})
+		files = append(files, captureFile{pin: kit.ReplayMember{Path: name, Role: role, Bytes: uint64(partSize), SHA256: digest}, data: data})
+		offset += partSize
+	}
+	var extra [1]byte
+	n, readErr := f.Read(extra[:])
+	after, statErr := f.Stat()
+	if n != 0 || readErr != io.EOF || statErr != nil || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) || hex.EncodeToString(h.Sum(nil)) != digest {
+		return nil, nil, fmt.Errorf("semantic %s bytes mismatch", kind)
+	}
+	return files, parts, nil
 }
 
 func (p *semanticCapturePlan) driverShape() error {

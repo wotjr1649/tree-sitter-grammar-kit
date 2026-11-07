@@ -79,7 +79,16 @@ func semanticLocalCase(cr *CaseResult, registration string, capture *kit.ReplayM
 }
 
 func semanticBuildFiles(ctx context.Context, b *Build, paged ...bool) ([]captureFile, error) {
-	pages := len(paged) == 1 && paged[0]
+	captureContext := "full-input-utf8/r2"
+	if len(paged) == 1 && paged[0] {
+		captureContext = semanticPagedContext
+	}
+	return semanticBuildFilesIn(ctx, b, captureContext)
+}
+
+func semanticBuildFilesIn(ctx context.Context, b *Build, captureContext string) ([]captureFile, error) {
+	plan := semanticCapturePlan{Context: captureContext}
+	pages := plan.paged()
 	root, err := os.OpenRoot(b.Dir)
 	if err != nil {
 		return nil, err
@@ -118,11 +127,18 @@ func semanticBuildFiles(ctx context.Context, b *Build, paged ...bool) ([]capture
 		}
 		return data, nil
 	}
-	data, err := read(filepath.Base(b.Executable), b.ExecutableBytes, b.ExecutableSHA256)
-	if err != nil {
-		return nil, err
+	if plan.binaries() && b.ExecutableBytes > kit.MaxDocumentBytes {
+		files, err = semanticDriverFiles(ctx, root, b)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data, err := read(filepath.Base(b.Executable), b.ExecutableBytes, b.ExecutableSHA256)
+		if err != nil {
+			return nil, err
+		}
+		add("capture/driver.bin", "driver", data)
 	}
-	add("capture/driver.bin", "driver", data)
 	for i, pin := range b.Closure {
 		if pages && pin.Role == "grammar-parser" && pin.Bytes > kit.MaxDocumentBytes {
 			parts, err := semanticParserFiles(ctx, root, pin, i)
@@ -148,7 +164,7 @@ func semanticBuildFiles(ctx context.Context, b *Build, paged ...bool) ([]capture
 		}
 		add(fmt.Sprintf("capture/build-input-%05d.bin", i), role, data)
 	}
-	data, err = json.Marshal(b)
+	data, err := json.Marshal(b)
 	if err != nil {
 		return nil, err
 	}
