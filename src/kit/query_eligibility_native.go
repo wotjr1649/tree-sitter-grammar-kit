@@ -688,6 +688,21 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 		}
 		sourceIDs[i] = nativewire.SourceID{Bytes: uint64(len(version)), SHA256: digestHex(version)}
 	}
+	referenceLibrarySHA, pagedLibrary := "", false
+	if n := s.reg.Native; n != nil && n.ReferenceLibrary != nil && n.ReferenceLibrary.Member.Role == "library-paged-descriptor" {
+		pagedLibrary = true
+		if s.reg.Context == semanticPagedBinariesContext {
+			logical, ok, e := s.nativePagedLibrary(*n.ReferenceLibrary)
+			if e != nil {
+				return e
+			}
+			if !ok {
+				s.finding("ELIGIBILITY_NATIVE_LIBRARY_PAGES", "native", true)
+			} else {
+				referenceLibrarySHA = logical.SHA256
+			}
+		}
+	}
 	for _, inv := range s.invocations {
 		s.failItem = nil
 		if inv.Kind != "REFERENCE_PROCESS" || s.cohorts[inv.CohortID].Purpose != "current" {
@@ -941,7 +956,12 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				hashArg = 4
 			}
 			librarySHA := req.Args[hashArg]
-			if !hex64.MatchString(librarySHA) || library.MemberPin != nil && librarySHA != library.MemberPin.Member.SHA256 || s.reg.Native != nil && s.reg.Native.ReferenceLibrary != nil && librarySHA != s.reg.Native.ReferenceLibrary.Member.SHA256 {
+			if pagedLibrary {
+				if !hex64.MatchString(librarySHA) || librarySHA != referenceLibrarySHA {
+					s.finding("ELIGIBILITY_CURRENT_LIBRARY_ARGV", inv.ID, true)
+					ready = false
+				}
+			} else if !hex64.MatchString(librarySHA) || library.MemberPin != nil && librarySHA != library.MemberPin.Member.SHA256 || s.reg.Native != nil && s.reg.Native.ReferenceLibrary != nil && librarySHA != s.reg.Native.ReferenceLibrary.Member.SHA256 {
 				s.finding("ELIGIBILITY_CURRENT_LIBRARY_ARGV", inv.ID, true)
 				ready = false
 			}
@@ -1123,6 +1143,33 @@ func (s *eligibilitySession) nativePagedParser(n *eligibilityNative, pin eligibi
 		}
 	}
 	return true, nil
+}
+
+func (s *eligibilitySession) nativePagedLibrary(pin eligibilityMember) (semanticBinaryLogical, bool, *Error) {
+	path, found := strings.CutSuffix(pin.Member.Path, ".pages.json")
+	if !found || path == "" || pin.Member.Role != "library-paged-descriptor" {
+		return semanticBinaryLogical{}, false, nil
+	}
+	data, ok, e := s.member(&pin)
+	if e != nil || !ok {
+		return semanticBinaryLogical{}, false, e
+	}
+	used := map[string]bool{pin.Member.Path: true}
+	logical, good, e := s.b.semanticPagedBinary(data, pin.NodeID, "library", path, path, func(part ReplayMember) ([]byte, bool, *Error) {
+		used[part.Path] = true
+		return s.member(&eligibilityMember{NodeID: pin.NodeID, Member: part})
+	})
+	if e != nil || !good {
+		return semanticBinaryLogical{}, false, e
+	}
+	for _, m := range s.reg.OwnedMembers {
+		if m.Member.Role == "library-paged-descriptor" || m.Member.Role == "library-paged-part" {
+			if !used[m.Member.Path] || m.NodeID != pin.NodeID {
+				return semanticBinaryLogical{}, false, nil
+			}
+		}
+	}
+	return logical, true, nil
 }
 
 func (s *eligibilitySession) nativePagedDriver(inv *eligibilityInvocation) (semanticBinaryLogical, bool, *Error) {

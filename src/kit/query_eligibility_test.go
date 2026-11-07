@@ -178,6 +178,10 @@ func (f *eligibilityFixture) response(id, library string) []byte {
 }
 
 func newEligibilityFixture(t *testing.T) *eligibilityFixture {
+	return newEligibilityFixtureLibrary(t, nil)
+}
+
+func newEligibilityFixtureLibrary(t *testing.T, current func(*eligibilityFixture) (eligibilityMember, string)) *eligibilityFixture {
 	t.Helper()
 	f := &eligibilityFixture{t: t, files: map[string][]byte{}, nodes: map[string]EvidenceNode{}, root: t.TempDir()}
 	if err := jsonv2.Unmarshal([]byte(eligibilityCatalogueJSON), &f.cat); err != nil {
@@ -336,11 +340,15 @@ func newEligibilityFixture(t *testing.T) *eligibilityFixture {
 	for _, name := range []string{"cc", "supervisor", "python"} {
 		f.reg.Tools = append(f.reg.Tools, eligibilityTool{ID: "control-tool-" + name, CohortID: "control", ToolName: name, PathLiteral: tools[name], SubjectSHA256: hashes[name], IdentityMember: summaryPin, ProvenanceID: "p-control"})
 	}
-	f.addNative(reference, library, grammar, inputPins)
+	currentLibrary, librarySHA := library, library.Member.SHA256
+	if current != nil {
+		currentLibrary, librarySHA = current(f)
+	}
+	f.addNative(reference, currentLibrary, librarySHA, grammar, inputPins)
 	return f
 }
 
-func (f *eligibilityFixture) addNative(reference, library eligibilityMember, grammar, inputPins map[string]eligibilityMember) {
+func (f *eligibilityFixture) addNative(reference, library eligibilityMember, librarySHA string, grammar, inputPins map[string]eligibilityMember) {
 	t := f.t
 	initial := []byte("x;\n1;\n")
 	later := []byte("y;\n1;\n")
@@ -457,13 +465,13 @@ func (f *eligibilityFixture) addNative(reference, library eligibilityMember, gra
 	f.reg.Native = &eligibilityNative{InvocationID: inv.ID, Source: source, BuildManifest: build, ReferenceLibrary: &library, Symbol: "tree_sitter_tsgk_plain", Grammar: maps.Clone(grammar)}
 	for k, sourcePin := range []eligibilityMember{source, inputPins["eq-1.txt"]} {
 		id := fmt.Sprintf("current-ref-%d", k)
-		req := eligibilityProcessRequest{Path: "/current/reference", Args: []string{"/current/library", "tree_sitter_tsgk_plain", fmt.Sprintf("/current/source-%d", k), "/current/query", "q0", library.Member.SHA256}, Dir: "/current", Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 10000000000, Grace: 2000000000, CgroupParent: "/delegated"}
+		req := eligibilityProcessRequest{Path: "/current/reference", Args: []string{"/current/library", "tree_sitter_tsgk_plain", fmt.Sprintf("/current/source-%d", k), "/current/query", "q0", librarySHA}, Dir: "/current", Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 10000000000, Grace: 2000000000, CgroupParent: "/delegated"}
 		req.Memory.Bytes, req.Memory.Hard = 1<<30, true
 		rid := "response-2"
 		if k == 1 {
 			rid = "response-3"
 		}
-		stdout := f.response(rid, library.Member.SHA256)
+		stdout := f.response(rid, librarySHA)
 		ref := f.invocation(id, "current", id, req, stdout, 0, false)
 		ref.Executable, ref.ExecutablePath = &reference, req.Path
 		ref.Inputs["source"] = eligibilityInput{Kind: "PINNED", MemberPin: &sourcePin, ContentBasis: "APPROVED_EXPECTED_BYTES", ArgvIndex: eligibilityIndex(2), PathLiteral: req.Args[2]}
