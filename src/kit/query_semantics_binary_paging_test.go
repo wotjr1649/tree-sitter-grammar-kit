@@ -13,6 +13,75 @@ import (
 	"time"
 )
 
+func TestSemanticBinaryPagedReplay(t *testing.T) {
+	t.Parallel()
+	req, f, binding := semanticBoundFixtureBinaries(t, MaxDocumentBytes+1, false)
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+	defer cancel()
+	passed, err := VerifyQuerySemantics(ctx, req)
+	if err != nil || passed.Assessment != AssessPass {
+		t.Fatalf("binary paging API: %v %+v", err, passed)
+	}
+	root, profile := semanticBoundReplay(t, req, f, binding)
+	replayed, err := Replay(ctx, ReplayRequest{Root: root, Profile: profile})
+	if err != nil || replayed.Assessment != AssessPass || replayed.QuerySemantics == nil || replayed.QuerySemantics.Tuple != passed.Tuple || replayed.BytesRead != passed.BytesRead || !validSemanticReplayResult(replayed) {
+		t.Fatalf("binary paging replay: %v %+v", err, replayed)
+	}
+	wrongRevision := replayed
+	wrongRevision.Reducer.Revision = "r5"
+	if validSemanticReplayResult(wrongRevision) {
+		t.Fatal("r6 replay accepted the wrong revision")
+	}
+	var wrong map[string]any
+	if err := json.Unmarshal(profile, &wrong); err != nil {
+		t.Fatal(err)
+	}
+	for _, reducer := range []string{"oracle-set-r5", "oracle-set-r4"} {
+		wrong["reducer"] = reducer
+		_, err := Replay(ctx, ReplayRequest{Root: root, Profile: eligibilityJSON(t, wrong)})
+		if err == nil || asError(err).Code != "SEMANTICS_REDUCER_CONTEXT" {
+			t.Fatalf("%s accepted binary paging: %v", reducer, err)
+		}
+	}
+}
+
+func TestSemanticPagedParserRejectsBinariesReducer(t *testing.T) {
+	t.Parallel()
+	req, f, binding := semanticBoundFixtureMode(t, 0, true, true)
+	root, profile := semanticBoundReplay(t, req, f, binding)
+	var wrong map[string]any
+	if err := json.Unmarshal(profile, &wrong); err != nil {
+		t.Fatal(err)
+	}
+	wrong["reducer"] = "oracle-set-r6"
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+	defer cancel()
+	_, err := Replay(ctx, ReplayRequest{Root: root, Profile: eligibilityJSON(t, wrong)})
+	if err == nil || asError(err).Code != "SEMANTICS_REDUCER_CONTEXT" {
+		t.Fatalf("r6 accepted parser-only paging: %v", err)
+	}
+}
+
+func TestQualifySemanticReplayRejectsPagedReducers(t *testing.T) {
+	t.Parallel()
+	for _, reducer := range []string{"oracle-set-r5", "oracle-set-r6"} {
+		t.Run(reducer, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			r, e := startRun(ctx, time.Minute)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			r.eligibility = &eligibilityBudget{r: r}
+			_, e = parseQualificationReplay([]byte(`{"reducer":"`+reducer+`"}`), r)
+			if e == nil || e.Code != "SEMANTICS_REDUCER_UNSUPPORTED" {
+				t.Fatalf("%s: want SEMANTICS_REDUCER_UNSUPPORTED, got %v", reducer, e)
+			}
+		})
+	}
+}
+
 func semanticBinaryTestDescriptor(kind string, size uint64, block []byte) (semanticBinaryDescriptor, map[string][]byte, string) {
 	owner, path, prefix := "D", "capture/driver.bin", "capture/driver"
 	if kind == "library" {

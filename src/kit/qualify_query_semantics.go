@@ -570,7 +570,7 @@ func parseQualificationReplay(data []byte, r *run) (ReplayProfile, *Error) {
 	if e := r.eligibility.charge(2*uint64(len(data))+1, 2*uint64(len(data))+256, "qualification-replay-selector"); e != nil {
 		return ReplayProfile{}, e
 	}
-	selected, e := selectJSONRevision(data, r, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5")
+	selected, e := selectJSONRevision(data, r, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6")
 	if e != nil {
 		return ReplayProfile{}, e
 	}

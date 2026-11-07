@@ -425,6 +425,8 @@ func semanticBoundReplay(t *testing.T, req QuerySemanticsRequest, f *eligibility
 	reducer := "oracle-set-r4"
 	if mode.Context == semanticPagedContext {
 		reducer = "oracle-set-r5"
+	} else if mode.Context == semanticPagedBinariesContext {
+		reducer = "oracle-set-r6"
 	}
 	profile := eligibilityJSON(t, map[string]any{"schema": ReplaySchema, "id": "semantic-bound-replay", "reducer": reducer, "operation": "evidence-replay", "subject": ReplaySubject{Run: o.Identities["run"], Attempt: 1, Platform: "linux/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked}, "identities": map[string]string{"workload": digestHex(req.Profile), "semantics-registration": digestHex(req.Registration), "semantics-run-binding": digestHex(req.RunBinding), "evidence-policy": digestHex(req.Evidence.Policy)}, "records": []string{f.witness.Case}, "members": members})
 	return root, profile

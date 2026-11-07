@@ -309,6 +309,11 @@ type reducer struct {
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
 
+		"oracle-set-r6": {ReducerInfo{ID: "oracle-set-r6", Revision: "r6", Operation: "evidence-replay",
+			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r7 and record/r4"},
+			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
+			Gates:  []string{"query-semantics"}, Recorded: []string{"execution authenticity", "unrecomputed API/fact/dynamic claims"},
+			Description: "Paged-binaries query semantics with immutable producer verdict, recomputed base and caller-approved reference closure under one run and guarded snapshot"}, replayQuerySemantics},
 		"oracle-set-r5": {ReducerInfo{ID: "oracle-set-r5", Revision: "r5", Operation: "evidence-replay",
 			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r6 and record/r4"},
 			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
@@ -924,7 +929,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 		}
 		selected = borrowed.profile.Reducer
 	} else {
-		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5")
+		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6")
 	}
 	// A non-selected revision keeps its existing decoder's error ordering.
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {

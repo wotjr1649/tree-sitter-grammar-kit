@@ -37,7 +37,9 @@ func semanticContextManifest(context string) string {
 	return OracleSemanticsManifestSchema
 }
 
-func semanticReducer(id string) bool { return id == "oracle-set-r4" || id == "oracle-set-r5" }
+func semanticReducer(id string) bool {
+	return id == "oracle-set-r4" || id == "oracle-set-r5" || id == "oracle-set-r6"
+}
 
 type semanticParserDescriptor struct {
 	Schema  string `json:"schema"`

@@ -252,6 +252,8 @@ PREPARE tracking receipt의 객체별 S00 보존은 `s00_object_preservation.app
 
 `tsgk-oracle-manifest/r7`은 [binary paging 문맥](instrumented-query-reference.md#216-binary-paging)의 명시적 생산 set이다. r6의 parser paging role에 더해 `driver-paged-descriptor`와 `driver-paged-part`를 허용하며 r5·r6 set은 이 role을 거부한다. driver는 `capture/driver.bin` 하나이거나, descriptor `capture/driver.pages.json`과 그 part `capture/driver.part-%05d.bin` 중 하나다. 재결합 logical 값을 `build.json`의 `executable_sha256`·`executable_bytes`와 producer `executable_sha256`에 대조한다. run-binding과 eligibility의 executable pin은 descriptor 물리 pin을 가리키며 물리 값을 실행 파일 identity로 쓰지 않는다.
 
+`oracle-set-r6`은 manifest/r7·binaries context만 받고, `oracle-set-r5`와 `oracle-set-r4`는 r7을 받지 않는다. 반대 context와의 교차는 `SEMANTICS_REDUCER_CONTEXT`로 거부한다. qualification은 `oracle-set-r5`와 `oracle-set-r6`을 `SEMANTICS_REDUCER_UNSUPPORTED`로 거부한다.
+
 ## #216 small semantic qualification opt-in — r10
 
 `QualifyRequest.QuerySemantics`가 nil이면 기존 `tsgk-qualification-result/r9`의 inventory → 결과 선택·칸·JSON 동작을 유지한다. Opt-in은 현재 `tsgk-qualification-inventory/r8`만 받으며 별도 `tsgk-qualification-result/r10`을 만든다. 기존 `QualificationResultSchema` 상수와 r9 판정은 바뀌지 않는다. `r10`은 small predicate probe만 보는 닫힌 부분 scope이며 full semantic support를 나타낼 수 없다.
