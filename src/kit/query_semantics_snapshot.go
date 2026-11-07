@@ -90,7 +90,7 @@ func (b *eligibilityBudget) semanticSnapshot(parent, child *os.Root, snapshot *e
 		case "driver", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "build", "build-manifest":
 			valid = member.Case == "" && strings.HasPrefix(member.Path, "capture/") && member.InputBytes == member.Bytes && member.InputSHA256 == member.SHA256 && member.ExecutionStatus == StatusCompleted
 		}
-		if manifest.Schema == OraclePagedSemanticsManifestSchema && (member.Role == "grammar-paged-descriptor" || member.Role == "grammar-paged-part") {
+		if semanticParserPagingSchema(manifest.Schema) && (member.Role == "grammar-paged-descriptor" || member.Role == "grammar-paged-part") || manifest.Schema == OraclePagedBinariesSemanticsManifestSchema && (member.Role == "driver-paged-descriptor" || member.Role == "driver-paged-part") {
 			valid = member.Case == "" && strings.HasPrefix(member.Path, "capture/") && member.InputBytes == member.Bytes && member.InputSHA256 == member.SHA256 && member.ExecutionStatus == StatusCompleted
 		}
 		if !valid || !portable(member.Path, false) {

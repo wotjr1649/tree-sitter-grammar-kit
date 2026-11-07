@@ -580,7 +580,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		add("JSON_INVALID_UTF8", "manifest", "manifest가 UTF-8이 아니다")
 		return r
 	}
-	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil, OraclePagedSemanticsManifestSchema)
+	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil, OraclePagedSemanticsManifestSchema, OraclePagedBinariesSemanticsManifestSchema)
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		add(selectionErr.Code, selectionErr.Path, "manifest revision을 선택하지 못했다")
 		return r
@@ -611,7 +611,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 			add(e.Code, e.Path, "manifest 해석 예산을 넘었다")
 			return r
 		}
-		if e := decodeOracleManifestValue(data, &m, v, typed{doc: "manifest", check: run.check}, OracleSemanticsManifestSchema, OraclePagedSemanticsManifestSchema); e != nil {
+		if e := decodeOracleManifestValue(data, &m, v, typed{doc: "manifest", check: run.check}, OracleSemanticsManifestSchema, OraclePagedSemanticsManifestSchema, OraclePagedBinariesSemanticsManifestSchema); e != nil {
 			add(e.Code, e.Path, "manifest 형식이 틀렸다")
 			return r
 		}
@@ -690,7 +690,7 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 				dir, validPath = "capture/", portable(mem.Path, false) && mem.Case == "" && mem.InputBytes == mem.Bytes && mem.InputSHA256 == mem.SHA256 && mem.ExecutionStatus == StatusCompleted
 			}
 		}
-		if m.Schema == OraclePagedSemanticsManifestSchema && (mem.Role == "grammar-paged-descriptor" || mem.Role == "grammar-paged-part") {
+		if semanticParserPagingSchema(m.Schema) && (mem.Role == "grammar-paged-descriptor" || mem.Role == "grammar-paged-part") || m.Schema == OraclePagedBinariesSemanticsManifestSchema && (mem.Role == "driver-paged-descriptor" || mem.Role == "driver-paged-part") {
 			dir, validPath = "capture/", portable(mem.Path, false) && mem.Case == "" && mem.InputBytes == mem.Bytes && mem.InputSHA256 == mem.SHA256 && mem.ExecutionStatus == StatusCompleted
 		}
 		if !validPath || dir == "" || !strings.HasPrefix(mem.Path, dir) || listed[mem.Path] {

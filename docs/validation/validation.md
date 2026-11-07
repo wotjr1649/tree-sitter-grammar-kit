@@ -54,6 +54,61 @@ Grammar29개와 원본 query6개, native registry·inventory·qualification의 �
 
 분류 시험 helper `classificationGoLibrary`는 compiler byte를 항상 work로 charge한다. library는 16 MiB 이하이면 byte를 work로(logical 0), 16 MiB를 넘으면 library byte를 work에 넣지 않고 16 MiB part 수를 work로, part별 `2×(bytes+1)`의 합(`2×(bytes+part 수)`)을 logical로 charge하며, 논리 64 MiB를 넘으면 거부한다. 따라서 16 MiB 이하 library의 charge는 byte 단위다(PG9: 3,299,024 + 15,924,504 = 19,223,528). `TestQueryClassificationLibrary/paged-charge`는 파일 없이 길이만으로 이 경계(16 MiB·+1, 32 MiB·+1, TSQL 예측 34,976,060 B, 64 MiB·+1)와 compiler byte 민감도, 90% work 선을 정수로 단언한다. 같은 request/receipt의 빈 compiler 기준선과 차분을 비교하므로 요청·영수증 work에 가려지지 않으며, `pg9-unchanged`는 여기에 더해 work 한도 경계의 절대값 탐침(한도를 정확히 채우면 다음 request charge에서, 1 byte 모자라면 `go-library/bytes`에서 실패)으로 기준선과 무관하게 PG9 work charge를 고정한다(16 MiB 이하 library의 logical 0은 기준선 차분으로만 확인한다). 변이 M-D1(paged logical 제거)·M-D2(paged compiler byte 제거)·M-D2′(양쪽 compiler byte 제거)·M-D3(64 MiB 상한 `>=`)·M-D4(paging 문턱 `>=`)는 각각 이 시험에서 FAIL이어야 한다. 이 64 MiB 상한은 시험 원장 회계의 상한이며 위의 case library 16 MiB 규칙을 완화하지 않는다. 실제 입력은 조립 경로의 `actualJSONRead`와 guarded 재검사의 evidence 파일 한도(`FileBytes`)가 각각 16 MiB로 막는다.
 
+### #216 binary paging 계약 검증
+
+[Binary paging 계약](../specs/instrumented-query-reference.md#216-binary-paging)의 합성 저장 자료 검증이다. 물리 16 MiB/file, logical binary 64 MiB, 공유 work 32,000,000을 유지한다. eligibility가 직접 시작한 approval 결속 원장만 두 paged context에서 1.5 GiB이고, semantic·replay·qualification에서 상속한 원장은 1 GiB다. T1–T6는 한 PR의 작업 단위이며, library descriptor 검증이 없는 T2 commit만 분리해 통합하지 않는다.
+
+| 작업 | 실제 시험 | 고정하는 계약 |
+|---|---|---|
+| T1 | `TestSemanticPagedBinaryValidation` | driver/library descriptor의 schema·owner·kind·path, part 순서·누락·중복·잘림과 개별/연결 해시 |
+| T1 | `TestSemanticPagedBinaryBoundaries` | 16 MiB 거부, +1·32 MiB·+1·64 MiB 허용, 64 MiB+1 거부와 part 읽기 경계 |
+| T1 | `TestSemanticPagedBinaryCharge` | part마다 work 1·logical `2×(bytes+1)`의 정확한 차분 |
+| T1 | `TestSemanticPagedBinaryRoleBinding` | callback이 요구한 driver part role과 parser/library part role의 교차 거부 |
+| T2 | `TestEligibilityBinaryPagedDriver` | 승인 executable logical SHA, descriptor/part owner·미사용 part, 3 parts 및 다른 context 거부 |
+| T2·T2R | `TestEligibilityBinaryPagesRequired` | `current-runtime`·`historical-runtime` 모두 U5 위반은 `ELIGIBILITY_NATIVE_BINARY_PAGES`로 FAIL |
+| T2 | `TestEligibilityPagedLogicalLimitBoundary`, `TestEligibilityPagedLogicalLimitSelection`, `TestEligibilityPagedLogicalLimitSelectionSite`, `TestEligibilityPagedLogicalLimitPostgreSQL9PartArithmetic` | binaries의 owner·bound에 한정한 1.5 GiB 선택, unbound/inherited 1 GiB와 단일 선택 지점, 기존 parser 산술 |
+| T3 | `TestEligibilityBinaryPagedLibrary` | 재결합 logical SHA와 argv/response 결속, descriptor/part owner·미사용 part, driver+library 및 다른 context 거부 |
+| T2R | `TestEligibilityBinaryLibraryRoleOnly` | role만 바꾼 작은 library와 descriptor 물리 SHA를 쓰는 argv/response의 거부 |
+| T2R | `TestEligibilityBinaryReservedRoles` | r2·paged-parser에서 승인/argv를 descriptor 물리 SHA로 맞춰도 driver/library 예약 role 거부 |
+| T4 | `TestSemanticBinaryPagedDriverPublicAPI` | r7 set·BOUND API/standalone PASS, r6 reader의 r7 거부, ABSENT base PASS·3 BLOCKED |
+| T4 | `TestSemanticBinaryPagedDriverAndParser` | driver와 parser의 동시 paging 및 role 분리 |
+| T4 | `TestSemanticBinaryPagedSetRejects` | descriptor 물리 build identity·r6 manifest·미사용 part·plain driver 공존·parser-only U5 거부 |
+| T4 | `TestSemanticBinaryPagedRehashCannotReplaceProfile` | driver part·descriptor·graph 재해시는 `SEMANTICS_BUILD_BINDING`, build·producer까지 맞춘 set은 Valid여도 기존 승인과 달라 `ELIGIBILITY_NATIVE_EXECUTABLE`로 FAIL |
+| T5 | `TestSemanticBinaryPagedReplay` | r6 replay와 공개 API의 tuple·BytesRead 일치, 저장 ID/revision invariant 및 r4/r5의 binaries 거부 |
+| T5 | `TestSemanticPagedParserRejectsBinariesReducer` | r6의 paged-parser context 거부(`SEMANTICS_REDUCER_CONTEXT`) |
+| T5 | `TestQualifySemanticReplayRejectsPagedReducers` | qualification의 r5/r6 거부(`SEMANTICS_REDUCER_UNSUPPORTED`) |
+
+기존 `TestReplayUnsupported`는 r6을 포함한 reducer 등록 목록을 확인한다. library charge 회귀는 β2a의 파일 없는 in-memory `TestQueryClassificationLibrary/paged-charge`다. 길이만으로 16 MiB·+1, 32 MiB·+1, TSQL 예측값, 64 MiB·+1과 compiler byte 민감도를 확인하며 실제 library 수집 증거로 사용하지 않는다.
+
+다음은 실행된 변이의 이름·편집·검출 시험이다. `{a,b}`는 각각의 전체 leaf로 전개한다. M-U5는 T2R·T4에서 확장된 집합, M2-lib·M-R1은 T3에서 driver/library를 함께 검사한 집합이다. M-R1-driver·M-R1-library는 예약 role fallback 규칙을 직접 삭제하는 추가 변이다.
+
+| 변이 | 편집 | 정확한 기대 FAIL leaf |
+|---|---|---|
+| M3 | binary logical 상한 `>` → `>=` | `TestSemanticPagedBinaryBoundaries/{driver,library}/64MiB` |
+| M4 | 연결 해시 불일치 조건 → `false` | `TestSemanticPagedBinaryValidation/{driver,library}/{whole-hash,part-rehashed}` |
+| M5 | parser paging 문턱 `<=` → `<` | `TestSemanticPagedParserPartBoundaries/single-part-exactly-16MiB` |
+| M5b | binary paging 문턱 `<=` → `<` | `TestSemanticPagedBinaryBoundaries/{driver,library}/16MiB` |
+| M6 | binary part charge의 work/logical → `0, 0` | `TestSemanticPagedBinaryCharge` |
+| M2-lib | descriptor `d.Owner != owner` 삭제 | `TestSemanticPagedBinaryValidation/{driver,library}/owner`, `TestEligibilityBinaryPagedLibrary/descriptor-owner-field` |
+| M1-inv | 승인 executable 비교값을 logical SHA 대신 descriptor SHA로 변경 | `TestEligibilityBinaryPagedDriver/{normal,approval-descriptor-sha,three-parts}` |
+| M2-drv | driver descriptor/part의 선택 invocation owner 비교 두 곳 삭제 | `TestEligibilityBinaryPagedDriver/descriptor-foreign-owner` |
+| M-L6 | paged 예산 context 술어에서 binaries 삭제 | `TestEligibilityPagedLogicalLimitBoundary`, `TestEligibilityPagedLogicalLimitSelection/binaries_owner_bound` |
+| M-L7 | binaries에서 `owner && s.bound` 우회 | `TestEligibilityPagedLogicalLimitSelection/{binaries_owner_unbound,binaries_inherited_ledger}`, `TestEligibilityPagedLogicalLimitSelectionSite` |
+| M-U5 | `verifyNative`의 U5 조건 → `false` | `TestEligibilityBinaryPagesRequired/{current-runtime,historical-runtime}`, `TestSemanticBinaryPagedSetRejects/parser-only` |
+| M-R1 | driver/library의 binaries context gate 두 곳 → `true` | `TestEligibilityBinaryPagedDriver/non-binaries-context`, `TestEligibilityBinaryPagedLibrary/non-binaries-context` |
+| M-R1-driver | 예약 role 분기의 `executableSHA = ""` 삭제 | `TestEligibilityBinaryReservedRoles/{full-input-utf8/r2,full-input-utf8-paged-parser/r1}/driver` |
+| M-R1-library | 예약 role 분기의 `pagedLibrary = true` 삭제 | `TestEligibilityBinaryReservedRoles/{full-input-utf8/r2,full-input-utf8-paged-parser/r1}/library` |
+| M1-lib | current argv 비교값을 logical SHA 대신 descriptor SHA로 변경 | `TestEligibilityBinaryPagedLibrary/{normal,argv-descriptor-sha,driver-and-library}` |
+| M1-set | build와 대조할 driver SHA/bytes를 logical 대신 descriptor 물리 값으로 변경 | `TestSemanticBinaryPagedDriverPublicAPI`, `TestSemanticBinaryPagedDriverAndParser`, `TestSemanticBinaryPagedSetRejects/build-descriptor-identity` |
+| M-R6 | replay의 r6 context 선택 분기 → `false` | `TestSemanticBinaryPagedReplay` |
+| M-Q1 | qualification selector의 대안에서 r6 삭제 | 없음. 유효 최소 JSON에서 `TestQualifySemanticReplayRejectsPagedReducers/{oracle-set-r5,oracle-set-r6}`가 모두 PASS하므로 동치로 검출 대상에서 제외 |
+
+M-Q1의 원안은 r6 leaf FAIL 예측이었으나 `selectJSONRevision`이 유효 JSON 끝에서도 대안 밖 revision을 반환하므로 동일 unsupported 분기로 간다. 실행 전 동치 처분과 실제 무FAIL·무SKIP 결과를 함께 보존하며 검출 성공으로 세지 않는다. 이 처분은 유효 최소 JSON에 한정하며 malformed trailing JSON의 동치를 주장하지 않는다. M1-inv·M1-lib overlay에는 unused-local 컴파일 오류를 막는 `_ = logical`만 보완한다. M-L7은 Go overlay를 따르지 않는 SelectionSite의 런타임 source 읽기만 mutant 경로로 돌리고 구조 단언을 유지한다. M-L6의 Boundary 사전 조건 실패 아래 미도달 자식은 허용하되 다른 누락 시험은 허용하지 않는다.
+
+runtime 필요 시험(T4의 네 시험, `TestSemanticBinaryPagedReplay`, `TestSemanticPagedParserRejectsBinariesReducer`)의 로컬 근거는 `TSGK_NATIVE_RUNTIME`를 설정한 실행의 각 `--- PASS:` 줄이며 SKIP은 근거가 아니다. M1-set·M-U5의 set 반례·M-R6도 같은 native 환경의 정상 기준선과 변이를 사용한다. 이 환경은 fixture의 pinned runtime source closure를 읽게 하며 실제 native/reference executable 실행·TSQL8 관측·producer 수집의 증거가 아니다.
+
+TASK별 결과는 개발 검증이며 PR 근거는 최종 후보 commit에서 다시 결속한다. 변이 manifest에 HEAD·porcelain·관련 제품/시험 파일 SHA-256과 생성 시각을 기록하고 대상 mtime이 manifest 이후로 바뀌지 않았는지 확인한다. overlay·mutant SHA를 다시 읽어 대조하고, manifest 뒤에 동일 `(native, -run)`의 기준선을 실행해 기대 leaf PASS·SKIP 0을 확인한다. 검출 대상 변이는 컴파일 실패 없이 FAILED/exit 1, 부모를 제외한 FAIL leaf 집합이 예측과 정확히 같고 나머지 선택 시험은 PASS여야 한다. 모든 Go 실행은 `CGO_ENABLED=0`, 유한 wall과 HARD 4 GiB Job에서 직렬 수행하고 cleanup 검증·잔류 0, label별 wall·peak와 원본 결과를 보존한다. 최종 HEAD·porcelain·대상 SHA가 manifest와 달라지면 기존 결과를 그 후보의 근거로 재사용하지 않는다.
+
 ## #216 PowerShell3 닫힌 1-byte profile 검증
 
 별도 닫힌 `powershell3-tiny` 수동 profile은 [계측 reference 계약](../specs/instrumented-query-reference.md#powershell3-단일-byte-frame-정의-분류)을 따른다. Native의 `TestQueryClassificationPowerShell3StaticProfileAndPins`·`TestQueryClassificationPowerShell3AnchorGuards`·`TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles`·`TestQueryClassificationPowerShell3EmptyStderrCaptureMember`와 kit의 `TestQueryClassificationPowerShell3ProfileAndClosure`·`TestQueryClassificationPowerShell3RejectsSourceAndCSTMutations`·`TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles`·`TestQueryClassificationPowerShell3ClosedNamesRoutesAndReferences`·`TestQueryClassificationPowerShell3StderrBinding`는 닫힌 이름·anchor·query3개의 원문/순서/SHA/metadata·1-byte source와 4-node CST·ABI(445/16)·ordinary 분모(39/24/63/87/261)·5-file grammar 폐쇄와 compiler argv·dispatch 분리와 near-alias 거부를 확인한다. source는 빈 값·`;` 뒤 개행·`;` 앞 공백, CST는 root만·node 누락·span 0..0·field 설정·named 반전, 그리고 ABI·query 순서/원문/metadata·required null 변이를 거부해야 한다.

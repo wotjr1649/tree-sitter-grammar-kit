@@ -18,7 +18,7 @@
 
 run-binding/r1은 profile·manifest·semantic 등록·eligibility 승인/등록·witness·policy·graph digest와 완전한 사전 member 순서를 고정한다. 각 member는 D/O 논리 owner, Oracle-local 이름, 실제 graph node, 정확한 `oracle/` 경로·role·bytes·SHA-256을 함께 가진다. native invocation의 plain `process`와 current reference invocation별 `references[].receipt`를 구분한다. native/r1 eligibility DTO의 `Receipt == nil` 계약은 유지한다. 같은 hash의 다른 경로나 owner로 대신할 수 없다. 파일·디렉터리의 물리 동일성도 같은 pass의 metadata와 held child root로 대조한다.
 
-small 예산은 파일당 16 MiB, 총 256 MiB, 10,000 files, wall 120초, work 32,000,000, logical allocation 1 GiB다(이 API는 eligibility 원장을 상속하므로 paged-parser context에서도 1 GiB이며, 1.5 GiB는 `VerifyQueryReferenceEligibility`가 직접 시작한 approval 결속 paged-parser 원장에만 적용된다). frame 한도에는 4-byte header가 포함된다. 이 값은 기존 reference/replay 한도를 올리지 않는다. `complete`는 offline 평가가 끝났다는 뜻이며, 조건부 저장 일관성 PASS가 실행 진위를 인증하지 않는다. 재계산하지 않은 기존 API/fact/dynamic claim은 base PASS의 근거로 채택하지 않는다. 전체 route·SVC·large·replay/qualification 통합과 실제 main 확인은 별도 완료 조건이다.
+small 예산은 파일당 16 MiB, 총 256 MiB, 10,000 files, wall 120초, work 32,000,000, logical allocation 1 GiB다(이 API는 eligibility 원장을 상속하므로 두 paged context(`full-input-utf8-paged-parser/r1`, `full-input-utf8-paged-binaries/r1`)에서도 1 GiB이며, 1.5 GiB는 `VerifyQueryReferenceEligibility`가 직접 시작한 approval 결속 두 paged context의 원장에만 적용된다). frame 한도에는 4-byte header가 포함된다. 이 값은 기존 reference/replay 한도를 올리지 않는다. `complete`는 offline 평가가 끝났다는 뜻이며, 조건부 저장 일관성 PASS가 실행 진위를 인증하지 않는다. 재계산하지 않은 기존 API/fact/dynamic claim은 base PASS의 근거로 채택하지 않는다. 전체 route·SVC·large·replay/qualification 통합과 실제 main 확인은 별도 완료 조건이다.
 
 ## S01 함수와 소유권
 
@@ -460,4 +460,4 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 
 ## Parser-only paging과 기존 의미 API
 
-`VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`와 `Replay`의 인자·결과 shape를 유지하며 [명시적 parser paging context](instrumented-query-reference.md#216-parser-only-paging)를 같은 core에서 검증한다. `OraclePagedSemanticsManifestSchema`는 manifest/r6를 나타낸다. 호출자가 승인한 문서의 context·전체 logical 입력과 동일 pass의 physical part pin을 대조하며, 새로운 source/CST 대형 한도를 부여하지 않는다. `oracle-set-r5`만 새 문맥을 받고 기존 `oracle-set-r4`는 이를 거부한다. 승인 ABSENT는 base 검증과 고정 required를 유지한 BLOCKED이며, caller-approved PASS는 저장 자료의 일관성에 한정된다.
+`VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`와 `Replay`의 인자·결과 shape를 유지하며 [명시적 parser paging context](instrumented-query-reference.md#216-parser-only-paging)를 같은 core에서 검증한다. `OraclePagedSemanticsManifestSchema`는 manifest/r6를 나타낸다. 호출자가 승인한 문서의 context·전체 logical 입력과 동일 pass의 physical part pin을 대조하며, 새로운 source/CST 대형 한도를 부여하지 않는다. `oracle-set-r5`만 새 문맥을 받고 기존 `oracle-set-r4`는 이를 거부한다. 승인 ABSENT는 base 검증과 고정 required를 유지한 BLOCKED이며, caller-approved PASS는 저장 자료의 일관성에 한정된다. `OraclePagedBinariesSemanticsManifestSchema`는 binaries 문맥의 manifest revision을 구분하며, r5·r6만 허용하는 reader는 r7을 거부한다.

@@ -15,7 +15,7 @@ func pagedLimitCharge(t *testing.T, b *eligibilityBudget, logical uint64) *Error
 
 // The cap is a fixed, per-ledger constant: ordinary ledgers stay at 1 GiB and only an explicitly selected ledger reaches 1.5 GiB.
 func TestEligibilityPagedLogicalLimitBoundary(t *testing.T) {
-	if eligibilityLogicalLimit != 1<<30 || eligibilityPagedLogicalLimit != 1610612736 || !eligibilityPagedContext(semanticPagedContext) || eligibilityPagedContext("full-input-utf8/r2") || eligibilityPagedContext("") {
+	if eligibilityLogicalLimit != 1<<30 || eligibilityPagedLogicalLimit != 1610612736 || !eligibilityPagedContext(semanticPagedContext) || !eligibilityPagedContext(semanticPagedBinariesContext) || eligibilityPagedContext("full-input-utf8-paged-binaries/r2") || eligibilityPagedContext("full-input-utf8/r2") || eligibilityPagedContext("") {
 		t.Fatal("limit constants or approved-context predicate changed")
 	}
 	for _, tc := range []struct {
@@ -127,6 +127,7 @@ func pagedLimitCap(t *testing.T, mutate func(*eligibilityFixture), edit func(*Qu
 // The selection table: only an owning, approval-bound, approved paged-parser request is raised, and only once.
 func TestEligibilityPagedLogicalLimitSelection(t *testing.T) {
 	paged := func(f *eligibilityFixture) { f.reg.Context = semanticPagedContext }
+	binaries := func(f *eligibilityFixture) { f.reg.Context = semanticPagedBinariesContext }
 	for _, tc := range []struct {
 		name   string
 		mutate func(*eligibilityFixture)
@@ -139,6 +140,9 @@ func TestEligibilityPagedLogicalLimitSelection(t *testing.T) {
 		{"paged owner unbound", paged, func(r *QueryReferenceEligibilityRequest) { r.Registration = append(r.Registration, '\n') }, nil, eligibilityLogicalLimit},
 		{"paged inherited ledger", paged, nil, &eligibilityBudget{}, eligibilityLogicalLimit},
 		{"ordinary inherited ledger", nil, nil, &eligibilityBudget{}, eligibilityLogicalLimit},
+		{"binaries owner bound", binaries, nil, nil, eligibilityPagedLogicalLimit},
+		{"binaries owner unbound", binaries, func(r *QueryReferenceEligibilityRequest) { r.Registration = append(r.Registration, '\n') }, nil, eligibilityLogicalLimit},
+		{"binaries inherited ledger", binaries, nil, &eligibilityBudget{}, eligibilityLogicalLimit},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := pagedLimitCap(t, tc.mutate, tc.edit, tc.preset); got != tc.want {

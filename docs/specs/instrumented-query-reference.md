@@ -332,7 +332,7 @@ producer_fold_valid는 record와 projection의 claim·상태·판정·code 관�
 
 ## #216 parser-only paging
 
-일반 작은 source의 `native-query`에서 grammar parser 하나가 16 MiB를 넘을 때만 `full-input-utf8-paged-parser/r1`을 사용한다. source·CST·raw response·driver executable·reference executable/library·다른 closure 입력은 각각 기존 물리 파일 한도를 지킨다. 큰 source/CST, SVC, 전처리, batch, 신규 macOS claim은 이 단위의 대상이 아니다. 기존 small offline 한도 16 MiB/file·256 MiB/shared total·120초·10,000 files·work 32,000,000과 native-query 4 GiB/10초를 유지한다. eligibility 검증(core·public)이 직접 시작한 원장의 logical allocation만 이 context에서 1 GiB 대신 1.5 GiB이고, semantic run의 1 GiB는 그대로다. 향후 별도 large-replay 예산을 이 경로에 적용하지 않는다.
+일반 작은 source의 `native-query`에서 grammar parser 하나가 16 MiB를 넘을 때만 `full-input-utf8-paged-parser/r1`을 사용한다. 이 context와 `full-input-utf8/r2`에서 source·CST·raw response·driver executable·reference executable/library·다른 closure 입력은 각각 기존 물리 파일 한도를 지킨다. 큰 source/CST, SVC, 전처리, batch, 신규 macOS claim은 이 단위의 대상이 아니다. 기존 small offline 한도 16 MiB/file·256 MiB/shared total·120초·10,000 files·work 32,000,000과 native-query 4 GiB/10초를 유지한다. eligibility 검증(core·public)이 직접 시작한 원장의 logical allocation만 이 context에서 1 GiB 대신 1.5 GiB이고, semantic run의 1 GiB는 그대로다. 별도 large-replay 예산을 이 경로에 적용하지 않는다.
 
 새 context의 producer는 manifest/r6와 기존 profile/r3·record/r4·result/r3를 사용한다. 기존 context `full-input-utf8/r2`와 manifest/r5·`oracle-set-r4`는 기존 의미를 유지한다. 새 `oracle-set-r5`만 paged context/r6를 소비하며 반대 context와의 교차는 거부한다. 공개 의미 결과/r1·replay 결과/r3·eligibility 승인/등록/r1·run-binding/r1·witness/r2는 같은 필드 의미를 유지한다. `OraclePagedSemanticsManifestSchema` 상수로 새 manifest revision을 구분한다. 기존 r5만 허용하는 reader는 r6를 거부한다.
 
@@ -345,6 +345,16 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
 이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+
+## #216 binary paging
+
+`full-input-utf8-paged-binaries/r1`에서 16 MiB를 넘는 driver executable과 reference library는 descriptor `tsgk-query-binary-pages/r1`과 물리 part로 보존한다. descriptor의 필수 필드는 `schema`, `owner`, `logical {kind,path,bytes,sha256}`, `parts [{index,offset,path,bytes,sha256}]`다. `kind`는 `driver` 또는 `library`이고 logical 크기는 16 MiB 초과·64 MiB 이하다. part index는 0부터 연속이고, offset은 index×16 MiB다. 마지막이 아닌 part는 16 MiB이고 마지막 part는 1 byte 이상이다. 검증은 같은 evidence pass에서 확인한 part bytes로 개별 해시와 연결 해시를 계산한다. part마다 work 1과 logical `2×(bytes+1)`을 charge한다. descriptor의 logical 값은 연결 해시가 일치한 뒤에만 신뢰 출처와 대조한다. descriptor 자신의 물리 SHA-256은 실행 파일이나 library의 identity로 쓰지 않는다.
+
+reference library descriptor는 graph 상대 logical 경로 `L`에 대해 `L.pages.json`, part는 `L.part-%05d.bin`이다. descriptor의 `owner`와 모든 part의 소유 node는 registration `Native.ReferenceLibrary`의 node와 같다. eligibility는 approval에 결속된 이 pin의 descriptor를 실행마다 한 번 재결합하고, current reference argv와 response의 library SHA-256을 재결합 logical 값과 대조한다. 다른 context에서 descriptor role의 reference library는 거부한다. control cohort의 library는 기존 물리 한도를 유지한다.
+
+이 context의 standalone eligibility는 16 MiB 초과 grammar parser를 0개 또는 1개 허용하고, approval에 결속된 registration의 executable·library pin 중 하나 이상에 paged descriptor role을 요구한다. parser만 paged이면 `full-input-utf8-paged-parser/r1`을 사용한다. 이 조건은 native build manifest 검증의 조기 반환 전에 판정하며 historical runtime에서도 위반은 FAIL이다. driver descriptor는 `oracle/capture/driver.pages.json`, part는 `oracle/capture/driver.part-%05d.bin`이며 logical 경로는 `capture/driver.bin`, owner는 `D`다. descriptor와 모든 driver part는 선택된 NATIVE_DRIVER invocation node가 소유해야 하고 미사용 part는 거부한다. 재결합한 logical SHA-256을 approval의 `executable_sha256`과 대조하며 다른 context의 descriptor executable은 거부한다. 새 context의 producer는 manifest/r7과 기존 profile/r3·record/r4·result/r3를 사용한다. 새 `oracle-set-r6`만 binaries context/r7을 소비한다. 기존 두 context와 manifest/r5·r6의 의미는 바뀌지 않는다. 의미 검증 registration은 16 MiB를 넘는 grammar parser를 0개 또는 1개 허용한다. driver 분할 producer와 library 분할 controller는 이 절의 형식을 따른다. oracle set·semantic 연결은 [Binary-paged semantic set](identity-and-evidence.md#binary-paged-semantic-set)을 따른다.
+
+공개 의미 검증은 set 검증과 eligibility 검증이 driver part 해시를 각각 한 번씩 계산하므로 driver의 part hash charge가 두 번 들어간다. 공유 work 한도 32,000,000을 유지하며, logical 한도는 원장을 상속하는 semantic·replay·qualification run에서 1 GiB다. eligibility 검증이 원장을 직접 시작하고 approval에 결속된 binaries context일 때만 parser-paged context와 같은 owner·bound 조건으로 1.5 GiB를 적용하며, 공개 API의 logical 최악 상한도 1.5 GiB로 같다. 이 중복 charge를 이유로 한도를 올리지 않는다. reference executable(`build/reference.exe`)과 control cohort의 library는 이 문맥에서도 기존 물리 한도를 지킨다. 큰 source/CST, SVC, 전처리, batch, 신규 macOS claim은 대상이 아니다.
 
 ## Windows C# parser paging 첫 실제 표본
 

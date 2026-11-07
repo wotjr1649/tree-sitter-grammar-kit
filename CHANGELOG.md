@@ -18,6 +18,8 @@
 - main push CI가 같은 tree의 완료된 PR run 근거를 재사용하면 native·large·qualification·integration gate를 다시 돌리지 않는다(#335). foundation 두 개는 항상 다시 실행한다. 재사용은 merge commit의 두 번째 parent를 head로 한 24시간 안의 Foundation PR run이 필수 job 여덟 개와 `CI mode (<synthetic SHA>)`를 각각 하나씩 성공했고, 그 synthetic merge의 tree가 merge commit의 tree와 같을 때만이며, 조회 실패나 불일치는 전체 실행이다. 앞 후보의 stderr 뒤 성공 근거 보존과 cleanup 예외 처리·native gh 정지 회귀를 보강했다(#339). pull_request run에서는 integration gate가 skip되지 않고, `ci-gate verify`는 `mode`의 `pr_verified`가 `false`일 때만 통과한다. 이 CI 변경은 제품 동작과 검증 범위를 바꾸지 않으며, 재사용된 commit이 main HEAD로 남아 있을 때 다음 전체 nightly가 그 commit의 첫 actual-main heavy 검증이 된다. 중간 merge commit은 PR 근거만 유지될 수 있고, dispatch도 실제 실행 SHA가 해당 commit과 같을 때만 그 commit의 heavy 검증 근거다.
 - eligibility 검증이 직접 시작한 원장의 논리 처리량 한도를, approval에 결속된 `full-input-utf8-paged-parser/r1` context에 한해 1 GiB에서 1.5 GiB로 올렸다(#216). 다른 context·결속되지 않은 요청·semantic/replay/qualification run의 원장은 1 GiB 그대로이며 caller가 값을 지정하는 옵션은 없다. paged context의 public API 논리 처리량 최악 상한이 1.5 GiB로 바뀐다. 이 상향만으로 PostgreSQL9 분류를 채택하지 않으며, 분류는 새 source revision에서 처음부터 다시 실행해 [계약](docs/specs/instrumented-query-reference.md#postgresql-9개-정의의-parser-paging-분류)에 기록한다.
 
+- `full-input-utf8-paged-binaries/r1`에서 16 MiB를 넘는 driver executable·reference library의 descriptor 검증(manifest/r7, `oracle-set-r6`)을 추가했다(#216). eligibility 원장의 1.5 GiB는 이 context에도 같은 owner·bound 조건으로 적용되며 공개 API logical 최악 상한은 1.5 GiB로 같다. semantic·replay·qualification의 상속 원장은 1 GiB를 유지한다. descriptor의 offline 검증 범위이며 실제 분할 수집·실행 진위를 보증하지 않는다.
+
 ## v0.2.0 — 2026-10-06
 
 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md)에 있다. tag `v0.2.0`과 GitHub Release로 소스만 발행한다. binary와 package는 없다(#106).
