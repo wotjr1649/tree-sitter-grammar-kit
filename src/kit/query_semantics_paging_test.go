@@ -13,6 +13,7 @@ import (
 )
 
 func TestSemanticPagedParserValidation(t *testing.T) {
+	t.Parallel()
 	data := bytes.Repeat([]byte("p"), MaxDocumentBytes+1)
 	input := semanticBuildInput{Role: "grammar-parser", Path: "parser.c", Bytes: uint64(len(data)), SHA256: digestHex(data)}
 	d := semanticParserDescriptor{Schema: "tsgk-query-parser-pages/r1", Owner: "D"}
@@ -85,6 +86,7 @@ func TestSemanticPagedParserValidation(t *testing.T) {
 
 // Part-count boundaries: exactly 16 MiB is not paged; 2 parts (2x16 MiB, 16 MiB+n Swift8), 3 parts (2x16 MiB+n Kotlin5), and 7 parts (6x16 MiB+n PostgreSQL9) are.
 func TestSemanticPagedParserPartBoundaries(t *testing.T) {
+	t.Parallel()
 	const tail, swiftTail, pgTail = 315585, 13858951, 3622435 // Kotlin5 3-part, Swift8 2-part, and PostgreSQL9 7-part parser tails
 	type built struct {
 		input semanticBuildInput
@@ -223,6 +225,7 @@ func TestSemanticPagedParserBuildFileCeiling(t *testing.T) {
 }
 
 func TestSemanticPagedPublicAPIAndReplay(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixtureMode(t, 0, true, true)
 	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
 	defer cancel()
@@ -313,6 +316,7 @@ func TestSemanticPagedPublicAPIAndReplay(t *testing.T) {
 }
 
 func TestSemanticPagedContextRequiresLargeParser(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	f.reg.Context = semanticPagedContext
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

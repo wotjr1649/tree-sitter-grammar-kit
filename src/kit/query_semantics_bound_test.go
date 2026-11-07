@@ -380,6 +380,7 @@ func semanticBoundReplay(t *testing.T, req QuerySemanticsRequest, f *eligibility
 }
 
 func TestSemanticBoundPublicAPIAndReplay(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixture(t, 0)
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -678,6 +679,7 @@ func TestSemanticBoundPartialReplayPreservesRecordedAndMismatch(t *testing.T) {
 }
 
 func TestSemanticBoundRejectsUnregisteredGrammar(t *testing.T) {
+	t.Parallel()
 	req, _, _ := semanticBoundFixture(t, 0, "grammar-header")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -726,6 +728,7 @@ func semanticBoundReapprove(t *testing.T, req *QuerySemanticsRequest, f *eligibi
 }
 
 func TestSemanticBoundRejectsBorrowedGrammarPin(t *testing.T) {
+	t.Parallel()
 	for _, borrowControl := range []bool{true, false} {
 		t.Run(strconv.FormatBool(borrowControl), func(t *testing.T) {
 			req, f, binding := semanticBoundFixture(t, 0)
@@ -751,6 +754,7 @@ func TestSemanticBoundRejectsBorrowedGrammarPin(t *testing.T) {
 }
 
 func TestSemanticBoundRejectsDeclaredCompilerContradiction(t *testing.T) {
+	t.Parallel()
 	for _, field := range []string{"name", "version"} {
 		t.Run(field, func(t *testing.T) {
 			req, f, binding := semanticBoundFixture(t, 0)
@@ -777,6 +781,7 @@ func TestSemanticBoundRejectsDeclaredCompilerContradiction(t *testing.T) {
 }
 
 func TestSemanticBoundSparseRegistrationAndStoredResult(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixture(t, 5<<20)
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -803,6 +808,7 @@ func TestSemanticBoundSparseRegistrationAndStoredResult(t *testing.T) {
 }
 
 func TestSemanticBoundSparseProjection(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixture(t, 0)
 	projectionPath := "oracle/projection/00000-" + f.witness.Case + ".json"
 	recordPath := "oracle/records/00000-" + f.witness.Case + ".json"

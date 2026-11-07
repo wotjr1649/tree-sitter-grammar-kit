@@ -25,6 +25,7 @@ func classificationPowerShell3Clone(a classificationAnchors) classificationAncho
 }
 
 func TestQueryClassificationPowerShell3ProfileAndClosure(t *testing.T) {
+	t.Parallel()
 	const name = "powershell3-tiny"
 	if !classificationGoLocalSkipsProfile(name) || !classificationGoDefinitionProfileAllowed(name) ||
 		classificationWeb16ProfileName(name) || classificationScript17ProfileName(name) || classificationSmall17ProfileName(name) || classificationDartPHP12ProfileName(name) {
@@ -91,6 +92,7 @@ func TestQueryClassificationPowerShell3ProfileAndClosure(t *testing.T) {
 }
 
 func TestQueryClassificationPowerShell3RejectsSourceAndCSTMutations(t *testing.T) {
+	t.Parallel()
 	fixture := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
 	field := "value"
 	for _, mutate := range []struct {
@@ -163,6 +165,7 @@ func classificationUnpagedEmptyProfileNames(t *testing.T) []string {
 
 // A nonempty source needs an explicit CST: the empty-source root-only default must not apply to it.
 func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testing.T) {
+	t.Parallel()
 	fixture := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
 	profile := fixture.profile
 	profile.Nodes = nil
@@ -175,6 +178,7 @@ func TestQueryClassificationEmptyAnchorsRejectNonemptySourceWithoutCST(t *testin
 }
 
 func TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles(t *testing.T) {
+	t.Parallel()
 	powershell := classificationEmptyStaticFixtureForTest(t, "powershell3-tiny")
 	for _, name := range classificationUnpagedEmptyProfileNames(t) {
 		t.Run(name, func(t *testing.T) {
@@ -202,6 +206,7 @@ func TestQueryClassificationPowerShell3SourceFixingDoesNotWeakenEmptyProfiles(t 
 }
 
 func TestQueryClassificationPowerShell3ClosedNamesRoutesAndReferences(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"", "powershell", "powershell3", "powershell3-tiny ", "POWERSHELL3-tiny", "powershell3-tiny-alias", "powershell3-empty", "dart7-empty", "bash2-empty"} {
 		if classificationPowerShell3ProfileName(name) {
 			t.Fatalf("near-alias PowerShell3 profile %q accepted", name)

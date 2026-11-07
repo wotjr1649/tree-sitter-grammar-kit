@@ -504,6 +504,7 @@ func TestSchemaFindingBounds(t *testing.T) {
 // S03-A08: limits at and one over each bound, deep supertype chains without recursion,
 // and typed cancellation.
 func TestSchemaLimits(t *testing.T) {
+	t.Parallel()
 	base := []byte(schemaBase)
 	ok, _ := schemaCheck(t, schemaBase)
 	c := ok.Input.Counts

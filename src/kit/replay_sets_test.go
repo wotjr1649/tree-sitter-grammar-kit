@@ -246,6 +246,7 @@ func fxPrivate(t *testing.T, mutate func(files map[string][]byte, sum map[string
 // route case, recomputes the projection and the counts, checks the local-run identity and
 // reports ordinals, never paths.
 func TestReplayRecordEnvelope(t *testing.T) {
+	t.Parallel()
 	for _, reducer := range []string{"private-corpus-r1", "private-corpus-r2"} {
 		for _, mutation := range []string{"none", "schema", "source", "bytes", "encoding", "encoding-source", "digest", "count", "producer", "identity-missing", "identity-schema", "identity-duplicate"} {
 			t.Run(reducer+"/"+mutation, func(t *testing.T) {

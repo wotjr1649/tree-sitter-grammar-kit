@@ -423,6 +423,7 @@ func acceptedEarlyProcess(p map[string]any) {
 
 // The same immutable evidence must fail the public proof and pass only the exact private control.
 func TestReuseAcceptedOmitControl(t *testing.T) {
+	t.Parallel()
 	for _, index := range []int{0, 12, 13, 14} {
 		t.Run(fmt.Sprint(index), func(t *testing.T) {
 			tests := []struct {

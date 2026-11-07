@@ -432,6 +432,7 @@ func setCodes(c QualCell) []string { return codes(c.Set.Findings) }
 // route passes on every host, a route with an uncovered required kind is INCOMPLETE and
 // never PASS, and the support claim stays BLOCKED until every cell passes.
 func TestQualifyBaseline(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	r := f.run(t, f.all(t, nil))
 	if len(r.Cells) != 6 || r.Completeness != AssessPass || r.Assessment != AssessBlocked || r.SupportClaim != "BLOCKED" || r.MechanismGate != AssessPass {
@@ -484,6 +485,7 @@ func TestQualifyBaseline(t *testing.T) {
 // after an edit) still decides the requirement axis; a failing detector fails its role
 // row without touching the kit gate.
 func TestQualifyRegisteredChecks(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
 	for _, r := range f.inv.Routes {
@@ -535,6 +537,7 @@ func TestQualifyRegisteredChecks(t *testing.T) {
 
 // S08-A04: a missing host or set, or a duplicate row, fails completeness.
 func TestQualifyCompleteness(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	hosts := f.all(t, nil)
 	one := map[string]string{"windows-amd64": hosts["windows-amd64"], "linux-amd64": hosts["linux-amd64"]}
@@ -567,6 +570,7 @@ func TestQualifyCompleteness(t *testing.T) {
 }
 
 func TestQualifySeparateHoldoutEvidence(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"json-holdout.log", "reuse-observation.log", "svc-reuse-observation.log"} {
 		t.Run(name, func(t *testing.T) {
 			f := newQfx(t)
@@ -592,6 +596,7 @@ func TestQualifySeparateHoldoutEvidence(t *testing.T) {
 // S08-A05: mixed run cohorts, wrong architecture and a workload other than the
 // registration are rejected; the other hosts' cells are not repaired from them.
 func TestQualifyCohort(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		mut  qfxMut
@@ -639,6 +644,7 @@ func TestQualifyCohort(t *testing.T) {
 // and fails the route on every platform; host timing, memory and build identities differ
 // freely and are retained.
 func TestQualifyComparison(t *testing.T) {
+	t.Parallel()
 	plant := map[string]func(recs []map[string]any){
 		"tree-type": func(recs []map[string]any) {
 			nodes := fxTree("alpha", false)
@@ -718,6 +724,7 @@ func TestQualifyComparison(t *testing.T) {
 // and the build stays a host observation; a composite producer other than the run's build
 // is a mixed result on that host; a real composite difference still fails the comparison.
 func TestQualifyCompositeHostIdentity(t *testing.T) {
+	t.Parallel()
 	other := strings.Repeat("9", 64)
 	host := func(build string, edit func(c map[string]any)) qfxMut {
 		return qfxMut{record: func(s string, recs []map[string]any) {
@@ -808,6 +815,7 @@ func TestQualifyCompositeHostIdentity(t *testing.T) {
 // S08-A08: a registered historical detector passes its row while a required mainstream
 // failure still fails its cell and keeps the support claim blocked.
 func TestQualifyDetectorAndGap(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
 	gap := func(s string, recs []map[string]any) {
@@ -846,6 +854,7 @@ func TestQualifyDetectorAndGap(t *testing.T) {
 
 // S08-A09: a replay or an old commit's success cannot fill a current-candidate cell.
 func TestQualifyEligibility(t *testing.T) {
+	t.Parallel()
 	for name, mut := range map[string]func(id map[string]any){
 		"old-sha":     func(id map[string]any) { id["sha"], id["checkout"] = strings.Repeat("b", 40), strings.Repeat("b", 40) },
 		"replay-mode": func(id map[string]any) { id["evidence_mode"] = ModeReplayedRaw },
@@ -883,6 +892,7 @@ func TestQualifyEligibility(t *testing.T) {
 // claim failure, a claimed query result the registered captures do not give and a
 // collapsed dialect (another route's set under this route) all fail the mechanism axis.
 func TestQualifyMechanism(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		mut  qfxMut
@@ -1160,6 +1170,7 @@ func TestQualifyPlatformClaims(t *testing.T) {
 // #76 a registered SVC observation-only verdict: the check passes exactly when the
 // recorded assessment and code are the registered ones; any difference fails the row.
 func TestQualifySvcExpectedAssessment(t *testing.T) {
+	t.Parallel()
 	run := func(assess, code string) QualRoleRow {
 		f := newQfx(t)
 		w := f.svcRole()
@@ -1192,6 +1203,7 @@ func TestQualifySvcExpectedAssessment(t *testing.T) {
 }
 
 func TestQualifySvcObservationOnlyAPIClaim(t *testing.T) {
+	t.Parallel()
 	for _, claim := range []string{claimNotClaimed, claimPass, claimBlocked, "missing"} {
 		f := newQfx(t)
 		w := f.svcRole()
@@ -1323,6 +1335,7 @@ func expectCode(t *testing.T, name, code string, mut func(inv *QualificationInve
 // result is then the worst covering case. A PENDING row or an unlisted alternative leaves
 // P NOT_COVERED, and the obligation counts its alternatives.
 func TestQualifyAlternatives(t *testing.T) {
+	t.Parallel()
 	covered := func() *qfx {
 		f := newQfx(t)
 		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
@@ -1432,6 +1445,7 @@ func qfxAll(m qfxMut) map[string]qfxMut {
 // recorded tree holds none of them (has_error does not see them). A registered error node
 // in the tree fails P; a route without the registration keeps P.
 func TestQualifyErrorNodesInTree(t *testing.T) {
+	t.Parallel()
 	covered := func(errNodes []string) *qfx {
 		f := newQfx(t)
 		f.inv.Routes[1].Requirements[0].Kinds = []string{"P", "E", "Q"}
@@ -1524,6 +1538,7 @@ func TestQualificationInventoryAlternatives(t *testing.T) {
 // still passes its own NO_ERROR + contains expectation. Without the registration the
 // same contains derives nothing new.
 func TestQualifyErrorNodes(t *testing.T) {
+	t.Parallel()
 	// fxb: c1 expects NO_ERROR with doc and word, and covers N and R instead of P
 	errCase := func(errNodes []string, contains []string, kinds ...string) *qfx {
 		f := newQfx(t)
@@ -1573,6 +1588,7 @@ func TestQualifyErrorNodes(t *testing.T) {
 // bytes) covers W when its step 0 expects NO_ERROR; the recorded step 0 tree must stay
 // within 10000 nodes.
 func TestQualifySampleW(t *testing.T) {
+	t.Parallel()
 	sample := func() *QualSample {
 		return &QualSample{Repository: "owner/name", Commit: strings.Repeat("a", 40), Path: "src/alpha.txt", License: "MIT", SHA256: sum([]byte("alpha")), Bytes: 5}
 	}
@@ -1713,6 +1729,7 @@ func qfxRouteNoReuse(errTree bool, route, code string) func(string, []map[string
 // and never PASS. A route that is not proven on clean trees still fails the kit axis, and
 // an error-tree route recorded as FAIL is a claim mismatch.
 func TestQualifyRouteOnErrorTree(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	r := f.run(t, f.all(t, qfxAll(qfxMut{record: qfxRouteNoReuse(true, claimBlocked, "INCREMENTAL_ROUTE_UNOBSERVABLE_ERROR_TREE_STEP_1")})))
 	for _, p := range qfxPlatforms {
@@ -1763,6 +1780,7 @@ func TestQualifyRouteOnErrorTree(t *testing.T) {
 }
 
 func TestQualifyRejectsPositionalAPIPass(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	mut := qfxMut{record: func(set string, records []map[string]any) {
 		if set != "s06-fxa" {
@@ -1780,6 +1798,7 @@ func TestQualifyRejectsPositionalAPIPass(t *testing.T) {
 }
 
 func TestQualifyRequiresCompleteAPIProof(t *testing.T) {
+	t.Parallel()
 	for _, bad := range []string{"", "claims", "claim", "api", "null", "empty", "revision", "consistent", "first_difference", "position_navigation_divergences", "first_divergence", "false", "difference", "divergence", "fresh"} {
 		t.Run(bad, func(t *testing.T) {
 			f := newQfx(t)
@@ -1824,6 +1843,7 @@ func TestQualifyRequiresCompleteAPIProof(t *testing.T) {
 }
 
 func TestQualifyRejectsMissingTreeEnvelope(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	mut := qfxMut{record: func(set string, records []map[string]any) {
 		if set != "s06-fxa" {
@@ -1840,6 +1860,7 @@ func TestQualifyRejectsMissingTreeEnvelope(t *testing.T) {
 }
 
 func TestQualifyAPIClaimMatchesReducedTree(t *testing.T) {
+	t.Parallel()
 	for _, form := range []string{"summary", "record"} {
 		for _, claim := range []string{claimBlocked, claimPass, claimNotClaimed, "unknown", ""} {
 			t.Run(form+"/"+claim, func(t *testing.T) {
@@ -1873,6 +1894,7 @@ func TestQualifyAPIClaimMatchesReducedTree(t *testing.T) {
 }
 
 func TestQualifyMixedSummaryAPIFailure(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	mut := qfxMut{record: func(set string, records []map[string]any) {
 		if set != "s06-fxa" {

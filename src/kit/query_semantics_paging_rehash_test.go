@@ -13,6 +13,7 @@ import (
 )
 
 func TestSemanticPagedRehashCannotReplaceProfile(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixtureMode(t, 0, true, true)
 	buildPath := "oracle/capture/build.json"
 	var build semanticBuildDescription
