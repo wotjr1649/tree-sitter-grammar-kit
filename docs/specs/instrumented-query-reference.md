@@ -346,6 +346,10 @@ Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리
 
 이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
 
+## #216 binary paging
+
+`full-input-utf8-paged-binaries/r1`에서 16 MiB를 넘는 driver executable과 reference library는 descriptor `tsgk-query-binary-pages/r1`과 물리 part로 보존한다. descriptor의 필수 필드는 `schema`, `owner`, `logical {kind,path,bytes,sha256}`, `parts [{index,offset,path,bytes,sha256}]`다. `kind`는 `driver` 또는 `library`이고 logical 크기는 16 MiB 초과·64 MiB 이하다. part index는 0부터 연속이고, offset은 index×16 MiB다. 마지막이 아닌 part는 16 MiB이고 마지막 part는 1 byte 이상이다. 검증은 같은 evidence pass에서 확인한 part bytes로 개별 해시와 연결 해시를 계산한다. part마다 work 1과 logical `2×(bytes+1)`을 charge한다. descriptor의 logical 값은 연결 해시가 일치한 뒤에만 신뢰 출처와 대조한다. descriptor 자신의 물리 SHA-256은 실행 파일이나 library의 identity로 쓰지 않는다.
+
 ## Windows C# parser paging 첫 실제 표본
 
 [독립 anchor fixture](../../src/testdata/query-semantics/csharp3-anchors.json)는 원래 실행 전 등록에서 필요한 기대값만 보존한다. `class C {}` → `class D {}`의 한 바이트 편집과 `((compilation_unit) @root (#eq? @root "class C {}"))`를 사용한다. 필수 표본은 초기 incremental, 편집 후 incremental·fresh의 세 개이며 structural root는 각각 1개, 평가 capture는 1/0/0이다. ABI 기대값은 15/15/13/654/26이며, fixture의 child anchor는 정적 기대값이다. planner는 이를 별도 파일로 보존하며 수동 assemble·verify 단계는 그 파일을 소비하지 않는다. 이 cohort는 실행 전에 고정한 별도 비교기에서 type/span의 유일성·실제 root→class→identifier 부모 관계와 C/D 원문을 대조했다. 이후 실행도 별도의 독립 대조를 갖춰야 한다. 관측된 child node 번호로 사전 기대값을 만들지 않는다.

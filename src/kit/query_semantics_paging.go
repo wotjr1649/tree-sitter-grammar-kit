@@ -7,8 +7,11 @@ import (
 )
 
 const (
-	OraclePagedSemanticsManifestSchema = "tsgk-oracle-manifest/r6"
-	semanticPagedContext               = "full-input-utf8-paged-parser/r1"
+	OraclePagedSemanticsManifestSchema        = "tsgk-oracle-manifest/r6"
+	semanticPagedContext                      = "full-input-utf8-paged-parser/r1"
+	semanticPagedBinariesContext              = "full-input-utf8-paged-binaries/r1"
+	semanticBinaryPagesSchema                 = "tsgk-query-binary-pages/r1"
+	semanticBinaryLogicalMax           uint64 = 64 << 20
 )
 
 func semanticManifestSchema(schema string) bool {
@@ -35,6 +38,26 @@ type semanticParserDescriptor struct {
 		SHA256       string `json:"sha256"`
 	} `json:"logical"`
 	Parts []struct {
+		Index  uint64 `json:"index"`
+		Offset uint64 `json:"offset"`
+		Path   string `json:"path"`
+		Bytes  uint64 `json:"bytes"`
+		SHA256 string `json:"sha256"`
+	} `json:"parts"`
+}
+
+type semanticBinaryLogical struct {
+	Kind   string `json:"kind"`
+	Path   string `json:"path"`
+	Bytes  uint64 `json:"bytes"`
+	SHA256 string `json:"sha256"`
+}
+
+type semanticBinaryDescriptor struct {
+	Schema  string                `json:"schema"`
+	Owner   string                `json:"owner"`
+	Logical semanticBinaryLogical `json:"logical"`
+	Parts   []struct {
 		Index  uint64 `json:"index"`
 		Offset uint64 `json:"offset"`
 		Path   string `json:"path"`
@@ -75,4 +98,40 @@ func (b *eligibilityBudget) semanticPagedParser(data []byte, input semanticBuild
 		_, _ = h.Write(bytes)
 	}
 	return hex.EncodeToString(h.Sum(nil)) == input.SHA256, nil
+}
+
+// The logical value is trusted only after the concatenated part hash equals it; callers compare it with their own trusted source.
+func (b *eligibilityBudget) semanticPagedBinary(data []byte, owner, kind, path, partPrefix string, part func(ReplayMember) ([]byte, bool, *Error)) (semanticBinaryLogical, bool, *Error) {
+	var d semanticBinaryDescriptor
+	if e := b.decode("binary-descriptor", data, &d, true); e != nil {
+		return semanticBinaryLogical{}, false, e
+	}
+	l := d.Logical
+	if d.Schema != semanticBinaryPagesSchema || d.Owner != owner || l.Kind != kind || l.Path != path || l.Bytes <= MaxDocumentBytes || l.Bytes > semanticBinaryLogicalMax || !hex64.MatchString(l.SHA256) ||
+		uint64(len(d.Parts)) != (l.Bytes+MaxDocumentBytes-1)/MaxDocumentBytes {
+		return semanticBinaryLogical{}, false, nil
+	}
+	h := sha256.New()
+	for i, p := range d.Parts {
+		offset := uint64(i) * MaxDocumentBytes
+		size := min(uint64(MaxDocumentBytes), l.Bytes-offset)
+		if p.Index != uint64(i) || p.Offset != offset || p.Bytes != size || p.Path != fmt.Sprintf("%s.part-%05d.bin", partPrefix, i) || !hex64.MatchString(p.SHA256) {
+			return semanticBinaryLogical{}, false, nil
+		}
+		bytes, ok, e := part(ReplayMember{Path: p.Path, Role: kind + "-paged-part", Bytes: p.Bytes, SHA256: p.SHA256})
+		if e != nil || !ok {
+			return semanticBinaryLogical{}, false, e
+		}
+		if e := b.charge(1, 2*(p.Bytes+1), kind+"-part-hash"); e != nil {
+			return semanticBinaryLogical{}, false, e
+		}
+		if uint64(len(bytes)) != p.Bytes || digestHex(bytes) != p.SHA256 {
+			return semanticBinaryLogical{}, false, nil
+		}
+		_, _ = h.Write(bytes)
+	}
+	if hex.EncodeToString(h.Sum(nil)) != l.SHA256 {
+		return semanticBinaryLogical{}, false, nil
+	}
+	return l, true, nil
 }
