@@ -170,7 +170,7 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 		return classificationCaptureProfile{"go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288", "go", "tree_sitter_go", 3, 5, false}, nil
 	case "csharp15-empty":
 		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
-	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty":
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
 	default:
@@ -551,7 +551,7 @@ func classificationNativeLocalCapture(t *testing.T) {
 		if err := classificationCSharpAnchorsValid(anchors); err != nil {
 			t.Fatal(err)
 		}
-	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty":
 		if err := classificationPagedAnchorsValid(profileName, anchors); err != nil {
 			t.Fatal(err)
 		}
@@ -704,7 +704,9 @@ func classificationNativeLocalCapture(t *testing.T) {
 		t.Fatal(err)
 	}
 	var files []captureFile
-	if profile.paged {
+	if profile.route == "tsql" {
+		files, err = semanticBuildFilesIn(ctx, b, semanticPagedBinariesContext)
+	} else if profile.paged {
 		files, err = semanticBuildFiles(ctx, b, true)
 	} else {
 		files, err = semanticBuildFiles(ctx, b)
@@ -787,4 +789,11 @@ func classificationNativeLocalCapture(t *testing.T) {
 	}
 	write("native-complete.json", report)
 	t.Logf("independent %s CST/ABI/metadata%d checked; no external eligibility or semantic approval", profile.route, len(anchors.Queries))
+}
+
+func TestQueryClassificationTSQL8LocalCapture(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "tsql8-empty" {
+		t.Skip("explicit TSQL8 classification profile required")
+	}
+	classificationNativeLocalCapture(t)
 }

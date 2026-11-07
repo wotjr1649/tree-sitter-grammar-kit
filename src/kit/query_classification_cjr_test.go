@@ -136,7 +136,7 @@ func classificationGoCompilerArgs(route, grammarRoot, output string, grammar []N
 	}
 	withScanner, prefix := false, "" // prefix is the grammar directory inside the route checkout
 	switch route {
-	case "go", "csharp", "rust", "cpp", "kotlin", "swift":
+	case "go", "csharp", "rust", "cpp", "kotlin", "swift", "tsql":
 		withScanner = true
 	case "postgresql-sql":
 		withScanner, prefix = true, "postgres/"

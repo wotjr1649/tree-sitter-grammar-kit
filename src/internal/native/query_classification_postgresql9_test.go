@@ -30,7 +30,7 @@ func TestQueryClassificationPostgreSQL9StaticProfile(t *testing.T) {
 			t.Fatalf("fact queries leaked into the %q paged profile", name)
 		}
 	}
-	for _, alias := range []string{"postgresql-sql", "postgresql9", "postgresql9-empty ", "POSTGRESQL9-empty", "postgres9-empty", "tsql8-empty"} {
+	for _, alias := range []string{"postgresql-sql", "postgresql9", "postgresql9-empty ", "POSTGRESQL9-empty", "postgres9-empty"} {
 		if _, ok := classificationCPPProfileSpecFor(alias); ok {
 			t.Fatalf("near-alias paged profile %q accepted", alias)
 		}
