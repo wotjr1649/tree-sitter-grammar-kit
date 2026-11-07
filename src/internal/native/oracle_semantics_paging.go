@@ -20,6 +20,7 @@ import (
 )
 
 const semanticPagedContext = "full-input-utf8-paged-parser/r1"
+const semanticPagedBinariesContext = "full-input-utf8-paged-binaries/r1"
 
 type semanticCaptureMember struct {
 	Owner string `json:"owner"`
@@ -29,6 +30,14 @@ type semanticCaptureMember struct {
 type semanticCapturePlan struct {
 	Context string
 	Members []semanticCaptureMember
+}
+
+func (p *semanticCapturePlan) paged() bool {
+	return p.Context == semanticPagedContext || p.binaries()
+}
+
+func (p *semanticCapturePlan) binaries() bool {
+	return p.Context == semanticPagedBinariesContext
 }
 
 // Legacy registrations remain opaque; only an explicit paged context selects the new contract.
@@ -210,7 +219,7 @@ func semanticPagedRegistration(data []byte, check func() error) (*semanticCaptur
 			}
 		}
 	}
-	if schema != "tsgk-query-semantics-registration/r1" || plan.Context != semanticPagedContext || manifest != 1 || len(plan.Members) == 0 {
+	if schema != "tsgk-query-semantics-registration/r1" || !plan.paged() || manifest != 1 || len(plan.Members) == 0 {
 		return nil, bad()
 	}
 	return plan, nil
@@ -258,7 +267,7 @@ func semanticMemberRole(role string) bool {
 func (p *semanticCapturePlan) matches(files []captureFile, buildOnly bool) bool {
 	want := map[string]string{}
 	for _, m := range p.Members {
-		if buildOnly && !(m.Role == "driver" || m.Role == "build" || m.Role == "build-manifest" || m.Role == "build-input" || strings.HasPrefix(m.Role, "grammar-")) {
+		if buildOnly && !(m.Role == "driver" || m.Role == "driver-paged-descriptor" || m.Role == "driver-paged-part" || m.Role == "build" || m.Role == "build-manifest" || m.Role == "build-input" || strings.HasPrefix(m.Role, "grammar-")) {
 			continue
 		}
 		if !buildOnly && m.Role == "manifest" && m.Path == "manifest.json" {
@@ -351,6 +360,46 @@ func semanticParserFiles(ctx context.Context, root *os.Root, pin ClosureFile, in
 	}
 	files = append(files, captureFile{pin: kit.ReplayMember{Path: fmt.Sprintf("capture/build-input-%05d.pages.json", index), Role: "grammar-paged-descriptor", Bytes: uint64(len(data)), SHA256: sha(data)}, data: data})
 	return files, nil
+}
+
+func (p *semanticCapturePlan) driverShape() error {
+	bad := func() error { return refuse(kit.KindInvalidInput, "SEMANTICS_MEMBER_PLAN", nil) }
+	drivers, descriptors := 0, 0
+	parts := map[string]bool{}
+	for _, m := range p.Members {
+		if m.Role == "driver" {
+			drivers++
+		}
+		if !strings.HasPrefix(m.Role, "driver-paged-") {
+			continue
+		}
+		if !p.binaries() {
+			return bad()
+		}
+		switch m.Role {
+		case "driver-paged-descriptor":
+			descriptors++
+			if m.Path != "capture/driver.pages.json" {
+				return bad()
+			}
+		case "driver-paged-part":
+			parts[m.Path] = true
+		default:
+			return bad()
+		}
+	}
+	if !p.binaries() || drivers == 1 && descriptors == 0 && len(parts) == 0 {
+		return nil
+	}
+	if drivers != 0 || descriptors != 1 || len(parts) < 2 || len(parts) > 4 {
+		return bad()
+	}
+	for i := range len(parts) {
+		if !parts[fmt.Sprintf("capture/driver.part-%05d.bin", i)] {
+			return bad()
+		}
+	}
+	return nil
 }
 
 func (p *semanticCapturePlan) parserShape(grammar []kit.NativeInput) error {
@@ -513,7 +562,7 @@ func semanticPagedSelected(data []byte, check func() error) (selected bool, resu
 				}
 			}
 		}
-		if key && matches(bytes.TrimSpace(data[start:pos]), semanticPagedContext) {
+		if key && (matches(bytes.TrimSpace(data[start:pos]), semanticPagedContext) || matches(bytes.TrimSpace(data[start:pos]), semanticPagedBinariesContext)) {
 			return true, nil
 		}
 		if pos >= len(data) || data[pos] == '}' {

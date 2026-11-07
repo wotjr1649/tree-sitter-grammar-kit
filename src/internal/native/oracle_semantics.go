@@ -33,21 +33,41 @@ func semanticRecording(ctx context.Context, req OracleRequest, profile kit.Oracl
 		!slices.Contains([]string{"windows/amd64", "linux/amd64"}, runtime.GOOS+"/"+runtime.GOARCH) {
 		return nil, refuse(kit.KindUnsupported, "SEMANTICS_CONTEXT_UNSUPPORTED", nil)
 	}
-	for _, pin := range n.Grammar {
-		if pin.Bytes > kit.MaxDocumentBytes && (plan.Context != semanticPagedContext || pin.Role != "parser" || pin.Bytes > kit.BuildFileBytes) {
-			return nil, refuse(kit.KindResourceLimit, "SEMANTICS_MEMBER_LIMIT", nil)
-		}
+	if err := plan.grammarShape(n.Grammar); err != nil {
+		return nil, err
 	}
-	if plan.Context == semanticPagedContext {
-		if err := plan.parserShape(n.Grammar); err != nil {
-			return nil, err
-		}
+	if err := plan.driverShape(); err != nil {
+		return nil, err
 	}
 	c := profile.OracleCases[0]
 	if c.Encoding != kit.EncodingUTF8 || len(c.SvcSource) != 0 {
 		return nil, refuse(kit.KindUnsupported, "SEMANTICS_CONTEXT_UNSUPPORTED", nil)
 	}
 	return plan, nil
+}
+
+func (plan *semanticCapturePlan) grammarShape(grammar []kit.NativeInput) error {
+	pagedParser := false
+	for _, pin := range grammar {
+		if pin.Bytes > kit.MaxDocumentBytes && (!plan.paged() || pin.Role != "parser" || pin.Bytes > kit.BuildFileBytes) {
+			return refuse(kit.KindResourceLimit, "SEMANTICS_MEMBER_LIMIT", nil)
+		}
+		if pin.Role == "parser" && pin.Bytes > kit.MaxDocumentBytes {
+			pagedParser = true
+		}
+	}
+	if plan.Context == semanticPagedContext || plan.binaries() && pagedParser {
+		if err := plan.parserShape(grammar); err != nil {
+			return err
+		}
+	} else if plan.binaries() {
+		for _, m := range plan.Members {
+			if strings.HasPrefix(m.Role, "grammar-paged-") {
+				return refuse(kit.KindInvalidInput, "SEMANTICS_MEMBER_PLAN", nil)
+			}
+		}
+	}
+	return nil
 }
 
 // The local leaf cannot approve itself; the immutable projection keeps the prior verdict.
