@@ -910,6 +910,7 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		if b := r.eligibility; b != nil {
 			t.Logf("eligibility ledger at exit work=%d/%d logical=%d/%d", b.work, eligibilityWorkLimit, b.logical, b.logicalCap())
 		}
+		t.Logf("eligibility bytes_read=%d", r.totalRead) // run-wide shared read total; the reader already enforces its cap
 	}()
 	cache := &semanticNativeCache{}
 	scope := &eligibilityScope{r: r, native: cache}
