@@ -45,6 +45,7 @@ func classificationAddSecondEligibilityNative(f *eligibilityFixture, id string) 
 }
 
 func TestQueryClassificationNativeSelectionAfterSyntheticCorePass(t *testing.T) {
+	t.Parallel()
 	for _, selected := range []string{"native-current", "native-alternate"} {
 		t.Run(selected, func(t *testing.T) {
 			f := newEligibilityFixture(t)

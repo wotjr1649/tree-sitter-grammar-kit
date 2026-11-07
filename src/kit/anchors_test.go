@@ -221,6 +221,7 @@ func TestReplayAnchors(t *testing.T) {
 // registered anchor on the recorded word passes; one on another range fails the P
 // obligation even when the record says PASS.
 func TestQualifyAnchors(t *testing.T) {
+	t.Parallel()
 	run := func(a ExpectAnchor) QualificationResult {
 		f := newQfx(t)
 		f.inv.Routes[0].Workload.Cases[0].Expect[0].Anchors = []ExpectAnchor{a}

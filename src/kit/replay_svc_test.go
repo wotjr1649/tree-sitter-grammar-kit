@@ -164,6 +164,7 @@ func TestSvcReplayRejectsUnregisteredComposite(t *testing.T) {
 }
 
 func TestQualifyRejectsUnregisteredComposite(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	mut := qfxMut{record: func(set string, records []map[string]any) {
 		if set != "s06-fxa" {
@@ -181,6 +182,7 @@ func TestQualifyRejectsUnregisteredComposite(t *testing.T) {
 }
 
 func TestQualifyRejectsStepOrdinal(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	mut := qfxMut{record: func(set string, records []map[string]any) {
 		if set == "s06-fxa" {

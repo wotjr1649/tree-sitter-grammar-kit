@@ -187,6 +187,7 @@ func TestRecordManifestForHostMarkers(t *testing.T) {
 }
 
 func TestReplayReuseRejectsRehashedMutations(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"run", "policy", "producer", "missing-role", "missing-zero", "old-source", "claim", "null-claim", "raw-drift", "missing-raw", "legacy-result", "legacy-reducer", "edit-point-both", "source-witness"} {
 		t.Run(name, func(t *testing.T) {
 			f := reuseFixture(t)

@@ -63,6 +63,7 @@ func tsqlContextCases(t *testing.T) []tsqlContextCase {
 }
 
 func TestTSQLContextNativeSnapshots(t *testing.T) {
+	t.Parallel()
 	for _, c := range tsqlContextCases(t) {
 		t.Run(c.ID, func(t *testing.T) {
 			source := []byte(c.Source)

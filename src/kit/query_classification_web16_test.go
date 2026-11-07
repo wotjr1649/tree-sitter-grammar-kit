@@ -650,6 +650,7 @@ func TestQueryClassificationWeb16EntrySelectionIsDisjoint(t *testing.T) {
 }
 
 func TestQueryClassificationWeb16ProfilesAndCompilerClosure(t *testing.T) {
+	t.Parallel()
 	names := []string{"javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty"}
 	var totalDefinitions, totalPatterns, totalCaptureEntries uint64
 	allCaptureNames := make(map[string]bool)
@@ -723,6 +724,7 @@ func TestQueryClassificationWeb16ProfilesAndCompilerClosure(t *testing.T) {
 }
 
 func TestQueryClassificationWeb16JavaScriptAndJSXShareSymbolWithoutRouteExchange(t *testing.T) {
+	t.Parallel()
 	javascript := classificationEmptyStaticFixtureForTest(t, "javascript4-empty")
 	jsx := classificationEmptyStaticFixtureForTest(t, "jsx3-empty")
 	if javascript.profile.Symbol != "tree_sitter_javascript" || jsx.profile.Symbol != javascript.profile.Symbol ||
@@ -751,6 +753,7 @@ func TestQueryClassificationWeb16JavaScriptAndJSXShareSymbolWithoutRouteExchange
 }
 
 func TestQueryClassificationWeb16RejectsSourceAliasesAndReusedReferences(t *testing.T) {
+	t.Parallel()
 	fixture := classificationEmptyStaticFixtureForTest(t, "typescript7-empty")
 	anchors := fixture.anchors
 	for _, name := range []string{"javascript", "javascript4-empty-alias", "jsx3-empty ", "typescript7-empty2", "tsx2", ""} {

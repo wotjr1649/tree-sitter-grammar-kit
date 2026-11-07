@@ -9,6 +9,7 @@ import (
 )
 
 func TestSemanticEligibilityBorrowedScope(t *testing.T) {
+	t.Parallel()
 	fixture := newEligibilityFixture(t)
 	req := fixture.request()
 	b := semanticTestBudget(t)

@@ -535,6 +535,7 @@ func (f *eligibilityFixture) request() QueryReferenceEligibilityRequest {
 }
 
 func TestQueryReferenceEligibilityComplete(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	req := f.request()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -834,6 +835,7 @@ func TestQueryReferenceEligibilityAdversarial(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMalformedAndApproval(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	req := f.request()
 	for _, tc := range []struct {
@@ -939,6 +941,7 @@ func TestQueryReferenceEligibilityInterruption(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityFreshSnapshot(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	req := f.request()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1004,6 +1007,7 @@ func TestQueryReferenceEligibilityBudgetReservations(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityInvalidParent(t *testing.T) {
+	t.Parallel()
 	for _, parent := range []int64{-2, 100000} {
 		t.Run(fmt.Sprint(parent), func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -1128,6 +1132,7 @@ func TestQueryReferenceEligibilityReview33(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityManifestAndABI(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"space-path", "missing-parser-step", "unknown-grammar-role", "runtime-abi"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -1176,6 +1181,7 @@ func TestQueryReferenceEligibilityManifestAndABI(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityReview34(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"current-missing-executable", "current-wrong-executable-path"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -1252,6 +1258,7 @@ func TestQueryReferenceEligibilityReview34(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMemberInterruptions(t *testing.T) {
+	t.Parallel()
 	for _, where := range []string{"tool", "registered-tool", "input", "replay"} {
 		for _, kind := range []string{"cancel", "wall", "work", "values"} {
 			if kind == "values" && where != "replay" {
@@ -1518,6 +1525,7 @@ func TestQueryReferenceEligibilityBindingInterruption(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityTupleBindingFailure(t *testing.T) {
+	t.Parallel()
 	for _, id := range []string{"current-ref-1", "native-current"} {
 		for _, malformed := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s-malformed-%v", id, malformed), func(t *testing.T) {
@@ -1699,6 +1707,7 @@ func TestQueryReferenceEligibilityReview36(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMissingBatchObservation(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	q := f.witness.Queries[0]
 	q.ID = "q1"
@@ -1793,6 +1802,7 @@ func TestQueryReferenceEligibilityMissingBatchObservation(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMissingObservationKnownInputs(t *testing.T) {
+	t.Parallel()
 	for _, bad := range []string{"missing-source", "missing-query", "query-hash", "library-hash", "malformed"} {
 		t.Run(bad, func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -1844,6 +1854,7 @@ func TestQueryReferenceEligibilityMissingObservationKnownInputs(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityReview37(t *testing.T) {
+	t.Parallel()
 	t.Run("partial-field-product", func(t *testing.T) {
 		r, e := startRun(ctxT(t), 30*time.Second)
 		if e != nil {
@@ -1912,6 +1923,7 @@ func TestQueryReferenceEligibilityReview37(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityMissingSourceMalformedNative(t *testing.T) {
+	t.Parallel()
 	for _, nested := range []bool{false, true} {
 		t.Run(fmt.Sprint(nested), func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -2112,6 +2124,7 @@ func TestQueryReferenceEligibilityReview38(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	var raw nativewire.Response
 	if e := jsonv2.Unmarshal(f.files["native/response.json"], &raw); e != nil {
@@ -2190,6 +2203,7 @@ func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityReview39(t *testing.T) {
+	t.Parallel()
 	for _, bad := range []string{"valid", "missing-step", "null-has-error", "nested-unknown"} {
 		for _, prior := range []bool{false, true} {
 			t.Run(fmt.Sprintf("missing-native-%s-prior-%v", bad, prior), func(t *testing.T) {
@@ -2843,6 +2857,7 @@ func TestQueryReferenceEligibilitySourceFailureBeforeCancellation(t *testing.T) 
 }
 
 func TestQueryReferenceEligibilityProcessPaths(t *testing.T) {
+	t.Parallel()
 	for _, id := range []string{"native-current", "current-ref-0"} {
 		for _, field := range []string{"Path", "Dir", "Both"} {
 			t.Run(id+"/"+field, func(t *testing.T) {
@@ -3145,6 +3160,7 @@ func TestQueryReferenceEligibilityReferenceAbsolutePath(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityReview64(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"valid", "phantom", "wrong-owner"} {
 		t.Run("unused-owned/"+mode, func(t *testing.T) {
 			f := newEligibilityFixture(t)

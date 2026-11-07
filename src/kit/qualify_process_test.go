@@ -3,6 +3,7 @@ package kit
 import "testing"
 
 func TestQualifyRetainsSegmentProcessObservations(t *testing.T) {
+	t.Parallel()
 	for _, top := range []string{"absent", "smaller", "larger"} {
 		t.Run(top, func(t *testing.T) {
 			f := newQfx(t)

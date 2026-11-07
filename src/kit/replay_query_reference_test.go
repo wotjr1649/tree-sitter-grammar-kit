@@ -49,6 +49,7 @@ func referenceReplayFixture(t *testing.T, f *referenceFixture) (QueryReferenceCo
 }
 
 func TestReplayQueryReferenceConnection(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"complete", "missing-anchor", "wrong-anchor", "missing-response", "mutated-response", "graph-witness-undeclared", "graph-witness-missing", "shared-context", "outer-response-pin", "outer-graph-pin", "wrong-records", "wrong-subject", "wrong-subject-mode", "wrong-subject-status", "wrong-subject-assessment", "outer-extra", "nested-extra"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newReferenceFixture(t)
@@ -206,6 +207,7 @@ func TestReplayQueryReferenceConnectionSinglePass(t *testing.T) {
 }
 
 func TestReplayQueryReferenceRegistrationRoles(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"missing-policy", "duplicate-policy", "policy-inside", "retained-inside", "evidence-outside"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newReferenceFixture(t)
@@ -747,6 +749,7 @@ func TestReplayQueryReferencePartialSubject(t *testing.T) {
 }
 
 func TestReplayQueryReferencePartialNativeRegistration(t *testing.T) {
+	t.Parallel()
 	for _, state := range []string{"verified", "verified-empty", "required-empty", "early-error", "native-pass", "native-required"} {
 		t.Run(state, func(t *testing.T) {
 			f := newReferenceFixture(t)

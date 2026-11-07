@@ -183,6 +183,7 @@ func codesOf(res VerifyResult) string {
 // S02-A01/A02: an independently prepared expected set matches; each single-member change
 // yields its specific difference and FAIL, never a generic success.
 func TestVerifyDirectory(t *testing.T) {
+	t.Parallel()
 	ref := t.TempDir()
 	writeTree(t, ref, verifyTree)
 	exp := trustedExpected(t, ref, nil)
