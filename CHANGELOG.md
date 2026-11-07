@@ -19,6 +19,7 @@
 - eligibility 검증이 직접 시작한 원장의 논리 처리량 한도를, approval에 결속된 `full-input-utf8-paged-parser/r1` context에 한해 1 GiB에서 1.5 GiB로 올렸다(#216). 다른 context·결속되지 않은 요청·semantic/replay/qualification run의 원장은 1 GiB 그대로이며 caller가 값을 지정하는 옵션은 없다. paged context의 public API 논리 처리량 최악 상한이 1.5 GiB로 바뀐다. 이 상향만으로 PostgreSQL9 분류를 채택하지 않으며, 분류는 새 source revision에서 처음부터 다시 실행해 [계약](docs/specs/instrumented-query-reference.md#postgresql-9개-정의의-parser-paging-분류)에 기록한다.
 
 - `full-input-utf8-paged-binaries/r1`에서 16 MiB를 넘는 driver executable·reference library의 descriptor 검증(manifest/r7, `oracle-set-r6`)을 추가했다(#216). eligibility 원장의 1.5 GiB는 이 context에도 같은 owner·bound 조건으로 적용되며 공개 API logical 최악 상한은 1.5 GiB로 같다. semantic·replay·qualification의 상속 원장은 1 GiB를 유지한다. descriptor의 offline 검증 범위이며 실제 분할 수집·실행 진위를 보증하지 않는다.
+- `full-input-utf8-paged-binaries/r1`의 native driver 분할 producer를 추가했다(#216). build 제거 전 16 MiB 초과·64 MiB 이하 executable을 16 MiB part와 descriptor로 보존하고 사전 계획·원본 identity를 대조하며 parser paging과 공존한다. manifest/r7·`oracle-set-r6`를 사용하고 공개 API·logical 최악 상한 1.5 GiB는 유지한다.
 
 ## v0.2.0 — 2026-10-06
 

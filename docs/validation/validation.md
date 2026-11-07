@@ -56,7 +56,7 @@ Grammar29개와 원본 query6개, native registry·inventory·qualification의 �
 
 ### #216 binary paging 계약 검증
 
-[Binary paging 계약](../specs/instrumented-query-reference.md#216-binary-paging)의 합성 저장 자료 검증이다. 물리 16 MiB/file, logical binary 64 MiB, 공유 work 32,000,000을 유지한다. eligibility가 직접 시작한 approval 결속 원장만 두 paged context에서 1.5 GiB이고, semantic·replay·qualification에서 상속한 원장은 1 GiB다. T1–T6는 한 PR의 작업 단위이며, library descriptor 검증이 없는 T2 commit만 분리해 통합하지 않는다.
+[Binary paging 계약](../specs/instrumented-query-reference.md#216-binary-paging)의 합성 저장 자료와 native driver producer 검증이다. 물리 16 MiB/file, logical binary 64 MiB, 공유 work 32,000,000을 유지한다. eligibility가 직접 시작한 approval 결속 원장만 두 paged context에서 1.5 GiB이고, semantic·replay·qualification에서 상속한 원장은 1 GiB다. T1–T6는 한 PR의 작업 단위이며, library descriptor 검증이 없는 T2 commit만 분리해 통합하지 않는다.
 
 | 작업 | 실제 시험 | 고정하는 계약 |
 |---|---|---|
@@ -106,6 +106,48 @@ Grammar29개와 원본 query6개, native registry·inventory·qualification의 �
 M-Q1의 원안은 r6 leaf FAIL 예측이었으나 `selectJSONRevision`이 유효 JSON 끝에서도 대안 밖 revision을 반환하므로 동일 unsupported 분기로 간다. 실행 전 동치 처분과 실제 무FAIL·무SKIP 결과를 함께 보존하며 검출 성공으로 세지 않는다. 이 처분은 유효 최소 JSON에 한정하며 malformed trailing JSON의 동치를 주장하지 않는다. M1-inv·M1-lib overlay에는 unused-local 컴파일 오류를 막는 `_ = logical`만 보완한다. M-L7은 Go overlay를 따르지 않는 SelectionSite의 런타임 source 읽기만 mutant 경로로 돌리고 구조 단언을 유지한다. M-L6의 Boundary 사전 조건 실패 아래 미도달 자식은 허용하되 다른 누락 시험은 허용하지 않는다.
 
 runtime 필요 시험(T4의 네 시험, `TestSemanticBinaryPagedReplay`, `TestSemanticPagedParserRejectsBinariesReducer`)의 로컬 근거는 `TSGK_NATIVE_RUNTIME`를 설정한 실행의 각 `--- PASS:` 줄이며 SKIP은 근거가 아니다. M1-set·M-U5의 set 반례·M-R6도 같은 native 환경의 정상 기준선과 변이를 사용한다. 이 환경은 fixture의 pinned runtime source closure를 읽게 하며 실제 native/reference executable 실행·TSQL8 관측·producer 수집의 증거가 아니다.
+
+Native의 합성 시험은 compiler 없이 driver 사전 계획과 분할 producer를 검사한다. 다음 이름은 `src/internal/native`의 실제 top-level 시험이다.
+
+| 실제 시험 | 고정하는 계약 |
+|---|---|
+| `TestSemanticCapturePlanDriverShapeBounds` | plain 또는 descriptor 하나·연속 part 2~4개, 혼용·누락·경로·대소문자 충돌 거부 |
+| `TestSemanticCapturePlanContextSelection`, `TestSemanticPagedBinariesContextMatchesKit` | strict registration/selector의 binaries 선택과 kit r7 schema 일치 |
+| `TestSemanticCapturePlanBuildOnlyDriverRoles`, `TestSemanticCapturePlanDriverRolesOtherContexts` | build-only driver role 정확 일치와 다른 context의 paged role 거부 |
+| `TestSemanticCapturePlanGrammarShapeUnderBinaries` | 큰 parser 0개 또는 1개, parser 부재 시 grammar-paged role 거부와 build file 상한 |
+| `TestSemanticDriverFilesBoundaries` | helper의 16 MiB 거부, +1·32 MiB·+1·64 MiB 허용과 part 수, 64 MiB+1의 읽기 전 거부 |
+| `TestSemanticDriverFilesContent` | part 재결합 bytes·해시·경로·role, 원본 executable logical identity와 descriptor 물리 identity 분리 |
+| `TestSemanticDriverFilesIntegrity`, `TestSemanticDriverFilesChangedWhileReading` | 취소·SHA·크기·디렉터리 거부, 사후 SameFile·크기·ModTime 불일치와 부분 결과 미반환 |
+| `TestSemanticBuildFilesBinariesDriver`, `TestSemanticBuildFilesOtherContextsKeepDriverLimit` | binaries의 16 MiB 이하 plain/+1 분할 선택, 기존 두 context의 driver 읽기 전 물리 한도 |
+| `TestSemanticPlanMatchesDriverParts` | build 뒤 실제 part 수·plain/paged와 사전 계획의 정확한 일치 |
+| `TestSemanticParserPagedOutputGolden` | helper 추출 전 고정한 parser part·descriptor의 경로·role·bytes·SHA-256 유지 |
+
+기존 `TestSemanticCapturePlanParserShapeBounds`, `TestSemanticPagedParserCapture`, `TestOracleSemanticsBuildCaptureBounds`도 회귀 범위다. 합성 시험의 PASS를 실제 compiler 실행 근거로 사용하지 않는다.
+
+Compile control의 로컬 근거는 Root가 승인한 Windows GCC 실행이다. `TSGK_BENCH_PREPARED`·`TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC`를 child에 설정하고 HARD 4 GiB Job에서 실행했다. 기존 `TestOracleSemanticsPagedProducerControl`의 `normal`·`missing-manifest`·`unexpected-stderr`가 SKIP 없이 PASS한 기준선을 확보하고, `TestOracleSemanticsPagedBinariesProducerControl/{driver-only,parser-and-driver}`도 두 leaf 모두 SKIP 없이 PASS했다. JSON parser 사본에 `const unsigned char tsgk_binary_pad[16777300] = {1};`을 넣어 실제 driver 17,189,935 B와 part 2개(16,777,216 B·412,719 B)를 관측했다. driver-only는 parser가 16 MiB 이하이고 동시 모드는 parser가 16,777,217 B·part 2개다. 두 모드는 build `REMOVED`, `COMPLETED/BLOCKED`, manifest/r7, 모든 물리 member ≤16 MiB, driver descriptor 1·part 2·plain 0과 제품 `kit.VerifyOracleSet`의 `Set.Valid`를 검사한다. 이 근거는 외부 reference 승인·TSQL8 관측이나 다른 compiler의 배열 보존을 증명하지 않는다.
+
+CI 선택은 로컬 실행 근거와 구분한다. `.github/workflows/foundation.yml`의 `if (-not $IsMacOS)` 블록에서 닫힌 native `-run` 선택식의 `OracleSemantics(...)` 대안에 `PagedBinariesProducerControl`을 포함하고, 최상위 PASS 확인 목록에도 `TestOracleSemanticsPagedBinariesProducerControl`을 포함한다. Windows/Linux 선택과 기존 `-timeout=180s`를 유지하며 macOS는 제외한다. 동일 코드·Windows 환경에서 기존/추가 선택 묶음의 로컬 wall은 38.626초/51.210초(증가 12.584초), Job committed-memory peak는 1,189,552,128 B/1,572,818,944 B였다. hosted·cold-cache·Linux/sanitizer 시간의 보장이 아니며 hosted 다중 OS CI 실행을 뜻하지 않는다.
+
+Native producer 변이는 다음과 같이 실행했다. N2는 상·하한으로 나누며 아래 `{a,b}`는 전체 leaf 각각으로 전개한다. 같은 이름의 재실행은 각 실행의 선택 범위에서 FAIL leaf 집합을 대조한다.
+
+| 변이 | 편집 | 정확한 기대 = 실제 FAIL leaf |
+|---|---|---|
+| M-N2-upper / M-N2-lower | driver part 상한 4 → 5 / 하한 2 → 1 | `TestSemanticCapturePlanDriverShapeBounds/parts-5` / `TestSemanticCapturePlanDriverShapeBounds/parts-1` |
+| M-N4 | strict registration에서 binaries 제거 | `TestSemanticCapturePlanContextSelection/registration-binaries` |
+| M-N5 | selector의 binaries 비교 제거 | `TestSemanticCapturePlanContextSelection/{registration-binaries,selector-binaries}` |
+| M-N6 | 큰 grammar pin 허용에서 binaries 제거 | `TestSemanticCapturePlanGrammarShapeUnderBinaries/{build-file-boundary,large-without-pages,one-large,two-large}` |
+| M-C1-filter-omit | build-only의 paged driver 두 role 제거 | `TestSemanticCapturePlanBuildOnlyDriverRoles/{driver-paged-descriptor,driver-paged-part}` |
+| M-C1-filter-prefix | driver role 정확 일치 → 접두 매칭 | `TestSemanticCapturePlanBuildOnlyDriverRoles/{driver-future,driver-paged-future}` |
+| M-C1-other-context | 다른 context의 paged driver 거부 제거 | `TestSemanticCapturePlanDriverRolesOtherContexts/{full-input-utf8/r2,full-input-utf8-paged-parser/r1}/{driver-paged-descriptor,driver-paged-part}` |
+| M5-native | 일반 reader의 16 MiB 상한 → 64 MiB | `TestSemanticBuildFilesOtherContextsKeepDriverLimit/{full-input-utf8/r2,full-input-utf8-paged-parser/r1}` |
+| M-N1 (합성) | build-only의 paged driver 두 role 제거 | `TestSemanticCapturePlanBuildOnlyDriverRoles/{driver-paged-descriptor,driver-paged-part}`, `TestSemanticPlanMatchesDriverParts/same` |
+| M-N3 | 사후 SameFile·ModTime 조건 제거, 크기 조건 유지 | `TestSemanticDriverFilesChangedWhileReading/{modtime,same-file}` |
+| M-N7 | 공유 분할 helper의 전체 SHA 비교 무력화 | `TestSemanticDriverFilesIntegrity/wrong-sha`, `TestSemanticPagedParserCapture` |
+| M-N8 | descriptor 직렬화의 물리 SHA를 logical SHA에 넣고 재직렬화 | `TestSemanticDriverFilesContent` |
+| M-N9 | driver logical 상한 `>` → `>=` | `TestSemanticDriverFilesBoundaries/64MiB` |
+| M-N1 / M-N10 (compile) | build-only의 paged driver 두 role 제거 / binaries manifest를 r7 대신 r6으로 발행 | 두 변이 각각 `TestOracleSemanticsPagedBinariesProducerControl/{driver-only,parser-and-driver}` |
+
+사전 계획 단계 8개, 분할 producer 단계 11개, compile 단계 2개의 검출 실행을 보존했다. 분할 단계는 M5-native와 N2 상·하한을 각각 세며, N2·N4·N5·N6는 사전 계획 변이의 재실행이다. 모든 검출은 정상 기준선의 기대 leaf PASS·SKIP 0과 대비해 컴파일 성공 후 FAILED/exit 1 및 예상/실제 FAIL leaf의 정확한 일치를 확인했다. M-N7의 첫 unused-import 컴파일 실패는 검출 근거에서 제외하고 import 참조를 유지한 `false && <원래 SHA 비교>` 변이의 실행으로 대체했다. compile M-N1은 두 모드에서 `SEMANTICS_MEMBER_PLAN`, M-N10은 r6/r7 schema 불일치와 제품의 `REFERENCE_SET_INVALID`·`Set.Valid=false`를 확인했다.
 
 TASK별 결과는 개발 검증이며 PR 근거는 최종 후보 commit에서 다시 결속한다. 변이 manifest에 HEAD·porcelain·관련 제품/시험 파일 SHA-256과 생성 시각을 기록하고 대상 mtime이 manifest 이후로 바뀌지 않았는지 확인한다. overlay·mutant SHA를 다시 읽어 대조하고, manifest 뒤에 동일 `(native, -run)`의 기준선을 실행해 기대 leaf PASS·SKIP 0을 확인한다. 검출 대상 변이는 컴파일 실패 없이 FAILED/exit 1, 부모를 제외한 FAIL leaf 집합이 예측과 정확히 같고 나머지 선택 시험은 PASS여야 한다. 모든 Go 실행은 `CGO_ENABLED=0`, 유한 wall과 HARD 4 GiB Job에서 직렬 수행하고 cleanup 검증·잔류 0, label별 wall·peak와 원본 결과를 보존한다. 최종 HEAD·porcelain·대상 SHA가 manifest와 달라지면 기존 결과를 그 후보의 근거로 재사용하지 않는다.
 
