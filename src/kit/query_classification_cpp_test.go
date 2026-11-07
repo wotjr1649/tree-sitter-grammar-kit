@@ -152,7 +152,7 @@ func classificationPagedDefinitionPlanValid(p classificationCPP4Profile, a class
 	if err := classificationPagedAnchorsValid(p, a); err != nil {
 		return err
 	}
-	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != p.AnchorSHA || plan.APIAnchorsSHA256 != "" || plan.NativeContext != semanticPagedContext ||
+	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != p.AnchorSHA || plan.APIAnchorsSHA256 != "" || plan.NativeContext != (classificationAnchors{Route: p.Route}).nativeContext() ||
 		!eligibilityRevision(plan.SourceRevision) || !validID(plan.RunID) || !hex64.MatchString(plan.RuntimeManifestSHA256) || !hex64.MatchString(plan.CompilerSHA256) ||
 		!classificationPagedGrammarValid(p, plan.Grammar) {
 		return fmt.Errorf("%s preregistration differs from its closed paged profile", p.Label)
@@ -370,7 +370,7 @@ func classificationPagedDefinitionProjection(p classificationCPP4Profile, anchor
 	if !classificationLibraryMatches(s) {
 		return result, fmt.Errorf("%s reference library differs from guarded compiler output", p.Label)
 	}
-	if plan.NativeContext != semanticPagedContext || s.reg.Context != semanticPagedContext || s.reg.Native == nil || s.reg.Native.Symbol != p.Symbol || s.reg.Native.InvocationID != "native-"+anchors.Case ||
+	if plan.NativeContext != (classificationAnchors{Route: p.Route}).nativeContext() || s.reg.Context != plan.NativeContext || s.reg.Native == nil || s.reg.Native.Symbol != p.Symbol || s.reg.Native.InvocationID != "native-"+anchors.Case ||
 		s.witness.Schema != queryEligibilityWitnessSchema || s.witness.Policy != "tsgk-predicates/r1" || s.witness.Case != anchors.Case || s.witness.Route != p.Route || s.witness.Role != "owned" || s.witness.Encoding != EncodingUTF8 ||
 		s.witness.Platform != s.approval.Candidate.Platform || s.witness.Input.Path != "source.bin" || s.witness.Input.Bytes != 0 || s.witness.Input.SHA256 != anchors.Source.SHA256 || s.witness.Input.Role != "case" ||
 		s.witness.Native.RequestID != anchors.Case || s.witness.Native.API || s.witness.Native.ProducerABI != p.ABI || s.witness.Native.RuntimeManifestSHA256 != plan.RuntimeManifestSHA256 || s.witness.Native.ObservationRunID != plan.RunID || len(s.witness.Native.Points) != 0 ||
@@ -435,11 +435,24 @@ func classificationPagedDefinitionProjection(p classificationCPP4Profile, anchor
 	if err != nil {
 		return result, err
 	}
-	libraryPin, libraryOK := s.owned["current/go.dll"]
-	if nativeInvocation == nil || nativeInvocation.ID != "native-"+anchors.Case || nativeInvocation.Executable == nil || nativeInvocation.Executable.Member.SHA256 != s.witness.Native.ExecutableSHA256 || !hex64.MatchString(nativeInvocation.Executable.Member.SHA256) {
+	if nativeInvocation.Executable == nil {
+		return result, fmt.Errorf("guarded native driver executable is missing")
+	}
+	driverSHA, librarySHA := nativeInvocation.Executable.Member.SHA256, s.reg.Native.ReferenceLibrary.Member.SHA256
+	if anchors.Route == "tsql" {
+		driverSHA, librarySHA, err = classificationTSQL8BinaryIdentities(s, nativeInvocation)
+		if err != nil {
+			return result, err
+		}
+	}
+	if driverSHA != s.witness.Native.ExecutableSHA256 {
+		return result, fmt.Errorf("guarded logical driver identity differs")
+	}
+	libraryPin, libraryOK := classificationLibraryPin(s)
+	if nativeInvocation == nil || nativeInvocation.ID != "native-"+anchors.Case || nativeInvocation.Executable == nil || !hex64.MatchString(driverSHA) {
 		return result, fmt.Errorf("guarded %s native driver executable is missing or mismatched", p.Label)
 	}
-	if !libraryOK || libraryPin.NodeID != "go-library-build" || libraryPin.Member.Role != "runtime-library" || !hex64.MatchString(libraryPin.Member.SHA256) || s.reg.Build == nil || s.reg.Native.ReferenceLibrary == nil || !hex64.MatchString(s.reg.Native.ReferenceLibrary.Member.SHA256) {
+	if !libraryOK || libraryPin.NodeID != "go-library-build" || !classificationLibraryMatches(s) || !hex64.MatchString(librarySHA) || s.reg.Build == nil || s.reg.Native.ReferenceLibrary == nil || !hex64.MatchString(s.reg.Native.ReferenceLibrary.Member.SHA256) {
 		return result, fmt.Errorf("guarded %s build or route library binding is missing", p.Label)
 	}
 	libraryNode, ok := s.nodes["go-library-build"]
@@ -451,17 +464,21 @@ func classificationPagedDefinitionProjection(p classificationCPP4Profile, anchor
 			return result, fmt.Errorf("guarded %s build identity pin is invalid", p.Label)
 		}
 	}
+	frameScope := "paged-parser"
+	if p.Route == "tsql" {
+		frameScope = "paged-binaries"
+	}
 	result = classificationGoDefinitionProjectionResult{
-		Scope: fmt.Sprintf("conditional historical classification of %d predicate-free %s definitions and %d potential %s links; one empty-source paged-parser native-query frame is the guard, not per-case or semantic completion", p.QueryCount, p.ScopeName, p.Counts.PotentialQueryTreeRoles, p.Set),
+		Scope: fmt.Sprintf("conditional historical classification of %d predicate-free %s definitions and %d potential %s links; one empty-source %s native-query frame is the guard, not per-case or semantic completion", p.QueryCount, p.ScopeName, p.Counts.PotentialQueryTreeRoles, p.Set, frameScope),
 		Guard: classificationGoDefinitionGuardBinding{
 			ReaderRevision: readerRevision, NativeContext: plan.NativeContext, ObservationSourceRevision: plan.SourceRevision, ObservationRunID: plan.RunID,
 			ObservationAttempt: s.approval.Candidate.Attempt, ObservationPlatform: s.approval.Candidate.Platform,
 			Case: anchors.Case, Route: anchors.Route, Workload: anchors.Workload, Operation: anchors.Operation,
 			NativeInvocationID: nativeInvocation.ID, ReferenceInvocationIDs: orderedReferenceIDs,
 			CaseSourceSHA256: anchors.Source.SHA256, AnchorsSHA256: anchors.sha256, RuntimeManifestSHA256: plan.RuntimeManifestSHA256,
-			ProducerABI: s.witness.Native.ProducerABI, DriverSHA256: nativeInvocation.Executable.Member.SHA256,
-			ReferenceExecutableSHA256: referenceExecutableSHA, ReferenceLibrarySHA256: s.reg.Native.ReferenceLibrary.Member.SHA256,
-			CurrentLibrarySHA256: libraryPin.Member.SHA256, CompilerSHA256: libraryNode.Identities["tool"],
+			ProducerABI: s.witness.Native.ProducerABI, DriverSHA256: driverSHA,
+			ReferenceExecutableSHA256: referenceExecutableSHA, ReferenceLibrarySHA256: librarySHA,
+			CurrentLibrarySHA256: librarySHA, CompilerSHA256: libraryNode.Identities["tool"],
 			BuildIdentitySHA256: s.reg.Build.Identity.Member.SHA256, SourceSnapshotSHA256: s.reg.Build.SourceSnapshot.Member.SHA256,
 			VendorSnapshotSHA256: s.reg.Build.VendorSnapshot.Member.SHA256, Grammar: slices.Clone(plan.Grammar),
 			ApprovalSHA256: core.ApprovalSHA256, RegistrationSHA256: core.RegistrationSHA256, WitnessSHA256: core.WitnessSHA256,

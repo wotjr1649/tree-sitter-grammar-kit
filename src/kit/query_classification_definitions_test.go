@@ -636,7 +636,7 @@ func classificationDefinitionRows(a classificationAnchors, inputs classification
 		want = 7
 	case "TSX", "Bash":
 		want = 2
-	case "Python", "Swift":
+	case "Python", "Swift", "T-SQL":
 		want = 8
 	case "PostgreSQL":
 		want = 9

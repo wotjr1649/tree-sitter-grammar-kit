@@ -77,7 +77,7 @@ func TestQueryClassificationGoLocal(t *testing.T) {
 }
 
 func classificationGoLocalSkipsProfile(profile string) bool {
-	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" || profile == "kotlin5-empty" || profile == "swift8-empty" || profile == "postgresql9-empty" ||
+	return profile == "csharp15-empty" || profile == "c4-empty" || profile == "java5-empty" || profile == "rust4-empty" || profile == "cpp4-empty" || profile == "kotlin5-empty" || profile == "swift8-empty" || profile == "postgresql9-empty" || profile == "tsql8-empty" ||
 		classificationSmall17ProfileName(profile) || classificationWeb16ProfileName(profile) || classificationScript17ProfileName(profile) || classificationDartPHP12ProfileName(profile) || classificationPowerShell3ProfileName(profile)
 }
 
@@ -185,7 +185,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 			t.Fatal(err)
 		}
 		name, expectedSHA, route, definitions = cjrProfile.AnchorFile, cjrProfile.AnchorSHA, cjrProfile.Route, cjrProfile.QueryCount
-	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty":
 		pagedProfile, _ := classificationPagedProfileForName(profile)
 		name, expectedSHA, route, definitions = pagedProfile.AnchorFile, pagedProfile.AnchorSHA, pagedProfile.Route, pagedProfile.QueryCount
 	case "json1-tiny", "yaml1-empty", "xml2-tiny", "html2-empty", "css11-empty":
@@ -237,7 +237,7 @@ func classificationGoAnchors(t *testing.T) (classificationAnchors, []byte) {
 		if err := classificationCJRAnchorsValid(cjrProfile, a); err != nil {
 			t.Fatal(err)
 		}
-	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty":
+	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty":
 		pagedProfile, _ := classificationPagedProfileForName(profile)
 		if err := classificationPagedAnchorsValid(pagedProfile, a); err != nil {
 			t.Fatal(err)
@@ -278,6 +278,8 @@ func (a classificationAnchors) nativeContext() string {
 		return "full-input-utf8/r2"
 	case "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php", "powershell":
 		return "full-input-utf8/r2"
+	case "tsql":
+		return semanticPagedBinariesContext
 	case "csharp", "cpp", "kotlin", "swift", "postgresql-sql":
 		return semanticPagedContext
 	default:
@@ -303,6 +305,8 @@ func (a classificationAnchors) nativeSymbol() string {
 		return "tree_sitter_kotlin"
 	case "swift":
 		return "tree_sitter_swift"
+	case "tsql":
+		return "tree_sitter_mssql"
 	case "postgresql-sql":
 		return "tree_sitter_postgres"
 	case "json":
@@ -344,9 +348,9 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 	switch a.Route {
 	case "csharp":
 		return a.sha256 == classificationCSharpAnchorsSHA && plan.NativeContext == semanticPagedContext
-	case "cpp", "kotlin", "swift", "postgresql-sql":
+	case "cpp", "kotlin", "swift", "postgresql-sql", "tsql":
 		profile, ok := classificationPagedProfileForRoute(a.Route)
-		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == semanticPagedContext
+		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
 	case "c", "java", "rust":
 		profile, ok := classificationCJRProfileForRoute(a.Route)
 		return ok && a.sha256 == profile.AnchorSHA && plan.NativeContext == a.nativeContext()
@@ -365,7 +369,7 @@ func classificationPlanContextMatches(a classificationAnchors, plan classificati
 
 func classificationNativePrefix(a classificationAnchors) string {
 	switch a.Route {
-	case "csharp", "cpp", "kotlin", "swift", "postgresql-sql":
+	case "csharp", "cpp", "kotlin", "swift", "postgresql-sql", "tsql":
 		return "oracle/"
 	case "go", "c", "java", "rust":
 		return "current/native/"
@@ -386,7 +390,7 @@ func classificationGrammarContext(s *eligibilitySession, a classificationAnchors
 		if !exists || inv == nil || pin.NodeID != inv.Node.ID {
 			return fmt.Errorf("classification grammar owner differs: %s", g.Path)
 		}
-		if a.nativeContext() == semanticPagedContext && g.Role == "parser" {
+		if semanticParserPagingContext(a.nativeContext()) && g.Role == "parser" {
 			if pin.Member.Role != "grammar-paged-descriptor" {
 				return fmt.Errorf("classification parser descriptor missing")
 			}
@@ -693,7 +697,15 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	for _, q := range anchors.Queries {
 		queries = append(queries, OracleQuery{ID: q.ID, Source: q.Source})
 	}
-	n := a.node("native-"+anchors.Case, "current", digestHex(actualJSONRead(t, filepath.Join(nativeRoot, "capture", "driver.bin"))), anchors.Source.SHA256, digestHex(eligibilityJSON(t, queries)), "tsgk-native/r4", "native-"+anchors.Case, StatusCompleted, AssessPass)
+	var build struct {
+		ExecutableSHA256 string `json:"executable_sha256"`
+		Closure          []struct {
+			Path string `json:"path"`
+			Role string `json:"role"`
+		} `json:"closure"`
+	}
+	actualJSONDecode(t, filepath.Join(nativeRoot, "capture", "build.json"), &build)
+	n := a.node("native-"+anchors.Case, "current", build.ExecutableSHA256, anchors.Source.SHA256, digestHex(eligibilityJSON(t, queries)), "tsgk-native/r4", "native-"+anchors.Case, StatusCompleted, AssessPass)
 	n.Identities["policy"] = NativePolicy(NativeOperations()[anchors.Operation], OutputTree, nil).SHA256
 	a.nodes[n.ID] = n
 	pins := map[string]eligibilityMember{}
@@ -717,24 +729,36 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 		t.Fatal("source changed")
 	}
 	executable := pins["capture/driver.bin"]
-	expected := eligibilityNativeExpected{Protocol: "tsgk-native/r4", RequestID: anchors.Case, NodeLimit: NativeOperations()[anchors.Operation].Nodes, API: anchors.API, Points: []uint32{}, RuntimeManifestSHA256: plan.RuntimeManifestSHA256, ProducerSHA256: captured.BuildIdentity, ExecutableSHA256: executable.Member.SHA256, ProducerABI: anchors.ABI, ObservationRunID: plan.RunID, HistoryStart: 0, Process: process}
+	executableSHA := executable.Member.SHA256
+	if anchors.Route == "tsql" {
+		executable = pins["capture/driver.pages.json"]
+		descriptor := actualJSONRead(t, filepath.Join(nativeRoot, "capture", "driver.pages.json"))
+		logical, good, err := semanticTestBudget(t).semanticPagedBinary(descriptor, "D", "driver", "capture/driver.bin", "capture/driver", func(part ReplayMember) ([]byte, bool, *Error) {
+			pin, ok := pins[part.Path]
+			if !ok || pin.Member.Role != part.Role || pin.Member.Bytes != part.Bytes || pin.Member.SHA256 != part.SHA256 {
+				return nil, false, nil
+			}
+			return actualJSONRead(t, filepath.Join(nativeRoot, filepath.FromSlash(part.Path))), true, nil
+		})
+		if err != nil || !good {
+			t.Fatal("TSQL8 driver capture pages", err)
+		}
+		executableSHA = logical.SHA256
+	}
+	if executableSHA != build.ExecutableSHA256 {
+		t.Fatal("native logical executable differs from build")
+	}
+	expected := eligibilityNativeExpected{Protocol: "tsgk-native/r4", RequestID: anchors.Case, NodeLimit: NativeOperations()[anchors.Operation].Nodes, API: anchors.API, Points: []uint32{}, RuntimeManifestSHA256: plan.RuntimeManifestSHA256, ProducerSHA256: captured.BuildIdentity, ExecutableSHA256: executableSHA, ProducerABI: anchors.ABI, ObservationRunID: plan.RunID, HistoryStart: 0, Process: process}
 	witness := eligibilityWitness{QueryWitnessRegistration: classificationGoRegistration(anchors), Native: expected}
 	queryPins := map[string]eligibilityMember{}
 	for _, q := range anchors.Queries {
 		queryPins[q.ID] = a.copy(n.ID, "current/input/"+q.ID+".scm", "query-source", filepath.Join(nativeRoot, "input", q.ID+".scm"))
 	}
-	var build struct {
-		Closure []struct {
-			Path string `json:"path"`
-			Role string `json:"role"`
-		} `json:"closure"`
-	}
-	actualJSONDecode(t, filepath.Join(nativeRoot, "capture", "build.json"), &build)
 	grammar := map[string]eligibilityMember{}
 	for i, row := range build.Closure {
 		if strings.HasPrefix(row.Role, "grammar-") {
 			name := fmt.Sprintf("capture/build-input-%05d.bin", i)
-			if anchors.nativeContext() == semanticPagedContext && row.Role == "grammar-parser" {
+			if semanticParserPagingContext(anchors.nativeContext()) && row.Role == "grammar-parser" {
 				name = fmt.Sprintf("capture/build-input-%05d.pages.json", i)
 			}
 			pin, exists := pins[name]
@@ -747,12 +771,45 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	requestData := actualJSONRead(t, filepath.Join(root, "library", "request.json"))
 	receiptData := actualJSONRead(t, filepath.Join(root, "library", "receipt.json"))
 	compilerData := actualJSONRead(t, plan.LibraryRequest.Path)
-	libraryData := actualJSONRead(t, filepath.Join(root, "library", anchors.libraryName()))
-	if err := classificationGoLibrary(semanticTestBudget(t), plan, requestData, receiptData, compilerData, libraryData); err != nil {
+	var libraryData, libraryDescriptor []byte
+	var librarySize uint64
+	var libraryParts []ReplayMember
+	librarySHA := ""
+	if anchors.Route == "tsql" {
+		libraryDescriptor = actualJSONRead(t, filepath.Join(root, "library", anchors.libraryName()+".pages.json"))
+		var logical semanticBinaryLogical
+		var good bool
+		var err *Error
+		logical, good, err = semanticTestBudget(t).semanticPagedBinary(libraryDescriptor, "go-library-build", "library", "current/go.dll", "current/go.dll", func(part ReplayMember) ([]byte, bool, *Error) {
+			data := actualJSONRead(t, filepath.Join(root, "library", filepath.Base(part.Path)))
+			libraryParts = append(libraryParts, part)
+			return data, true, nil
+		})
+		if err != nil || !good {
+			t.Fatal("TSQL8 library capture", err)
+		}
+		librarySHA, librarySize = logical.SHA256, logical.Bytes
+	} else {
+		libraryData = actualJSONRead(t, filepath.Join(root, "library", anchors.libraryName()))
+		librarySHA, librarySize = digestHex(libraryData), uint64(len(libraryData))
+	}
+	if err := classificationGoLibrarySize(semanticTestBudget(t), plan, requestData, receiptData, compilerData, librarySize); err != nil {
 		t.Fatal("library compiler capture", err)
 	}
 	a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
-	library := a.add("go-library-build", "current/go.dll", "runtime-library", libraryData)
+	var library eligibilityMember
+	if anchors.Route == "tsql" {
+		library = a.add("go-library-build", "current/go.dll.pages.json", "library-paged-descriptor", libraryDescriptor)
+		for _, part := range libraryParts {
+			data := actualJSONRead(t, filepath.Join(root, "library", filepath.Base(part.Path)))
+			if uint64(len(data)) != part.Bytes || digestHex(data) != part.SHA256 {
+				t.Fatal("TSQL8 library capture part changed")
+			}
+			a.add("go-library-build", part.Path, part.Role, data)
+		}
+	} else {
+		library = a.add("go-library-build", "current/go.dll", "runtime-library", libraryData)
+	}
 	a.add("go-library-build", "current/library-request.json", "compiler-request", requestData)
 	a.add("go-library-build", "current/library-receipt.json", "compiler-receipt", receiptData)
 	a.add("go-library-build", "current/library-compiler.bin", "compiler", compilerData)
@@ -777,7 +834,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 			t.Fatal(err)
 		}
 		ri.ExecutablePath = spec.Path
-		if len(spec.Args) != 6 || spec.Args[1] != anchors.nativeSymbol() || spec.Args[4] != q.ID || spec.Args[5] != library.Member.SHA256 {
+		if len(spec.Args) != 6 || spec.Args[1] != anchors.nativeSymbol() || spec.Args[4] != q.ID || spec.Args[5] != librarySHA {
 			t.Fatal("reference argv changed")
 		}
 		ri.Inputs["library"] = actualJSONPinned(library, 0, spec.Args[0], "PRESERVED_ORIGINAL")
@@ -891,7 +948,11 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		}
 		return data
 	}
-	if err := classificationGoLibrary(s.b, plan, readLibrary("current/library-request.json"), readLibrary("current/library-receipt.json"), readLibrary("current/library-compiler.bin"), readLibrary("current/go.dll")); err != nil {
+	librarySize, libraryErr := classificationGuardedLibrarySize(s)
+	if libraryErr != nil {
+		t.Fatal("guarded library pages", libraryErr)
+	}
+	if err := classificationGoLibrarySize(s.b, plan, readLibrary("current/library-request.json"), readLibrary("current/library-receipt.json"), readLibrary("current/library-compiler.bin"), librarySize); err != nil {
 		t.Fatal("guarded library compiler capture", err)
 	}
 	needsUniqueReferences := classificationPagedRoute(anchors.Route)
@@ -1047,7 +1108,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 				}
 				queryPath := filepath.Join("..", filepath.FromSlash(strings.TrimPrefix(cjrProfile.QueryFile, "src/")))
 				record, err = classificationCJRDefinitionProjection(anchors, plan, s, cache, core, inventoryData, qualificationData, actualJSONRead(t, queryPath), reader)
-			case "cpp", "kotlin", "swift", "postgresql-sql":
+			case "cpp", "kotlin", "swift", "postgresql-sql", "tsql":
 				pagedProfile, ok := classificationPagedProfileForRoute(anchors.Route)
 				if !ok {
 					t.Fatal("unknown closed paged definition profile", anchors.Route)
@@ -1101,7 +1162,7 @@ func classificationGoVerifyDefinitions(t *testing.T, root, assembly, approvalPat
 
 func classificationGoDefinitionProfileAllowed(profile string) bool {
 	switch profile {
-	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
+	case "positive-batch", "csharp15-empty", "c4-empty", "java5-empty", "rust4-empty", "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty", "javascript4-empty", "jsx3-empty", "typescript7-empty", "tsx2-empty", "python8-empty", "ruby4-empty", "r3-empty", "bash2-empty":
 		return true
 	default:
 		return classificationSmall17ProfileName(profile) || classificationDartPHP12ProfileName(profile) || classificationPowerShell3ProfileName(profile)
@@ -1209,15 +1270,19 @@ func classificationLibraryMatches(s *eligibilitySession) bool {
 	if s == nil || s.reg.Native == nil || s.reg.Native.ReferenceLibrary == nil {
 		return false
 	}
-	library, exists := s.owned["current/go.dll"]
-	return exists && library.NodeID == "go-library-build" && library.Member.Role == "runtime-library" && *s.reg.Native.ReferenceLibrary == library
+	library, exists := classificationLibraryPin(s)
+	role := "runtime-library"
+	if s.reg.Context == semanticPagedBinariesContext {
+		role = "library-paged-descriptor"
+	}
+	return exists && library.NodeID == "go-library-build" && library.Member.Role == role && *s.reg.Native.ReferenceLibrary == library
 }
 
 func classificationCaptureStderr(a classificationAnchors, capture semanticProcessCapture, process eligibilityExecution, read func(*ReplayMember) ([]byte, error)) error {
 	strictZeroMember := false
 	switch a.Route {
 	case "go":
-	case "csharp", "c", "java", "rust", "cpp", "kotlin", "swift", "postgresql-sql", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php", "powershell":
+	case "csharp", "c", "java", "rust", "cpp", "kotlin", "swift", "postgresql-sql", "tsql", "json", "yaml", "xml", "html", "css", "javascript", "jsx", "typescript", "tsx", "python", "ruby", "r", "bash", "dart", "php", "powershell":
 		strictZeroMember = true
 	default:
 		return fmt.Errorf("unknown classification stderr route")
@@ -1363,12 +1428,15 @@ func TestQueryClassificationProcessSpec(t *testing.T) {
 }
 
 func classificationGoLibrary(b *eligibilityBudget, plan classificationPlan, requestData, receiptData, compiler, library []byte) error {
-	// Libraries up to one 16 MiB page are charged by bytes; larger ones per part like semanticPagedParser (work 1 and logical 2*(bytes+1) per part).
-	// Callers pass at most one page (actualJSONRead, evidence file limit); a caller that reassembles a larger library must re-check this charge.
-	work, logical := uint64(len(compiler)+len(library)), uint64(0)
-	if len(library) > MaxDocumentBytes {
-		parts := (len(library) + MaxDocumentBytes - 1) / MaxDocumentBytes
-		work, logical = uint64(len(compiler)+parts), 2*uint64(len(library)+parts)
+	return classificationGoLibrarySize(b, plan, requestData, receiptData, compiler, uint64(len(library)))
+}
+
+func classificationGoLibrarySize(b *eligibilityBudget, plan classificationPlan, requestData, receiptData, compiler []byte, librarySize uint64) error {
+	// Preserve D3(a): compiler byte work and library byte/part work plus paged logical bytes.
+	work, logical := uint64(len(compiler))+librarySize, uint64(0)
+	if librarySize > MaxDocumentBytes {
+		parts := (librarySize + MaxDocumentBytes - 1) / MaxDocumentBytes
+		work, logical = uint64(len(compiler))+parts, 2*(librarySize+parts)
 	}
 	if err := b.charge(work, logical, "go-library/bytes"); err != nil {
 		return err
@@ -1381,7 +1449,7 @@ func classificationGoLibrary(b *eligibilityBudget, plan classificationPlan, requ
 	if err := b.decode("go-library/receipt", receiptData, &receipt, true); err != nil {
 		return err
 	}
-	if eligibilityValidateRequest(request, "go-library") != nil || !reflect.DeepEqual(request, plan.LibraryRequest) || !hex64.MatchString(plan.CompilerSHA256) || digestHex(compiler) != plan.CompilerSHA256 || len(library) == 0 || len(library) > 64<<20 || receipt.Schema != "tsgk-reference-process/r1" {
+	if eligibilityValidateRequest(request, "go-library") != nil || !reflect.DeepEqual(request, plan.LibraryRequest) || !hex64.MatchString(plan.CompilerSHA256) || digestHex(compiler) != plan.CompilerSHA256 || librarySize == 0 || librarySize > 64<<20 || receipt.Schema != "tsgk-reference-process/r1" {
 		return fmt.Errorf("library request, compiler or output differs from preregistration")
 	}
 	check := &eligibilitySession{res: &QueryReferenceEligibilityResult{}}
@@ -1538,4 +1606,11 @@ func TestQueryClassificationLibrary(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestQueryClassificationTSQL8Local(t *testing.T) {
+	if os.Getenv("TSGK_QUERY_CLASSIFICATION_PROFILE") != "tsql8-empty" {
+		t.Skip("explicit TSQL8 classification profile required")
+	}
+	classificationLocal(t)
 }

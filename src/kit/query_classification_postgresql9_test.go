@@ -382,7 +382,7 @@ func TestQueryClassificationPostgreSQL9ClosedNames(t *testing.T) {
 	if !classificationGoDefinitionProfileAllowed("postgresql9-empty") || !classificationGoLocalSkipsProfile("postgresql9-empty") {
 		t.Fatal("postgresql9-empty is not admitted by the closed definition and local-skip entries")
 	}
-	for _, alias := range []string{"", "postgresql-sql", "postgresql9", "postgresql9-empty ", "POSTGRESQL9-empty", "postgres9-empty", "tsql8-empty", "swift8"} {
+	for _, alias := range []string{"", "postgresql-sql", "postgresql9", "postgresql9-empty ", "POSTGRESQL9-empty", "postgres9-empty", "swift8"} {
 		if _, ok := classificationPagedProfileForName(alias); ok {
 			t.Fatalf("near-alias paged profile %q accepted", alias)
 		}
@@ -390,7 +390,7 @@ func TestQueryClassificationPostgreSQL9ClosedNames(t *testing.T) {
 			t.Fatalf("near-alias definition profile %q accepted", alias)
 		}
 	}
-	for _, route := range []string{"", "PostgreSQL-sql", "postgresql-sql ", "postgres", "tsql"} {
+	for _, route := range []string{"", "PostgreSQL-sql", "postgresql-sql ", "postgres", "tsql "} {
 		if classificationPagedRoute(route) {
 			t.Fatalf("route %q entered the closed paged set", route)
 		}
