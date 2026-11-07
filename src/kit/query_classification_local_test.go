@@ -1363,7 +1363,14 @@ func TestQueryClassificationProcessSpec(t *testing.T) {
 }
 
 func classificationGoLibrary(b *eligibilityBudget, plan classificationPlan, requestData, receiptData, compiler, library []byte) error {
-	if err := b.charge(uint64(len(compiler)+len(library)), 0, "go-library/bytes"); err != nil {
+	// Libraries up to one 16 MiB page are charged by bytes; larger ones per part like semanticPagedParser (work 1 and logical 2*(bytes+1) per part).
+	// Callers pass at most one page (actualJSONRead, evidence file limit); a caller that reassembles a larger library must re-check this charge.
+	work, logical := uint64(len(compiler)+len(library)), uint64(0)
+	if len(library) > MaxDocumentBytes {
+		parts := (len(library) + MaxDocumentBytes - 1) / MaxDocumentBytes
+		work, logical = uint64(len(compiler)+parts), 2*uint64(len(library)+parts)
+	}
+	if err := b.charge(work, logical, "go-library/bytes"); err != nil {
 		return err
 	}
 	var request eligibilityProcessRequest
@@ -1374,7 +1381,7 @@ func classificationGoLibrary(b *eligibilityBudget, plan classificationPlan, requ
 	if err := b.decode("go-library/receipt", receiptData, &receipt, true); err != nil {
 		return err
 	}
-	if eligibilityValidateRequest(request, "go-library") != nil || !reflect.DeepEqual(request, plan.LibraryRequest) || !hex64.MatchString(plan.CompilerSHA256) || digestHex(compiler) != plan.CompilerSHA256 || len(library) == 0 || len(library) > MaxDocumentBytes || receipt.Schema != "tsgk-reference-process/r1" {
+	if eligibilityValidateRequest(request, "go-library") != nil || !reflect.DeepEqual(request, plan.LibraryRequest) || !hex64.MatchString(plan.CompilerSHA256) || digestHex(compiler) != plan.CompilerSHA256 || len(library) == 0 || len(library) > 64<<20 || receipt.Schema != "tsgk-reference-process/r1" {
 		return fmt.Errorf("library request, compiler or output differs from preregistration")
 	}
 	check := &eligibilitySession{res: &QueryReferenceEligibilityResult{}}
@@ -1449,4 +1456,86 @@ func TestQueryClassificationLibrary(t *testing.T) {
 	if check(request, receipt, []byte("changed compiler"), []byte("library")) == nil || check(request, receipt, []byte("compiler"), nil) == nil {
 		t.Fatal("changed compiler or empty output accepted")
 	}
+	t.Run("paged-charge", func(t *testing.T) {
+		const (
+			compilerN = 3299024  // PG9 compiler bytes
+			tsqlLib   = 34976060 // predicted TSQL go.dll bytes
+			rejection = "library request, compiler or output differs from preregistration"
+		)
+		requestData, receiptData := eligibilityJSON(t, request), eligibilityJSON(t, receipt)
+		libs := make([]byte, 64<<20+1) // the helper reads only the length
+		compiler, compilerPlus := make([]byte, compilerN), make([]byte, compilerN+1000)
+		run := func(t *testing.T, comp, lib []byte, prefill uint64) (work, logical uint64, err error) {
+			p := plan
+			p.CompilerSHA256 = digestHex(comp)
+			b := semanticTestBudget(t)
+			b.work = prefill
+			err = classificationGoLibrary(b, p, requestData, receiptData, comp, lib)
+			return b.work - prefill, b.logical, err
+		}
+		// Baseline with an empty compiler and a 1-byte library: independent of any compiler charge, so request/receipt/stream work is isolated.
+		baseWork, otherLogical, err := run(t, nil, libs[:1], 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		otherWork := baseWork - 1
+		for _, c := range []struct {
+			name          string
+			compiler      []byte
+			library       int
+			work, logical uint64 // the D3 term only: bytes before paging, part count after
+		}{
+			{"pg9-unchanged", compiler, 15924504, 19223528, 0},
+			{"16MiB-exact", compiler, 16 << 20, compilerN + 16<<20, 0},
+			{"16MiB-plus1", compiler, 16<<20 + 1, compilerN + 2, 2*(16<<20+1) + 2*2},
+			{"32MiB-exact", compiler, 32 << 20, compilerN + 2, 2*(32<<20) + 2*2},
+			{"32MiB-plus1", compiler, 32<<20 + 1, compilerN + 3, 2*(32<<20+1) + 2*3},
+			{"tsql", compiler, tsqlLib, compilerN + 3, 69952126},
+			{"64MiB", compiler, 64 << 20, compilerN + 4, 2*(64<<20) + 2*4},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				work, logical, err := run(t, c.compiler, libs[:c.library], 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if work-otherWork != c.work || logical-otherLogical != c.logical {
+					t.Fatalf("D3 work %d logical %d, want %d and %d", work-otherWork, logical-otherLogical, c.work, c.logical)
+				}
+				if c.name != "pg9-unchanged" {
+					return
+				}
+				// Absolute probe, independent of the baseline: the byte charge alone fills the work limit exactly so the next (request) charge fails; one byte less room fails the byte charge itself.
+				for _, p := range []struct {
+					prefill uint64
+					path    string
+				}{{eligibilityWorkLimit - c.work, "go-library/request"}, {eligibilityWorkLimit - c.work + 1, "go-library/bytes"}} {
+					_, _, err := run(t, c.compiler, libs[:c.library], p.prefill)
+					if e, ok := err.(*Error); !ok || e.Path != p.path {
+						t.Fatalf("prefill %d: want a charge failure at %s, got %v", p.prefill, p.path, err)
+					}
+				}
+			})
+		}
+		t.Run("64MiB-plus1", func(t *testing.T) {
+			if _, _, err := run(t, compiler, libs, 0); err == nil || err.Error() != rejection {
+				t.Fatalf("library over the 64 MiB logical cap: %v", err)
+			}
+		})
+		t.Run("compiler-sensitivity", func(t *testing.T) {
+			a, _, errA := run(t, compiler, libs[:tsqlLib], 0)
+			b, _, errB := run(t, compilerPlus, libs[:tsqlLib], 0)
+			if errA != nil || errB != nil || b-a != 1000 {
+				t.Fatalf("compiler bytes must be charged once per byte on the paged path: %d -> %d (%v, %v)", a, b, errA, errB)
+			}
+		})
+		t.Run("ledger-90pct", func(t *testing.T) {
+			// PG9's observed core ledger (W0) stands in for the TSQL core; the real TSQL W is measured by the guarded TSQL classification rehearsal (#216).
+			const w0 = 7823848
+			// Integer division is exact here: 32,000,000/10 = 3,200,000, and x9 gives the 28,800,000 threshold.
+			work, _, err := run(t, compiler, libs[:tsqlLib], w0)
+			if err != nil || w0+work > eligibilityWorkLimit/10*9 {
+				t.Fatalf("work %d after W0 (limit %d): %v", w0+work, eligibilityWorkLimit/10*9, err)
+			}
+		})
+	})
 }
