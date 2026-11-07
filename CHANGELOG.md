@@ -4,8 +4,6 @@
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
-- #216 TSQL8의 닫힌 `tsql8-empty` 사전 기대값과 binary-paged 수동 분류 경로를 준비했다. 일반 query6개·fact2개의 원문/metadata·분모, descriptor 물리 pin과 실행 산출물 논리 identity, 같은 guarded snapshot의 library 재검사·추가 charge를 고정한다. 실제 TSQL 관측은 NOT_RUN이며 기존122/130과 semantic 미평가 상태를 유지한다. [계약](docs/specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다.
-
 - `--out` 경로 별칭의 지원 경계와 문서 정합성을 정리했다(#196). 검출하지 못하는 별칭을 완전히 해결했다는 의미는 아니다.
 - 선택적 incremental logger 관측과 source witness를 추가했다(#197). 기존 판정과 관측 증거를 구분하며, 관측된 reuse를 속도 향상으로 환산하지 않는다.
 - 오류 tree route BLOCKED 전에 old-tree 전달 관측을 필수로 요구한다(#217). incremental 결과 r3·`native-result-r4`에 이어 oracle 기록은 `tsgk-native/r4`, qualification은 inventory·결과 r4로 관측을 kit 축에서 소비한다. 과거 r3 qualification 근거는 당시 revision의 기록이다.
@@ -22,6 +20,7 @@
 
 - `full-input-utf8-paged-binaries/r1`에서 16 MiB를 넘는 driver executable·reference library의 descriptor 검증(manifest/r7, `oracle-set-r6`)을 추가했다(#216). eligibility 원장의 1.5 GiB는 이 context에도 같은 owner·bound 조건으로 적용되며 공개 API logical 최악 상한은 1.5 GiB로 같다. semantic·replay·qualification의 상속 원장은 1 GiB를 유지한다. descriptor의 offline 검증 범위이며 실제 분할 수집·실행 진위를 보증하지 않는다.
 - `full-input-utf8-paged-binaries/r1`의 native driver 분할 producer를 추가했다(#216). build 제거 전 16 MiB 초과·64 MiB 이하 executable을 16 MiB part와 descriptor로 보존하고 사전 계획·원본 identity를 대조하며 parser paging과 공존한다. manifest/r7·`oracle-set-r6`를 사용하고 공개 API·logical 최악 상한 1.5 GiB는 유지한다.
+- #216 TSQL8의 닫힌 `tsql8-empty` 사전 기대값과 binary-paged 수동 분류 경로를 준비했다. 일반 query6개·fact2개의 원문/metadata·분모, descriptor 물리 pin과 실행 산출물 논리 identity, core가 결속한 driver·library 논리 identity를 같은 guarded snapshot에서 재사용하고 descriptor 크기 기반 D3(a) charge를 유지한다. 실제 TSQL 관측은 NOT_RUN이며 기존122/130과 semantic 미평가 상태를 유지한다. [계약](docs/specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다.
 
 ## v0.2.0 — 2026-10-06
 
