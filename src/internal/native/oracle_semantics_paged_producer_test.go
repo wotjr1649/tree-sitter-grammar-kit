@@ -16,6 +16,15 @@ import (
 
 // Owned padding preserves the JSON grammar; this control does not approve a reference.
 func TestOracleSemanticsPagedProducerControl(t *testing.T) {
+	testOracleSemanticsPagedProducerControl(t, []string{"normal", "missing-manifest", "unexpected-stderr"})
+}
+
+func TestOracleSemanticsPagedBinariesProducerControl(t *testing.T) {
+	testOracleSemanticsPagedProducerControl(t, []string{"driver-only", "parser-and-driver"})
+}
+
+func testOracleSemanticsPagedProducerControl(t *testing.T, modes []string) {
+	t.Helper()
 	if runtime.GOOS == "darwin" {
 		t.Skip("new semantic producer validation excluded on macOS")
 	}
@@ -42,8 +51,10 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 	if err := json.Unmarshal(runtimeData, &pinnedRuntime); err != nil || len(pinnedRuntime.Files) != 83 {
 		t.Fatal("runtime closure", err)
 	}
-	for _, mode := range []string{"normal", "missing-manifest", "unexpected-stderr"} {
+	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
+			binaries := mode == "driver-only" || mode == "parser-and-driver"
+			pagedParser := mode != "driver-only"
 			grammarRoot := t.TempDir()
 			grammar := append([]kit.NativeInput(nil), registered...)
 			parserIndex := -1
@@ -55,7 +66,14 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 				}
 				if pin.Role == "parser" {
 					parserIndex = len(pinnedRuntime.Files) + i
-					data = append(data, bytes.Repeat([]byte(" "), kit.MaxDocumentBytes+1-len(data))...)
+					if binaries {
+						data = append(data, []byte("\nconst unsigned char tsgk_binary_pad[16777300] = {1};\n")...)
+					}
+					if pagedParser {
+						data = append(data, bytes.Repeat([]byte(" "), kit.MaxDocumentBytes+1-len(data))...)
+					} else if len(data) > kit.MaxDocumentBytes {
+						t.Fatal("driver-only parser exceeds physical limit")
+					}
 					if mode == "unexpected-stderr" {
 						data = append(data, []byte("\n#include <stdio.h>\n__attribute__((constructor)) static void paging_control(void) { fputs(\"paging stderr control\\n\", stderr); }\n")...)
 					}
@@ -73,19 +91,29 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 				t.Fatal("missing parser")
 			}
 			plan := &semanticCapturePlan{Context: semanticPagedContext}
+			if binaries {
+				plan.Context = semanticPagedBinariesContext
+			}
 			add := func(owner, path, role string) {
 				plan.Members = append(plan.Members, semanticCaptureMember{Owner: owner, Path: path, Role: role})
 			}
 			if mode != "missing-manifest" {
 				add("O", "manifest.json", "manifest")
 			}
-			add("D", "capture/driver.bin", "driver")
+			if binaries {
+				add("D", "capture/driver.pages.json", "driver-paged-descriptor")
+				for part := 0; part < 2; part++ {
+					add("D", fmt.Sprintf("capture/driver.part-%05d.bin", part), "driver-paged-part")
+				}
+			} else {
+				add("D", "capture/driver.bin", "driver")
+			}
 			for i := 0; i < len(pinnedRuntime.Files)+len(grammar)+3; i++ {
 				role := "build-input"
 				if i >= len(pinnedRuntime.Files) && i < len(pinnedRuntime.Files)+len(grammar) {
 					role = "grammar-" + grammar[i-len(pinnedRuntime.Files)].Role
 				}
-				if i == parserIndex {
+				if i == parserIndex && pagedParser {
 					add("D", fmt.Sprintf("capture/build-input-%05d.pages.json", i), "grammar-paged-descriptor")
 					for part := 0; part < 2; part++ {
 						add("D", fmt.Sprintf("capture/build-input-%05d.part-%05d.bin", i, part), "grammar-paged-part")
@@ -103,7 +131,7 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 			add("O", "source/00000-c1.bin", "source")
 			add("D", "raw/00000-c1.json", "raw")
 			add("O", "records/00000-c1.json", "record")
-			registration, err := json.Marshal(map[string]any{"schema": "tsgk-query-semantics-registration/r1", "context": semanticPagedContext, "planned_members": plan.Members, "producer_control": "not_external_approval"})
+			registration, err := json.Marshal(map[string]any{"schema": "tsgk-query-semantics-registration/r1", "context": plan.Context, "planned_members": plan.Members, "producer_control": "not_external_approval"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -132,6 +160,12 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 				}
 				return
 			}
+			if result.Build != nil {
+				t.Logf("compiled driver bytes=%d planned parts=%d", result.Build.ExecutableBytes, (result.Build.ExecutableBytes+kit.MaxDocumentBytes-1)/kit.MaxDocumentBytes)
+				if binaries && (result.Build.ExecutableBytes <= kit.MaxDocumentBytes || result.Build.ExecutableBytes > 2*kit.MaxDocumentBytes) {
+					t.Fatalf("padded driver outside preregistered two-part range: %d bytes", result.Build.ExecutableBytes)
+				}
+			}
 			if err != nil || result.BuildRemoved != "REMOVED" {
 				t.Fatalf("capture/cleanup: %+v %v", result, err)
 			}
@@ -153,18 +187,25 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 				}
 				return
 			}
-			if result.ExecutionStatus != kit.StatusCompleted || result.Assessment != kit.AssessBlocked || result.Set == nil || !result.Set.Valid {
-				t.Fatalf("paged producer not pending valid: %+v", result)
-			}
 			data, e := os.ReadFile(filepath.Join(out, "manifest.json"))
 			if e != nil {
 				t.Fatal(e)
 			}
 			var m kit.OracleManifest
-			if e := json.Unmarshal(data, &m); e != nil || m.Schema != kit.OraclePagedSemanticsManifestSchema {
-				t.Fatal("wrong manifest", e)
+			if e := json.Unmarshal(data, &m); e != nil {
+				t.Fatal(e)
 			}
-			descriptors, parts := 0, 0
+			wantSchema := kit.OraclePagedSemanticsManifestSchema
+			if binaries {
+				wantSchema = kit.OraclePagedBinariesSemanticsManifestSchema
+			}
+			if m.Schema != wantSchema {
+				t.Errorf("wrong manifest schema: got %q, want %q", m.Schema, wantSchema)
+			}
+			if result.ExecutionStatus != kit.StatusCompleted || result.Assessment != kit.AssessBlocked || result.Set == nil || !result.Set.Valid {
+				t.Fatalf("paged producer not pending valid: %+v set=%+v", result, result.Set)
+			}
+			descriptors, parts, driverDescriptors, driverParts, plainDrivers := 0, 0, 0, 0, 0
 			for _, member := range m.Members {
 				if member.Bytes > kit.MaxDocumentBytes {
 					t.Fatal("oversized physical member")
@@ -175,8 +216,26 @@ func TestOracleSemanticsPagedProducerControl(t *testing.T) {
 				if member.Role == "grammar-paged-part" {
 					parts++
 				}
+				switch member.Role {
+				case "driver-paged-descriptor":
+					driverDescriptors++
+				case "driver-paged-part":
+					driverParts++
+				case "driver":
+					plainDrivers++
+				}
 			}
-			if descriptors != 1 || parts != 2 {
+			if binaries {
+				if driverDescriptors != 1 || driverParts != 2 || plainDrivers != 0 {
+					t.Fatalf("driver physical closure %d/%d/plain=%d", driverDescriptors, driverParts, plainDrivers)
+				}
+				t.Logf("driver closure descriptors=%d parts=%d plain=%d", driverDescriptors, driverParts, plainDrivers)
+			}
+			wantDescriptors, wantParts := 0, 0
+			if pagedParser {
+				wantDescriptors, wantParts = 1, 2
+			}
+			if descriptors != wantDescriptors || parts != wantParts {
 				t.Fatalf("paged physical closure %d/%d", descriptors, parts)
 			}
 		})

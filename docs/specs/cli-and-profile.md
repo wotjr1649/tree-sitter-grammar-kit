@@ -354,3 +354,7 @@ record/r4·manifest/r5·Oracle result/r3은 `PRODUCER_LOCAL / BLOCKED / EXTERNAL
 ## #216 parser-only paging opt-in
 
 기존 oracle record의 hash-bound `--query-semantics FILE` 문서가 `full-input-utf8-paged-parser/r1`을 명시하면 큰 grammar parser 하나만 [분할 계약](instrumented-query-reference.md#216-parser-only-paging)에 따라 보존한다. 기존 profile/r3·native-query·compiler/실행 권한과 예산을 사용하며 새 flag·source/CST large 실행은 추가하지 않는다. 새 context는 manifest/r6와 `oracle-set-r5`를 사용한다. 계획을 build 전에 고정하고 실제 closure와 driver 실행 전에 대조하며, 예상 밖 member와 stderr는 원문을 남기고 complete manifest 발행을 거부한다. 취소·자원 한도 및 cleanup 오류는 원래 상태·최초 실패에 맞게 보존한다. 기존 opaque r5 producer 등록의 의미는 유지한다.
+
+## #216 binary paging opt-in
+
+`oracle record --query-semantics FILE`의 hash-bound 문서가 `full-input-utf8-paged-binaries/r1`을 명시하면 16 MiB 초과·64 MiB 이하 driver executable을 [binary paging 계약](instrumented-query-reference.md#216-binary-paging)에 따라 분할 보존한다. 16 MiB 이하 driver는 plain member로 남으며 큰 grammar parser 하나의 paging과 공존할 수 있다. 기존 profile/r3·native-query·Windows/Linux compiler/실행 권한과 예산을 사용하고 새 flag는 없다. driver descriptor 하나와 part 2~4개의 사전 계획을 build 뒤 실제 member와 대조하고 manifest/r7을 발행하며 `oracle-set-r6`가 소비한다. reference library 분할은 controller의 역할이고, standalone eligibility는 승인에 결속된 executable·library 중 하나 이상이 paged여야 한다. 계획 불일치·예상 밖 stderr·취소·자원 한도·cleanup의 실패 보존과 `PRODUCER_LOCAL / BLOCKED / EXTERNAL_APPROVAL_PENDING` 의미는 유지한다.
