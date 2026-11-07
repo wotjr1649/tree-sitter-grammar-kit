@@ -142,10 +142,17 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		roles[mem.Role] = append(roles[mem.Role], mem)
 	}
 	for _, role := range []string{"record", "source", "projection", "driver", "build", "build-manifest"} {
+		if role == "driver" && m.Schema == OraclePagedBinariesSemanticsManifestSchema && len(roles["driver-paged-descriptor"]) > 0 {
+			continue
+		}
 		if len(roles[role]) != 1 {
 			bad("SEMANTICS_MEMBER_COUNT", role)
 			return nil
 		}
+	}
+	if len(roles["driver-paged-descriptor"]) > 1 || len(roles["driver-paged-descriptor"]) == 1 && len(roles["driver"]) != 0 || len(roles["driver-paged-descriptor"]) == 0 && len(roles["driver-paged-part"]) != 0 {
+		bad("SEMANTICS_MEMBER_COUNT", "driver")
+		return nil
 	}
 	for _, role := range []string{"capture", "stdin-frame", "process", "stdout-frame", "stderr", "raw"} {
 		if len(roles[role]) > 1 {
@@ -514,7 +521,25 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		}
 	}
 	var build semanticBuildDescription
-	buildPin, driverPin, manifestPin := roles["build"][0], roles["driver"][0], roles["build-manifest"][0]
+	buildPin, manifestPin := roles["build"][0], roles["build-manifest"][0]
+	driverSHA, driverBytes := "", uint64(0)
+	if len(roles["driver"]) == 1 {
+		driverSHA, driverBytes = roles["driver"][0].SHA256, roles["driver"][0].Bytes
+	} else {
+		driverPages := roles["driver-paged-descriptor"][0]
+		logical, ok, e := b.semanticPagedBinary(files[driverPages.Path], "D", "driver", "capture/driver.bin", "capture/driver", func(p ReplayMember) ([]byte, bool, *Error) {
+			m, ok := pins[p.Path]
+			return files[p.Path], ok && m.Role == p.Role && m.Bytes == p.Bytes && m.SHA256 == p.SHA256 && m.Case == "", nil
+		})
+		if e != nil {
+			return e
+		}
+		if !ok || driverPages.Path != "capture/driver.pages.json" || driverPages.Case != "" || uint64(len(roles["driver-paged-part"])) != (logical.Bytes+MaxDocumentBytes-1)/MaxDocumentBytes {
+			bad("SEMANTICS_DRIVER_PAGES", driverPages.Path)
+		} else {
+			driverSHA, driverBytes = logical.SHA256, logical.Bytes
+		}
+	}
 	buildData := files[buildPin.Path]
 	if e := b.decode(buildPin.Path, buildData, &build, false); e != nil {
 		return e
@@ -522,7 +547,7 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 	if state != nil {
 		state.build = build
 	}
-	if build.Identity != m.Producer["build_identity"] || build.Identity != manifestPin.SHA256 || build.ExecutableSHA256 != driverPin.SHA256 || build.ExecutableBytes != driverPin.Bytes || build.ExecutableSHA256 != m.Producer["executable_sha256"] || len(roles["build-input"])+len(roles["grammar-parser"])+len(roles["grammar-scanner"])+len(roles["grammar-header"])+len(roles["grammar-paged-descriptor"]) != len(build.Closure) {
+	if build.Identity != m.Producer["build_identity"] || build.Identity != manifestPin.SHA256 || build.ExecutableSHA256 != driverSHA || build.ExecutableBytes != driverBytes || build.ExecutableSHA256 != m.Producer["executable_sha256"] || len(roles["build-input"])+len(roles["grammar-parser"])+len(roles["grammar-scanner"])+len(roles["grammar-header"])+len(roles["grammar-paged-descriptor"]) != len(build.Closure) {
 		bad("SEMANTICS_BUILD_BINDING", buildPin.Path)
 	}
 	if build.Runtime != m.Producer["runtime_commit"] || build.Compiler.SHA256 != m.Producer["compiler_sha256"] || build.CompilerVersion != m.Producer["compiler_version"] {
@@ -547,7 +572,7 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			bad("SEMANTICS_BUILD_CLOSURE", buildPin.Path)
 		}
 		seen[key] = true
-		if input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes && m.Schema == OraclePagedSemanticsManifestSchema {
+		if input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes && semanticParserPagingSchema(m.Schema) {
 			pin, ok := pins[fmt.Sprintf("capture/build-input-%05d.pages.json", i)]
 			valid := ok && pin.Role == "grammar-paged-descriptor" && pin.Case == ""
 			if valid {
@@ -595,7 +620,7 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			bad("SEMANTICS_BUILD_STATIC_MISSING", buildPin.Path)
 		}
 	}
-	if len(roles["grammar-paged-descriptor"]) != pagedParsers || len(roles["grammar-paged-part"]) != pagedParts || (m.Schema == OraclePagedSemanticsManifestSchema && pagedParsers != 1) {
+	if len(roles["grammar-paged-descriptor"]) != pagedParsers || len(roles["grammar-paged-part"]) != pagedParts || (m.Schema == OraclePagedSemanticsManifestSchema && pagedParsers != 1) || (m.Schema == OraclePagedBinariesSemanticsManifestSchema && pagedParsers > 1) {
 		bad("SEMANTICS_PARSER_PAGES", buildPin.Path)
 	}
 	if parsers != 1 || grammar > BuildFiles {

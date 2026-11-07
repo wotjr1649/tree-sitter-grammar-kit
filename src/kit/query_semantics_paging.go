@@ -7,11 +7,12 @@ import (
 )
 
 const (
-	OraclePagedSemanticsManifestSchema        = "tsgk-oracle-manifest/r6"
-	semanticPagedContext                      = "full-input-utf8-paged-parser/r1"
-	semanticPagedBinariesContext              = "full-input-utf8-paged-binaries/r1"
-	semanticBinaryPagesSchema                 = "tsgk-query-binary-pages/r1"
-	semanticBinaryLogicalMax           uint64 = 64 << 20
+	OraclePagedSemanticsManifestSchema                = "tsgk-oracle-manifest/r6"
+	OraclePagedBinariesSemanticsManifestSchema        = "tsgk-oracle-manifest/r7"
+	semanticPagedContext                              = "full-input-utf8-paged-parser/r1"
+	semanticPagedBinariesContext                      = "full-input-utf8-paged-binaries/r1"
+	semanticBinaryPagesSchema                         = "tsgk-query-binary-pages/r1"
+	semanticBinaryLogicalMax                   uint64 = 64 << 20
 )
 
 func semanticParserPagingContext(c string) bool {
@@ -19,10 +20,17 @@ func semanticParserPagingContext(c string) bool {
 }
 
 func semanticManifestSchema(schema string) bool {
-	return schema == OracleSemanticsManifestSchema || schema == OraclePagedSemanticsManifestSchema
+	return schema == OracleSemanticsManifestSchema || semanticParserPagingSchema(schema)
+}
+
+func semanticParserPagingSchema(s string) bool {
+	return s == OraclePagedSemanticsManifestSchema || s == OraclePagedBinariesSemanticsManifestSchema
 }
 
 func semanticContextManifest(context string) string {
+	if context == semanticPagedBinariesContext {
+		return OraclePagedBinariesSemanticsManifestSchema
+	}
 	if context == semanticPagedContext {
 		return OraclePagedSemanticsManifestSchema
 	}

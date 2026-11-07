@@ -178,7 +178,7 @@ func (b *eligibilityBudget) semanticsRegistration(data []byte, profile OraclePro
 	if profile.Native.Schema != OracleSemanticsSchema || profile.QuerySemanticsRegistrationSHA256 != digestHex(data) {
 		return bad("SEMANTICS_REGISTRATION_BINDING")
 	}
-	if reg.Platform != "windows/amd64" && reg.Platform != "linux/amd64" || (reg.Context != "full-input-utf8/r2" && reg.Context != semanticPagedContext) || n.Operation != "native-query" || n.Output != OutputTree || n.Encoding != EncodingUTF8 || n.Format != "" || n.SvcContext != nil || n.Preprocess != nil ||
+	if reg.Platform != "windows/amd64" && reg.Platform != "linux/amd64" || (reg.Context != "full-input-utf8/r2" && !semanticParserPagingContext(reg.Context)) || n.Operation != "native-query" || n.Output != OutputTree || n.Encoding != EncodingUTF8 || n.Format != "" || n.SvcContext != nil || n.Preprocess != nil ||
 		len(profile.OracleCases) != 1 || profile.FactPack != nil || reg.Profile.FactPack != nil {
 		return reg, fail(KindUnsupported, "SEMANTICS_CONTEXT_UNSUPPORTED", "semantics-registration", nil)
 	}
@@ -239,7 +239,7 @@ func (b *eligibilityBudget) semanticsRegistration(data []byte, profile OraclePro
 			}
 		}
 	}
-	if reg.Context == semanticPagedContext {
+	if semanticParserPagingContext(reg.Context) {
 		paged := 0
 		for _, g := range n.Grammar {
 			if g.Bytes > MaxDocumentBytes {
@@ -249,7 +249,7 @@ func (b *eligibilityBudget) semanticsRegistration(data []byte, profile OraclePro
 				paged++
 			}
 		}
-		if paged != 1 {
+		if paged > 1 || reg.Context == semanticPagedContext && paged != 1 {
 			return bad("SEMANTICS_CONTEXT_UNSUPPORTED")
 		}
 	}

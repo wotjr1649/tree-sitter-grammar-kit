@@ -36,6 +36,25 @@ func semanticBoundFixtureQueries(t *testing.T, registrationPadding int, withQuer
 
 func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries, paged bool, omittedGrammarRoles ...string) (QuerySemanticsRequest, *eligibilityFixture, semanticRunBinding) {
 	t.Helper()
+	return semanticBoundFixtureWith(t, registrationPadding, withQueries, semanticBoundOptions{PagedParser: paged}, omittedGrammarRoles...)
+}
+
+type semanticBoundOptions struct {
+	PagedParser    bool
+	DriverBytes    int
+	ManifestSchema string
+	Build          func(*semanticBuildDescription)
+	Extra          func(add func(path, role string, data []byte) ReplayMember)
+}
+
+func semanticBoundFixtureBinaries(t *testing.T, driverBytes int, pagedParser bool) (QuerySemanticsRequest, *eligibilityFixture, semanticRunBinding) {
+	t.Helper()
+	return semanticBoundFixtureWith(t, 0, true, semanticBoundOptions{DriverBytes: driverBytes, PagedParser: pagedParser, ManifestSchema: OraclePagedBinariesSemanticsManifestSchema})
+}
+
+func semanticBoundFixtureWith(t *testing.T, registrationPadding int, withQueries bool, o semanticBoundOptions, omittedGrammarRoles ...string) (QuerySemanticsRequest, *eligibilityFixture, semanticRunBinding) {
+	t.Helper()
+	paged := o.PagedParser
 	runtimeRoot := os.Getenv("TSGK_NATIVE_RUNTIME")
 	if runtimeRoot == "" {
 		t.Skip("pinned runtime source closure is not configured")
@@ -174,7 +193,23 @@ func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries
 	}
 	exe := f.files["native/executable.bin"]
 	build.ExecutableSHA256, build.ExecutableBytes = digestHex(exe), uint64(len(exe))
-	add("capture/driver.bin", "driver", exe)
+	if o.DriverBytes > 0 {
+		block := bytes.Repeat([]byte("d"), MaxDocumentBytes)
+		d, parts, _ := semanticBinaryTestDescriptor("driver", uint64(o.DriverBytes), block)
+		for _, p := range d.Parts {
+			add(p.Path, "driver-paged-part", parts[p.Path])
+		}
+		add("capture/driver.pages.json", "driver-paged-descriptor", eligibilityJSON(t, d))
+		build.ExecutableSHA256, build.ExecutableBytes = d.Logical.SHA256, d.Logical.Bytes
+	} else {
+		add("capture/driver.bin", "driver", exe)
+	}
+	if o.Build != nil {
+		o.Build(&build)
+	}
+	if o.Extra != nil {
+		o.Extra(add)
+	}
 	add("capture/build.json", "build", eligibilityJSON(t, build))
 	add("capture/build-manifest.txt", "build-manifest", buildText)
 	add("source/00000-"+caseID+".bin", "source", f.files["native/source.bin"])
@@ -256,6 +291,10 @@ func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries
 	if paged {
 		reg.Context = semanticPagedContext
 	}
+	if o.DriverBytes > 0 || o.ManifestSchema == OraclePagedBinariesSemanticsManifestSchema {
+		reg.Context = semanticPagedBinariesContext
+		f.reg.Context = semanticPagedBinariesContext
+	}
 	reg.Schema = querySemanticsRegistrationSchema
 	for _, path := range sortedKeys(roles) {
 		owner := "D"
@@ -292,6 +331,12 @@ func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries
 	if paged {
 		manifest.Schema = OraclePagedSemanticsManifestSchema
 	}
+	if o.DriverBytes > 0 {
+		manifest.Schema = OraclePagedBinariesSemanticsManifestSchema
+	}
+	if o.ManifestSchema != "" {
+		manifest.Schema = o.ManifestSchema
+	}
 	if withQueries {
 		manifest.Queries = []IdentityRef{{Role: "query:q0", Schema: "tsgk-query-source/r1", SHA256: digestHex([]byte(profile.Queries[0].Source))}}
 	}
@@ -320,12 +365,18 @@ func semanticBoundFixtureMode(t *testing.T, registrationPadding int, withQueries
 	oracle.Assessment = AssessBlocked
 	f.nodes[oracle.ID] = oracle
 	f.reg.Native.Source, f.reg.Native.BuildManifest = pins["source"], pins["build-manifest"]
+	if o.DriverBytes > 0 {
+		f.witness.Native.ExecutableSHA256 = build.ExecutableSHA256
+	}
 	for i := range f.reg.Invocations {
 		inv := &f.reg.Invocations[i]
 		if inv.ID == "native-current" {
 			wrapper := f.member(inv.Node.ID, "native/semantic-request.json", "approved-request", eligibilityJSON(t, f.witness.Native))
 			inv.Request, inv.ApprovedRequest = &wrapper, eligibilityJSON(t, f.witness.Native)
 			processPin, responsePin, executablePin, sourcePin := pins["process"], pins["raw"], pins["driver"], pins["source"]
+			if o.DriverBytes > 0 {
+				executablePin = pins["driver-paged-descriptor"]
+			}
 			inv.Process, inv.Response, inv.Executable = &processPin, &responsePin, &executablePin
 			inv.Inputs["source"] = eligibilityInput{Kind: "PINNED", MemberPin: &sourcePin, ContentBasis: "PRESERVED_ORIGINAL"}
 			binding.Process = processPin

@@ -2,10 +2,15 @@ package kit
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 )
 
 func semanticBinaryTestDescriptor(kind string, size uint64, block []byte) (semanticBinaryDescriptor, map[string][]byte, string) {
@@ -171,5 +176,167 @@ func TestSemanticPagedBinaryRoleBinding(t *testing.T) {
 				t.Fatalf("role=%s ok=%v err=%v", role, ok, e)
 			}
 		})
+	}
+}
+
+func TestSemanticBinaryPagedDriverPublicAPI(t *testing.T) {
+	t.Parallel()
+	req, f, binding := semanticBoundFixtureBinaries(t, MaxDocumentBytes+1, false)
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+	defer cancel()
+	set := VerifyOracleSet(os.DirFS(filepath.Join(f.root, "oracle")))
+	if !set.Valid {
+		t.Fatalf("binary-paged set invalid: %+v", set.Findings)
+	}
+	var old OracleManifest
+	if e := decodeOracleManifestVersion(f.files["oracle/manifest.json"], &old, OraclePagedSemanticsManifestSchema); e == nil || e.Code != "SCHEMA_UNSUPPORTED" {
+		t.Fatalf("r6 reader accepted r7: %v", e)
+	}
+	passed, err := VerifyQuerySemantics(ctx, req)
+	if err != nil || !passed.Complete || !passed.BindingValid || passed.Assessment != AssessPass || passed.Tuple.Verified != 3 {
+		t.Fatalf("BOUND binary paging: %v %+v eligibility=%+v", err, passed, passed.Eligibility)
+	}
+	standalone, err := VerifyQueryReferenceEligibility(ctx, QueryReferenceEligibilityRequest{Evidence: req.Evidence, Approval: req.EligibilityApproval, Registration: req.EligibilityRegistration, WitnessRegistration: req.WitnessRegistration})
+	if err != nil || standalone.Assessment != AssessPass {
+		t.Fatalf("standalone binary paging: %v %+v", err, standalone)
+	}
+	absent := req
+	absent.EligibilityApproval, absent.EligibilityRegistration, absent.WitnessRegistration = nil, nil, nil
+	binding.EligibilityApprovalSHA256, binding.EligibilityRegistrationSHA256, binding.WitnessRegistrationSHA256 = digestHex(nil), digestHex(nil), digestHex(nil)
+	binding.CohortID, binding.InvocationID = "", ""
+	binding.Process = eligibilityMember{}
+	binding.References = []semanticReferenceBinding{}
+	absent.RunBinding = eligibilityJSON(t, binding)
+	blocked, err := VerifyQuerySemantics(ctx, absent)
+	if err != nil || !blocked.Complete || blocked.Assessment != AssessBlocked || blocked.BaseVerified.Assessment != AssessPass || blocked.Tuple.Blocked != 3 {
+		t.Fatalf("ABSENT binary paging: %v %+v", err, blocked)
+	}
+}
+
+func TestSemanticBinaryPagedDriverAndParser(t *testing.T) {
+	t.Parallel()
+	req, f, _ := semanticBoundFixtureBinaries(t, MaxDocumentBytes+1, true)
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+	defer cancel()
+	result, err := VerifyQuerySemantics(ctx, req)
+	if err != nil || result.Assessment != AssessPass || !result.BindingValid || result.Tuple.Verified != 3 {
+		t.Fatalf("driver and parser paging: %v %+v eligibility=%+v", err, result, result.Eligibility)
+	}
+	var m OracleManifest
+	if err := json.Unmarshal(f.files["oracle/manifest.json"], &m); err != nil {
+		t.Fatal(err)
+	}
+	counts := map[string]int{}
+	for _, member := range m.Members {
+		counts[member.Role]++
+	}
+	if counts["grammar-paged-descriptor"] != 1 || counts["driver-paged-descriptor"] != 1 || counts["driver"] != 0 {
+		t.Fatalf("unexpected paging roles: %v", counts)
+	}
+}
+
+func TestSemanticBinaryPagedSetRejects(t *testing.T) {
+	t.Parallel()
+	for _, name := range []string{"build-descriptor-identity", "r6-manifest", "unused-driver-part", "driver-and-descriptor", "parser-only"} {
+		t.Run(name, func(t *testing.T) {
+			o := semanticBoundOptions{DriverBytes: MaxDocumentBytes + 1}
+			code, path := "", ""
+			switch name {
+			case "build-descriptor-identity":
+				code, path = "SEMANTICS_BUILD_BINDING", "capture/build.json"
+				o.Build = func(build *semanticBuildDescription) {
+					d, _, _ := semanticBinaryTestDescriptor("driver", MaxDocumentBytes+1, bytes.Repeat([]byte("d"), MaxDocumentBytes))
+					data := eligibilityJSON(t, d)
+					build.ExecutableSHA256, build.ExecutableBytes = digestHex(data), uint64(len(data))
+				}
+			case "r6-manifest":
+				o.ManifestSchema = OraclePagedSemanticsManifestSchema
+				code, path = "MEMBER_INVALID", "capture/driver.pages.json"
+			case "unused-driver-part":
+				code, path = "SEMANTICS_DRIVER_PAGES", "capture/driver.pages.json"
+				o.Extra = func(add func(string, string, []byte) ReplayMember) {
+					add("capture/driver.part-00002.bin", "driver-paged-part", []byte("unused"))
+				}
+			case "driver-and-descriptor":
+				code, path = "SEMANTICS_MEMBER_COUNT", "driver"
+				o.Extra = func(add func(string, string, []byte) ReplayMember) {
+					add("capture/driver.bin", "driver", []byte("plain driver"))
+				}
+			case "parser-only":
+				o.DriverBytes, o.PagedParser, o.ManifestSchema = 0, true, OraclePagedBinariesSemanticsManifestSchema
+			}
+			req, f, _ := semanticBoundFixtureWith(t, 0, true, o)
+			if name == "parser-only" {
+				ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+				defer cancel()
+				result, err := VerifyQuerySemantics(ctx, req)
+				if err != nil || result.Assessment != AssessFail || result.Eligibility == nil || !eligibilityFinding(*result.Eligibility, "ELIGIBILITY_NATIVE_BINARY_PAGES") {
+					t.Fatalf("parser-only binaries accepted: %v %+v eligibility=%+v", err, result, result.Eligibility)
+				}
+				return
+			}
+			set := VerifyOracleSet(os.DirFS(filepath.Join(f.root, "oracle")))
+			found := false
+			for _, finding := range set.Findings {
+				found = found || finding.Code == code && finding.Path == path
+			}
+			if set.Valid || !found {
+				t.Fatalf("%s: want %s at %s, got %+v", name, code, path, set.Findings)
+			}
+		})
+	}
+}
+
+func TestSemanticBinaryPagedRehashCannotReplaceProfile(t *testing.T) {
+	t.Parallel()
+	req, f, binding := semanticBoundFixtureBinaries(t, MaxDocumentBytes+1, false)
+	var d semanticBinaryDescriptor
+	if err := json.Unmarshal(f.files["oracle/capture/driver.pages.json"], &d); err != nil {
+		t.Fatal(err)
+	}
+	last := len(d.Parts) - 1
+	if last < 0 || d.Parts[last].Bytes != 1 {
+		t.Fatal("independent synthetic boundary changed")
+	}
+	f.replace("oracle/"+d.Parts[last].Path, []byte("q"))
+	d.Parts[last].SHA256 = digestHex([]byte("q"))
+	h := sha256.New()
+	for _, p := range d.Parts {
+		_, _ = h.Write(f.files["oracle/"+p.Path])
+	}
+	d.Logical.SHA256 = hex.EncodeToString(h.Sum(nil))
+	f.replace("oracle/capture/driver.pages.json", eligibilityJSON(t, d))
+	semanticBoundReapprove(t, &req, f, &binding)
+	set := VerifyOracleSet(os.DirFS(filepath.Join(f.root, "oracle")))
+	found := false
+	for _, finding := range set.Findings {
+		found = found || finding.Code == "SEMANTICS_BUILD_BINDING"
+	}
+	if set.Valid || !found {
+		t.Fatalf("rehashed driver replaced build identity: %+v", set.Findings)
+	}
+	// Driver identity is pinned by build and approval; the profile pins grammar inputs.
+	var build semanticBuildDescription
+	if err := json.Unmarshal(f.files["oracle/capture/build.json"], &build); err != nil {
+		t.Fatal(err)
+	}
+	build.ExecutableSHA256 = d.Logical.SHA256
+	f.replace("oracle/capture/build.json", eligibilityJSON(t, build))
+	var manifest OracleManifest
+	if err := json.Unmarshal(f.files["oracle/manifest.json"], &manifest); err != nil {
+		t.Fatal(err)
+	}
+	manifest.Producer["executable_sha256"] = d.Logical.SHA256
+	f.replace("oracle/manifest.json", mustJSON(t, manifest))
+	semanticBoundReapprove(t, &req, f, &binding)
+	set = VerifyOracleSet(os.DirFS(filepath.Join(f.root, "oracle")))
+	if !set.Valid {
+		t.Fatalf("rehashed set is not internally coherent: %+v", set.Findings)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+	defer cancel()
+	result, err := VerifyQuerySemantics(ctx, req)
+	if err != nil || result.Assessment != AssessFail || result.Eligibility == nil || !eligibilityFinding(*result.Eligibility, "ELIGIBILITY_NATIVE_EXECUTABLE") {
+		t.Fatalf("rehashed driver bypassed approved executable identity: %v %+v eligibility=%+v", err, result, result.Eligibility)
 	}
 }

@@ -197,7 +197,11 @@ func (b *eligibilityBudget) semanticRunBinding(binding *semanticRunBinding, req 
 		}
 		return nil
 	}
-	if n.Source != full(find("source"), binding.OracleNode) || n.BuildManifest != full(find("build-manifest"), binding.DriverNode) || inv.Process == nil || *inv.Process != full(state.capture.Process, binding.DriverNode) || inv.Response == nil || *inv.Response != full(find("raw"), binding.DriverNode) || inv.Executable == nil || *inv.Executable != full(find("driver"), binding.DriverNode) {
+	exe := find("driver")
+	if exe == nil {
+		exe = find("driver-paged-descriptor")
+	}
+	if n.Source != full(find("source"), binding.OracleNode) || n.BuildManifest != full(find("build-manifest"), binding.DriverNode) || inv.Process == nil || *inv.Process != full(state.capture.Process, binding.DriverNode) || inv.Response == nil || *inv.Response != full(find("raw"), binding.DriverNode) || inv.Executable == nil || *inv.Executable != full(exe, binding.DriverNode) {
 		bad("SEMANTICS_NATIVE_PIN", "run-binding")
 	}
 	for i, input := range state.build.Closure {
@@ -209,7 +213,7 @@ func (b *eligibilityBudget) semanticRunBinding(binding *semanticRunBinding, req 
 		}
 		path := fmt.Sprintf("oracle/capture/build-input-%05d.bin", i)
 		want := eligibilityMember{NodeID: binding.DriverNode, Member: ReplayMember{Path: path, Role: input.Role, Bytes: input.Bytes, SHA256: input.SHA256}}
-		if manifest.Schema == OraclePagedSemanticsManifestSchema && input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes {
+		if semanticParserPagingSchema(manifest.Schema) && input.Role == "grammar-parser" && input.Bytes > MaxDocumentBytes {
 			path = fmt.Sprintf("oracle/capture/build-input-%05d.pages.json", i)
 			want = eligibilityMember{NodeID: binding.DriverNode, Member: snapshot.verifiedMembers[path]}
 			if want.Member.Role != "grammar-paged-descriptor" {
