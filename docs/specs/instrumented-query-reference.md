@@ -163,6 +163,8 @@ guarded compiler 재검사는 같은 live `s.member` snapshot의 library descrip
 
 새 외부 approval, 같은 guarded snapshot의 CST/ABI/metadata·compiler/library·8개 서로 다른 reference invocation·공개 API parity를 실제로 통과한 뒤에만 `definitions` 결과를 채택한다. source 시험은 실행 관측이나 8/8 분류 PASS가 아니다. 원장 `STRUCTURAL_CANDIDATE`·`compiled_metadata=UNVERIFIED`·`semantic_required:null`, r10 `full_scope_complete=false`, 기존 누계122/130과 #216/#195의 미완료 상태를 유지한다.
 
+Windows의 source/reader `29ecdef`에서 실제 관측·외부 caller approval·guarded 정의 검증을 확인한 범위는 [TSQL8 보고서](../reports/issue-216-tsql8-classification.md)에 기록한다. 8개는 조건부 구조 분류이며 130/130은 서로 다른 source/profile 실행의 local candidate 누계로, 원장의 미검증 metadata·semantic 미평가와 #216/#195 미완료를 유지한다.
+
 ## PowerShell3 단일 byte frame 정의 분류
 
 닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=powershell3-tiny`는 [PowerShell3 사전 기대값](../../src/testdata/query-semantics/powershell3-classification-anchors.json)의 UTF-8 source `;`(1 byte, SHA-256 `41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4`)·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 선택한다. 이름의 `-tiny`는 빈 source가 아님을 뜻한다. PowerShell root `program`은 nonnullable이라 빈 입력은 error 경로로 가므로 빈 입력 profile이 존재할 수 없고, 가장 작은 유효 입력 중 query 대상 node를 만들지 않는 `;`를 고정한다.
