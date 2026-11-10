@@ -128,12 +128,14 @@ func TestOracleRecordSetWithoutQueries(t *testing.T) {
 }
 
 func TestOracleSourceWitness(t *testing.T) {
+	// #352: the modes run in sequence, so one test-owned cache compiles once for all of them.
+	cache := t.TempDir()
 	for _, mode := range []string{"exact-buffer", "missing-source", "write-failure", "build-failure"} {
 		t.Run(mode, func(t *testing.T) {
 			profile, root := oracleProfile(t, nil, "a = f(1);\n", "")
 			out := filepath.Join(t.TempDir(), "set")
 			req := oracleRequest(t, profile, root, out)
-			req.SourceWitness = true
+			req.SourceWitness, req.BuildCache = true, cache
 			if mode == "build-failure" {
 				var p map[string]any
 				if err := json.Unmarshal(req.Profile, &p); err != nil {

@@ -158,10 +158,17 @@ func TestOracleBatchSet(t *testing.T) {
 	t.Parallel()
 	queries := []kit.OracleQuery{{ID: "q.ids", Source: "(identifier) @id\n"}, {ID: "q.numbers", Source: "(number) @n\n"}}
 	profile, root := oracleProfile(t, queries, "a = f(1);\n", "b = 2;\n", "c = (;\n", "d = g(3, 4);\n")
+	// #352: the runs are sequential, so one test-owned cache compiles once for all of them.
+	cache := t.TempDir()
+	request := func(op, out string) OracleRequest {
+		req := oracleRequest(t, withOperation(t, profile, op), root, out)
+		req.BuildCache = cache
+		return req
+	}
 	sets := map[string]string{}
 	for _, op := range []string{"native-query", "native-query-batch"} {
 		out := filepath.Join(t.TempDir(), "set")
-		req := oracleRequest(t, withOperation(t, profile, op), root, out)
+		req := request(op, out)
 		req.ReuseObservation = true
 		res, err := runOracle(t, req)
 		if err != nil || res.Set == nil || !res.Set.Valid || len(res.Cases) != 4 {
@@ -195,7 +202,7 @@ func TestOracleBatchSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	gone := filepath.Join(t.TempDir(), "set")
-	res, err := runOracle(t, oracleRequest(t, withOperation(t, profile, "native-query-batch"), root, gone))
+	res, err := runOracle(t, request("native-query-batch", gone))
 	r := readDoc(t, filepath.Join(gone, "records", "00001-cb.json"))
 	if err != nil || !res.Set.Valid || r["execution_status"] != kit.StatusNotRun || r["transport"] != nil {
 		t.Fatalf("missing input: %v %+v %v %v", err, res.Set, r["execution_status"], r["transport"])
@@ -207,7 +214,7 @@ func TestOracleBatchSet(t *testing.T) {
 		}
 	}
 	none := filepath.Join(t.TempDir(), "set")
-	res, err = runOracle(t, oracleRequest(t, withOperation(t, profile, "native-query-batch"), root, none))
+	res, err = runOracle(t, request("native-query-batch", none))
 	if b, ok := readDoc(t, filepath.Join(none, "manifest.json"))["batches"].([]any); err != nil || !res.Set.Valid || !ok || len(b) != 0 {
 		t.Fatalf("no input: %v %+v %+v", err, res.Set, res.Findings)
 	}
@@ -219,11 +226,18 @@ func TestOracleBatchSet(t *testing.T) {
 func TestOracleBatchSetControls(t *testing.T) {
 	t.Parallel()
 	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "q", Source: "(identifier) @id\n"}}, "a = f(1);\n", "b = 2;\n")
+	// #352: one run publishes the set; each control changes its own copy, so the compile and
+	// run cost is paid once.
+	published := filepath.Join(t.TempDir(), "set")
+	res, err := runOracle(t, oracleRequest(t, withOperation(t, profile, "native-query-batch"), root, published))
+	if err != nil || !res.Set.Valid {
+		t.Fatalf("%v %+v", err, res.Set)
+	}
 	fresh := func() string {
 		out := filepath.Join(t.TempDir(), "set")
-		res, err := runOracle(t, oracleRequest(t, withOperation(t, profile, "native-query-batch"), root, out))
-		if err != nil || !res.Set.Valid {
-			t.Fatalf("%v %+v", err, res.Set)
+		copyTree(t, published, out)
+		if got := kit.VerifyOracleSet(os.DirFS(out)); !got.Valid {
+			t.Fatalf("copied set: %+v", got.Findings)
 		}
 		return out
 	}

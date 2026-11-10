@@ -81,6 +81,7 @@ func TestInputRootsRefuseBeforeOutput(t *testing.T) {
 }
 
 func TestOracleBoundInputsAndPredicates(t *testing.T) {
+	t.Parallel()
 	source := "a = 1;\nb = 2;\n"
 	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "filtered", Source: `((identifier) @x (#eq? @x "a"))`}}, source)
 	out := filepath.Join(t.TempDir(), "set")

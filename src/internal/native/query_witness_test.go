@@ -156,6 +156,7 @@ func TestNativeStoredQueryWitness(t *testing.T) {
 
 // The producer's stored bytes feed the verifier; metadata and anchors stay literal.
 func TestOracleSourceWitnessStoredQuery(t *testing.T) {
+	t.Parallel()
 	query := `((identifier) @x (#eq? @x "x"))`
 	originals := []string{"x;\n1;\n", "y;\n1;\n", ""}
 	profile, root := oracleProfile(t, []kit.OracleQuery{{ID: "q0", Source: query}}, originals...)

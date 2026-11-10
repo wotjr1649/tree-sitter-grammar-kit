@@ -10,6 +10,7 @@ import (
 // Visible aliases own their fields; an unaliased hidden node still inherits them.
 // The last inherited entry and a later direct entry exercise both map exits.
 func TestRuntimeFieldOwnership(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "runtime_fields")
 	for _, tc := range []struct {
 		src, parentValue string

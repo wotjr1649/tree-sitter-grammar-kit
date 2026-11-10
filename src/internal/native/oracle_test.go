@@ -434,6 +434,7 @@ func TestRevisionR4(t *testing.T) {
 // #217: an r4 oracle case folds the mandatory observation: an observed edit passes with its
 // queries, and the owned old-tree omission is a kit FAIL next to passing query claims.
 func TestOracleObservation(t *testing.T) {
+	t.Parallel()
 	src := "z = [1, 2];\na = f(1);\n"
 	for _, omit := range []bool{false, true} {
 		var defines []string
