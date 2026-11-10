@@ -5,6 +5,7 @@
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - `src/internal/native` 시험의 중복 C 문법 compile을 줄였다(#352). batch 대조 시험은 set을 한 번 만들어 복사본을 변형하고, 순차 Oracle을 실행하는 두 시험은 시험 전용 build cache를 공유한다. 전역을 쓰지 않는 직렬 시험 6개는 병렬로 돌린다. 시험 수와 판정은 같다(PASS 916·SKIP 23). 로컬 Windows 교대 측정에서 base 146.1·145.4·143.9초, head 106.3·108.2초였다. CI 여유는 자연 표본으로 따로 판정한다.
+- Windows·Linux foundation의 13분 step과 native 명령 wall(420초 한도에 대한 보수적 대용값)을 margin 계측에 추가하고, 다른 source의 과거 report에 신규 4개 ID 누락을 제한적으로 허용한다(#352). 성능 개선이 아니며 새 구성 표본은 n=1부터 시작하므로 n20·70% 여유 달성은 별도 관측이 필요하다.
 - 보호된 파일 읽기가 파일마다 1 MiB 버퍼를 0으로 채워 할당하던 비용을 없앴다(#303). 버퍼를 `min(1 MiB, 파일 크기+1)`로 잡으며 읽은 bytes·hash·오류 판정은 같다. 로컬 Windows `src/kit` 시험 3쌍에서 63.9→46.4·81.3→66.7·74.8→55.9초였고, host 부하 변동이 포함된 값이라 CI 여유는 자연 표본으로 따로 판정한다.
 - Go 기준을 1.27.3(보안 패치)으로 올렸다(#349). 변경은 root `go.mod`의 `go` 줄과 margin 이전 버전 허용 목록의 `go1.27.2` 추가뿐이며, 공개 module 소비자의 최소 Go 버전도 1.27.3이 된다.
 - CI·cache·host identity·margin 및 외부 consumer 시험의 현재 Go 기준을 root `go.mod`로 통일하고 버전 불일치 거부를 유지한다(#346). 버전 값과 기존 역사 fixture는 그대로 둔다.

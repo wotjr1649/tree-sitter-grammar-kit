@@ -14,5 +14,8 @@ if ($env:GITHUB_JOB -cin @('foundation', 'native-routes', 'native-routes-macos',
 }
 $taskConfigArgs = @('run', './src/dev/ci-gate', 'config', '-expected', (Join-Path $dest 'run-identity.json'), '-out', (Join-Path $dest 'config.json'))
 if ($cc) { $taskConfigArgs += @('-compiler', $cc) }
+if ($env:GITHUB_JOB -ceq 'foundation') {
+  $taskConfigArgs += @('-native-wall', (Join-Path $env:RUNNER_TEMP "ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt"))
+}
 go @taskConfigArgs
 if ($LASTEXITCODE -ne 0) { throw 'margin configuration capture failed' }

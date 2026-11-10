@@ -21,10 +21,11 @@ import (
 const marginSchema = "tsgk-ci-margin/r1"
 
 type marginConfig struct {
-	Schema   string          `json:"schema"`
-	Run      kit.RunIdentity `json:"run"`
-	Source   string          `json:"source_sha256"`
-	Compiler *fileDigest     `json:"compiler"`
+	Schema            string          `json:"schema"`
+	Run               kit.RunIdentity `json:"run"`
+	Source            string          `json:"source_sha256"`
+	Compiler          *fileDigest     `json:"compiler"`
+	NativeCommandWall *int64          `json:"native_command_wall_ms,omitempty"`
 }
 
 type marginMetric struct {
@@ -111,7 +112,7 @@ func marginSource() (string, error) {
 	return digest(b), err
 }
 
-func saveMarginConfig(identity, compiler, out string) error {
+func saveMarginConfig(identity, compiler, nativeWall, out string) error {
 	b, err := readFile(identity, 65536)
 	var r kit.RunIdentity
 	if err != nil || decode(b, &r) != nil {
@@ -126,11 +127,22 @@ func saveMarginConfig(identity, compiler, out string) error {
 	if selected == nil || r.Image == "" || strings.HasPrefix(r.Image, "/") || strings.HasSuffix(r.Image, "/") {
 		return errors.New("margin producer configuration unavailable")
 	}
+	c := marginConfig{Schema: "tsgk-ci-config/r1", Run: r}
+	if selected.job == "foundation" {
+		b, err := readFile(nativeWall, 32)
+		ms, parseErr := strconv.ParseInt(string(b), 10, 64)
+		if err != nil || parseErr != nil || ms < 0 || ms > 24*time.Hour.Milliseconds() || strconv.FormatInt(ms, 10) != string(b) {
+			return errors.New("margin native command wall unavailable or invalid")
+		}
+		c.NativeCommandWall = &ms
+	} else if nativeWall != "" {
+		return errors.New("unexpected margin native command wall")
+	}
 	source, err := marginSource()
 	if err != nil {
 		return err
 	}
-	c := marginConfig{Schema: "tsgk-ci-config/r1", Run: r, Source: source}
+	c.Source = source
 	if selected.compiler {
 		b, err := readFile(compiler, 256<<20)
 		if err != nil {
@@ -152,6 +164,14 @@ func marginToolchain(v, expectedGo string, historical bool) bool {
 
 func checkMarginConfig(c marginConfig, j marginJob, expected kit.RunIdentity, expectedGo string, historical bool) error {
 	r := c.Run
+	nativeWall := j.job == "foundation" && (j.goos == "windows" || j.goos == "linux")
+	if c.NativeCommandWall != nil {
+		if !nativeWall || *c.NativeCommandWall < 0 || *c.NativeCommandWall > 24*time.Hour.Milliseconds() {
+			return errors.New("margin native command wall invalid")
+		}
+	} else if nativeWall && !historical {
+		return errors.New("margin native command wall missing")
+	}
 	if c.Schema != "tsgk-ci-config/r1" || !sameRun(&r, expected) || r.Job != j.job || r.GOOS != j.goos || r.GOARCH != j.arch ||
 		!marginToolchain(r.GoVersion, expectedGo, historical) || !hex64.MatchString(c.Source) ||
 		len(r.Image) > 128 || r.RunnerOS != map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos] ||
@@ -171,6 +191,9 @@ func decodeMarginConfig(b []byte, c *marginConfig) error {
 	}
 	if _, ok := object["compiler"]; !ok {
 		return errors.New("margin compiler declaration missing")
+	}
+	if _, ok := object["native_command_wall_ms"]; ok && requiredFields(b, "native_command_wall_ms") != nil {
+		return errors.New("margin native command wall null")
 	}
 	return nil
 }
@@ -272,6 +295,9 @@ func elapsed(s marginStep) (int64, error) {
 func marginStepLimits(j marginJob) map[string]int64 {
 	limits := map[string]int64{}
 	if j.job == "foundation" {
+		if j.goos == "windows" || j.goos == "linux" {
+			limits["형식과 foundation 검사"] = 13
+		}
 		limits["frame 상태와 native cancellation 반복 시험 (#65)"] = 6
 		if j.goos == "linux" {
 			limits["isolated bind-mount output boundary (#196)"] = 2
@@ -336,6 +362,9 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, expectedGo
 			return nil, err
 		}
 		add(j.job+"/"+j.goos+"/job", wall, j.minutes*60000)
+		if c.NativeCommandWall != nil {
+			add(j.job+"/"+j.goos+"/native-command-wall", *c.NativeCommandWall, 420000)
+		}
 		for name, minutes := range marginStepLimits(j) {
 			var found []marginStep
 			for _, step := range job.Steps {
@@ -367,6 +396,14 @@ func currentMargins(expected kit.RunIdentity, configs []marginConfig, expectedGo
 	return metrics, nil
 }
 
+// Only these additions may be absent in historical reports of another source (#352).
+var marginHistoricalOptionalMetrics = []string{
+	"foundation/windows/step/형식과 foundation 검사",
+	"foundation/linux/step/형식과 foundation 검사",
+	"foundation/windows/native-command-wall",
+	"foundation/linux/native-command-wall",
+}
+
 func validateMarginReport(r marginReport, expectedGo string, historical bool) error {
 	// a past report may have the job list from before macOS left CI (#332); a current one never
 	jobList := marginJobs
@@ -392,6 +429,12 @@ func validateMarginReport(r marginReport, expectedGo string, historical bool) er
 		limits[id] = j.minutes * 60000
 		expected[id] = marginKey(c, id, limits[id])
 		configs[id] = c
+		if j.job == "foundation" && (j.goos == "windows" || j.goos == "linux") {
+			id := j.job + "/" + j.goos + "/native-command-wall"
+			limits[id] = 420000
+			expected[id] = marginKey(c, id, limits[id])
+			configs[id] = c
+		}
 		for name, minutes := range marginStepLimits(j) {
 			id := j.job + "/" + j.goos + "/step/" + name
 			limits[id] = minutes * 60000
@@ -405,9 +448,6 @@ func validateMarginReport(r marginReport, expectedGo string, historical bool) er
 			configs[id] = c
 		}
 	}
-	if len(r.Metrics) != len(expected) {
-		return errors.New("margin metric coverage")
-	}
 	for _, m := range r.Metrics {
 		key, ok := expected[m.ID]
 		// #260: a past report keeps the limit it ran under; its key binds that limit, so it is
@@ -419,7 +459,19 @@ func validateMarginReport(r marginReport, expectedGo string, historical bool) er
 		if !ok || m.Config != key || m.Limit != limits[m.ID] || m.Used < 0 || m.Used > 24*time.Hour.Milliseconds() {
 			return errors.New("margin invalid metric or configuration key")
 		}
+		if strings.HasSuffix(m.ID, "/native-command-wall") {
+			wall := configs[m.ID].NativeCommandWall
+			if wall == nil || m.Used != *wall {
+				return errors.New("margin native command wall mismatch")
+			}
+		}
 		delete(expected, m.ID)
+	}
+	for id := range expected {
+		if !historical || !slices.Contains(marginHistoricalOptionalMetrics, id) ||
+			(strings.HasSuffix(id, "/native-command-wall") && configs[id].NativeCommandWall != nil) {
+			return errors.New("margin metric coverage")
+		}
 	}
 	return nil
 }
@@ -450,6 +502,13 @@ func evaluateMargins(current *marginReport, history []marginReport, expectedGo s
 		// #332: the source binds the workflow, so one source has one job list
 		if len(r.Configs) != len(current.Configs) && r.Configs[0].Source == current.Configs[0].Source {
 			return false, errors.New("former margin job list claims current configuration")
+		}
+		if r.Configs[0].Source == current.Configs[0].Source {
+			for _, id := range marginHistoricalOptionalMetrics {
+				if !slices.ContainsFunc(r.Metrics, func(m marginMetric) bool { return m.ID == id }) {
+					return false, errors.New("missing margin metric claims current configuration")
+				}
+			}
 		}
 		// #260: the source binds the workflow and the limit table, so one source has one limit set
 		for _, m := range r.Metrics {

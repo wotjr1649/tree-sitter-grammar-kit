@@ -327,7 +327,17 @@ func run(args []string, stderr io.Writer) int {
 	history := fs.String("history", "", "bounded margin metadata and ZIP root")
 	core := fs.String("core", "", "successful current-run core result")
 	compiler := fs.String("compiler", "", "selected producer compiler")
+	nativeWall := fs.String("native-wall", "", "foundation native command wall file")
 	if fs.Parse(args[1:]) != nil || fs.NArg() != 0 || (*expectPath == "") != (args[0] == "inventory") {
+		return 2
+	}
+	nativeWallSet := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "native-wall" {
+			nativeWallSet = true
+		}
+	})
+	if nativeWallSet && (*nativeWall == "" || args[0] != "config") {
 		return 2
 	}
 	if args[0] == "inventory" {
@@ -345,7 +355,7 @@ func run(args []string, stderr io.Writer) int {
 		if *out == "" {
 			return 2
 		}
-		if err := saveMarginConfig(*expectPath, *compiler, *out); err != nil {
+		if err := saveMarginConfig(*expectPath, *compiler, *nativeWall, *out); err != nil {
 			fmt.Fprintln(stderr, "ci-gate:", err)
 			return 1
 		}

@@ -38,7 +38,10 @@ func formerMarginFixture(t *testing.T, id string) (marginReport, []byte, []byte)
 	saved := marginJobs
 	marginJobs = marginFormerJobs
 	defer func() { marginJobs = saved }()
-	return marginFixture(t, id)
+	r, jobs, core := marginFixture(t, id)
+	// Keep the pre-instrumentation shape explicit, independent of the current metric table.
+	removeNativeMarginObservations(&r)
+	return r, jobs, core
 }
 
 // #332: a past nine-job report stays valid history of its own configuration; the current

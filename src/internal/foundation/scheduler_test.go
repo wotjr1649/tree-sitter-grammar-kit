@@ -745,6 +745,131 @@ func runWorkflowPowerShell(t *testing.T, dir, script string) error {
 	return nil
 }
 
+// #352 keeps the native command, failure propagation and cgroup in the existing step.
+func foundationNativeMarginPolicy(text, config string) error {
+	step := workflowStep(workflowJobBody(text, "foundation"), "형식과 foundation 검사")
+	code := workflowRunCode(step)
+	for _, need := range []string{
+		"        timeout-minutes: 13\n",
+		"go test @otherPackages -count=1 -v -timeout 300s\nif ($LASTEXITCODE -ne 0) { throw 'test failed' }",
+		`$nativePackage = 'github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native'`,
+		`$packages = @(go list ./src/...)`,
+		`if ($LASTEXITCODE -ne 0 -or $packages -notcontains $nativePackage) { throw 'native package enumeration failed' }`,
+		`$otherPackages = @($packages | Where-Object { $_ -ne $nativePackage })`,
+		`if ($otherPackages.Count -eq 0) { throw 'other packages missing' }`,
+		"$nativeWallPath = Join-Path $env:RUNNER_TEMP \"ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt\"\n" +
+			"if (Test-Path -LiteralPath $nativeWallPath) { throw 'native command wall output exists' }\n" +
+			"$nativeWatch = [Diagnostics.Stopwatch]::StartNew()\n" +
+			"go test $nativePackage -count=1 -v -timeout 420s\n" +
+			"$nativeWatch.Stop()\nif ($LASTEXITCODE -ne 0) { throw 'native test failed' }\n" +
+			"$nativeWallFile = [IO.File]::Open($nativeWallPath, [IO.FileMode]::CreateNew)\n" +
+			"try {\n  $nativeWallBytes = [Text.Encoding]::ASCII.GetBytes($nativeWatch.ElapsedMilliseconds.ToString([Globalization.CultureInfo]::InvariantCulture))\n" +
+			"  $nativeWallFile.Write($nativeWallBytes)\n} finally { $nativeWallFile.Dispose() }",
+		`$base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"`,
+		`sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"`,
+		`$env:TSGK_CGROUP_PARENT = "$base/jobs"`,
+	} {
+		if !strings.Contains(step, need) && !strings.Contains(code, need) {
+			return fmt.Errorf("native margin collection missing: %q", need)
+		}
+	}
+	if strings.Index(code, "go test @otherPackages") > strings.Index(code, "$nativeWatch =") {
+		return fmt.Errorf("native command moved before other packages")
+	}
+	transfer := "if ($env:GITHUB_JOB -ceq 'foundation') {\n" +
+		"  $taskConfigArgs += @('-native-wall', (Join-Path $env:RUNNER_TEMP \"ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt\"))\n}\ngo @taskConfigArgs"
+	if !strings.Contains(config, transfer) || strings.Count(config, "'-native-wall'") != 1 {
+		return fmt.Errorf("native wall must reach foundation config only")
+	}
+	return nil
+}
+
+func TestWorkflowFoundationNativeMargin(t *testing.T) {
+	root := repository(t)
+	text := string(mustRead(t, filepath.Join(root, ".github/workflows/foundation.yml")))
+	config := string(mustRead(t, filepath.Join(root, "src/dev/ci-gate/config.ps1")))
+	if err := foundationNativeMarginPolicy(text, config); err != nil {
+		t.Fatal(err)
+	}
+	for name, broken := range map[string]string{
+		"record-removed":      strings.Replace(text, "$nativeWallFile.Write($nativeWallBytes)", "", 1),
+		"exit-ignored":        strings.Replace(text, "if ($LASTEXITCODE -ne 0) { throw 'native test failed' }", "", 1),
+		"clock-removed":       strings.Replace(text, "$nativeWatch.Stop()", "", 1),
+		"collision-overwrite": strings.Replace(text, "[IO.FileMode]::CreateNew", "[IO.FileMode]::Create", 1),
+		"no-precheck":         strings.Replace(text, "if (Test-Path -LiteralPath $nativeWallPath) { throw 'native command wall output exists' }", "", 1),
+		"attempt-unbound":     strings.Replace(text, "ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt", "ci-native-wall.txt", 1),
+		"native-json":         strings.Replace(text, "-v -timeout 420s", "-v -timeout 420s -json", 1),
+		"cgroup-removed":      strings.Replace(text, `$env:TSGK_CGROUP_PARENT = "$base/jobs"`, "", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || foundationNativeMarginPolicy(broken, config) == nil {
+				t.Fatal("workflow mutant accepted")
+			}
+		})
+	}
+	for _, broken := range []string{
+		strings.Replace(config, "'-native-wall'", "'-other'", 1),
+		strings.Replace(config, "-ceq 'foundation'", "-cne 'foundation'", 1),
+		strings.Replace(config, "$env:GITHUB_RUN_ATTEMPT.txt", "1.txt", 1),
+	} {
+		if foundationNativeMarginPolicy(text, broken) == nil {
+			t.Fatal("config transfer mutant accepted")
+		}
+	}
+	code := workflowRunCode(workflowStep(workflowJobBody(text, "foundation"), "형식과 foundation 검사"))
+	_, capture, ok := strings.Cut(code, "$nativeWallPath =")
+	if !ok {
+		t.Fatal("capture block missing")
+	}
+	capture = "$nativeWallPath =" + capture
+	for _, scenario := range []string{"success", "failed", "existing", "race"} {
+		t.Run(scenario, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "ci-native-wall-900-2.txt")
+			old := filepath.Join(dir, "ci-native-wall-900-1.txt")
+			if err := os.WriteFile(old, []byte("earlier-attempt"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if scenario == "existing" {
+				if err := os.WriteFile(path, []byte("keep"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			stub := "$ErrorActionPreference = 'Stop'\n$env:RUNNER_TEMP = (Get-Location).Path\n$env:GITHUB_RUN_ID = '900'\n$env:GITHUB_RUN_ATTEMPT = '2'\n$nativePackage = 'fixture'\nfunction go { $global:LASTEXITCODE = 0"
+			if scenario == "failed" {
+				stub += "; $global:LASTEXITCODE = 7"
+			}
+			if scenario == "race" {
+				stub += "; [IO.File]::WriteAllText($nativeWallPath, 'keep')"
+			}
+			stub += " }\n"
+			err := runWorkflowPowerShell(t, dir, stub+capture)
+			if (err == nil) != (scenario == "success") {
+				t.Fatalf("capture exit: %v", err)
+			}
+			b, readErr := os.ReadFile(path)
+			switch scenario {
+			case "success":
+				ms, parseErr := strconv.ParseInt(string(b), 10, 64)
+				if readErr != nil || parseErr != nil || ms < 0 {
+					t.Fatalf("bad recorded wall: %q %v", b, readErr)
+				}
+			case "failed":
+				if !os.IsNotExist(readErr) || !strings.Contains(err.Error(), "native test failed") {
+					t.Fatal("failed command recorded or failure lost", err)
+				}
+			default:
+				if readErr != nil || string(b) != "keep" {
+					t.Fatal("existing observation overwritten")
+				}
+			}
+			if b, err := os.ReadFile(old); err != nil || string(b) != "earlier-attempt" {
+				t.Fatal("earlier attempt modified", err)
+			}
+		})
+	}
+}
+
 func TestWorkflowGoVersionScripts(t *testing.T) {
 	if _, err := exec.LookPath("pwsh"); err != nil {
 		t.Skip("PowerShell 7 is unavailable")
