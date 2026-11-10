@@ -175,8 +175,17 @@ jobs:
           if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
           go test @otherPackages -count=1 -v -timeout 300s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
+          $nativeWallPath = Join-Path $env:RUNNER_TEMP "ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt"
+          if (Test-Path -LiteralPath $nativeWallPath) { throw 'native command wall output exists' }
+          $nativeWatch = [Diagnostics.Stopwatch]::StartNew()
           go test $nativePackage -count=1 -v -timeout 420s
+          $nativeWatch.Stop()
           if ($LASTEXITCODE -ne 0) { throw 'native test failed' }
+          $nativeWallFile = [IO.File]::Open($nativeWallPath, [IO.FileMode]::CreateNew)
+          try {
+            $nativeWallBytes = [Text.Encoding]::ASCII.GetBytes($nativeWatch.ElapsedMilliseconds.ToString([Globalization.CultureInfo]::InvariantCulture))
+            $nativeWallFile.Write($nativeWallBytes)
+          } finally { $nativeWallFile.Dispose() }
       - name: isolated bind-mount output boundary (#196)
         if: runner.os == 'Linux'
         timeout-minutes: 2

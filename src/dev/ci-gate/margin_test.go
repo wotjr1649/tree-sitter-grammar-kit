@@ -58,6 +58,9 @@ func marginFixtureWithGo(t *testing.T, id, expectedGo string) (marginReport, []b
 		host.RunnerArch = map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch]
 		host.Image, host.GoVersion = j.goos+"/image-v1", expectedGo
 		c := marginConfig{Schema: "tsgk-ci-config/r1", Run: host, Source: strings.Repeat("c", 64)}
+		if j.job == "foundation" && j.goos != "darwin" {
+			c.NativeCommandWall = new(int64(60000))
+		}
 		if j.compiler {
 			c.Compiler = &fileDigest{strings.Repeat("d", 64), 100}
 		}
@@ -116,6 +119,18 @@ func TestMarginJobsSettled(t *testing.T) {
 		"step-running": func(jobs []marginAPIJob) []marginAPIJob { jobs[a].Steps[0].Status = "in_progress"; return jobs },
 		"step-missing": func(jobs []marginAPIJob) []marginAPIJob { jobs[a].Steps = nil; return jobs },
 		"job-missing":  func(jobs []marginAPIJob) []marginAPIJob { return jobs[1:] },
+		"foundation-step-missing": func(jobs []marginAPIJob) []marginAPIJob {
+			jobs[0].Steps = slices.DeleteFunc(jobs[0].Steps, func(s marginStep) bool { return s.Name == "형식과 foundation 검사" })
+			return jobs
+		},
+		"foundation-step-running": func(jobs []marginAPIJob) []marginAPIJob {
+			for i := range jobs[0].Steps {
+				if jobs[0].Steps[i].Name == "형식과 foundation 검사" {
+					jobs[0].Steps[i].Status = "in_progress"
+				}
+			}
+			return jobs
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			jobs := slices.Clone(fixture.Jobs)
@@ -148,6 +163,11 @@ func TestMarginThresholdAndIndependentRuns(t *testing.T) {
 			r, _, _ := marginFixture(t, "900")
 			for i := range r.Metrics {
 				r.Metrics[i].Used = r.Metrics[i].Limit * int64(tc.percent) / 100
+			}
+			for i := range r.Configs {
+				if r.Configs[i].NativeCommandWall != nil {
+					r.Configs[i].NativeCommandWall = new(420000 * int64(tc.percent) / 100)
+				}
 			}
 			var past []marginReport
 			for i := 1; i < tc.n; i++ {
@@ -191,8 +211,7 @@ func TestMarginThresholdAndIndependentRuns(t *testing.T) {
 
 func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 	r, jobs, core := marginFixture(t, "900")
-	if len(r.Metrics) != 14 { // 17 with the three darwin metrics before #332
-
+	if len(r.Metrics) != 18 { // Seven jobs, eight steps, page-max, two native command walls.
 		t.Fatalf("metrics=%d", len(r.Metrics))
 	}
 	a, _, _ := marginFixture(t, "1")
@@ -320,6 +339,227 @@ func TestMarginSecondResolutionTimestamps(t *testing.T) {
 		}
 	}
 	t.Fatal("zero-duration successful step metric absent")
+}
+
+// Model the old bytes by explicitly removing only the four #352 additions.
+func removeNativeMarginObservations(r *marginReport) {
+	r.Metrics = slices.DeleteFunc(r.Metrics, func(m marginMetric) bool {
+		return slices.Contains([]string{
+			"foundation/windows/step/형식과 foundation 검사", "foundation/linux/step/형식과 foundation 검사",
+			"foundation/windows/native-command-wall", "foundation/linux/native-command-wall",
+		}, m.ID)
+	})
+	for i := range r.Configs {
+		r.Configs[i].NativeCommandWall = nil
+	}
+}
+
+func TestMarginNativeHistoricalCoverage(t *testing.T) {
+	current, _, _ := marginFixture(t, "900")
+	fixture := func(old bool) marginReport {
+		r, _, _ := marginFixture(t, "1")
+		if old {
+			removeNativeMarginObservations(&r)
+		}
+		for i := range r.Configs {
+			r.Configs[i].Source = strings.Repeat("e", 64)
+		}
+		for i := range r.Metrics {
+			m := &r.Metrics[i]
+			for _, c := range r.Configs {
+				if strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+					m.Config = marginKey(c, m.ID, m.Limit)
+				}
+			}
+		}
+		return r
+	}
+	past := fixture(true)
+	if len(past.Metrics) != 14 {
+		t.Fatal("historical fixture gained new observations")
+	}
+	if _, err := evaluateMargins(&current, []marginReport{past}, marginExpectedGo(t)); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range current.Metrics {
+		if m.Samples != 1 {
+			t.Fatal("old source counted as a current sample")
+		}
+	}
+	if validateMarginReport(past, marginExpectedGo(t), false) == nil {
+		t.Fatal("old shape accepted as current")
+	}
+	for name, tc := range map[string]struct {
+		old    bool
+		mutate func(*marginReport)
+	}{
+		"existing-id-missing": {true, func(r *marginReport) { r.Metrics = r.Metrics[1:] }},
+		"unknown-id":          {true, func(r *marginReport) { r.Metrics[0].ID = "foundation/windows/unknown" }},
+		"duplicate":           {true, func(r *marginReport) { r.Metrics[1] = r.Metrics[0] }},
+		"forged-key":          {true, func(r *marginReport) { r.Metrics[0].Config = strings.Repeat("0", 64) }},
+		"same-source": {true, func(r *marginReport) {
+			for i := range r.Configs {
+				r.Configs[i].Source = current.Configs[0].Source
+			}
+			for i := range r.Metrics {
+				m := &r.Metrics[i]
+				for _, c := range r.Configs {
+					if strings.HasPrefix(m.ID, c.Run.Job+"/"+c.Run.GOOS+"/") {
+						m.Config = marginKey(c, m.ID, m.Limit)
+					}
+				}
+			}
+		}},
+		"wall-field-without-metric": {true, func(r *marginReport) { r.Configs[0].NativeCommandWall = new(int64(60000)) }},
+		"wall-metric-without-field": {false, func(r *marginReport) { r.Configs[0].NativeCommandWall = nil }},
+		"wall-mismatch":             {false, func(r *marginReport) { r.Configs[0].NativeCommandWall = new(int64(1)) }},
+		"optional-forged-key": {false, func(r *marginReport) {
+			for i := range r.Metrics {
+				if r.Metrics[i].ID == "foundation/windows/native-command-wall" {
+					r.Metrics[i].Config = strings.Repeat("0", 64)
+				}
+			}
+		}},
+		"optional-negative": {false, func(r *marginReport) {
+			for i := range r.Metrics {
+				if r.Metrics[i].ID == "foundation/linux/step/형식과 foundation 검사" {
+					r.Metrics[i].Used = -1
+				}
+			}
+		}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := fixture(tc.old)
+			tc.mutate(&r)
+			if _, err := evaluateMargins(&current, []marginReport{r}, marginExpectedGo(t)); err == nil {
+				t.Fatal("invalid historical report accepted")
+			}
+		})
+	}
+	if _, err := evaluateMargins(&current, []marginReport{fixture(false)}, marginExpectedGo(t)); err != nil {
+		t.Fatal("new observations rejected in history", err)
+	}
+	// A missing single step is also permitted only across sources, without inventing a sample.
+	past = fixture(false)
+	past.Metrics = slices.DeleteFunc(past.Metrics, func(m marginMetric) bool { return m.ID == "foundation/windows/step/형식과 foundation 검사" })
+	if _, err := evaluateMargins(&current, []marginReport{past}, marginExpectedGo(t)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMarginNativeWallConfig(t *testing.T) {
+	r, jobs, core := marginFixture(t, "900")
+	for _, id := range []string{"foundation/windows/native-command-wall", "foundation/linux/native-command-wall",
+		"foundation/windows/step/형식과 foundation 검사", "foundation/linux/step/형식과 foundation 검사"} {
+		idx := slices.IndexFunc(r.Metrics, func(m marginMetric) bool { return m.ID == id })
+		limit := int64(780000)
+		if strings.HasSuffix(id, "/native-command-wall") {
+			limit = 420000
+		}
+		if idx < 0 || r.Metrics[idx].Used != 60000 || r.Metrics[idx].Limit != limit {
+			t.Fatalf("bad current metric %s", id)
+		}
+	}
+	for name, mutate := range map[string]func(*marginReport){
+		"missing":   func(r *marginReport) { r.Configs[0].NativeCommandWall = nil },
+		"other-job": func(r *marginReport) { r.Configs[2].NativeCommandWall = new(int64(0)) },
+		"negative":  func(r *marginReport) { r.Configs[0].NativeCommandWall = new(int64(-1)) },
+		"oversized": func(r *marginReport) { r.Configs[0].NativeCommandWall = new(24*time.Hour.Milliseconds() + 1) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			bad, _, _ := marginFixture(t, "900")
+			mutate(&bad)
+			if _, err := currentMargins(bad.Run, bad.Configs, marginExpectedGo(t), jobs, core); err == nil {
+				t.Fatal("bad current wall accepted")
+			}
+			if validateMarginReport(bad, marginExpectedGo(t), false) == nil {
+				t.Fatal("bad report wall accepted")
+			}
+		})
+	}
+	c := r.Configs[0]
+	key := marginKey(c, "foundation/windows/native-command-wall", 420000)
+	c.NativeCommandWall = new(int64(1))
+	if marginKey(c, "foundation/windows/native-command-wall", 420000) != key {
+		t.Fatal("observation split configuration key")
+	}
+	for _, raw := range []string{"null", "-1", "86400001", "1.5", `"1"`, "true"} {
+		data := strings.Replace(string(encoded(t, r.Configs[0])), `"native_command_wall_ms":60000`, `"native_command_wall_ms":`+raw, 1)
+		var bad marginConfig
+		if decodeMarginConfig([]byte(data), &bad) == nil && checkMarginConfig(bad, marginJobs[0], r.Run, marginExpectedGo(t), false) == nil {
+			t.Fatalf("bad config wall accepted: %s", raw)
+		}
+	}
+	// This exercises the CLI flag, bounded file reader, and the single config payload.
+	t.Chdir(t.TempDir())
+	put := func(path, value string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(value), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.MkdirAll("src", 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(".github/workflows", 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"go.mod", "go.sum", "src/p.go", ".github/workflows/foundation.yml", "compiler"} {
+		put(path, "fixture")
+	}
+	for i, tc := range []struct {
+		wall            string
+		flag, other, ok bool
+	}{
+		{"0", true, false, true}, {"86400000", true, false, true}, {"420001", true, false, true},
+		{"-1", true, false, false}, {"86400001", true, false, false}, {"1.5", true, false, false},
+		{"null", true, false, false}, {"", true, false, false}, {strings.Repeat("1", 33), true, false, false},
+		{"1", false, false, false}, {"1", true, true, false}, {"1", false, true, true},
+	} {
+		identity := r.Configs[0].Run
+		if tc.other {
+			identity = r.Configs[2].Run
+		}
+		put("identity.json", string(encoded(t, identity)))
+		put("wall.txt", tc.wall)
+		out := fmt.Sprintf("config-%d.json", i)
+		args := []string{"config", "-expected", "identity.json", "-out", out}
+		if !tc.other {
+			args = append(args, "-compiler", "compiler")
+		}
+		if tc.flag {
+			args = append(args, "-native-wall", "wall.txt")
+		}
+		if got := run(args, io.Discard); (got == 0) != tc.ok {
+			t.Fatalf("case %d: exit %d", i, got)
+		}
+		if tc.ok {
+			b, err := os.ReadFile(out)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var c marginConfig
+			if decodeMarginConfig(b, &c) != nil || (!tc.other && (c.NativeCommandWall == nil || strconv.FormatInt(*c.NativeCommandWall, 10) != tc.wall)) || (tc.other && c.NativeCommandWall != nil) {
+				t.Fatal("wall lost in config", string(b))
+			}
+			if run(args, io.Discard) == 0 {
+				t.Fatal("existing config overwritten")
+			}
+		} else if _, err := os.Stat(out); !errors.Is(err, os.ErrNotExist) {
+			t.Fatal("invalid config written")
+		}
+	}
+	put("identity.json", string(encoded(t, r.Configs[2].Run)))
+	if run([]string{"config", "-expected", "identity.json", "-out", "empty-flag.json", "-native-wall", ""}, io.Discard) == 0 {
+		t.Fatal("empty native wall flag accepted for another job")
+	}
+	if err := os.Remove("wall.txt"); err != nil {
+		t.Fatal(err)
+	}
+	put("identity.json", string(encoded(t, r.Configs[0].Run)))
+	if saveMarginConfig("identity.json", "compiler", "wall.txt", "missing.json") == nil {
+		t.Fatal("missing wall file accepted")
+	}
 }
 
 func TestMarginSourceIdentity(t *testing.T) {
@@ -644,6 +884,9 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				}
 				if m.ID == "large-api/windows/page-max" && (m.Exceeded != true || (n == 19 && m.State != "FAIL") || (n == 0 && m.State != "INSUFFICIENT_SAMPLE")) {
 					t.Fatalf("%+v", m)
+				}
+				if strings.HasSuffix(m.ID, "/native-command-wall") && (m.Used != 60000 || m.Limit != 420000) {
+					t.Fatalf("native command wall lost in artifact flow: %+v", m)
 				}
 			}
 		})
