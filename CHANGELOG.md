@@ -4,6 +4,7 @@
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
+- Go 기준을 1.27.3(보안 패치)으로 올렸다(#349). 변경은 root `go.mod`의 `go` 줄과 margin 이전 버전 허용 목록의 `go1.27.2` 추가뿐이며, 공개 module 소비자의 최소 Go 버전도 1.27.3이 된다.
 - CI·cache·host identity·margin 및 외부 consumer 시험의 현재 Go 기준을 root `go.mod`로 통일하고 버전 불일치 거부를 유지한다(#346). 버전 값과 기존 역사 fixture는 그대로 둔다.
 - `--out` 경로 별칭의 지원 경계와 문서 정합성을 정리했다(#196). 검출하지 못하는 별칭을 완전히 해결했다는 의미는 아니다.
 - 선택적 incremental logger 관측과 source witness를 추가했다(#197). 기존 판정과 관측 증거를 구분하며, 관측된 reuse를 속도 향상으로 환산하지 않는다.
