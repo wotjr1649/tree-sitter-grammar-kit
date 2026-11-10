@@ -23,7 +23,7 @@ stable → 개발 snapshot compare API는 12 commits와 변경 20개를 보고�
 
 | 항목 | 채택 identity·이유 |
 |---|---|
-| Go | 로컬 `go1.27.2 windows/amd64`; root go.mod와 CI는 1.27.2 고정(#261). 이전 고정 값은 1.27.1이며, 그때 [공식 배포 목록](https://go.dev/dl/?mode=json)의 stable 버전과 세 OS archive 존재를 확인했다. 1.27.2의 세 OS archive는 hosted CI의 `actions/setup-go` 취득으로 확인한다 |
+| Go | 현재 기준은 root `go.mod`의 `go` 줄이며 공개 module의 최소 버전과 CI의 정확한 toolchain 기준을 겸한다(#346). 고정 `actions/setup-go`는 `GOTOOLCHAIN=local`에서 `go-version-file: go.mod`로 이 값을 읽는다. #261 당시 로컬 `go1.27.2 windows/amd64`와 root go.mod·CI의 `1.27.2` 고정을 기록했다. 이전 고정 값은 `1.27.1`이며, 그때 [공식 배포 목록](https://go.dev/dl/?mode=json)의 stable 버전과 세 OS archive 존재를 확인했다. `1.27.2`의 세 OS archive는 hosted CI의 `actions/setup-go` 취득으로 확인한다는 당시 검증 범위를 보존하며, 새 hosted 설치 성공을 뜻하지 않는다 |
 | checkout | [v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), commit `3d3c42e5aac5ba805825da76410c181273ba90b1`; action.yml의 node24, credential persistence 입력 확인 |
 | setup-go | [v7.0.0](https://github.com/actions/setup-go/releases/tag/v7.0.0), commit `b7ad1dad31e06c5925ef5d2fc7ad053ef454303e`; action.yml의 version/cache/arch 입력과 node24 확인 |
 | hosted runner | [공식 표](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)로 `windows-2025` x64, `ubuntu-24.04` x64, `macos-15` arm64 선택. public 저장소 standard runner 범위. 실제 image/arch는 CI에서도 검사 |

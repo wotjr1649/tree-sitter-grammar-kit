@@ -16,6 +16,34 @@ import (
 	"time"
 )
 
+func TestModuleGoVersion(t *testing.T) {
+	for _, input := range []string{"go 1.28.4\n", "module example.invalid/test\r\n\tgo\t1.28.4 // floor\r\n"} {
+		if got, err := ModuleGoVersion([]byte(input)); err != nil || got != "1.28.4" {
+			t.Fatalf("version = %q, %v", got, err)
+		}
+	}
+	for name, input := range map[string]string{
+		"missing": "module example.invalid/test\n", "empty": "go\n",
+		"duplicate": "go 1.28.4\ngo 1.28.4\n", "minor-only": "go 1.28\n",
+		"suffix": "go 1.28.4rc1\n", "range": "go >=1.28.4\n",
+		"leading-zero": "go 1.028.4\n", "unicode-space": "go\u00a01.28.4\n",
+		"oversize": "go 1.28.4\n" + strings.Repeat(" ", 65536),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if got, err := ModuleGoVersion([]byte(input)); err == nil {
+				t.Fatalf("accepted %q", got)
+			}
+		})
+	}
+	data, err := os.ReadFile(filepath.Join(repository(t), "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := ModuleGoVersion(data); err != nil || !strings.Contains(string(data), "go "+got+"\n") {
+		t.Fatalf("root go directive = %q, %v", got, err)
+	}
+}
+
 func repository(t *testing.T) string {
 	t.Helper()
 	root, err := filepath.Abs("../../..")

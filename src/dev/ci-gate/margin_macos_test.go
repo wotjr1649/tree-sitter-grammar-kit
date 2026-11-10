@@ -19,7 +19,7 @@ func TestMarginFixedMainHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 	current, _, _ := marginFixture(t, "900")
-	if failed, err := evaluateMargins(&current, []marginReport{past}); err != nil || failed {
+	if failed, err := evaluateMargins(&current, []marginReport{past}, marginExpectedGo(t)); err != nil || failed {
 		t.Fatalf("original main report rejected: failed=%v err=%v", failed, err)
 	}
 	for _, m := range current.Metrics {
@@ -27,7 +27,7 @@ func TestMarginFixedMainHistory(t *testing.T) {
 			t.Fatal("original main configuration increased current samples")
 		}
 	}
-	if _, err := evaluateMargins(&past, nil); err == nil {
+	if _, err := evaluateMargins(&past, nil, marginExpectedGo(t)); err == nil {
 		t.Fatal("original main report accepted as current evidence")
 	}
 }
@@ -68,7 +68,7 @@ func TestMarginFormerJobList(t *testing.T) {
 	if len(past.Configs) != 9 {
 		t.Fatal("former fixture must have nine jobs")
 	}
-	if failed, err := evaluateMargins(&current, []marginReport{past}); err != nil || failed {
+	if failed, err := evaluateMargins(&current, []marginReport{past}, marginExpectedGo(t)); err != nil || failed {
 		t.Fatalf("former nine-job history rejected: failed=%v err=%v", failed, err)
 	}
 	for _, m := range current.Metrics {
@@ -76,13 +76,13 @@ func TestMarginFormerJobList(t *testing.T) {
 			t.Fatal("former job-list report increased current samples")
 		}
 	}
-	if _, err := evaluateMargins(&past, nil); err == nil {
+	if _, err := evaluateMargins(&past, nil, marginExpectedGo(t)); err == nil {
 		t.Fatal("nine-job report accepted as current evidence")
 	}
-	if _, err := evaluateMargins(&current, []marginReport{former("2", current.Configs[0].Source, 9)}); err == nil {
+	if _, err := evaluateMargins(&current, []marginReport{former("2", current.Configs[0].Source, 9)}, marginExpectedGo(t)); err == nil {
 		t.Fatal("nine-job report of the current source accepted")
 	}
-	if _, err := evaluateMargins(&current, []marginReport{former("3", strings.Repeat("e", 64), 8)}); err == nil {
+	if _, err := evaluateMargins(&current, []marginReport{former("3", strings.Repeat("e", 64), 8)}, marginExpectedGo(t)); err == nil {
 		t.Fatal("report of another job count accepted as history")
 	}
 }
@@ -111,7 +111,7 @@ func TestMarginMacLegacyHistory(t *testing.T) {
 	if err := decodeMarginReport(encoded(t, legacy), &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if failed, err := evaluateMargins(&current, []marginReport{decoded}); err != nil || failed {
+	if failed, err := evaluateMargins(&current, []marginReport{decoded}, marginExpectedGo(t)); err != nil || failed {
 		t.Fatalf("valid legacy history: failed=%v err=%v", failed, err)
 	}
 	for _, m := range current.Metrics {
@@ -119,10 +119,10 @@ func TestMarginMacLegacyHistory(t *testing.T) {
 			t.Fatal("different legacy configuration increased current samples")
 		}
 	}
-	if _, err := evaluateMargins(&decoded, nil); err == nil {
+	if _, err := evaluateMargins(&decoded, nil, marginExpectedGo(t)); err == nil {
 		t.Fatal("legacy job accepted as current evidence")
 	}
-	if _, err := currentMargins(legacy.Run, legacy.Configs, jobs, core); err == nil {
+	if _, err := currentMargins(legacy.Run, legacy.Configs, marginExpectedGo(t), jobs, core); err == nil {
 		t.Fatal("legacy producer accepted in current API observations")
 	}
 	for name, mutate := range map[string]func(*marginReport){
@@ -149,7 +149,7 @@ func TestMarginMacLegacyHistory(t *testing.T) {
 				t.Fatal(err)
 			}
 			mutate(&bad)
-			if _, err := evaluateMargins(&current, []marginReport{bad}); err == nil {
+			if _, err := evaluateMargins(&current, []marginReport{bad}, marginExpectedGo(t)); err == nil {
 				t.Fatal("invalid legacy history accepted")
 			}
 		})
@@ -216,7 +216,7 @@ func TestMarginFormerLimitHistory(t *testing.T) {
 		}
 		return past
 	}
-	if failed, err := evaluateMargins(&current, []marginReport{former(600000, true, true)}); err != nil || failed {
+	if failed, err := evaluateMargins(&current, []marginReport{former(600000, true, true)}, marginExpectedGo(t)); err != nil || failed {
 		t.Fatalf("former limit rejected: failed=%v err=%v", failed, err)
 	}
 	for _, m := range current.Metrics {
@@ -226,7 +226,7 @@ func TestMarginFormerLimitHistory(t *testing.T) {
 	}
 	for name, past := range map[string]marginReport{"same-source": former(600000, true, false), "stale-key": former(600000, false, true),
 		"zero": former(0, true, true), "unbounded": former(24*time.Hour.Milliseconds()+1, true, true)} {
-		if _, err := evaluateMargins(&current, []marginReport{past}); err == nil {
+		if _, err := evaluateMargins(&current, []marginReport{past}, marginExpectedGo(t)); err == nil {
 			t.Fatalf("%s history accepted", name)
 		}
 	}
@@ -246,7 +246,7 @@ func TestMarginFormerLimitHistory(t *testing.T) {
 				}
 			}
 		}
-		if _, err := evaluateMargins(&changed, nil); !found || err == nil {
+		if _, err := evaluateMargins(&changed, nil, marginExpectedGo(t)); !found || err == nil {
 			t.Fatalf("current report accepted under another limit: %s", id)
 		}
 	}

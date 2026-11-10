@@ -60,9 +60,10 @@ jobs:
           set-safe-directory: false
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        id: setup_go
         timeout-minutes: 2
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         timeout-minutes: 2
@@ -77,10 +78,22 @@ jobs:
       - name: Go build cache 경로
         id: gocache
         timeout-minutes: 1
+        env:
+          SETUP_GO_VERSION: ${{ steps.setup_go.outputs.go-version }}
         run: |
           # #317: only the content-addressed build cache is restored; tests still run with -count=1.
+          $goMod = Get-Item -LiteralPath 'go.mod'
+          if ($goMod.Length -gt 65536) { throw 'go.mod exceeds the version input limit' }
+          $goModText = Get-Content -Raw -LiteralPath $goMod.FullName
+          $goModText = $goModText.Replace("`r`n", "`n")
+          $goLines = [regex]::Matches($goModText, '(?m)^[ \t]*go(?:[ \t].*)?$')
+          $goVersions = [regex]::Matches($goModText, '(?m)^[ \t]*go[ \t]+([1-9][0-9]*\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))[ \t]*(?://[^\r\n]*)?$')
+          if ($goLines.Count -ne 1 -or $goVersions.Count -ne 1) { throw 'go.mod must contain one valid stable patch go directive' }
+          $goVersion = $goVersions[0].Groups[1].Value
+          if ([string]::IsNullOrWhiteSpace($env:SETUP_GO_VERSION) -or $goVersion -cne $env:SETUP_GO_VERSION) { throw 'go.mod and setup-go version mismatch' }
           $path = go env GOCACHE
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($path)) { throw 'go env GOCACHE failed' }
+          "go-version=$goVersion" >> $env:GITHUB_OUTPUT
           "path=$path" >> $env:GITHUB_OUTPUT
       - name: Go build cache 복원
         # Only pull_request and push restore; schedule and dispatch build cold, an independent check.
@@ -94,9 +107,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.gocache.outputs.path }}
-          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-${{ github.sha }}
+          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}-${{ github.sha }}
           restore-keys: |
-            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-
+            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}-
       - name: Verify clean validation input
         timeout-minutes: 1
         run: |
@@ -109,6 +122,7 @@ jobs:
         env:
           EXPECTED_GOOS: ${{ matrix.goos }}
           EXPECTED_GOARCH: ${{ matrix.goarch }}
+          EXPECTED_GO_VERSION: ${{ steps.gocache.outputs.go-version }}
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -116,7 +130,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:ImageOS) -or [string]::IsNullOrWhiteSpace($env:ImageVersion)) { throw 'Runner image identity missing' }
           $goIdentity = go version
           if ($LASTEXITCODE -ne 0) { throw 'go version failed' }
-          if ($goIdentity -ne "go version go1.27.2 $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH") { throw 'Go host identity mismatch' }
+          if ([string]::IsNullOrWhiteSpace($env:EXPECTED_GO_VERSION) -or $goIdentity -cne "go version go$env:EXPECTED_GO_VERSION $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH") { throw 'Go host identity mismatch' }
           $goIdentity
           Write-Output "PowerShell=$($PSVersionTable.PSVersion) runner=$env:RUNNER_OS/$env:RUNNER_ARCH image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT event=$env:GITHUB_EVENT_NAME"
           $checkoutSha = git rev-parse HEAD
@@ -282,7 +296,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.gocache.outputs.path }}
-          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-${{ github.sha }}
+          key: go-build-v1-${{ runner.os }}-${{ runner.arch }}-go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}-${{ github.sha }}
       - name: Margin 실행 구성 기록
         timeout-minutes: 1
         env:
@@ -337,7 +351,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         id: setup
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         id: modules
@@ -576,7 +590,7 @@ jobs:
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         env:
@@ -674,7 +688,7 @@ jobs:
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         env:
@@ -884,7 +898,7 @@ jobs:
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         env:
@@ -971,7 +985,7 @@ jobs:
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 Go module 취득
         env:
@@ -1094,7 +1108,7 @@ jobs:
           clean: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version-file: go.mod
           cache: false
       - name: 고정 module 및 gate 준비
         env:
