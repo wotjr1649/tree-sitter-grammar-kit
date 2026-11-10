@@ -886,12 +886,16 @@ var testHookQualifyLimits func(ReplayLimits) ReplayLimits
 // the S07 record gates) before its cases are judged; a cell passes only when its kit
 // mechanism, every required obligation and the cross-platform comparison pass.
 func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, error) {
+	return qualifyWithOptions(ctx, req, nil)
+}
+
+func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOptions) (QualificationResult, error) {
 	res := QualificationResult{Report: newReport("qualify"), ResultSchema: QualificationResultSchema, Hosts: map[string]string{}, Cells: []QualCell{},
 		ExtraRoles: []QualRoleRow{}, Comparisons: []QualComparison{}, Explanation: []string{}, SupportClaim: "BLOCKED", MechanismGate: AssessFail, PlatformClaims: map[string]string{}}
 	res.Assessment = AssessNotAssessed
 	if req.QuerySemantics != nil {
 		res.ResultSchema = QualificationSemanticsResultSchema
-		res.QuerySemantics = newQualSemanticsAxis()
+		res.QuerySemantics = newQualSemanticsAxisWithOptions(opts)
 		res.Baseline = &QualBaselineSummary{Assessment: AssessNotAssessed, Completeness: AssessBlocked, MechanismGate: AssessBlocked, SupportClaim: "BLOCKED", PlatformClaims: map[string]string{}}
 	}
 	var q *qualifier
@@ -936,14 +940,18 @@ func Qualify(ctx context.Context, req QualifyRequest) (QualificationResult, erro
 	}
 	res.InventoryID, res.Candidate = inv.ID, req.Candidate
 	lim := QualificationLimits()
-	if testHookQualifyLimits != nil {
+	if opts != nil {
+		if opts.qualifyLimits != nil {
+			lim = opts.qualifyLimits(lim)
+		}
+	} else if testHookQualifyLimits != nil {
 		lim = testHookQualifyLimits(lim)
 	}
 	res.Limits = lim
 	res.Identities = append(res.Identities, IdentityRef{Role: "inventory", Schema: inv.Schema, SHA256: inv.SHA256},
 		IdentityRef{Role: "policy", Schema: "tsgk-qualification-policy/r1", SHA256: digestHex([]byte(replayPolicyText("qualification", lim)))})
 	res.Coverage.Requested = []string{"completeness", "run-cohort", "eligibility", "set-integrity", "registration", "record-gates", "mechanism", "requirements", "comparison"}
-	r, e := startRun(ctx, lim.Wall)
+	r, e := startRunWithOptions(ctx, lim.Wall, opts)
 	if e != nil {
 		return bad(e)
 	}

@@ -218,10 +218,11 @@ type qualSemanticTargetRun struct {
 }
 
 func newQualSemanticsAxis() *QualQuerySemanticsAxis {
-	lim := ReplayOperations()["evidence-replay"]
-	if testHookReplayLimits != nil {
-		lim = testHookReplayLimits(lim)
-	}
+	return newQualSemanticsAxisWithOptions(nil)
+}
+
+func newQualSemanticsAxisWithOptions(opts *runOptions) *QualQuerySemanticsAxis {
+	lim := opts.replayLimitsFor(ReplayOperations()["evidence-replay"])
 	return &QualQuerySemanticsAxis{Scope: qualSemanticScope, Assessment: AssessBlocked,
 		Targets: []QualQuerySemanticsTarget{
 			{Platform: "windows-amd64", State: "UNREGISTERED", Assessment: AssessBlocked, Code: "SEMANTICS_TARGET_UNREGISTERED"},
@@ -283,7 +284,7 @@ func (t *qualSemanticTargetRun) finishCounts() {
 }
 
 func (q *qualifier) querySemantics(ctx context.Context, req QualificationQuerySemanticsRequest, axis *QualQuerySemanticsAxis) (resultErr *Error) {
-	r, e := startRun(ctx, axis.Limits.Wall)
+	r, e := startRunWithOptions(ctx, axis.Limits.Wall, q.r.options)
 	if e != nil {
 		return e
 	}
@@ -524,7 +525,7 @@ func (s *qualSemanticRun) target(t *qualSemanticTargetRun) (resultErr *Error) {
 	if e := t.openRoot(); e != nil {
 		return e
 	}
-	rr, replayErr := replayShared(s.r.caller, t.input.Replay, &replayBudget{semantic: t})
+	rr, replayErr := replaySharedWithOptions(s.r.caller, t.input.Replay, &replayBudget{semantic: t}, s.r.options)
 	t.replay = &rr
 	t.row.Core = rr.QuerySemantics
 	if t.row.Core != nil {

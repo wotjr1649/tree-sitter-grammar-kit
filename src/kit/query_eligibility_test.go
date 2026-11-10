@@ -903,6 +903,7 @@ func TestQueryReferenceEligibilityMalformedAndApproval(t *testing.T) {
 }
 
 func TestQueryReferenceEligibilityInterruption(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"cancel", "wall", "both", "fail-cancel", "fail-wall", "fail-budget"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -917,22 +918,23 @@ func TestQueryReferenceEligibilityInterruption(t *testing.T) {
 			defer cancel()
 			wall, expire := context.WithCancel(context.Background())
 			defer expire()
-			testHookWall = func() (context.Context, context.CancelFunc) { return wall, func() {} }
-			testHookOpen = func(path string) {
-				if path == "evidence.json" {
-					if strings.Contains(kind, "cancel") || kind == "both" {
-						cancel()
+			opts := &runOptions{
+				wall: func() (context.Context, context.CancelFunc) { return wall, func() {} },
+				open: func(path string) {
+					if path == "evidence.json" {
+						if strings.Contains(kind, "cancel") || kind == "both" {
+							cancel()
+						}
+						if strings.Contains(kind, "wall") || kind == "both" {
+							expire()
+						}
 					}
-					if strings.Contains(kind, "wall") || kind == "both" {
-						expire()
-					}
-				}
+				},
 			}
 			if kind == "fail-budget" {
-				testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = 1; return l }
+				opts.replayLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = 1; return l }
 			}
-			defer func() { testHookWall = nil; testHookOpen = nil; testHookReplayLimits = nil }()
-			got, err := VerifyQueryReferenceEligibility(caller, req)
+			got, err := verifyQueryReferenceEligibilityWithOptions(caller, req, opts)
 			code := "CANCELLED"
 			if strings.Contains(kind, "wall") {
 				code = "WALL_LIMIT"

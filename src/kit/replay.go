@@ -877,6 +877,17 @@ type replayBudget struct {
 }
 
 func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) (ReplayResult, error) {
+	return replaySharedWithOptions(ctx, req, budget, nil)
+}
+
+func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *replayBudget, opts *runOptions) (ReplayResult, error) {
+	if budget != nil {
+		if budget.semantic != nil {
+			opts = budget.semantic.owner.r.options
+		} else if budget.r != nil {
+			opts = budget.r.options
+		}
+	}
 	res := ReplayResult{Report: newReport("replay"), ResultSchema: ReplayResultSchema, Gates: []ReplayGate{}, Observed: map[string]string{}, Explanation: []string{}}
 	res.EvidenceMode = ModeReplayedRaw
 	res.Assessment = AssessNotAssessed
@@ -937,7 +948,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	}
 	rootValue := bytes.TrimLeft(req.Profile, " \t\r\n")
 	if selected == "" && len(rootValue) > 0 && rootValue[0] != '{' {
-		invalidRun, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall-time.Since(profileStart))
+		invalidRun, e := startRunWithOptions(ctx, ReplayOperations()["evidence-replay"].Wall-time.Since(profileStart), opts)
 		if e != nil {
 			return bad(e)
 		}
@@ -959,11 +970,8 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	if borrowed != nil {
 		semanticRun, semanticLimits, prof = borrowed.owner.r, borrowed.owner.lim, *borrowed.profile
 	} else if semanticReducer(selected) {
-		semanticLimits = ReplayOperations()["evidence-replay"]
-		if testHookReplayLimits != nil {
-			semanticLimits = testHookReplayLimits(semanticLimits)
-		}
-		semanticRun, e = startRun(ctx, semanticLimits.Wall-time.Since(profileStart))
+		semanticLimits = opts.replayLimitsFor(ReplayOperations()["evidence-replay"])
+		semanticRun, e = startRunWithOptions(ctx, semanticLimits.Wall-time.Since(profileStart), opts)
 		if e != nil {
 			return bad(e)
 		}
@@ -999,8 +1007,8 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	}
 	if semanticRun != nil {
 		lim = semanticLimits
-	} else if testHookReplayLimits != nil {
-		lim = testHookReplayLimits(lim)
+	} else {
+		lim = opts.replayLimitsFor(lim)
 	}
 	res.Limits = lim
 	var memberIdentity string
@@ -1039,7 +1047,7 @@ func replayShared(ctx context.Context, req ReplayRequest, budget *replayBudget) 
 	}
 	r := semanticRun
 	if r == nil {
-		r, e = startRun(ctx, lim.Wall)
+		r, e = startRunWithOptions(ctx, lim.Wall, opts)
 		if e != nil {
 			return bad(e)
 		}

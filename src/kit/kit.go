@@ -206,6 +206,7 @@ func messageFor(err *Error) string {
 
 // run holds per-call state: caller context, kit wall, limits accounting.
 type run struct {
+	options         *runOptions
 	caller          context.Context
 	wall            context.Context
 	cancel          context.CancelFunc
@@ -258,7 +259,31 @@ var errWall = errors.New("kit wall limit")
 // a test can expire the wall at a chosen point instead of racing a 1 ns timer (#61).
 var testHookWall func() (context.Context, context.CancelFunc)
 
+// Non-nil options isolate a call from the corresponding legacy global hooks.
+type runOptions struct {
+	wall                 func() (context.Context, context.CancelFunc)
+	open                 func(string)
+	replayLimits         func(ReplayLimits) ReplayLimits
+	qualifyLimits        func(ReplayLimits) ReplayLimits
+	semanticProducerFold func(*eligibilityBudget)
+}
+
+func (opts *runOptions) replayLimitsFor(lim ReplayLimits) ReplayLimits {
+	if opts != nil {
+		if opts.replayLimits != nil {
+			return opts.replayLimits(lim)
+		}
+	} else if testHookReplayLimits != nil {
+		return testHookReplayLimits(lim)
+	}
+	return lim
+}
+
 func startRun(ctx context.Context, wall time.Duration) (*run, *Error) {
+	return startRunWithOptions(ctx, wall, nil)
+}
+
+func startRunWithOptions(ctx context.Context, wall time.Duration, opts *runOptions) (*run, *Error) {
 	if ctx == nil {
 		return nil, fail(KindInvalidInput, "NIL_CONTEXT", "", nil)
 	}
@@ -267,12 +292,18 @@ func startRun(ctx context.Context, wall time.Duration) (*run, *Error) {
 	}
 	var wctx context.Context
 	var cancel context.CancelFunc
-	if testHookWall != nil {
-		wctx, cancel = testHookWall()
+	var wallHook func() (context.Context, context.CancelFunc)
+	if opts != nil {
+		wallHook = opts.wall
+	} else {
+		wallHook = testHookWall
+	}
+	if wallHook != nil {
+		wctx, cancel = wallHook()
 	} else {
 		wctx, cancel = context.WithTimeoutCause(context.Background(), wall, errWall)
 	}
-	r := &run{caller: ctx, wall: wctx, cancel: cancel}
+	r := &run{caller: ctx, wall: wctx, cancel: cancel, options: opts}
 	if err := r.check(); err != nil {
 		cancel()
 		return nil, err

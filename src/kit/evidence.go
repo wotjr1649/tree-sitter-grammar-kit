@@ -191,9 +191,11 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	res.PolicyID = pol.ID
 	res.Identities = append(res.Identities, IdentityRef{Role: "evidence-policy", Schema: EvidencePolicySchema, SHA256: digestHex(req.Policy)})
 	lim := ReplayOperations()["evidence-replay"]
-	if testHookReplayLimits != nil {
-		lim = testHookReplayLimits(lim)
+	var opts *runOptions
+	if sharedRun != nil {
+		opts = sharedRun.options
 	}
+	lim = opts.replayLimitsFor(lim)
 	r := sharedRun
 	if r == nil {
 		r, e = startRun(ctx, lim.Wall)

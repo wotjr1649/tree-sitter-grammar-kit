@@ -389,8 +389,14 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 	}
 	if state != nil {
 		state.producerVerified, state.producerCode = producerVerdict, code
-		if producerVerdict && testHookSemanticProducerFold != nil {
-			testHookSemanticProducerFold(b)
+		if producerVerdict {
+			if b.r.options != nil {
+				if b.r.options.semanticProducerFold != nil {
+					b.r.options.semanticProducerFold(b)
+				}
+			} else if testHookSemanticProducerFold != nil {
+				testHookSemanticProducerFold(b)
+			}
 		}
 		if producerVerdict && m.Assessment == AssessFail && state.producerFailure != nil {
 			preserved := code

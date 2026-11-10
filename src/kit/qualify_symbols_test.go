@@ -246,6 +246,7 @@ func TestReplaySharedBudget(t *testing.T) {
 // (INCOMPLETE, mechanism BLOCKED), never a pass; the replay counts against the host byte
 // budget and the set's cases against the host record limit.
 func TestQualifySymbolSetLimits(t *testing.T) {
+	t.Parallel()
 	for _, schema := range []string{QualificationInventorySchema, qualificationInventoryR6, qualificationInventoryR5} {
 		t.Run(schema, func(t *testing.T) { qualifySymbolSetLimits(t, schema) })
 	}
@@ -313,8 +314,8 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 	if err := os.WriteFile(filepath.Join(host, "run-identity.json"), id, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	qualify := func() (QualRoleRow, error) {
-		r, err := Qualify(ctxT(t), QualifyRequest{Inventory: invData, Candidate: cand, Hosts: []QualifyHost{{Platform: win.ID, Root: host}}})
+	qualify := func(opts *runOptions) (QualRoleRow, error) {
+		r, err := qualifyWithOptions(ctxT(t), QualifyRequest{Inventory: invData, Candidate: cand, Hosts: []QualifyHost{{Platform: win.ID, Root: host}}}, opts)
 		wantSchema := QualificationResultSchema
 		if schema == qualificationInventoryR5 {
 			wantSchema = qualificationResultR6
@@ -336,12 +337,12 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r, err := qualify(); err != nil || r.Status != CellFail || r.Mechanism != AssessFail || len(r.Sets) != 1 || len(r.Sets[0].Findings) != 1 || r.Sets[0].Findings[0].Code != "REGISTRATION_MISMATCH" || !strings.HasSuffix(r.Sets[0].Findings[0].Message, ": grammar") {
+	if r, err := qualify(nil); err != nil || r.Status != CellFail || r.Mechanism != AssessFail || len(r.Sets) != 1 || len(r.Sets[0].Findings) != 1 || r.Sets[0].Findings[0].Code != "REGISTRATION_MISMATCH" || !strings.HasSuffix(r.Sets[0].Findings[0].Message, ": grammar") {
 		t.Fatalf("fixture under wrong grammar: %v %+v", err, r)
 	}
 	inv.ExtraRoles[0].Workloads[0].Grammar = w.Grammar
 	invData = registered
-	if r, err := qualify(); err != nil || r.Status != CellPass || r.Mechanism != AssessPass {
+	if r, err := qualify(nil); err != nil || r.Status != CellPass || r.Mechanism != AssessPass {
 		t.Fatalf("recorded set: %v %+v", err, r)
 	}
 	// a recorded code on a case whose steps are all OK is not fixed by its selection: with the
@@ -356,22 +357,18 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 	if bytes.Equal(changed, recorded) || os.WriteFile(resPath, changed, 0o644) != nil {
 		t.Fatal("recorded code not changed")
 	}
-	if r, err := qualify(); err != nil || r.Status != CellFail || r.Mechanism != AssessPass || r.Checks != claimFail {
+	if r, err := qualify(nil); err != nil || r.Status != CellFail || r.Mechanism != AssessPass || r.Checks != claimFail {
 		t.Fatalf("recorded code: %v %+v", err, r)
 	}
 	if err := os.WriteFile(resPath, recorded, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 1024; return l }
-	r, err := qualify()
-	testHookReplayLimits = nil
+	r, err := qualify(&runOptions{replayLimits: func(l ReplayLimits) ReplayLimits { l.FileBytes = 1024; return l }})
 	if err != nil || r.Status != CellIncomplete || r.Mechanism != AssessBlocked {
 		t.Fatalf("replay member over its limit: %v %+v", err, r)
 	}
 	// a set file beyond the host file limit is not read either: unverified, not failed
-	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.FileBytes = 4096; return l }
-	r, err = qualify()
-	testHookQualifyLimits = nil
+	r, err = qualify(&runOptions{qualifyLimits: func(l ReplayLimits) ReplayLimits { l.FileBytes = 4096; return l }})
 	if err != nil || r.Status != CellIncomplete || r.Mechanism != AssessBlocked {
 		t.Fatalf("host file over its limit: %v %+v", err, r)
 	}
@@ -391,33 +388,30 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 		pre += size("primary/responses/00000-issue198-nested-directives.json")
 	}
 	replayStarted := false
-	testHookReplayLimits = func(l ReplayLimits) ReplayLimits { replayStarted = true; return l }
-	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.TotalBytes = pre + 64; return l }
-	_, err = qualify()
-	testHookQualifyLimits = nil
-	testHookReplayLimits = nil
+	_, err = qualify(&runOptions{
+		replayLimits:  func(l ReplayLimits) ReplayLimits { replayStarted = true; return l },
+		qualifyLimits: func(l ReplayLimits) ReplayLimits { l.TotalBytes = pre + 64; return l },
+	})
 	if asError(err).Code != "TOTAL_BYTES_LIMIT" || !replayStarted {
 		t.Fatalf("replay beyond the host budget: %v", err)
 	}
 	// the qualification wall's deadline passing while the set replays is the qualification's
 	// WALL_LIMIT (RESOURCE_LIMIT), not a caller cancellation: the replay starts after it
 	var deadline time.Time
-	testHookWall = func() (context.Context, context.CancelFunc) {
+	wallCalls := 0
+	_, err = qualify(&runOptions{wall: func() (context.Context, context.CancelFunc) {
+		wallCalls++
 		if deadline.IsZero() {
 			deadline = time.Now().Add(2 * time.Second)
 			return context.WithDeadline(context.Background(), deadline)
 		}
 		time.Sleep(time.Until(deadline) + 50*time.Millisecond)
 		return context.WithCancel(context.Background())
+	}})
+	if e := asError(err); e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" || wallCalls != 2 {
+		t.Fatalf("wall during the replay: %v (wall calls: %d)", err, wallCalls)
 	}
-	_, err = qualify()
-	testHookWall = nil
-	if e := asError(err); e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" {
-		t.Fatalf("wall during the replay: %v", err)
-	}
-	testHookQualifyLimits = func(l ReplayLimits) ReplayLimits { l.Records = 0; return l }
-	_, err = qualify()
-	testHookQualifyLimits = nil
+	_, err = qualify(&runOptions{qualifyLimits: func(l ReplayLimits) ReplayLimits { l.Records = 0; return l }})
 	if asError(err).Code != "RECORDS_LIMIT" {
 		t.Fatalf("cases beyond the host record limit: %v", err)
 	}

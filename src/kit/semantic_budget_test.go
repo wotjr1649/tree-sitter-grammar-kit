@@ -2,11 +2,120 @@ package kit
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
+
+func TestRunOptionsIsolation(t *testing.T) {
+	type result struct {
+		index      int
+		assessment string
+		err        error
+		wallCalls  int
+		openCalls  int
+		limitCalls int
+	}
+	type call struct {
+		index      int
+		request    QueryReferenceEligibilityRequest
+		ctx        context.Context
+		cancel     context.CancelFunc
+		opts       *runOptions
+		wallCalls  int
+		openCalls  int
+		limitCalls int
+	}
+
+	calls := make([]call, 2)
+	for i := range calls {
+		calls[i].index = i
+		fixture := newEligibilityFixture(t)
+		calls[i].request = fixture.request()
+		calls[i].ctx, calls[i].cancel = context.WithTimeout(context.Background(), time.Minute)
+		t.Cleanup(calls[i].cancel)
+		c := &calls[i]
+		c.opts = &runOptions{
+			wall: func() (context.Context, context.CancelFunc) {
+				c.wallCalls++
+				return context.WithCancel(context.Background())
+			},
+			open: func(string) { c.openCalls++ },
+		}
+		if i == 0 {
+			c.opts.replayLimits = func(lim ReplayLimits) ReplayLimits {
+				c.limitCalls++
+				return lim
+			}
+		}
+	}
+
+	oldWall, oldOpen, oldReplayLimits := testHookWall, testHookOpen, testHookReplayLimits
+	var globalCalls atomic.Int64
+	testHookWall = func() (context.Context, context.CancelFunc) {
+		globalCalls.Add(1)
+		return context.Background(), func() {}
+	}
+	testHookOpen = func(string) { globalCalls.Add(1) }
+	testHookReplayLimits = func(lim ReplayLimits) ReplayLimits {
+		globalCalls.Add(1)
+		lim.TotalBytes = 1
+		return lim
+	}
+	defer func() {
+		testHookWall, testHookOpen, testHookReplayLimits = oldWall, oldOpen, oldReplayLimits
+	}()
+
+	results := make(chan result, 2)
+	for i := range calls {
+		c := &calls[i]
+		go func() {
+			got, err := verifyQueryReferenceEligibilityWithOptions(c.ctx, c.request, c.opts)
+			results <- result{c.index, got.Assessment, err, c.wallCalls, c.openCalls, c.limitCalls}
+		}()
+	}
+	var failures []result
+	for range len(calls) {
+		got := <-results
+		if got.err != nil || got.assessment != AssessPass || got.wallCalls != 1 || got.openCalls == 0 {
+			failures = append(failures, got)
+		} else if got.limitCalls != 1-got.index {
+			failures = append(failures, got)
+		}
+	}
+	if len(failures) != 0 {
+		t.Fatalf("per-call options were not isolated: %+v", failures)
+	}
+
+	root := t.TempDir()
+	candidate := strings.Repeat("a", 40)
+	identity, err := json.Marshal(RunIdentity{Schema: RunIdentitySchema, Repository: "o/r", Workflow: "foundation", RunID: "1", RunAttempt: "1", Event: "push", SHA: candidate, HeadSHA: candidate,
+		Checkout: candidate, RunnerOS: "Windows", RunnerArch: "X64", GOOS: "windows", GOARCH: "amd64", EvidenceMode: ModeNewRun})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "run-identity.json"), identity, 0600); err != nil {
+		t.Fatal(err)
+	}
+	openCalls := calls[0].openCalls
+	qualifier := &qualifier{r: &run{caller: calls[0].ctx, wall: calls[0].ctx, options: calls[0].opts}, lim: QualificationLimits(), candidate: candidate}
+	// openHost returns *Error; keep it out of the error-typed err to avoid a typed-nil interface.
+	host, openErr := qualifier.openHost(QualPlatform{ID: "windows-amd64", GOOS: "windows", GOARCH: "amd64"}, root, nil)
+	if openErr != nil {
+		t.Fatal(openErr)
+	}
+	t.Cleanup(func() { _ = host.x.g.root.Close() })
+	if host.x.r.options != calls[0].opts || calls[0].openCalls != openCalls+1 {
+		t.Fatalf("qualification host did not inherit call options: options=%p want=%p open callbacks=%d", host.x.r.options, calls[0].opts, calls[0].openCalls)
+	}
+	if globalCalls.Load() != 0 {
+		t.Fatalf("options fell back to package hooks %d times", globalCalls.Load())
+	}
+}
 
 func semanticBudgetRun(t *testing.T) *run {
 	t.Helper()

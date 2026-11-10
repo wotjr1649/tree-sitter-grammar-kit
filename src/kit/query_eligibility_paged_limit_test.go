@@ -126,6 +126,7 @@ func pagedLimitCap(t *testing.T, mutate func(*eligibilityFixture), edit func(*Qu
 
 // The selection table: only an owning, approval-bound, approved paged-parser request is raised, and only once.
 func TestEligibilityPagedLogicalLimitSelection(t *testing.T) {
+	t.Parallel()
 	paged := func(f *eligibilityFixture) { f.reg.Context = semanticPagedContext }
 	binaries := func(f *eligibilityFixture) { f.reg.Context = semanticPagedBinariesContext }
 	for _, tc := range []struct {

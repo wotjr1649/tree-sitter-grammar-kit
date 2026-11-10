@@ -695,6 +695,7 @@ func TestSemanticProducerFoldRejectsMatchingInvalidVerdict(t *testing.T) {
 }
 
 func TestSemanticBoundPartialReplayPreservesRecordedAndMismatch(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{KindCancelled, KindResourceLimit} {
 		t.Run(kind, func(t *testing.T) {
 			req, fixture, binding := semanticBoundFixture(t, 0)
@@ -707,16 +708,16 @@ func TestSemanticBoundPartialReplayPreservesRecordedAndMismatch(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			hits := 0
-			testHookSemanticProducerFold = func(b *eligibilityBudget) {
-				hits++
-				if kind == KindCancelled {
-					cancel()
-				} else {
-					b.work = eligibilityWorkLimit
-				}
-			}
-			t.Cleanup(func() { testHookSemanticProducerFold = nil })
-			result, err := Replay(ctx, ReplayRequest{Root: root, Profile: mustJSON(t, registered)})
+			result, err := replaySharedWithOptions(ctx, ReplayRequest{Root: root, Profile: mustJSON(t, registered)}, nil, &runOptions{
+				semanticProducerFold: func(b *eligibilityBudget) {
+					hits++
+					if kind == KindCancelled {
+						cancel()
+					} else {
+						b.work = eligibilityWorkLimit
+					}
+				},
+			})
 			if hits != 1 || err == nil || asError(err).Kind != kind || kind == KindCancelled && !errors.Is(err, context.Canceled) || result.Recorded != (Verdict{StatusCompleted, AssessBlocked}) || result.QuerySemantics == nil || !result.QuerySemantics.ProducerFoldValid || result.Recorded != result.QuerySemantics.ProducerRecorded || result.Assessment != AssessFail {
 				t.Fatalf("partial producer/mismatch/error lost: hits=%d %v %+v", hits, err, result)
 			}
@@ -957,6 +958,7 @@ func TestSemanticEmptyQueriesClaimsAPIReplayStored(t *testing.T) {
 }
 
 func TestSemanticProducerFailureCodeSurvivesPartialReplay(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{KindCancelled, KindResourceLimit} {
 		t.Run(kind, func(t *testing.T) {
 			req, f, binding := semanticBoundFixture(t, 0)
@@ -997,16 +999,16 @@ func TestSemanticProducerFailureCodeSurvivesPartialReplay(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			hits := 0
-			testHookSemanticProducerFold = func(b *eligibilityBudget) {
-				hits++
-				if kind == KindCancelled {
-					cancel()
-				} else {
-					b.work = eligibilityWorkLimit
-				}
-			}
-			defer func() { testHookSemanticProducerFold = nil }()
-			result, err := Replay(ctx, ReplayRequest{Root: root, Profile: mustJSON(t, registered)})
+			result, err := replaySharedWithOptions(ctx, ReplayRequest{Root: root, Profile: mustJSON(t, registered)}, nil, &runOptions{
+				semanticProducerFold: func(b *eligibilityBudget) {
+					hits++
+					if kind == KindCancelled {
+						cancel()
+					} else {
+						b.work = eligibilityWorkLimit
+					}
+				},
+			})
 			if hits != 1 || err == nil || asError(err).Kind != kind || result.QuerySemantics == nil || result.QuerySemantics.Complete || result.QuerySemantics.Assessment != AssessFail || result.QuerySemantics.Code != "EXPECTATION_FAILED" || result.Recorded.Assessment != AssessFail || !validSemanticReplayResult(result) {
 				t.Fatalf("producer FAIL partial lost: hits=%d %v %+v", hits, err, result)
 			}
