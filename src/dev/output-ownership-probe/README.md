@@ -2,7 +2,7 @@
 
 이 개발 도구는 Linux API의 제한된 관측을 남긴다. **현재 제품의 출력 경로를 바꾸지 않으며 모든 결과의 `support_claim`은 `BLOCKED`다.** #215 해결·namespace snapshot·권한 격리·현재/다른 kernel의 일반 보장을 증명하지 않는다. macOS용 해법이나 Go `os.Root` 내부 descriptor의 Close 오류 관측도 제공하지 않는다.
 
-기존 Go 1.27.2와 고정 `golang.org/x/sys`만 사용한다. native library·compiler·network·새 capability·설치가 필요 없다. 기존 parent 아래 새 `probe-215-*` directory 하나와 네 하위 실험 directory만 만들고 보존한다. 기존 directory를 결과로 수용하거나 기존 entry를 삭제하지 않는다. task 전용 parent에서 다른 process가 건드리지 않는 조건으로 실행한다. 실제 다른 UID 공격을 수행하는 시험은 아니다.
+root `go.mod`가 지정한 Go toolchain과 고정 `golang.org/x/sys`만 사용한다. native library·compiler·network·새 capability·설치가 필요 없다. 기존 parent 아래 새 `probe-215-*` directory 하나와 네 하위 실험 directory만 만들고 보존한다. 기존 directory를 결과로 수용하거나 기존 entry를 삭제하지 않는다. task 전용 parent에서 다른 process가 건드리지 않는 조건으로 실행한다. 실제 다른 UID 공격을 수행하는 시험은 아니다.
 
 ```text
 CGO_ENABLED=0 go build -o <task-directory>/probe ./src/dev/output-ownership-probe

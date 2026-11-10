@@ -1,13 +1,16 @@
 package foundation
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Model every possible completed/active/pending cohort, including jobs released
@@ -645,6 +648,187 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 	}
 }
 
+func workflowGoVersionPolicy(foundation, reference, module string) error {
+	setupStep := regexp.MustCompile(`(?m)^      - uses: actions/setup-go@[^\n]*\n`)
+	for _, workflow := range []struct {
+		name, text string
+		count      int
+	}{{"foundation", foundation, 7}, {"reference-linux", reference, 1}} {
+		name, text, count := workflow.name, workflow.text, workflow.count
+		starts := setupStep.FindAllStringIndex(text, -1)
+		if len(starts) != count {
+			return fmt.Errorf("%s has %d setup-go steps, want %d", name, len(starts), count)
+		}
+		blocks := make([]string, len(starts))
+		for i, start := range starts {
+			end := len(text)
+			if next := strings.Index(text[start[1]:], "\n      - "); next >= 0 {
+				end = start[1] + next + 1
+			}
+			blocks[i] = text[start[1]:end]
+			if !strings.Contains(blocks[i], "          go-version-file: go.mod\n") || regexp.MustCompile(`(?m)^\s*go-version\s*:`).MatchString(blocks[i]) || !strings.Contains(blocks[i], "          cache: false\n") {
+				return fmt.Errorf("%s setup-go step %d must read go.mod without an inline version or cache", name, i+1)
+			}
+		}
+		if name == "foundation" && (!strings.Contains(blocks[0], "        id: setup_go\n") || strings.Count(text, "id: setup_go") != 1) {
+			return fmt.Errorf("foundation must expose the first setup-go output as setup_go")
+		}
+		if name == "reference-linux" && strings.Contains(text, "id: setup_go") {
+			return fmt.Errorf("reference-linux must not add an unused setup_go id")
+		}
+	}
+	if regexp.MustCompile(`(?m)^[ \t]*toolchain[ \t]+`).MatchString(module) {
+		return fmt.Errorf("A policy uses the go directive, without a toolchain directive")
+	}
+	return nil
+}
+
+func TestWorkflowGoVersionPolicy(t *testing.T) {
+	foundationPath := filepath.Join(repository(t), ".github/workflows/foundation.yml")
+	referencePath := filepath.Join(repository(t), ".github/workflows/reference-linux.yml")
+	foundation := string(mustRead(t, foundationPath))
+	reference := string(mustRead(t, referencePath))
+	module := string(mustRead(t, filepath.Join(repository(t), "go.mod")))
+	if err := workflowGoVersionPolicy(foundation, reference, module); err != nil {
+		t.Fatal(err)
+	}
+	for name, broken := range map[string][3]string{
+		"foundation-literal": {strings.Replace(foundation, "          go-version-file: go.mod\n", "          go-version: '1.28.4'\n", 1), reference, module},
+		"foundation-file":    {strings.Replace(foundation, "          go-version-file: go.mod\n", "          go-version-file: other.mod\n", 1), reference, module},
+		"reference-literal":  {foundation, strings.Replace(reference, "          go-version-file: go.mod\n", "          go-version: '1.28.4'\n", 1), module},
+		"missing-first-id":   {strings.Replace(foundation, "        id: setup_go\n", "", 1), reference, module},
+		"toolchain-source":   {foundation, reference, module + "toolchain go1.28.4\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == [3]string{foundation, reference, module} || workflowGoVersionPolicy(broken[0], broken[1], broken[2]) == nil {
+				t.Fatal("unsupported Go version policy was not rejected")
+			}
+		})
+	}
+}
+
+func workflowStep(text, name string) string {
+	_, step, ok := strings.Cut(text, "      - name: "+name+"\n")
+	if !ok {
+		return ""
+	}
+	step, _, _ = strings.Cut(step, "\n      - ")
+	return step
+}
+
+func workflowRunCode(step string) string {
+	_, code, ok := strings.Cut(step, "        run: |\n")
+	if !ok {
+		return ""
+	}
+	lines := strings.Split(code, "\n")
+	for i := range lines {
+		lines[i] = strings.TrimPrefix(lines[i], "          ")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func runWorkflowPowerShell(t *testing.T, dir, script string) error {
+	t.Helper()
+	pwsh, err := exec.LookPath("pwsh")
+	if err != nil {
+		t.Skip("PowerShell 7 is unavailable")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-Command", script)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("pwsh failed: %w: %s", err, output)
+	}
+	return nil
+}
+
+func TestWorkflowGoVersionScripts(t *testing.T) {
+	if _, err := exec.LookPath("pwsh"); err != nil {
+		t.Skip("PowerShell 7 is unavailable")
+	}
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	job := workflowJobBody(text, "foundation")
+	cacheCode := workflowRunCode(workflowStep(job, "Go build cache 경로"))
+	if cacheCode == "" {
+		t.Fatal("Go cache script missing")
+	}
+	identityStep := workflowStep(job, "실행 identity 확인")
+	identityLines := strings.Split(workflowRunCode(identityStep), "\n")
+	identityCode := make([]string, 0, len(identityLines))
+	for _, line := range identityLines {
+		identityCode = append(identityCode, line)
+		if strings.Contains(line, "Go host identity mismatch") {
+			break
+		}
+	}
+	if len(identityCode) == 0 || !strings.Contains(identityCode[len(identityCode)-1], "Go host identity mismatch") {
+		t.Fatal("Go host identity check missing")
+	}
+
+	quote := func(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
+	for _, tc := range []struct {
+		name, moduleVersion, setupVersion string
+		crlf, wantError                   bool
+	}{
+		{name: "matching version and CRLF go.mod", moduleVersion: "1.28.4", setupVersion: "1.28.4", crlf: true},
+		{name: "old setup-go output after go.mod change", moduleVersion: "1.28.4", setupVersion: "1.27.2", wantError: true},
+		{name: "duplicate directive", moduleVersion: "1.28.4\ngo 1.28.4", setupVersion: "1.28.4", wantError: true},
+		{name: "minor-only directive", moduleVersion: "1.28", setupVersion: "1.28", wantError: true},
+		{name: "empty directive", moduleVersion: "", setupVersion: "", wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			module := "module example.test/candidate\ngo " + tc.moduleVersion + "\n"
+			if tc.crlf {
+				module = strings.ReplaceAll(module, "\n", "\r\n")
+			}
+			if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(module), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			outputPath := filepath.Join(dir, "github-output")
+			stub := "function go { if ($args[0] -ceq 'env' -and $args[1] -ceq 'GOCACHE') { $global:LASTEXITCODE = 0; return '/fake/gocache' }; throw 'unexpected go invocation' }\n"
+			prefix := "$env:SETUP_GO_VERSION = " + quote(tc.setupVersion) + "\n$env:GITHUB_OUTPUT = " + quote(outputPath) + "\n"
+			err := runWorkflowPowerShell(t, dir, stub+prefix+cacheCode)
+			if (err != nil) != tc.wantError {
+				t.Fatalf("cache script error = %v, wantError %t", err, tc.wantError)
+			}
+			if !tc.wantError {
+				written, readErr := os.ReadFile(outputPath)
+				lines := strings.Split(strings.TrimSuffix(strings.ReplaceAll(string(written), "\r\n", "\n"), "\n"), "\n")
+				if readErr != nil || len(lines) != 2 || lines[0] != "go-version="+tc.moduleVersion || lines[1] != "path=/fake/gocache" {
+					t.Fatalf("cache outputs = %q, error %v", written, readErr)
+				}
+			}
+		})
+	}
+
+	for _, tc := range []struct {
+		name, identity string
+		commandFails   bool
+		wantError      bool
+	}{
+		{name: "matching host", identity: "go version go1.28.4 windows/amd64"},
+		{name: "host version mismatch", identity: "go version go1.28.3 windows/amd64", wantError: true},
+		{name: "host platform mismatch", identity: "go version go1.28.4 linux/amd64", wantError: true},
+		{name: "go command failed", commandFails: true, wantError: true},
+	} {
+		t.Run("identity/"+tc.name, func(t *testing.T) {
+			stub := "function go { $global:LASTEXITCODE = 0; return " + quote(tc.identity) + " }\n"
+			if tc.commandFails {
+				stub = "function go { $global:LASTEXITCODE = 1; return '' }\n"
+			}
+			prefix := "$env:ImageOS = 'windows'\n$env:ImageVersion = 'test'\n$env:EXPECTED_GO_VERSION = '1.28.4'\n$env:EXPECTED_GOOS = 'windows'\n$env:EXPECTED_GOARCH = 'amd64'\n"
+			err := runWorkflowPowerShell(t, t.TempDir(), stub+prefix+strings.Join(identityCode, "\n"))
+			if (err != nil) != tc.wantError {
+				t.Fatalf("identity script error = %v, wantError %t", err, tc.wantError)
+			}
+		})
+	}
+}
+
 // foundationCachePolicy is #317: every foundation leg restores the content-addressed Go build
 // cache and only a push to main saves it, from commit-pinned actions of one version. Tests keep
 // -count=1, so no test result is ever reused.
@@ -655,17 +839,55 @@ func foundationCachePolicy(text string) error {
 		s, _, _ = strings.Cut(s, "\n      - ")
 		return "\n" + s + "\n"
 	}
-	key := "go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-"
+	key := "go-build-v1-${{ runner.os }}-${{ runner.arch }}-go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}-"
 	pins := regexp.MustCompile(`(?m)^        uses: actions/cache/(restore|save)@([0-9a-f]{40}) # (v[0-9]+\.[0-9]+\.[0-9]+)$`).FindAllStringSubmatch(text, -1)
 	if strings.Count(text, "actions/cache") != 2 || len(pins) != 2 || pins[0][1] != "restore" || pins[1][1] != "save" || pins[0][2] != pins[1][2] || pins[0][3] != pins[1][3] {
 		return fmt.Errorf("the build cache needs one commit-pinned restore and one save of the same version")
 	}
 	path := step("Go build cache 경로")
 	restore, save := step("Go build cache 복원"), step("Go build cache 저장")
-	for _, required := range []string{"        id: gocache\n", "$path = go env GOCACHE", `"path=$path" >> $env:GITHUB_OUTPUT`} {
+	for _, required := range []string{
+		"        id: gocache\n",
+		"          SETUP_GO_VERSION: ${{ steps.setup_go.outputs.go-version }}\n",
+		"$goMod.Length -gt 65536",
+		"$goModText = $goModText.Replace(\"`r`n\", \"`n\")",
+		`$goLines = [regex]::Matches($goModText, '(?m)^[ \t]*go(?:[ \t].*)?$')`,
+		`$goVersions = [regex]::Matches($goModText, '(?m)^[ \t]*go[ \t]+([1-9][0-9]*\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))[ \t]*(?://[^\r\n]*)?$')`,
+		"$goLines.Count -ne 1 -or $goVersions.Count -ne 1",
+		"$goVersion = $goVersions[0].Groups[1].Value",
+		"$goVersion -cne $env:SETUP_GO_VERSION",
+		"$path = go env GOCACHE",
+		`"go-version=$goVersion" >> $env:GITHUB_OUTPUT`,
+		`"path=$path" >> $env:GITHUB_OUTPUT`,
+	} {
 		if !strings.Contains(path, required) {
-			return fmt.Errorf("cache path step missing: %q", required)
+			return fmt.Errorf("cache version/path step missing: %q", required)
 		}
+	}
+	ordered := []string{
+		"$goLines = [regex]::Matches",
+		"$goVersions = [regex]::Matches",
+		"if ($goLines.Count -ne 1 -or $goVersions.Count -ne 1)",
+		"$goVersion = $goVersions[0].Groups[1].Value",
+		"$goVersion -cne $env:SETUP_GO_VERSION",
+		"$path = go env GOCACHE",
+		`"go-version=$goVersion" >> $env:GITHUB_OUTPUT`,
+	}
+	for i := 1; i < len(ordered); i++ {
+		if strings.Index(path, ordered[i-1]) > strings.Index(path, ordered[i]) {
+			return fmt.Errorf("the bounded go.mod parser and setup-go comparison must precede cache lookup and output")
+		}
+	}
+	if strings.Index(body, "- name: Go build cache 경로") > strings.Index(body, "- name: Go build cache 복원") {
+		return fmt.Errorf("the checked Go version must be produced before cache restore")
+	}
+	identity := step("실행 identity 확인")
+	if !strings.Contains(identity, "EXPECTED_GO_VERSION: ${{ steps.gocache.outputs.go-version }}") ||
+		!strings.Contains(identity, `$goIdentity -cne "go version go$env:EXPECTED_GO_VERSION $env:EXPECTED_GOOS/$env:EXPECTED_GOARCH"`) {
+		return fmt.Errorf("host identity must compare the actual version against the checked go.mod expectation")
+	}
+	if !strings.Contains(step("Go build cache 복원"), "${{ steps.gocache.outputs.go-version }}") || !strings.Contains(step("Go build cache 저장"), "${{ steps.gocache.outputs.go-version }}") {
+		return fmt.Errorf("cache restore and save must use the checked go.mod version")
 	}
 	// the cache is an optional optimization: only these two steps may fail without failing the job
 	if strings.Count(body, "continue-on-error:") != 2 || strings.Count(restore, "\n        continue-on-error: true\n") != 1 || strings.Count(save, "\n        continue-on-error: true\n") != 1 {
@@ -703,26 +925,30 @@ func TestWorkflowFoundationCachePolicy(t *testing.T) {
 	pin := regexp.MustCompile(`actions/cache/save@[0-9a-f]{40} # v[0-9.]+`).FindString(text)
 	runner := "          go test ./src/internal/runner -count=20 -failfast -timeout 180s -run"
 	for name, broken := range map[string]string{
-		"tag-pin":            strings.Replace(text, pin, "actions/cache/save@v6 # v6.1.0", 1),
-		"mixed-versions":     strings.Replace(text, pin, pin[:len(pin)-1]+"9", 1),
-		"combined-action":    strings.Replace(text, "actions/cache/restore@", "actions/cache@", 1),
-		"save-everywhere":    strings.Replace(text, "\n"+cacheSaveCondition+"\n", "\n", 1),
-		"save-on-pr":         strings.Replace(text, "github.event_name == 'push' && github.ref", "github.event_name != 'x' && github.ref", 1),
-		"restore-no-sha":     strings.Replace(text, "${{ hashFiles('go.sum') }}-${{ github.sha }}\n          restore-keys", "${{ hashFiles('go.sum') }}\n          restore-keys", 1),
-		"restore-any-hash":   strings.Replace(text, "          restore-keys: |\n            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go1.27.2-${{ hashFiles('go.sum') }}-\n", "          restore-keys: |\n            go-build-\n", 1),
-		"no-epoch":           strings.ReplaceAll(text, "go-build-v1-", "go-build-"),
-		"epoch-mismatch":     strings.Replace(text, "            go-build-v1-", "            go-build-v2-", 1),
-		"restore-always":     strings.Replace(text, "\n"+cacheRestoreCondition+"\n", "\n", 1),
-		"restore-on-nightly": strings.Replace(text, "github.event_name == 'pull_request' || github.event_name == 'push'", "github.event_name != 'workflow_dispatch'", 1),
-		"restore-unbounded":  strings.Replace(text, "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '1'\n", "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '60'\n", 1),
-		"restore-fails-job":  strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        env:", "        timeout-minutes: 2\n        env:", 1),
-		"save-fails-job":     strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        uses: actions/cache/save@", "        timeout-minutes: 2\n        uses: actions/cache/save@", 1),
-		"error-spreads":      strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n        continue-on-error: true\n", 1),
-		"test-cache-on":      strings.Replace(text, "go test @otherPackages -count=1 -v", "go test @otherPackages -v", 1),
-		"count-dropped":      strings.Replace(text, runner, "          go test ./src/internal/runner -failfast -timeout 180s -run", 1),
-		"count-zero":         strings.Replace(text, runner, "          go test ./src/internal/runner -count=0 -failfast -timeout 180s -run", 1),
-		"added-cached-test":  strings.Replace(text, "          go vet ./src/...\n", "          go test ./src/kit -timeout 60s\n          go vet ./src/...\n", 1),
-		"cache-elsewhere":    strings.Replace(text, "  mode:\n", "  mode:\n    # uses: actions/cache/save@0000000000000000000000000000000000000000 # v6.1.0\n", 1),
+		"tag-pin":                         strings.Replace(text, pin, "actions/cache/save@v6 # v6.1.0", 1),
+		"mixed-versions":                  strings.Replace(text, pin, pin[:len(pin)-1]+"9", 1),
+		"combined-action":                 strings.Replace(text, "actions/cache/restore@", "actions/cache@", 1),
+		"save-everywhere":                 strings.Replace(text, "\n"+cacheSaveCondition+"\n", "\n", 1),
+		"save-on-pr":                      strings.Replace(text, "github.event_name == 'push' && github.ref", "github.event_name != 'x' && github.ref", 1),
+		"restore-no-sha":                  strings.Replace(text, "${{ hashFiles('go.sum') }}-${{ github.sha }}\n          restore-keys", "${{ hashFiles('go.sum') }}\n          restore-keys", 1),
+		"restore-any-hash":                strings.Replace(text, "          restore-keys: |\n            go-build-v1-${{ runner.os }}-${{ runner.arch }}-go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}-\n", "          restore-keys: |\n            go-build-\n", 1),
+		"cache-version-literal":           strings.Replace(text, "go${{ steps.gocache.outputs.go-version }}-${{ hashFiles('go.sum') }}", "go1.28.4-${{ hashFiles('go.sum') }}", 1),
+		"setup-output-mismatch-unchecked": strings.Replace(text, "$goVersion -cne $env:SETUP_GO_VERSION", "$goVersion -ceq $env:SETUP_GO_VERSION", 1),
+		"host-expectation-from-runtime":   strings.Replace(text, "EXPECTED_GO_VERSION: ${{ steps.gocache.outputs.go-version }}", "EXPECTED_GO_VERSION: ${{ steps.setup_go.outputs.go-version }}", 1),
+		"go-mod-parser-missing":           strings.Replace(text, "$goVersions = [regex]::Matches($goModText", "$goVersions = [regex]::Matches($goModText, '^$'", 1),
+		"no-epoch":                        strings.ReplaceAll(text, "go-build-v1-", "go-build-"),
+		"epoch-mismatch":                  strings.Replace(text, "            go-build-v1-", "            go-build-v2-", 1),
+		"restore-always":                  strings.Replace(text, "\n"+cacheRestoreCondition+"\n", "\n", 1),
+		"restore-on-nightly":              strings.Replace(text, "github.event_name == 'pull_request' || github.event_name == 'push'", "github.event_name != 'workflow_dispatch'", 1),
+		"restore-unbounded":               strings.Replace(text, "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '1'\n", "          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '60'\n", 1),
+		"restore-fails-job":               strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        env:", "        timeout-minutes: 2\n        env:", 1),
+		"save-fails-job":                  strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        uses: actions/cache/save@", "        timeout-minutes: 2\n        uses: actions/cache/save@", 1),
+		"error-spreads":                   strings.Replace(text, "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n", "      - name: Vet와 CGO-free build\n        timeout-minutes: 3\n        continue-on-error: true\n", 1),
+		"test-cache-on":                   strings.Replace(text, "go test @otherPackages -count=1 -v", "go test @otherPackages -v", 1),
+		"count-dropped":                   strings.Replace(text, runner, "          go test ./src/internal/runner -failfast -timeout 180s -run", 1),
+		"count-zero":                      strings.Replace(text, runner, "          go test ./src/internal/runner -count=0 -failfast -timeout 180s -run", 1),
+		"added-cached-test":               strings.Replace(text, "          go vet ./src/...\n", "          go test ./src/kit -timeout 60s\n          go vet ./src/...\n", 1),
+		"cache-elsewhere":                 strings.Replace(text, "  mode:\n", "  mode:\n    # uses: actions/cache/save@0000000000000000000000000000000000000000 # v6.1.0\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || foundationCachePolicy(broken) == nil {
