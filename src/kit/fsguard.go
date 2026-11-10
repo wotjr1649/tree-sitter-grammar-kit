@@ -355,7 +355,8 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 	h := sha256.New()
 	det := newDetector()
 	st := &readStats{encoding: det}
-	buf := make([]byte, readChunk)
+	// Size+1 still reads a small file in one call and then sees EOF, without zeroing 1 MiB per file (#303).
+	buf := make([]byte, min(uint64(readChunk), confirmedSize+1))
 	for {
 		if e := r.check(); e != nil {
 			return nil, e
@@ -397,6 +398,10 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 			}
 			if keep > 0 && st.size <= keep {
 				st.content = append(st.content, chunk...)
+			}
+			if st.size > confirmedSize && len(buf) < readChunk {
+				// The file grew while open; keep the 1 MiB pace to the error instead of tiny reads.
+				buf = make([]byte, readChunk)
 			}
 		}
 		if err == io.EOF {
