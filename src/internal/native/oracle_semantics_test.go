@@ -525,6 +525,7 @@ func TestOracleSemanticsFailureClassification(t *testing.T) {
 }
 
 func TestOracleSemanticsProducerIncompatibleABI(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "darwin" {
 		t.Skip("new semantics producer is deferred on macOS")
 	}

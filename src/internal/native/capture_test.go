@@ -145,6 +145,7 @@ func TestDriverCaptureRefusalAndError(t *testing.T) {
 }
 
 func TestDriverCaptureActualInvocation(t *testing.T) {
+	t.Parallel()
 	b := fixtureBuild(t, "plain")
 	x := oracleContext(false, "((number) @n (#eq? @n \"1\"))")
 	request := x.request(kit.IncrementalCase{ID: "c1", Encoding: kit.EncodingUTF8}, []byte("a = 1;\n"))
