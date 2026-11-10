@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/foundation"
 )
 
 var fixture = map[string]string{
@@ -313,7 +315,21 @@ func buildConsumer(t *testing.T) string {
 	if bytes.Contains(src, []byte("/src/internal")) {
 		t.Fatal("consumer must not import internal packages")
 	}
-	gomod := strings.ReplaceAll(string(tmpl), "{{KIT}}", filepath.ToSlash(repoRoot(t)))
+	rootmod, err := os.ReadFile(filepath.Join(repoRoot(t), "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	version, err := foundation.ModuleGoVersion(rootmod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gomod := strings.NewReplacer("{{KIT}}", filepath.ToSlash(repoRoot(t)), "{{GO_VERSION}}", version).Replace(string(tmpl))
+	if strings.Contains(gomod, "{{") {
+		t.Fatal("unresolved consumer template placeholder")
+	}
+	if got, err := foundation.ModuleGoVersion([]byte(gomod)); err != nil || got != version {
+		t.Fatalf("consumer go directive = %q, %v; want %q", got, err, version)
+	}
 	writeTree(t, module, map[string]string{"go.mod": gomod, "main.go": string(src)})
 	consumer := filepath.Join(module, "consumer"+exeSuffix())
 	goRun(t, module, "build", "-o", consumer, ".")

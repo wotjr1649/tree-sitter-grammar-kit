@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/foundation"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
@@ -83,6 +84,10 @@ func TestModuleProxyConsumer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	version, err := foundation.ModuleGoVersion(gomod)
+	if err != nil {
+		t.Fatal(err)
+	}
 	writeTree(t, modDir, map[string]string{
 		"list": moduleVersion + "\n", moduleVersion + ".info": `{"Version":"` + moduleVersion + `","Time":"2026-10-04T00:00:00Z"}`,
 		moduleVersion + ".mod": string(gomod), moduleVersion + ".zip": string(moduleZip(t))})
@@ -104,7 +109,7 @@ func TestModuleProxyConsumer(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeTree(t, module, map[string]string{"main.go": string(main),
-		"go.mod": "module example.invalid/tsgkconsumer\n\ngo 1.27.2\n\nrequire " + modulePath + " " + moduleVersion + "\n"})
+		"go.mod": "module example.invalid/tsgkconsumer\n\ngo " + version + "\n\nrequire " + modulePath + " " + moduleVersion + "\n"})
 	consumer := filepath.Join(module, "consumer"+exeSuffix())
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()

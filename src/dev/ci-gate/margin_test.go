@@ -9,22 +9,45 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/foundation"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
+func marginExpectedGo(t *testing.T) string {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("margin test path unavailable")
+	}
+	b, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "..", "..", "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	version, err := foundation.ModuleGoVersion(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return "go" + version
+}
+
 func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
+	return marginFixtureWithGo(t, id, marginExpectedGo(t))
+}
+
+func marginFixtureWithGo(t *testing.T, id, expectedGo string) (marginReport, []byte, []byte) {
 	t.Helper()
 	r := expectation()
 	r.RunID = id
 	r.Event = "push"
 	r.HeadSHA = r.SHA
-	r.GoVersion = marginGo
+	r.GoVersion = expectedGo
 	report := marginReport{Schema: marginSchema, Run: r, CoreSHA: strings.Repeat("f", 64), Cutoff: "2026-10-16T04:00:00Z"}
 	var jobs []marginAPIJob
 	number, _ := strconv.ParseUint(id, 10, 64)
@@ -33,7 +56,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 		host.Job, host.GOOS, host.GOARCH = j.job, j.goos, j.arch
 		host.RunnerOS = map[string]string{"windows": "Windows", "linux": "Linux", "darwin": "macOS"}[j.goos]
 		host.RunnerArch = map[string]string{"amd64": "X64", "arm64": "ARM64"}[j.arch]
-		host.Image, host.GoVersion = j.goos+"/image-v1", marginGo
+		host.Image, host.GoVersion = j.goos+"/image-v1", expectedGo
 		c := marginConfig{Schema: "tsgk-ci-config/r1", Run: host, Source: strings.Repeat("c", 64)}
 		if j.compiler {
 			c.Compiler = &fileDigest{strings.Repeat("d", 64), 100}
@@ -50,7 +73,7 @@ func marginFixture(t *testing.T, id string) (marginReport, []byte, []byte) {
 	jobs = append(jobs, marginAPIJob{marginStep: marginStep{Name: "integration gate", Status: "in_progress"}})
 	jobsData := encoded(t, map[string]any{"total_count": len(jobs), "jobs": jobs})
 	core := encoded(t, map[string]any{"assessment": "PASS", "run": r, "large": map[string]any{"max_page_wall_ms": 63000}})
-	metrics, err := currentMargins(r, report.Configs, jobsData, core)
+	metrics, err := currentMargins(r, report.Configs, expectedGo, jobsData, core)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +154,7 @@ func TestMarginThresholdAndIndependentRuns(t *testing.T) {
 				p, _, _ := marginFixture(t, strconv.Itoa(i))
 				past = append(past, p)
 			}
-			failed, err := evaluateMargins(&r, past)
+			failed, err := evaluateMargins(&r, past, marginExpectedGo(t))
 			if err != nil || failed != tc.failed {
 				t.Fatalf("failed=%v err=%v", failed, err)
 			}
@@ -149,14 +172,14 @@ func TestMarginThresholdAndIndependentRuns(t *testing.T) {
 	for i := range b.Configs {
 		b.Configs[i].Run.RunAttempt = "3"
 	}
-	if _, err := evaluateMargins(&r, []marginReport{a, b}); err == nil {
+	if _, err := evaluateMargins(&r, []marginReport{a, b}, marginExpectedGo(t)); err == nil {
 		t.Fatal("rerun counted as another sample")
 	}
 	// Historical aggregates are never imported: one report with samples=999 is one run.
 	for i := range a.Metrics {
 		a.Metrics[i].Samples = 999
 	}
-	if _, err := evaluateMargins(&r, []marginReport{a}); err != nil {
+	if _, err := evaluateMargins(&r, []marginReport{a}, marginExpectedGo(t)); err != nil {
 		t.Fatal(err)
 	}
 	for _, m := range r.Metrics {
@@ -183,7 +206,7 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 			}
 		}
 	}
-	if _, err := evaluateMargins(&r, []marginReport{a}); err != nil {
+	if _, err := evaluateMargins(&r, []marginReport{a}, marginExpectedGo(t)); err != nil {
 		t.Fatal(err)
 	}
 	for _, m := range r.Metrics {
@@ -200,12 +223,21 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 		"forged-key":         func(r *marginReport) { r.Metrics[0].Config = strings.Repeat("0", 64) },
 		"compiler":           func(r *marginReport) { r.Configs[0].Compiler = nil },
 		"toolchain":          func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.3" },
-		"former-toolchain":   func(r *marginReport) { r.Configs[0].Run.GoVersion = marginFormerGo },
+		"former-toolchain":   func(r *marginReport) { r.Configs[0].Run.GoVersion = "go1.27.1" },
 	} {
 		t.Run(name, func(t *testing.T) {
+			expectedGo := marginExpectedGo(t)
 			bad, _, _ := marginFixture(t, "900")
+			if name == "toolchain" || name == "former-toolchain" {
+				version, err := foundation.ModuleGoVersion([]byte("module example.com/test\n\ngo 1.28.4\n"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				expectedGo = "go" + version
+				bad, _, _ = marginFixtureWithGo(t, "900", expectedGo)
+			}
 			mutate(&bad)
-			if _, err := evaluateMargins(&bad, nil); err == nil {
+			if _, err := evaluateMargins(&bad, nil, expectedGo); err == nil {
 				t.Fatal("invalid report accepted")
 			}
 		})
@@ -228,12 +260,12 @@ func TestMarginConfigurationAndMalformedControls(t *testing.T) {
 		json.Unmarshal(jobs, &bad)
 		job := bad["jobs"].([]any)[0].(map[string]any)
 		delete(job, field)
-		if _, err := currentMargins(r.Run, r.Configs, encoded(t, bad), core); err == nil {
+		if _, err := currentMargins(r.Run, r.Configs, marginExpectedGo(t), encoded(t, bad), core); err == nil {
 			t.Fatalf("missing API %s accepted", field)
 		}
 	}
 	badCore := []byte(strings.Replace(string(core), `"max_page_wall_ms":63000`, `"max_page_wall_ms":null`, 1))
-	if _, err := currentMargins(r.Run, r.Configs, jobs, badCore); err == nil {
+	if _, err := currentMargins(r.Run, r.Configs, marginExpectedGo(t), jobs, badCore); err == nil {
 		t.Fatal("missing page wall became zero")
 	}
 }
@@ -278,7 +310,7 @@ func TestMarginSecondResolutionTimestamps(t *testing.T) {
 			}
 		}
 	}
-	metrics, err := currentMargins(r.Run, r.Configs, encoded(t, api), core)
+	metrics, err := currentMargins(r.Run, r.Configs, marginExpectedGo(t), encoded(t, api), core)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -553,7 +585,7 @@ func TestMarginOfflineArtifactFlowAndFailedSamplePreservation(t *testing.T) {
 				for j := range p.Configs {
 					p.Configs[j].Source = source
 				}
-				p.Metrics, err = currentMargins(p.Run, p.Configs, jobs, core)
+				p.Metrics, err = currentMargins(p.Run, p.Configs, marginExpectedGo(t), jobs, core)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -637,7 +669,7 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 		jobs []marginAPIJob
 		ok   bool
 	}{"pr": {jobs.Jobs, true}, "main": {main, true}, "extra": {append(slices.Clone(main), diagnostic("extra")), false}, "no-mode": {noMode, false}} {
-		_, err := currentMargins(r.Run, r.Configs, encoded(t, map[string]any{"total_count": len(tc.jobs), "jobs": tc.jobs}), core)
+		_, err := currentMargins(r.Run, r.Configs, marginExpectedGo(t), encoded(t, map[string]any{"total_count": len(tc.jobs), "jobs": tc.jobs}), core)
 		if (err == nil) != tc.ok {
 			t.Fatalf("%s: %d jobs: %v", name, len(tc.jobs), err)
 		}
@@ -645,14 +677,23 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 }
 
 // TestMarginToolchain pins the toolchain each report accepts (#261): the current report only
-// the pinned Go, a historical one also the former pin, both for every measured configuration
+// the pinned Go, a historical one also the listed former pins, both for every measured configuration
 // and for the report's own run.
 func TestMarginToolchain(t *testing.T) {
-	report, _, _ := marginFixture(t, "900")
+	saved := marginFormerGo
+	marginFormerGo = []string{"go1.28.3", "go1.28.1"}
+	defer func() { marginFormerGo = saved }()
+	const module = "module example.com/test\n\ngo 1.28.4\n"
+	version, err := foundation.ModuleGoVersion([]byte(module))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedGo := "go" + version
+	report, _, _ := marginFixtureWithGo(t, "900", expectedGo)
 	for _, tc := range []struct {
 		version             string
 		current, historical bool
-	}{{marginGo, true, true}, {marginFormerGo, false, true}, {"go1.27.3", false, false}, {"", false, false}} {
+	}{{expectedGo, true, true}, {"go1.28.3", false, true}, {"go1.28.1", false, true}, {"go1.28.2", false, false}, {"go1.27.3", false, false}, {"", false, false}} {
 		for _, historical := range []bool{false, true} {
 			want := tc.current
 			if historical {
@@ -660,14 +701,42 @@ func TestMarginToolchain(t *testing.T) {
 			}
 			c := report.Configs[0]
 			c.Run.GoVersion = tc.version
-			if got := checkMarginConfig(c, marginJobs[0], report.Run, historical) == nil; got != want {
+			if got := checkMarginConfig(c, marginJobs[0], report.Run, expectedGo, historical) == nil; got != want {
 				t.Fatalf("configuration %q historical %v: accepted %v", tc.version, historical, got)
 			}
 			r := report
 			r.Run.GoVersion = tc.version
-			if got := validateMarginReport(r, historical) == nil; got != want {
+			if got := validateMarginReport(r, expectedGo, historical) == nil; got != want {
 				t.Fatalf("report run %q historical %v: accepted %v", tc.version, historical, got)
 			}
 		}
+	}
+	changedVersion, err := foundation.ModuleGoVersion([]byte("module example.com/test\n\ngo 1.28.5\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedExpected := "go" + changedVersion
+	changed, _, _ := marginFixtureWithGo(t, "901", changedExpected)
+	if err := validateMarginReport(changed, changedExpected, false); err != nil {
+		t.Fatalf("report did not follow synthetic go.mod: %v", err)
+	}
+	oldPin, _, _ := marginFixtureWithGo(t, "902", expectedGo)
+	if err := validateMarginReport(oldPin, changedExpected, false); err == nil {
+		t.Fatal("previous current pin accepted after go.mod version change")
+	}
+	wrongRun, _, _ := marginFixtureWithGo(t, "903", changedExpected)
+	wrongRun.Run.GoVersion = expectedGo
+	if err := validateMarginReport(wrongRun, changedExpected, false); err == nil {
+		t.Fatal("report run with previous pin accepted after go.mod version change")
+	}
+	wrongConfig, _, _ := marginFixtureWithGo(t, "904", changedExpected)
+	wrongConfig.Configs[0].Run.GoVersion = expectedGo
+	for i := range wrongConfig.Metrics {
+		if strings.HasPrefix(wrongConfig.Metrics[i].ID, wrongConfig.Configs[0].Run.Job+"/"+wrongConfig.Configs[0].Run.GOOS+"/") {
+			wrongConfig.Metrics[i].Config = marginKey(wrongConfig.Configs[0], wrongConfig.Metrics[i].ID, wrongConfig.Metrics[i].Limit)
+		}
+	}
+	if err := validateMarginReport(wrongConfig, changedExpected, false); err == nil {
+		t.Fatal("configuration with previous pin accepted after go.mod version change")
 	}
 }

@@ -19,6 +19,31 @@ import (
 	"unicode/utf8"
 )
 
+// ModuleGoVersion reads the repository's single stable patch-version directive.
+func ModuleGoVersion(data []byte) (string, error) {
+	if len(data) > 65536 {
+		return "", errors.New("go.mod byte limit")
+	}
+	directive := regexp.MustCompile(`^[ \t]*go([ \t]|$)`)
+	version := regexp.MustCompile(`^[ \t]*go[ \t]+([1-9][0-9]*\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))[ \t]*(//[^\r\n]*)?$`)
+	var found string
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSuffix(line, "\r")
+		if !directive.MatchString(line) {
+			continue
+		}
+		match := version.FindStringSubmatch(line)
+		if found != "" || match == nil {
+			return "", errors.New("invalid or duplicate go directive")
+		}
+		found = match[1]
+	}
+	if found == "" {
+		return "", errors.New("go directive missing")
+	}
+	return found, nil
+}
+
 var required = []string{
 	"go.mod", "AGENTS.md", "README.md", "LICENSE", "CHANGELOG.md", "SECURITY.md",
 	".gitignore", ".gitattributes", ".github/workflows/foundation.yml",
