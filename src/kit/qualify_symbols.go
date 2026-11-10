@@ -263,7 +263,7 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 			acceptedCases[id] = c
 		}
 	}
-	rr, rerr := replayShared(ctx, ReplayRequest{Root: filepath.Join(h.root, "incremental", w.Set), Profile: reg}, budget)
+	rr, rerr := replaySharedWithOptions(ctx, ReplayRequest{Root: filepath.Join(h.root, "incremental", w.Set), Profile: reg}, budget, h.x.r.options)
 	stopWall()
 	cancel()
 	s.Gates = append(s.Gates, rr.Gates...)

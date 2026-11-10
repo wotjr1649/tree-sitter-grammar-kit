@@ -314,7 +314,11 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 			return nil, e
 		}
 	}
-	if testHookOpen != nil {
+	if r.options != nil {
+		if r.options.open != nil {
+			r.options.open(name)
+		}
+	} else if testHookOpen != nil {
 		testHookOpen(name)
 	}
 	f, err := g.root.Open(name)

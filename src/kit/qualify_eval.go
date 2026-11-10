@@ -80,7 +80,7 @@ func (q *qualifier) openHost(p QualPlatform, dir string, expected fs.FileInfo) (
 		}
 	}
 	// each host has its own byte budget; the wall and cancellation are shared
-	hr := &run{caller: q.r.caller, wall: q.r.wall, cancel: q.r.cancel}
+	hr := &run{caller: q.r.caller, wall: q.r.wall, cancel: q.r.cancel, options: q.r.options}
 	hr.forbiddenFiles = q.r.forbiddenFiles
 	// the records are new CI evidence: they are judged with the oracle-set-r2 S05 route rule
 	x := &replayEnv{r: hr, g: newGuard(root), lim: q.lim, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{}, verified: map[string]bool{},

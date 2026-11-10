@@ -88,10 +88,18 @@ func eligibilityRevision(x string) bool {
 }
 
 func verifyQueryReferenceEligibility(ctx context.Context, req QueryReferenceEligibilityRequest) (QueryReferenceEligibilityResult, error) {
-	return verifyQueryReferenceEligibilityInRun(ctx, req, nil)
+	return verifyQueryReferenceEligibilityWithOptions(ctx, req, nil)
 }
 
-func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenceEligibilityRequest, scope *eligibilityScope) (res QueryReferenceEligibilityResult, resultErr error) {
+func verifyQueryReferenceEligibilityWithOptions(ctx context.Context, req QueryReferenceEligibilityRequest, opts *runOptions) (QueryReferenceEligibilityResult, error) {
+	return verifyQueryReferenceEligibilityInRunWithOptions(ctx, req, nil, opts)
+}
+
+func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenceEligibilityRequest, scope *eligibilityScope) (QueryReferenceEligibilityResult, error) {
+	return verifyQueryReferenceEligibilityInRunWithOptions(ctx, req, scope, nil)
+}
+
+func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req QueryReferenceEligibilityRequest, scope *eligibilityScope, opts *runOptions) (res QueryReferenceEligibilityResult, resultErr error) {
 	res = QueryReferenceEligibilityResult{Report: newReport("query reference eligibility"), ResultSchema: QueryReferenceEligibilityResultSchema,
 		Build: QueryEligibilityCounts{Required: 9, Unprocessed: 9}, Unit: QueryEligibilityCounts{Required: 4, Unprocessed: 4}, Control: QueryEligibilityCounts{Required: 53, Unprocessed: 53}, Assertion: QueryEligibilityCounts{Required: 36, Unprocessed: 36}}
 	var r *run
@@ -100,7 +108,7 @@ func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenc
 	}
 	if r == nil {
 		var e *Error
-		r, e = startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
+		r, e = startRunWithOptions(ctx, ReplayOperations()["evidence-replay"].Wall, opts)
 		if e != nil {
 			failReport(&res.Report, e)
 			return res, e

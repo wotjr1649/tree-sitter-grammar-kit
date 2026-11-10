@@ -477,6 +477,7 @@ func qualificationSemanticRow(result QualificationResult, platform string) *Qual
 }
 
 func TestQualificationSmallSemanticFanIn(t *testing.T) {
+	t.Parallel()
 	fixture := newQualificationSemanticFixtureState(t)
 	t.Run("positive partial-scope fold", func(t *testing.T) {
 		baselineRequest := cloneQualificationSemanticRequest(t, fixture.request)
@@ -679,10 +680,9 @@ func TestQualificationSmallSemanticFanIn(t *testing.T) {
 			t.Fatalf("rehashing the graph, policy, approval and context hid the source mismatch: %+v", row)
 		}
 		limit := uint64(len(req.QuerySemantics.Plan)) + row.BytesRead + uint64(len(req.QuerySemantics.Targets[1].Replay.Profile)) - 1
-		oldLimits := testHookReplayLimits
-		testHookReplayLimits = func(limits ReplayLimits) ReplayLimits { limits.TotalBytes = limit; return limits }
-		t.Cleanup(func() { testHookReplayLimits = oldLimits })
-		partial, interrupted := Qualify(ctxT(t), req)
+		partial, interrupted := qualifyWithOptions(ctxT(t), req, &runOptions{
+			replayLimits: func(limits ReplayLimits) ReplayLimits { limits.TotalBytes = limit; return limits },
+		})
 		if interrupted == nil || asError(interrupted).Kind != KindResourceLimit || partial.ExecutionStatus != StatusResourceLimit || partial.Assessment != AssessFail || partial.QuerySemantics == nil || partial.QuerySemantics.Code != row.Code {
 			t.Fatalf("later resource stop replaced the first failure: err=%v status=%s result=%s semantics=%+v", interrupted, partial.ExecutionStatus, partial.Assessment, partial.QuerySemantics)
 		}
