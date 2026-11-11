@@ -8,6 +8,12 @@
 
 `TestQualificationInventoryRouteValidationProductLimit`·`TestQualificationInventoryRouteAlternativeProductLimit`·`TestQualificationInventoryRoutePlatformProductLimit`는 coverage×expectations·alternatives×coverage·accepted 플랫폼의 반복 검색을 실제 중첩 순회 전에 work 한도로 차단한다. `TestQualificationInventoryRouteSpecialParity`는 비선택 영역의 특수 arm schema와 typed decode보다 먼저 실행되는 shape 오류 분류를 전체 파서와 대조하고, `TestQualificationInventoryRouteJSONLimits`는16MiB와2,000,000값 경계를 확인한다.
 
+## #370 V2-A 역사 자료 결속 검증
+
+[pin 계약](../specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 `TestEvidencePinsProductionSelectionDoesNotChangeHistory`는 생산 후보 A/B/C와 별도로 A의 원문·승인·판정·counter·consumed identity를 고정한다. `TestEvidencePinsRejectForgery`는 독립 승인 집합 불일치·pin 치환·자료/sidecar 동시 재해시·sidecar 위조/재사용·혼합 자료를 거부한다. `TestEvidencePinsStrictBoundaries`는 unknown/duplicate/missing/null·depth·size·scope/reader/schema·role·alias·미사용과 누락 자료의 BLOCKED를 검사하고, `TestEvidencePinsInterruptionPreservesFailure`는 확정 FAIL 뒤 자원 오류와 caller 취소를 검사한다. `TestEvidencePinsArchive`는 보관한 모든 집합의 내용 주소와 모든 원문 자료의 길이/hash 및 단일 선택 집합의 존재를 검증한다. 승인 집합 비교를 제거한 overlay mutant는 위조 반례에서 FAIL이어야 한다.
+
+`CGO_ENABLED=0`으로 gofmt·영향 시험·kit 전체·foundation 전체(`TestNoHardcodedToolVersions` 포함)·`go vet ./src/...`를 실행한다. 역사 자료 결속 PASS는 새 Rust/runtime/Oracle의 실제 자격 검증이나 full eligibility·semantic PASS가 아니다. V2-B의 stdout/tool/receipt/catalogue와 V2-C/D의 전체 전달 검증은 이 단계에서 미구현이다.
+
 ## #216 TSQL8 source 준비 검증
 
 [TSQL8 사전 기대값과 binary paging 연결](../specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다. Native의 `TestQueryClassificationTSQL8StaticProfile`, `TestQueryClassificationTSQL8AnchorGuards`, `TestQueryClassificationTSQL8GrammarGuards`, `TestQueryClassificationTSQL8EmptyStderrCaptureMember`는 닫힌 이름·일반6+fact2의 원문/순서/SHA/metadata·빈 CST/ABI·grammar5개와 parser5 parts를 고정한다. kit의 `TestQueryClassificationTSQL8DefinitionBindings`, `TestQueryClassificationTSQL8ProfileAndPagedContext`, `TestQueryClassificationTSQL8ClosedNames`, `TestQueryClassificationTSQL8StderrBinding`은 두 원문 envelope·fact route 유일성/순서·2982 tree roles/23856 potential links·compiler argv/limits·다른 family/context·null/alias·live session 없는 projection을 검사한다.
