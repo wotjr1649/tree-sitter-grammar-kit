@@ -160,7 +160,7 @@ func newOrdinaryReaderFixture(t *testing.T) ordinaryReaderFixture {
 		t.Fatalf("stat manifest: %#v", err)
 	}
 	snapshot.observed[manifestReplay.Path] = fi
-	ordinaryBinding := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "plain", Profile: profilePin, PlanningProfile: planningPin, Registration: registrationPin, Assets: assetsPin, Plan: planPin, ReferenceSelection: OrdinaryPin{Path: "reference-selection.json", Bytes: 1, SHA256: digestHex([]byte("x"))}, RunBinding: OrdinaryPin{Path: "run-binding.json", Bytes: uint64(len(bindingBytes)), SHA256: digestHex(bindingBytes)}, Candidate: manifest.Candidate, SemanticCohort: manifest.SemanticCohort, RunID: manifest.RunID, ShardIDs: shards}
+	ordinaryBinding := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "plain", Profile: profilePin, PlanningProfile: planningPin, Registration: registrationPin, Assets: assetsPin, Plan: planPin, Commitment: planPin, ReferenceSelection: OrdinaryPin{Path: "reference-selection.json", Bytes: 1, SHA256: digestHex([]byte("x"))}, RunBinding: OrdinaryPin{Path: "run-binding.json", Bytes: uint64(len(bindingBytes)), SHA256: digestHex(bindingBytes)}, Candidate: manifest.Candidate, SemanticCohort: manifest.SemanticCohort, RunID: manifest.RunID, ShardIDs: shards}
 	ordinary := &ordinaryEligibilityScope{Binding: ordinaryBinding, ClosureEncoding: "plain", TupleRequired: 1}
 	session := &eligibilitySession{r: r, b: b, snapshot: snapshot, owned: owned, owners: owners, ordinary: ordinary, bound: true, res: &QueryReferenceEligibilityResult{Report: newReport("ordinary fixture")}}
 	ordinary.session = session

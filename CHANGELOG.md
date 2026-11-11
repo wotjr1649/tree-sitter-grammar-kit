@@ -2,6 +2,7 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- #362 P2-C 일부에서 P2-A source-only full-plan 검증 결과를 caller-pinned `tsgk-query-ordinary-plan-commitment/r1` Merkle root와 shard inclusion proofs로 고정하고, ordinary 입력 검증은 선택 shard의 coordinate와 registration row만 typed decode하도록 구조화한다(Refs #362). Global strict token/ID 불변식 및 registry/inventory 고정 검증과 기존 1 GiB/32 M/256 MiB 한도는 유지하며 공개 API·ordinary semantic PASS·SQL full capacity는 활성화하지 않는다.
 - P2-C internal ordinary approval/scope/paging binding과 typed input/reader/adjudicator/reference 구성요소를 준비한다(Refs #362). Verified page authority는 ordinary caller pins, reference selection, cohort/run, closure encoding과 ordered selected shard IDs에 결속하며 선택 case 수는 기존 `native-query-batch`의 1000 상한을 따른다. Public `VerifyOrdinaryQuerySemantics`/result contract는 활성화하지 않았으며 ordinary PASS나 full SQL capacity를 주장하지 않는다. 공개 entry/end-to-end 원장 검증과 SQL capacity는 남겨 `CAPACITY_UNPROVEN`/BLOCKED로 기록하고, P2-D stored reducer/CLI parity도 후속으로 둔다.
 
 - P2-B 2단계에서 `OracleRequest.Ordinary`의 명시 경로로 P2-A 문서와 실제 batch source witness를 연결하고 record/r5·manifest/r8·caller-facing run-binding/r2, immutable base와 local pending, file-backed actual capture 발행을 추가했다. `nativewire.CompareAPI`를 live/offline이 공유하고 step/role/query fact는 편집 후 source와 fresh captures로 독립 도출한다. 기존 profile의 거부·한도·API 의미를 보존하며 guarded ordinary reader/replay·외부 승인·SQL capacity는 미완료다(Refs #362).

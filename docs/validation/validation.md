@@ -1,5 +1,13 @@
 # Validation and merge contract
 
+## #362 ordinary shard plan commitment 검증
+
+`BuildOrdinaryShardPlan`와 `ValidateOrdinaryShardPlan`은 full source-only plan을 만들어 P0 fixed registry/qualification inputs에 대한 106,208 ordinary ID의 exact union을 검증한다. `src/internal/ordinarycommit.Build`는 이 semantic 증명을 대체하지 않고 검증 성공한 full plan의 6,402개 정렬 shard 원문을 commitment/root와 ordered inclusion proofs로 묶는다. Caller approval이 full plan pin 및 commitment pin을 함께 고정해야 한다. Pass는 commitment와 선택된 shard/proofs만 읽어 strict decode하고, inclusion·승인된 ID 순서·coordinate 재구성·shard digest를 검사한다. r8/r2의 기존 full `shard_plan_pin`은 같은 complete-plan pin에 대조한다.
+
+선택 registration 검사는 원문 전체를 strict-scan하고 global token/ID/coordinate uniqueness·cross-link invariants를 유지한 채 선택 case·route query·required row만 typed decode한다. 계량기 변경은 실제 full plan decode와 전체 coordinate rehash를 제거하는 경우에만 절감으로 기록한다. Full registration read/global scan, qualification/registry 검사와 proof/shard hash는 원장에 남는다. 기존 1 GiB logical, 32,000,000 work, 256 MiB shared read는 유지한다.
+
+Focused regressions는 shard substitution, foreign-plan inclusion, proof/index reorder, omission/duplication, caller commitment pin mismatch, coordinate-rehashed tampering, global registration duplicate/key/null/unknown invariants, and selected decode boundaries를 다룬다. Test-only independent instrumentation은 verifier의 실제 hashed bytes/visited values와 registration projection의 실제 typed rows를 관찰해 각 대응 예약이 actual 이상인지 assert한다. CLI producer 시험은 emitted commitment/proof 재독출과 기존 output directory overwrite rejection을 확인한다. Capacity 측정은 `ordinaryInputs` 경계까지로 제한되며 evidence/body/semantic completion을 포함하지 않는 결과는 그 한계를 그대로 표시한다.
+
 ## #362 P2-C ordinary guarded reader 활성화 전 검증 계약
 
 이 검증 계약은 public `VerifyOrdinaryQuerySemantics`의 활성화 gate다. P2-C internal helpers/shape 시험의 존재만으로 end-to-end API, ordinary PASS 또는 full SQL capacity를 통과로 기록하지 않는다.

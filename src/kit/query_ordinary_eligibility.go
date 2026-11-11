@@ -19,6 +19,7 @@ type ordinaryEligibilityBinding struct {
 	Registration       OrdinaryPin `json:"registration_pin"`
 	Assets             OrdinaryPin `json:"asset_registration_pin"`
 	Plan               OrdinaryPin `json:"shard_plan_pin"`
+	Commitment         OrdinaryPin `json:"plan_commitment_pin"`
 	ReferenceSelection OrdinaryPin `json:"reference_selection_pin"`
 	RunBinding         OrdinaryPin `json:"run_binding_pin"`
 	Candidate          string      `json:"candidate"`
@@ -40,7 +41,7 @@ func validOrdinaryEligibilityBinding(b ordinaryEligibilityBinding) bool {
 	if b.Schema != ordinaryEligibilityBindingSchema || b.Context != OrdinaryContext || !ordinaryClosure(b.ClosureEncoding) || b.Candidate == "" || b.SemanticCohort == "" || b.RunID == "" || b.ShardIDs == nil || len(b.ShardIDs) == 0 || len(b.ShardIDs) > NativeOperations()["native-query-batch"].MaxCases {
 		return false
 	}
-	for _, p := range []OrdinaryPin{b.Profile, b.PlanningProfile, b.Registration, b.Assets, b.Plan, b.ReferenceSelection, b.RunBinding} {
+	for _, p := range []OrdinaryPin{b.Profile, b.PlanningProfile, b.Registration, b.Assets, b.Plan, b.Commitment, b.ReferenceSelection, b.RunBinding} {
 		if !ordinaryPin(p) {
 			return false
 		}
@@ -74,7 +75,7 @@ func ordinaryPagingDigest(binding ordinaryEligibilityBinding) [32]byte {
 		_, _ = h.Write(length[:])
 		_, _ = io.WriteString(h, value)
 	}
-	for _, pin := range []OrdinaryPin{binding.Profile, binding.PlanningProfile, binding.Registration, binding.Assets, binding.Plan, binding.ReferenceSelection, binding.RunBinding} {
+	for _, pin := range []OrdinaryPin{binding.Profile, binding.PlanningProfile, binding.Registration, binding.Assets, binding.Plan, binding.Commitment, binding.ReferenceSelection, binding.RunBinding} {
 		write(pin.Path)
 		var size [8]byte
 		binary.LittleEndian.PutUint64(size[:], pin.Bytes)

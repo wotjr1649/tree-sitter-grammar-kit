@@ -172,7 +172,7 @@ func TestOrdinaryReferencesChecksPinnedStoredRows(t *testing.T) {
 	pin := func(path string, data []byte) OrdinaryPin { return queryregistrycore.FilePin(path, data) }
 	binding := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "binary-paged",
 		Profile: pin("caller/profile.json", []byte("profile")), PlanningProfile: pin("caller/planning.json", []byte("planning")),
-		Registration: pin("caller/registration.json", []byte("registration")), Assets: pin("caller/assets.json", []byte("assets")), Plan: pin("caller/plan.json", []byte("plan")),
+		Registration: pin("caller/registration.json", []byte("registration")), Assets: pin("caller/assets.json", []byte("assets")), Plan: pin("caller/plan.json", []byte("plan")), Commitment: pin("caller/commitment.json", []byte("commitment")),
 		ReferenceSelection: pin("caller/references.json", selectionBytes), RunBinding: pin("caller/run-binding.json", []byte("run-binding")),
 		Candidate: "candidate-362", SemanticCohort: "current", RunID: f.approval.Candidate.Run, ShardIDs: []string{"route/windows/case-a"}}
 	f.approval.Ordinary = &binding

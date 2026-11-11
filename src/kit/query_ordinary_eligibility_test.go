@@ -3,15 +3,37 @@ package kit
 import (
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestOrdinaryPagingCommitmentBytesAreCharged(t *testing.T) {
+	pin := OrdinaryPin{Path: "caller/input.json", Bytes: 1, SHA256: digestHex([]byte("input"))}
+	binding := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "binary-paged",
+		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, Commitment: pin, ReferenceSelection: pin, RunBinding: pin,
+		Candidate: "candidate", SemanticCohort: "cohort", RunID: "run", ShardIDs: []string{"shard"}}
+	measure := func(binding ordinaryEligibilityBinding) (uint64, uint64) {
+		budget := ordinaryTestBudget(t)
+		s := &eligibilitySession{b: budget, res: &QueryReferenceEligibilityResult{}, ordinary: &ordinaryEligibilityScope{Binding: binding}, approval: eligibilityApproval{Ordinary: &binding}}
+		if _, e := s.pagingBinding(); e != nil {
+			t.Fatal(e)
+		}
+		return budget.work, budget.logical
+	}
+	w, l := measure(binding)
+	binding.Commitment.Path += strings.Repeat("x", 4096)
+	w2, l2 := measure(binding)
+	if w2 < w+4096 || l2 < l+4096 {
+		t.Fatal("commitment pin bytes were hashed without being charged")
+	}
+}
 
 func TestOrdinaryEligibilityBindingPinsContextAndShard(t *testing.T) {
 	pin := OrdinaryPin{Path: "caller/profile.json", Bytes: 7, SHA256: digestHex([]byte("profile"))}
 	b := ordinaryEligibilityBinding{
 		Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "parser-paged",
-		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, ReferenceSelection: pin, RunBinding: pin,
+		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, Commitment: pin, ReferenceSelection: pin, RunBinding: pin,
 		Candidate: "candidate", SemanticCohort: "cohort", RunID: "run", ShardIDs: []string{"shard-1", "shard-2"},
 	}
 	if !ordinaryEligibilityBindingMatches(b, b) {
@@ -21,6 +43,8 @@ func TestOrdinaryEligibilityBindingPinsContextAndShard(t *testing.T) {
 		"context":            func(x *ordinaryEligibilityBinding) { x.Context = "full-input-utf8/r2" },
 		"closure":            func(x *ordinaryEligibilityBinding) { x.ClosureEncoding = "unspecified" },
 		"rehash-target":      func(x *ordinaryEligibilityBinding) { x.Profile.SHA256 = digestHex([]byte("replacement")) },
+		"missing-commitment": func(x *ordinaryEligibilityBinding) { x.Commitment = OrdinaryPin{} },
+		"commitment-pin":     func(x *ordinaryEligibilityBinding) { x.Commitment.SHA256 = digestHex([]byte("other")) },
 		"missing-run-pin":    func(x *ordinaryEligibilityBinding) { x.RunBinding = OrdinaryPin{} },
 		"missing-references": func(x *ordinaryEligibilityBinding) { x.ReferenceSelection = OrdinaryPin{} },
 		"duplicate-shard":    func(x *ordinaryEligibilityBinding) { x.ShardIDs[1] = x.ShardIDs[0] },
@@ -54,7 +78,7 @@ func TestOrdinaryVerifiedPagingKeepsSmallEligibilityCap(t *testing.T) {
 func TestOrdinaryPagingSelectionKeepsBatchOperationMaximum(t *testing.T) {
 	pin := OrdinaryPin{Path: "caller/profile.json", Bytes: 7, SHA256: digestHex([]byte("profile"))}
 	b := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "plain",
-		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, ReferenceSelection: pin, RunBinding: pin,
+		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, Commitment: pin, ReferenceSelection: pin, RunBinding: pin,
 		Candidate: "candidate", SemanticCohort: "cohort", RunID: "run", ShardIDs: make([]string, NativeOperations()["native-query-batch"].MaxCases)}
 	for i := range b.ShardIDs {
 		b.ShardIDs[i] = "shard-" + strconv.Itoa(i)
@@ -72,7 +96,7 @@ func TestOrdinaryEligibilityCannotUseLegacyUnboundPath(t *testing.T) {
 	pin := OrdinaryPin{Path: "caller/profile.json", Bytes: 7, SHA256: digestHex([]byte("profile"))}
 	binding := ordinaryEligibilityBinding{
 		Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "binary-paged",
-		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, ReferenceSelection: pin, RunBinding: pin,
+		Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, Commitment: pin, ReferenceSelection: pin, RunBinding: pin,
 		Candidate: "candidate", SemanticCohort: "cohort", RunID: "run", ShardIDs: []string{"shard"},
 	}
 	scope := &ordinaryEligibilityScope{Binding: binding, ClosureEncoding: binding.ClosureEncoding, TupleRequired: 1}
@@ -112,7 +136,7 @@ func TestOrdinaryVerifiedPagingBindsCallerSelection(t *testing.T) {
 		t.Cleanup(r.cancel)
 		binding := ordinaryEligibilityBinding{
 			Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "binary-paged",
-			Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, ReferenceSelection: pin, RunBinding: pin,
+			Profile: pin, PlanningProfile: pin, Registration: pin, Assets: pin, Plan: pin, Commitment: pin, ReferenceSelection: pin, RunBinding: pin,
 			Candidate: "candidate", SemanticCohort: "cohort", RunID: "run", ShardIDs: []string{"shard-1", "shard-2"},
 		}
 		scope := &ordinaryEligibilityScope{Binding: binding, ClosureEncoding: binding.ClosureEncoding, TupleRequired: 1}
@@ -133,6 +157,7 @@ func TestOrdinaryVerifiedPagingBindsCallerSelection(t *testing.T) {
 		name   string
 		mutate func(*eligibilitySession)
 	}{
+		{"commitment-pin", func(s *eligibilitySession) { s.ordinary.Binding.Commitment.SHA256 = digestHex([]byte("other")) }},
 		{"profile-pin", func(s *eligibilitySession) { s.ordinary.Binding.Profile.SHA256 = digestHex([]byte("other")) }},
 		{"registration-pin", func(s *eligibilitySession) { s.ordinary.Binding.Registration.Path = "caller/other.json" }},
 		{"reference-selection-pin", func(s *eligibilitySession) { s.ordinary.Binding.ReferenceSelection.Bytes++ }},

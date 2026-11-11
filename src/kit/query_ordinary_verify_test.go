@@ -2,11 +2,15 @@ package kit
 
 import (
 	"context"
+	"encoding/json"
+	"slices"
+
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/ordinarycommit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
@@ -26,9 +30,18 @@ func ordinaryTestBudget(t *testing.T) *eligibilityBudget {
 
 func TestOrdinaryReaderSelectedInventoryBudget(t *testing.T) {
 	v, inv := ordinaryP0ForPlanTest(t)
-	for _, routeName := range []string{"json", "postgresql-sql", "tsql"} {
+	for _, routeName := range []string{"json", "postgresql-sql", "tsql", "largest-shard"} {
 		t.Run(routeName, func(t *testing.T) {
 			plan := ordinaryPlanForTest(v, inv)
+			selectedIndex := -1
+			if routeName == "largest-shard" {
+				for i, shard := range plan.Shards {
+					if shard.Platform == "windows-amd64" && (selectedIndex < 0 || len(ordinaryJSON(t, shard)) > len(ordinaryJSON(t, plan.Shards[selectedIndex]))) {
+						selectedIndex = i
+					}
+				}
+				routeName = plan.Shards[selectedIndex].Route
+			}
 			routeIndex := ordinaryRouteIndex(inv, routeName)
 			route := inv.Routes[routeIndex]
 			p := ordinaryProfileFixture()
@@ -83,62 +96,110 @@ func TestOrdinaryReaderSelectedInventoryBudget(t *testing.T) {
 				return data
 			}
 			b := ordinaryTestBudget(t)
-			planData := ordinaryJSON(t, plan)
+			if selectedIndex < 0 {
+				selectedIndex = slices.IndexFunc(plan.Shards, func(s OrdinaryPlanShard) bool { return s.Route == reg.Route && s.Platform == reg.Platform })
+			}
+			if t.Name() == "TestOrdinaryReaderSelectedInventoryBudget/largest-shard" {
+				for _, shard := range plan.Shards {
+					if len(ordinaryJSON(t, shard)) > len(ordinaryJSON(t, plan.Shards[selectedIndex])) {
+						t.Fatal("selected shard is not the largest raw shard")
+					}
+				}
+			}
+			commitmentData, selection := ordinarySelectionForTest(t, plan, []int{selectedIndex})
+			t.Logf("input sizes: commitment=%d proof=%d selected_shard=%d registration=%d route_cases=%d", len(commitmentData), len(selection.Proofs[0]), len(ordinaryJSON(t, plan.Shards[selectedIndex])), len(rb), len(reg.Cases))
 			registryData, inventoryData, slotsData := read("../contracts/query-semantic-registry-r1.json"), read("../contracts/qualification-c1.json"), read("../contracts/query-slot-inventory-r1.json")
-			for _, data := range [][]byte{pb, ab, rb, planData, registryData, inventoryData, slotsData} {
+			for _, data := range [][]byte{pb, ab, rb, commitmentData, registryData, inventoryData, slotsData} {
 				if e := b.r.chargeRead(uint64(len(data)), OrdinaryPlanLimits().ReadBytes, "ordinary-synthetic-input"); e != nil {
 					t.Fatal(e)
 				}
 			}
-			_, e := b.ordinaryInputs(pb, ab, rb, planData, registryData, inventoryData, slotsData, ordinaryRegistrySHA)
-			if e != nil && (e.Kind != KindResourceLimit || e.Code != "ELIGIBILITY_WORK_LIMIT") {
-				t.Fatalf("unexpected selected ordinary input error: %v logical=%d work=%d", e, b.logical, b.work)
+			for _, proof := range selection.Proofs {
+				if e := b.r.chargeRead(uint64(len(proof)), OrdinaryPlanLimits().ReadBytes, "ordinary-synthetic-proof"); e != nil {
+					t.Fatal(e)
+				}
+			}
+			out, e := b.ordinaryInputs(pb, ab, rb, commitmentData, registryData, inventoryData, slotsData, ordinaryRegistrySHA, selection)
+			if e != nil {
+				t.Fatal(e)
+			}
+			if len(out.plan.Shards) != 1 || len(out.registration.Cases) != 1 || len(out.registration.Required) != len(plan.Shards[selectedIndex].ObligationIDs) {
+				t.Fatal("selection decoded unrelated cases/IDs")
 			}
 			if b.logical > OrdinaryPlanLimits().Logical || b.work > OrdinaryPlanLimits().Work {
 				t.Fatalf("ordinary input validation escaped inherited cap: logical=%d work=%d", b.logical, b.work)
 			}
-			t.Logf("synthetic full plan + selected %s inputs: error=%v logical=%d work=%d read=%d (evidence/body excluded; never full capacity PASS)", routeName, e, b.logical, b.work, b.r.totalRead)
+			t.Logf("selected %s case=%s obligations=%d: error=%v logical=%d work=%d read=%d remaining_logical=%d remaining_work=%d remaining_read=%d (evidence/body excluded; never full capacity PASS)", routeName, plan.Shards[selectedIndex].Case, len(plan.Shards[selectedIndex].ObligationIDs), e, b.logical, b.work, b.r.totalRead, OrdinaryPlanLimits().Logical-b.logical, OrdinaryPlanLimits().Work-b.work, OrdinaryPlanLimits().ReadBytes-b.r.totalRead)
 		})
 	}
 }
 
-func TestOrdinaryReaderPlanMembership(t *testing.T) {
-	v, inv := ordinaryP0ForPlanTest(t)
-	plan := ordinaryPlanForTest(v, inv)
-	var registry queryregistrycore.Registry
-	data, err := os.ReadFile("../contracts/query-semantic-registry-r1.json")
+func ordinarySelectionForTest(t *testing.T, plan OrdinaryShardPlan, indices []int) ([]byte, ordinaryPlanSelection) {
+	t.Helper()
+	c, proofs, err := ordinarycommit.Build(ordinaryJSON(t, plan))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if e := inventoryTyped(data, &registry, ordinaryTestBudget(t)); e != nil {
+	data := ordinaryJSON(t, c)
+	pin := OrdinaryPin{Path: "test/pin.json", Bytes: 1, SHA256: strings.Repeat("a", 64)}
+	binding := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: OrdinaryContext, ClosureEncoding: "plain", Profile: pin, PlanningProfile: plan.Profile, Registration: pin, Assets: plan.Assets, Plan: OrdinaryPin{Path: c.Plan.Path, Bytes: c.Plan.Bytes, SHA256: c.Plan.SHA256}, Commitment: queryregistrycore.FilePin("plan/commitment.json", data), ReferenceSelection: pin, RunBinding: pin, Candidate: plan.Candidate, SemanticCohort: plan.SemanticCohort, RunID: "run", ShardIDs: []string{}}
+	if len(plan.Registrations) > 0 {
+		binding.Registration = plan.Registrations[0]
+	}
+	out := ordinaryPlanSelection{Binding: binding}
+	for _, i := range indices {
+		out.Binding.ShardIDs = append(out.Binding.ShardIDs, plan.Shards[i].ID)
+		out.Proofs = append(out.Proofs, ordinaryJSON(t, proofs[i]))
+	}
+	return data, out
+}
+
+func TestOrdinarySelectedPlanProofAndCoordinate(t *testing.T) {
+	v, inv := ordinaryP0ForPlanTest(t)
+	plan := ordinaryPlanForTest(v, inv)
+	data, selection := ordinarySelectionForTest(t, plan, []int{0, 1})
+	if _, e := ordinaryTestBudget(t).ordinarySelectedPlan(data, selection); e != nil {
 		t.Fatal(e)
 	}
-	if e := ordinaryTestBudget(t).ordinaryPlanUnion(plan, registry); e != nil {
-		t.Fatal(e)
-	}
-	for _, name := range []string{"case", "query", "source-history", "platform", "context-namespace", "id-only"} {
+	for _, name := range []string{"foreign-plan", "coordinate", "reorder", "omit", "duplicate", "caller-pin", "full-plan-pin", "header-pin"} {
 		t.Run(name, func(t *testing.T) {
-			var changed OrdinaryShardPlan
-			if e := ordinaryTestBudget(t).decodeOrdinaryTyped("plan", ordinaryJSON(t, plan), &changed); e != nil {
-				t.Fatal(e)
-			}
-			s := &changed.Shards[0]
+			raw := append([]byte(nil), data...)
+			s := selection
+			s.Proofs = append([][]byte(nil), selection.Proofs...)
+			s.Binding.ShardIDs = append([]string(nil), selection.Binding.ShardIDs...)
 			switch name {
-			case "case":
-				s.Case += "-replacement"
-			case "query":
-				changed.Routes[0].NativeQueryIDs[0] += "-replacement"
-			case "source-history":
-				s.SourceHistory = append(s.SourceHistory, s.SourceHistory[0])
-			case "platform":
-				s.Subject += "-replacement"
-			case "context-namespace":
-				changed.Namespace = strings.Repeat("a", 64)
-			case "id-only":
-				s.ObligationIDs[0] = "qsem1:" + strings.Repeat("b", 64)
+			case "foreign-plan":
+				var changed OrdinaryShardPlan
+				if err := json.Unmarshal(ordinaryJSON(t, plan), &changed); err != nil {
+					t.Fatal(err)
+				}
+				changed.Witness.SHA256 = strings.Repeat("f", 64)
+				_, other := ordinarySelectionForTest(t, changed, []int{0})
+				s.Proofs[0] = other.Proofs[0]
+			case "coordinate":
+				var changed OrdinaryShardPlan
+				if err := json.Unmarshal(ordinaryJSON(t, plan), &changed); err != nil {
+					t.Fatal(err)
+				}
+				changed.Shards[0].ObligationIDs[0] = "qsem1:" + strings.Repeat("a", 64)
+				changed.Shards[0].ObligationIDSHA256 = ordinaryIDDigest(changed.Shards[0].ObligationIDs)
+				raw, s = ordinarySelectionForTest(t, changed, []int{0, 1})
+			case "reorder":
+				s.Proofs[0], s.Proofs[1] = s.Proofs[1], s.Proofs[0]
+				s.Binding.ShardIDs[0], s.Binding.ShardIDs[1] = s.Binding.ShardIDs[1], s.Binding.ShardIDs[0]
+			case "omit":
+				s.Proofs = s.Proofs[:1]
+			case "duplicate":
+				s.Proofs[1] = s.Proofs[0]
+			case "caller-pin":
+				s.Binding.Commitment.SHA256 = strings.Repeat("f", 64)
+			case "full-plan-pin":
+				s.Binding.Plan.Bytes++
+			case "header-pin":
+				s.Binding.PlanningProfile.Bytes++
 			}
-			if e := ordinaryTestBudget(t).ordinaryPlanUnion(changed, registry); e == nil {
-				t.Fatal("accepted altered plan membership")
+			if _, e := ordinaryTestBudget(t).ordinarySelectedPlan(raw, s); e == nil {
+				t.Fatal("accepted altered selected plan")
 			}
 		})
 	}

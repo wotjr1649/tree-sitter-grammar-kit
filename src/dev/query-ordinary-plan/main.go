@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/ordinarycommit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
@@ -79,6 +81,10 @@ func readRoot(root, path string, limit int64) ([]byte, error) {
 }
 
 func run(root, witnessPath, profilePath, assetsPath, registrySHA string, registrationPaths []string, stdout, stderr io.Writer) error {
+	return runWithCommitmentDir(root, witnessPath, profilePath, assetsPath, registrySHA, registrationPaths, "", stdout, stderr)
+}
+
+func runWithCommitmentDir(root, witnessPath, profilePath, assetsPath, registrySHA string, registrationPaths []string, commitmentDir string, stdout, stderr io.Writer) error {
 	if witnessPath == "" || profilePath == "" || assetsPath == "" || registrySHA == "" {
 		return errors.New("-witness, -profile, -assets and -registry-sha256 are required")
 	}
@@ -199,11 +205,62 @@ func run(root, witnessPath, profilePath, assetsPath, registrySHA string, registr
 	if err != nil {
 		return err
 	}
+	if commitmentDir != "" {
+		if err := writeCommitmentArtifacts(commitmentDir, data); err != nil {
+			return err
+		}
+	}
 	_, err = stdout.Write(data)
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(stderr, "required=%d admitted=%d blocked=%d sql=BLOCKED/CAPACITY_UNPROVEN\n", plan.Required, plan.Admitted, plan.Blocked)
+	return nil
+}
+
+func writeCommitmentArtifacts(dir string, plan []byte) error {
+	commitment, proofs, err := ordinarycommit.Build(plan)
+	if err != nil {
+		return err
+	}
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	if err := os.Mkdir(dir, 0700); err != nil {
+		return fmt.Errorf("create new commitment directory: %w", err)
+	}
+	writeNew := func(name string, data []byte) error {
+		if len(data) > 16<<20 {
+			return fmt.Errorf("commitment artifact exceeds 16 MiB: %s", name)
+		}
+		file, err := os.OpenFile(filepath.Join(dir, name), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if err != nil {
+			return err
+		}
+		if _, err := file.Write(data); err != nil {
+			file.Close()
+			return err
+		}
+		return file.Close()
+	}
+	commitmentData, err := json.Marshal(commitment)
+	if err != nil {
+		return err
+	}
+	if err := writeNew("commitment.json", append(commitmentData, '\n')); err != nil {
+		return err
+	}
+	for i, proof := range proofs {
+		proofData, err := json.Marshal(proof)
+		if err != nil {
+			return err
+		}
+		name := fmt.Sprintf("proof-%06d.json", i)
+		if err := writeNew(name, append(proofData, '\n')); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -213,10 +270,11 @@ func main() {
 	profile := flag.String("profile", "", "ordinary profile path relative to root")
 	assets := flag.String("assets", "", "ordinary asset registration path relative to root")
 	registrySHA := flag.String("registry-sha256", "", "independently selected P0 registry SHA-256")
+	commitmentDir := flag.String("commitment-dir", "", "new directory for the plan commitment and shard inclusion proofs")
 	var registrationPaths pathsFlag
 	flag.Var(&registrationPaths, "registration", "ordinary registration path relative to root (repeatable)")
 	flag.Parse()
-	if err := run(*root, *witness, *profile, *assets, *registrySHA, registrationPaths, os.Stdout, os.Stderr); err != nil {
+	if err := runWithCommitmentDir(*root, *witness, *profile, *assets, *registrySHA, registrationPaths, *commitmentDir, os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

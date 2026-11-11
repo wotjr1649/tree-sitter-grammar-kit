@@ -611,40 +611,51 @@ func ParseOrdinaryShardPlan(data []byte) (OrdinaryShardPlan, error) {
 	return validateOrdinaryPlanShape(plan)
 }
 
-func validateOrdinaryPlanShape(plan OrdinaryShardPlan) (OrdinaryShardPlan, error) {
+func validateOrdinaryPlanHeader(plan OrdinaryShardPlan, whole bool) error {
 	if plan.Schema != ordinaryShardPlanSchema || !ordinaryPin(plan.Registry) || !ordinaryPin(plan.Witness) || !ordinaryPin(plan.Profile) || !ordinaryPin(plan.Assets) ||
 		plan.Namespace == "" || !hex64.MatchString(plan.Namespace) || plan.Candidate == "" || plan.SemanticCohort == "" || plan.Registrations == nil || plan.Shards == nil || plan.Bindings == nil || plan.Routes == nil ||
 		!reflect.DeepEqual(plan.CapacityUnknown, ordinaryCapacityUnknown) || plan.Budget.LogicalLimit != OrdinaryPlanLimits().Logical ||
 		plan.Budget.FixedDocumentDecodeLogicalPerPass != ordinaryFixedDocumentDecodeLogical || plan.Budget.ReferenceModel == "" || plan.Budget.SQLModel == "" || !plan.Budget.OtherRouteClosureUnknown || plan.Budget.StructuralSavingsApplied ||
 		!reflect.DeepEqual(plan.Budget.SQL, ordinarySQLFixedBudgets()) || len(plan.Budget.ReferenceRoutes) != len(plan.Routes) {
-		return plan, ordinaryBad("ORDINARY_PLAN_SCHEMA")
+		return ordinaryBad("ORDINARY_PLAN_SCHEMA")
 	}
 	if plan.Registry != (OrdinaryPin{Path: queryregistrycore.Path, Bytes: ordinaryRegistryBytes, SHA256: ordinaryRegistrySHA}) ||
-		plan.Limits != OrdinaryPlanLimits() || plan.Admitted != 0 || plan.Blocked != plan.Required || plan.FullScopeComplete || plan.Required != 106208 || plan.Required != uint64(len(planIDs(plan.Shards))) ||
+		plan.Limits != OrdinaryPlanLimits() || plan.Admitted != 0 || plan.Blocked != plan.Required || plan.FullScopeComplete || plan.Required != 106208 || whole && plan.Required != uint64(len(planIDs(plan.Shards))) ||
 		len(plan.Bindings) != len(plan.Routes)*2 {
-		return plan, ordinaryBad("ORDINARY_PLAN_HEADER")
+		return ordinaryBad("ORDINARY_PLAN_HEADER")
 	}
 	for i, route := range plan.Routes {
 		if route.Route == "" || route.Set == "" || route.NativeQueryIDs == nil || !reflect.DeepEqual(route.ReferenceQueryGroups, ordinaryQueryGroups(route.NativeQueryIDs)) ||
 			plan.Budget.ReferenceRoutes[i].Route != route.Route || plan.Budget.ReferenceRoutes[i].Set != route.Set ||
 			plan.Budget.ReferenceRoutes[i].Nominal.Density != 8 || plan.Budget.ReferenceRoutes[i].Dense.Density != 2 {
-			return plan, ordinaryBad("ORDINARY_PLAN_ROUTE")
+			return ordinaryBad("ORDINARY_PLAN_ROUTE")
 		}
 	}
 	bindings := make(map[string]OrdinaryBinding, len(plan.Bindings))
 	for _, binding := range plan.Bindings {
 		key := binding.Route + "/" + binding.Platform
 		if _, exists := bindings[key]; exists || !ordinaryHost(binding.Platform, binding.Subject) || !ordinaryClosure(binding.ClosureEncoding) || binding.Members == nil || ordinaryMembers(binding.Members, binding.ClosureEncoding) != nil {
-			return plan, ordinaryBad("ORDINARY_PLAN_BINDING")
+			return ordinaryBad("ORDINARY_PLAN_BINDING")
 		}
 		bindings[key] = binding
 	}
 	for _, route := range plan.Routes {
 		for _, host := range []string{"windows-amd64", "linux-amd64"} {
 			if _, ok := bindings[route.Route+"/"+host]; !ok {
-				return plan, ordinaryBad("ORDINARY_PLAN_BINDING")
+				return ordinaryBad("ORDINARY_PLAN_BINDING")
 			}
 		}
+	}
+	return nil
+}
+
+func validateOrdinaryPlanShape(plan OrdinaryShardPlan) (OrdinaryShardPlan, error) {
+	if err := validateOrdinaryPlanHeader(plan, true); err != nil {
+		return plan, err
+	}
+	bindings := make(map[string]OrdinaryBinding, len(plan.Bindings))
+	for _, binding := range plan.Bindings {
+		bindings[binding.Route+"/"+binding.Platform] = binding
 	}
 	seenIDs := make(map[string]bool, plan.Required)
 	seenShards := make(map[string]bool, len(plan.Shards))

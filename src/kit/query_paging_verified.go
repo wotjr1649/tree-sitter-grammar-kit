@@ -65,8 +65,8 @@ func (s *eligibilitySession) pagingBinding() (pagingBinding, *Error) {
 		if s.approval.Ordinary == nil || !ordinaryEligibilityBindingMatches(*s.approval.Ordinary, ordinary) {
 			return x, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", "approval/ordinary", nil)
 		}
-		bytes := uint64(8*7*3 + 128 + 8*len(ordinary.ShardIDs))
-		for _, pin := range []OrdinaryPin{ordinary.Profile, ordinary.PlanningProfile, ordinary.Registration, ordinary.Assets, ordinary.Plan, ordinary.ReferenceSelection, ordinary.RunBinding} {
+		bytes := uint64(8*8*3 + 128 + 8*len(ordinary.ShardIDs))
+		for _, pin := range []OrdinaryPin{ordinary.Profile, ordinary.PlanningProfile, ordinary.Registration, ordinary.Assets, ordinary.Plan, ordinary.Commitment, ordinary.ReferenceSelection, ordinary.RunBinding} {
 			bytes += uint64(len(pin.Path) + len(pin.SHA256))
 		}
 		for _, value := range []string{ordinary.Schema, ordinary.Context, ordinary.ClosureEncoding, ordinary.Candidate, ordinary.SemanticCohort, ordinary.RunID} {

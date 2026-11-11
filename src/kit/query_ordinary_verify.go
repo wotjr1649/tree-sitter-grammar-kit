@@ -65,20 +65,16 @@ type ordinaryVerifiedInputs struct {
 	assets       OrdinaryAssetRegistration
 	registration OrdinaryRegistration
 	plan         OrdinaryShardPlan
+	caseIndices  []int
+	totalCases   int
+	totalQueries int
 	registry     queryregistrycore.Registry
 	route        QualRoute
 }
 
 // The fixed P0 pins permit route selection without rebuilding the full inventory AST.
-func (b *eligibilityBudget) ordinaryInputs(profileData, assetData, registrationData, planData, registryData, inventoryData, slotData []byte, registrySHA string) (out ordinaryVerifiedInputs, e *Error) {
-	if e = b.decodeOrdinaryTyped("ordinary-registration", registrationData, &out.registration); e != nil {
-		return out, e
-	}
+func (b *eligibilityBudget) ordinaryInputs(profileData, assetData, registrationData, planData, registryData, inventoryData, slotData []byte, registrySHA string, selection ordinaryPlanSelection) (out ordinaryVerifiedInputs, e *Error) {
 	var err error
-	if out.registration, err = validateOrdinaryRegistrationShape(out.registration); err != nil {
-		return out, asError(err)
-	}
-	r := out.registration
 	if e = b.decodeOrdinaryTyped("ordinary-profile", profileData, &out.profile); e != nil {
 		return out, e
 	}
@@ -91,7 +87,24 @@ func (b *eligibilityBudget) ordinaryInputs(profileData, assetData, registrationD
 	if out.assets, err = validateOrdinaryAssets(out.assets); err != nil {
 		return out, asError(err)
 	}
-	if e = b.charge(3, uint64(len(registryData)+len(inventoryData)+len(slotData)), "ordinary-source-pins"); e != nil {
+	if out.plan, e = b.ordinarySelectedPlan(planData, selection); e != nil {
+		return out, e
+	}
+	selectedRegistration, e := b.decodeOrdinaryRegistrationSelection(registrationData, out.plan.Shards)
+	if e != nil {
+		return out, e
+	}
+	out.registration = selectedRegistration.Registration
+	out.caseIndices, out.totalCases, out.totalQueries = selectedRegistration.CaseIndices, selectedRegistration.TotalCases, selectedRegistration.TotalQueries
+	r := out.registration
+	binding := selection.Binding
+	if e = b.charge(3, uint64(len(profileData)+len(assetData)+len(registrationData)), "ordinary-approval-input-pins"); e != nil {
+		return out, e
+	}
+	if binding.PlanningProfile != queryregistrycore.FilePin(binding.PlanningProfile.Path, profileData) || binding.Assets != queryregistrycore.FilePin(binding.Assets.Path, assetData) || binding.Registration != queryregistrycore.FilePin(binding.Registration.Path, registrationData) || binding.Candidate != r.Candidate || binding.SemanticCohort != r.SemanticCohort || binding.ClosureEncoding != r.ClosureEncoding {
+		return out, fail(KindInvalidInput, "ORDINARY_APPROVAL_INPUT_BINDING", "ordinary", nil)
+	}
+	if e = b.charge(3, uint64(2*len(registryData)+len(slotData)), "ordinary-source-pins"); e != nil {
 		return out, e
 	}
 	if registrySHA != ordinaryRegistrySHA || queryregistrycore.FilePin(ordinaryRegistryPath, registryData) != (OrdinaryPin{Path: ordinaryRegistryPath, Bytes: ordinaryRegistryBytes, SHA256: ordinaryRegistrySHA}) || queryregistrycore.FilePin(ordinarySlotsPath, slotData) != queryregistrycore.SlotPin || r.Registry != queryregistrycore.FilePin(ordinaryRegistryPath, registryData) || r.Inventory != queryregistrycore.QualificationPin || r.Slots != queryregistrycore.SlotPin {
@@ -100,94 +113,25 @@ func (b *eligibilityBudget) ordinaryInputs(profileData, assetData, registrationD
 	if e = inventoryTyped(registryData, &out.registry, b); e != nil {
 		return out, e
 	}
+	if out.plan.Namespace != out.registry.Namespace {
+		return out, fail(KindInvalidInput, "ORDINARY_PLAN_NAMESPACE", "ordinary", nil)
+	}
 	selected, e := parseQualificationInventoryRoute(inventoryData, r.Inventory.SHA256, r.Route, b)
 	if e != nil {
 		return out, e
 	}
 	out.route = selected.Route
-	if e = b.decodeOrdinaryTyped("ordinary-plan", planData, &out.plan); e != nil {
-		return out, e
-	}
-	if out.plan, err = validateOrdinaryPlanShape(out.plan); err != nil {
-		return out, asError(err)
-	}
-	if e = b.ordinaryPlanUnion(out.plan, out.registry); e != nil {
-		return out, e
-	}
-	if e = b.ordinarySelectedRegistration(out, profileData, assetData, registrationData, selected.RouteIndex); e != nil {
+	if e = b.ordinarySelectedRegistration(out, binding, selected.RouteIndex); e != nil {
 		return out, e
 	}
 	return out, nil
 }
 
-// Reconstruct every ordinary coordinate from the plan, then compare each set with P0's
-// independently pinned digest. No other route's source/CST is decoded for this pass.
-func (b *eligibilityBudget) ordinaryPlanUnion(plan OrdinaryShardPlan, registry queryregistrycore.Registry) *Error {
-	bad := func() *Error { return fail(KindInvalidInput, "ORDINARY_PLAN_MEMBERSHIP", "ordinary-plan", nil) }
-	if plan.Namespace != registry.Namespace || plan.Registry.SHA256 != ordinaryRegistrySHA || len(plan.Routes) != len(registry.Ordinary) {
-		return bad()
-	}
-	routes := map[string]OrdinaryPlanRoute{}
-	for i, route := range plan.Routes {
-		original := registry.Ordinary[i]
-		if route.Route != original.Route || route.Set != original.Set || len(route.NativeQueryIDs) == 0 || len(route.NativeQueryIDs) > MaxQueries || routes[route.Route].Route != "" {
-			return bad()
-		}
-		routes[route.Route] = route
-	}
-	coordinates := make([]OrdinaryCoordinate, 0, plan.Required)
-	if e := b.charge(plan.Required+uint64(len(plan.Shards)), 1024*plan.Required, "ordinary-plan-coordinate-index"); e != nil {
-		return e
-	}
-	for _, shard := range plan.Shards {
-		route := routes[shard.Route]
-		if route.Route == "" || shard.Set != route.Set || !ordinaryHost(shard.Platform, shard.Subject) || len(shard.SourceHistory) == 0 || len(shard.SourceHistory) > 5 || shard.Case == "" {
-			return bad()
-		}
-		index := 0
-		for _, q := range route.NativeQueryIDs {
-			for step := range shard.SourceHistory {
-				for _, role := range []string{"incremental", "fresh"} {
-					if step == 0 && role == "fresh" {
-						continue
-					}
-					c := OrdinaryCoordinate{Kind: queryregistrycore.Structural, Route: shard.Route, Platform: shard.Platform, Subject: shard.Subject, Role: "primary", Set: shard.Set, Case: shard.Case, Query: q, Step: uint32(step), TreeRole: role, Context: "qualification/r8"}
-					if e := b.charge(1, 1024, "ordinary-plan-coordinate-hash"); e != nil {
-						return e
-					}
-					if index >= len(shard.ObligationIDs) || shard.ObligationIDs[index] != c.ID(plan.Namespace) {
-						return bad()
-					}
-					coordinates = append(coordinates, c)
-					index++
-				}
-			}
-		}
-		if index != len(shard.ObligationIDs) {
-			return bad()
-		}
-	}
-	// Charge sorting and canonical strings before queryregistrycore.Sets allocates them.
-	if e := b.charge(32*uint64(len(coordinates)), 2048*uint64(len(coordinates)), "ordinary-plan-set-digests"); e != nil {
-		return e
-	}
-	want := []queryregistrycore.RequiredSet{}
-	for _, set := range registry.RequiredSets {
-		if set.Kind == queryregistrycore.Structural && set.Scope != "owned-plain" {
-			want = append(want, set)
-		}
-	}
-	if !reflect.DeepEqual(queryregistrycore.Sets(coordinates), want) {
-		return bad()
-	}
-	return b.r.check()
-}
-
-func (b *eligibilityBudget) ordinarySelectedRegistration(in ordinaryVerifiedInputs, profileData, assetData, registrationData []byte, routeIndex int) *Error {
+func (b *eligibilityBudget) ordinarySelectedRegistration(in ordinaryVerifiedInputs, approval ordinaryEligibilityBinding, routeIndex int) *Error {
 	r, p, a, plan, route := in.registration, in.profile, in.assets, in.plan, in.route
 	bad := func(code string) *Error { return fail(KindInvalidInput, code, "ordinary-registration", nil) }
-	registered := slices.ContainsFunc(plan.Registrations, func(pin OrdinaryPin) bool { return pin == queryregistrycore.FilePin(pin.Path, registrationData) })
-	if !registered || r.Namespace != plan.Namespace || r.Registry != plan.Registry || r.Profile != queryregistrycore.FilePin(r.Profile.Path, profileData) || r.Assets != queryregistrycore.FilePin(r.Assets.Path, assetData) || r.Candidate != p.Candidate || r.SemanticCohort != p.SemanticCohort || a.Registry != r.Registry || a.Candidate != r.Candidate || a.SemanticCohort != r.SemanticCohort || plan.Profile != r.Profile || plan.Assets != r.Assets || plan.Candidate != r.Candidate || plan.SemanticCohort != r.SemanticCohort {
+	registered := slices.ContainsFunc(plan.Registrations, func(pin OrdinaryPin) bool { return pin == approval.Registration })
+	if !registered || r.Namespace != plan.Namespace || r.Registry != plan.Registry || r.Profile != approval.PlanningProfile || r.Assets != approval.Assets || r.Candidate != p.Candidate || r.SemanticCohort != p.SemanticCohort || a.Registry != r.Registry || a.Candidate != r.Candidate || a.SemanticCohort != r.SemanticCohort || plan.Profile != r.Profile || plan.Assets != r.Assets || plan.Candidate != r.Candidate || plan.SemanticCohort != r.SemanticCohort {
 		return bad("ORDINARY_REGISTRATION_BINDING")
 	}
 	var binding *OrdinaryBinding
@@ -196,7 +140,7 @@ func (b *eligibilityBudget) ordinarySelectedRegistration(in ordinaryVerifiedInpu
 			binding = &p.Bindings[i]
 		}
 	}
-	if binding == nil || binding.Subject != r.Subject || binding.ClosureEncoding != r.ClosureEncoding || !reflect.DeepEqual(binding.Grammar, route.Workload.Grammar) || !reflect.DeepEqual(binding.Members, r.PlannedMembers) || len(r.Cases) != len(route.Workload.Cases) || len(r.Queries) != len(route.Workload.Queries) || r.Set != route.Workload.Set {
+	if binding == nil || binding.Subject != r.Subject || binding.ClosureEncoding != r.ClosureEncoding || !reflect.DeepEqual(binding.Grammar, route.Workload.Grammar) || !reflect.DeepEqual(binding.Members, r.PlannedMembers) || in.totalCases != len(route.Workload.Cases) || in.totalQueries != len(route.Workload.Queries) || r.Set != route.Workload.Set {
 		return bad("ORDINARY_WORKLOAD_BINDING")
 	}
 	foundBinding := false
@@ -224,13 +168,17 @@ func (b *eligibilityBudget) ordinarySelectedRegistration(in ordinaryVerifiedInpu
 			shards[shard.Case] = shard
 		}
 	}
-	if e := b.charge(uint64(len(r.Required)+len(r.Cases)+len(r.Queries)), 512*uint64(len(r.Required)), "ordinary-registration-index"); e != nil {
+	if e := b.charge(32*uint64(len(r.Required)+len(r.Cases)+len(r.Queries)), 2048*uint64(len(r.Required))+1024*uint64(len(r.Cases)+len(r.Queries)), "ordinary-registration-index"); e != nil {
 		return e
 	}
 	ids := map[string]OrdinaryCoordinate{}
 	for i, c := range r.Cases {
-		original, shard := route.Workload.Cases[i], shards[c.ID]
-		selector := "qualification_inventory#/routes/" + strconv.Itoa(routeIndex) + "/workload/cases/" + strconv.Itoa(i)
+		if i >= len(in.caseIndices) || in.caseIndices[i] < 0 || in.caseIndices[i] >= len(route.Workload.Cases) {
+			return bad("ORDINARY_HISTORY_BINDING")
+		}
+		originalIndex := in.caseIndices[i]
+		original, shard := route.Workload.Cases[originalIndex], shards[c.ID]
+		selector := "qualification_inventory#/routes/" + strconv.Itoa(routeIndex) + "/workload/cases/" + strconv.Itoa(originalIndex)
 		if c.ID != original.ID || c.OriginalSelector != selector || !semanticEditsEqual(c.Edits, original.Edits) || c.InitialSource.Bytes != original.Input.Bytes || c.InitialSource.SHA256 != original.Input.SHA256 || len(c.VersionPins) != len(shard.SourceHistory) || !reflect.DeepEqual(c.Points, shard.EditPoints) {
 			return bad("ORDINARY_HISTORY_BINDING")
 		}
@@ -246,7 +194,11 @@ func (b *eligibilityBudget) ordinarySelectedRegistration(in ordinaryVerifiedInpu
 						continue
 					}
 					coord := OrdinaryCoordinate{Kind: queryregistrycore.Structural, Route: r.Route, Platform: r.Platform, Subject: r.Subject, Role: "primary", Set: r.Set, Case: c.ID, Query: q.ID, Step: uint32(step), TreeRole: role, Context: r.MembershipContext}
-					ids[coord.ID(r.Namespace)] = coord
+					id, e := b.ordinaryCoordinateID(coord, r.Namespace)
+					if e != nil {
+						return e
+					}
+					ids[id] = coord
 				}
 			}
 		}
