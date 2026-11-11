@@ -17,7 +17,7 @@ import (
 
 const (
 	classificationWeb16NativeRoutesBytes = 118237
-	classificationWeb16NativeRoutesSHA   = "7be36efe4cafcefa460c8841c8698a0d055cb25d6f86a5bed8561d601c093ad2"
+	classificationWeb16NativeRoutesSHA   = "788820dc1f9106713b4cc5533f7fe52c9c78f54abf7432c5662611ca35d58a75"
 )
 
 type classificationEmptyQuerySpec struct {

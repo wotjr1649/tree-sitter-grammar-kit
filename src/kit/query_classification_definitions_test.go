@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	classificationGoDefinitionInventorySHA     = "f24b4f0b4aad3fe165afd7950d2166fdc7e1d6a59d809faf670d5907c4f12789"
-	classificationGoDefinitionQualificationSHA = "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+	classificationGoDefinitionInventorySHA     = "b62bc4951646dac5e1523270170d19e64797a95492cbde8c359314a33f6d5143"
+	classificationGoDefinitionQualificationSHA = "43654f240a5d13a09107b9bfffb95c5b4ef81b4ae3d1f0dbd318b5b5fe731d5a"
 	classificationGoDefinitionQueriesSHA       = "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
 	classificationCSharpDefinitionQueriesSHA   = "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
 	classificationCSharpFactQueryPackSHA       = "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
@@ -1258,7 +1258,7 @@ func TestQueryClassificationCSharpDefinitionProjectionMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 15 || fixture.inputs.ordinary.coordinates.Cases != 390 || fixture.inputs.ordinary.coordinates.Edits != 125 || fixture.inputs.ordinary.coordinates.CaseSteps != 515 || fixture.inputs.ordinary.coordinates.TreeRoles != 640 || fixture.inputs.ordinary.coordinates.Definitions != 15 || fixture.inputs.ordinary.coordinates.TreeRolesPerDefinition != 640 || fixture.inputs.ordinary.coordinates.PotentialQueryTreeRoles != 9600 || fixture.inputs.ordinary.coordinates.QuerySourceFileSHA256 != "" || len(fixture.inputs.ordinary.coordinates.QuerySourceFiles) != 2 || plan.NativeContext != semanticPagedContext || len(plan.Grammar) != 5 || plan.Grammar[0].Path != "src/parser.c" || plan.Grammar[0].Role != "parser" || plan.Grammar[0].Bytes != 51472926 || plan.Grammar[0].SHA256 != "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb" {
+	if len(rows) != 15 || fixture.inputs.ordinary.coordinates.Cases != 390 || fixture.inputs.ordinary.coordinates.Edits != 125 || fixture.inputs.ordinary.coordinates.CaseSteps != 515 || fixture.inputs.ordinary.coordinates.TreeRoles != 640 || fixture.inputs.ordinary.coordinates.Definitions != 15 || fixture.inputs.ordinary.coordinates.TreeRolesPerDefinition != 640 || fixture.inputs.ordinary.coordinates.PotentialQueryTreeRoles != 9600 || fixture.inputs.ordinary.coordinates.QuerySourceFileSHA256 != "" || len(fixture.inputs.ordinary.coordinates.QuerySourceFiles) != 2 || plan.NativeContext != semanticPagedContext || len(plan.Grammar) != 5 || plan.Grammar[0].Path != "src/parser.c" || plan.Grammar[0].Role != "parser" || plan.Grammar[0].Bytes != 53114064 || plan.Grammar[0].SHA256 != "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6" {
 		t.Fatalf("C# definition denominator or dual source pins differ: rows=%d inventory=%#v", len(rows), fixture.inputs.ordinary.coordinates)
 	}
 	if fixture.inputs.ordinary.coordinates.QuerySourceFiles[0].Path != "src/testdata/native/queries/csharp.json" || fixture.inputs.ordinary.coordinates.QuerySourceFiles[1].Path != "src/contracts/fact-query-pack.json" {

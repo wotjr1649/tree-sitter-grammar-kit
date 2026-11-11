@@ -15,7 +15,7 @@ import (
 
 const (
 	classificationSmall17NativeRoutesBytes = 118237
-	classificationSmall17NativeRoutesSHA   = "7be36efe4cafcefa460c8841c8698a0d055cb25d6f86a5bed8561d601c093ad2"
+	classificationSmall17NativeRoutesSHA   = "788820dc1f9106713b4cc5533f7fe52c9c78f54abf7432c5662611ca35d58a75"
 	classificationSmall17FactPackPath      = "../../contracts/fact-query-pack.json"
 	classificationSmall17FactPackBytes     = 9702
 	classificationSmall17FactPackSHA       = "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"

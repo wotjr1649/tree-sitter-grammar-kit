@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- C#의 #233 lexical recovery 잔여 후보(C1–C4)를 제품 C2 patch chain에 반영했다: malformed single-line raw token의 newline 소유, q−1/q+1 raw closing, `#pragma` raw tail의 내부 directive 차단, `#line` filename 뒤 block comment의 오류 유지. directive 뒤 `//` comment는 정상 comment로 받고 pragma 꼬리는 기존 `preproc_arg` CST를 보존한다. 원본 157개 중 정상 88개의 CST 변화는 0이고, 허용된 교정은 고정 Roslyn 근거의 raw 2·pragma 2·`#if A // note` 1, 총 5건이다. S05 C# 361·S06 C# 390이 모두 통과하고 SVC는 기존 BLOCKED 1건 외 통과한다.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.

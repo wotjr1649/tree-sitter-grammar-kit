@@ -20,7 +20,7 @@
   "qualification_inventory": {
     "path": "src/contracts/qualification-c1.json",
     "bytes": 8297072,
-    "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+    "sha256": "43654f240a5d13a09107b9bfffb95c5b4ef81b4ae3d1f0dbd318b5b5fe731d5a"
   },
   "query_sources": [
     {
