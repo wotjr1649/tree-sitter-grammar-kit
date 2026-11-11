@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 const OrdinaryContext = "ordinary-batch-full-input-utf8/r1"

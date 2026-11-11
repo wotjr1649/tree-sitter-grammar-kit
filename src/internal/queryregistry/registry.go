@@ -7,8 +7,8 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 const (

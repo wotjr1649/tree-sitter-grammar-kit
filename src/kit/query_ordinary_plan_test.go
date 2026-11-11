@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
