@@ -113,6 +113,8 @@ func ordinaryTSQLJudgeR8(t *testing.T, produced ordinarySQLProduced, bodies map[
 		ProducerByCase: map[string][]byte{caseProfile.ID: record.StepFacts}, Ready: true}
 
 	b := ordinaryTestBudget(t)
+	// The 72 tuples read 9 trees: share their decoded assets as the coordinator does.
+	b.decoded = newOrdinaryDecodedAssets()
 	judgments := map[ordinaryTSQLTuple]ordinaryTupleJudgment{}
 	var order []ordinaryTSQLTuple
 	for step, version := range versions {

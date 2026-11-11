@@ -327,6 +327,13 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 		return e
 	}
 	ordinaryStage("facts", b)
+	// Expected assets are decoded once per pass and shared by the judgment, the reference
+	// comparison and every tuple of the same asset; the share lives only for this call.
+	if e := b.charge(1, ordinaryDecodedEntryLogical, "ordinary-expected-cache"); e != nil {
+		return e
+	}
+	b.decoded = newOrdinaryDecodedAssets()
+	defer func() { b.decoded = nil }()
 	assets := ordinaryAssetResolver{session: s, assets: map[string]OrdinaryAsset{}, resolved: map[string][]byte{}}
 	for _, asset := range in.assets.Assets {
 		assets.assets[asset.ID] = asset

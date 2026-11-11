@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"sync"
@@ -13,6 +14,7 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 	t.Helper()
 	var mu sync.Mutex
 	labels := map[*eligibilityBudget]map[string][4]uint64{}
+	decodes := map[string][2]int{} // expected-asset decode uses per doc: {new decodes, shared uses}
 	appendRecord := func(v any) {
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -29,7 +31,18 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 			panic(err)
 		}
 	}
-	prevStage, prevCharge := ordinaryStageHook, ordinaryChargeHook
+	prevStage, prevCharge, prevDecode := ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook
+	ordinaryDecodeHook = func(doc string, shared bool) {
+		mu.Lock()
+		defer mu.Unlock()
+		v := decodes[doc]
+		if shared {
+			v[1]++
+		} else {
+			v[0]++
+		}
+		decodes[doc] = v
+	}
 	ordinaryChargeHook = func(b *eligibilityBudget, work, logical uint64, at string, beforeWork, beforeLogical uint64) {
 		if b.r == nil {
 			return
@@ -59,9 +72,31 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 			"remaining_read": ReplayOperations()["evidence-replay"].TotalBytes - b.r.totalRead}
 		if stage == "exit" {
 			record["labels"] = labels[b]
+			record["decodes"] = decodes
 			delete(labels, b)
 		}
 		appendRecord(record)
 	}
-	t.Cleanup(func() { ordinaryStageHook, ordinaryChargeHook = prevStage, prevCharge })
+	t.Cleanup(func() { ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook = prevStage, prevCharge, prevDecode })
+}
+
+// ordinaryLedgerDecodes reads the expected-asset decode counts of the pass from its exit record.
+func ordinaryLedgerDecodes(t *testing.T, path string) map[string][2]int {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range bytes.Split(data, []byte{'\n'}) {
+		var record struct {
+			Kind    string            `json:"kind"`
+			Stage   string            `json:"stage"`
+			Decodes map[string][2]int `json:"decodes"`
+		}
+		if json.Unmarshal(line, &record) == nil && record.Kind == "stage" && record.Stage == "exit" {
+			return record.Decodes
+		}
+	}
+	t.Fatalf("%s has no exit record", path)
+	return nil
 }

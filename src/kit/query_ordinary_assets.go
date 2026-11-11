@@ -13,6 +13,7 @@ type ordinaryAssetResolver struct {
 	session  *eligibilitySession
 	assets   map[string]OrdinaryAsset
 	resolved map[string][]byte
+	pins     map[string]OrdinaryPin // the pin each resolved body was verified against
 }
 
 func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
@@ -34,6 +35,10 @@ func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
 		return nil, fail(KindInvalidInput, "ORDINARY_ASSET_STATE", id, nil)
 	}
 	if data, ok := a.resolved[id]; ok {
+		// A shared body is only reused for the pin it was verified against, on every use.
+		if a.pins[id] != *asset.Pin || uint64(len(data)) != asset.Pin.Bytes {
+			return nil, fail(KindInvalidInput, "ORDINARY_ASSET_PIN", id, nil)
+		}
 		return data, nil
 	}
 	var body []byte
@@ -63,6 +68,10 @@ func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
 		}
 	}
 	a.resolved[id] = body
+	if a.pins == nil {
+		a.pins = map[string]OrdinaryPin{}
+	}
+	a.pins[id] = *asset.Pin
 	return body, nil
 }
 

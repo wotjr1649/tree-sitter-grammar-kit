@@ -71,7 +71,8 @@ type eligibilityBudget struct {
 	work, logical uint64
 	logicalLimit  uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
 	err           *Error
-	unmetered     bool // Standalone witness decoding has no shared eligibility ledger.
+	unmetered     bool                   // Standalone witness decoding has no shared eligibility ledger.
+	decoded       *ordinaryDecodedAssets // Set by the ordinary coordinator for the pass; nil elsewhere.
 }
 
 func (b *eligibilityBudget) logicalCap() uint64 {

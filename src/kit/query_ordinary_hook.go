@@ -14,3 +14,13 @@ func ordinaryStage(stage string, b *eligibilityBudget) {
 		ordinaryStageHook(stage, b)
 	}
 }
+
+// ordinaryDecodeHook receives each use of an expected asset decode: shared is true when the
+// decoded value came from the per-pass share instead of a new decode.
+var ordinaryDecodeHook func(doc string, shared bool)
+
+func ordinaryDecodeObserved(doc string, shared bool) {
+	if ordinaryDecodeHook != nil {
+		ordinaryDecodeHook(doc, shared)
+	}
+}

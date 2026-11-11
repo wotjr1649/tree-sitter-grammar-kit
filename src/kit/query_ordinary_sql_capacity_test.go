@@ -650,6 +650,7 @@ type ordinarySQLRouteRun struct {
 	LastStage    string
 	LastRejected any
 	AssetBodies  int
+	TreeAssets   int // distinct expected-tree bodies of the registration
 	References   int
 	LedgerPath   string
 	LogPath      string
@@ -764,8 +765,14 @@ func ordinarySQLRunRoute(t *testing.T, routeDir, route string, mutation *ordinar
 	if err := os.WriteFile(filepath.Join(routeDir, "capacity-stop.json"), stopBytes, 0600); err != nil {
 		t.Fatal(err)
 	}
+	trees := map[string]bool{}
+	for _, body := range assetBodies {
+		if bytes.Contains(body, []byte(ordinaryExpectedTreeSchema)) {
+			trees[digestHex(body)] = true
+		}
+	}
 	return ordinarySQLRouteRun{Result: result, Err: verifyErr, Capacity: capacity, LastStage: lastStage, LastRejected: lastRejected,
-		AssetBodies: len(assetBodies), References: len(references), LedgerPath: ledgerPath, LogPath: logPath}
+		AssetBodies: len(assetBodies), TreeAssets: len(trees), References: len(references), LedgerPath: ledgerPath, LogPath: logPath}
 }
 
 func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
@@ -792,6 +799,16 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 					}
 				}
 			}
+			// Each distinct expected tree is decoded at most once per pass, for the judgment and the reference alike.
+			decodes := ordinaryLedgerDecodes(t, run.LedgerPath)
+			treeNew, treeShared := 0, 0
+			for _, doc := range []string{"ordinary-expected-tree", "ordinary-reference-expected-tree"} {
+				treeNew, treeShared = treeNew+decodes[doc][0], treeShared+decodes[doc][1]
+			}
+			if treeNew > run.TreeAssets {
+				t.Fatalf("%s: %d expected-tree decodes for %d distinct trees (%v)", route, treeNew, run.TreeAssets, decodes)
+			}
+			t.Logf("route=%s expected-asset decodes {new, shared}: %v; distinct trees %d, tree decodes %d, tree shared uses %d", route, decodes, run.TreeAssets, treeNew, treeShared)
 			expectedState := "UNAVAILABLE"
 			if run.AssetBodies != 0 {
 				expectedState = "independently-authored CST/query/fact fixtures"

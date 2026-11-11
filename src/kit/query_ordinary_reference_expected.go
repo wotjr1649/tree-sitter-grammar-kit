@@ -9,23 +9,24 @@ func (b *eligibilityBudget) ordinaryReferenceExpected(id ordinaryTupleIdentity, 
 		j.block("ORDINARY_REFERENCE_EXPECTED_MISSING", "reference의 독립 기대 자산이 없다")
 		return j.value(), nil
 	}
-	var metadata QueryWitnessMetadata
-	if e := b.decodeWitnessTyped("ordinary-reference-metadata", metadataData, &metadata, true); e != nil {
+	// The decoded assets are shared with the tuple judgment and read-only here.
+	metadata, _, e := ordinaryExpectedDecode[QueryWitnessMetadata](b, "ordinary-reference-metadata", metadataData)
+	if e != nil {
 		return j.value(), e
 	}
 	actualMetadata := QueryWitnessMetadata{Patterns: ref.Query.Patterns, CaptureNames: ref.Query.CaptureNames, Predicates: ref.Query.Predicates}
-	if !reflect.DeepEqual(metadata, actualMetadata) || len(ref.Query.Predicates) != 0 {
+	if !reflect.DeepEqual(*metadata, actualMetadata) || len(ref.Query.Predicates) != 0 {
 		j.fail("ORDINARY_REFERENCE_METADATA", "reference metadata가 독립 structural-only 등록과 다르다")
 	}
-	var tree ordinaryExpectedTree
-	if e := b.decodeWitnessTyped("ordinary-reference-expected-tree", treeData, &tree, true); e != nil {
+	tree, _, e := ordinaryExpectedDecode[ordinaryExpectedTree](b, "ordinary-reference-expected-tree", treeData)
+	if e != nil {
 		return j.value(), e
 	}
 	if !ordinaryTreeIdentity(tree.Schema, tree.Case, tree.Step, tree.TreeRole, tree.Source, id) {
 		j.fail("ORDINARY_REFERENCE_TREE_BINDING", "reference expected tree가 선택 tuple에 연결되지 않는다")
 	}
-	var captures ordinaryExpectedCaptures
-	if e := b.decodeWitnessTyped("ordinary-reference-expected-captures", captureData, &captures, true); e != nil {
+	captures, _, e := ordinaryExpectedDecode[ordinaryExpectedCaptures](b, "ordinary-reference-expected-captures", captureData)
+	if e != nil {
 		return j.value(), e
 	}
 	if !ordinaryCaptureIdentity(captures.Schema, captures.Case, captures.Query, captures.Step, captures.TreeRole, captures.Source, id) {

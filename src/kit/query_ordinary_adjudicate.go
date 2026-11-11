@@ -233,12 +233,12 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 	metadataReady := false
 	if len(metadataData) == 0 {
 		j.block("ORDINARY_METADATA_UNAVAILABLE", "독립 query metadata가 제공되지 않았다")
-	} else if e := b.decodeWitnessTyped("ordinary-expected-metadata", metadataData, &metadata, true); e != nil {
+	} else if shared, _, e := ordinaryExpectedDecode[QueryWitnessMetadata](b, "ordinary-expected-metadata", metadataData); e != nil {
 		if e.Kind != KindInvalidInput {
 			return j.value(), e
 		}
 		j.fail(e.Code, "독립 query metadata가 strict decode를 통과하지 못했다")
-	} else if !ordinaryStructuralMetadataValid(metadata) {
+	} else if metadata = *shared; !ordinaryStructuralMetadataValid(metadata) {
 		j.fail("ORDINARY_EXPECTED_METADATA_INVALID", "metadata는 predicates가 명시적으로 빈 structural-only 목록이어야 한다")
 	} else {
 		metadataReady = true
@@ -259,8 +259,8 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 	if len(treeData) == 0 {
 		j.block("ORDINARY_EXPECTED_TREE_UNAVAILABLE", "독립 full CST가 제공되지 않았다")
 	} else {
-		var v ordinaryExpectedTree
-		if e := b.decodeWitnessTyped("ordinary-expected-tree", treeData, &v, true); e != nil {
+		v, entry, e := ordinaryExpectedDecode[ordinaryExpectedTree](b, "ordinary-expected-tree", treeData)
+		if e != nil {
 			if e.Kind != KindInvalidInput {
 				return j.value(), e
 			}
@@ -268,24 +268,14 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 		} else if !ordinaryTreeIdentity(v.Schema, v.Case, v.Step, v.TreeRole, v.Source, id) {
 			j.fail("ORDINARY_EXPECTED_TREE_BINDING", "expected tree의 case/step/role/source 결속이 다르다")
 		} else {
-			nodes := uint64(len(v.Tree))
-			logical, e := eligibilityProduct("ordinary-expected-tree-check", nodes, 512)
+			check, e := b.ordinaryExpectedTreeCheck(entry, v, id.Source, source)
 			if e != nil {
 				return j.value(), e
 			}
-			work, e := eligibilityProduct("ordinary-expected-tree-check", nodes, 16)
-			if e != nil {
-				return j.value(), e
-			}
-			if e := b.charge(work+uint64(len(source))+1, logical, "ordinary-expected-tree-check"); e != nil {
-				return j.value(), e
-			}
-			if err := nativewire.ValidateTree(v.Tree, uint64(len(source))); err != nil {
-				j.fail("ORDINARY_EXPECTED_TREE_INVALID", err.Code)
-			} else if !ordinaryTreePointsValid(v.Tree, source) {
-				j.fail("ORDINARY_EXPECTED_TREE_POINTS", "expected tree point가 선택된 source와 다르다")
+			if check.code != "" {
+				j.fail(check.code, check.detail)
 			} else {
-				expectedTree = &v
+				expectedTree = v
 			}
 		}
 	}
@@ -329,8 +319,8 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 	if len(captureData) == 0 {
 		j.block("ORDINARY_EXPECTED_CAPTURES_UNAVAILABLE", "독립 ordered capture stream이 제공되지 않았다")
 	} else {
-		var v ordinaryExpectedCaptures
-		if e := b.decodeWitnessTyped("ordinary-expected-captures", captureData, &v, true); e != nil {
+		v, _, e := ordinaryExpectedDecode[ordinaryExpectedCaptures](b, "ordinary-expected-captures", captureData)
+		if e != nil {
 			if e.Kind != KindInvalidInput {
 				return j.value(), e
 			}
@@ -338,7 +328,7 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 		} else if !ordinaryCaptureIdentity(v.Schema, v.Case, v.Query, v.Step, v.TreeRole, v.Source, id) {
 			j.fail("ORDINARY_EXPECTED_CAPTURE_BINDING", "expected captures의 case/query/step/role/source 결속이 다르다")
 		} else {
-			expectedCaptures = &v
+			expectedCaptures = v
 		}
 	}
 	if expectedCaptures != nil && captureReady {
@@ -595,7 +585,7 @@ func ordinaryAPIShapeValid(api *nativewire.WireAPI, nodes int) bool {
 
 func adjudicateOrdinaryFact(b *eligibilityBudget, id ordinaryTupleIdentity, captures []Capture, source []byte, query querywire.Query, expectedData []byte, inputs ordinaryFactInputs, judgment *ordinaryJudgmentBuilder) *Error {
 	var expected ordinaryExpectedFact
-	if e := b.decodeWitnessTyped("ordinary-expected-facts", expectedData, &expected, true); e != nil {
+	if _, e := b.decodeOrdinaryExpected("ordinary-expected-facts", expectedData, &expected); e != nil {
 		if e.Kind != KindInvalidInput {
 			return e
 		}
