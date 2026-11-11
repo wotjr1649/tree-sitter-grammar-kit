@@ -326,13 +326,20 @@ func parseQualificationInventoryRoute(data []byte, expectedSHA256, route string,
 	if e := inventoryTyped(raw, &inv.Routes[selected], b); e != nil {
 		return result, e
 	}
-	if e := b.charge(8*uint64(len(raw))+uint64(len(projection)), 8*uint64(len(raw))+4*uint64(len(projection)), "inventory-validation"); e != nil {
+	// Retain the existing logical reservation; work follows the semantic structures below.
+	if e := b.charge(0, 8*uint64(len(raw))+4*uint64(len(projection)), "inventory-validation"); e != nil {
 		return result, e
+	}
+	// shortcut: SVC's recursive marshal/decode/context checks retain the byte bound until metered separately.
+	if inv.Routes[selected].Workload.SvcContext != nil {
+		if e := b.charge(8*uint64(len(raw)), 0, "inventory-validation"); e != nil {
+			return result, e
+		}
 	}
 	if e := inventoryRouteValidationWork(inv.Routes[selected], b); e != nil {
 		return result, e
 	}
-	if _, e := validateQualificationInventory(inv, selected); e != nil {
+	if _, e := validateQualificationInventoryMode(inv, selected, true); e != nil {
 		return result, e
 	}
 	if e := b.r.check(); e != nil {
@@ -354,30 +361,117 @@ func inventoryValidationProduct(b *eligibilityBudget, factors ...uint64) *Error 
 
 // Coverage and duplicate/platform scans can revisit the same retained values quadratically.
 func inventoryRouteValidationWork(route QualRoute, b *eligibilityBudget) *Error {
+	// Count visits are charged in place; reserve the corresponding validator/helper visits.
+	work := uint64(1)
 	var errorBytes, kinds uint64
 	for _, name := range route.ErrorNodes {
+		if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+			return e
+		}
 		errorBytes += uint64(len(name)) + 1
+		work += 1 + uint64(len(name))
 	}
 	if e := inventoryValidationProduct(b, errorBytes+1, uint64(len(route.ErrorNodes)+1)); e != nil {
 		return e
 	}
+	var maxRow uint64
 	for _, req := range route.Requirements {
+		if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+			return e
+		}
+		maxRow = max(maxRow, uint64(len(req.Row)))
+		// Row regexp, prefix, map lookup/insert; alternatives also hash their row and ID.
+		work += 1 + 4*uint64(len(req.Row)) + uint64(len(route.Route))
 		kinds += uint64(len(req.Kinds))
+		work += 7 * uint64(len(req.Kinds)) // one visit and at most six caseKinds comparisons
+		for _, alt := range req.Alternatives {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
+			work += 1 + 4*uint64(len(alt)) + uint64(len(req.Row))
+		}
+	}
+	w := route.Workload
+	work += 1
+	for _, g := range w.Grammar {
+		if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+			return e
+		}
+		work += 1 + uint64(len(g.SHA256))
+	}
+	for _, q := range w.Queries {
+		if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+			return e
+		}
+		work += 1 + 3*uint64(len(q.ID)) + uint64(len(q.SHA256))
 	}
 	for _, c := range route.Workload.Cases {
+		if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+			return e
+		}
+		work += 1 + 3*uint64(len(c.ID)) + uint64(len(c.Input.SHA256)) + uint64(len(c.Edits))
+		// UTF-8 validation and SHA-256 each traverse the source, once per applicable guard.
+		if c.Source != nil {
+			checks := uint64(0)
+			if w.Format == SvcFormat {
+				checks++
+			}
+			if len(c.QueryExpect) > 0 {
+				checks++
+			}
+			work += 2 * checks * uint64(len(*c.Source))
+		}
+		for _, expect := range c.Expect {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
+			work += 1
+			for _, a := range expect.Anchors {
+				if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+					return e
+				}
+				work += 1 + uint64(len(a.Type))
+			}
+		}
+		for _, q := range c.QueryExpect {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
+			work += 2 + uint64(len(q.Query)) // step guard and query lookup
+		}
+		if s := c.Sample; s != nil {
+			// Repository/commit regexps, samplePath scans/split, license search and pin equality.
+			work += 8 * uint64(1+len(s.Repository)+len(s.Commit)+len(s.Path)+len(s.License)+len(s.SHA256)+len(c.Input.SHA256))
+		}
 		visits := uint64(len(c.Expect) + len(c.QueryExpect) + 1)
 		for _, expect := range c.Expect {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
 			for _, name := range expect.Contains {
+				if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+					return e
+				}
 				visits += (uint64(len(name)) + 1) * uint64(len(route.ErrorNodes)+1)
 			}
 		}
 		var coversBytes, maxClaims uint64
 		for row, claimed := range c.Covers {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
+			work += 1 + uint64(len(row)) + uint64(len(claimed))
 			coversBytes += uint64(len(row)) + 1
 			maxClaims = max(maxClaims, uint64(len(claimed)))
 			if e := inventoryValidationProduct(b, uint64(len(claimed)+1), kinds+2*visits+1); e != nil {
 				return e
 			}
+		}
+		for _, alt := range c.Alternatives {
+			if e := b.charge(1, 0, "inventory-validation-count"); e != nil {
+				return e
+			}
+			work += 1 + 3*uint64(len(alt)) + maxRow
 		}
 		if e := inventoryValidationProduct(b, uint64(len(c.Alternatives)), maxClaims+1); e != nil {
 			return e
@@ -386,7 +480,7 @@ func inventoryRouteValidationWork(route QualRoute, b *eligibilityBudget) *Error 
 			return e
 		}
 	}
-	return nil
+	return b.charge(work, 0, "inventory-validation-structures")
 }
 
 // The legacy parser checks these arms globally, before typed decoding, in preorder.
