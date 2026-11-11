@@ -6,16 +6,27 @@ import (
 )
 
 func (b *eligibilityBudget) semanticBase(profile OracleProfile, data []byte, cache *semanticNativeCache, res *QuerySemanticsResult, add func(string, string, string)) *Error {
-	significant, sizeErr := b.significantJSONBytes(data)
-	if sizeErr != nil {
-		return sizeErr
-	}
-	if e := b.charge(16*significant+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
-		return e
+	if cache.ordinaryBase {
+		if e := b.charge(uint64(len(data))+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
+			return e
+		}
+	} else {
+		significant, sizeErr := b.significantJSONBytes(data)
+		if sizeErr != nil {
+			return sizeErr
+		}
+		if e := b.charge(16*significant+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
+			return e
+		}
 	}
 	var c rcCase
 	if err := jsonv2.Unmarshal(data, &c); err != nil {
 		return fail(KindInvalidInput, "JSON_SHAPE", "projection", err)
+	}
+	if cache.ordinaryBase {
+		if e := b.reserveOrdinaryBaseReplay(&c, &profile.Native.Cases[0], uint64(len(data))); e != nil {
+			return e
+		}
 	}
 	missingOracle := c.Oracle == nil && (c.ExecutionStatus == StatusCompleted || len(profile.Queries) != 0 || profile.API)
 	if missingOracle {

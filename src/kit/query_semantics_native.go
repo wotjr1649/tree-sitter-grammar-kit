@@ -16,6 +16,7 @@ type semanticNativeCache struct {
 	tuples         []QueryWitnessTuple
 	queryClaims    []string
 	ordinaryClaims map[string]string
+	ordinaryBase   bool
 	record         eligibilityNativeRecord
 	checked        []nativewire.CheckedStep
 	versions       [][]byte

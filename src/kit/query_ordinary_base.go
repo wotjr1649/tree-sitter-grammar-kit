@@ -2,9 +2,12 @@ package kit
 
 import (
 	"encoding/json/jsontext"
+	"math/bits"
 	"reflect"
+	"slices"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 type ordinaryBaseResult struct {
@@ -20,6 +23,7 @@ type ordinaryBaseProjection struct {
 	Status            string                       `json:"execution_status"`
 	Oracle            jsontext.Value               `json:"oracle_claims,omitempty"`
 	QueryExpectations jsontext.Value               `json:"query_expectations,omitempty"`
+	Facts             jsontext.Value               `json:"facts,omitempty"`
 	Steps             []ordinaryBaseProjectionStep `json:"steps"`
 }
 
@@ -79,7 +83,7 @@ type ordinaryBaseAPISummary struct {
 }
 
 // recomputeOrdinaryBase reuses the legacy base reducer over one verified ordinary case.
-func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseIndex int, cache *ordinaryCaseCache) (ordinaryBaseResult, *Error) {
+func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseIndex int, cache *ordinaryCaseCache, facts *ordinaryFactInputs) (ordinaryBaseResult, *Error) {
 	out := ordinaryBaseResult{Verdict: Verdict{ExecutionStatus: StatusNotRun, Assessment: AssessBlocked}, Gates: []ReplayGate{}, Findings: []Finding{}}
 	if cache == nil || caseIndex < 0 || caseIndex >= len(profile.Native.Cases) || caseIndex >= len(profile.OracleCases) ||
 		profile.Native.Cases[caseIndex].ID != cache.Case || profile.OracleCases[caseIndex].ID != cache.Case {
@@ -138,6 +142,13 @@ func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseInd
 		out.Findings = res.Findings
 		return out, e
 	}
+	if e := b.ordinaryCompareBaseFacts(one, cache, projection, facts, semanticCache.ordinaryClaims, add); e != nil {
+		if res.Assessment == AssessFail {
+			out.Verdict.Assessment = AssessFail
+		}
+		out.Findings = res.Findings
+		return out, e
+	}
 	if e := b.semanticBase(one, cache.projection, semanticCache, &res, add); e != nil {
 		if res.BaseVerified.Assessment == AssessFail || out.Verdict.Assessment == AssessFail {
 			out.Verdict.Assessment = AssessFail
@@ -166,8 +177,9 @@ func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseInd
 
 func (b *eligibilityBudget) ordinarySemanticBaseCache(profile OracleProfile, cache *ordinaryCaseCache) (*semanticNativeCache, *Error) {
 	out := &semanticNativeCache{
-		record:  eligibilityNativeRecord{raw: cache.raw, rawBytes: uint64(max(0, len(cache.ResponseFrame)-4)), haveRaw: true},
-		checked: cache.checked, versions: cache.versions, points: cache.points, ready: cache.ready,
+		ordinaryBase: true,
+		record:       eligibilityNativeRecord{raw: cache.raw, rawBytes: uint64(max(0, len(cache.ResponseFrame)-4)), haveRaw: true},
+		checked:      cache.checked, versions: cache.versions, points: cache.points, ready: cache.ready,
 	}
 	out.record.approved.ProducerSHA256 = cache.request.ObservationProducerSHA256
 	count := len(profile.OracleCases[0].QueryExpect)
@@ -249,7 +261,11 @@ func (b *eligibilityBudget) ordinaryBindBaseProjection(profile OracleProfile, ca
 	if e != nil {
 		return projection, nil, e
 	}
-	if e := b.semanticProjectionInputs(cache.raw, rawAST, uint64(max(0, len(cache.ResponseFrame)-4)), add); e != nil {
+	inputBytes, e := b.ordinaryBaseInputBytes(cache.raw, rawAST)
+	if e != nil {
+		return projection, nil, e
+	}
+	if e := b.semanticProjectionInputs(cache.raw, rawAST, inputBytes, add); e != nil {
 		return projection, nil, e
 	}
 	if len(projection.Steps) != len(cache.checked) {
@@ -483,4 +499,422 @@ func (b *eligibilityBudget) ordinaryCompareBaseAPI(profile OracleProfile, cache 
 	}
 	claims["api"] = claim
 	return nil
+}
+
+type ordinaryBaseFacts struct {
+	Pack         FactPackRef                `json:"pack"`
+	Declarations *ordinaryProducerDeclFacts `json:"declarations"`
+	DynamicSQL   *DynamicSQLFacts           `json:"dynamic_sql"`
+	XML          map[string]int             `json:"xml_structure,omitempty"`
+}
+
+// Facts reproduce producer evidence; independent expectations remain in the tuple adjudicator.
+func (b *eligibilityBudget) ordinaryCompareBaseFacts(profile OracleProfile, cache *ordinaryCaseCache, projection ordinaryBaseProjection, inputs *ordinaryFactInputs, claims map[string]string, add func(string, string, string)) *Error {
+	if profile.FactPack == nil || inputs == nil || cache.raw.Status != StatusCompleted {
+		return nil
+	}
+	if !inputs.Ready || *profile.FactPack != inputs.PackRef {
+		return fail(KindInvalidInput, "ORDINARY_BASE_FACT_INPUTS", cache.Case, nil)
+	}
+	var recorded ordinaryProducerFactRecord
+	if e := b.decodeOrdinaryTyped("ordinary-base-step-facts", cache.stepFacts, &recorded); e != nil {
+		return e
+	}
+	if e := b.charge(uint64(len(inputs.Pack.Routes))+uint64(len(profile.Queries))+1, 256, "ordinary-base-fact-index"); e != nil {
+		return e
+	}
+	route, ok := ordinaryFactRoute(inputs.Pack, inputs.PackRef.Route)
+	if !ok || len(route.Queries) == 0 || len(profile.Queries) < len(route.Queries) {
+		return fail(KindInvalidInput, "ORDINARY_BASE_FACT_ROUTE", cache.Case, nil)
+	}
+	// Reserve pin hashing/comparison before constructing the ordered suffix.
+	pinBytes := uint64(len(cache.stepFacts))
+	for _, q := range route.Queries {
+		pinBytes += uint64(len(q.ID) + len(q.Source) + len(q.Facts) + 88)
+	}
+	if e := b.charge(4*pinBytes+uint64(len(inputs.Pack.Routes))+1, 4*pinBytes+512, "ordinary-base-fact-pins"); e != nil {
+		return e
+	}
+	pins := ordinaryPackFactQueryPins(inputs.Pack, inputs.PackRef.Route)
+	start := len(profile.Queries) - len(pins)
+	for i, q := range route.Queries {
+		if profile.Queries[start+i].ID != q.ID || profile.Queries[start+i].Source != q.Source {
+			return fail(KindInvalidInput, "ORDINARY_FACT_SUFFIX", cache.Case, nil)
+		}
+	}
+	if recorded.Schema != "tsgk-ordinary-step-facts/r1" || recorded.Case != cache.Case || recorded.Pack != inputs.PackRef || recorded.Mapping != inputs.MappingPin ||
+		recorded.DynamicSQLRevision != inputs.Pack.DynamicSQL || recorded.XMLRevision != inputs.Pack.XML || !slices.Equal(recorded.FactQueries, pins) || recorded.FactSuffixSHA256 != ordinaryFactSuffixDigest(pins) {
+		add("ORDINARY_BASE_FACT_BINDING", cache.Case, "저장 step facts의 pack·mapping·query suffix pin이 다르다")
+		return nil
+	}
+	if len(cache.checked) == 0 || len(cache.checked) != len(cache.versions) || len(recorded.Steps) != 2*len(cache.checked)-1 {
+		add("ORDINARY_BASE_FACT_STEPS", cache.Case, "저장 step facts의 전체 step·role 분모가 다르다")
+		return nil
+	}
+	if e := b.charge(uint64(len(cache.stepFacts))+uint64(len(recorded.Steps))+1, 512, "ordinary-base-fact-compare"); e != nil {
+		return e
+	}
+	first := ordinaryBaseFacts{Pack: inputs.PackRef}
+	factClaim, dynamicClaim := claimNotClaimed, claimNotClaimed
+	index := 0
+	for step, checked := range cache.checked {
+		version := cache.versions[step]
+		if e := b.charge(uint64(len(version))+1, 128, "ordinary-base-fact-source"); e != nil {
+			return e
+		}
+		sourceSHA := digestHex(version)
+		for roleIndex, tree := range []*nativewire.Tree{&checked.Incremental, checked.Fresh} {
+			if step == 0 && roleIndex == 1 {
+				continue
+			}
+			role := "incremental"
+			if roleIndex == 1 {
+				role = "fresh"
+			}
+			stored := recorded.Steps[index]
+			index++
+			if stored.Step != step || stored.TreeRole != role || stored.SourceBytes != uint64(len(version)) || stored.SourceSHA256 != sourceSHA || len(stored.Queries) != len(pins) {
+				add("ORDINARY_BASE_FACT_SOURCE", cache.Case, "저장 fact가 해당 step·role의 편집 후 source와 결속되지 않는다")
+				continue
+			}
+			if tree == nil || tree.Status != StatusCompleted || tree.Form != "full" || len(tree.Queries) != len(profile.Queries) {
+				if step == 0 {
+					factClaim = worseClaim(factClaim, claimBlocked)
+				}
+				continue
+			}
+			roleStatus, roleCode := StatusCompleted, ""
+			for qi, q := range route.Queries {
+				query := tree.Queries[start+qi]
+				got := ordinaryProducerFactQuery{ID: q.ID, SHA256: pins[qi].SHA256, Kind: q.Facts, Status: StatusNotRun, Code: "FACT_QUERY_NOT_COMPLETE_STRUCTURAL"}
+				if query.ID == q.ID && query.Status == StatusCompleted && !query.Partial && len(query.Predicates) == 0 && query.Captures != nil {
+					if e := b.ordinaryBaseFactReservation(q, route, query, version); e != nil {
+						return e
+					}
+					captures := make([]Capture, len(query.Captures))
+					for i, row := range query.Captures {
+						captures[i] = witnessCapture(query, row)
+					}
+					got.Status, got.Code = StatusCompleted, ""
+					switch q.Facts {
+					case FactDeclarations:
+						items, e := deriveDeclarations(route.Declarations, captures, b)
+						if e != nil {
+							return e
+						}
+						reproduces := ordinaryBaseDeclarationsEqual(items, tree.Wire.Declarations)
+						got.Declarations = &ordinaryProducerDeclFacts{Items: items, Assessment: ordinaryDeclarationAssessment(items), Reproduces: reproduces}
+						if !reproduces {
+							got.Status, got.Code = StatusFailed, "FACT_REPRODUCTION_MISMATCH"
+						}
+					case FactDynamicSQL:
+						facts, err := DeriveDynamicSQLChecked(inputs.PackRef.Route, profile.Native.Encoding, captures, version)
+						if err != nil {
+							got.Status, got.Code = StatusFailed, "FACT_DERIVATION_FAILED"
+						} else {
+							got.DynamicSQL = &facts
+						}
+					case FactXMLStructure:
+						got.XML = map[string]int{}
+						for _, c := range captures {
+							got.XML[c.Name]++
+						}
+					}
+				}
+				want := stored.Queries[qi]
+				if want.ID != got.ID || want.SHA256 != got.SHA256 || want.Kind != got.Kind || want.Status != got.Status || want.Code != got.Code ||
+					!reflect.DeepEqual(want.Declarations, got.Declarations) || !reflect.DeepEqual(want.DynamicSQL, got.DynamicSQL) || !reflect.DeepEqual(want.XML, got.XML) {
+					add("ORDINARY_BASE_FACT_MISMATCH", cache.Case, "저장 fact가 같은 step·role의 raw captures·source 재계산과 다르다")
+				}
+				if got.Status == StatusFailed {
+					roleStatus, roleCode = StatusFailed, got.Code
+				} else if got.Status != StatusCompleted && roleStatus == StatusCompleted {
+					roleStatus, roleCode = got.Status, got.Code
+				}
+				if step == 0 {
+					if query.Status != StatusCompleted {
+						factClaim = worseClaim(factClaim, claimBlocked)
+					}
+					switch q.Facts {
+					case FactDeclarations:
+						first.Declarations = got.Declarations
+						if got.Declarations != nil {
+							value := claimPass
+							if !got.Declarations.Reproduces {
+								value = claimFail
+							}
+							factClaim = worseClaim(factClaim, value)
+						}
+					case FactDynamicSQL:
+						first.DynamicSQL = got.DynamicSQL
+						if got.Code == "FACT_DERIVATION_FAILED" {
+							dynamicClaim = worseClaim(dynamicClaim, claimBlocked)
+						}
+						if expected := profile.OracleCases[0].DynamicSQL; expected != nil && got.DynamicSQL != nil {
+							if e := b.charge(256*uint64(len(expected.Facts)+len(expected.KnownMisses)+1), 0, "ordinary-base-fact-expectation"); e != nil {
+								return e
+							}
+							dynamicClaim = ordinaryBaseDynamicClaim(*expected, got.DynamicSQL)
+						}
+					case FactXMLStructure:
+						first.XML = got.XML
+					}
+				}
+			}
+			if stored.Status != roleStatus || stored.Code != roleCode {
+				add("ORDINARY_BASE_FACT_STATUS", cache.Case, "저장 step·role fact status가 재계산과 다르다")
+			}
+		}
+	}
+	var storedFirst ordinaryBaseFacts
+	if e := b.decodeOrdinaryTypedShape("ordinary-base-facts", projection.Facts, &storedFirst, false); e != nil {
+		return e
+	}
+	if !reflect.DeepEqual(storedFirst, first) {
+		add("ORDINARY_BASE_FACT_PROJECTION", cache.Case, "저장 base fact projection이 step0 재계산과 다르다")
+	}
+	claims["fact-reproduction"], claims["dynamic-sql"] = factClaim, dynamicClaim
+	return b.r.check()
+}
+
+func ordinaryBaseDeclarationsEqual(items []DeclarationItem, raw *[]nativewire.DeclItem) bool {
+	if raw == nil || len(items) != len(*raw) {
+		return false
+	}
+	for i, a := range items {
+		b := (*raw)[i]
+		if a.Fact != b.Fact || a.NodeType != b.NodeType || a.StartByte != b.StartByte || a.EndByte != b.EndByte || a.Status != b.Status ||
+			(a.Name == nil) != (b.Name == nil) || a.Name != nil && (a.Name.StartByte != b.Name.StartByte || a.Name.EndByte != b.Name.EndByte) {
+			return false
+		}
+	}
+	return true
+}
+
+func ordinaryBaseDynamicClaim(want DynamicSQLExpectation, got *DynamicSQLFacts) string {
+	if got == nil {
+		return claimBlocked
+	}
+	if !slices.EqualFunc(want.Facts, got.Items, func(a, b DynamicSQLFact) bool { return reflect.DeepEqual(a, b) }) || len(want.KnownMisses) != len(got.KnownMisses) {
+		return claimFail
+	}
+	for i, miss := range got.KnownMisses {
+		if miss.StartByte != want.KnownMisses[i].StartByte || miss.EndByte != want.KnownMisses[i].EndByte {
+			return claimFail
+		}
+	}
+	return claimPass
+}
+
+func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactPackRoute, query querywire.Query, source []byte) *Error {
+	if e := b.charge(uint64(len(query.Captures))+1, 0, "ordinary-base-fact-index"); e != nil {
+		return e
+	}
+	n := uint64(len(query.Captures)) + 1
+	var text, spans, execs, withErrors uint64
+	for _, row := range query.Captures {
+		name := query.CaptureNames[row[2]]
+		text += uint64(len(name) + len(query.Types[row[4]]))
+		if row[7] >= row[6] && row[6] >= 0 && uint64(row[7]) <= uint64(len(source)) {
+			spans += uint64(row[7] - row[6])
+		}
+		if name == "exec" {
+			execs++
+		} else if name == "errwith" {
+			withErrors++
+		}
+	}
+	// Capture conversion, indexes and XML counts; declaration frontiers reserve in the walk.
+	if e := b.charge(64*n+8*text, 1024*n+4*text, "ordinary-base-fact-derive"); e != nil {
+		return e
+	}
+	if q.Facts != FactDynamicSQL {
+		return nil
+	}
+	if route.Route != "tsql" {
+		// Keep the legacy conservative bound for other dynamic SQL adapters.
+		work, e := eligibilityProduct("ordinary-base-fact-derive", 64, n, n, n+uint64(len(source))+text+1)
+		if e != nil {
+			return e
+		}
+		logical, e := eligibilityProduct("ordinary-base-fact-derive", 1024, n, n+uint64(len(source))+text+1)
+		if e != nil {
+			return e
+		}
+		return b.charge(work, logical, "ordinary-base-fact-derive")
+	}
+	// Fixed pair scans/sorts, repeated child/known-miss scans and decoded source spans.
+	for _, term := range [][]uint64{{128, n, n}, {64, execs + 1, spans}, {64, execs, withErrors, uint64(len(source))}} {
+		work, e := eligibilityProduct("ordinary-base-fact-derive", term...)
+		if e != nil {
+			return e
+		}
+		if e := b.charge(work, work, "ordinary-base-fact-derive"); e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+// Bound only the values semanticProjectionInputs serializes, including JSON escaping.
+func (b *eligibilityBudget) ordinaryBaseInputBytes(raw nativewire.Response, projection *jv) (uint64, *Error) {
+	var rootKeys uint64
+	if projection != nil {
+		rootKeys = uint64(len(projection.keys))
+	}
+	// Include this estimator's lookups and the shared comparator's bounded field names.
+	if e := b.charge(256*rootKeys+3, 0, "ordinary-base-input-size"); e != nil {
+		return 0, e
+	}
+	status := jvMember(projection, "execution_status")
+	if raw.Status != StatusCompleted || status == nil || status.s != StatusCompleted {
+		return 0, nil
+	}
+	p := raw.Producer
+	n := uint64(1024 + 6*(len(p.Query)+len(p.ReuseObservation)+len(raw.Status)+len(raw.Code)))
+	for _, value := range []*string{p.API, p.Predicates} {
+		if value != nil {
+			n += 6 * uint64(len(*value))
+		}
+	}
+	steps := jvMember(projection, "steps")
+	for i, step := range raw.Steps {
+		var view *jv
+		if steps != nil && i < len(steps.vals) {
+			view = steps.vals[i]
+		}
+		var keys uint64
+		if view != nil {
+			keys = uint64(len(view.keys))
+		}
+		if e := b.charge(256*keys+5, 0, "ordinary-base-input-size"); e != nil {
+			return 0, e
+		}
+		for _, role := range []string{"incremental", "fresh"} {
+			if tree := jvMember(view, role); tree != nil {
+				if e := b.charge(32*uint64(len(tree.keys)), 0, "ordinary-base-input-size"); e != nil {
+					return 0, e
+				}
+			}
+		}
+		n += 512 // route, null declarations and role/container punctuation
+		for _, tree := range []*nativewire.WireTree{&step.Incremental, step.Fresh} {
+			if tree == nil || tree.Declarations == nil {
+				continue
+			}
+			if e := b.charge(uint64(len(*tree.Declarations)), 0, "ordinary-base-input-size"); e != nil {
+				return 0, e
+			}
+			for _, item := range *tree.Declarations {
+				n += 256 + 6*uint64(len(item.Fact)+len(item.NodeType)+len(item.Status))
+			}
+		}
+	}
+	return n, nil
+}
+
+// Decode bytes are reserved separately; retain every shared reducer check.
+func (b *eligibilityBudget) reserveOrdinaryBaseReplay(c *rcCase, want *IncrementalCase, n uint64) *Error {
+	if e := b.charge(uint64(3*len(c.Steps)+len(c.Expectations)+len(c.References))+1, 0, "ordinary-base-replay-size"); e != nil {
+		return e
+	}
+	work := 2*n + 128 + 64*uint64(len(c.Steps)+len(c.Expectations)+len(c.References))
+	identities := func(ids []IdentityRef) *Error {
+		if e := b.charge(uint64(len(ids)), 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		work += 64 * uint64(len(ids))
+		for _, id := range ids {
+			work += 8 * uint64(bits.Len64(n)+1) * uint64(len(id.Role)+len(id.Schema)+len(id.SHA256)+1)
+		}
+		return nil
+	}
+	for _, step := range c.Steps {
+		work += 8 * uint64(len(step.Observations))
+		if step.Composite != nil {
+			if e := identities(step.Composite.Identities); e != nil {
+				return e
+			}
+			if step.Composite.Inline != nil && step.Composite.Inline.Tree != nil {
+				if e := identities(step.Composite.Inline.Tree.Identities); e != nil {
+					return e
+				}
+			}
+		}
+		for _, tree := range []*rcTree{step.Incremental, step.Fresh} {
+			if tree == nil {
+				continue
+			}
+			work += 64 * uint64(len(tree.Queries)+1)
+			if e := b.charge(uint64(len(tree.Queries))+1, 0, "ordinary-base-replay-size"); e != nil {
+				return e
+			}
+			for _, query := range tree.Queries {
+				work += 64 * uint64(len(query.Captures))
+				if e := b.charge(uint64(len(query.Captures)), 0, "ordinary-base-replay-size"); e != nil {
+					return e
+				}
+				for _, capture := range query.Captures {
+					work += 16 * uint64(len(capture.Name)+len(capture.Type))
+				}
+			}
+			if tree.Tree != nil {
+				if e := identities(tree.Tree.Identities); e != nil {
+					return e
+				}
+				if e := b.charge(uint64(len(tree.Tree.Nodes)), 0, "ordinary-base-replay-size"); e != nil {
+					return e
+				}
+				for _, node := range tree.Tree.Nodes {
+					work += 256 + 8*uint64(len(node.Type))
+					if node.Field != nil {
+						work += 8 * uint64(len(*node.Field))
+					}
+				}
+			}
+			if tree.Summary != nil {
+				if e := identities(tree.Summary.Identities); e != nil {
+					return e
+				}
+			}
+		}
+	}
+	for _, expected := range want.Expect {
+		if e := b.charge(uint64(len(expected.Contains)+len(expected.Anchors))+1, 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		work += 64 * uint64(len(expected.Contains)+len(expected.Anchors)+1)
+		for _, value := range expected.Contains {
+			work += 4 * uint64(len(value))
+		}
+		if expected.Step < 0 || expected.Step >= len(c.Steps) || len(expected.Contains)+len(expected.Anchors) == 0 {
+			continue
+		}
+		tree := c.Steps[expected.Step].Incremental
+		if tree == nil || tree.Tree == nil {
+			continue
+		}
+		nodes := tree.Tree.Nodes
+		if e := b.charge(uint64(len(nodes)), 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		var types uint64
+		for _, node := range nodes {
+			types += uint64(len(node.Type))
+		}
+		if len(expected.Contains) != 0 {
+			if e := b.charge(0, 256*uint64(len(nodes)), "semantic-base-replay"); e != nil {
+				return e
+			}
+			work += 64*uint64(len(nodes)) + 4*types
+		}
+		for _, anchor := range expected.Anchors {
+			part, e := eligibilityProduct("semantic-base-replay", uint64(len(nodes)), 64+4*uint64(len(anchor.Type)))
+			if e != nil {
+				return e
+			}
+			work += part + 4*types
+		}
+	}
+	return b.charge(work, 0, "semantic-base-replay")
 }

@@ -32,6 +32,12 @@ func ordinaryTypedNulls(s *typedJSONShape) {
 			f.nullable = name == "first_difference" || name == "first_divergence"
 		case reflect.TypeFor[OrdinaryQuerySemanticsResult]():
 			f.nullable = name == "eligibility"
+		case reflect.TypeFor[ordinaryBaseFacts]():
+			f.nullable = name == "declarations" || name == "dynamic_sql"
+		case reflect.TypeFor[DeclarationItem]():
+			f.nullable = name == "name"
+		case reflect.TypeFor[DynamicSQLFact]():
+			f.nullable = name == "variable"
 		}
 		s.fields[name] = f
 		ordinaryTypedNulls(f.shape)

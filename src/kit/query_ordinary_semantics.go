@@ -342,13 +342,14 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 		}
 	}
 	// Base contradictions must survive an interruption in later reference/asset reads.
+	facts, factErr := b.ordinaryFactContext(s, set.Manifest, profile, producerFacts)
 	bases := map[string]Verdict{}
 	res.BaseVerified = Verdict{StatusCompleted, AssessPass}
 	for i, c := range profile.Native.Cases {
 		base := ordinaryBaseResult{Verdict: Verdict{StatusNotRun, AssessBlocked}}
 		var e *Error
 		if cache := set.Cases[c.ID]; cache != nil {
-			base, e = b.recomputeOrdinaryBase(profile, i, cache)
+			base, e = b.recomputeOrdinaryBase(profile, i, cache, facts)
 		}
 		bases[c.ID] = base.Verdict
 		res.Gates = append(res.Gates, base.Gates...)
@@ -363,12 +364,11 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 			return e
 		}
 	}
+	if factErr != nil {
+		return factErr
+	}
 	references, e := s.ordinaryReferences(in.registration, referenceSelection, sources)
 	ordinaryCopyEligibilityFindings(res, s)
-	if e != nil {
-		return e
-	}
-	facts, e := b.ordinaryFactContext(s, set.Manifest, profile, producerFacts)
 	if e != nil {
 		return e
 	}

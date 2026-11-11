@@ -323,7 +323,8 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 	for _, member := range manifest.Members {
 		memberPathBytes += uint64(len(member.Path))
 	}
-	if e := b.charge(uint64(len(manifest.Members))+4*memberPathBytes+1, 1024*uint64(len(manifest.Members)+1)+4*memberPathBytes, "ordinary-member-index"); e != nil {
+	memberWork, memberLogical := ordinaryMemberIndexReservation(uint64(len(manifest.Members)), memberPathBytes)
+	if e := b.charge(memberWork, memberLogical, "ordinary-member-case-index"); e != nil {
 		return stop(e)
 	}
 	memberByPath := make(map[string]OrdinaryMember, len(manifest.Members))
@@ -1007,3 +1008,11 @@ func ordinaryVersionPinsDigest(pins []OrdinaryPin) string {
 }
 
 func containsString(xs []string, x string) bool { return slices.Contains(xs, x) }
+
+// ordinaryMemberIndexReservation prices the exact-path, folded-path and member maps built from n manifest
+// members whose paths total p bytes. It keeps both merged parents' terms: the case-index entries
+// (2n+2 work, 128n+256 logical) and the lowered-key member index (n+4p+1 work, 1024(n+1)+4p logical),
+// plus constant per-member map-operation visits.
+func ordinaryMemberIndexReservation(n, p uint64) (work, logical uint64) {
+	return 6*n + 4*p + 8, 1024*(n+1) + 128*n + 256 + 4*p
+}

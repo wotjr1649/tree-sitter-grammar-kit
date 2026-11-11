@@ -58,7 +58,7 @@ func TestOrdinaryBaseRecomputesStoredQueryClaim(t *testing.T) {
 	cache := &ordinaryCaseCache{Case: "c1", projection: projectionBytes, raw: nativewire.Response{Status: StatusCompleted}, ResponseFrame: []byte{0, 0, 0, 0},
 		checked:  []nativewire.CheckedStep{{Incremental: nativewire.Tree{Status: StatusCompleted, Form: "full", Nodes: nodes, Queries: []querywire.Query{query}, Wire: nativewire.WireTree{DescendantCount: uint64(len(nodes)), Digest: TreeDigest(nodes)}}}},
 		versions: [][]byte{source}, ready: true}
-	got, runErr := b.recomputeOrdinaryBase(profile, 0, cache)
+	got, runErr := b.recomputeOrdinaryBase(profile, 0, cache, nil)
 	if runErr != nil {
 		t.Fatal(runErr)
 	}
@@ -83,7 +83,7 @@ func TestOrdinaryBaseKeepsStoredFailWhenRecomputationStops(t *testing.T) {
 	caller := b.r.caller
 	b.r.caller = &countingCtx{Context: caller}
 	b.r.caller.(*countingCtx).left.Store(0)
-	got, runErr := b.recomputeOrdinaryBase(profile, 0, cache)
+	got, runErr := b.recomputeOrdinaryBase(profile, 0, cache, nil)
 	if runErr == nil || got.Verdict.Assessment != AssessFail || got.Verdict.ExecutionStatus != StatusFailed {
 		t.Fatalf("partial recomputation erased saved FAIL: result=%+v err=%v", got, runErr)
 	}

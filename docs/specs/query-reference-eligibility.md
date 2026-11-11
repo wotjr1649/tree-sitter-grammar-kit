@@ -117,9 +117,64 @@ Caller approval은 commitment를 승인된 전체 증명 경로와 묶는 외부
 
 선택 registration decoder도 전체 원문을 읽고 strict token 및 얇은 global projection으로 duplicate key, shape, 전역 ID·coordinate 중복/관계 오류를 확인한다. case/query/step/tree-role tuple의 exact union과 교차 참조를 검사한다. 비선택 coordinate ID hash 및 source/asset·고정 scope의 local 의미 검증은 planner가 전수 검증한 registration pin에 대한 승인 provenance를 상속한다. 전체 typed decode·history/query/required 결속은 선택 case와 route에 한정한다. Full registration 원문 read, global scanner와 selected registration work는 shared budget에 들어간다. Registry와 qualification inventory의 기존 고정 pin/검증도 계속 수행한다.
 
-선택 plan의 proof 예약은 실제 Merkle hashing 전에 work `H+S+512D+2048`, logical `8(H+S)+256D+4096`이다(`H`: header 원문 bytes, `S`: 선택 shard 원문 bytes, `D`: sibling 수). Header 의미 검증은 별도 work `32H`·logical `4H`를 예약하고, strict typed decode는 기존 container/shape 예약을 유지한다. 선택 coordinate ID 하나는 namespace와 문자열 필드 길이 합 `n`에 대해 canonical JSON escaping 상한 `u=6n+512`를 먼저 예약한다(work `u`, logical `8u+1024`). 선택 shard ID digest와 coordinate/map 관리 비용도 별도이며 비선택 ID hash 비용을 지불했다고 표시하지 않는다.
+선택 plan의 proof 예약은 실제 Merkle hashing 전에 work `H+S+512D+2048`, logical `8(H+S)+256D+4096`이다(`H`: header 원문 bytes, `S`: 선택 shard 원문 bytes, `D`: sibling 수). Header 의미 검증은 아래 row·문자열별 work 합과 별도 logical `4H`를 예약하고, strict typed decode는 기존 container/shape 예약을 유지한다. 선택 coordinate ID 하나는 namespace와 문자열 필드 길이 합 `n`에 대해 canonical JSON escaping 상한 `u=6n+512`를 먼저 예약한다(work `u`, logical `8u+1024`). 선택 shard ID digest와 coordinate/map 관리 비용도 별도이며 비선택 ID hash 비용을 지불했다고 표시하지 않는다.
 
-Registration index는 raw 크기 `n`에 대해 `5n+32768` B를 미리 예약하고 실제 token 방문마다 16 B, retained span마다 16 B를 더한다. 깊이·값 한도와 duplicate key 검사가 strict typed-shape 재귀보다 먼저 실행된다. 얇은 case/query/required projection decode는 각 raw subtree bytes를 work/logical에 예약하고 선택 행의 전체 typed decode와 전역 tuple·ID map, source/query/asset 결속도 별도 계상한다. Paging identity의 hash 예약은 새 commitment를 포함한 8개 caller pin 전체를 포함한다. 이들 logical 예약은 heap peak나 CPU instruction 수의 실측값이 아니다.
+Registration은 한 strict token scan에서 전체 shape와 case/query/required header, `version_pins` 수와 row span을 함께 수집한다. 구문·중복·깊이·값 한도를 끝까지 검사한 뒤 첫 shape 오류를 반환하고, JSON member 순서와 무관하게 기존 header → case → query → required 의미 검사 순서를 유지한다. 전역 유일성과 exact tuple union은 이 cached header로 대조하며 원문 subtree를 다시 해석하지 않는다. 선택 case·route query·required만 전체 typed decode한다.
+
+Registration scan의 원장은 raw 크기 `n`에 대해 `ordinary-registration`에 decoder/token 문자열·오류 버퍼 `4n+32768` B와 고정 reflection shape 비용을 먼저 예약한다. `ordinary-registration-index`는 실제 읽은 token마다 work 1, 시작 value마다 logical 16 B, schema에 등록된 member name마다 logical 16 B, 알 수 없는 member나 shape 없는 객체의 name에는 폭이 제한되지 않은 중복 이름 table을 포함한 logical 256 B, 객체의 필수 field 검사마다 work 1을 예약한다. `ordinary-registration-headers`는 header 배열을 용량 8부터 두 배로 늘리기 전에 새 backing array의 전체 `capacity × sizeof(row)` B 및 실제 이전 row 복사의 work를 예약한다. 이전 backing array의 비용도 누적하며 row span은 이 배열에 포함한다. 비선택 행에 typed container가 생기지 않으므로 과거 shape scanner의 객체별 `256+512×fields` 예약은 이 경로에 적용하지 않는다. Case/query/required의 map·tuple 예약과 선택 행의 typed decode는 별도다. Required ID는 길이·`qsem1:` prefix와 lowercase hex suffix를 검사하며 suffix 검사와 64-byte key 복사를 한 번에 수행한다. 전역 ID 유일성은 이 고정 key의 map으로 확인하고 전역 tuple exact union은 그대로 대조한다. Required map은 row마다 logical 96 B, work 1을 먼저 예약하고, 각 row 처리 전 work `8+len(id)+len(case)+len(query)+len(role)`를 더한다. Prefix/suffix의 실제 byte 방문은 합쳐 `len(id)` 이하이고 8은 고정 row/map 연산을 덮는다. Tuple 문자열 길이 항은 cached tuple 대조의 보수 상한이며 Go runtime의 hash instruction 수를 뜻하지 않는다. 선택 ID 재구성·typed decode는 기존 별도 label에 남는다. 과거 전체 header의 raw bytes별 unmarshal 예약은 실제 unmarshal 제거와 함께 사라진다. Paging identity의 hash 예약은 새 commitment를 포함한 8개 caller pin 전체를 포함한다. 이들 logical 예약은 heap peak나 CPU instruction 수의 실측값이 아니다.
+
+선택 plan header 의미 검사는 commitment로 승인된 header라도 모든 route·binding·member와 교차 host 참조를 계속 확인한다. `ordinary-plan-header-validation`의 work는 raw header bytes의 32배 대신 아래 합을 검사 전에 예약한다. 원문의 JSON strict decode·commitment pin·proof hash와 logical `4×len(header)`는 별도로 유지한다. `s(x)`는 decoded 문자열 byte 길이의 합이며, 각 항에는 비용을 계산하는 사전 순회도 포함한다.
+
+| 항목 | work |
+|---|---:|
+| 고정 schema/namespace/limits/budget 비교 | 1024 |
+| Registry/Witness/Profile/Assets pin 각각 | `64+64×len(path)+8×len(sha256)` |
+| CapacityUnknown 문자열 각각 | `32+8×len(value)` |
+| Budget.SQL row 각각 | `96+8×len(route)` |
+| Budget.ReferenceRoutes row 각각 | `64+8×s(route,set)` |
+| Routes row 각각, NativeQueryIDs 각각 | `128+8×s(route,set)`, `32+8×len(query)` |
+| Bindings row 각각 | `128+8×s(route,platform,subject,closure)` |
+| Binding member 각각 | `128+8×s(owner,caseOrBatch,role,sha256)+64×s(path,pin.path)` |
+| Route와 두 host의 각 교차 조회 | `32+8×s(route,host)` |
+
+비교하지 않는 reference estimate 본문, note 문자열 내용, grammar/runtime와 registration pin 목록의 bytes를 이 의미 검사 label에서 다시 전수 순회한 것으로 계상하지 않는다. 이들 원문은 이미 strict decode와 commitment pin/hash 대상이다. `ReferenceModel`/`SQLModel`은 비어 있지 않은지만 검사하며, `ReferenceRoutes`는 route/set 및 density만 검사한다. 이 예약 교정은 header 의미 검사를 생략하거나 commitment를 semantic 증명의 대체물로 삼지 않는다.
+
+### #362 ordinary base의 실제 순회 예약
+
+Ordinary adapter의 `semanticProjectionInputs`는 raw의 producer/status/code, 각 step의 route/restarted 및 declarations를 대조하며 full raw CST/query/API를 직렬화하지 않는다. Ordinary 호출만 full raw bytes 대신 소비 필드의 JSON escaping 상한 `B`를 전달한다. `B`는 고정 producer/응답 overhead 1,024 B, step마다 route/null/container overhead 512 B, declaration마다 256 B, producer query/API/predicates/reuse-observation·응답 status/code·declaration fact/node-type/status의 문자열 bytes 6배의 합이다. 기존 `semantic-base-inputs` 식 work `16B+1`, logical `16B`를 적용하고 크기 산정의 step/declaration 방문은 `ordinary-base-input-size`에 별도 예약한다. 실제 marshal·AST·구조 대조를 생략하지 않는다.
+
+Root/step 객체의 field lookup도 `ordinary-base-input-size`에 각 member 수 256배로 예약한다. 이는 estimator와 comparator의 최대 8회 lookup 및 길이 32 이내의 고정 field name 대조를 덮으며, 각 role tree의 declaration lookup은 해당 member 수 32배를 예약한다. CST 내부 node 객체는 이 index 비용에 포함하지 않는다. 고정 산정 방문은 root 3단위, step 5단위와 declaration 행 수다.
+
+Ordinary base만 `semantic-base-replay` decode를 work `n+1`, logical `16n`에 예약한다(`n`: projection 전체 bytes). 이미 strict decode한 ordinary projection의 significant-byte 재scan을 하지 않으며 `rcCase` unmarshal과 공용 reducer의 모든 검사는 유지한다. Replay 직전 추가 work는 `2n+128`에 다음 상한을 더한다: step/기록 expectation/reference와 tree/query/identity/capture 행 64단위, full node 256단위, node type/field bytes 8배, capture name/type bytes 16배, 각 step observation JSON bytes 8배. 등록 expectation마다 contains/anchor 행과 고정 검사를 64단위, contains 문자열 bytes를 4배로 더한다. Contains 검사는 대상 node마다 work 64와 type bytes 4배, logical 256 B를 더한다. Anchor마다 `대상 node 수 × (64+4×len(anchor.Type)) + 4×대상 node type bytes`를 더해 반복 검색을 포함한다. 크기 산정 자체의 step/query/capture/node/expectation 방문은 `ordinary-base-replay-size`에 별도 예약한다.
+
+Identity는 tree/summary/composite/inline의 모든 행을 포함한다. 각 행의 role/schema/SHA bytes와 1의 합에 `8×(bits.Len64(n)+1)`을 곱해 `checkSeen`의 정렬·문자열 대조를 예약한다. Identity 수는 projection bytes `n` 이하이므로 이 식은 실제 중복 제거 뒤의 정렬 수에도 적용된다. Estimator의 identity 행 방문도 별도 size label에 포함한다.
+
+이 식은 collection 방문·명시적 문자열/JSON/hash bytes의 work 상한이며 CPU instruction/heap/RSS 실측이 아니다. Raw·projection·checked CST의 결속이나 공용 reducer의 판정을 생략하지 않는다. Legacy single small semantic, r4–r6, r10은 기존 `16×significant+1` work와 `16n` logical 및 full-raw input 예약을 유지한다. Fact 재계산, 최초 FAIL 보존 및 공유 한도도 유지한다.
+
+### #362 ordinary base fact 도출 예약
+
+Fact 도출은 version → incremental/fresh role → fact query마다 예약한다. Source version SHA, ordered query suffix SHA와 pin 대조, 저장 record decode·payload 대조는 기존 별도 label에 남는다. Declaration/XML 도출은 source 본문을 읽지 않으므로 전체 source bytes를 capture 수의 제곱에 곱하지 않는다. 이전 공통식 `64n²(n+text)` work / `1024n(n+text)` logical 대신 실제 종류와 순회 경계에 따라 아래를 예약한다. 한도·fact 의미·독립 expected 조건은 유지한다.
+
+`C`는 해당 query의 capture 수, `n=C+1`, `M`은 각 capture가 참조하는 Name/Type 문자열 byte 길이의 합이다. Capture 크기 산정 자체는 `ordinary-base-fact-index`에 work `C+1`을 먼저 청구한다. Capture 변환·초기 index와 XML count map은 `ordinary-base-fact-derive`에 work `64n+8M`, logical `1024n+4M`을 예약한다. XML 결과는 capture 이름별 count이며 source 크기와 무관하다.
+
+Declaration의 인접 level owner 탐색과 locator frontier는 별도 checked private derivation을 사용한다. 같은 node가 여러 match/parent 경로를 통해 반복 전개될 수 있어 `C²×depth`를 전체 상한으로 가정하지 않는다. 다음 항을 해당 순회·할당 전에 누적 예약하고 초과 시 `RESOURCE_LIMIT/ELIGIBILITY_WORK_LIMIT`으로 중단한다. 기존 public `DeriveDeclarations`와 ordinary 이외 호출은 budget 없는 경로로 같은 도출 의미를 유지한다.
+
+| Declaration 작업 직전 | work | logical B |
+|---|---:|---:|
+| match의 capture 수 `m` | `32+32m` | `512+512m` |
+| capture 이름 `s` 분해·숫자 parse | `8len(s)+1` | `32len(s)` |
+| capture에서 읽은 depth `d`의 빈 level 포함 반복 | `max(d,0)+1` | 0 |
+| 자식 하나의 직전 level 부모 후보 `p`개 검색 | `16+p` | 256 |
+| 길이 `k`의 key/candidate/frontier clone·sort·compact·append | `64(k+1)(bits.Len64(k)+1)` | `512k` |
+| declaration locator `s` 분해 | `64+8len(s)` | `256+64len(s)` |
+| 해당 level의 frontier `k`개 방문 | `1+k` | 0 |
+| 결과 `k`개, `t=len(fact)+len(node)` | `k(64+8t)` | `k(256+4t)` |
+
+Huge numeric depth는 level 반복 전에 거부하며, frontier가 여러 경로로 증가해도 다음 복제·정렬·출력 전에 예약하므로 선행 단계의 여유로 초과 작업을 숨기지 않는다. 초기 capture/index 예약은 match grouping과 key 수집도 덮는다. Sort 항은 실제 comparator 횟수의 보수 상한이며 원소별 비교는 node/item 정수 비교다.
+
+TSQL dynamic SQL은 위 기본 예약에 work와 logical 각각 `128n² + 64(E+1)A + 64EWS`를 더한다. `E`는 `exec` capture 수, `W`는 `errwith` capture 수, `S`는 source bytes, `A`는 source 안의 유효 capture span 길이 합이다. 고정 개수의 match pair index/정렬·반복 child/known-miss 탐색, exec별 text 검사, exec×errwith의 반복 공백 gap/정규식 span 검사를 덮는다. 문자열 decode와 variable 결과도 포함한다. 각 곱은 overflow 검사 후 별도로 청구하며 아직 실행하지 않은 query의 예산을 소급 청구하지 않는다. 다른 route의 dynamic SQL은 기존 보수적인 `64n²(n+S+M+1)` / `1024n(n+S+M+1)` 식을 유지한다.
+
+Test-only overlay로 실제 loop/comparator 방문, hash/span 입력 bytes와 구체화한 capture·결과 payload를 별도로 관찰한다. PostgreSQL/TSQL 실제 owned 입력과 많은 capture·긴 문자열·큰 XML 및 반복 declaration frontier에서 각 query의 `계상 ≥ 실제`를 확인한다. 이 logical payload 검사는 process 전체 할당이나 heap/RSS peak의 실측이 아니다.
 
 ## #362 P2-C ordinary eligibility activation boundary
 
@@ -127,13 +182,19 @@ P2-C는 `VerifyOrdinaryQuerySemantics`의 private binding/session adapter를 연
 
 Ordinary 호출의 eligibility registration은 ordinary context, `Native == nil`, 빈 legacy `observations`를 사용한다. Build·control invocation, evidence graph, owned member와 caller approval은 기존 typed eligibility 경로에서 같은 `run`, `eligibilityBudget`, held `os.Root`, evidence snapshot으로 검증한다. Ordinary batch reader가 tuple을 직접 검사하므로 기존 단일 native `verifyNative`와 그 tuple witness를 실행하지 않는다. Approval 안의 ordinary cohort ID는 현재 eligibility cohort ID와 같아야 한다. Pin이나 cohort가 불일치하면 session은 bound가 되지 않고 결과에 FAIL이 남는다. 기존 eligibility public entry에서 이 block을 전달할 방법은 없다.
 
-`closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나를 caller가 고정한다. Paged 선택은 해당 binding과 같은 eligibility snapshot 안에서만 private verified part authority를 만든다. Root·session·approval·cohort가 다른 part record는 재사용할 수 없다. 연결된 authority가 없으면 기존 guarded full-read/hash 경로를 사용한다. Ordinary 호출은 semantic/replay로부터 1 GiB 원장을 상속하고 paged encoding으로 eligibility 전용 1.5 GiB 직접 진입 한도를 받지 않는다. Inventory 및 registry 입력은 fixed source pin을 먼저 확인하고 `parseQualificationInventoryRoute` 선택 decode와 typed registry decoder를 공유 원장에서 실행한다. Full public path의 누적 원장과 closure positive는 별도 검증 사항이다.
+`closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나를 caller가 고정한다. Paged 선택은 해당 binding과 같은 eligibility snapshot 안에서만 private verified part authority를 만든다. Root·session·approval·cohort가 다른 part record는 재사용할 수 없다. 연결된 authority가 없으면 기존 guarded full-read/hash 경로를 사용한다. Ordinary 호출은 semantic/replay로부터 1 GiB 원장을 상속하고 paged encoding으로 eligibility 전용 1.5 GiB 직접 진입 한도를 받지 않는다. Inventory 및 registry 입력은 fixed source pin을 먼저 확인하고 `parseQualificationInventoryRoute` 선택 decode와 typed registry decoder를 공유 원장에서 실행한다. Valid HARD receipt를 확인한 focused Windows JSON public call은 actual owned r8로 tuple 1/1을 VERIFIED로 끝냈으며 native child는 1 GiB/30 s, `JOB_OBJECT` cleanup, 잔류 자식 0이었다. 여섯 build-step receipt는 각각 4 GiB HARD/120 s였고, stricter native cap은 test-only runner overlay로 강제했다. 제품 기본 4 GiB native operation policy는 바뀌지 않았다. 원장 값은 logical 206,346,731 B, work 7,835,933, read 11,216,999 B다. 이 입력의 complete-plan scaffold는 전체 P0 source-only exact-union provenance가 아니고 approval/reference row도 synthetic이므로 선택 JSON 외의 closure나 전체 P0를 입증하지 않는다.
+
+이전 P2-C SQL 측정은 full admission으로 이어지지 않았다. PostgreSQL `alt-postgresql-sql-B04-22`의 owned r8 selected body/reference/adjudication/fold/identity/seal 원장은 logical 697,519,126 B, work 14,102,601, read 134,443,515 B였다. Independent 10-node grammar-authored CST와 9 PostgreSQL9-anchor metadata, empty captures/declaration facts를 비교했지만 9 tuple은 base fact-reproduction gate 미재계산으로 `ORDINARY_PREREQUISITE_INCOMPLETE`/BLOCKED였다. TSQL `alt-tsql-B01-r001`은 binary-paged owned r8 사용 중 `ordinary-base-tree-projection`에서 logical usage 1,073,275,806 B까지 갔고, 다음 1,731,872 B 예약에 1,265,854 B가 부족해 `ELIGIBILITY_WORK_LIMIT`으로 멈췄다. Work/read는 각각 31,403,098/126,923,139 B였다. TSQL의 40 reference rows는 synthetic placeholders이고 expected assets는 UNAVAILABLE이므로 이 중단 뒤 비용은 측정하지 않았다. 두 SQL route 모두 `CAPACITY_UNPROVEN`/BLOCKED다. 후속 registration·required ID·plan header 최적화 뒤 2026-11-12 같은 owned-native 선택 TSQL 공개 경로는 seal까지 logical 942,338,579 B, work 31,240,589, read 126,923,146 B에서 끝났다. Expected 부재와 synthetic reference는 유지되므로 이는 해당 fixture의 전체 제어 흐름 측정이며 full SQL admission/semantic PASS가 아니다.
+
+2026-11-12 ordinary base fact 후속 검증은 위 PostgreSQL의 미재계산 gate를 해소한다. Adapter는 같은 guarded session에서 fact pack·mapping을 한 번 확인한 뒤, P2-B2의 ordered suffix/query SHA와 mapping revision을 결속하고 편집 후 각 source version 및 incremental/fresh 각각의 raw captures로 declaration/dynamic SQL/XML facts를 다시 도출한다. 전체 step·role·query의 저장 `step_facts`와 step0 base `facts` projection을 대조하고, 기존 case claim의 step0 의미를 유지한 재계산 값을 공용 `semanticBase`에 전달한다. 저장 fact 자체는 독립 expected가 아니며 tuple의 metadata/CST/capture/fact 독립 비교를 생략하지 않는다. Legacy single small semantic admission은 fact pack을 받지 않으며 r4–r6와 r10 의미·한도를 바꾸지 않는다.
+
+같은 PostgreSQL shard·실제 owned parser-paged r8·독립 DO expected·합성 approval/reference를 사용한 새 공개 호출은 `BaseVerified=PASS`, semantic/assessment `PASS`, required 9/verified 9/failed 0/blocked 0/unprocessed 0, complete/processing true다. 새 원장은 logical 698,039,669 B, work 14,108,124, read 134,443,451 B다. 이 수치는 선택 shard의 `FULL_BODY_MEASURED_VERIFIED`이며 전체 PostgreSQL route/P0 admission이나 reference 실행 증거가 아니다. 앞의 697,519,126 B 측정은 변경 전 역사적 결과다. 같은 후속 실행의 TSQL은 logical 1,073,723,418 B/work 30,896,698/read 126,923,074 B에서 `projection/steps/0/route`의 다음 logical 예약 32,896 B에 14,490 B가 부족해 중단됐다. Fact context를 base 전에 확인해 이전 측정과 중단 위치가 달라졌으며 full capacity는 여전히 미입증이다.
 
 Reader는 전체 required ordinary 집합에서 선택 shard 분모를 먼저 고정한다. 선택하지 않은 ID는 이번 shard PASS로 계산하지 않고 전체 registry도 `INCOMPLETE`로 남긴다. Reference selection은 각 `(case, step, query)` 응답 row의 source pin, invocation, ordinal, offset, 길이 및 SHA-256을 고정한다. 같은 step의 incremental/fresh tuple은 그 reference row를 공유할 수 있지만, 각 native tree role과 independent expected는 따로 판정한다. 실제 raw reference 출력은 기대값이 아니다.
 
 Structural-only 판정은 별도 pin된 query metadata, full CST, ordered captures와 선택적 fact expected를 actual checked tree/raw API/captures 및 source bytes와 비교한다. Metadata와 predicate 빈 목록, capture의 node/index/좌표·순서·중복, tree identity, API table의 의미 비교와 fact pack/mapping pin을 각각 검사한다. Internal fact 재도출이나 producer의 `step_facts`는 independent fact expected를 대신하지 않는다. CST field만 다른 경우는 FAIL 대신 `INELIGIBLE`/BLOCKED로 남기되, 별도로 확정한 metadata/API/capture/fact FAIL은 유지한다. 원본 base projection은 기존 base reducer 의미로 raw에서 다시 판정해 저장 projection 및 query expectation과 대조한다.
 
-Tuple 상태는 `verified`, `failed`, `blocked`, `unprocessed`로 shard required 집합을 나눈다. Finding 1000개 제한·취소·budget 중단은 이미 확정된 FAIL과 최초 code를 지우지 않는다. `processing_complete`는 selected shard 처리가 끝났다는 뜻이고, `full_scope_complete`는 false다. `MEASURED_SELECTED_PASS`는 전체 route capacity 또는 full P0 완료의 증거가 될 수 없다. SQL ordinary의 exact current closure/body 상한은 별도 실측·입증 전까지 `CAPACITY_UNPROVEN`/BLOCKED다. Exported API는 있지만 full public positive 및 SQL capacity는 아직 검증되지 않았다.
+Tuple 상태는 `verified`, `failed`, `blocked`, `unprocessed`로 shard required 집합을 나눈다. Finding 1000개 제한·취소·budget 중단은 이미 확정된 FAIL과 최초 code를 지우지 않는다. `processing_complete`는 selected shard 처리가 끝났다는 뜻이고, `full_scope_complete`는 false다. `MEASURED_SELECTED_PASS`는 전체 route capacity 또는 full P0 완료의 증거가 될 수 없다. Focused public JSON call은 선택 tuple 1/1 `VERIFIED`를 확인했고, approval 부재·approval-selection 불일치·다른 cohort·member 변조·final identity 변경·base FAIL 보존의 여섯 public negative case도 실행했다. Approval과 reference response는 synthetic fixture이며 reference process를 실행하지 않았다. SQL ordinary의 exact current closure/body 상한은 별도 실측·입증 전까지 `CAPACITY_UNPROVEN`/BLOCKED다. 전체 P0와 P2-D 저장 결과/replay/CLI는 미완료다.
 
 ### 같은 session의 paging identity 재사용 (Refs #362)
 
@@ -189,7 +250,7 @@ Graph work 상한은 `N + CarryForward + 16H + 64·(1+N+E+R+S+N·B(N)+P+D+J+Q)`�
 
 전체 문서는 AST를 만들지 않는 strict token 검사로 UTF-8·surrogate·escape-equivalent 중복 key·문법·trailing value·depth32·2,000,000 values를 확인한다. Token 순회는 header와 전역 검사용 작은 투영 및 원문 route 구간만 수집한다. Header의 cell 수는 전체 route×platform 곱과 같아야 하며 platform ID, route ID, 전체 ordinary/extra workload set, extra-role ID와 route ID 충돌, workload의 route 연결을 검사한다. Extra-role의 platform 참조·실행/미적용/유예 분할 및 `reuse-accepted`의 OS/arch별 실행·유예 조건도 유지한다. Query/case ID·coverage·source/edit·requirement 및 extra workload 내용의 의미 검사는 workload 안의 계약이다. 선택한 route의 내용만 기존 의미 검증기를 적용하고, 다른 route의 내용 검증은 그 route를 처리하는 pass의 의무로 남긴다. 선택 결과는 전체 inventory로 오인되지 않는 별도 내부 type이며 header에서 routes/extra_roles를 제거하고 원래 route index와 선택 route를 돌려준다.
 
-엄격 token 검사의 예약은 `S(n,z,v)=3n+2z+32768+16v`, AST 없는 typed decode의 예약은 `T32(n,z,v)=5n+32z+32768+80v`다. `n`은 bytes, `z`는 문자열 내부 공백을 포함한 유효 JSON bytes, `v`는 member name과 닫는 괄호를 제외한 값 수다. T32는 작은 전역 투영과 선택 route에만 적용한다. Registry는 전체를 typed decode하며 P0의 presence/null·exact membership·pin 검사를 생략하는 근거로 사용하지 않는다. Ordinary coordinator는 typed registry와 선택 route 해석을 공통 ledger에서 실행하고 inventory pin을 재검사한다. 이 문서의 계약은 full public positive나 current SQL capacity의 실측을 대신하지 않는다.
+엄격 token 검사의 예약은 `S(n,z,v)=3n+2z+32768+16v`, AST 없는 typed decode의 예약은 `T32(n,z,v)=5n+32z+32768+80v`다. `n`은 bytes, `z`는 문자열 내부 공백을 포함한 유효 JSON bytes, `v`는 member name과 닫는 괄호를 제외한 값 수다. T32는 작은 전역 투영과 선택 route에만 적용한다. Registry는 전체를 typed decode하며 P0의 presence/null·exact membership·pin 검사를 생략하는 근거로 사용하지 않는다. Ordinary coordinator는 typed registry와 선택 route 해석을 공통 ledger에서 실행하고 inventory pin을 재검사한다. 이 문서의 계약은 별도의 public-call 원장 관측이나 current SQL capacity 실측을 대신하지 않는다.
 
 Guarded read의 기존 비용 외에 전체 hash 재대조 `n`, route index당64 B, 투영 buffer의 실제 복사·성장 예약, 전역/선택 의미 검증과 전역 특수-arm shape 검사를 추가 계상한다. 전역 의미 검증은 투영 bytes당 work8/logical4 및 기존 platform 곱을 먼저 예약하고 정확히 한 번 실행한다. 그 성공 후 선택 route는 전역 header·platform·route/set·extra-role 검사를 반복하지 않고 같은 validator의 route-local 부분만 실행한다. 공개 전체 parser의 검사와 순서는 유지한다. 선택 의미 검증의 logical 예약 `8·len(raw)+4·len(projection)`도 유지한다.
 

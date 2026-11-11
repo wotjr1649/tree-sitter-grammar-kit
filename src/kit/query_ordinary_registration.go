@@ -4,6 +4,7 @@ import (
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
@@ -95,7 +96,7 @@ func validateOrdinaryRegistration(r OrdinaryRegistration, p OrdinaryProfile, a O
 	for i, c := range r.Cases {
 		s := source.Cases[i]
 		original := route.Workload.Cases[i]
-		if c.ID != s.ID || c.OriginalSelector != s.Selector || !semanticEditsEqual(c.Edits, original.Edits) || !reflect.DeepEqual(c.Points, s.Points) || len(c.VersionPins) != len(s.Steps) {
+		if c.ID != s.ID || c.OriginalSelector != s.Selector || !semanticEditsEqual(c.Edits, original.Edits) || !slices.Equal(c.Points, s.Points) || len(c.VersionPins) != len(s.Steps) {
 			return ordinaryBad("ORDINARY_HISTORY_BINDING")
 		}
 		for step, pin := range c.VersionPins {
