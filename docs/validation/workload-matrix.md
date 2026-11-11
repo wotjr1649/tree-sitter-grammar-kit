@@ -1,8 +1,8 @@
 # 기능별 검증 workload
 
-추가 [NET461 업무 workload/format 등록부](net461-workload.md)의 파일 역할·case 종류·Session 책임은 기존 Session에 연결한다. 업무/.svc 결과는 기존 26 route·78개 요약 칸과 별도로 결속하고 현재 full corpus·svc 제품 기능·S08 qualification은 NOT_RUN이다. 원본/encoding/mapping·안전한 참조·후속 검증의 준비 계약을 현재 PREPARE에서 확인하며 미래 검증 전체를 새 pre-S01 gate로 만들지 않는다.
+추가 [NET461 업무 workload/format 등록부](net461-workload.md)의 파일 역할·case 종류·Session 책임은 기존 Session에 연결한다. PREPARE 당시 full corpus·svc 제품 기능·S08 qualification은 NOT_RUN이었고 원본/encoding/mapping·안전한 참조·후속 검증의 준비 계약을 확인했다. 이후 Session 01~08은 [campaign 등록부](../../src/contracts/campaign-01.json)에 통합 기록이 있다. 업무/.svc 결과는 기존 26 route·78개 설계 요약 칸과 별도로 결속한다. 현재 CI의 Windows·Linux 파생 52칸·1,652개 의무는 [nightly 42923449889](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/42923449889)에서 assessment PASS다. 현재 실행·지원 범위는 [platform](../specs/platform-support.md)을 따른다. 등록 밖 full corpus의 완료를 이 수치로 주장하지 않으며 미래 검증 전체를 새 pre-S01 gate로 만들지 않는다.
 
-실제 test는 해당 Session 구현과 함께 추가한다. 아래는 계획이며 PASS 기록이 아니다. 모든 Session은 [공통 gate](validation.md)를 적용하고 미지원 capability를 BLOCKED/UNSUPPORTED로 구분한다.
+아래는 Session 구현 때 적용한 검증 요구사항이며 표 자체는 PASS 기록이 아니다. 구현 통합과 실제 실행 근거는 campaign 등록부 및 각 Session 보고서에서 확인한다. 모든 Session은 [공통 gate](validation.md)를 적용하고 미지원 capability를 BLOCKED/UNSUPPORTED로 구분한다.
 
 | Session / Issue | 정상·negative·mutant·경계 검증 | 플랫폼/완료 범위 |
 |---|---|---|
