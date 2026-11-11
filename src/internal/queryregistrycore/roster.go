@@ -1,4 +1,4 @@
-package queryregistry
+package queryregistrycore
 
 import "strings"
 

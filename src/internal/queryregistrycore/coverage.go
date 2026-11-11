@@ -1,9 +1,7 @@
-package queryregistry
+package queryregistrycore
 
 import (
 	"errors"
-
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
 type Subject struct {
@@ -87,9 +85,9 @@ func (v *Validated) Fold(shards []Shard, missingInput bool) (Coverage, error) {
 	// confirmed by a well-formed judgment before it, never an empty coverage (#362 review M2).
 	fail := func(err error) (Coverage, error) {
 		code := v.firstConfirmedFailure(shards)
-		var ke *kit.Error
-		if code == "" && errors.As(err, &ke) {
-			code = ke.Code
+		var fault *Fault
+		if code == "" && errors.As(err, &fault) {
+			code = fault.Code
 		}
 		return Coverage{Verdict: "FAIL", Code: code}, err
 	}

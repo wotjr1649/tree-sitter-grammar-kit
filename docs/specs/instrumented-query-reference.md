@@ -372,6 +372,41 @@ Coverage fold는 caller가 제출한 adjudicated state만 집계하며 각 typed
 
 P0 registry가 유효해도 독립 기대 자료, 실행 관측, 승인, replay 및 SVC/large 전수 하위 원장이 갖춰지지 않았으므로 `full_scope_complete=false`다. P0 fold는 모든 adjudicated row가 VERIFIED여도 이를 true로 바꾸지 않는다. 이는 #362 전체 완료, r9/r10 승격, release gate, runtime 예산, producer/reducer, CLI 또는 workflow 활성화를 뜻하지 않는다. 전체 완료는 모든 필수 집합의 exact membership, positive·control 검증, 현재 cohort·승인·저장 재계산, SVC/large 전수성 및 미완료 상태 0을 별도 확인한 뒤에만 가능하다.
 
+## #362 ordinary 사전 등록과 capacity plan P2-A
+
+P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
+
+P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
+
+`src/kit`의 ordinary planning helpers는 `OrdinaryProfile` (`tsgk-oracle/r4`, `Context OrdinaryContext`), `ParseOrdinaryProfile`, `ParseOrdinaryAssets` (`tsgk-query-ordinary-assets/r1`), `ParseOrdinaryRegistration` (`tsgk-query-semantics-registration/r2`), `BuildOrdinaryShardPlan`, `ParseOrdinaryShardPlan`, `ValidateOrdinaryShardPlan`을 제공한다. Registration은 `registry_pin`, membership namespace, qualification/slot 원문 pin, route/set/platform 및 subject, execution context/closure, candidate/cohort, profile/asset pin, 원래 case selector와 초기 source pin, 순서 있는 전체 edit/version pin/points, query 원문·metadata asset pin, asset basis/review pin, full P0 coordinate·ID, planned members를 연결한다. Policy/limits는 pinned profile을 통해 결속한다. Plan은 registration pin을 단방향으로 참조한다. P0 ID는 기존 membership namespace와 전체 canonical coordinate로만 계산한다. 새 execution context를 P0 `context`에 덮어쓰거나 registry 전체를 다시 hash해 기존 selector를 대체하지 않는다. ID 분리 기준의 context는 P0 membership context다. 같은 source bytes를 쓰는 다른 case·history·host의 기존 membership coordinate는 각각 보존하고, 새 execution context는 그 P0 ID를 바꾸지 않는다.
+
+Shard plan은 ordinary obligation ID를 각 고정 case shard에 정확히 한 번 포함한다. 각 shard는 ID 문자열과 route/platform/subject/case·history, per-step reference role을 기록하며 full coordinate row를 복제하지 않는다. Header에는 profile binding과 route별 query group을 공통화해 저장한다. Validator는 고정 P0 입력에서 full coordinate와 ID를 다시 전개하여 shard route/case를 대조하고 겹침·누락·중복·미지 ID·빈 범위를 거부한다. Shard들의 disjoint union은 P0에서 전개한 Windows/Linux ordinary 집합 106,208개와 정확히 같아야 한다. 각 shard는 file/read/work/logical/entry/wall 한도와 capacity 상태도 기록한다. 모든 planned limits와 inherited limits는 file 16 MiB, total read 256 MiB, work 32,000,000, logical 1 GiB, entries 10,000, wall 120,000 ms로 고정한다. Frame file 상한은 4-byte header를 포함한다. 본문과 검증된 full-output upper bound가 아직 제공되지 않은 현재 P1 skeleton은 각 obligation을 `CAPACITY_UNPROVEN`/BLOCKED로 남긴다. 이 상태도 ID를 빼지 않는다. `UNAVAILABLE` asset은 임의의 `PINNED`로 바꾸지 않는다. 부분 ordinary 계획은 predicate/control/SVC/large 등 다른 P0 범위를 완료하거나 `full_scope_complete`를 바꾸지 않는다.
+
+### 기존 budget model의 누락과 reference 재계산
+
+예산 재검토는 P2 §5의 잔액 계산에 pass마다 반복되는 qualification inventory 및 registry decode가 빠졌음을 확인했다. 이 고정 입력 비용은 ordinary pass마다 **353,877,949 B**다. 이는 query-slot inventory decode를 포함하지 않는다. Slot 및 새 ordinary documents의 추가 charge는 별도 입력으로 더해지며 아직 미확정이다. 과거 verified-part 재사용 후의 historical core anchor와 알려진 set layer를 그대로 사용해 고정 decode를 차감하면, ordinary body를 읽기 전 잔액은 PostgreSQL −297,750,339 B, TSQL −341,653,347 B다.
+
+| 정적 산술, B | PostgreSQL | TSQL |
+|---|---:|---:|
+| 작은 inherited logical 한도 | 1,073,741,824 | 1,073,741,824 |
+| historical core anchor | 1,017,472,466 | 1,061,314,324 |
+| 알려진 set layer | 141,748 | 202,898 |
+| pass당 qualification inventory 및 registry decode | 353,877,949 | 353,877,949 |
+| body 전 잔액 | **−297,750,339** | **−341,653,347** |
+
+이는 #366 이후 historical core anchor를 쓴 진단 계산이다. PR #366 코드는 P2-A base에 없고, P2-A는 이를 가져오거나 K0–K4·structural 절감액을 적용하지 않는다. 이 계산은 current ordinary closure의 실측 합계라고 주장하지 않는다. 다만 현 P2-A 계약이 고정 decode를 포함하고 기존 1 GiB 상한·작은 pass 모델을 유지하는 한, 위 최소 진단치만으로 두 SQL route의 body 전 여유가 음수이므로 density를 바꿔도 capacity BLOCKED라는 점을 보여준다. 실제 current closure와 모든 output 상한이 입증되지 않은 현재 planner 판정은 `CAPACITY_UNPROVEN`/BLOCKED다. 한도는 올리지 않으며 별도 ordinary 예산도 만들지 않는다.
+
+Reference의 기존 P2 row 모형도 receipt의 Base64 stdout, JSONL row의 두 차례 decode(head/full), structural query에도 적용되는 `reserveReference` 비용을 모두 포함하지 않아 약 세 배 낮게 잡았다.
+
+| U1 최대 step 정적 추정, B | PostgreSQL nominal | TSQL nominal | TSQL dense |
+|---|---:|---:|---:|
+| 기존 P2 reference row 모형 | 10,809,604 | 58,141,956 | 232,269,572 |
+| receipt·두 decode·reservation을 반영한 추정 | 30,249,029 | 177,534,284 | 708,656,264 |
+
+이 값들은 실제 크기나 안전 upper bound의 측정치가 아니다. 특히 `nativeReservation`의 상세 비용, API/fact 본문, 남은 set/registration/binding 비용과 실제 expected output 상한은 여전히 미확정이다. `OrdinaryReferenceEstimate`는 `Density`, `SourceBytes`, `VersionsTextBytes`, `RowBytes`, `ReceiptBytes`, `ReceiptLogical`, `DoubleRowDecodeLogical`, `ReserveReferenceLogical`, `TotalLogical`, `PreviousModelLogical`을 분리해 담는다. 이는 낙관적 이전 모델과 코드 기반 추정의 차이를 검토하기 위한 자료다. `OrdinaryShardCapacity`는 `ClosurePasses=1`, `FixedDocumentDecodeLogical=353877949`, `SourceHistoryBytes`, `DeclaredMemberBytes`, `UpperBound=nil`을 노출한다. Top-level budget에는 고정 pass decode, SQL historical anchor/set 차감 진단, route별 nominal/dense reference maxima를 둔다. Profile binding과 route별 ≤15-query reference groups는 plan에서 한 번 고정해 각 case shard에서는 참조하며, 이 문서 factored metadata는 plan 파일 한도를 지키는 표현이다. 이것은 native/reference output, raw decode 비용이나 logical admission을 줄이는 runtime 구조 절감이 아니다. Capacity plan은 per-pass fixed input decode와 source/member/reference/native 비용을 나눠 기록하되, 이 추정치를 measured upper bound나 admission PASS 근거로 쓰지 않는다. 부족한 상한은 `CAPACITY_UNPROVEN`/BLOCKED로 남긴다.
+
+`src/dev/query-ordinary-plan`은 P1 source export, 검증된 P0 registry, 사전 등록 profile/assets/registration, 그리고 선언된 closure/build/control member bodies를 읽는 source-only 도구다. Native/reference output을 기대값으로 소비하거나 해당 프로세스를 시작하지 않는다. Asset metadata와 제공된 body의 bytes/hash/shape는 검사하지만, P1 rule skeleton에는 독립 full-CST/capture/fact의 완전한 output 상한 계약이 없다. 향후 admission에 필요한 정확한 expected counts와 output caps는 현재 입력에 정의되어 있지 않아 각 shard의 `UpperBound`는 nil이고 모든 ID가 `CAPACITY_UNPROVEN`/BLOCKED다. P2-A는 P1 export의 source bytes를 pinned qualification input 및 embedded source와 대조하고 기존 edit 적용 규칙으로 모든 version bytes/hash/points를 재구성한다. Export의 `Origins` fixture path/selector는 출처를 설명하는 `DERIVED_UNREVIEWED` label이며 fixture 원본 row bytes를 포함하지 않으므로 그 자체로 각 fixture origin을 독립 인증하지 않는다. Registration의 `original_selector`는 변경 불가 witness selector와 같아야 하지만 origin fixture attestation을 대신하지 않는다. Density 추정만으로 capacity PASS를 내지 않는다. TSQL이 현재 `CAPACITY_UNPROVEN`/BLOCKED로 남는 것은 계획의 정상 결과이며 예산 상향이나 별도 ordinary 예산을 뜻하지 않는다. P2-A 산출은 실행 승인이 아니며 실제 guarded charge와 semantic 판단은 후속 범위다.
+
 ## #216 parser-only paging
 
 일반 작은 source의 `native-query`에서 grammar parser 하나가 16 MiB를 넘을 때만 `full-input-utf8-paged-parser/r1`을 사용한다. 이 context와 `full-input-utf8/r2`에서 source·CST·raw response·driver executable·reference executable/library·다른 closure 입력은 각각 기존 물리 파일 한도를 지킨다. 큰 source/CST, SVC, 전처리, batch, 신규 macOS claim은 이 단위의 대상이 아니다. 기존 small offline 한도 16 MiB/file·256 MiB/shared total·120초·10,000 files·work 32,000,000과 native-query 4 GiB/10초를 유지한다. eligibility 검증(core·public)이 직접 시작한 원장의 logical allocation만 이 context에서 1 GiB 대신 1.5 GiB이고, semantic run의 1 GiB는 그대로다. 별도 large-replay 예산을 이 경로에 적용하지 않는다.

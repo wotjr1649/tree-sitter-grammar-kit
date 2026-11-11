@@ -2,6 +2,7 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- P2-A에서 P0 registry core 공용화와 strict ordinary profile/asset/registration/shard-plan, source-only planner를 추가하며 106,208개 ID의 exact union과 기존 small 한도를 유지한다. 예산 재검토는 pass당 qualification-inventory+registry decode 353,877,949 B와 reference row 추정의 과소 산정을 반영한다; historical #366 anchor 진단에서 body 전 여유는 PostgreSQL −297,750,339 B, TSQL −341,653,347 B이고, reference 기존→수정 추정은 PG nominal 10,809,604→30,249,029 B, TSQL nominal 58,141,956→177,534,284 B, dense 232,269,572→708,656,264 B이며 수정값은 upper bound가 아니다. K0–K4 절감이나 cap 변경을 적용하지 않고 SQL은 `CAPACITY_UNPROVEN`/BLOCKED로 보존하며, P2-B/C producer·reader·replay는 제외한다(Refs #362).
 - P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.

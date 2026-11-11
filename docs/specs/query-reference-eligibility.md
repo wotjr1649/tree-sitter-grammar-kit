@@ -95,6 +95,20 @@ Observation 필수 field는 `query`, `step`, `tree_role`, `source_bytes`, `sourc
 
 정상/변조 synthetic 검사는 외부 승인 경계의 동작 검사이며 runtime 자격 근거가 아니다. 보관한 Linux raw192는 요청/receipt/stderr·identity·snapshot·summary를 부분 수용하는 근거다. 실제 binary/library/입력/current-r4/승인 graph가 없으므로 전체 PASS로 승격하지 않는다. Producer 보관 확대·claim/reducer/inventory/fan-in·전체 Windows/Linux route 및 C# 실제 재사용 증명은 후속 단위이며 이 API 구현으로 Issue #216을 닫지 않는다.
 
+## #362 ordinary admission 입력 범위
+
+P2-A source-only planner는 이 eligibility verifier를 호출해 실행 권한을 만들지 않는다. 제공된 asset 본문의 pin·길이·hash 및 metadata shape, 원문 history와 선언된 member 크기를 검사하고 고정 비용과 reference 추정을 기록한다. Full CST/capture/API/fact의 정확한 개수와 검증된 출력 상한은 아직 지원하는 admission 근거가 아니므로 `upper_bound:null`과 BLOCKED를 유지한다. 이를 이 API의 actual guarded read/work/logical charge로 간주하지 않는다. 후속 ordinary reader는 이 문서의 caller 승인·snapshot·physical member 규칙을 재사용해야 한다.
+
+Ordinary shard admission은 기존 small 상한인 physical file 16 MiB, shared read 256 MiB, work 32,000,000, logical 1 GiB, 10,000 entries, wall 120,000 ms를 유지한다. Native frame 파일은 4-byte header를 포함해 16 MiB 안에 있어야 한다. Parser-paged 또는 binary-paged closure 표기는 eligibility가 직접 시작할 때 허용되는 기존 1.5 GiB 예산을 ordinary semantic/replay 실행으로 확장하지 않는다. 상속된 ordinary pass는 1 GiB다. 상한이나 candidate body를 입증하지 못한 shard는 `CAPACITY_UNPROVEN`/BLOCKED로 남고 ID 집합에서 제거되지 않는다. SQL plan의 BLOCKED는 실행 실패가 아니라 사전 capacity 근거의 미완료다.
+
+매 ordinary pass의 qualification inventory 및 registry decode 비용은 353,877,949 B로 계산됐다. 이 값은 query-slot inventory decode를 포함하지 않으며, slot 및 새 ordinary documents의 추가 charge는 별도 미확정이다. 과거 reuse core anchor와 알려진 set layer 진단값을 뺀 뒤 고정 decode만 차감해도 body 이전 잔액은 PostgreSQL −297,750,339 B, TSQL −341,653,347 B다. 이는 #366 after-reuse anchor를 쓴 정적 진단이지 current exact closure 실측이 아니고, #366 구현은 P2-A base에 없다. P2-A는 K0–K4 또는 다른 구조 절감과 body density 추정으로 이 잔액을 상쇄하지 않으므로 두 SQL route 모두 capacity BLOCKED다. 세부 산술 및 reference row의 수정 추정은 [ordinary capacity 계약](instrumented-query-reference.md#기존-budget-model의-누락과-reference-재계산)을 따른다.
+
+Reference row도 receipt Base64, head/full 두 차례 JSONL decode 및 structural query를 포함한 `reserveReference` 비용을 반영하면 기존 P2 모델보다 약 세 배 크다(예: TSQL nominal 기존 58,141,956 B, 수정 추정 177,534,284 B; dense 기존 232,269,572 B, 수정 추정 708,656,264 B). 이 역시 추정이지 실측 상한이 아니다. `nativeReservation`, API/fact, 남은 U 비용과 expected output body의 안전 상한은 입증되지 않았다. Planner의 cost fields는 per-pass fixed decode와 native/reference 비용을 따로 드러내며, 이 산술 추정값은 admission upper bound로 취급하지 않는다. P2-A 계산은 #366 재사용 구현의 최적화를 가져오지 않으며, 역사 anchor를 이용한 수치는 capacity 진단으로만 표시한다.
+
+P2-A 산출은 strict preregistration과 shard-plan 무결성만 검사한다. Approval, runtime observation, evidence verification이나 `VerifyQueryReferenceEligibility` 판정은 생성하지 않으며, 본 절의 기존 eligibility API가 ordinary registration을 지원한다고 간주하지 않는다.
+
+`OrdinaryBinding.Runtime` pin은 caller의 profile·plan identity에 결속된다. 해당 runtime 자료가 `Members`에 별도로 선언되지 않았다면 그 본문 검증과 크기는 `declared_member_bytes`에 포함되지 않으며 current closure의 미확정 비용으로 남는다. 이 필드를 전체 closure 크기나 actual runtime 검증으로 읽지 않는다.
+
 ## Parser-only paging 문맥
 
 `full-input-utf8-paged-parser/r1`은 단일 작은 UTF-8 native-query source의 큰 grammar parser에 한정된다. 세 approval/registration/result r1과 witness r2의 필드 의미는 유지하며 Windows/Linux만 받는다. `Native.Grammar[original_path]`는 실제 `grammar-paged-descriptor` 물리 pin을 가진다. 실제 `Native.InvocationID`의 NATIVE_DRIVER node가 descriptor와 모든 part의 owner여야 하며, 조각은 동일 guard의 검증된 cached bytes에서만 소비한다. 참조하지 않은 paged member와 다른 owner는 거부한다. 전체 logical pin은 승인된 원본 plain build manifest에 대조하고 선언된 descriptor 해시만으로 승인하지 않는다. 정확한 분할 규칙과 변경되지 않는 small 예산은 [계측 계약](instrumented-query-reference.md#216-parser-only-paging)이 소유한다. 이 문맥에서 eligibility 검증이 직접 시작한 원장(approval 결속)의 논리 처리량은 1.5 GiB이며 다른 small 한도는 같다. `VerifyQuerySemantics`·Replay처럼 원장을 상속하는 경로는 이 문맥에서도 1 GiB다. 큰 source/CST 또는 새 macOS 검증을 추가하지 않는다.

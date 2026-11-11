@@ -1,11 +1,9 @@
-package queryregistry
+package queryregistrycore
 
 import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native"
 )
 
 func TestRosterDenominatorsAndMeaning(t *testing.T) {
@@ -191,7 +189,7 @@ func TestControlRosterExact(t *testing.T) {
 // Control expectations are fixed before results, so they must use the values the pinned host
 // policy actually emits, not a registry-side spelling (#362 review M1).
 func TestRosterControlsUseHostEvaluationValues(t *testing.T) {
-	host := map[string]bool{"": true, native.EvalStructural: true, native.EvalEvaluated: true, native.EvalUnsupported: true}
+	host := map[string]bool{"": true, "STRUCTURAL": true, "EVALUATED": true, "UNSUPPORTED": true}
 	controls := 0
 	for _, p := range Roster() {
 		if p.Kind != Control {
