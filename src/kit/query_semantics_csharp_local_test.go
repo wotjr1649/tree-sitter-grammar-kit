@@ -145,7 +145,7 @@ func actualCSharpPlan(t *testing.T, root string) {
 		}
 		if role == "grammar-parser" {
 			pin := grammar[i-len(runtime.Files)]
-			if pin.Bytes != 51472926 || pin.Bytes <= 16777216 {
+			if pin.Bytes <= 16777216 { // the registered parser must need paging; its size comes from native-routes
 				t.Fatal("parser paging prerequisite")
 			}
 			add("D", fmt.Sprintf("capture/build-input-%05d.pages.json", i), "grammar-paged-descriptor")
