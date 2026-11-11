@@ -157,6 +157,39 @@ Graph work 상한은 `N + CarryForward + 16H + 64·(1+N+E+R+S+N·B(N)+P+D+J+Q)`�
 
 기존 graph 문자열 logical 예약 `(fields+1)·(N+R+1)`을 유지하고 새 map·slice·역방향 edge를 위해 `512·(1+N+E+R)` B를 더한다. Estimator의 map 공간은 만들기 전에 일부를 예약하며 나머지는 graph 검증 전에 예약한다. Work32,000,000과 기존 context별 logical 한도는 바꾸지 않는다. 계측은 test-only Go overlay에서 실제 loop body 진입·DFS node 진입·정렬 comparator 호출을 세며, 동일 SQL core·기존 fixture·합성 사슬/fan-out/cycle 직전과 cycle에서 예약이 계측값 이상인지 확인한다. 이는 새로운 runtime 관측이나 ordinary 전체 capacity의 증거가 아니다.
 
+### #362 ordinary inventory 선택 decode
+
+내부 `parseQualificationInventoryRoute`는 아직 ordinary pass가 없는 P2-C의 입력 처리 기반이다. P2-C는 같은 guarded session에서 읽고 독립 승인된 전체 SHA-256과 대조한 `qualification-c1.json` bytes를 이 함수로 전달해야 한다. 함수도 전체 bytes의 SHA-256을 재대조한다. 공개 `ParseQualificationInventory`와 기존 qualification·semantic·replay 호출자는 전체 decode와 기존 오류 분류를 유지한다. 새 공개 API나 한도 선택 옵션은 없다.
+
+전체 문서는 AST를 만들지 않는 strict token 검사로 UTF-8·surrogate·escape-equivalent 중복 key·문법·trailing value·depth32·2,000,000 values를 확인한다. Token 순회는 header와 전역 검사용 작은 투영 및 원문 route 구간만 수집한다. Header의 cell 수는 전체 route×platform 곱과 같아야 하며 platform ID, route ID, 전체 ordinary/extra workload set, extra-role ID와 route ID 충돌, workload의 route 연결을 검사한다. Extra-role의 platform 참조·실행/미적용/유예 분할 및 `reuse-accepted`의 OS/arch별 실행·유예 조건도 유지한다. Query/case ID·coverage·source/edit·requirement 및 extra workload 내용의 의미 검사는 workload 안의 계약이다. 선택한 route의 내용만 기존 의미 검증기를 적용하고, 다른 route의 내용 검증은 그 route를 처리하는 pass의 의무로 남긴다. 선택 결과는 전체 inventory로 오인되지 않는 별도 내부 type이며 header에서 routes/extra_roles를 제거하고 원래 route index와 선택 route를 돌려준다.
+
+엄격 token 검사의 예약은 `S(n,z,v)=3n+2z+32768+16v`, AST 없는 typed decode의 예약은 `T32(n,z,v)=5n+32z+32768+80v`다. `n`은 bytes, `z`는 문자열 내부 공백을 포함한 유효 JSON bytes, `v`는 member name과 닫는 괄호를 제외한 값 수다. T32는 작은 전역 투영과 선택 route에만 적용한다. Registry는 전체를 typed decode하며 P0의 presence/null·exact membership·pin 검사를 생략하는 근거로 사용하지 않는다. 현재 base에는 P0 reader가 없으므로 실제 P0 자료의 전체 typed decode는 test-only 측정 경로에서 대조한다. P2-C는 통합된 P0 reader의 계약과 registry의 inventory pin을 함께 검사해야 한다.
+
+Guarded read의 기존 비용 외에 전체 hash 재대조 `n`, route index당64 B, 투영 buffer의 실제 복사·성장 예약, 전역/선택 의미 검증과 전역 특수-arm shape 검사를 추가 계상한다. 전역 의미 검증은 투영 bytes당 work8/logical4 및 기존 platform 곱을 먼저 예약하고 정확히 한 번 실행한다. 그 성공 후 선택 route는 전역 header·platform·route/set·extra-role 검사를 반복하지 않고 같은 validator의 route-local 부분만 실행한다. 공개 전체 parser의 검사와 순서는 유지한다. 선택 의미 검증의 logical 예약 `8·len(raw)+4·len(projection)`도 유지한다.
+
+선택 work는 `N + L + P + F`다. `N`은 `inventoryRouteValidationWork`가 실제 수행하는 각 counting loop 반복을 그 자리에서1씩 charge한 값이며, `L`과 기존 곱 `P`는 route-local validator를 실행하기 전에 예약한다. `F`는 `SvcContext != nil`일 때만 유지하는 기존 `8·len(raw)` 상한이다. SVC의 marshal/strict decode/재귀 context 검사는 구조 상한을 따로 입증하지 않았으므로 byte 예약을 없애지 않는다. ordinary route의 preprocess/accepted 설정은 `role=false`에서 helper 실행 전에 기존처럼 거부한다.
+
+`L`은 아래 항의 합이다. `|s|`는 decoded 문자열의 byte 길이이고 배열 기호의 길이는 원소 수다. map/hash·문자열 검사의 항은 해당 key/입력 전체 길이를 상한으로 사용하며 CPU instruction 수나 regexp 엔진의 내부 상태 전이 수를 뜻하지 않는다.
+
+| 실제 검증 대상 | `L` 예약 항과 대응하는 순회 |
+|---|---|
+| route/workload | 고정2: 각각의 validator 진입 |
+| error node `s` | `1+|s|`: 행 방문과 node regexp; 중복 검색은 `P` |
+| requirement `r` | `1+4·|r.Row|+|route.Route|+7·len(r.Kinds)`: 행, row regexp·prefix·map 조회/삽입, kind마다 행 방문+최대6개 kind 비교 |
+| requirement alternative `a` | `1+4·|a|+|r.Row|`: 행, prefix·suffix regexp·대안 map 조회/삽입 |
+| grammar `g` / query `q` | 각각 `1+|g.SHA256|`, `1+3·|q.ID|+|q.SHA256|`: 행, hash regexp 및 ID 검사·map 조회/삽입 |
+| case `c` | `1+3·|c.ID|+|c.Input.SHA256|+len(c.Edits)`: 행, ID·hash 검사/조회/삽입과 `stepSizes` edit 반복 |
+| case source | `2·checks·|source|`: UTF-8와 SHA-256 순회. `checks`는 `Format==SvcFormat`과 `len(QueryExpect)>0`의 참인 조건 수이며 두 조건이 함께 참이면 두 검사를 모두 계상 |
+| expectation / anchor | expectation당1, anchor당 `1+|Type|`: callback 방문과 `validAnchorType` byte 순회 |
+| query expectation `q` | `2+|q.Query|`: step와 query membership 두 반복 및 key 검사 |
+| sample `s` | `8·(1+|Repository|+|Commit|+|Path|+|License|+|SHA256|+|c.Input.SHA256|)`: repository/commit 검사, path 검사·split·segment 방문, 고정 license 집합·pin 비교의 byte 상한 유지 |
+| coverage `(row, claims)` | `1+|row|+len(claims)`: 행·row map 조회·claim 반복. 정렬 및 반복 검색은 `P` |
+| case alternative `a` | `1+3·|a|+maxRowBytes`: 행, alternative map 조회/중복 검사/삽입 및 coverage row 조회. claim membership는 `P` |
+
+문서 전체의 `reuse_accepted`/`preprocess_cst_expect` arm은 schema gate와 기존 별도 shape 검사를 typed decode 전에 preorder로 적용한다. 이 구간에 한정된 subtree AST·shape 비용과 구간 index를 추가 예약하며, 다른 비선택 subtree의 AST는 만들지 않는다. 실제로 읽거나 보관하지 않은 다른 route의 typed container 비용은 예약하지 않는다. 한 pass의 원장을 새로 만들거나 reset하지 않으며 file/read/work/logical/wall 한도를 바꾸지 않는다. 이 부분 구현과 측정은 ordinary 전체 의미 검증·새 runtime 관측·#362 완료를 뜻하지 않는다.
+
+플랫폼 분할·error-node 중복·coverage의 kinds/expectations/contains 조합·alternatives×coverage 검색과 coverage key 정렬은 byte 선형 예약만으로 상한을 잡지 않는다. 각 입력 길이의 보수적 곱을 overflow-safe하게 추가 work 예약한 뒤 기존 의미 검증기를 호출한다. 반복 coverage와 긴 expectation 목록을 조합해 work를 소진하는 입력은 실제 중첩 순회 전에 `RESOURCE_LIMIT`으로 중단한다.
+
 ## Parser-only paging 문맥
 
 `full-input-utf8-paged-parser/r1`은 단일 작은 UTF-8 native-query source의 큰 grammar parser에 한정된다. 세 approval/registration/result r1과 witness r2의 필드 의미는 유지하며 Windows/Linux만 받는다. `Native.Grammar[original_path]`는 실제 `grammar-paged-descriptor` 물리 pin을 가진다. 실제 `Native.InvocationID`의 NATIVE_DRIVER node가 descriptor와 모든 part의 owner여야 하며, 조각은 동일 guard의 검증된 cached bytes에서만 소비한다. 참조하지 않은 paged member와 다른 owner는 거부한다. 전체 logical pin은 승인된 원본 plain build manifest에 대조하고 선언된 descriptor 해시만으로 승인하지 않는다. 정확한 분할 규칙과 변경되지 않는 small 예산은 [계측 계약](instrumented-query-reference.md#216-parser-only-paging)이 소유한다. 이 문맥에서 eligibility 검증이 직접 시작한 원장(approval 결속)의 논리 처리량은 1.5 GiB이며 다른 small 한도는 같다. `VerifyQuerySemantics`·Replay처럼 원장을 상속하는 경로는 이 문맥에서도 1 GiB다. 큰 source/CST 또는 새 macOS 검증을 추가하지 않는다.

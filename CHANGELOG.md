@@ -17,6 +17,10 @@
 
 - Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다.
 
+- inventory 선택 경로에서 전역 의미 검증의 실제 중복 실행을 없애고, 선택 의미 검증 work를 구조 방문·검사 문자열·기존 중첩 검색 상한으로 계상한다(Refs #362). SVC의 byte 상한과 기존 logical·공유 한도는 유지하며26 route의 원장·실제 순회 계측·오류 parity와 mutant로 검증한다. 전체 ordinary 수용이나 새 runtime 관측을 뜻하지 않는다.
+
+- ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
