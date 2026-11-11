@@ -85,6 +85,9 @@ func (b *eligibilityBudget) charge(work, logical uint64, at string) *Error {
 	if b == nil {
 		return nil
 	}
+	if ordinaryChargeHook != nil {
+		defer ordinaryChargeHook(b, work, logical, at, b.work, b.logical)
+	}
 	if e := b.r.check(); e != nil {
 		return e
 	}
@@ -315,80 +318,143 @@ func (b *eligibilityBudget) significantJSONBytes(data []byte) (uint64, *Error) {
 	return significant, nil
 }
 
+// jsonErrorPathBytes returns the largest sum of member-name bytes on one root-to-value path and
+// the longest single name. Decoder error paths and duplicate-name messages copy only these, so
+// they bound the error allocation far better than the whole document. It reports false for a
+// bracket mismatch or nesting beyond 64, where the caller must price every byte as a name.
+func jsonErrorPathBytes(data []byte) (maxPath, maxName uint64, ok bool) {
+	var kinds [64]byte
+	var names [64]uint64
+	depth, path, expectName := 0, uint64(0), false
+	for i := 0; i < len(data); i++ {
+		switch c := data[i]; c {
+		case ' ', '\t', '\r', '\n':
+		case '{', '[':
+			if depth == len(kinds) {
+				return 0, 0, false
+			}
+			kinds[depth], names[depth] = c, 0
+			depth++
+			expectName = c == '{'
+		case '}', ']':
+			if depth == 0 || kinds[depth-1] != c-2 {
+				return 0, 0, false
+			}
+			depth--
+			path -= names[depth]
+			expectName = false
+		case ',':
+			expectName = depth > 0 && kinds[depth-1] == '{'
+		case '"':
+			start := i + 1
+			for i++; i < len(data) && data[i] != '"'; i++ {
+				if data[i] == '\\' {
+					i++
+				}
+			}
+			if expectName {
+				n := uint64(min(i, len(data)) - start)
+				path = path - names[depth-1] + n
+				names[depth-1] = n
+				maxPath, maxName = max(maxPath, path), max(maxName, n)
+			}
+			expectName = false
+		default:
+			expectName = false
+		}
+	}
+	return maxPath, maxName, true
+}
+
 // Token preflight reserves decoder/error buffers first, then AST and typed containers before any AST pass.
 func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) *Error {
 	return b.reserveJSONContainers(doc, data, passes, 448)
 }
 
 func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passes, perValue uint64) *Error {
+	_, e := b.reserveJSONContainersCount(doc, data, passes, perValue, false)
+	return e
+}
+
+// reserveJSONContainersCount also returns the number of values the preflight walked. With pathBound
+// set, the error/buffer reservation prices the names on one path instead of every byte as a name.
+func (b *eligibilityBudget) reserveJSONContainersCount(doc string, data []byte, passes, perValue uint64, pathBound bool) (uint64, *Error) {
 	if b == nil {
-		return nil
+		return 0, nil
 	}
 	if e := b.r.check(); e != nil {
-		return e
+		return 0, e
 	}
 	if e := b.charge(1, uint64(len(data)), doc); e != nil {
-		return e
+		return 0, e
 	}
 	if uint64(len(data)) > MaxDocumentBytes {
-		return fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
+		return 0, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
 	}
 	if !utf8.Valid(data) {
-		return fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
+		return 0, fail(KindInvalidInput, "JSON_INVALID_UTF8", doc, nil)
 	}
 	significant, sizeErr := b.significantJSONBytes(data)
 	if sizeErr != nil {
-		return sizeErr
+		return 0, sizeErr
 	}
 	// bytes.Buffer aliases the input; only strings and non-whitespace syntax can grow names/error paths.
-	if e := b.charge(0, 32*significant+32768, doc); e != nil {
-		return e
+	reserve := 32*significant + 32768
+	if pathBound {
+		// An error copies the names on its path about 15 times (32 is the reservation); a long string
+		// value is copied about once, which the per-pass byte terms below already cover.
+		if maxPath, maxName, ok := jsonErrorPathBytes(data); ok {
+			reserve = 32*(maxPath+maxName) + 32768
+		}
+	}
+	if e := b.charge(0, reserve, doc); e != nil {
+		return 0, e
 	}
 	dec := jsontext.NewDecoder(bytes.NewBuffer(data))
 	values := uint64(0)
 	for {
 		if e := b.r.check(); e != nil {
-			return e
+			return 0, e
 		}
 		kind, count := dec.StackIndex(dec.StackDepth())
 		if dec.StackDepth() == 0 && count > 0 {
 			if _, err := dec.ReadToken(); err == io.EOF {
 				break
 			} else if err != nil {
-				return jsonError(doc, "", err)
+				return 0, jsonError(doc, "", err)
 			}
-			return fail(KindInvalidInput, "JSON_TRAILING_VALUE", doc, nil)
+			return 0, fail(KindInvalidInput, "JSON_TRAILING_VALUE", doc, nil)
 		}
 		name := kind == '{' && count%2 == 0
 		peek := dec.PeekKind()
 		if !name && peek != '}' && peek != ']' && peek != 0 {
 			values++
 			if values > 2000000 {
-				return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
+				return 0, fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
 			}
 			// The caller reserves either AST + typed containers or only typed containers.
 			if e := b.charge(1, perValue, doc); e != nil {
-				return e
+				return 0, e
 			}
 			if (peek == '{' || peek == '[') && dec.StackDepth() >= jsonMaxDepth {
-				return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
+				return 0, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
 			}
 		}
 		if _, err := dec.ReadToken(); err == io.EOF {
 			break
 		} else if err != nil {
-			return jsonError(doc, "", err)
+			return 0, jsonError(doc, "", err)
 		}
 	}
 	work, e := eligibilityProduct(doc, values, passes)
 	if e != nil {
-		return e
+		return 0, e
 	}
 	logical, e := eligibilityProduct(doc, uint64(len(data)), passes)
 	if e != nil {
-		return e
+		return 0, e
 	}
-	return b.charge(work, logical, doc)
+	return values, b.charge(work, logical, doc)
 }
 
 func (b *eligibilityBudget) reserveGraph(nodes []EvidenceNode, pol evidencePolicy) *Error {

@@ -135,6 +135,7 @@ func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession,
 		res.BindingValid = false
 		return e
 	}
+	ordinaryStage("final-identity", b)
 	if res.Tuple.Failed > 0 {
 		res.Semantic = AssessFail
 	} else if res.BindingValid && res.ProcessingComplete && res.Tuple.Required > 0 && res.Tuple.Verified == res.Tuple.Required &&
@@ -156,6 +157,7 @@ func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession,
 		return e
 	}
 	res.BytesRead, res.Work, res.LogicalBytes = b.r.totalRead, b.work, b.logical
+	ordinaryStage("seal", b)
 	return sealOutput(res, ReplayOperations()["evidence-replay"].OutputBytes)
 }
 

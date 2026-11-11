@@ -321,7 +321,7 @@ func (s *eligibilitySession) ordinaryReferences(reg OrdinaryRegistration, select
 			}
 			out.offsets = append(out.offsets, offset)
 			obs := QueryReferenceObservation{Query: row.Query, Step: 0, SourceBytes: uint64(len(sourceBytes)), SourceSHA256: digestHex(sourceBytes)}
-			ref, code, complete, e := decodeReferenceResponseBound(actual, obs, librarySHA, req.Args[symbolIndex], queries[i], true, [][]byte{sourceBytes}, s.r)
+			ref, code, complete, e := decodeReferenceResponseRow(actual, obs, librarySHA, req.Args[symbolIndex], queries[i], true, [][]byte{sourceBytes}, s.r, true)
 			if e != nil {
 				return result, e
 			}

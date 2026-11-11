@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 ordinary reference row 예약 검증
+
+`TestOrdinaryReferenceRowAccounting`와 `TestOrdinaryReceiptDecodeAccounting`은 native 없이 실행되며, ordinary reference row와 process receipt의 decode 원장이 실제 할당(`TotalAlloc`)과 방문 수 이상인지 assert한다. 정상 형태 행은 20,000 node CST, capture 12,000개, 긴 node type·capture 이름·query id, 100,000개의 빈 capture 이름, 60,000개 match mapping이고, 오류 입력은 31단계 중첩의 긴 이름, 긴 문자열의 잘못된 escape, 긴 중복 이름, 100,000개 `{}` 배열, 넓은 이름 집합, 큰 문자열 schema다. Work는 독립 token 순회로 센 값 수의 5배(preflight 1 + head 2 + full 2 순회)와 query source hash byte 이상이어야 한다. `TestReferenceRowSharedDecodeUnchanged`는 공용 `decodeReferenceResponseBound`가 기존 head/full 두 decode와 `reserveReference`, `reference-points`의 합과 같은 원장을 유지하고 ordinary 경로가 더 작은지 확인한다. Opt-in `TestOrdinaryReferenceRowsAccountingSQL`은 선택 TSQL 40행과 PostgreSQL 9행에서 같은 부등식을 실제 입력으로 검사한다. 오류·buffer 예약에서 `32·(maxPath+maxName)` 항을 뺀 mutant는 `error-duplicate-long-name`과 중첩 이름 입력에서 `accounted logical … below … bytes allocated`로 실패해야 한다. 이 mutant는 test-only overlay로 한 번에 하나만 실행하며 제품 원문을 바꾸지 않는다.
+
+`TestOrdinarySQLPublicPassCapacity`의 단계별 원장(`public-ledger.jsonl`의 `kind: stage`)은 추적되는 test-only hook(`ordinaryStageHook`, `ordinaryChargeHook`, `src/kit/query_ordinary_hook.go`)과 `ordinaryInstallLedgerHooks`(`query_ordinary_ledger_test.go`)로 기록한다. 이전의 미추적 overlay 없이 opt-in 환경 변수만으로 끝까지 실행되며 hook은 제품 동작·원장·오류를 바꾸지 않는다.
+
 ## #362 ordinary base fact 예약 검증
 
 `TestOrdinaryBaseFactReservationIgnoresUnusedSource`는 declaration/XML 도출 예약이 소비하지 않는 source 길이에 따라 커지지 않는지 확인한다. `TestOrdinaryBaseDeclarationBudgetStopsBeforeHugeDepth`는 빈 level을 포함한 숫자 depth 반복 전에 자원 한도로 중단하고, `TestOrdinaryBaseDeclarationBudgetStopsFrontierExpansion`은 여러 parent 경로의 중복 frontier가 다음 clone·sort·출력 전에 차단되는지 검사한다. 기존 fact 재계산의 모든 step·role·pin·suffix·payload 음성과 독립 expected 경계를 유지한다.

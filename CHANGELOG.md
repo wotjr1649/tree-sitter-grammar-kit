@@ -2,6 +2,7 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Ordinary reference row 처리의 원장을 실제 순회에 맞췄다(Refs #362). Ordinary row는 head와 full decode가 한 번의 preflight를 공유하고, 오류·buffer 예약은 한 경로의 member 이름 byte(`32·(maxPath+maxName)`)로 계상하며 typed 값은 Go 크기로 계상한다. Ordinary scope의 process receipt도 같은 오류·buffer 예약을 쓴다. 선택 TSQL 40행의 decode+`reserveReference`가 logical 222,514,364 B에서 41,291,129 B로 줄었고 `reference-rows` 단계(71,807,549 B)를 통과한다. 공용 reference 호출의 원장은 그대로다. `TestOrdinarySQLPublicPassCapacity`의 단계 기록은 추적되는 test-only hook으로 옮겨 overlay 없이 실행된다. 한도·expected·reference row 내용은 바꾸지 않았다. TSQL은 독립 tuple 판정에서 `ordinary-expected-tree` logical 한도로 멈추고(tuple 10개 VERIFIED) PostgreSQL은 9/9 VERIFIED를 유지한다.
 - 선택 TSQL shard `alt-tsql-B01-r001`의 독립 expected asset 107개(metadata 8·full CST 9·ordered captures 72·facts 18)를 grammar.json·scanner 원문·query cursor 규칙에서 손으로 작성하고 native 실행 전에 봉인했다(Refs #362). Opt-in `TestOrdinaryTSQLExpectedAgainstNative`가 같은 actual owned r8에서 72/72 tuple을 제품 adjudicator로 VERIFIED 판정하고 node·capture·fact 변조가 해당 tuple만 FAILED로 만드는지 검사한다. 공개 pass는 합성 reference row 40개의 decode 비용(logical 222,514,364 B)이 남은 logical을 넘어 `reference-rows`에서 `CAPACITY_UNPROVEN`으로 멈추며 한도와 PostgreSQL 9/9 VERIFIED는 바꾸지 않았다. 새 시험 파일 2개가 추가되며 제품 코드는 바꾸지 않았다.
 
 - Ordinary base fact의 공통 capture 제곱×source 예약을 종류별 실제 순회 상한으로 교정했다(Refs #362). Declaration은 depth·parent 검색·frontier 복제/정렬·출력 전에 예약하고, TSQL은 capture pair와 실제 span/exec/errwith 수, XML은 이름별 count 비용을 계상한다. 기존 재계산 의미·음성 시험·한도와 expected 부재의 BLOCKED를 유지하며 test-only 실제 순회·결과 payload 계측과 예약 항 제거 mutant로 검증한다.

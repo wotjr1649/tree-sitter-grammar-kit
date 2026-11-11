@@ -613,6 +613,33 @@ func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg Que
 }
 
 func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
+	return decodeReferenceResponseRow(data, obs, librarySHA256, symbol, q, queryKnown, versions, r, false)
+}
+
+// decodeReferenceResponseRow keeps the shared contract. An ordinary row is preflighted once and
+// the head and full decodes share that preflight; their errors and their order do not change.
+func decodeReferenceResponseRow(data []byte, obs QueryReferenceObservation, librarySHA256, symbol string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run, ordinary bool) (*instrumentedReference, string, bool, *Error) {
+	scanned, scanValues := false, uint64(0)
+	decode := func(target any, exact bool) *Error {
+		if !ordinary || r.eligibility == nil {
+			return decodeWitnessDocument("reference-response", data, target, exact, r)
+		}
+		b := r.eligibility
+		if !scanned {
+			// Three passes: preflight, shape walk and unmarshal of this first decode.
+			if e := b.charge(1, uint64(len(data)), "reference-response"); e != nil {
+				return e
+			}
+			values, e := b.reserveJSONContainersCount("reference-response", data, 3, 80, true)
+			if e != nil {
+				return e
+			}
+			scanned, scanValues = true, values
+		} else if e := b.charge(2*scanValues, 2*uint64(len(data)), "reference-response"); e != nil {
+			return e
+		}
+		return b.decodeTypedScanned("reference-response", data, target, b.unmetered, exact, true, true)
+	}
 	var head struct {
 		Schema   string `json:"schema"`
 		Status   string `json:"status"`
@@ -625,14 +652,14 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 		}
 		return nil, "REFERENCE_RESPONSE_INVALID", false, nil
 	}
-	if e := decodeWitnessDocument("reference-response", data, &head, false, r); e != nil {
+	if e := decode(&head, false); e != nil {
 		return invalid(e)
 	}
 	if head.Schema != instrumentedReferenceSchema {
 		return nil, "REFERENCE_RESPONSE_SCHEMA", false, nil
 	}
 	if head.Status == StatusFailed && !head.Complete && head.Code != "" {
-		if e := decodeWitnessDocument("reference-response", data, &head, true, r); e != nil {
+		if e := decode(&head, true); e != nil {
 			return invalid(e)
 		}
 		if !slices.Contains([]string{
@@ -648,7 +675,7 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 		return nil, "", false, nil
 	}
 	var ref instrumentedReference
-	if e := decodeWitnessDocument("reference-response", data, &ref, true, r); e != nil {
+	if e := decode(&ref, true); e != nil {
 		return invalid(e)
 	}
 	if r.eligibility != nil {

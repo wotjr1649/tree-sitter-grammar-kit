@@ -726,7 +726,7 @@ func ordinarySQLRunRoute(t *testing.T, routeDir, route string, mutation *ordinar
 	if err := os.WriteFile(ledgerPath, nil, 0600); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("TSGK_ORDINARY_LEDGER_TRACE", ledgerPath)
+	ordinaryInstallLedgerHooks(t, ledgerPath)
 	references := ordinarySQLSyntheticReferences(t, profile, source, registration, expected, metadata)
 	req = ordinaryE2EAssemble(t, req, producerDir, references, assetBodies)
 	ctx, stop := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
