@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	classificationGoDefinitionInventorySHA     = "b62bc4951646dac5e1523270170d19e64797a95492cbde8c359314a33f6d5143"
-	classificationGoDefinitionQualificationSHA = "43654f240a5d13a09107b9bfffb95c5b4ef81b4ae3d1f0dbd318b5b5fe731d5a"
+	classificationGoDefinitionInventorySHA     = "bca429d4e02729db4e66ae53ad31b835ec0b95471504d9b9ef0499b8b19bc0b6"
+	classificationGoDefinitionQualificationSHA = "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
 	classificationGoDefinitionQueriesSHA       = "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
 	classificationCSharpDefinitionQueriesSHA   = "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
 	classificationCSharpFactQueryPackSHA       = "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"

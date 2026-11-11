@@ -74,8 +74,8 @@
      },
      {
       "path": "src/scanner.c",
-      "bytes": 61112,
-      "sha256": "8ed217a313908371b8941d2f9586aff8750b113785c4a07aa9b86def55ffb36b"
+      "bytes": 61493,
+      "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed"
      }
     ]
    }

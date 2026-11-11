@@ -192,8 +192,59 @@ func testCSharpLexicalBoundaries(t *testing.T, b *Build) {
 			}
 		})
 	}
+	t.Run("pragma-string-boundaries", func(t *testing.T) { testCSharpPragmaStringBoundaries(t, b) })
 	t.Run("residual-oracle-controls", func(t *testing.T) { testCSharpResidualOracleControls(t, b) })
 	t.Run("registered-define-trailing-comment", func(t *testing.T) { testCSharpRegisteredDefineTrailingComment(t, b) })
+}
+
+func testCSharpPragmaStringBoundaries(t *testing.T, b *Build) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "csharp-pp", "pragma-string-boundaries.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Schema string `json:"schema"`
+		Cases  []struct {
+			ID         string `json:"id"`
+			Source     string `json:"source"`
+			UndefStart uint32 `json:"undef_start"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Schema != "tsgk-csharp-pragma-string-boundaries/r1" || len(fixture.Cases) != 30 {
+		t.Fatal("pragma string boundary fixture is incomplete")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, tc := range fixture.Cases {
+		t.Run(tc.ID, func(t *testing.T) {
+			if int(tc.UndefStart) != strings.Index(tc.Source, "#undef") {
+				t.Fatal("independent directive anchor does not match source")
+			}
+			c := kit.IncrementalCase{ID: tc.ID, Encoding: kit.EncodingUTF8, Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(tc.Source))
+			if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass || len(r.Steps) != 1 {
+				t.Fatalf("pragma boundary %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+			}
+			nodes := r.Steps[0].Incremental.Tree.Nodes
+			for _, want := range []struct {
+				kind       string
+				start, end uint32
+			}{
+				{"preproc_pragma", 0, tc.UndefStart},
+				{"preproc_arg", 8, tc.UndefStart - 1},
+				{"#undef", tc.UndefStart, tc.UndefStart + 6},
+			} {
+				if !slices.ContainsFunc(nodes, func(n kit.TreeNode) bool {
+					return n.Type == want.kind && n.StartByte == want.start && n.EndByte == want.end && !n.IsMissing
+				}) {
+					t.Fatalf("pragma tail lost %s [%d,%d)", want.kind, want.start, want.end)
+				}
+			}
+		})
+	}
 }
 
 func testCSharpResidualOracleControls(t *testing.T, b *Build) {

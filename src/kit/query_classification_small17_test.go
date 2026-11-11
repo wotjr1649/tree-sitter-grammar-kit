@@ -15,7 +15,7 @@ import (
 )
 
 const classificationSmall17FactQueryPackSHA = "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
-const classificationSmall17NativeRoutesSHA = "788820dc1f9106713b4cc5533f7fe52c9c78f54abf7432c5662611ca35d58a75"
+const classificationSmall17NativeRoutesSHA = "5cd47f70e7af9cad9eb0e19cc70daae1c3244127c92c89f4e5192d2a1f6946d7"
 
 type classificationSmall17GrammarFile struct {
 	Path string

@@ -119,3 +119,16 @@ current fixture의 profile은 LF bytes를 실행 전에 고정한 뒤 실제 `ts
 gofmt·go vet·mandatory native preprocess/CLI symbols·kit 영향 검사·classification-native·ci-gate는 PASS다. 명시적 capture 환경이 없는 수동 kit5개/native2개는 SKIP이다. 동일 HARD4GiB/300초의 foundation 전체는 기존 `unresponsive-native-gh`만 FAIL(599.2734ms, fallback 로그 부재), top-level58 PASS·SKIP0이었다. 별도 환경 대조에서 mixed-slash `ComSpec`의 `.cmd` 인자 전달이 `--jq` 안의 `|`를 cmd 파이프로 해석해 exit255로 끝나고 hang shim에 진입하지 못하는 것을 확인했다. 자식 ComSpec만 역슬래시로 정규화하면 shim hang과 실제 미수정 leaf의 PASS(1.93초)가 확인됐다. 전체 foundation의 최초 FAIL은 유지하며 시험·workflow·보호 조건을 바꾸지 않았다.
 
 두 독립 STATIC_REVIEW에서 parser/CST와 identity/evidence를 서로 다른 관점으로 교차 확인했고 blocking finding은 없었다. outer receipt509개 모두 HARD·peak_known·cleanup verified·잔류0, timeout/메모리 hit/출력 잘림0이며 최대 Job committed peak는1,488.105MiB다. 이는 로컬 지정 관문의 근거이며 PR/main CI·Linux/macOS/sanitizer·새 Roslyn/실제 semantic capture·#233 전체 acceptance는 미완료다. LF 정상 pragma 회귀와 고정 scratch의 성공을 malformed/inactive/nested·모든 newline/pragma-comment 조합의 보편적 증명으로 확대하지 않는다.
+
+
+## 2026-11-12 pragma verbatim quote 경계 회귀 교정 (#233)
+
+PR #369의 후속 P2는 `scan_pragma_raw_tail`이 `@"a"""""`의 첫 content quote에서 일반 문자열처럼 닫고 남은 quote를 multiline raw opener로 오인하는 회귀다. 수정 전 실제 native에서 정상30개 중 세 verbatim prefix의 doubled quote가 두 쌍 이상인18개는 다음 `#undef`와 후속 class를 pragma tail로 삼켰다. NO_ERROR만으로는 이 소실을 검출할 수 없었다.
+
+helper는 raw quote run 검사 전에 `@`/`$@`/`@$` prefix와 doubled quote를 넘긴다. 일반 문자열의 backslash escape와 char literal 처리를 보존하고, 기존 first-physical-line 종료·raw tail 내부 directive 차단·두 caller·직렬화 형식과 자원 한도는 유지한다. scanner는61,493 bytes / SHA256 `8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed`다. 두 생성 workspace의 출력6개는 product3 pin과 같으며 등록 상태의 normal prepare도 PASS다. language/native/qualification scanner pin, qualification/query-slot inventory, P0 registry 원문 pin 및 파생 registry와 source-bound opt-in 시험 pin을 갱신했다. 기존 C# capture ABI의662 symbols(658+4 alias)·26 fields는 그대로다.
+
+새 fixture30개는 정상 pragma/arg/다음 `#undef` span을 검사하고 모두 PASS다. 이전 정상12개 full CST는 같고 소실18개를 복원했다. scratch424는 CST 생성 성공422개와 기존 producer failure2개(exit2)를 구분하며22 gate가 PASS다. 정상 원본88 full CST 차분0, 승인5 source SHA/ERROR 소실3 source SHA 정확한 일치, edit40 equality, 상태32왕복·invalid3거부, 별도 newline18을 유지했다. 새 Roslyn 실행이나 승인 집합 추가는 없다. 새 회귀의 기대값은 C# 명세의 문자열/char 경계와 pragma 물리행에 근거하며 기존 고정 Roslyn 관측과 구분한다.
+
+제품 S05 C#361·S06 C#390은 전부 PASS, SVC69는 각68 PASS·기존1 BLOCKED·FAIL0이며 사례별 expectation 행을 직접 대조했다. symbols6set/30case의25 PASS·등록5 BLOCKED가 정확히 일치한다. current symbol fixture는 실행 전 LF profile을 고정한 실제 CLI로 재기록했고 원본/역사11파일은 그대로다. gofmt·vet·mandatory native preprocess와 CLI symbols·kit 영향 검사·classification-native·ci-gate·queryregistry·foundation 전체는 exit0다. foundation은62 top-level PASS·SKIP0, 수동 환경 없는 kit5개/native2개는 SKIP로 구분했다. product3 환경 진단에 따라 이번 자식 process의 ComSpec만 정상 Windows 역슬래시 경로로 지정했으며 host·시험·workflow를 수정하지 않았다.
+
+outer receipt573개 모두 HARD·peak_known·cleanup verified/잔류0, timeout·memory limit hit·출력 잘림0이다. 최대 Job committed peak는1,274.293MiB이며 nonzero5개는 위 producer failure2와 invalid state3이다. 이 기록은 지정된 로컬 회귀 교정의 근거다. PR/main CI, Linux/macOS/sanitizer, 새 Roslyn 및 실제 query reference capture/승인, 보간 expression 내부의 모든 중첩 문자열·char 조합과 #233 전체 acceptance를 입증하지 않는다.

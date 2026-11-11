@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- C# pragma tail에서 verbatim 문자열의 doubled quote를 raw opener로 오인해 다음 실제 directive를 잃던 회귀를 교정했다(#233). `@`·`$@`·`@$`, 일반 문자열 escape 및 char literal의 정상30개 native 회귀를 추가하고 scanner와 파생 registry identity를 갱신했다.
+
 - C#의 #233 lexical recovery 잔여 후보(C1–C4)를 제품 C2 patch chain에 반영했다: malformed single-line raw token의 newline 소유, q−1/q+1 raw closing, `#pragma` raw tail의 내부 directive 차단, `#line` filename 뒤 block comment의 오류 유지. directive 뒤 `//` comment는 정상 comment로 받고 pragma 꼬리는 기존 `preproc_arg` CST를 보존한다. 원본 157개 중 정상 88개의 CST 변화는 0이고, 허용된 교정은 고정 Roslyn 근거의 raw 2·pragma 2·`#if A // note` 1, 총 5건이다. S05 C# 361·S06 C# 390이 모두 통과하고 SVC는 기존 BLOCKED 1건 외 통과한다.
 
 - ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
