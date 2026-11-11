@@ -4,6 +4,8 @@
 
 - 직접 eligibility에 승인 historical catalogue·Rust tuple을 쓰는 `Pins` opt-in과 r2 결과를 추가했다. 생산 후보가 바뀌어도 같은 과거 증거·승인의 판정을 보존하고 고정 의무9/4/53/36·known-rule와 기존 tool/receipt/source/vendor 검사를 유지한다. V2-B1 Go verifier 분할이며 Python/workflow·classification 및 semantic/replay/CLI/runtime 전달은 남아 있다. Refs #370.
 
+- inventory 선택 경로에서 전역 의미 검증의 실제 중복 실행을 없애고, 선택 의미 검증 work를 구조 방문·검사 문자열·기존 중첩 검색 상한으로 계상한다(Refs #362). SVC의 byte 상한과 기존 logical·공유 한도는 유지하며26 route의 원장·실제 순회 계측·오류 parity와 mutant로 검증한다. 전체 ordinary 수용이나 새 runtime 관측을 뜻하지 않는다.
+
 - C# pragma tail에서 verbatim 문자열의 doubled quote를 raw opener로 오인해 다음 실제 directive를 잃던 회귀를 교정했다(#233). `@`·`$@`·`@$`, 일반 문자열 escape 및 char literal의 정상30개 native 회귀를 추가하고 scanner와 파생 registry identity를 갱신했다.
 
 - C#의 #233 lexical recovery 잔여 후보(C1–C4)를 제품 C2 patch chain에 반영했다: malformed single-line raw token의 newline 소유, q−1/q+1 raw closing, `#pragma` raw tail의 내부 directive 차단, `#line` filename 뒤 block comment의 오류 유지. directive 뒤 `//` comment는 정상 comment로 받고 pragma 꼬리는 기존 `preproc_arg` CST를 보존한다. 원본 157개 중 정상 88개의 CST 변화는 0이고, 허용된 교정은 고정 Roslyn 근거의 raw 2·pragma 2·`#if A // note` 1, 총 5건이다. S05 C# 361·S06 C# 390이 모두 통과하고 SVC는 기존 BLOCKED 1건 외 통과한다.
