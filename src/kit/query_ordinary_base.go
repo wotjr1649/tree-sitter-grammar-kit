@@ -2,6 +2,7 @@ package kit
 
 import (
 	"encoding/json/jsontext"
+	"math/bits"
 	"reflect"
 	"slices"
 
@@ -175,8 +176,9 @@ func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseInd
 
 func (b *eligibilityBudget) ordinarySemanticBaseCache(profile OracleProfile, cache *ordinaryCaseCache) (*semanticNativeCache, *Error) {
 	out := &semanticNativeCache{
-		record:  eligibilityNativeRecord{raw: cache.raw, rawBytes: uint64(max(0, len(cache.ResponseFrame)-4)), haveRaw: true},
-		checked: cache.checked, versions: cache.versions, points: cache.points, ready: cache.ready,
+		ordinaryBase: true,
+		record:       eligibilityNativeRecord{raw: cache.raw, rawBytes: uint64(max(0, len(cache.ResponseFrame)-4)), haveRaw: true},
+		checked:      cache.checked, versions: cache.versions, points: cache.points, ready: cache.ready,
 	}
 	out.record.approved.ProducerSHA256 = cache.request.ObservationProducerSHA256
 	count := len(profile.OracleCases[0].QueryExpect)
@@ -258,7 +260,11 @@ func (b *eligibilityBudget) ordinaryBindBaseProjection(profile OracleProfile, ca
 	if e != nil {
 		return projection, nil, e
 	}
-	if e := b.semanticProjectionInputs(cache.raw, rawAST, uint64(max(0, len(cache.ResponseFrame)-4)), add); e != nil {
+	inputBytes, e := b.ordinaryBaseInputBytes(cache.raw, rawAST)
+	if e != nil {
+		return projection, nil, e
+	}
+	if e := b.semanticProjectionInputs(cache.raw, rawAST, inputBytes, add); e != nil {
 		return projection, nil, e
 	}
 	if len(projection.Steps) != len(cache.checked) {
@@ -715,4 +721,167 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 		return e
 	}
 	return b.charge(work+uint64(len(tree.Nodes))+uint64(len(q.Source)), logical, "ordinary-base-fact-derive")
+}
+
+// Bound only the values semanticProjectionInputs serializes, including JSON escaping.
+func (b *eligibilityBudget) ordinaryBaseInputBytes(raw nativewire.Response, projection *jv) (uint64, *Error) {
+	var rootKeys uint64
+	if projection != nil {
+		rootKeys = uint64(len(projection.keys))
+	}
+	// Include this estimator's lookups and the shared comparator's bounded field names.
+	if e := b.charge(256*rootKeys+3, 0, "ordinary-base-input-size"); e != nil {
+		return 0, e
+	}
+	status := jvMember(projection, "execution_status")
+	if raw.Status != StatusCompleted || status == nil || status.s != StatusCompleted {
+		return 0, nil
+	}
+	p := raw.Producer
+	n := uint64(1024 + 6*(len(p.Query)+len(p.ReuseObservation)+len(raw.Status)+len(raw.Code)))
+	for _, value := range []*string{p.API, p.Predicates} {
+		if value != nil {
+			n += 6 * uint64(len(*value))
+		}
+	}
+	steps := jvMember(projection, "steps")
+	for i, step := range raw.Steps {
+		var view *jv
+		if steps != nil && i < len(steps.vals) {
+			view = steps.vals[i]
+		}
+		var keys uint64
+		if view != nil {
+			keys = uint64(len(view.keys))
+		}
+		if e := b.charge(256*keys+5, 0, "ordinary-base-input-size"); e != nil {
+			return 0, e
+		}
+		for _, role := range []string{"incremental", "fresh"} {
+			if tree := jvMember(view, role); tree != nil {
+				if e := b.charge(32*uint64(len(tree.keys)), 0, "ordinary-base-input-size"); e != nil {
+					return 0, e
+				}
+			}
+		}
+		n += 512 // route, null declarations and role/container punctuation
+		for _, tree := range []*nativewire.WireTree{&step.Incremental, step.Fresh} {
+			if tree == nil || tree.Declarations == nil {
+				continue
+			}
+			if e := b.charge(uint64(len(*tree.Declarations)), 0, "ordinary-base-input-size"); e != nil {
+				return 0, e
+			}
+			for _, item := range *tree.Declarations {
+				n += 256 + 6*uint64(len(item.Fact)+len(item.NodeType)+len(item.Status))
+			}
+		}
+	}
+	return n, nil
+}
+
+// Decode bytes are reserved separately; retain every shared reducer check.
+func (b *eligibilityBudget) reserveOrdinaryBaseReplay(c *rcCase, want *IncrementalCase, n uint64) *Error {
+	if e := b.charge(uint64(3*len(c.Steps)+len(c.Expectations)+len(c.References))+1, 0, "ordinary-base-replay-size"); e != nil {
+		return e
+	}
+	work := 2*n + 128 + 64*uint64(len(c.Steps)+len(c.Expectations)+len(c.References))
+	identities := func(ids []IdentityRef) *Error {
+		if e := b.charge(uint64(len(ids)), 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		work += 64 * uint64(len(ids))
+		for _, id := range ids {
+			work += 8 * uint64(bits.Len64(n)+1) * uint64(len(id.Role)+len(id.Schema)+len(id.SHA256)+1)
+		}
+		return nil
+	}
+	for _, step := range c.Steps {
+		work += 8 * uint64(len(step.Observations))
+		if step.Composite != nil {
+			if e := identities(step.Composite.Identities); e != nil {
+				return e
+			}
+			if step.Composite.Inline != nil && step.Composite.Inline.Tree != nil {
+				if e := identities(step.Composite.Inline.Tree.Identities); e != nil {
+					return e
+				}
+			}
+		}
+		for _, tree := range []*rcTree{step.Incremental, step.Fresh} {
+			if tree == nil {
+				continue
+			}
+			work += 64 * uint64(len(tree.Queries)+1)
+			if e := b.charge(uint64(len(tree.Queries))+1, 0, "ordinary-base-replay-size"); e != nil {
+				return e
+			}
+			for _, query := range tree.Queries {
+				work += 64 * uint64(len(query.Captures))
+				if e := b.charge(uint64(len(query.Captures)), 0, "ordinary-base-replay-size"); e != nil {
+					return e
+				}
+				for _, capture := range query.Captures {
+					work += 16 * uint64(len(capture.Name)+len(capture.Type))
+				}
+			}
+			if tree.Tree != nil {
+				if e := identities(tree.Tree.Identities); e != nil {
+					return e
+				}
+				if e := b.charge(uint64(len(tree.Tree.Nodes)), 0, "ordinary-base-replay-size"); e != nil {
+					return e
+				}
+				for _, node := range tree.Tree.Nodes {
+					work += 256 + 8*uint64(len(node.Type))
+					if node.Field != nil {
+						work += 8 * uint64(len(*node.Field))
+					}
+				}
+			}
+			if tree.Summary != nil {
+				if e := identities(tree.Summary.Identities); e != nil {
+					return e
+				}
+			}
+		}
+	}
+	for _, expected := range want.Expect {
+		if e := b.charge(uint64(len(expected.Contains)+len(expected.Anchors))+1, 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		work += 64 * uint64(len(expected.Contains)+len(expected.Anchors)+1)
+		for _, value := range expected.Contains {
+			work += 4 * uint64(len(value))
+		}
+		if expected.Step < 0 || expected.Step >= len(c.Steps) || len(expected.Contains)+len(expected.Anchors) == 0 {
+			continue
+		}
+		tree := c.Steps[expected.Step].Incremental
+		if tree == nil || tree.Tree == nil {
+			continue
+		}
+		nodes := tree.Tree.Nodes
+		if e := b.charge(uint64(len(nodes)), 0, "ordinary-base-replay-size"); e != nil {
+			return e
+		}
+		var types uint64
+		for _, node := range nodes {
+			types += uint64(len(node.Type))
+		}
+		if len(expected.Contains) != 0 {
+			if e := b.charge(0, 256*uint64(len(nodes)), "semantic-base-replay"); e != nil {
+				return e
+			}
+			work += 64*uint64(len(nodes)) + 4*types
+		}
+		for _, anchor := range expected.Anchors {
+			part, e := eligibilityProduct("semantic-base-replay", uint64(len(nodes)), 64+4*uint64(len(anchor.Type)))
+			if e != nil {
+				return e
+			}
+			work += part + 4*types
+		}
+	}
+	return b.charge(work, 0, "semantic-base-replay")
 }
