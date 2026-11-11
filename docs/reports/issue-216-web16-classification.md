@@ -69,4 +69,4 @@ Frozen source의 focused 검사는 native18·kit33·foundation49, 최상위100 P
 
 기존 [Small17까지의 역사적52/130](issue-216-small17-classification.md)에 이번16개를 중복 없이 더한 **역사적 조건부 분류 누계는68/130**이다. 서로 다른 source/reader/profile의 합계이며 단일 source의68개 검증이나 전체 완료가 아니다. 나머지62개 정의와 전체 ordinary per-case·semantic 평가, Windows/Linux 후속 검증, SVC69·large4·replay·inventory·fan-in 및 #216/#195 완료는 남아 있다.
 
-새 Linux/macOS 수동 관측은 수행하지 않았다. 기존 mandatory baseline은 유지하며 #303의 알려진 macOS race timeout은 비차단·release 후 분석 처분을 따른다. 최종 release workflow skip은 아직 구현하지 않았다. 새 공개 API·CLI·schema·dependency나 release 발행은 이번 단위에 포함하지 않는다.
+새 Linux/macOS 수동 관측은 수행하지 않았다. 당시에는 기존 mandatory baseline을 유지하고 #303 macOS race timeout을 비차단·release 후 분석 대상으로 두었으며 최종 release workflow skip은 미구현이었다. 이 처분은 이후 [2026-11-06 #303 범위 재정의](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303#issuecomment-6682907056)로 대체됐고 skip 요청은 철회됐다. 현재 macOS CI는 #332로 일시 제외됐으며, #303은 Windows foundation `src/kit`의 자연 표본 판정을 추적한다. 새 공개 API·CLI·schema·dependency나 release 발행은 이번 단위에 포함하지 않는다.
