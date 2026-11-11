@@ -14,7 +14,7 @@ The current implementation consists of repository foundation checks, the Session
 | OS/arch/capabilities | [platform](specs/platform-support.md) |
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
-| #370 역사 자료·reference/runtime 검증, 단일 생산 선택과 공개 pin 전달 | [pin 입력·소비 계약](specs/query-reference-eligibility.md#370-v2-b2-공개-reference-pin-전달), [runtime reader](specs/query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증), [생산 연결](specs/instrumented-query-reference.md#370-v2-b2-단일-생산-pin), [공개 API](specs/public-go-api.md) |
+| #370 역사 자료·reference/runtime 검증, 단일 생산 선택과 공개 pin 전달 | [pin 입력·소비 계약](specs/query-reference-eligibility.md#370-v2-b2-공개-reference-pin-전달), [runtime reader](specs/query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증), [logger replay/qualification](specs/query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in), [생산 연결](specs/instrumented-query-reference.md#370-v2-b2-단일-생산-pin), [공개 API](specs/public-go-api.md) |
 | Generator reproduction routes, tool digests | [reproduction registry](../src/contracts/reproduction-routes.json) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
 | Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md), [disposition](validation/language-feature-disposition.md), [production alternatives](../src/contracts/feature-alternatives.json), [source risks](validation/source-feature-feasibility.md) |

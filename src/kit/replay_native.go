@@ -172,8 +172,11 @@ type rcCase struct {
 	PreprocessCST jsontext.Value    `json:"preprocess_cst,omitempty"`
 	Process       jsontext.Value    `json:"process"` // only read for a stopped symbol-mode case (#218)
 	Producer      *struct {
-		Query            string         `json:"query"`
-		ReuseObservation jsontext.Value `json:"reuse_observation,omitempty"`
+		Query                  string         `json:"query"`
+		ReuseObservation       jsontext.Value `json:"reuse_observation,omitempty"`
+		LanguageVersion        jsontext.Value `json:"language_version"`
+		RuntimeLanguageVersion jsontext.Value `json:"runtime_language_version"`
+		RuntimeMinCompatible   jsontext.Value `json:"runtime_min_compatible"`
 	} `json:"producer"`
 }
 

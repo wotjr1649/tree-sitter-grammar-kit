@@ -1,5 +1,13 @@
 # Validation and merge contract
 
+## #370 V2-C2 logger replay·qualification 검사
+
+`TestReplayLoggerPinsProductionIndependence`는 선택적/mandatory logger replay의 전체 historical PASS와 B/C 생산 후보 선택 후 A 결과·counter·소비 identity 불변성을 검사한다. `TestReplayLoggerPinsRejectForgery`·`TestReplayLoggerPinsAdmission`은 위조 tuple/승인/subject·producer/observation/raw·ABI·runtime commit·inventory 축소·누락과 기존 reducer scope를 검사한다. `TestLoggerPinsHostMarkers`는 producer가 없는 marker도 승인 기대값만 사용하며 current fallback과 누락을 거부하는지 확인한다. 저장 PASS에서 고정8개 자료와 counter를 함께 축소한 반례도 거부한다. 저장 r5 reader는 graph subject의 status·assessment·mode 변조도 거부한다. `TestLoggerPinsSharedBudget`는 공유 read/work/logical counter 차분과 기존 runtime context 복원·work 상한을 검사한다.
+
+`TestQualificationLoggerPinsHistoricalRuntime`·`TestQualificationLoggerPinsRejectsUnboundRuntime`·`TestQualificationLoggerPinsLegacyAndScope`는 실제 ordinary r4 host 경로를 실행한다. Historical 승인 host와 legacy current host의 격리, B/C 결과 전체 불변성, tuple/subject·projection/raw·ABI·commit 위조 및 기존 current-only 실패·semantic 동시 입력 거부를 확인한다. 전체 qualification은 fixture의 미충족 요구 때문에 BLOCKED일 수 있으며 logger mechanism PASS와 구분한다. 합성 자료는 실제 과거 실행 관측이나 새 runtime 자격을 대신하지 않는다.
+
+Tuple의 material SHA 대조를 제거한 test-only overlay에서 replay와 qualification의 위조 시험이 assertion으로 실패해야 한다. Compile 실패는 mutant 검출이 아니다. `CGO_ENABLED=0`에서 gofmt·vet/build, kit 전체·CLI 전체·영향 native·foundation 전체를 직접 실행하고 SKIP·test-only packaging overlay를 보고한다. 기존 `TestQualificationMandatoryObservation`의 오류 순서와 C1 semantic 회귀를 유지한다.
+
 ## #370 V2-C historical runtime 검증
 
 `TestRuntimePinsProductionIndependence`는 pre-#213 manifest/driver에 결속한 합성 저장 증거를 B/C 생산 후보와 독립적으로 판독하고 판정·counter·소비 identity 전체를 비교한다. 새 ABI 상하한과 driver를 가진 승인 조합도 검증하며 legacy historical BLOCKED는 유지한다. `TestRuntimePinsRejectForgery`는 tuple/manifest/driver/ABI·marker/capability/build 결속, 누락,83-file/3-patch 의무 축소·중복·shim·reader·외부 승인 모순을 검사한다. Tuple과 승인 자료 비교를 제거한 overlay mutant는 해당 위조 assertion으로 실패해야 한다.
@@ -8,7 +16,7 @@
 
 `TestSemanticRuntimePinsProductionIndependence`는 기존 전체 native fixture의 manifest Note만 바꾼 합성 비현재 identity로 semantic API와 `oracle-set-r7` replay의 전체 PASS와 B/C 결과 불변성을 검사한다. 실제 보존된 runtime body·driver를 유지하며 미보존 pre-#213 checkout을 만들어 내지 않는다. Semantic base의 mandatory logger 재계산도 같은 context를 사용해야 한다. `TestQualificationRuntimePinsProductionIndependence`와 `TestQualificationRuntimePinsRejectForgery`는 별도의 합성 비현재 manifest를 실제 qualification→replay→eligibility까지 전달하고 A/B/C·미승인·tuple/driver 모순·필수 driver 누락을 검사한다. 이 qualification fixture는 의도적으로 불완전한 Oracle set에서 중단하므로 전체 qualification PASS가 아니다. 지정 runtime 환경의 SKIP은 PASS로 세지 않으며, 합성 관측은 실제 historical runtime 실행이나 새 ABI 자격 근거가 아니다.
 
-`CGO_ENABLED=0`에서 gofmt·`go vet ./src/...`·`go build ./src/...`, kit 전체·CLI 전체·영향 native·foundation 전체(`TestNoHardcodedToolVersions` 포함)를 실행한다. Native 환경은 지정한 `TSGK_NATIVE_RUNTIME`와 `TSGK_NATIVE_CC`를 사용한다. Accepted·preprocess-CST·일반 logger replay의 historical 통합과 실제 reference 실행·필수 CI/PR/main 통합은 별도 범위다.
+`CGO_ENABLED=0`에서 gofmt·`go vet ./src/...`·`go build ./src/...`, kit 전체·CLI 전체·영향 native·foundation 전체(`TestNoHardcodedToolVersions` 포함)를 실행한다. Native 환경은 지정한 `TSGK_NATIVE_RUNTIME`와 `TSGK_NATIVE_CC`를 사용한다. 일반 logger replay·qualification의 historical 통합은 위 V2-C2 검사를 따른다. Accepted·preprocess-CST와 실제 reference 실행·필수 CI/PR/main 통합은 별도 범위다.
 
 ## #370 V2-B2 생산·공개 pin 전달 검증
 

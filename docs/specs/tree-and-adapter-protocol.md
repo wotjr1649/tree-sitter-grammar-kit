@@ -406,3 +406,7 @@ Replay producer 검증은 caller-trusted registration의 producer 선택과 저�
 ## Accepted reuse opt-in (#264)
 
 `--reuse-accepted FILE`의 current structural result/r7 및 Oracle record/r3·manifest/r4, 요청·source·전체 CST·logger 결속, 기존 route 승격의 제한은 [accepted reuse 계약](reuse-accepted.md)이 소유한다. 기존 symbol result/r6과 mandatory 관측의 의미는 유지한다.
+
+### #370 V2-C2 일반 logger historical 판독
+
+위 legacy current/previous 및 r4 current-only 규칙은 기존 호출의 의미다. 명시적 [RuntimePins opt-in](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)은 승인 tuple의 manifest·logger reader·ABI를 projection/producer/raw/marker와 mandatory claim에 전달한다. Host marker가 기대 runtime을 결정하지 않는다. 기존 raw strict 검사와 source/edit/role/run/build 결속은 그대로 수행한다. Accepted-event/r1 및 preprocess-CST 판독 권한은 이 logger token에서 파생하지 않는다.

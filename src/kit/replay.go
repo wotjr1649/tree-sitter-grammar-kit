@@ -27,6 +27,7 @@ const (
 	ReplayReferenceResultSchema     = "tsgk-replay-result/r2"
 	ReplaySemanticsResultSchema     = "tsgk-replay-result/r3"
 	ReplaySemanticsPinsResultSchema = "tsgk-replay-result/r4"
+	ReplayLoggerPinsResultSchema    = "tsgk-replay-result/r5"
 
 	ModeReplayedRaw           = "REPLAYED_RAW"
 	ModeCarriedForward        = "CARRIED_FORWARD"
@@ -148,6 +149,7 @@ type ReplayResult struct {
 	Explanation    []string                        `json:"explanation"`
 	QueryReference *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
 	QuerySemantics *QuerySemanticsResult           `json:"query_semantics,omitempty"`
+	RuntimePins    *RuntimeEvidenceResult          `json:"runtime_pins,omitempty"`
 	PreprocessCST  []PreprocessCSTCase             `json:"preprocess_cst,omitempty"`
 }
 
@@ -157,6 +159,8 @@ type ReplayRequest struct {
 	Profile []byte
 	// Pins is caller-trusted historical material approval; it is never read from the graph.
 	Pins *EvidencePinsRequest
+	// RuntimePins approves logger interpretation for the exact Profile bytes.
+	RuntimePins *EvidencePinsRequest
 }
 
 // ParseReplayProfile strictly decodes a tsgk-replay/r1 registration.
@@ -454,6 +458,13 @@ func reducerTable() map[string]reducer {
 		return replayOracleSet(x)
 	}
 	t[or3.info.ID] = or3
+	for _, pair := range []struct{ id, base, revision string }{{"native-result-r9", "native-result-r3", "r9"}, {"native-result-r10", "native-result-r4", "r10"}} {
+		pinned := t[pair.base]
+		pinned.info.ID, pinned.info.Revision = pair.id, pair.revision
+		pinned.info.Inputs = append(slices.Clone(pinned.info.Inputs), "caller-approved runtime tuple and original materials")
+		pinned.info.Description += "; caller-approved historical logger interpretation, bound to the exact replay profile"
+		t[pair.id] = pinned
+	}
 	return t
 }
 
@@ -524,7 +535,9 @@ type replayEnv struct {
 	acceptedLegacyConsumer func(string, caseOutcome, string)
 	nativeInputBytes       uint64
 	reuseObservation       bool
-	observationRuntime     *reuseobs.RuntimePin // Set only by an approved historical semantic consumer.
+	loggerRuntime          *eligibilityRuntimePins
+	observationManifest    string
+	observationRuntime     *reuseobs.RuntimePin // Set only by an approved historical consumer.
 	mandatoryObservation   bool                 // r4: the observation claim is mandatory and folds into the verdict
 	preprocess             bool                 // r5: the C# symbol mode (#218)
 	preprocessTrees        []preprocessTree     // r5: every symbol-mode tree, for its policy
@@ -906,7 +919,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
-		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || partial.reuseAccepted) {
+		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || res.ResultSchema == ReplayLoggerPinsResultSchema || partial.reuseAccepted) {
 			res.QuerySemantics = partial.querySemantics
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
 			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
@@ -957,6 +970,9 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		return bad(selectionErr)
 	}
+	if req.RuntimePins != nil || loggerPinsReducer(selected) {
+		res.ResultSchema = ReplayLoggerPinsResultSchema
+	}
 	if selected == "oracle-set-r7" {
 		res.ResultSchema = ReplaySemanticsPinsResultSchema
 	}
@@ -1000,6 +1016,12 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	}
 	if prof.Reducer == "oracle-set-r7" && req.Pins == nil || prof.Reducer != "oracle-set-r7" && req.Pins != nil {
 		return bad(fail(KindInvalidInput, "REPLAY_PINS_REDUCER_MISMATCH", "replay", nil))
+	}
+	if loggerPinsReducer(prof.Reducer) != (req.RuntimePins != nil) {
+		return bad(fail(KindInvalidInput, "REPLAY_RUNTIME_PINS_REDUCER_MISMATCH", "replay", nil))
+	}
+	if loggerPinsReducer(prof.Reducer) {
+		res.ResultSchema = ReplayLoggerPinsResultSchema
 	}
 	res.ProfileID, res.Subject, res.Operation = prof.ID, prof.Subject, prof.Operation
 	res.Recorded = Verdict{prof.Subject.ExecutionStatus, prof.Subject.Assessment}
@@ -1104,6 +1126,23 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		}()
 	}
 	partial = x
+	if req.RuntimePins != nil {
+		if r.eligibility == nil {
+			r.eligibility = &eligibilityBudget{r: r}
+		}
+		pinResult, runtime, pinErr := verifyLoggerRuntime(req.RuntimePins, req.Profile, r.eligibility)
+		res.RuntimePins = &pinResult
+		if pinErr != nil {
+			return bad(pinErr)
+		}
+		if runtime == nil {
+			res.ExecutionStatus, res.Assessment = StatusCompleted, pinResult.Assessment
+			res.BytesRead = r.totalRead
+			res.Findings = append(res.Findings, pinResult.Findings...)
+			return res, nil
+		}
+		x.loggerRuntime, x.observationRuntime, x.observationManifest = runtime, &runtime.logger, runtime.tuple.ManifestSHA256
+	}
 	x.qualificationSemantics = borrowed
 	for _, m := range prof.Members {
 		x.members[m.Path] = m

@@ -95,3 +95,7 @@ source/tool 확보와 offline 제품 호출을 분리한다. 승인 기록은 �
 ## #370 V2-B1 직접 reference opt-in 경계
 
 직접 eligibility의 `Pins`는 [historical reference 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. 독립 승인 sidecar와 pin 집합을 기존 eligibility Approval 원문에 결속하며 catalogue·tuple·controller 원문은 같은 상속 원장에서 처리한다. Materials 결속 PASS에 의미 검증 권한을 암묵적으로 주지 않는다. Reader 소유 의무와 기존 build/control/native 검사가 추가로 필요하다. 현재 생산 선택을 역사 신뢰 입력으로 사용하지 않는다. CLI file admission과 semantic/replay/qualification 전달은 이 분할에 포함되지 않는다.
+
+## #370 V2-C2 logger 입력 경계
+
+Logger의 `RuntimePins`는 caller-trusted byte 입력이며 증거 graph에서 승인 문서를 찾거나 생성하지 않는다. [정확한 subject·scope 계약](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)에 따라 두 외부 승인 digest, 원문 집합, tuple과 reader 의무를 먼저 검증한다. 부분 material PASS는 실행 진위나 accepted/preprocess 권한이 아니다. 입력 소유권·deadline·공유 한도를 유지하며 token은 host/ordinary set 범위를 넘지 않는다. 새로운 CLI 파일 admission이나 파일 수 예외는 없다.

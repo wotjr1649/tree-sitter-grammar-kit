@@ -45,17 +45,18 @@ func (q *qualifier) close() {
 // qhost is one host directory: its walked files, its run identity and the files the
 // workloads used; a rejected host contributes no cell.
 type qhost struct {
-	platform QualPlatform
-	root     string // the host directory, for a symbol-mode set's replay
-	x        *replayEnv
-	files    map[string]fs.FileInfo
-	used     map[string]bool
-	id       *RunIdentity
-	idSHA    string
-	rejected []Finding
-	unused   int
-	records  uint64
-	entries  uint64
+	loggerRuntime *eligibilityRuntimePins
+	platform      QualPlatform
+	root          string // the host directory, for a symbol-mode set's replay
+	x             *replayEnv
+	files         map[string]fs.FileInfo
+	used          map[string]bool
+	id            *RunIdentity
+	idSHA         string
+	rejected      []Finding
+	unused        int
+	records       uint64
+	entries       uint64
 }
 
 func (h *qhost) reject(code, path, msg string) {
@@ -515,6 +516,13 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 		}
 	}
 	x := h.x
+	previousPin, previousRuntime, previousManifest := x.loggerRuntime, x.observationRuntime, x.observationManifest
+	defer func() {
+		x.loggerRuntime, x.observationRuntime, x.observationManifest = previousPin, previousRuntime, previousManifest
+	}()
+	if h.loggerRuntime != nil {
+		x.loggerRuntime, x.observationRuntime, x.observationManifest = h.loggerRuntime, &h.loggerRuntime.logger, h.loggerRuntime.tuple.ManifestSHA256
+	}
 	x.startSvcReferences(w.SvcContext)
 	x.svcFormat = w.Format
 	x.observationSources = nil // the set profile's query sources, read below
@@ -609,7 +617,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	x.reuseObservation, x.mandatoryObservation = observe, observe
 	x.responseDir, x.observationWire, x.observationResponses = dir+"raw/", "tsgk-native/r4", map[string]bool{}
 	x.observationQueries, x.observationAPI, x.observationNodes = len(w.Queries) > 0, w.API, NativeOperations()[w.Operation].Nodes
-	top := nativeResult{ObservationRunID: man.Producer["observation_run_id"], Build: &nativeBuild{Identity: man.Producer["build_identity"]}}
+	top := nativeResult{ObservationRunID: man.Producer["observation_run_id"], Build: &nativeBuild{Identity: man.Producer["build_identity"], RuntimeCommit: man.Producer["runtime_commit"]}}
 	if observe && (top.ObservationRunID == "" || len(top.ObservationRunID) > 128) {
 		add("OBSERVATION_RUN_UNBOUND", manPath, "관측 set에 observation run id가 없다")
 	}
@@ -631,6 +639,9 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 	fp := ""
 	if man.FactPack != nil {
 		fp = man.FactPack.Revision + "=" + man.FactPack.SHA256
+	}
+	if x.loggerRuntime != nil {
+		x.gate("reuse-observation").check(man.Producer["runtime_commit"] == x.loggerRuntime.manifest.Commit, manPath, "OBSERVATION_RUNTIME_MISMATCH", "저장 runtime commit이 승인 manifest와 다르다")
 	}
 	s.Identities = map[string]string{"runtime": man.Producer["runtime_commit"], "protocol": man.Protocol, "comparators": joinList(man.Comparators), "policy": man.Policy.SHA256,
 		"queries": qs, "fact_pack": fp, "workload-route": man.Workload["route"], "operation": man.Workload["operation"]}
@@ -750,7 +761,7 @@ func (q *qualifier) evalSet(w QualWorkload, errNodes []string, p QualPlatform) (
 			}
 			// the observation is a kit axis (#217): a failed one fails the set, a collection
 			// limit leaves it unverified (BLOCKED), apart from the requirement verdicts
-			switch claim, _ := mandatoryObservations(&c); claim {
+			switch claim, _ := mandatoryObservationsWithRuntime(&c, x.observationRuntime); claim {
 			case claimFail:
 				add("REUSE_OBSERVATION_FAILED", full, "필수 관측이 native parse의 old tree 전달을 확인하지 못했다")
 			case claimBlocked:

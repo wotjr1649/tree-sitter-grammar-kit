@@ -628,6 +628,19 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			}
 			rr.ResultSchema, rr.EvidenceMode, rr.Assessment = full.ResultSchema, full.EvidenceMode, full.Assessment
 			rr.Subject.Run, rr.Subject.Attempt, rr.Subject.Platform = full.Subject.Run, full.Subject.Attempt, full.Subject.Platform
+		} else if selection == ReplayLoggerPinsResultSchema {
+			if x.r != nil {
+				if e := x.r.eligibility.reserveLegacyReplayResult(data); e != nil {
+					return e
+				}
+			}
+			var full ReplayResult
+			valid = decodeTyped("replay-result", data, &full) == nil && validLoggerReplayResult(full)
+			if valid && full.ExecutionStatus == StatusCompleted && full.EvidenceValid && (full.Subject.ExecutionStatus != subject.ExecutionStatus || full.Subject.Assessment != subject.Assessment || full.Subject.EvidenceMode != subject.EvidenceMode) {
+				valid = false
+			}
+			rr.ResultSchema, rr.EvidenceMode, rr.Assessment = full.ResultSchema, full.EvidenceMode, full.Assessment
+			rr.Subject.Run, rr.Subject.Attempt, rr.Subject.Platform = full.Subject.Run, full.Subject.Attempt, full.Subject.Platform
 		} else {
 			if x.r != nil {
 				if e := x.r.eligibility.reserveLegacyReplayResult(data); e != nil {
@@ -666,7 +679,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 
 // This selector scans delimiters and bounded schema strings only; the selected decoder validates JSON.
 func replayResultRevision(data []byte, r *run) (string, *Error) {
-	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema, ReplaySemanticsPinsResultSchema})
+	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema, ReplaySemanticsPinsResultSchema, ReplayLoggerPinsResultSchema})
 }
 
 func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string, alternatives ...string) (selected string, resultErr *Error) {

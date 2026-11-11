@@ -15,15 +15,16 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema = "tsgk-qualification-inventory/r8"
-	QualificationResultSchema    = "tsgk-qualification-result/r9"
-	qualificationInventoryR7     = "tsgk-qualification-inventory/r7"
-	qualificationResultR8        = "tsgk-qualification-result/r8"
-	qualificationInventoryR6     = "tsgk-qualification-inventory/r6"
-	qualificationResultR7        = "tsgk-qualification-result/r7"
-	qualificationInventoryR5     = "tsgk-qualification-inventory/r5"
-	qualificationResultR6        = "tsgk-qualification-result/r6"
-	RunIdentitySchema            = "tsgk-run-identity/r1"
+	QualificationInventorySchema        = "tsgk-qualification-inventory/r8"
+	QualificationResultSchema           = "tsgk-qualification-result/r9"
+	QualificationLoggerPinsResultSchema = "tsgk-qualification-result/r12"
+	qualificationInventoryR7            = "tsgk-qualification-inventory/r7"
+	qualificationResultR8               = "tsgk-qualification-result/r8"
+	qualificationInventoryR6            = "tsgk-qualification-inventory/r6"
+	qualificationResultR7               = "tsgk-qualification-result/r7"
+	qualificationInventoryR5            = "tsgk-qualification-inventory/r5"
+	qualificationResultR6               = "tsgk-qualification-result/r6"
+	RunIdentitySchema                   = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
 	// error node types in contains. P is a NO_ERROR step with named structure that is not
@@ -725,6 +726,8 @@ type QualifyHost struct {
 	Platform             string
 	Root                 string
 	ExpectedRootIdentity fs.FileInfo `json:"-"`
+	// RuntimePins binds logger interpretation to this host's run-identity.json bytes.
+	RuntimePins *EvidencePinsRequest
 }
 
 // QualifyRequest is the inventory bytes, the candidate commit every host must have run and
@@ -868,11 +871,12 @@ type QualificationResult struct {
 	// single cell of the platform with mechanism and requirement PASS, and every executed
 	// extra-role row of the platform with mechanism and status PASS. The cross-platform
 	// comparison stays in SupportClaim only.
-	PlatformClaims map[string]string       `json:"platform_claims"`
-	BytesRead      uint64                  `json:"bytes_read"`
-	Explanation    []string                `json:"explanation"`
-	Baseline       *QualBaselineSummary    `json:"baseline,omitempty"`
-	QuerySemantics *QualQuerySemanticsAxis `json:"query_semantics,omitempty"`
+	PlatformClaims map[string]string                `json:"platform_claims"`
+	BytesRead      uint64                           `json:"bytes_read"`
+	Explanation    []string                         `json:"explanation"`
+	RuntimePins    map[string]RuntimeEvidenceResult `json:"runtime_pins,omitempty"`
+	Baseline       *QualBaselineSummary             `json:"baseline,omitempty"`
+	QuerySemantics *QualQuerySemanticsAxis          `json:"query_semantics,omitempty"`
 }
 
 // testHookQualifyLimits lets a test lower the qualification limits.
@@ -904,9 +908,22 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 		res.QuerySemantics = newQualSemanticsAxisWithOptions(opts)
 		res.Baseline = &QualBaselineSummary{Assessment: AssessNotAssessed, Completeness: AssessBlocked, MechanismGate: AssessBlocked, SupportClaim: "BLOCKED", PlatformClaims: map[string]string{}}
 	}
+	for _, host := range req.Hosts {
+		if host.RuntimePins != nil {
+			res.ResultSchema = QualificationLoggerPinsResultSchema
+			res.RuntimePins = map[string]RuntimeEvidenceResult{}
+			break
+		}
+	}
 	var q *qualifier
 	bad := func(e *Error) (QualificationResult, error) {
 		knownFailure := res.Assessment == AssessFail
+		if res.RuntimePins != nil {
+			knownFailure = knownFailure || knownQualificationFailure(res, nil)
+			for _, pin := range res.RuntimePins {
+				knownFailure = knownFailure || pin.Assessment == AssessFail
+			}
+		}
 		failReport(&res.Report, e)
 		if q != nil {
 			q.restoreAccepted(&res)
@@ -918,7 +935,7 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 				knownFailure = knownFailure || res.QuerySemantics.Assessment == AssessFail || knownQualificationFailure(res, q.findings)
 			}
 		}
-		if req.QuerySemantics != nil && knownFailure {
+		if (req.QuerySemantics != nil || res.RuntimePins != nil) && knownFailure {
 			res.Assessment = AssessFail
 		}
 		// a run that did not complete claims nothing: also after aggregation (output limit,
@@ -930,6 +947,9 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 	inv, e := parseInventory(req.Inventory)
 	if e != nil {
 		return bad(e)
+	}
+	if res.RuntimePins != nil && (req.QuerySemantics != nil || inv.Schema != QualificationInventorySchema) {
+		return bad(fail(KindUnsupported, "LOGGER_PINS_QUALIFICATION_SCOPE", "qualification", nil))
 	}
 	if req.QuerySemantics != nil && inv.Schema != QualificationInventorySchema {
 		return bad(fail(KindUnsupported, "SEMANTICS_INVENTORY_REVISION", "inventory", nil))
@@ -989,6 +1009,26 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 			return bad(e)
 		}
 		q.hosts[h.Platform] = hx
+		if h.RuntimePins != nil {
+			data, readErr := hx.readWalked("run-identity.json")
+			if readErr != nil {
+				return bad(readErr)
+			}
+			if hx.x.r.eligibility == nil {
+				hx.x.r.eligibility = &eligibilityBudget{r: hx.x.r}
+			}
+			pinResult, runtime, pinErr := verifyLoggerRuntime(h.RuntimePins, data, hx.x.r.eligibility)
+			res.RuntimePins[h.Platform] = pinResult
+			if pinErr != nil {
+				return bad(pinErr)
+			}
+			if runtime == nil {
+				res.Assessment, res.BytesRead = pinResult.Assessment, q.bytesRead()
+				res.Findings = append(res.Findings, pinResult.Findings...)
+				return res, nil
+			}
+			hx.loggerRuntime = runtime
+		}
 	}
 	// one run cohort: the same repository run, attempt, event, checkout and head on every host
 	var first *qhost
