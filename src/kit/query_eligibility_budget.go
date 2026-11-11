@@ -312,6 +312,10 @@ func (b *eligibilityBudget) significantJSONBytes(data []byte) (uint64, *Error) {
 
 // Token preflight reserves decoder/error buffers first, then AST and typed containers before any AST pass.
 func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) *Error {
+	return b.reserveJSONContainers(doc, data, passes, 448)
+}
+
+func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passes, perValue uint64) *Error {
 	if b == nil {
 		return nil
 	}
@@ -357,8 +361,8 @@ func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) 
 			if values > 2000000 {
 				return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
 			}
-			// 448 covers one jv, geometric child/key growth, and subsequent typed containers.
-			if e := b.charge(1, 448, doc); e != nil {
+			// The caller reserves either AST + typed containers or only typed containers.
+			if e := b.charge(1, perValue, doc); e != nil {
 				return e
 			}
 			if (peek == '{' || peek == '[') && dec.StackDepth() >= jsonMaxDepth {

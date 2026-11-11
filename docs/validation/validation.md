@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 snapshot typed decoder 검증
+
+`TestTypedJSONSnapshotDifferential`은 기존 source/vendor synthetic fixture와 고정 오류·결정적 byte 변이를 기존 AST decoder와 비교한다. `FuzzTypedJSONSnapshot`은 같은 oracle로 임의 bytes를 대조한다. 성공 값과 오류 Kind/Code가 같아야 하며, `TestTypedJSONPaths`는 escape가 포함된 unknown/missing/number 오류 경로도 확인한다. `TestTypedJSONLimits`는 document/value 초과, logical/work의 정확 경계와 +1, 취소를 검사한다. 전체 strict preflight 뒤 streaming shape와 typed unmarshal을 실행해 뒤쪽 구문 오류가 앞쪽 shape 오류보다 우선하는 기존 분류를 유지한다.
+
+보존 PostgreSQL9 rerun·TSQL8 A6 assembly의 같은 inherited 1 GiB core 원장에서 전후 logical/work/read를 직접 측정하고, 저장 source/vendor bytes와 생성 변이의 differential 및 typed 할당을 기록한다. Duplicate 검사를 허용하는 변이와 unknown field를 허용하는 변이는 differential 시험에서 실패해야 한다. Runtime source가 필요한 kit 회귀는 기존 `TSGK_NATIVE_RUNTIME`로 SKIP 없이 실행하며 opt-in 수동 capture의 SKIP은 별도로 기록한다. 이 단위는 엔진·K3에 한정되고 native B1·reference/expected B4·receipt B5 및 ordinary 전체 capacity는 후속 범위다.
+
 ## #216 TSQL8 source 준비 검증
 
 [TSQL8 사전 기대값과 binary paging 연결](../specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다. Native의 `TestQueryClassificationTSQL8StaticProfile`, `TestQueryClassificationTSQL8AnchorGuards`, `TestQueryClassificationTSQL8GrammarGuards`, `TestQueryClassificationTSQL8EmptyStderrCaptureMember`는 닫힌 이름·일반6+fact2의 원문/순서/SHA/metadata·빈 CST/ABI·grammar5개와 parser5 parts를 고정한다. kit의 `TestQueryClassificationTSQL8DefinitionBindings`, `TestQueryClassificationTSQL8ProfileAndPagedContext`, `TestQueryClassificationTSQL8ClosedNames`, `TestQueryClassificationTSQL8StderrBinding`은 두 원문 envelope·fact route 유일성/순서·2982 tree roles/23856 potential links·compiler argv/limits·다른 family/context·null/alias·live session 없는 projection을 검사한다.

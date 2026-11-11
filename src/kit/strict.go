@@ -279,24 +279,32 @@ func (t typed) uint(v *jv) (uint64, *Error) {
 	if e := t.want(v, '0'); e != nil {
 		return 0, e
 	}
-	s := v.s
+	n, code := jsonUint(v.s)
+	if code != "" {
+		return 0, t.bad(code, v)
+	}
+	return n, nil
+}
+
+// jsonUint shares canonical integer checks without allocating a temporary AST value.
+func jsonUint(s string) (uint64, string) {
 	for _, c := range s {
 		if c < '0' || c > '9' {
-			return 0, t.bad("JSON_NUMBER_NOT_INTEGER", v)
+			return 0, "JSON_NUMBER_NOT_INTEGER"
 		}
 	}
 	if len(s) > 1 && s[0] == '0' {
-		return 0, t.bad("JSON_NUMBER_NOT_INTEGER", v)
+		return 0, "JSON_NUMBER_NOT_INTEGER"
 	}
 	if len(s) > 16 {
-		return 0, t.bad("JSON_INTEGER_RANGE", v)
+		return 0, "JSON_INTEGER_RANGE"
 	}
 	var n uint64
 	for _, c := range s {
 		n = n*10 + uint64(c-'0')
 	}
 	if n > maxJSONInteger {
-		return 0, t.bad("JSON_INTEGER_RANGE", v)
+		return 0, "JSON_INTEGER_RANGE"
 	}
-	return n, nil
+	return n, ""
 }
