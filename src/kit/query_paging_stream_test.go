@@ -3,6 +3,7 @@ package kit
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -107,6 +108,62 @@ func TestStreamedPagingLateInvalidNodeFallback(t *testing.T) {
 				if part.chain != nil {
 					t.Fatal("invalid node streamed away fallback bytes")
 				}
+			}
+		})
+	}
+}
+
+// A later chain part that fails file verification must keep the standalone FILE_MEMBER_* findings,
+// not surface as an internal paging identity error when an earlier streamed part is looked up.
+func TestStreamedPagingLatePartFileFailureKeepsFindings(t *testing.T) {
+	for _, mutation := range []string{"missing", "mismatch"} {
+		t.Run(mutation, func(t *testing.T) {
+			f := binaryDriverFixture(t, MaxDocumentBytes+1)
+			req := f.request()
+			late := ""
+			for _, p := range f.nodes["native-current"].Files {
+				if p.Role == "driver-paged-part" && strings.HasSuffix(p.Path, ".part-00001.bin") {
+					late = filepath.Join(req.Evidence.Root, filepath.FromSlash(p.Path))
+				}
+			}
+			if late == "" {
+				t.Fatal("fixture has no second driver part")
+			}
+			if mutation == "missing" {
+				if err := os.Remove(late); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				fh, err := os.OpenFile(late, os.O_APPEND|os.O_WRONLY, 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				_, err = fh.Write([]byte("x"))
+				if cerr := fh.Close(); err == nil {
+					err = cerr
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			baseline, err := VerifyQueryReferenceEligibility(ctxT(t), req)
+			if err != nil || baseline.Assessment == AssessPass {
+				t.Fatalf("baseline: %v %+v", err, baseline)
+			}
+			root, err := os.OpenRoot(req.Evidence.Root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			r, e := startRun(ctxT(t), time.Minute)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer r.cancel()
+			r.eligibility = &eligibilityBudget{r: r}
+			got, err := verifyQueryReferenceEligibilityInRun(ctxT(t), req, &eligibilityScope{r: r, root: root})
+			if err != nil || !reflect.DeepEqual(got.Findings, baseline.Findings) || got.Assessment != baseline.Assessment || got.Complete != baseline.Complete {
+				t.Fatalf("late part failure changed classification: %v %+v vs %+v", err, got, baseline)
 			}
 		})
 	}
