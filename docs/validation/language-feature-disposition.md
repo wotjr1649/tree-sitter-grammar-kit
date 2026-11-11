@@ -6,6 +6,10 @@
 
 기본 구조 모드와 caller symbols를 평가하는 모드는 별도다. symbol 모드의 host 선택과 primary full CST에서 관측한 지시문 `#` byte 위치가 다르면 활성 CST 실행을 멈추고 별도 CST 축에 MISMATCH/BLOCKED를 남긴다. 교정 전 네 detector는 당시 `dollars-two-quotes-raw`(extra37), `nested-string-open-no-runaway`(extra62), `directive-string-no-escape`(A, extra25), `razor-comment-lines`(A, extra9)였다. 이들은 당시 위치 차이의 검출 근거다. #233 lexical producer 교정 뒤 현재 6set/30사례의 기대값은 26 PASS / 0 MISMATCH / 4 NOT_APPLICABLE이다([교정 보고서](../reports/issue-233-csharp-lexical-recovery.md)). 역사적 위치 차이는 독립 음성 fixture로 보존하며, ERROR tree만으로 mismatch를 만들지 않는다. 등록 검사 PASS만으로 현재 실행이나 grammar 전체의 정확성을 확정하지 않는다. query/reference 의미는 #216의 후속 의무이며, macOS symbol 검증은 #243 NOT_PLANNED에 따라 `DEFERRED`다. 세부 등록·집계는 [identity/evidence](../specs/identity-and-evidence.md#primary-cst-replay와-별도-qualification-축-279)를 따른다.
 
+## C# lexical recovery residual (#233)
+
+2026-11-11 제품 작업은 raw recovery 두 사례, pragma tail 두 사례 및 `#if A // note`의 `trailing-line-comment` 한 사례를 의도 교정으로 취급한다. raw `#line` filename의 오류, q−1/q+1 closing quote, token-reading pragma tail, filename 뒤 block comment의 LF·CRLF·CR·NEL·LS·PS 경계는 그 계약을 둘러싼 보존·오류 대조다. 원본157 사례는 줄이지 않으며 baseline과 둘 다 `NO_ERROR`인 88개 full CST 차분은 0, 원본157에서 바뀌는 사례는 source SHA256으로 명시한 raw 2·pragma 2·line-comment 1, 다섯 건만 허용한다. 원본 ERROR 소실은 독립 Roslyn 기대값에서 오류가 없는 pragma 두 건과 line-comment 한 건으로 한정한다. 정상 pragma `//` 꼬리의 기존 `preproc_arg` CST 소유권은 보존한다. scratch의 확장 입력은 별도 분모로 기록하며 원본 처분 수에 합치지 않는다. 이 처분은 고정 입력의 producer 경계이지 C# 전체 lexical 동등성, qualification 전체 완료, Issue #233 acceptance 완료를 뜻하지 않는다. 상세 기대값과 구현·검증 진행은 [#233 lexical recovery 보고서](../reports/issue-233-csharp-lexical-recovery.md)에 기록한다.
+
 ## 읽는 법과 완료 경계
 
 표의 한 행은 사양의 이름 있는 production 계열이다. `구문 사실`에 나열한 항목 각각과 `근거 장`의 해당 production 대안 전부가 범위다. 예시 하나만 통과해 계열 전체를 완료 처리하지 않는다. "production 대안 전부"의 기계적 경계는 [production 대안 등록부](../../src/contracts/feature-alternatives.json)다. 행마다 대안 id(`<행>.aNN`)와 `COMPLETE`·`PENDING` 상태를 둔다. qualification(`tsgk-coverage-rule/r2`)은 `COMPLETE`이고 대안마다 그 대안을 적은 사례가 있는 행만 P로 인정한다. 기본 계열과 version delta의 합집합으로 하한에서 유효했던 구문도 보존한다. delta는 기본 계열에 더해지는 명시적 추적 항목이며 중복 fixture를 강제하지 않는다. 문법상 허용 여부와 binding/type checking/실행 결과는 별도로 다룬다.

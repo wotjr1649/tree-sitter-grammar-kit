@@ -34,8 +34,8 @@ type Pin struct {
 	SHA256 string `json:"sha256"`
 }
 
-var QualificationPin = Pin{"src/contracts/qualification-c1.json", 8297072, "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"}
-var SlotPin = Pin{"src/contracts/query-slot-inventory-r1.json", 60490, "f24b4f0b4aad3fe165afd7950d2166fdc7e1d6a59d809faf670d5907c4f12789"}
+var QualificationPin = Pin{"src/contracts/qualification-c1.json", 8297072, "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"}
+var SlotPin = Pin{"src/contracts/query-slot-inventory-r1.json", 60490, "bca429d4e02729db4e66ae53ad31b835ec0b95471504d9b9ef0499b8b19bc0b6"}
 
 type Platform struct {
 	ID      string `json:"id"`
