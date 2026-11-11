@@ -169,7 +169,7 @@ func classificationCaptureProfileFor(name string) (classificationCaptureProfile,
 	case "positive-batch":
 		return classificationCaptureProfile{"go-positive-batch-anchors.json", "921d28f6e805bf443260961e7394cfb4bcd0526066425b60057b37d514169288", "go", "tree_sitter_go", 3, 5, false}, nil
 	case "csharp15-empty":
-		return classificationCaptureProfile{"csharp15-classification-anchors.json", "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
+		return classificationCaptureProfile{"csharp15-classification-anchors.json", "0b767581404d6c59ba58792d3a6fbee177b191b58eef71e4d52fed729b16beb2", "csharp", "tree_sitter_c_sharp", 15, 5, true}, nil
 	case "cpp4-empty", "kotlin5-empty", "swift8-empty", "postgresql9-empty", "tsql8-empty":
 		spec, _ := classificationCPPProfileSpecFor(name)
 		return classificationCaptureProfile{spec.anchorFile, spec.anchorSHA, spec.route, spec.symbol, len(spec.querySpecs), spec.grammarCount, true}, nil
@@ -281,7 +281,7 @@ func classificationCSharpAnchorsValid(a classificationLocalAnchors) error {
 		return fmt.Errorf("C# 15 empty-source definition profile changed")
 	}
 	wantRoot := []kit.TreeNode{{Parent: -1, Type: "compilation_unit", Named: true}}
-	if !reflect.DeepEqual(a.Nodes, wantRoot) || a.ABI.LanguageVersion != 15 || a.ABI.RuntimeLanguageVersion != 15 || a.ABI.RuntimeMinCompatible != 13 || a.ABI.SymbolCount != 654 || a.ABI.FieldCount != 26 {
+	if !reflect.DeepEqual(a.Nodes, wantRoot) || a.ABI.LanguageVersion != 15 || a.ABI.RuntimeLanguageVersion != 15 || a.ABI.RuntimeMinCompatible != 13 || a.ABI.SymbolCount != 662 || a.ABI.FieldCount != 26 {
 		return fmt.Errorf("C# 15 ABI or independent empty-source CST changed")
 	}
 	seen := make(map[string]bool, len(a.Queries))
@@ -345,7 +345,7 @@ func TestQueryClassificationCSharpEmptyStderr(t *testing.T) {
 
 func TestQueryClassificationCSharpProfile(t *testing.T) {
 	profile, err := classificationCaptureProfileFor("csharp15-empty")
-	if err != nil || profile.route != "csharp" || profile.symbol != "tree_sitter_c_sharp" || profile.anchorFile != "csharp15-classification-anchors.json" || profile.anchorSHA != "06933d6516106308ec9fc20762e8eebd9718b26b2453ceea2cec090f382c938b" || profile.queryCount != 15 || profile.grammarCount != 5 || !profile.paged {
+	if err != nil || profile.route != "csharp" || profile.symbol != "tree_sitter_c_sharp" || profile.anchorFile != "csharp15-classification-anchors.json" || profile.anchorSHA != "0b767581404d6c59ba58792d3a6fbee177b191b58eef71e4d52fed729b16beb2" || profile.queryCount != 15 || profile.grammarCount != 5 || !profile.paged {
 		t.Fatalf("C# 15 capture profile differs: %#v, %v", profile, err)
 	}
 	for _, name := range []string{"", "positive-batch"} {
