@@ -1117,19 +1117,10 @@ func validateQueryWitnessRegistrationChecked(reg QueryWitnessRegistration, schem
 
 func decodeWitnessDocument(doc string, data []byte, target any, exact bool, r *run) *Error {
 	if r.eligibility != nil {
-		return r.eligibility.decode(doc, data, target, exact)
+		return r.eligibility.decodeWitnessTyped(doc, data, target, exact)
 	}
-	v, e := decodeBounded(doc, data, MaxDocumentBytes, &valueBudget{max: 2000000, check: r.check})
-	if e != nil {
-		return e
-	}
-	if e := witnessShape(typed{doc: doc}, v, reflect.TypeOf(target).Elem(), exact, false, &valueBudget{max: 2000000, check: r.check}); e != nil {
-		return e
-	}
-	if err := jsonv2.Unmarshal(data, target); err != nil {
-		return fail(KindInvalidInput, "JSON_SHAPE", doc, err)
-	}
-	return nil
+	b := &eligibilityBudget{r: r, unmetered: true}
+	return b.decodeWitnessTyped(doc, data, target, exact)
 }
 
 // New witness documents check presence and primitive types before typed decoding can

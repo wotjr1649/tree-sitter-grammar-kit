@@ -12,7 +12,15 @@
 
 보존 PostgreSQL9 rerun·TSQL8 A6 assembly의 같은 inherited 1 GiB core 원장에서 전후 logical/work/read를 직접 측정하고, 저장 source/vendor bytes와 생성 변이의 differential 및 typed 할당을 기록한다. Duplicate 검사를 허용하는 변이와 unknown field를 허용하는 변이는 differential 시험에서 실패해야 한다. Runtime source가 필요한 kit 회귀는 기존 `TSGK_NATIVE_RUNTIME`로 SKIP 없이 실행하며 opt-in 수동 capture의 SKIP은 별도로 기록한다.
 
-`TestTypedJSONNativeDifferential`·`TestQueryReferenceEligibilityNativeShape`는 기존 AST 경로와 저장 native 응답·오류 사례·결정적 변이의 값·오류 Kind/Code를 대조한다. `TestTypedJSONNativeEnvelope`·`TestTypedJSONNativePaths`는 nullable/optional/조건부 필드와 고정 배열의 길이 우선 및 오류 경로를 검사한다. `TestTypedJSONNativeCheckReservation`은 Check의 `12v`/`12n` 유지와 새 원장의 정확한 경계·+1을 확인하며 `FuzzTypedJSONNative`는 임의 bytes parity를 검사한다. Producer/Step의 optional 규칙 완화와 실패 tree의 잘못된 필드 shape를 건너뛰는 mutant는 이 차등 시험에서 실패해야 한다. 보존 SQL core와 큰 저장 native/reference 문서의 원장을 직접 기록하되, 변경하지 않은 reference의 수치를 B4 절감으로 세지 않는다. B4·B5와 ordinary 전체 capacity는 후속 범위다.
+`TestTypedJSONNativeDifferential`·`TestQueryReferenceEligibilityNativeShape`는 기존 AST 경로와 저장 native 응답·오류 사례·결정적 변이의 값·오류 Kind/Code를 대조한다. `TestTypedJSONNativeEnvelope`·`TestTypedJSONNativePaths`는 nullable/optional/조건부 필드와 고정 배열의 길이 우선 및 오류 경로를 검사한다. `TestTypedJSONNativeCheckReservation`은 Check의 `12v`/`12n` 유지와 새 원장의 정확한 경계·+1을 확인하며 `FuzzTypedJSONNative`는 임의 bytes parity를 검사한다. Producer/Step의 optional 규칙 완화와 실패 tree의 잘못된 필드 shape를 건너뛰는 mutant는 이 차등 시험에서 실패해야 한다. 보존 SQL core와 큰 저장 native 문서의 원장을 직접 기록한다. B5와 ordinary 전체 capacity는 후속 범위다.
+
+### #362 reference·expected·witness decoder 검증
+
+B4는 저장 reference·witness와 기존 fixture의 registration/raw/projection·tuple 기대값·receipt r1·failure/footer를 변경 전 AST 경로와 대조한다. 독립 witness와 eligibility 결속 경로를 각각 검사하며 성공 값·오류 Kind/Code와 결정적인 오류 경로를 고정한다. Pointer-null, nullable 배열과 metadata 예외, optional/조건부 tree, non-exact unknown subtree, base64, inline registration, 정수·Unicode·중복·구문 우선순위·깊이/값 수·잘림을 포함한다. 결정적 byte 변이와 fuzz를 실행하고 FAILED exact envelope보다 full shape를 먼저 적용하는 mutant 및 witness nullable 규칙을 완화하는 mutant가 해당 차등 시험에서 실패하는지 확인한다.
+
+같은 보존 PostgreSQL9 rerun·TSQL8 A6 core와 큰 저장 reference·witness 문서에서 logical/work/read·실제 TotalAlloc의 전후를 기록한다. 원장 식을 바꾸는 경로는 test-only 실제 순회 계측으로 `계상 >= 실제`를 확인한다. 실제 할당은 heap peak/RSS 상한으로 해석하지 않으며 receipt r2·row 단일 decode의 B5 추정은 구현된 B4 절감과 구분한다. 한도나 원본 evidence를 변경하지 않는다.
+
+`TestTypedJSONReferencePointWork`는 64 KiB source와 단일 root node에서도 실제 point byte 방문만큼 work가 증가하는지, 잔액이 1 부족하면 좌표 순회 전에 `reference-points`에서 거부하는지 검사한다. Shape 값 수의 정확한 경계와 배열 원소의 witness handoff를 유지하며 standalone 경로에 공유 eligibility cap을 추가하지 않는다.
 
 ## #216 TSQL8 source 준비 검증
 

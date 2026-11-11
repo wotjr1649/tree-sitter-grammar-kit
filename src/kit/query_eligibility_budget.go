@@ -71,6 +71,7 @@ type eligibilityBudget struct {
 	work, logical uint64
 	logicalLimit  uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
 	err           *Error
+	unmetered     bool // Standalone witness decoding has no shared eligibility ledger.
 }
 
 func (b *eligibilityBudget) logicalCap() uint64 {
@@ -86,6 +87,9 @@ func (b *eligibilityBudget) charge(work, logical uint64, at string) *Error {
 	}
 	if e := b.r.check(); e != nil {
 		return e
+	}
+	if b.unmetered {
+		return nil
 	}
 	if work > eligibilityWorkLimit-b.work || logical > b.logicalCap()-b.logical {
 		b.err = fail(KindResourceLimit, "ELIGIBILITY_WORK_LIMIT", at, nil)

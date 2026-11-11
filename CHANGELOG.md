@@ -2,11 +2,13 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Reference·expected·witness와 reference receipt r1·failure/footer를 기존 strict streaming typed decoder로 옮겼다(Refs #362 B4). Pointer-null·nullable/optional·non-exact projection 및 FAILED head/full의 오류 우선순위를 기존 AST와 차등 검사하며, reference 좌표 검증의 source byte 순회 예약 누락을 보완했다. Wire schema·공개 API·한도를 유지하며 receipt r2·row 단일 decode(B5)와 ordinary 전체 수용은 후속 범위다.
+
 - Evidence graph의 run all-pairs 대조를 세 필드 identity index로, owner별 cycle 재순회를 공유 DFS·역방향 도달성 memo로, carry 전체 규칙 scan을 node별 index로 바꿨다(Refs #362). 기존 finding 순서·첫 실패를 차등 시험으로 보존하며 실제 순회와 중복 결과 수에 맞춘 상한을 계상한다. 새 index의 logical 비용도 추가하고 한도·공개 API를 유지한다.
 
-- Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Reference/expected B4·receipt B5와 ordinary 전체 capacity는 후속 범위다.
+- Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Receipt/row B5와 ordinary 전체 capacity는 후속 범위다.
 
-- Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다. Native/reference/expected 및 receipt 최적화는 후속 범위다.
+- Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다.
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 

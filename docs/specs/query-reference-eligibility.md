@@ -111,9 +111,9 @@ Eligibility registration의 bytes 소비 계획을 확인한 snapshot에서만, 
 
 ### Source/vendor snapshot의 typed decode (Refs #362)
 
-Source/vendor snapshot의 고정 `map[string]eligibilitySnapshotRow`는 전체 strict token preflight, AST 없는 streaming shape 검사, typed unmarshal로 읽는다. 구문 검사를 shape보다 먼저 끝내며 unknown·중복·필수 필드 누락·null·타입·정수 형식/범위·UTF-8·trailing data와 기존 depth/value/document 한도를 유지한다. 행별 portable path·case 충돌·SHA·크기/합계 검사도 그대로다. Native response도 아래 같은 엔진을 사용하며 reference/expected와 receipt는 기존 decoder를 유지한다.
+Source/vendor snapshot의 고정 `map[string]eligibilitySnapshotRow`는 전체 strict token preflight, AST 없는 streaming shape 검사, typed unmarshal로 읽는다. 구문 검사를 shape보다 먼저 끝내며 unknown·중복·필수 필드 누락·null·타입·정수 형식/범위·UTF-8·trailing data와 기존 depth/value/document 한도를 유지한다. 행별 portable path·case 충돌·SHA·크기/합계 검사도 그대로다. Native response와 아래 reference·witness 문서도 같은 엔진을 사용한다.
 
-현재 내부 엔진은 string/bool/uint/uint32/uint64/int/int64, string-key map, 명시적 tag의 struct와 slice/array/pointer 및 opaque `jsontext.Value`를 지원한다. Null과 필수 필드는 기존 eligibility native 규칙에 따르며 witness 전용 nullable/optional 규칙·inline struct·`[]byte`의 base64 표현·custom unmarshal은 지원하지 않는다. 기존 decoder의 범용 대체물이 아니며 B4/B5 연결에는 해당 shape·오류 우선순위의 별도 parity가 필요하다.
+현재 내부 엔진은 string/bool/uint/uint32/uint64/int/int64, string-key map, 명시적 tag의 struct와 slice/array/pointer 및 opaque `jsontext.Value`를 지원한다. Eligibility의 inline struct와 `[]byte`의 base64 문자열도 지원하며 null·필수 필드는 소비 경로의 기존 규칙을 따른다. 임의 custom unmarshal을 지원하는 범용 decoder는 아니다.
 
 이 경로의 decode 기본 logical 예약은 `5n + 32z + 32768 + 80v`다(`n`: 원문 bytes, `z`: 공백을 뺀 유효 bytes, `v`: JSON 값 수). AST와 행마다 생성하던 reflection 필드 표를 보관하지 않는다. 기존 snapshot 행별 1,280 B의 보수적 container/validation 예약은 유지하며, 문서당 shape descriptor에 type마다 256 B와 struct field마다 512 B를 추가한다. Snapshot 전체 descriptor는 2,048 B다. Work는 공통 preflight의 `4v+1`에 decode 진입 1, streaming shape의 값·member name·필수 field 순회, typed pass의 `v`와 descriptor 구축을 더한다. 정상 snapshot 행 수가 `r`이면 decode work는 기존 `24r+9`에서 `23r+14`가 된다. Guarded read와 후속 snapshot 의미 검증의 비용은 별도다. 80 B/value는 typed container 예약이며 실제 heap peak를 뜻하지 않는다. 이 절감으로 work/logical/read 한도를 늘리거나 ordinary 전체 수용을 주장하지 않는다.
 
@@ -121,7 +121,17 @@ Source/vendor snapshot의 고정 `map[string]eligibilitySnapshotRow`는 전체 s
 
 Eligibility의 `nativeResponse`와 승인 없는 semantic native 응답은 `decodeNativeResponse`를 공유한다. 전체 문서의 strict preflight 뒤 streaming shape와 typed unmarshal을 실행하며 중간 AST를 만들지 않는다. `Producer`·`Step`의 omitempty 필드도 기존처럼 필수이고, native nullable arm만 null을 허용한다. `WireTree`의 status/form 조건부 필수 필드는 member 순서와 무관하게 검사하되, 존재하는 필드의 잘못된 shape를 실패 envelope로 숨기지 않는다. Opaque query/API/observation의 전체 문법을 검사하고 후속 원래 검증도 유지한다. 고정 배열은 원래 AST 경로처럼 길이 오류가 원소 shape 오류보다 우선한다.
 
-기존 `reserveJSON(12)`와 AST decode의 기본 logical `20n + 64z + 65536 + 896v`를 `17n + 32z + 32768 + 80v`로 대체한다. 새 식은 snapshot 기본 예약에 `Check`의 기존 work `12v`·logical `12n`을 더한 것이다. Descriptor와 struct container/validation 예약은 별도이며, 고정 배열마다 길이 우선 검사를 위한 borrowed raw slice와 두 decoder의 `배열 bytes + 2048 B`, 추가 값 순회 work를 별도로 예약한다. 최종 typed pass의 값 수에는 같은 배열을 중복 합산하지 않는다. `nativeReservation`·`nativewire.Check`/`CheckStep`·source/history/points·query/API 검사는 그대로 모든 step/role에 적용한다. Reference/expected B4와 receipt/row B5 및 전체 ordinary capacity는 이 단위의 완료 범위가 아니다.
+기존 `reserveJSON(12)`와 AST decode의 기본 logical `20n + 64z + 65536 + 896v`를 `17n + 32z + 32768 + 80v`로 대체한다. 새 식은 snapshot 기본 예약에 `Check`의 기존 work `12v`·logical `12n`을 더한 것이다. Descriptor와 struct container/validation 예약은 별도이며, 고정 배열마다 길이 우선 검사를 위한 borrowed raw slice와 두 decoder의 `배열 bytes + 2048 B`, 추가 값 순회 work를 별도로 예약한다. 최종 typed pass의 값 수에는 같은 배열을 중복 합산하지 않는다. `nativeReservation`·`nativewire.Check`/`CheckStep`·source/history/points·query/API 검사는 그대로 모든 step/role에 적용한다. Receipt/row B5 및 전체 ordinary capacity는 이 단위의 완료 범위가 아니다.
+
+### Reference·expected·witness의 typed decode (Refs #362 B4)
+
+Reference connection의 registration/build/native projection과 response, query witness의 registration/raw/projection 및 eligibility의 witness registration·reference receipt r1·failure/footer는 같은 streaming 엔진을 쓴다. 기존 witness tuple의 `structural`·`expected`가 독립 capture 기대값이며 이 base에 별도의 ordinary expected wire 형식은 없다. 새 schema를 만들거나 기대값을 producer 결과에서 채우지 않는다.
+
+Eligibility에 결속된 문서는 기존 eligibility shape를 따르며 `TreeNode`·`Capture`·predicate step·witness query/metadata/tuple의 하위 구조만 기존 witness 규칙으로 전환한다. 독립 witness 경로는 처음부터 witness 규칙을 따른다. Witness의 pointer-null, 지정된 nullable 배열, metadata/registration의 non-null 배열, `encoding_source`와 optional/조건부 tree 필드를 유지한다. Non-exact projection은 알 수 없는 subtree의 shape를 적용하지 않지만 전체 문법·중복·깊이·값 수는 먼저 검사한다. 독립 경로에 eligibility의 공유 logical/work 한도를 새로 부여하지 않으며 기존 document/depth/value·caller/wall 한도를 유지한다.
+
+Reference는 non-exact head를 읽고 schema를 확인한 뒤 FAILED envelope의 exact head 또는 성공 response의 full shape를 검사한다. FAILED의 extra 필드·잘못된 failure code 및 뒤쪽 구문 오류의 우선순위는 기존과 같다. Head와 full은 이번에도 각각 decode하며 receipt r1의 stdout/stderr base64와 row 분할·offset·hash 결속도 유지한다. B5의 receipt r2와 row 단일 decode는 구현하지 않는다.
+
+각 decode의 기본 logical 예약은 snapshot과 같은 `5n + 32z + 32768 + 80v`이고 descriptor·struct container·고정 배열 비용은 별도다. 중간 AST를 만들지 않는 실제 경로에만 적용하며 후속 tree/capture/predicate 비교·guarded read·base64 비용은 별도 원장에 남는다. 기존 pointer·eligibility→witness handoff를 포함한 shape 값 수 한도도 별도 계수로 유지하되 제거된 AST 순회를 work로 계상하지 않는다. Reference의 source 좌표 검증은 분리된 span을 EOF까지 한 번 순회하므로 실제 검증 직전에 선택 source의 byte 길이를 `reference-points` work로 예약한다. Node 수만의 예약으로 긴 source 순회를 대신하지 않는다. 한도 변경이나 전체 ordinary 수용 근거가 아니다.
 
 ### Evidence graph의 순회 원장 (Refs #362)
 

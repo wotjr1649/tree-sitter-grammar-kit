@@ -934,7 +934,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				continue
 			}
 			var footer eligibilityBatchFooter
-			if e := s.b.decode(inv.ID+"/footer", out.rows[pairs], &footer, true); e != nil {
+			if e := s.b.decodeWitnessTyped(inv.ID+"/footer", out.rows[pairs], &footer, true); e != nil {
 				return e
 			}
 			if footer.Schema != "tsgk-instrumented-query-reference-batch/r1" || footer.Status != StatusCompleted || !footer.Complete || !slices.Equal(footer.Queries, ids) || footer.ResponsesCompleted != uint64(pairs) {

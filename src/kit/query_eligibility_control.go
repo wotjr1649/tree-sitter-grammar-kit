@@ -321,7 +321,7 @@ func (s *eligibilitySession) controlResponses(rule eligibilityControlRule, out *
 	}
 	if rule.Negative {
 		var failed eligibilityFailureResponse
-		if e := s.b.decode(rule.ID+"/failure", out.rows[len(rule.Responses)], &failed, true); e != nil {
+		if e := s.b.decodeWitnessTyped(rule.ID+"/failure", out.rows[len(rule.Responses)], &failed, true); e != nil {
 			return false, e
 		}
 		if failed.Schema != instrumentedReferenceSchema || failed.Status != StatusFailed || failed.Code != rule.FailureCode || failed.Complete {
@@ -331,7 +331,7 @@ func (s *eligibilitySession) controlResponses(rule eligibilityControlRule, out *
 	}
 	if batch {
 		var footer eligibilityBatchFooter
-		if e := s.b.decode(rule.ID+"/footer", out.rows[len(out.rows)-1], &footer, true); e != nil {
+		if e := s.b.decodeWitnessTyped(rule.ID+"/footer", out.rows[len(out.rows)-1], &footer, true); e != nil {
 			return false, e
 		}
 		status := StatusCompleted

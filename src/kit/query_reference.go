@@ -683,8 +683,16 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 	if querypolicy.Support(ref.Query.Patterns, ref.Query.Predicates, EncodingUTF8) != "" || !querywire.ValidMetadata(ref.Query.Patterns, ref.Query.CaptureNames, ref.Query.Predicates) {
 		return nil, "REFERENCE_METADATA_INVALID", false, nil
 	}
-	if int(obs.Step) < len(versions) && witnessPoints(ref.Tree.Nodes, EncodingUTF8, versions[obs.Step], r) != "" {
-		return nil, "REFERENCE_TREE_POINTS", false, nil
+	if int(obs.Step) < len(versions) {
+		// Disjoint point spans scan at most the selected source once through EOF.
+		if r.eligibility != nil {
+			if e := r.eligibility.charge(uint64(len(versions[obs.Step])), 0, "reference-points"); e != nil {
+				return nil, "", false, e
+			}
+		}
+		if witnessPoints(ref.Tree.Nodes, EncodingUTF8, versions[obs.Step], r) != "" {
+			return nil, "REFERENCE_TREE_POINTS", false, nil
+		}
 	}
 	if !querywire.MatchAccounting(ref.Query.Matches, len(ref.Query.Structural), func(i int) (int64, int64) { c := ref.Query.Structural[i]; return int64(c.Match), int64(c.Pattern) }) {
 		return nil, "REFERENCE_MATCH_ACCOUNTING", false, nil
