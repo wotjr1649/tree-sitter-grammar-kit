@@ -6,7 +6,7 @@
 
 - foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
-- 같은 guarded semantic session에서 paging part의 검증 identity와 완성된 logical identity를 재사용한다(Refs #362). Private record가 retained bytes를 소유하고 일반 caller에는 복사본을 주며, 전체 chain·외부 profile/build pin과 set의 member/owner/closure 검증을 유지한다. Record 관리 비용을 별도 과금하고 semantic/replay의 1 GiB와 standalone의 기존 검증 경로를 유지한다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.
+- Offline core에서 쓰지 않는 encoding detector와 binary bytes 보관을 없애고, 같은 guarded session의 연속·index 순 paging part는 읽는 자리에서 전체 chain을 hash한다(Refs #362). Identity-only member·streamed part와 retained fallback의 실제 처리에 맞춰 원장과 관리 비용을 계상하며, owner·개별/전체 pin·SameFile/size/mtime 및 실패 분류를 유지한다. 기존 검증 identity·완성 logical identity 재사용과 1 GiB/기존 standalone 한도는 그대로다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.
 - 도구 버전을 올려도 필수 CI가 막히지 않게 했다(#360).
   - margin gate는 과거 보고서의 Go 버전을 이전 버전 목록 대신 release 형식으로 받는다. 그래서 Go 기준을 올릴 때 `go.mod`만 바꾸면 된다.
   - 재현 등록부 시험은 tree-sitter·Node 버전 리터럴 대신 형식과 asset 이름의 일관성을 검사한다.

@@ -626,7 +626,7 @@ func (x *replayEnv) verifyFileBytes(path string, size uint64, sum string, keep b
 	return b, e
 }
 
-func (x *replayEnv) verifyFileContent(path string, size uint64, sum string, keep, seal bool) ([]byte, *guardedPart, *Error) {
+func (x *replayEnv) verifyFileContent(path string, size uint64, sum string, keep, seal bool, chains ...*streamedChain) ([]byte, *guardedPart, *Error) {
 	info := x.files[path]
 	if info == nil {
 		return nil, nil, fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
@@ -642,7 +642,12 @@ func (x *replayEnv) verifyFileContent(path string, size uint64, sum string, keep
 	if keep {
 		retained = size + 1
 	}
-	st, e := x.g.readFileContent(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, retained, seal)
+	var sinks []sink
+	if len(chains) == 1 && chains[0] != nil {
+		retained = 0
+		sinks = []sink{chains[0]}
+	}
+	st, e := x.g.readFileContent(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, retained, false, seal, sinks...)
 	if e != nil {
 		return nil, nil, e
 	}
@@ -666,7 +671,7 @@ func (x *replayEnv) read(path string, size uint64, sum string) ([]byte, *Error) 
 		x.over, x.overAt = true, path
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
-	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, size+1)
+	st, e := x.g.readFileContent(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, size+1, false, false)
 	if e != nil {
 		return nil, e
 	}

@@ -22,7 +22,7 @@ func (s *eligibilitySession) input(inv *eligibilityInvocation, name, kind string
 		good = false
 	}
 	if kind == "PINNED" {
-		_, present, e := s.member(x.MemberPin)
+		present, e := s.memberAvailable(x.MemberPin)
 		if e != nil {
 			return false, e
 		}

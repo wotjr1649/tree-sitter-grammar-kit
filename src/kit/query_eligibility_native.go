@@ -723,7 +723,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			s.finding("ELIGIBILITY_CURRENT_EXECUTABLE", inv.ID, true)
 			ready = false
 		}
-		_, exeOK, e := s.member(inv.Executable)
+		exeOK, e := s.memberAvailable(inv.Executable)
 		if e != nil {
 			return e
 		}

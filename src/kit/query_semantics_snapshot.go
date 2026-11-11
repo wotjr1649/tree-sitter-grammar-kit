@@ -36,14 +36,24 @@ func (b *eligibilityBudget) semanticSnapshot(parent, child *os.Root, snapshot *e
 		path := "oracle/" + member.Path
 		pin, ok := snapshot.verifiedMembers[path]
 		data, cached := snapshot.files[path]
+		identity, identityCached := snapshot.identities[path]
+		identityCached = identityCached && member.Role == "driver" && identity.member == pin && identity.owner == owners[path] && identityOnlyRole(identity.member.Role)
 		if state.paging != nil && pagingPartRole(member.Role) && snapshot.parts[path] != nil {
 			cached = true
 		}
-		if !ok || !cached || pin.Role != member.Role || owners[path] == "" || snapshot.invalidNodes[owners[path]] {
+		if !ok || !cached && !identityCached || pin.Role != member.Role || owners[path] == "" || snapshot.invalidNodes[owners[path]] {
 			add("SEMANTICS_MEMBER_UNBOUND", path, "등록한 역할과 owner의 동일 pass 검증 bytes가 없다")
 			continue
 		}
-		files[member.Path] = data
+		if cached {
+			files[member.Path] = data
+		} else if identityCached {
+			state.identitySnapshot = snapshot
+			if state.identities == nil {
+				state.identities = map[string]verifiedMemberIdentity{}
+			}
+			state.identities[member.Path] = identity
+		}
 	}
 	data, ok := files["manifest.json"]
 	if !ok || plan["manifest.json"].Owner != "O" || plan["manifest.json"].Role != "manifest" {

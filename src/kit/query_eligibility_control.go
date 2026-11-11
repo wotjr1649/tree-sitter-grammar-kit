@@ -56,7 +56,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 				return e
 			}
 		}
-		_, libraryReady, e := s.member(group.Library)
+		libraryReady, e := s.memberAvailable(group.Library)
 		if e != nil {
 			return e
 		}
@@ -168,7 +168,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 					ready = false
 				}
 			} else {
-				_, executableReady, e := s.member(inv.Executable)
+				executableReady, e := s.memberAvailable(inv.Executable)
 				if e != nil {
 					return e
 				}
