@@ -859,20 +859,27 @@ type reproductionRoutes struct {
 }
 
 var hex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
+var releaseVersion = regexp.MustCompile(`^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$`)
 
 // checkReproductionRoutes binds the S04 registry to the source registry: every route once,
 // in order, with the source path it actually has (S04-A15) and the tool digests that gate
 // generator runs per OS (S04-A18).
 func checkReproductionRoutes(r reproductionRoutes, sources sourceRegistry) error {
-	if r.Schema != "tsgk-reproduction-routes/r1" || r.Generator.Version != "0.27.1" || r.Generator.ABI != 15 || r.JSRuntime.Version != "24.21.0" {
+	// The registry is the single source of the tool pins: check their shape and that they agree
+	// with each other, never a literal version, so a pin bump edits only the registry (#360).
+	if r.Schema != "tsgk-reproduction-routes/r1" || !releaseVersion.MatchString(r.Generator.Version) || r.Generator.ABI <= 0 || !releaseVersion.MatchString(r.JSRuntime.Version) {
 		return errors.New("reproduction registry identity")
 	}
 	for _, os := range []string{"windows/amd64", "linux/amd64", "darwin/arm64"} {
 		if a := r.Generator.ReleaseAssets[os]; !hex64.MatchString(a.SHA256) || a.Asset == "" || a.Bytes <= 0 {
 			return fmt.Errorf("generator digest missing for %s", os)
 		}
-		if a := r.JSRuntime.ReleaseAssets[os]; !hex64.MatchString(a.SHA256) || a.Asset == "" {
+		a := r.JSRuntime.ReleaseAssets[os]
+		if !hex64.MatchString(a.SHA256) || a.Asset == "" {
 			return fmt.Errorf("node digest missing for %s", os)
+		}
+		if strings.HasPrefix(a.Asset, "node-v") && !strings.HasPrefix(a.Asset, "node-v"+r.JSRuntime.Version+"-") {
+			return fmt.Errorf("node asset %s disagrees with pinned version %s", a.Asset, r.JSRuntime.Version)
 		}
 	}
 	if len(r.Routes) != len(sources.Routes) {
@@ -963,6 +970,14 @@ func TestReproductionRoutes(t *testing.T) {
 		"adopted decision":  func(x *reproductionRoutes) { x.Routes[at(x, "csharp")].Decision = regenerationDecision },
 		"swift parser.c":    func(x *reproductionRoutes) { x.Routes[at(x, "swift")].UpstreamParserC = "" },
 		"missing digest":    func(x *reproductionRoutes) { delete(x.Generator.ReleaseAssets, "darwin/arm64") },
+		"generator version": func(x *reproductionRoutes) { x.Generator.Version = "v0.27" },
+		"node version":      func(x *reproductionRoutes) { x.JSRuntime.Version = "24" },
+		"zero abi":          func(x *reproductionRoutes) { x.Generator.ABI = 0 },
+		"node asset version": func(x *reproductionRoutes) {
+			a := x.JSRuntime.ReleaseAssets["linux/amd64"]
+			a.Asset = "node-v0.0.1-linux-x64.tar.xz"
+			x.JSRuntime.ReleaseAssets["linux/amd64"] = a
+		},
 		// regenerated-only routes
 		"upstream basis with a regeneration": func(x *reproductionRoutes) { x.Routes[at(x, "go")].ReferenceBasis = "UPSTREAM_CHECKED_IN" },
 		"missing regeneration decision":      func(x *reproductionRoutes) { x.Routes[at(x, "go")].Decision = "" },

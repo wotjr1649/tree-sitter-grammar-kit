@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $(if($PinnedTsql){'pinned-tsql-r1'}else{'archive-r1'}) -Subject $AcquisitionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
 $script:acquisitionLimit=[long]$toolchain.acquisition_limit_bytes
-if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
 Add-Type -AssemblyName System.Formats.Tar
 $script:received = 0L
 $script:expanded = 0L

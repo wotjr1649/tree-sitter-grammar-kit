@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -155,11 +156,12 @@ func saveMarginConfig(identity, compiler, nativeWall, out string) error {
 	return writeNewJSON(out, c, 65536)
 }
 
-// Historical reports may also carry listed former pins, separate configurations by their keys (#261).
-var marginFormerGo = []string{"go1.27.1", "go1.27.2"}
+// A historical report keeps the Go release it ran with; the key already separates its
+// configuration (#261), so any well-formed release is accepted and a go.mod bump needs no list (#360).
+var marginGoRelease = regexp.MustCompile(`^go(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$`)
 
 func marginToolchain(v, expectedGo string, historical bool) bool {
-	return v == expectedGo || historical && slices.Contains(marginFormerGo, v)
+	return v == expectedGo || historical && marginGoRelease.MatchString(v)
 }
 
 func checkMarginConfig(c marginConfig, j marginJob, expected kit.RunIdentity, expectedGo string, historical bool) error {
