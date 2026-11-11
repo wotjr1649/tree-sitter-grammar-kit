@@ -30,6 +30,12 @@ func ordinaryTypedNulls(s *typedJSONShape) {
 			f.nullable = name == "error" || name == "captures" || name == "predicates" || name == "capture_names"
 		case reflect.TypeFor[ordinaryBaseAPISummary]():
 			f.nullable = name == "first_difference" || name == "first_divergence"
+		case reflect.TypeFor[ordinaryBaseFacts]():
+			f.nullable = name == "declarations" || name == "dynamic_sql"
+		case reflect.TypeFor[DeclarationItem]():
+			f.nullable = name == "name"
+		case reflect.TypeFor[DynamicSQLFact]():
+			f.nullable = name == "variable"
 		}
 		s.fields[name] = f
 		ordinaryTypedNulls(f.shape)
