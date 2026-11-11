@@ -17,7 +17,7 @@ S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현
 | `--ordinary-profile PATH`, `--ordinary-assets PATH` | `--ordinary-root` 상대 경로 |
 | `--ordinary-registry-sha256 SHA` | 독립으로 고른 P0 registry SHA-256 |
 | `--ordinary-registration PATH`(반복) | plan이 포함하는 모든 registration, route/platform마다 하나 |
-| `--ordinary-shard ID`(반복) | 선택 shard. 모두 같은 route/platform의 registration 하나에 속해야 하며(`ORDINARY_REGISTRATION_SELECTION`) 이후 native producer가 plan·registration과 다시 대조한다 |
+| `--ordinary-shard ID`(반복) | 선택 shard. 모두 같은 route/platform의 registration 하나에 속해야 하며(`ORDINARY_REGISTRATION_SELECTION`) 이후 native producer가 plan·registration과 다시 대조한다. 순서는 무관하며(producer가 shard ID 오름차순 plan 순서로 정렬해 기록) shard와 profile case는 위치가 아니라 case ID로 일대일 대응해야 한다(`ORDINARY_SHARD_SELECTION`) |
 
 산출물은 기존과 같다. stdout은 `tsgk-oracle-result/r4`, `--out`은 manifest/r8·record/r5 set이다. Record는 수집만 하므로 정상 결과는 `COMPLETED`/`BLOCKED`(`EXTERNAL_APPROVAL_PENDING`)이며 exit 3이다. 판정은 공개 API나 `tsgk replay`가 한다. stderr에는 loader 원장 한 줄 `tsgk: ORDINARY_LOADER read=… work=… logical=… entries=… wall_ms=…`을 성공·실패 모두에 남긴다. 이것이 record의 wrapper 비용이다.
 

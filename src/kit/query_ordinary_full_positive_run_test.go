@@ -2,6 +2,9 @@ package kit
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 	"time"
@@ -145,6 +148,67 @@ func TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase(t *testing.T) {
 	if result.Tuple.Failed != 7 || result.Tuple.Verified != 7 || result.Tuple.Blocked != 0 {
 		t.Fatalf("exactly the seven tuples of the substituted case must FAIL: %+v", result.Tuple)
 	}
+}
+
+// ordinaryFullPosSelect rewrites the selected shard IDs in the caller selection and in the approval so that both
+// stay equal. The plan commitment, the r8 manifest and the run binding keep the original selection.
+func ordinaryFullPosSelect(t *testing.T, req OrdinaryQuerySemanticsRequest, change func(ids []string) []string, proofs func(proofs [][]byte) [][]byte) OrdinaryQuerySemanticsRequest {
+	t.Helper()
+	var approval eligibilityApproval
+	if err := json.Unmarshal(req.EligibilityApproval, &approval); err != nil || approval.Ordinary == nil {
+		t.Fatalf("the assembled approval has no ordinary binding: %v", err)
+	}
+	ids := change(slices.Clone(req.Selection.ShardIDs))
+	req.Selection.ShardIDs = ids
+	approval.Ordinary.ShardIDs = slices.Clone(ids)
+	req.EligibilityApproval = eligibilityJSON(t, approval)
+	if proofs != nil {
+		req.ShardProofs = proofs(slices.Clone(req.ShardProofs))
+	}
+	return req
+}
+
+// TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers selects shards whose plan order (ascending shard ID,
+// the commitment order) differs from their registration order (the P0 workload order the producer follows):
+// the zero-edit alt-json-B01-05 sorts before json-feature-r1 but is registered after it. The r8 must keep the
+// cases in registration order and the selected shard IDs in plan order, bound by ID, and the public API, the
+// r9 replay and `tsgk replay` must agree on 8/8 VERIFIED.
+func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
+	ordinaryFullPosNativeSetup(t)
+	grammarRoot := ordinaryFullPosGrammarRoot(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+	caseIDs := []string{"alt-json-B01-05", "json-feature-r1"}
+	in := ordinaryFullPosJSONInput(t, grammarRoot, caseIDs, ordinaryFullPosMutation{})
+	registered := []string{in.Cases[0].ID, in.Cases[1].ID}
+	byPlan := []string{ordinaryPlanShardKey("json", "windows-amd64", caseIDs[0]), ordinaryPlanShardKey("json", "windows-amd64", caseIDs[1])}
+	if !slices.Equal(registered, []string{"json-feature-r1", "alt-json-B01-05"}) || !slices.Equal(in.ShardIDs, byPlan) || !slices.IsSorted(in.ShardIDs) {
+		t.Fatalf("the premise changed: the registration order must be the reverse of the plan order: cases=%v shards=%v", registered, in.ShardIDs)
+	}
+	req, producerDir := ordinaryFullPosProduce(t, in)
+
+	var manifest OrdinaryOracleManifest
+	data, err := os.ReadFile(filepath.Join(producerDir, "r8", "manifest.json"))
+	if err != nil || json.Unmarshal(data, &manifest) != nil {
+		t.Fatalf("reading the owned r8 manifest: %v", err)
+	}
+	if !slices.Equal(manifest.Cases, registered) || !slices.Equal(manifest.ShardIDs, byPlan) {
+		t.Fatalf("the r8 must list cases in registration order and shard IDs in plan order: cases=%v shards=%v", manifest.Cases, manifest.ShardIDs)
+	}
+	ordinaryFullPosRequireAllVerified(t, ctx, "shard order differs from registration order", in, req, 8)
+
+	// Same shard-ID set, different binding: every variant must be refused by the public API.
+	swap := func(ids []string) []string { ids[0], ids[1] = ids[1], ids[0]; return ids }
+	reverse := func(proofs [][]byte) [][]byte { proofs[0], proofs[1] = proofs[1], proofs[0]; return proofs }
+	ordinaryFullPosRequireNotVerified(t, ctx, "selected IDs in registration order", ordinaryFullPosSelect(t, req, swap, nil))
+	ordinaryFullPosRequireNotVerified(t, ctx, "IDs and proofs in registration order", ordinaryFullPosSelect(t, req, swap, reverse))
+	ordinaryFullPosRequireNotVerified(t, ctx, "duplicated shard ID", ordinaryFullPosSelect(t, req, func(ids []string) []string { ids[1] = ids[0]; return ids }, nil))
+	ordinaryFullPosRequireNotVerified(t, ctx, "one shard ID omitted", ordinaryFullPosSelect(t, req, func(ids []string) []string { return ids[:1] }, func(p [][]byte) [][]byte { return p[:1] }))
+	ordinaryFullPosRequireNotVerified(t, ctx, "shard ID of another case substituted", ordinaryFullPosSelect(t, req,
+		func(ids []string) []string {
+			ids[1] = ordinaryPlanShardKey("json", "windows-amd64", "alt-json-B01-09")
+			return ids
+		}, nil))
 }
 
 // TestOrdinaryBatchStdoutBudgetCountsEveryFrame pins the multi-case rule: the producer budgets one

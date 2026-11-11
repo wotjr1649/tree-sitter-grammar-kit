@@ -159,9 +159,12 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 	shardIndex := func(caseID string) int {
 		return slices.IndexFunc(plan.Shards, func(s OrdinaryPlanShard) bool { return s.Route == "json" && s.Platform == platform && s.Case == caseID })
 	}
-	// A commitment needs sorted shard IDs and the producer needs registration order; the caller must pick
-	// cases where both orders agree.
-	slices.SortFunc(cases, func(a, b ordinaryFullPosCase) int { return shardIndex(a.ID) - shardIndex(b.ID) })
+	// Profile cases, producer sources and reference rows follow the registration (P0 workload) order; the
+	// selected shard IDs and proofs follow the plan order. The two orders may differ.
+	workloadIndex := func(caseID string) int {
+		return slices.IndexFunc(route.Workload.Cases, func(c QualCase) bool { return c.ID == caseID })
+	}
+	slices.SortFunc(cases, func(a, b ordinaryFullPosCase) int { return workloadIndex(a.ID) - workloadIndex(b.ID) })
 	// Reference rows model an independent reference run: they keep the true expectation while a
 	// counterexample mutates only the caller-authored expectation assets below.
 	pristine := map[string]ordinaryFullPosCase{}
@@ -183,6 +186,9 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 			t.Fatalf("no JSON shard for %s", cases[i].ID)
 		}
 		indices = append(indices, index)
+	}
+	slices.Sort(indices)
+	for _, index := range indices {
 		shardIDs = append(shardIDs, plan.Shards[index].ID)
 	}
 
@@ -372,8 +378,21 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 	for _, c := range cases {
 		versionsByCase[c.ID] = c.Versions
 	}
+	// The verifier orders the selected required rows by plan shard, then by each shard's obligation order, so the
+	// reference selection follows the plan order rather than the registration order of the cases.
+	requiredByID := map[string]OrdinaryRequired{}
+	for _, required := range registration.Required {
+		requiredByID[required.ID] = required
+	}
+	inPlanOrder := registration
+	inPlanOrder.Required = nil
+	for _, index := range indices {
+		for _, id := range plan.Shards[index].ObligationIDs {
+			inPlanOrder.Required = append(inPlanOrder.Required, requiredByID[id])
+		}
+	}
 	var references []ordinaryE2EReference
-	for _, key := range ordinaryReferenceKeys(registration, versionsByCase) {
+	for _, key := range ordinaryReferenceKeys(inPlanOrder, versionsByCase) {
 		parts := strings.Split(key, "/")
 		step, err := strconv.Atoi(parts[1])
 		if err != nil || len(parts) != 3 || parts[2] != "q.structure" {

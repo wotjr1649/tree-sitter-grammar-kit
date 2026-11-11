@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -261,16 +262,40 @@ func TestOrdinaryFailureKeepsKnownBaseFailure(t *testing.T) {
 	}
 }
 
-func TestOrdinarySelectedShardsBindExactCaseOrder(t *testing.T) {
+// The profile cases keep the registration order (c2 before c1 here) while the selected shard IDs
+// are canonicalized to the plan order; the two are bound by shard.Case, never by position.
+func TestOrdinarySelectedShardsBindCasesByIDNotPosition(t *testing.T) {
 	r := kit.OrdinaryRegistration{Route: "owned", Platform: "windows-amd64", Subject: "windows/amd64"}
-	plan := kit.OrdinaryShardPlan{Shards: []kit.OrdinaryPlanShard{{ID: "first", Route: r.Route, Platform: r.Platform, Subject: r.Subject, Case: "c1"}, {ID: "second", Route: r.Route, Platform: r.Platform, Subject: r.Subject, Case: "c2"}, {ID: "linux", Route: r.Route, Platform: "linux-amd64", Subject: "linux/amd64", Case: "c1"}}}
-	cases := []kit.IncrementalCase{{ID: "c1"}, {ID: "c2"}}
-	if err := validateOrdinaryShardSelection([]string{"first", "second"}, plan, r, cases); err != nil {
-		t.Fatal(err)
+	shard := func(id, caseID string) kit.OrdinaryPlanShard {
+		return kit.OrdinaryPlanShard{ID: id, Route: r.Route, Platform: r.Platform, Subject: r.Subject, Case: caseID}
 	}
-	for _, ids := range [][]string{nil, {"first"}, {"first", "first"}, {"second", "first"}, {"linux", "second"}, {"unknown", "second"}} {
-		if err := validateOrdinaryShardSelection(ids, plan, r, cases); err == nil {
-			t.Fatalf("accepted selected shard mutation %v", ids)
+	plan := kit.OrdinaryShardPlan{Shards: []kit.OrdinaryPlanShard{shard("a-shard", "c1"), shard("b-shard", "c2"), shard("c-shard", "c3"),
+		{ID: "linux", Route: r.Route, Platform: "linux-amd64", Subject: "linux/amd64", Case: "c1"}}}
+	cases := []kit.IncrementalCase{{ID: "c2"}, {ID: "c1"}}
+	want := []string{"a-shard", "b-shard"}
+	for _, ids := range [][]string{{"a-shard", "b-shard"}, {"b-shard", "a-shard"}} {
+		given := slices.Clone(ids)
+		got, err := validateOrdinaryShardSelection(ids, plan, r, cases)
+		if err != nil || !slices.Equal(got, want) || !slices.Equal(ids, given) {
+			t.Fatalf("ids %v: got %v, %v; want %v; caller slice now %v", given, got, err, want, ids)
+		}
+	}
+	for name, test := range map[string]struct {
+		ids   []string
+		cases []kit.IncrementalCase
+	}{
+		"empty":               {nil, cases},
+		"omitted":             {[]string{"a-shard"}, cases},
+		"duplicate":           {[]string{"a-shard", "a-shard"}, cases},
+		"foreign-platform":    {[]string{"linux", "b-shard"}, cases},
+		"unknown":             {[]string{"unknown", "b-shard"}, cases},
+		"case-substitution":   {[]string{"a-shard", "c-shard"}, cases},
+		"duplicate-case":      {[]string{"a-shard", "b-shard"}, []kit.IncrementalCase{{ID: "c1"}, {ID: "c1"}}},
+		"unselected-case":     {[]string{"a-shard", "b-shard"}, []kit.IncrementalCase{{ID: "c1"}, {ID: "c3"}}},
+		"extra-shard-no-case": {[]string{"a-shard", "b-shard", "c-shard"}, cases},
+	} {
+		if got, err := validateOrdinaryShardSelection(test.ids, plan, r, test.cases); err == nil || got != nil {
+			t.Fatalf("%s: accepted %v for %v", name, test.ids, test.cases)
 		}
 	}
 }

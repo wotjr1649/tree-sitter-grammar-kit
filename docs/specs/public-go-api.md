@@ -10,7 +10,7 @@
 
 ### #362 P2-A ordinary 사전 등록과 계획 helper
 
-P2-B 2단계는 `OrdinaryOracleManifest`(r8), `OrdinaryOracleRecord`(r5), `OrdinaryRunBatch`, `OrdinaryRunBinding`(r2)의 실험적 저장 자료형을 추가한다. `VerifyOracleSet`은 r8의 구조·물리 pin·process owner·case/frame/raw 연결을 검사하며, `ValidateOrdinaryRunBinding`은 caller가 보유한 binding bytes를 같은 manifest의 input pin·candidate/cohort/run·selected shard IDs·실제 members/batches와 대조한다. `selected_shard_ids`는 실행 case와 순서대로 대응하고 `full_scope_complete`는 false다. set의 `Complete`/`Valid`는 저장 완결성과 일관성을 뜻하며 독립 의미 검증·외부 승인·full ordinary 완료를 뜻하지 않는다. 기존 semantic API/replay reducer에 r8 수용을 추가하지 않는다.
+P2-B 2단계는 `OrdinaryOracleManifest`(r8), `OrdinaryOracleRecord`(r5), `OrdinaryRunBatch`, `OrdinaryRunBinding`(r2)의 실험적 저장 자료형을 추가한다. `VerifyOracleSet`은 r8의 구조·물리 pin·process owner·case/frame/raw 연결을 검사하며, `ValidateOrdinaryRunBinding`은 caller가 보유한 binding bytes를 같은 manifest의 input pin·candidate/cohort/run·selected shard IDs·실제 members/batches와 대조한다. `selected_shard_ids`는 plan 순서(shard ID 오름차순)이며 실행 case(registration 순서)와는 위치가 아니라 shard의 case ID로 일대일 대응하고(순서 계약은 [identity-and-evidence](identity-and-evidence.md)) `full_scope_complete`는 false다. set의 `Complete`/`Valid`는 저장 완결성과 일관성을 뜻하며 독립 의미 검증·외부 승인·full ordinary 완료를 뜻하지 않는다. 기존 semantic API/replay reducer에 r8 수용을 추가하지 않는다.
 
 `nativewire.CompareAPI(nodes, api)`는 shape 검사에 성공한 `TreeNode`/`WireAPI`의 순수 의미 비교를 제공한다. native live producer와 offline raw 소비자가 같은 comparator를 쓰며 field·point·zero-width divergence의 기존 판단을 보존한다. 이 함수는 wire/tree/API shape를 대신 검증하지 않으며 호출자가 먼저 `CheckTree`를 통과시켜야 한다.
 

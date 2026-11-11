@@ -601,13 +601,22 @@ func ordinaryCheckManifestMembers(m OrdinaryOracleManifest, registration Ordinar
 	if len(m.Cases) == 0 || len(m.Cases) != len(profile.Native.Cases) || len(m.Cases) != len(m.ShardIDs) {
 		return fail(KindInvalidInput, "ORDINARY_CASE_COUNT", "manifest.json", nil)
 	}
+	// Cases follow the profile (registration) order; selected shard IDs follow the plan order. They are
+	// bound by ID: the shard IDs must be exactly the keys of the cases, listed in ascending plan order.
 	cases := map[string]bool{}
+	shardIDs := make([]string, len(m.Cases))
 	for i, c := range m.Cases {
-		if c == "" || cases[c] || profile.Native.Cases[i].ID != c || m.ShardIDs[i] != ordinaryPlanShardKey(registration.Route, registration.Platform, c) {
+		if c == "" || cases[c] || profile.Native.Cases[i].ID != c {
 			add("ORDINARY_CASE_ORDER", c, "manifest case와 profile·shard 순서가 다르다")
 			return fail(KindInvalidInput, "ORDINARY_CASE_ORDER", "manifest.json", nil)
 		}
 		cases[c] = true
+		shardIDs[i] = ordinaryPlanShardKey(registration.Route, registration.Platform, c)
+	}
+	slices.Sort(shardIDs)
+	if !slices.Equal(m.ShardIDs, shardIDs) {
+		add("ORDINARY_CASE_ORDER", m.Cases[0], "manifest case와 profile·shard 순서가 다르다")
+		return fail(KindInvalidInput, "ORDINARY_CASE_ORDER", "manifest.json", nil)
 	}
 	caseRoles, batchRoles := map[string]map[string]int{}, map[string]map[string]int{}
 	for _, member := range m.Members {

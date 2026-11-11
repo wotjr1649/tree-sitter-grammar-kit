@@ -91,7 +91,8 @@ func TestOracleOrdinaryE2EFixture(t *testing.T) {
 	if err := json.Unmarshal(in.ShardPlan, &plan); err != nil {
 		t.Fatal(err)
 	}
-	if err := validateOrdinaryShardSelection(in.ShardIDs, plan, parsedRegistration, p.Native.Cases); err != nil {
+	shardIDs, err := validateOrdinaryShardSelection(in.ShardIDs, plan, parsedRegistration, p.Native.Cases)
+	if err != nil {
 		t.Fatal(err)
 	}
 	req := OracleRequest{Root: root, GrammarRoot: in.GrammarRoot, Profile: in.Profile, Runtime: rt, Compiler: cc,
@@ -107,7 +108,7 @@ func TestOracleOrdinaryE2EFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prepared.shardIDs = in.ShardIDs
+	prepared.shardIDs = shardIDs
 	var pack *kit.FactPack
 	if len(in.FactPack) != 0 {
 		value, err := kit.ParseFactPack(in.FactPack)

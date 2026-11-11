@@ -73,34 +73,50 @@ func prepareOrdinary(ctx context.Context, req OracleRequest, prof kit.OracleProf
 	if !registered || r.Route != n.Route || r.Subject != hostPlatform || r.Profile != ordinaryPin(r.Profile.Path, in.Inputs.Profile) || r.Assets != ordinaryPin(r.Assets.Path, in.Inputs.Assets) || r.Candidate != p.Candidate || r.SemanticCohort != p.SemanticCohort {
 		return nil, refuse(kit.KindInvalidInput, "ORDINARY_EXECUTION_BINDING", nil)
 	}
-	if err := validateOrdinaryShardSelection(in.ShardIDs, plan, r, n.Cases); err != nil {
+	shardIDs, err := validateOrdinaryShardSelection(in.ShardIDs, plan, r, n.Cases)
+	if err != nil {
 		return nil, err
 	}
 	prepared, err := bindOrdinaryExecution(ctx, req, prof, p, r)
 	if err != nil {
 		return nil, err
 	}
-	prepared.shardIDs = slices.Clone(in.ShardIDs)
+	prepared.shardIDs = shardIDs
 	return prepared, nil
 }
 
-func validateOrdinaryShardSelection(ids []string, plan kit.OrdinaryShardPlan, r kit.OrdinaryRegistration, cases []kit.IncrementalCase) error {
+// validateOrdinaryShardSelection binds the selected shards to the executable profile cases by ID. The
+// caller may list shards in any order; the result is the canonical plan order (ascending ID, the order
+// of the plan commitment, its proofs and the approval). Profile cases keep the registration order and
+// are paired with shards through shard.Case, never by position.
+func validateOrdinaryShardSelection(ids []string, plan kit.OrdinaryShardPlan, r kit.OrdinaryRegistration, cases []kit.IncrementalCase) ([]string, error) {
 	if len(ids) == 0 || len(ids) != len(cases) {
-		return refuse(kit.KindInvalidInput, "ORDINARY_SHARD_SELECTION", nil)
+		return nil, refuse(kit.KindInvalidInput, "ORDINARY_SHARD_SELECTION", nil)
 	}
 	shards := make(map[string]kit.OrdinaryPlanShard, len(plan.Shards))
 	for _, shard := range plan.Shards {
 		shards[shard.ID] = shard
 	}
-	seen := map[string]bool{}
-	for i, id := range ids {
+	seen := make(map[string]bool, len(ids))
+	selectedCase := make(map[string]bool, len(ids))
+	for _, id := range ids {
 		shard, ok := shards[id]
-		if !ok || seen[id] || shard.Route != r.Route || shard.Platform != r.Platform || shard.Subject != r.Subject || shard.Case != cases[i].ID {
-			return refuse(kit.KindInvalidInput, "ORDINARY_SHARD_SELECTION", nil)
+		if !ok || seen[id] || selectedCase[shard.Case] || shard.Route != r.Route || shard.Platform != r.Platform || shard.Subject != r.Subject {
+			return nil, refuse(kit.KindInvalidInput, "ORDINARY_SHARD_SELECTION", nil)
 		}
-		seen[id] = true
+		seen[id], selectedCase[shard.Case] = true, true
 	}
-	return nil
+	// Equal cardinality and a distinct selected case per profile case make this an exact bijection.
+	covered := make(map[string]bool, len(cases))
+	for _, c := range cases {
+		if !selectedCase[c.ID] || covered[c.ID] {
+			return nil, refuse(kit.KindInvalidInput, "ORDINARY_SHARD_SELECTION", nil)
+		}
+		covered[c.ID] = true
+	}
+	canonical := slices.Clone(ids)
+	slices.Sort(canonical)
+	return canonical, nil
 }
 
 func bindOrdinaryExecution(ctx context.Context, req OracleRequest, prof kit.OracleProfile, p kit.OrdinaryProfile, r kit.OrdinaryRegistration) (*ordinaryRecording, error) {
