@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"context"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -15,12 +16,15 @@ import (
 // ReuseAcceptedResult belongs to its enclosing case and policy/ledger identity.
 // It does not authenticate execution or change the public node identity route.
 type ReuseAcceptedResult struct {
-	Schema        string              `json:"schema"`
-	HistorySHA256 string              `json:"history_sha256"`
-	Result        string              `json:"result"`
-	Code          string              `json:"code"`
-	Steps         []ReuseAcceptedStep `json:"steps"`
+	Schema        string                 `json:"schema"`
+	HistorySHA256 string                 `json:"history_sha256"`
+	Result        string                 `json:"result"`
+	Code          string                 `json:"code"`
+	Steps         []ReuseAcceptedStep    `json:"steps"`
+	RuntimePins   *RuntimeEvidenceResult `json:"runtime_pins,omitempty"`
 }
+
+const ReuseAcceptedRuntimeSchema = "tsgk-reuse-accepted/r2"
 
 // ReuseAcceptedStep is one fixed target, retained even when history completion fails.
 type ReuseAcceptedStep struct {
@@ -39,6 +43,8 @@ type ReuseAcceptedRequest struct {
 	Case                       IncrementalCase
 	Source, Raw, Projection    []byte
 	Expected                   nativewire.Expect
+	RuntimePins                *EvidencePinsRequest
+	runtime                    *eligibilityRuntimePins
 	Policy                     IdentityRef
 	Platform, RecordedPlatform string
 }
@@ -59,6 +65,52 @@ type acceptedProcess struct {
 // original history. Hashes and caller-supplied context are bindings, not execution proof.
 // Cancellation uses Expected.Check, including when replay shares its enclosing budget.
 func JudgeReuseAccepted(req ReuseAcceptedRequest) (ReuseAcceptedResult, error) {
+	if req.RuntimePins != nil {
+		res := ReuseAcceptedResult{Schema: ReuseAcceptedRuntimeSchema, Result: claimBlocked, Code: "REUSE_ACCEPTED_EVIDENCE_MISSING", Steps: []ReuseAcceptedStep{}}
+		h := req.Ledger.original(req.Case.ID)
+		if h == nil {
+			res.Result, res.Code = claimFail, "REUSE_ACCEPTED_HISTORY_MISMATCH"
+			return res, nil
+		}
+		res.HistorySHA256 = h.historySHA256()
+		for _, k := range h.BlockedSteps {
+			res.Steps = append(res.Steps, ReuseAcceptedStep{Step: k, Result: claimBlocked, Code: "REUSE_ACCEPTED_EVIDENCE_MISSING"})
+		}
+		check := req.Expected.Check
+		if check != nil {
+			if err := check(); err != nil {
+				return res, err
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+		defer cancel()
+		r, err := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
+		if err != nil {
+			return res, err
+		}
+		defer r.cancel()
+		runtimeResult, runtime, err := verifyScopedRuntime(req.RuntimePins, req.Raw, &eligibilityBudget{r: r}, runtimeAcceptedReader)
+		res.RuntimePins = &runtimeResult
+		if runtimeResult.Assessment == AssessFail {
+			res.Result, res.Code = claimFail, "REUSE_ACCEPTED_RUNTIME_INVALID"
+		}
+		if err != nil {
+			return res, err
+		}
+		if check != nil {
+			if err := check(); err != nil {
+				return res, err
+			}
+		}
+		if runtimeResult.Assessment != AssessPass || !runtimeResult.Complete || runtime == nil {
+			return res, nil
+		}
+		req.RuntimePins = nil
+		req.runtime = runtime
+		proof, proofErr := judgeReuseAccepted(req, false)
+		proof.Schema, proof.RuntimePins = ReuseAcceptedRuntimeSchema, &runtimeResult
+		return proof, proofErr
+	}
 	return judgeReuseAccepted(req, false)
 }
 
@@ -134,13 +186,22 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 	}
 	e := req.Expected
 	e.Check = check
+	if req.runtime != nil && e.Observation != nil {
+		binding := *e.Observation
+		binding.Runtime = &req.runtime.logger
+		e.Observation = &binding
+	}
 	if req.Policy.Role != "policy" || req.Policy.Schema != NativePolicySchema || !hex64.MatchString(req.Policy.SHA256) {
 		fail("REUSE_ACCEPTED_POLICY_MISMATCH")
 	}
 	hasExpected := e.Observation != nil || req.Raw != nil
+	expectedManifest := reuseobs.RuntimeManifestSHA256
+	if req.runtime != nil {
+		expectedManifest = req.runtime.tuple.ManifestSHA256
+	}
 	if hasExpected && ((e.Revision != nativewire.ProtocolR3 && e.Revision != nativewire.ProtocolR4) || e.ID != h.ID || e.Nodes != NativeOperations()["native-parse-edit"].Nodes ||
 		e.API || len(e.Queries) != 0 || len(e.Points) != 0 || e.SourceBytes != uint64(len(source)) || e.Observation == nil ||
-		e.Observation != nil && (e.Observation.Manifest != reuseobs.RuntimeManifestSHA256 || e.Observation.HistoryStart != 0 || !validID(e.Observation.RunID) || !hex64.MatchString(e.Observation.ProducerSHA256))) {
+		e.Observation != nil && (e.Observation.Manifest != expectedManifest || e.Observation.HistoryStart != 0 || !validID(e.Observation.RunID) || !hex64.MatchString(e.Observation.ProducerSHA256))) {
 		fail("REUSE_ACCEPTED_REQUEST_MISMATCH")
 	}
 	sources := make([]nativewire.SourceID, len(versions))
@@ -261,7 +322,11 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			fail("REUSE_ACCEPTED_PRODUCER_MISMATCH")
 		}
 		if p := producer; p != nil {
-			manifest, ok := observationProducer(p.ReuseObservation)
+			var loggerPin *reuseobs.RuntimePin
+			if e.Observation != nil {
+				loggerPin = e.Observation.Runtime
+			}
+			manifest, ok := observationProducerWithRuntime(p.ReuseObservation, loggerPin)
 			capabilities := p.Query != ""
 			if e.Revision == nativewire.ProtocolR3 {
 				capabilities = p.Query == "UNSUPPORTED" && p.API == nil && p.Predicates == nil && p.SymbolCount == nil && p.FieldCount == nil
@@ -270,6 +335,9 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 			}
 			if !ok || e.Observation == nil || manifest != e.Observation.Manifest || !capabilities {
 				fail("REUSE_ACCEPTED_PRODUCER_MISMATCH")
+			}
+			if req.runtime != nil && !acceptedRuntimeABI(*p, req.runtime) {
+				fail("REUSE_ACCEPTED_RUNTIME_ABI_MISMATCH")
 			}
 		}
 		if c.ExecutionStatus == StatusCompleted && (c.ResponseStatus != StatusCompleted || c.ResponseCode != "") {
@@ -324,6 +392,9 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 					fail("REUSE_ACCEPTED_RAW_INVALID")
 				}
 			}
+			if req.runtime != nil && !acceptedRuntimeABI(raw.Producer, req.runtime) {
+				fail("REUSE_ACCEPTED_RUNTIME_ABI_MISMATCH")
+			}
 		}
 	}
 	if req.Projection != nil && rawOK {
@@ -340,7 +411,11 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 		}
 		if !earlyProjection || len(top.Producer) != 0 && string(top.Producer) != "null" {
 			var producer nativewire.Producer
-			if jsonv2.Unmarshal(top.Producer, &producer, jsonv2.RejectUnknownMembers(true)) != nil || !acceptedProducerEqual(producer, raw.Producer) {
+			var loggerPin *reuseobs.RuntimePin
+			if e.Observation != nil {
+				loggerPin = e.Observation.Runtime
+			}
+			if jsonv2.Unmarshal(top.Producer, &producer, jsonv2.RejectUnknownMembers(true)) != nil || !acceptedProducerEqual(producer, raw.Producer, expectedManifest, loggerPin) {
 				fail("REUSE_ACCEPTED_PRODUCER_MISMATCH")
 			}
 		}
@@ -662,7 +737,7 @@ func acceptedObservations(raw jsontext.Value, k int, e nativewire.Expect) ([]reu
 		if k > 0 {
 			role = []string{"incremental", "fresh"}[i]
 		}
-		b := reuseobs.Binding{RuntimeManifestSHA256: e.Observation.Manifest, RequestID: e.ID, RunID: e.Observation.RunID, ProducerSHA256: e.Observation.ProducerSHA256, HistoryStart: e.Observation.HistoryStart, Step: uint64(k), Role: role, SourceSHA256: e.Sources[k].SHA256, SourceBytes: e.Sources[k].Bytes}
+		b := reuseobs.Binding{RuntimeManifestSHA256: e.Observation.Manifest, Runtime: e.Observation.Runtime, RequestID: e.ID, RunID: e.Observation.RunID, ProducerSHA256: e.Observation.ProducerSHA256, HistoryStart: e.Observation.HistoryStart, Step: uint64(k), Role: role, SourceSHA256: e.Sources[k].SHA256, SourceBytes: e.Sources[k].Bytes}
 		if k > 0 {
 			b.PreviousSourceSHA256 = e.Sources[k-1].SHA256
 		}
@@ -1034,14 +1109,20 @@ func earlyProjectionAvailable(c rcCase) bool {
 		p.Status == StatusCancelled && c.ExecutionStatus == StatusCancelled && c.Code == "CANCELLED")
 }
 
-func acceptedProducerEqual(a, b nativewire.Producer) bool {
+func acceptedProducerEqual(a, b nativewire.Producer, expectedManifest string, runtime *reuseobs.RuntimePin) bool {
 	capability := func(raw jsontext.Value) (string, bool) {
 		// The existing strict capability decoder rejects extra, duplicate and absent fields.
-		m, ok := observationProducer(raw)
-		return m, ok && m == reuseobs.RuntimeManifestSHA256
+		m, ok := observationProducerWithRuntime(raw, runtime)
+		return m, ok && m == expectedManifest
 	}
 	am, aok := capability(a.ReuseObservation)
 	bm, bok := capability(b.ReuseObservation)
 	a.ReuseObservation, b.ReuseObservation = nil, nil
 	return aok && bok && am == bm && reflect.DeepEqual(a, b)
+}
+
+func acceptedRuntimeABI(p nativewire.Producer, runtime *eligibilityRuntimePins) bool {
+	return runtime != nil && p.RuntimeLanguageVersion == runtime.tuple.RuntimeLanguageVersion &&
+		p.RuntimeMinCompatible == runtime.tuple.RuntimeMinCompatible &&
+		p.LanguageVersion >= runtime.tuple.RuntimeMinCompatible && p.LanguageVersion <= runtime.tuple.RuntimeLanguageVersion
 }

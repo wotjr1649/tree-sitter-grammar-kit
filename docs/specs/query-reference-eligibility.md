@@ -4,7 +4,7 @@
 
 ## #370 V2-A 역사 자료 pin 입력
 
-`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1, 생산 및 공개 호출 전달은 V2-B2 계약을 따른다. Runtime은 아래 V2-C의 명시적 tuple 범위에서 지원하며, 일반 logger replay·qualification은 아래 V2-C2 opt-in으로 지원하며 accepted·preprocess-CST 및 Roslyn 이행은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
+`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1, 생산 및 공개 호출 전달은 V2-B2 계약을 따른다. Runtime은 아래 V2-C의 명시적 tuple, 일반 logger replay·qualification은 V2-C2, accepted·preprocess-CST는 V2-C3의 별도 reader 범위에서 지원한다. Roslyn 이행은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
 
 `EvidencePinsRequest`의 `Approval`, `PinSet`, `Subject`는 원문 bytes이고 `Materials`는 정확한 논리 이름→원문 bytes map이다. Caller는 graph 밖에서 **독립 승인한** `ApprovedApprovalSHA256`와 `ApprovedPinSetSHA256`를 제공한다. 증거나 sidecar의 자기 hash를 그대로 이 두 field에 복사하는 것은 독립 승인이 아니다. API는 승인 작성자의 진위를 인증하지 않는다. Caller는 호출 중 slice/map을 변경하지 않는다. 함수는 입력을 수정하거나 file/process/network에 접근하지 않고 결과는 원문 slice/map을 소유하지 않는다.
 
@@ -16,7 +16,7 @@
 | `tsgk-evidence-pin-set/r1` | `schema`, `reader`, 비어 있지 않은 `materials` 배열. 행은 `name`, `role`, `bytes`, `sha256`이다. |
 | `tsgk-evidence-pin-approval/r1` | `schema`, `pin_set_sha256`, `subject_sha256`, `reader`, `scope`. 기존 approval/registration/profile 등 caller가 선택한 **하나의 원본 subject 전체 bytes**에 결속한다. 다른 graph/profile/candidate를 대표하는 원문으로 sidecar를 재사용하면 FAIL이다. 복수 문서 closure의 의미 검증은 해당 소비 API가 담당한다. |
 
-지원 reader는 `tsgk-evidence-materials/r1`, scope는 `historical-materials`뿐이다. 이 reader는 자료를 opaque bytes로 결속하며 catalogue 규칙·Rust version stdout·ABI·Roslyn diagnostic을 해석하지 않는다. 역할은 `reference-catalogue`, `reference-input`, `reference-tuple`, `runtime-tuple`, `runtime-manifest`, `runtime-patch`, `driver`, `cp949`, `shim-template`, `roslyn-observation`, `roslyn-cases`다. 알 수 없는 schema/reader/scope/role은 UNSUPPORTED이며 PASS가 아니다. 더 강한 scope는 승인 문서가 요구해도 지원하지 않는다. 후속 semantic reader는 고정 의무·분모·known-rule를 자체 소유해야 하며 이 배열로 줄일 수 없다.
+지원 reader는 `tsgk-evidence-materials/r1`, scope는 `historical-materials`뿐이다. 이 reader는 자료를 opaque bytes로 결속하며 catalogue 규칙·Rust version stdout·ABI·Roslyn diagnostic을 해석하지 않는다. 역할은 `reference-catalogue`, `reference-input`, `reference-tuple`, `runtime-tuple`, `runtime-manifest`, `runtime-patch`, `runtime-readers`, `driver`, `cp949`, `shim-template`, `roslyn-observation`, `roslyn-cases`다. 알 수 없는 schema/reader/scope/role은 UNSUPPORTED이며 PASS가 아니다. 더 강한 scope는 승인 문서가 요구해도 지원하지 않는다. 후속 semantic reader는 고정 의무·분모·known-rule를 자체 소유해야 하며 이 배열로 줄일 수 없다.
 
 이름은 host 경로로 열지 않는다. 기존 portable 상대 경로 검사, 1,024 bytes 상한과 대소문자 접기 중복 거부를 적용하고 입력 map은 정확한 이름으로 결속한다. 미사용·다른 대소문자 이름은 잘못된 입력이다. 동일 내용의 여러 역할은 각 정확한 이름을 제공한다. 역할·bytes·hash·순서는 승인된 집합 원문 digest에 함께 결속된다.
 
@@ -171,6 +171,18 @@ Observation 필수 field는 `query`, `step`, `tree_role`, `source_bytes`, `sourc
 `full-input-utf8-paged-parser/r1`은 단일 작은 UTF-8 native-query source의 큰 grammar parser에 한정된다. 세 approval/registration/result r1과 witness r2의 필드 의미는 유지하며 Windows/Linux만 받는다. `Native.Grammar[original_path]`는 실제 `grammar-paged-descriptor` 물리 pin을 가진다. 실제 `Native.InvocationID`의 NATIVE_DRIVER node가 descriptor와 모든 part의 owner여야 하며, 조각은 동일 guard의 검증된 cached bytes에서만 소비한다. 참조하지 않은 paged member와 다른 owner는 거부한다. 전체 logical pin은 승인된 원본 plain build manifest에 대조하고 선언된 descriptor 해시만으로 승인하지 않는다. 정확한 분할 규칙과 변경되지 않는 small 예산은 [계측 계약](instrumented-query-reference.md#216-parser-only-paging)이 소유한다. 이 문맥에서 eligibility 검증이 직접 시작한 원장(approval 결속)의 논리 처리량은 1.5 GiB이며 다른 small 한도는 같다. `VerifyQuerySemantics`·Replay처럼 원장을 상속하는 경로는 이 문맥에서도 1 GiB다. 큰 source/CST 또는 새 macOS 검증을 추가하지 않는다.
 
 `full-input-utf8-paged-binaries/r1`은 paged-parser 규칙을 포함하되 16 MiB를 넘는 grammar parser를 0개 또는 1개 허용한다. driver executable과 reference library 중 하나 이상이 descriptor로 보존돼야 하며, 이 조건은 approval에 결속된 registration의 executable·library pin role로만 판정한다. NATIVE_DRIVER의 executable이 `driver-paged-descriptor`이면 descriptor와 모든 part는 그 invocation node가 소유한다. 재결합한 logical SHA-256을 approval의 `executable_sha256`과 대조하고, 사용하지 않거나 다른 node가 소유한 `driver-paged-*` member는 거부한다. 다른 context에서 descriptor role의 executable은 승인 값과 무관하게 거부한다. reference library의 descriptor는 그 library node가 소유하며 사용하지 않는 `library-paged-*` member는 거부한다.
+
+## #370 V2-C3 accepted-event·preprocess-CST runtime opt-in
+
+Logger 판독 권한은 accepted-event 또는 preprocess-CST 권한을 포함하지 않는다. 새 경로는 V2-C의 승인 tuple·83-file/3-patch reader 의무에 더해, 같은 외부 승인 pin 집합의 `native/runtime-readers.json`(`role=runtime-readers`)을 요구한다. 문서는 `schema=tsgk-runtime-readers/r1`, 정확한 `tuple_sha256`, 선택적인 `accepted_reader=tsgk-runtime-accepted/r1`과 `preprocess_cst_reader=tsgk-runtime-preprocess-cst/r1`을 갖는다. Unknown/duplicate/type·원문 digest 검사를 유지한다. 요청 범위 누락은 `PIN_RUNTIME_READER_MISSING`/BLOCKED, tuple 모순은 `PIN_RUNTIME_READER_BINDING`/FAIL, 미지원 schema/reader는 `PIN_RUNTIME_READER_UNSUPPORTED`다. 승인 자료가 reader의 검사 의무나 분모를 선택하지 않는다.
+
+직접 `ReuseAcceptedRequest.RuntimePins`와 `PreprocessCSTRequest.RuntimePins`의 subject는 같은 요청의 **Raw 응답 원문 bytes 전체**다. source와 등록 edit에서 version/point를 다시 만들고 raw의 source/run/producer와 projection 또는 primary receipt·전체 CST·fresh equality를 대조한다. 공개 accepted 결과는 `tsgk-reuse-accepted/r2`, CST 결과는 `tsgk-preprocess-cst/r2`이며 선택 reader를 명시한 `runtime_pins`를 덧붙인다. 각 API는 기존 유한 replay 한도 안에서 승인 자료를 해석하고, nil 호출의 결과 schema·current manifest 검증을 유지한다.
+
+Replay는 exact Profile 원문 subject를 사용한다. 새 `native-result-r11`은 기존 accepted/r8, `oracle-set-r8`은 accepted/r3, `native-result-r12`는 CST/r7의 판독 의미에 해당 reader 승인을 더한다. `RuntimePins` 없는 새 reducer 또는 기존 reducer에 승인 입력을 붙이면 거부한다. 결과는 `tsgk-replay-result/r6`이며 nested `RuntimeEvidenceResult.reader`로 범위를 기록한다. 저장 PASS reader는 승인·tuple identity·고정8개 자료와 reader 자료, 필수 proof gate의 PASS·consumption·graph subject 일관성을 검사한다. CST 사례는 유일한 ID와 원본 r1/PASS·빈 code·중첩 승인 부재·비어 있지 않은 step을 요구한다. 원본 incremental/Oracle/CST/accepted projection schema는 그대로다.
+
+Qualification은 inventory/r8과 host의 exact run-identity subject를 유지한다. Reader 자료를 명시한 host가 있으면 `tsgk-qualification-result/r13`을 사용한다. 제출된 accepted/symbol workload마다 같은 host 원장에서 해당 scope를 확인하고 `QualSet.runtime_pins`에 실제 소비 범위를 남긴다. 검증된 private token만 내부 replay로 전달하고 다음 set/host로 권한을 유출하지 않는다. Candidate·cohort·platform·당시 NEW_RUN·등록 runtime commit·고정 original/target/control 분모는 유지한다. `QuerySemantics` 동시 입력과 이전 inventory admission, standalone CLI admission은 추가하지 않는다.
+
+자료 결속 PASS는 실행 진위나 새 runtime의 실제 자격이 아니다. 미보존 raw/build/checkout·독립 provenance를 추측하지 않으며 실제 역사 자료가 없으면 BLOCKED다. 생산 pointer 변경은 동일 과거 승인·증거의 결과를 바꾸지 않는다.
 
 ## #370 V2-C2 일반 logger replay·qualification opt-in
 

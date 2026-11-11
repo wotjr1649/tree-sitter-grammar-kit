@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #370 V2-C3 accepted-event·preprocess-CST 검사
+
+공개 API·replay·qualification에서 비현재 합성 runtime A의 명시적 reader 승인과 원본 source/primary/fresh 결속을 검사한다. 생산 후보 B/C 선택 뒤 A의 결과·counter·소비 identity 전체가 같아야 한다. Logger 승인만 있는 입력, 미승인 set, 다른 subject, tuple/reader 치환·누락·축소·미지원 reader와 producer/raw/projection/ABI·source/fresh 모순을 거부한다. Opt-in 없는 legacy 결과·schema와 current runtime 검사는 유지한다. 저장 replay r6의 고정8개 자료와 reader 자료·gate·consumption·graph subject 결속을 확인한다.
+
+각 경로의 tuple/material SHA 대조를 제거한 test-only overlay에서 위조 시험이 assertion으로 실패해야 한다. Compile 오류·시험 미선택은 mutant 검출이 아니다. `CGO_ENABLED=0`의 gofmt·vet/build·kit 전체·CLI 전체·영향 native·foundation 전체를 직접 실행한다. 미추적 제품 파일 때문에 module-proxy 소비가 실패하면 제품·원래 assertion을 보존한 test-only packaging overlay 결과를 별도로 기록한다. Synthetic 자료의 PASS와 현재 native 회귀는 실제 과거 실행 진위나 새 runtime 자격을 대신하지 않는다. 필수 CI·두 독립 리뷰·finding 처분과 main 통합은 별도 gate다.
+
 ## #370 V2-C2 logger replay·qualification 검사
 
 `TestReplayLoggerPinsProductionIndependence`는 선택적/mandatory logger replay의 전체 historical PASS와 B/C 생산 후보 선택 후 A 결과·counter·소비 identity 불변성을 검사한다. `TestReplayLoggerPinsRejectForgery`·`TestReplayLoggerPinsAdmission`은 위조 tuple/승인/subject·producer/observation/raw·ABI·runtime commit·inventory 축소·누락과 기존 reducer scope를 검사한다. `TestLoggerPinsHostMarkers`는 producer가 없는 marker도 승인 기대값만 사용하며 current fallback과 누락을 거부하는지 확인한다. 저장 PASS에서 고정8개 자료와 counter를 함께 축소한 반례도 거부한다. 저장 r5 reader는 graph subject의 status·assessment·mode 변조도 거부한다. `TestLoggerPinsSharedBudget`는 공유 read/work/logical counter 차분과 기존 runtime context 복원·work 상한을 검사한다.

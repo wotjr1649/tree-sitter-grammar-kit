@@ -581,7 +581,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 			if observed != nil {
 				ov = observed[k+1]
 			}
-			if selection && !completeSelectionObservation(s.Observations) {
+			if selection && !completeSelectionObservationWithRuntime(s.Observations, x.observationRuntime) {
 				ov = claimFail
 			}
 			if v == claimBlocked && observed != nil && ov != claimPass && (selection || ov != claimBlocked) {

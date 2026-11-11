@@ -98,4 +98,6 @@ source/tool 확보와 offline 제품 호출을 분리한다. 승인 기록은 �
 
 ## #370 V2-C2 logger 입력 경계
 
+V2-C3의 accepted/CST는 [별도 원문 reader 자료](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)를 외부 승인 집합에서 검증한다. 요청 Raw 또는 replay profile/host identity의 정확한 subject를 확인한 뒤만 token을 설치한다. Reader는 고정 data-only 구현이며 자료가 외부 코드·새 comparator·한도·분모를 지정하지 않는다. Logger 승인으로 권한을 확대하지 않는다. 기존 소유권·취소·wall·read/work/logical 원장과 host/set 격리를 유지한다.
+
 Logger의 `RuntimePins`는 caller-trusted byte 입력이며 증거 graph에서 승인 문서를 찾거나 생성하지 않는다. [정확한 subject·scope 계약](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)에 따라 두 외부 승인 digest, 원문 집합, tuple과 reader 의무를 먼저 검증한다. 부분 material PASS는 실행 진위나 accepted/preprocess 권한이 아니다. 입력 소유권·deadline·공유 한도를 유지하며 token은 host/ordinary set 범위를 넘지 않는다. 새로운 CLI 파일 admission이나 파일 수 예외는 없다.

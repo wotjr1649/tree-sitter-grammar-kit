@@ -308,4 +308,6 @@ Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 �
 
 ## #370 V2-C2 historical logger 결과
 
+V2-C3은 [별도 reader scope](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)를 승인 tuple에 결속한다. Replay r6의 `native-result-r11`/`oracle-set-r8`/`native-result-r12`는 원본 accepted/CST projection을 재작성하지 않고 검증하며, qualification r13은 host별 자료 결속과 set별 `runtime_pins`를 기록한다. 저장 PASS에서 reader 자료 또는 고정8개 의무를 삭제하고 counter를 함께 줄여도 거부한다. 생산 pin 갱신은 과거 승인의 철회나 새 실행 요구를 뜻하지 않는다.
+
 [Logger opt-in](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)은 exact replay profile 또는 exact host run identity를 외부 승인 subject로 사용한다. 생산 선택 갱신은 이 승인을 대신하거나 철회하지 않는다. 원본 recorded verdict와 subject의 NEW_RUN은 보존하며 replay operation은 REPLAYED_RAW로 기록한다. `native-result-r9`/`r10`은 기존 r3/r4 logger 의미를 명시 승인 tuple로 읽고 replay-result/r5의 `runtime_pins`를 남긴다. Qualification r12도 host별 같은 부분 결과를 보존한다. 저장 r5 PASS의 nested 승인·필수8개 descriptor·gate·consumption 검사는 required/verified 동시 축소를 허용하지 않는다. Opt-in 없는 r1~r4 replay 결과 의미와 qualification current-only 검사는 바꾸지 않는다.

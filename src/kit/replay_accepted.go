@@ -174,6 +174,9 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 	}
 	if top.Build != nil {
 		expected.Observation = &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: top.ObservationRunID, ProducerSHA256: top.Build.Identity}
+		if x.acceptedRuntime != nil {
+			expected.Observation.Manifest, expected.Observation.Runtime = x.acceptedRuntime.tuple.ManifestSHA256, &x.acceptedRuntime.logger
+		}
 	}
 	{
 		h := x.acceptedLedger.original(registered.ID)
@@ -200,6 +203,7 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 		expected.Exit = &process.ExitCode
 	}
 	req := ReuseAcceptedRequest{Ledger: x.acceptedLedger, Route: top.Route, Case: *registered, Source: source, Raw: response, Projection: raw, Expected: expected, Policy: policy, Platform: x.prof.Subject.Platform, RecordedPlatform: top.Platform}
+	req.runtime = x.acceptedRuntime
 	if x.acceptedControl {
 		// Retain independent control failures before a shared budget can stop public proof.
 		proof, err := judgeReuseAccepted(req, true)
@@ -236,7 +240,7 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 		return fail(KindInvalidInput, "REUSE_ACCEPTED_PROJECTION_INVALID", c.ID, err)
 	}
 	g.check(reflect.DeepEqual(stored, proof), c.ID, "REUSE_ACCEPTED_CLAIM_MISMATCH", "저장된 accepted 판정이 재계산과 다르다")
-	claim, _ := mandatoryObservations(c)
+	claim, _ := mandatoryObservationsWithRuntime(c, x.observationRuntime)
 	var storedClaim string
 	g.check(json.Unmarshal(c.ReuseObservationClaim, &storedClaim) == nil && claim == storedClaim, c.ID, "OBSERVATION_CLAIM_MISMATCH", "기존 mandatory 관측 판정이 다르다")
 	return nil

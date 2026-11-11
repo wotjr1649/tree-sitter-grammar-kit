@@ -472,4 +472,8 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 
 ## #370 V2-C2 logger 승인 전달
 
+V2-C3의 `ReuseAcceptedRequest.RuntimePins`와 `PreprocessCSTRequest.RuntimePins`는 exact `Raw`를 승인 subject로 받는다. [Scope 계약](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)의 reader 자료가 필요하다. 직접 API r2 결과에만 `RuntimePins`가 추가되며 nil 호출의 r1·current 검증은 보존한다. 기존 함수 signature는 유지하고 승인 해석은 유한 replay run에서 수행한다. Accepted API는 기존 `Expected.Check`를 승인 해석 전후에도 확인한다. CST API는 기존 반환 signature 안에 원래 오류 code와 UNVERIFIED/FAIL을 보존한다. 입력 map/slice·receipt 소유권은 기존대로다.
+
+새 Replay r6와 qualification r13은 각각 profile/host identity 승인에서 검증한 private context를 같은 checker에 전달한다. `RuntimeEvidenceResult.Reader`와 `QualSet.RuntimePins`가 실제 판독 범위를 기록한다. 공개 저수준 logger token 자체는 승인 또는 accepted/CST 권한이 아니다. Standalone CLI의 새 파일 admission과 Roslyn/V2-D는 후속 범위다.
+
 `ReplayRequest.RuntimePins`, `QualifyHost.RuntimePins`와 `RuntimeEvidenceResult`는 [logger opt-in 계약](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)을 따른다. Replay의 subject는 Profile 원문, host의 subject는 run-identity.json 원문이다. 입력 map/slice는 호출이 끝날 때까지 변경하지 않는다. 반환 결과는 입력 bytes나 실행 가능한 reader를 보유하지 않으며 tuple/manifest·reader·ABI와 승인 digest를 기록한다. 기존 nil 호출은 그대로다. Replay r5/native-result r9·r10, qualification r12만 새 의미를 사용한다. CLI admission, accepted·preprocess-CST의 historical 지원과 Roslyn은 포함하지 않는다.

@@ -9,10 +9,11 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
-// RuntimeEvidenceResult records approved material and fixed logger interpretation.
-// It does not attest execution authenticity or accepted-event/preprocess-CST support.
+// RuntimeEvidenceResult records approved material and the selected fixed reader.
+// It does not attest execution authenticity.
 type RuntimeEvidenceResult struct {
 	Report
+	Reader       string                   `json:"reader,omitempty"`
 	Pins         *EvidencePinsResult      `json:"pins"`
 	RuntimePin   *QueryRuntimePinIdentity `json:"runtime_pin,omitempty"`
 	Complete     bool                     `json:"complete"`
@@ -106,8 +107,22 @@ func validPassedLoggerRuntime(p *RuntimeEvidenceResult, subject string) bool {
 func loggerPinsReducer(id string) bool { return id == "native-result-r9" || id == "native-result-r10" }
 
 func validLoggerReplayResult(rr ReplayResult) bool {
-	if rr.Schema != ReportSchema || rr.ResultSchema != ReplayLoggerPinsResultSchema || !loggerPinsReducer(rr.Reducer.ID) || rr.Reducer.Revision != strings.TrimPrefix(rr.Reducer.ID, "native-result-") || rr.Operation != "evidence-replay" ||
-		!executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || rr.QuerySemantics != nil || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 {
+	return validRuntimeReplayResult(rr, "")
+}
+
+func validScopedRuntimeReplayResult(rr ReplayResult) bool {
+	reader := scopedRuntimeReader(rr.Reducer.ID)
+	return reader != "" && validRuntimeReplayResult(rr, reader)
+}
+
+func validRuntimeReplayResult(rr ReplayResult, reader string) bool {
+	schema, reducer := ReplayLoggerPinsResultSchema, loggerPinsReducer(rr.Reducer.ID)
+	if reader != "" {
+		schema, reducer = ReplayScopedRuntimeResultSchema, scopedRuntimeReader(rr.Reducer.ID) == reader
+	}
+	revision := rr.Reducer.ID[strings.LastIndex(rr.Reducer.ID, "-")+1:]
+	if rr.Schema != ReportSchema || rr.ResultSchema != schema || !reducer || rr.Reducer.Revision != revision || rr.Operation != "evidence-replay" ||
+		!executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || rr.QuerySemantics != nil || rr.QueryReference != nil || reader != runtimePreprocessCSTReader && len(rr.PreprocessCST) != 0 {
 		return false
 	}
 	s := rr.Subject
@@ -123,13 +138,19 @@ func validLoggerReplayResult(rr ReplayResult) bool {
 			subject = id.SHA256
 		}
 	}
-	if rr.RuntimePins != nil && rr.RuntimePins.Assessment == AssessPass && !validPassedLoggerRuntime(rr.RuntimePins, subject) {
+	validPin := func() bool {
+		if reader == "" {
+			return rr.RuntimePins != nil && rr.RuntimePins.Reader == "" && validPassedLoggerRuntime(rr.RuntimePins, subject)
+		}
+		return validPassedScopedRuntime(rr.RuntimePins, subject, reader)
+	}
+	if rr.RuntimePins != nil && rr.RuntimePins.Assessment == AssessPass && !validPin() {
 		return false
 	}
 	if rr.Assessment != AssessPass && !rr.EvidenceValid {
 		return true
 	}
-	if rr.ExecutionStatus != StatusCompleted || !validPassedLoggerRuntime(rr.RuntimePins, subject) {
+	if rr.ExecutionStatus != StatusCompleted || !validPin() {
 		return false
 	}
 	seen := map[string]bool{}
@@ -143,10 +164,27 @@ func validLoggerReplayResult(rr ReplayResult) bool {
 		if rr.Assessment == AssessPass && g.Failed > 0 {
 			return false
 		}
+		if rr.Assessment == AssessPass && (reader == runtimeAcceptedReader && g.ID == "reuse-accepted" || reader == runtimePreprocessCSTReader && (g.ID == "preprocess-cst" || g.ID == "preprocess")) && g.Assessment != AssessPass {
+			return false
+		}
 	}
 	if rr.Assessment == AssessPass {
 		c := rr.Consumption
-		return rr.EvidenceValid && seen["reuse-observation"] && seen["verdict"] && rr.Recomputed == (Verdict{StatusCompleted, AssessPass}) && c.Expected > 0 && c.Expected == c.Consumed && c.Missing == 0 && c.Duplicate == 0 && c.Unused == 0 && c.OutOfOrder == 0
+		if reader == runtimeAcceptedReader && !seen["reuse-accepted"] {
+			return false
+		}
+		if reader == runtimePreprocessCSTReader && (!seen["preprocess-cst"] || !seen["preprocess"] || len(rr.PreprocessCST) == 0 || len(rr.PreprocessCST) != c.Expected) {
+			return false
+		}
+		cases := map[string]bool{}
+		for _, cst := range rr.PreprocessCST {
+			if !validID(cst.ID) || cases[cst.ID] || cst.Result.Schema != PreprocessCSTSchema || cst.Result.Result != claimPass || cst.Result.Code != "" || cst.Result.RuntimePins != nil || len(cst.Result.Steps) == 0 {
+				return false
+			}
+			cases[cst.ID] = true
+		}
+		observations := seen["reuse-observation"] || reader == runtimeAcceptedReader && seen["reuse-accepted"]
+		return rr.EvidenceValid && observations && seen["verdict"] && rr.Recomputed == (Verdict{StatusCompleted, AssessPass}) && c.Expected > 0 && c.Expected == c.Consumed && c.Missing == 0 && c.Duplicate == 0 && c.Unused == 0 && c.OutOfOrder == 0
 	}
 	return rr.EvidenceValid
 }

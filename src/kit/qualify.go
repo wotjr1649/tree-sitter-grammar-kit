@@ -15,16 +15,17 @@ import (
 
 // Qualification schemas (Session 08).
 const (
-	QualificationInventorySchema        = "tsgk-qualification-inventory/r8"
-	QualificationResultSchema           = "tsgk-qualification-result/r9"
-	QualificationLoggerPinsResultSchema = "tsgk-qualification-result/r12"
-	qualificationInventoryR7            = "tsgk-qualification-inventory/r7"
-	qualificationResultR8               = "tsgk-qualification-result/r8"
-	qualificationInventoryR6            = "tsgk-qualification-inventory/r6"
-	qualificationResultR7               = "tsgk-qualification-result/r7"
-	qualificationInventoryR5            = "tsgk-qualification-inventory/r5"
-	qualificationResultR6               = "tsgk-qualification-result/r6"
-	RunIdentitySchema                   = "tsgk-run-identity/r1"
+	QualificationInventorySchema           = "tsgk-qualification-inventory/r8"
+	QualificationResultSchema              = "tsgk-qualification-result/r9"
+	QualificationLoggerPinsResultSchema    = "tsgk-qualification-result/r12"
+	QualificationScopedRuntimeResultSchema = "tsgk-qualification-result/r13"
+	qualificationInventoryR7               = "tsgk-qualification-inventory/r7"
+	qualificationResultR8                  = "tsgk-qualification-result/r8"
+	qualificationInventoryR6               = "tsgk-qualification-inventory/r6"
+	qualificationResultR7                  = "tsgk-qualification-result/r7"
+	qualificationInventoryR5               = "tsgk-qualification-inventory/r5"
+	qualificationResultR6                  = "tsgk-qualification-result/r6"
+	RunIdentitySchema                      = "tsgk-run-identity/r1"
 	// CoverageRule names how a registered case covers a requirement row's case kinds. An
 	// error step expects ERROR, or NO_ERROR while naming one of the route's registered
 	// error node types in contains. P is a NO_ERROR step with named structure that is not
@@ -764,6 +765,7 @@ type QualCounts struct {
 // axis (set integrity, registration, S07 gates, kit claims and expected statuses); host
 // observations are retained apart and never compared.
 type QualSet struct {
+	RuntimePins   *RuntimeEvidenceResult `json:"runtime_pins,omitempty"`
 	ReuseAccepted *QualReuseAcceptedAxis `json:"reuse_accepted,omitempty"`
 	PreprocessCST *QualPreprocessCSTAxis `json:"preprocess_cst,omitempty"`
 	Set           string                 `json:"set"`
@@ -912,7 +914,10 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 		if host.RuntimePins != nil {
 			res.ResultSchema = QualificationLoggerPinsResultSchema
 			res.RuntimePins = map[string]RuntimeEvidenceResult{}
-			break
+			if _, scoped := host.RuntimePins.Materials[runtimeReadersName]; scoped {
+				res.ResultSchema = QualificationScopedRuntimeResultSchema
+				break
+			}
 		}
 	}
 	var q *qualifier
@@ -1028,6 +1033,7 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 				return res, nil
 			}
 			hx.loggerRuntime = runtime
+			hx.runtimePins, hx.runtimeSubject = h.RuntimePins, data
 		}
 	}
 	// one run cohort: the same repository run, attempt, event, checkout and head on every host

@@ -20,6 +20,12 @@ raw가 미제출이어도 제공된 projection의 full CST는 source version·pr
 
 등록된 omit-old-tree 대조군은 private proof를 public proof보다 먼저 같은 예산에서 계산한다. 중도 오류도 확인한 독립 FAIL과 원래 typed 오류를 함께 보존한다. private 검사가 오류 없이 끝나면 public proof와 저장 claim을 기존대로 비교하며 public omit FAIL을 승격하지 않는다. private 검사는 실제 CST equality·route·mandatory 관측 순서로 legacy 첫 실패를 재계산하고 등록된 첫 omit step 및 저장 code와 대조한다. 뒤 step의 route 누락도 거부한다. 완료된 control FAIL은 set mechanism에도 FAIL로 반영하며, 증거 미제출만으로 FAIL을 만들지 않는다.
 
+## #370 V2-C3 historical accepted reader
+
+위 current manifest 검사는 opt-in 없는 기존 호출의 계약이다. `ReuseAcceptedRequest.RuntimePins`는 [독립 승인 reader 계약](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)에 따라 exact raw 응답과 tuple·accepted reader를 결속한다. 승인 logger만으로 accepted-event 지원을 추론하지 않는다. 새 공개 r2 결과의 `runtime_pins`는 승인 digest·실제 runtime·reader·공유 소비량을 기록한다. 내부 replay는 검증된 token으로 원본 r1 projection의 의미를 그대로 재계산한다. Runtime manifest뿐 아니라 projection/raw producer ABI·관측 binding도 같은 승인 조합과 비교한다. 기존 event≥1·old-tree/counter·full CST·fresh equality·source/edit·process·고정 ledger·control 규칙과 한도를 유지한다.
+
+새 `native-result-r11`/`oracle-set-r8`과 qualification r13은 해당 승인 범위를 전달한다. 원본 결과·ledger·관측 bytes와 당시 verdict를 바꾸지 않는다. 자료 부재는 BLOCKED이며 위조·명시적 모순을 PASS로 승격하지 않는다.
+
 ## 실행·저장·호환성
 
 지원 범위는 Windows/amd64와 Linux/amd64의 구조 full-tree 단일 사례 process다. structural 실행은 `native-parse-edit`, 작은 Oracle 대조군은 query 없는 `native-query`다. SVC, preprocess, batch, large, query, API, fact pack, declarations, dynamic SQL 및 다른 원장을 거부한다. macOS의 새 claim은 DEFERRED다. 명시한 빈 ledger/빈 flag도 거부하며, opt-in하지 않은 실행은 기존 revision을 유지한다.

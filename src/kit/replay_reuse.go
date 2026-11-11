@@ -137,8 +137,12 @@ type observationStep struct {
 
 // Complete collection is stricter than a mandatory parse-start observation (#277).
 func completeSelectionObservation(raw jsontext.Value) bool {
+	return completeSelectionObservationWithRuntime(raw, nil)
+}
+
+func completeSelectionObservationWithRuntime(raw jsontext.Value, runtime *reuseobs.RuntimePin) bool {
 	var observations []reuseobs.Observation
-	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.Judge(observations) == claimPass
+	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.JudgeWithRuntime(observations, runtime) == claimPass
 }
 
 // wireRoute is an edit step's route as live DecodeResponse reads it and the record keeps it.

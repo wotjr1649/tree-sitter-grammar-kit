@@ -45,18 +45,20 @@ func (q *qualifier) close() {
 // qhost is one host directory: its walked files, its run identity and the files the
 // workloads used; a rejected host contributes no cell.
 type qhost struct {
-	loggerRuntime *eligibilityRuntimePins
-	platform      QualPlatform
-	root          string // the host directory, for a symbol-mode set's replay
-	x             *replayEnv
-	files         map[string]fs.FileInfo
-	used          map[string]bool
-	id            *RunIdentity
-	idSHA         string
-	rejected      []Finding
-	unused        int
-	records       uint64
-	entries       uint64
+	loggerRuntime  *eligibilityRuntimePins
+	runtimePins    *EvidencePinsRequest
+	runtimeSubject []byte
+	platform       QualPlatform
+	root           string // the host directory, for a symbol-mode set's replay
+	x              *replayEnv
+	files          map[string]fs.FileInfo
+	used           map[string]bool
+	id             *RunIdentity
+	idSHA          string
+	rejected       []Finding
+	unused         int
+	records        uint64
+	entries        uint64
 }
 
 func (h *qhost) reject(code, path, msg string) {

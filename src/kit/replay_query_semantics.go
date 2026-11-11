@@ -192,7 +192,7 @@ func validEvidencePinsResult(p *EvidencePinsResult) bool {
 			return false
 		}
 		switch material.Role {
-		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-tuple", "runtime-manifest", "runtime-patch", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
+		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-tuple", "runtime-manifest", "runtime-patch", "runtime-readers", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
 		default:
 			return false
 		}
