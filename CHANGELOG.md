@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- 독립 승인한 sidecar·pin 집합의 원문 digest로 역사 자료를 결속하는 `ResolveEvidencePins`와 단일 생산 후보 원문을 선택하는 `SelectEvidenceProductionPin`을 추가했다. Content-addressed 보존 집합과 A/B/C 생산 선택 불변성·위조 거부 시험을 제공한다. V2-A의 PASS는 자료 결속에 한정되며 Rust/catalogue 생산·검증 이행(V2-B)과 runtime·semantic 통합(V2-C/D)은 남아 있다. Refs #370.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - Go 기준을 1.27.4로 올렸다(#358). go1.27.4는 cgo, `go` 명령, 컴파일러, 링커, `net/http`의 보안 수정을 담는다. 공개 module의 최소 Go 버전도 1.27.4가 된다. 과거 margin report는 기록 당시의 `go1.27.3`으로 계속 검증된다.

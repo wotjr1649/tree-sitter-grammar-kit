@@ -1,0 +1,7 @@
+{
+  "schema": "tsgk-reference-pin-tuple/r1",
+  "rustc_release": "1.97.1",
+  "cargo_release": "1.97.1",
+  "path_reader": "rust-path-1.97.1/r1",
+  "catalogue_sha256": "36aebcfae0117b158edec0c1bce6d8f05548c304f2dd2c2eb855d0f7b70d1933"
+}
