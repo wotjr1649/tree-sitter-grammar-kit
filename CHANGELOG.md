@@ -4,6 +4,7 @@
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
+- #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
 - `src/internal/native` 시험의 중복 C 문법 compile을 줄였다(#352). batch 대조 시험은 set을 한 번 만들어 복사본을 변형하고, 순차 Oracle을 실행하는 두 시험은 시험 전용 build cache를 공유한다. 전역을 쓰지 않는 직렬 시험 6개는 병렬로 돌린다. 시험 수와 판정은 같다(PASS 916·SKIP 23). 로컬 Windows 교대 측정에서 base 146.1·145.4·143.9초, head 106.3·108.2초였다. CI 여유는 자연 표본으로 따로 판정한다.
 - Windows·Linux foundation의 13분 step과 native 명령 wall(420초 한도에 대한 보수적 대용값)을 margin 계측에 추가하고, 다른 source의 과거 report에 신규 4개 ID 누락을 제한적으로 허용한다(#352). 성능 개선이 아니며 새 구성 표본은 n=1부터 시작하므로 n20·70% 여유 달성은 별도 관측이 필요하다.
