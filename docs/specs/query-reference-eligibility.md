@@ -151,6 +151,31 @@ Identity는 tree/summary/composite/inline의 모든 행을 포함한다. 각 행
 
 이 식은 collection 방문·명시적 문자열/JSON/hash bytes의 work 상한이며 CPU instruction/heap/RSS 실측이 아니다. Raw·projection·checked CST의 결속이나 공용 reducer의 판정을 생략하지 않는다. Legacy single small semantic, r4–r6, r10은 기존 `16×significant+1` work와 `16n` logical 및 full-raw input 예약을 유지한다. Fact 재계산, 최초 FAIL 보존 및 공유 한도도 유지한다.
 
+### #362 ordinary base fact 도출 예약
+
+Fact 도출은 version → incremental/fresh role → fact query마다 예약한다. Source version SHA, ordered query suffix SHA와 pin 대조, 저장 record decode·payload 대조는 기존 별도 label에 남는다. Declaration/XML 도출은 source 본문을 읽지 않으므로 전체 source bytes를 capture 수의 제곱에 곱하지 않는다. 이전 공통식 `64n²(n+text)` work / `1024n(n+text)` logical 대신 실제 종류와 순회 경계에 따라 아래를 예약한다. 한도·fact 의미·독립 expected 조건은 유지한다.
+
+`C`는 해당 query의 capture 수, `n=C+1`, `M`은 각 capture가 참조하는 Name/Type 문자열 byte 길이의 합이다. Capture 크기 산정 자체는 `ordinary-base-fact-index`에 work `C+1`을 먼저 청구한다. Capture 변환·초기 index와 XML count map은 `ordinary-base-fact-derive`에 work `64n+8M`, logical `1024n+4M`을 예약한다. XML 결과는 capture 이름별 count이며 source 크기와 무관하다.
+
+Declaration의 인접 level owner 탐색과 locator frontier는 별도 checked private derivation을 사용한다. 같은 node가 여러 match/parent 경로를 통해 반복 전개될 수 있어 `C²×depth`를 전체 상한으로 가정하지 않는다. 다음 항을 해당 순회·할당 전에 누적 예약하고 초과 시 `RESOURCE_LIMIT/ELIGIBILITY_WORK_LIMIT`으로 중단한다. 기존 public `DeriveDeclarations`와 ordinary 이외 호출은 budget 없는 경로로 같은 도출 의미를 유지한다.
+
+| Declaration 작업 직전 | work | logical B |
+|---|---:|---:|
+| match의 capture 수 `m` | `32+32m` | `512+512m` |
+| capture 이름 `s` 분해·숫자 parse | `8len(s)+1` | `32len(s)` |
+| capture에서 읽은 depth `d`의 빈 level 포함 반복 | `max(d,0)+1` | 0 |
+| 자식 하나의 직전 level 부모 후보 `p`개 검색 | `16+p` | 256 |
+| 길이 `k`의 key/candidate/frontier clone·sort·compact·append | `64(k+1)(bits.Len64(k)+1)` | `512k` |
+| declaration locator `s` 분해 | `64+8len(s)` | `256+64len(s)` |
+| 해당 level의 frontier `k`개 방문 | `1+k` | 0 |
+| 결과 `k`개, `t=len(fact)+len(node)` | `k(64+8t)` | `k(256+4t)` |
+
+Huge numeric depth는 level 반복 전에 거부하며, frontier가 여러 경로로 증가해도 다음 복제·정렬·출력 전에 예약하므로 선행 단계의 여유로 초과 작업을 숨기지 않는다. 초기 capture/index 예약은 match grouping과 key 수집도 덮는다. Sort 항은 실제 comparator 횟수의 보수 상한이며 원소별 비교는 node/item 정수 비교다.
+
+TSQL dynamic SQL은 위 기본 예약에 work와 logical 각각 `128n² + 64(E+1)A + 64EWS`를 더한다. `E`는 `exec` capture 수, `W`는 `errwith` capture 수, `S`는 source bytes, `A`는 source 안의 유효 capture span 길이 합이다. 고정 개수의 match pair index/정렬·반복 child/known-miss 탐색, exec별 text 검사, exec×errwith의 반복 공백 gap/정규식 span 검사를 덮는다. 문자열 decode와 variable 결과도 포함한다. 각 곱은 overflow 검사 후 별도로 청구하며 아직 실행하지 않은 query의 예산을 소급 청구하지 않는다. 다른 route의 dynamic SQL은 기존 보수적인 `64n²(n+S+M+1)` / `1024n(n+S+M+1)` 식을 유지한다.
+
+Test-only overlay로 실제 loop/comparator 방문, hash/span 입력 bytes와 구체화한 capture·결과 payload를 별도로 관찰한다. PostgreSQL/TSQL 실제 owned 입력과 많은 capture·긴 문자열·큰 XML 및 반복 declaration frontier에서 각 query의 `계상 ≥ 실제`를 확인한다. 이 logical payload 검사는 process 전체 할당이나 heap/RSS peak의 실측이 아니다.
+
 ## #362 P2-C ordinary eligibility activation boundary
 
 P2-C는 `VerifyOrdinaryQuerySemantics`의 private binding/session adapter를 연결했다. Required 분모는 public request의 필수 caller `Selection`에서 commitment proof 및 registration 검증으로 먼저 고정하며, 이후 `approval.ordinary`의 동일한 pin bundle이 맞아야만 session을 bind한다. Caller selection은 approval이 아니고 비어 있거나 invalid하면 input error다. Approval이 없으면 selected obligations는 BLOCKED이며 API 결과는 `Complete=false`/`ProcessingComplete=false`다. 기존 공개 `VerifyQueryReferenceEligibility`는 `ordinary-batch-full-input-utf8/r1`을 계속 거부한다. Ordinary API만 `tsgk-query-reference-eligibility-approval/r1` 안의 strict `ordinary` binding을 받아들인다. Binding은 실행 `profile_pin`, 계획 `planning_profile_pin`, ordinary `registration_pin`, `asset_registration_pin`, `shard_plan_pin`, `plan_commitment_pin`, `reference_selection_pin`, `run_binding_pin`, `closure_encoding`, candidate/cohort/run 및 선택 shard ID 전체를 묶는다. 같은 approval의 기존 registration digest는 eligibility registration bytes를 계속 묶는다. 일반 eligibility의 native witness registration은 보내지 않으며 빈 bytes가 필수다. 이 경계를 통해 ordinary batch reader가 구형 single-case witness를 새 의미로 해석하지 않는다.

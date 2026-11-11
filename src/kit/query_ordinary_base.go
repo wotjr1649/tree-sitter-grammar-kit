@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
 type ordinaryBaseResult struct {
@@ -587,7 +588,7 @@ func (b *eligibilityBudget) ordinaryCompareBaseFacts(profile OracleProfile, cach
 				query := tree.Queries[start+qi]
 				got := ordinaryProducerFactQuery{ID: q.ID, SHA256: pins[qi].SHA256, Kind: q.Facts, Status: StatusNotRun, Code: "FACT_QUERY_NOT_COMPLETE_STRUCTURAL"}
 				if query.ID == q.ID && query.Status == StatusCompleted && !query.Partial && len(query.Predicates) == 0 && query.Captures != nil {
-					if e := b.ordinaryBaseFactReservation(q, route, query.Captures, tree, version); e != nil {
+					if e := b.ordinaryBaseFactReservation(q, route, query, version); e != nil {
 						return e
 					}
 					captures := make([]Capture, len(query.Captures))
@@ -597,7 +598,10 @@ func (b *eligibilityBudget) ordinaryCompareBaseFacts(profile OracleProfile, cach
 					got.Status, got.Code = StatusCompleted, ""
 					switch q.Facts {
 					case FactDeclarations:
-						items := DeriveDeclarations(route.Declarations, captures)
+						items, e := deriveDeclarations(route.Declarations, captures, b)
+						if e != nil {
+							return e
+						}
 						reproduces := ordinaryBaseDeclarationsEqual(items, tree.Wire.Declarations)
 						got.Declarations = &ordinaryProducerDeclFacts{Items: items, Assessment: ordinaryDeclarationAssessment(items), Reproduces: reproduces}
 						if !reproduces {
@@ -702,25 +706,54 @@ func ordinaryBaseDynamicClaim(want DynamicSQLExpectation, got *DynamicSQLFacts) 
 	return claimPass
 }
 
-func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactPackRoute, rows [][]int64, tree *nativewire.Tree, source []byte) *Error {
-	if e := b.charge(uint64(len(route.Declarations))+1, 0, "ordinary-base-fact-index"); e != nil {
+func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactPackRoute, query querywire.Query, source []byte) *Error {
+	if e := b.charge(uint64(len(query.Captures))+1, 0, "ordinary-base-fact-index"); e != nil {
 		return e
 	}
-	n := uint64(len(rows)) + 1
-	text := uint64(len(source)) + 1
-	for _, d := range route.Declarations {
-		text += uint64(len(d.Fact) + len(d.Node) + len(d.Name))
+	n := uint64(len(query.Captures)) + 1
+	var text, spans, execs, withErrors uint64
+	for _, row := range query.Captures {
+		name := query.CaptureNames[row[2]]
+		text += uint64(len(name) + len(query.Types[row[4]]))
+		if row[7] >= row[6] && row[6] >= 0 && uint64(row[7]) <= uint64(len(source)) {
+			spans += uint64(row[7] - row[6])
+		}
+		if name == "exec" {
+			execs++
+		} else if name == "errwith" {
+			withErrors++
+		}
 	}
-	// Bound nested declaration edges, sorting, dynamic capture joins and source spans.
-	work, e := eligibilityProduct("ordinary-base-fact-derive", 64, n, n, n+text)
-	if e != nil {
+	// Capture conversion, indexes and XML counts; declaration frontiers reserve in the walk.
+	if e := b.charge(64*n+8*text, 1024*n+4*text, "ordinary-base-fact-derive"); e != nil {
 		return e
 	}
-	logical, e := eligibilityProduct("ordinary-base-fact-derive", 1024, n, n+text)
-	if e != nil {
-		return e
+	if q.Facts != FactDynamicSQL {
+		return nil
 	}
-	return b.charge(work+uint64(len(tree.Nodes))+uint64(len(q.Source)), logical, "ordinary-base-fact-derive")
+	if route.Route != "tsql" {
+		// Keep the legacy conservative bound for other dynamic SQL adapters.
+		work, e := eligibilityProduct("ordinary-base-fact-derive", 64, n, n, n+uint64(len(source))+text+1)
+		if e != nil {
+			return e
+		}
+		logical, e := eligibilityProduct("ordinary-base-fact-derive", 1024, n, n+uint64(len(source))+text+1)
+		if e != nil {
+			return e
+		}
+		return b.charge(work, logical, "ordinary-base-fact-derive")
+	}
+	// Fixed pair scans/sorts, repeated child/known-miss scans and decoded source spans.
+	for _, term := range [][]uint64{{128, n, n}, {64, execs + 1, spans}, {64, execs, withErrors, uint64(len(source))}} {
+		work, e := eligibilityProduct("ordinary-base-fact-derive", term...)
+		if e != nil {
+			return e
+		}
+		if e := b.charge(work, work, "ordinary-base-fact-derive"); e != nil {
+			return e
+		}
+	}
+	return nil
 }
 
 // Bound only the values semanticProjectionInputs serializes, including JSON escaping.

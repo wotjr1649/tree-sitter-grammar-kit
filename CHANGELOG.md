@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Ordinary base fact의 공통 capture 제곱×source 예약을 종류별 실제 순회 상한으로 교정했다(Refs #362). Declaration은 depth·parent 검색·frontier 복제/정렬·출력 전에 예약하고, TSQL은 capture pair와 실제 span/exec/errwith 수, XML은 이름별 count 비용을 계상한다. 기존 재계산 의미·음성 시험·한도와 expected 부재의 BLOCKED를 유지하며 test-only 실제 순회·결과 payload 계측과 예약 항 제거 mutant로 검증한다.
+
 - Ordinary base의 소비 필드만 input marshal 예약에 포함하고 replay decode·node/capture/observation·기대값 검색 순회에 맞춰 work 상한을 분리했다(Refs #362). 공용 reducer 검사·fact 재계산·base FAIL과 legacy 원장·한도를 유지하며 SQL capacity는 공개 호출의 실제 중단 단계로 보고한다.
 
 - Ordinary required ID의 prefix·hex 검사와 고정 길이 key 복사를 한 순회로 합치고 전역 ID 유일성·tuple union 검사를 유지한다. 선택 plan header의 전역 의미 검사는 유지하면서 실제 검사하는 row·문자열에 맞게 work 예약을 교정한다(Refs #362). 기존 한도에서 선택 TSQL 공개 호출을 seal까지 측정했지만 expected 부재·synthetic reference 때문에 SQL은 계속 `CAPACITY_UNPROVEN`/BLOCKED다. Differential·변조·실제 순회 계측·mutant로 원장과 오류 우선순위를 확인한다.

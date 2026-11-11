@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 ordinary base fact 예약 검증
+
+`TestOrdinaryBaseFactReservationIgnoresUnusedSource`는 declaration/XML 도출 예약이 소비하지 않는 source 길이에 따라 커지지 않는지 확인한다. `TestOrdinaryBaseDeclarationBudgetStopsBeforeHugeDepth`는 빈 level을 포함한 숫자 depth 반복 전에 자원 한도로 중단하고, `TestOrdinaryBaseDeclarationBudgetStopsFrontierExpansion`은 여러 parent 경로의 중복 frontier가 다음 clone·sort·출력 전에 차단되는지 검사한다. 기존 fact 재계산의 모든 step·role·pin·suffix·payload 음성과 독립 expected 경계를 유지한다.
+
+Test-only overlay는 각 fact query의 예약을 실제 derivation loop/comparator 방문·hash/span 입력 bytes·구체화한 capture와 결과 payload에 대조해 `계상 ≥ 실제`를 assert한다. 많은 XML capture, 긴 Unicode 이름·locator·declaration 결과, 중복 경로 frontier, 긴 dynamic variable과 반복 WITH RESULT SETS gap을 포함한다. 새 예약의 문자열 항을 제거한 mutant는 실제 assertion에서 실패해야 한다. 같은 actual owned-native r8 공개 경로를 compiler 4 GiB/120초·native 1 GiB/30초 HARD에서 순차 재측정하고 PostgreSQL 9/9 VERIFIED 및 TSQL seal 도달 여부와 잔여 work/logical을 기록한다. TSQL 독립 expected 부재는 계속 BLOCKED이며 제품 한도는 바꾸지 않는다.
+
 ## #362 ordinary base fact 재계산 검증
 
 `TestOrdinaryBaseFactsRecomputeEveryStepAndRole`와 `TestOrdinaryBaseFactsRejectTampering`은 편집 후 source version, 독립 fresh capture stream, pack/mapping pin, suffix 순서·digest/query SHA, 저장 fact와 base projection 변조 및 전체 step/role 분모를 검사한다. `TestOrdinarySQLPublicPassCapacity/postgresql-sql`은 같은 실제 owned-native r8/독립 expected 공개 경로에서 base PASS와 9/9 VERIFIED를 요구한다. Fact 내부 일치를 독립 expected로 사용하지 않는다.
