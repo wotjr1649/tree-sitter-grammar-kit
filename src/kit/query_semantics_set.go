@@ -121,6 +121,7 @@ func (b *eligibilityBudget) semanticValuesEqual(a, c *jv) (bool, *Error) {
 }
 
 type semanticSetState struct {
+	paging           *verifiedPaging
 	producerFailure  func(string, string, string)
 	producerVerified bool
 	producerCode     string
@@ -160,12 +161,22 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			return nil
 		}
 	}
-	available := func(pin OracleMember) bool {
+	available := func(pin OracleMember) (bool, *Error) {
+		if state != nil && state.paging != nil && pagingPartRole(pin.Role) {
+			p := ReplayMember{Path: "oracle/" + pin.Path, Role: pin.Role, Bytes: pin.Bytes, SHA256: pin.SHA256}
+			_, ok, _, e := state.paging.part(state.paging.owner, eligibilityMember{NodeID: state.paging.owner.owners[p.Path], Member: p}, false)
+			return ok, e
+		}
 		data, ok := files[pin.Path]
-		return ok && uint64(len(data)) == pin.Bytes && digestHex(data) == pin.SHA256
+		return ok && uint64(len(data)) == pin.Bytes && digestHex(data) == pin.SHA256, nil
 	}
 	for _, mem := range m.Members {
-		if !available(mem) {
+		ok, e := available(mem)
+		if e != nil {
+			return e
+		}
+		if !ok {
+			bad("SEMANTICS_MEMBER_UNBOUND", mem.Path)
 			return nil
 		}
 	}
@@ -533,10 +544,14 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		driverSHA, driverBytes = roles["driver"][0].SHA256, roles["driver"][0].Bytes
 	} else {
 		driverPages := roles["driver-paged-descriptor"][0]
-		logical, ok, e := b.semanticPagedBinary(files[driverPages.Path], "D", "driver", "capture/driver.bin", "capture/driver", func(p ReplayMember) ([]byte, bool, *Error) {
+		source, e := b.setPageSource(state, driverPages, pins)
+		if e != nil {
+			return e
+		}
+		logical, ok, e := b.semanticPagedBinaryVerified(files[driverPages.Path], "D", "driver", "capture/driver.bin", "capture/driver", func(p ReplayMember) ([]byte, bool, *Error) {
 			m, ok := pins[p.Path]
 			return files[p.Path], ok && m.Role == p.Role && m.Bytes == p.Bytes && m.SHA256 == p.SHA256 && m.Case == "", nil
-		})
+		}, source)
 		if e != nil {
 			return e
 		}
@@ -582,11 +597,14 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			pin, ok := pins[fmt.Sprintf("capture/build-input-%05d.pages.json", i)]
 			valid := ok && pin.Role == "grammar-paged-descriptor" && pin.Case == ""
 			if valid {
-				var e *Error
-				valid, e = b.semanticPagedParser(files[pin.Path], input, i, func(p ReplayMember) ([]byte, bool, *Error) {
+				source, e := b.setPageSource(state, pin, pins)
+				if e != nil {
+					return e
+				}
+				valid, e = b.semanticPagedParserVerified(files[pin.Path], input, i, func(p ReplayMember) ([]byte, bool, *Error) {
 					m, ok := pins[p.Path]
 					return files[p.Path], ok && m.Role == p.Role && m.Bytes == p.Bytes && m.SHA256 == p.SHA256 && m.Case == "", nil
-				})
+				}, source)
 				if e != nil {
 					return e
 				}
