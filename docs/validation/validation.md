@@ -8,6 +8,12 @@
 
 Focused regressions는 shard substitution, foreign-plan inclusion, proof/index reorder, omission/duplication, caller commitment pin mismatch, coordinate-rehashed tampering, global registration duplicate/key/null/unknown invariants, and selected decode boundaries를 다룬다. Test-only independent instrumentation은 verifier의 실제 hashed bytes/visited values와 registration projection의 실제 typed rows를 관찰해 각 대응 예약이 actual 이상인지 assert한다. CLI producer 시험은 emitted commitment/proof 재독출과 기존 output directory overwrite rejection을 확인한다. Capacity 측정은 `ordinaryInputs` 경계까지로 제한되며 evidence/body/semantic completion을 포함하지 않는 결과는 그 한계를 그대로 표시한다.
 
+### #362 registration 단일 scan 회귀와 계측
+
+Registration의 전체 strict shape와 header 추출은 같은 token scan을 사용한다. 기존 decoder를 보존한 test-only differential oracle로 정상 선택 값과 오류 Kind/Code/결정적 Path를 대조한다. JSON member 재배열·escaped name·Unicode, 비선택 row의 unknown/missing/null/type/정수 오류, 전역 case/query/required ID·coordinate 중복과 gap, 선택 source/asset 결속 및 앞쪽 의미/shape 오류와 뒤쪽 구문 오류의 우선순위를 포함한다. 전역 비선택 required ID 유일성 검사를 제거한 overlay mutant는 대응 assertion에서 실패해야 한다.
+
+Test-only overlay는 실제 token 읽기·header backing-array 할당과 row 복사·선택 typed row를 관찰하고 대응 label별 예약이 실제 이상임을 assert한다. 별도 직렬 프로세스에서 `runtime.MemStats.TotalAlloc` 차분으로 scan 및 전체 registration decode의 누적 할당도 확인한다. 이 값은 retained heap peak가 아니며 다른 원장 단계의 여유로 누락을 숨기지 않는다. PostgreSQL/TSQL public 측정은 실제 owned-native r8과 같은 stage observer를 사용하고 native 1 GiB/30초, compiler 4 GiB/120초 HARD receipt·검증된 cleanup·잔류 0을 확인한다. 원장 한도는 그대로이며 뒤 base/reference/expected gate에 남은 미완료를 semantic PASS로 바꾸지 않는다.
+
 ## #362 P2-C ordinary guarded reader 활성화 전 검증 계약
 
 이 검증 계약은 exported experimental `VerifyOrdinaryQuerySemantics`의 acceptance gate다. 구현에서 helper를 coordinator로 연결한 사실만으로 end-to-end API, ordinary PASS 또는 full SQL capacity가 확인되지는 않는다.

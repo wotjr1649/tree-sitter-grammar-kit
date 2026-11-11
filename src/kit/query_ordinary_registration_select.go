@@ -21,28 +21,17 @@ type ordinaryRegistrationSelection struct {
 type ordinaryJSONSpan struct{ start, end int }
 
 type ordinaryRegistrationSpans struct {
-	root   map[string]ordinaryJSONSpan
-	arrays map[string][]ordinaryJSONSpan
+	root       map[string]ordinaryJSONSpan
+	arrays     map[string][]ordinaryRegistrationRow
+	shapeError *Error
 }
 
-type ordinaryCaseHeader struct {
-	ID string `json:"case_id"`
-}
-
-type ordinaryQueryHeader struct {
-	ID string `json:"id"`
-}
-
-type ordinaryRequiredCoordinateHeader struct {
-	Case     string `json:"case"`
-	Query    string `json:"query"`
-	Step     uint32 `json:"step"`
-	TreeRole string `json:"tree_role"`
-}
-
-type ordinaryRequiredHeader struct {
-	ID         string                           `json:"obligation_id"`
-	Coordinate ordinaryRequiredCoordinateHeader `json:"coordinate"`
+type ordinaryRegistrationRow struct {
+	span         ordinaryJSONSpan
+	id           string
+	coordinate   ordinaryRegistrationTuple
+	steps        uint32
+	stepOverflow bool
 }
 
 type ordinaryRegistrationTuple struct {
@@ -63,30 +52,8 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 	if len(selected) == 0 {
 		return out, fail(KindInvalidInput, "ORDINARY_REGISTRATION_SELECTION", doc, nil)
 	}
-	shape, e := b.typedJSONShapeFor(doc, reflect.TypeFor[OrdinaryRegistration](), false, true)
+	spans, e := b.scanOrdinaryRegistration(data)
 	if e != nil {
-		return out, e
-	}
-	ordinaryTypedNulls(shape)
-	if e = b.charge(1, uint64(len(data)), doc); e != nil {
-		return out, e
-	}
-	if e = b.charge(1, 5*uint64(len(data))+32768, "ordinary-registration-index"); e != nil {
-		return out, e
-	}
-	spans, visits, e := b.indexOrdinaryRegistration(data)
-	if e != nil {
-		return out, e
-	}
-	dec := jsontext.NewDecoder(bytes.NewReader(data))
-	var values uint64
-	if e = b.readTypedJSON(doc, dec, shape, &values); e != nil {
-		return out, e
-	}
-	if e = b.charge(values, 0, doc); e != nil {
-		return out, e
-	}
-	if e = b.charge(visits, 0, "ordinary-registration-index"); e != nil {
 		return out, e
 	}
 	for _, key := range []string{"cases", "queries", "required"} {
@@ -127,26 +94,19 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 		return out, e
 	}
 	caseIDs := make(map[string]uint32, out.TotalCases)
-	for i, span := range spans.arrays["cases"] {
-		raw := ordinarySpanBytes(data, span)
-		var c ordinaryCaseHeader
-		if er := b.decodeOrdinaryRegistrationHeaderRow("ordinary-registration-case-index", raw, &c); er != nil {
-			return out, er
-		}
-		steps, er := b.ordinaryRegistrationArrayLength(raw, "version_pins")
-		if er != nil {
-			return out, er
-		}
-		if c.ID == "" || steps == 0 || caseIDs[c.ID] != 0 {
+	for i, row := range spans.arrays["cases"] {
+		cID, steps := row.id, row.steps
+		if cID == "" || steps == 0 || caseIDs[cID] != 0 {
 			return out, fail(KindInvalidInput, "ORDINARY_CASE", doc, nil)
 		}
-		caseIDs[c.ID] = uint32(steps)
-		if selectedIDs[c.ID] {
+		caseIDs[cID] = steps
+		if selectedIDs[cID] {
+			raw := ordinarySpanBytes(data, row.span)
 			var full OrdinaryCase
 			if er := b.decodeOrdinaryTyped("ordinary-registration-selected-case", raw, &full); er != nil {
 				return out, er
 			}
-			if full.ID != c.ID || len(full.VersionPins) != len(full.Edits)+1 || len(full.Points) != len(full.Edits) || full.OriginalSelector == "" || full.InitialSource != full.VersionPins[0] {
+			if full.ID != cID || len(full.VersionPins) != len(full.Edits)+1 || len(full.Points) != len(full.Edits) || full.OriginalSelector == "" || full.InitialSource != full.VersionPins[0] {
 				return out, fail(KindInvalidInput, "ORDINARY_CASE", doc, nil)
 			}
 			for _, pin := range full.VersionPins {
@@ -166,21 +126,17 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 		return out, e
 	}
 	queryIDs := make(map[string]bool, out.TotalQueries)
-	for _, span := range spans.arrays["queries"] {
-		raw := ordinarySpanBytes(data, span)
-		var header ordinaryQueryHeader
-		if er := b.decodeOrdinaryRegistrationHeaderRow("ordinary-registration-query-index", raw, &header); er != nil {
-			return out, er
-		}
-		if header.ID == "" || queryIDs[header.ID] {
+	for _, row := range spans.arrays["queries"] {
+		raw := ordinarySpanBytes(data, row.span)
+		if row.id == "" || queryIDs[row.id] {
 			return out, fail(KindInvalidInput, "ORDINARY_QUERY_BINDING", doc, nil)
 		}
-		queryIDs[header.ID] = true
+		queryIDs[row.id] = true
 		var query OrdinaryQuery
 		if er := b.decodeOrdinaryTyped("ordinary-registration-selected-query", raw, &query); er != nil {
 			return out, er
 		}
-		if query.ID != header.ID || !ordinaryPin(query.Source) || query.Kind != queryregistrycore.Structural || query.MetadataAsset == "" {
+		if query.ID != row.id || !ordinaryPin(query.Source) || query.Kind != queryregistrycore.Structural || query.MetadataAsset == "" {
 			return out, fail(KindInvalidInput, "ORDINARY_QUERY_BINDING", doc, nil)
 		}
 		out.Registration.Queries = append(out.Registration.Queries, query)
@@ -242,27 +198,28 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 		return out, e
 	}
 	seenRequiredIDs := make(map[string]bool, len(spans.arrays["required"]))
-	for _, span := range spans.arrays["required"] {
-		raw := ordinarySpanBytes(data, span)
-		var required ordinaryRequiredHeader
-		if er := b.decodeOrdinaryRegistrationHeaderRow("ordinary-registration-required-index", raw, &required); er != nil {
-			return out, er
+	for _, row := range spans.arrays["required"] {
+		if row.stepOverflow {
+			return out, fail(KindInvalidInput, "JSON_SHAPE", "ordinary-registration-required-index", nil)
 		}
-		c := required.Coordinate
-		tuple := ordinaryRegistrationTuple{caseID: c.Case, queryID: c.Query, step: c.Step, role: c.TreeRole}
-		if !expected[tuple] || seenRequiredIDs[required.ID] || !strings.HasPrefix(required.ID, "qsem1:") || len(required.ID) != len("qsem1:")+64 || !hex64.MatchString(strings.TrimPrefix(required.ID, "qsem1:")) {
+		tuple := row.coordinate
+		if e := b.charge(uint64(2*len(row.id)+len(tuple.caseID)+len(tuple.queryID)+len(tuple.role)), 0, "ordinary-registration-required-index"); e != nil {
+			return out, e
+		}
+		if !expected[tuple] || seenRequiredIDs[row.id] || !strings.HasPrefix(row.id, "qsem1:") || len(row.id) != len("qsem1:")+64 || !hex64.MatchString(strings.TrimPrefix(row.id, "qsem1:")) {
 			return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_COORDINATE", doc, nil)
 		}
-		seenRequiredIDs[required.ID] = true
+		seenRequiredIDs[row.id] = true
 		delete(expected, tuple)
-		if coord, selected := selectedExpected[required.ID]; selected {
+		if coord, selected := selectedExpected[row.id]; selected {
 			id, er := b.ordinaryCoordinateID(coord, header.Namespace)
 			if er != nil {
 				return out, er
 			}
-			if c.Case != coord.Case || c.Query != coord.Query || c.Step != coord.Step || c.TreeRole != coord.TreeRole || required.ID != id {
+			if tuple.caseID != coord.Case || tuple.queryID != coord.Query || tuple.step != coord.Step || tuple.role != coord.TreeRole || row.id != id {
 				return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_COORDINATE", doc, nil)
 			}
+			raw := ordinarySpanBytes(data, row.span)
 			var full OrdinaryRequired
 			if er := b.decodeOrdinaryTyped("ordinary-registration-selected-required", raw, &full); er != nil {
 				return out, er
@@ -271,7 +228,7 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 				return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_COORDINATE", doc, nil)
 			}
 			out.Registration.Required = append(out.Registration.Required, full)
-			delete(selectedExpected, required.ID)
+			delete(selectedExpected, row.id)
 		}
 	}
 	if len(expected) != 0 || len(selectedExpected) != 0 || len(selectedObligationIDs) != len(out.Registration.Required) || len(out.Registration.Required) == 0 {
@@ -280,22 +237,32 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 	return out, b.r.check()
 }
 
-func (b *eligibilityBudget) indexOrdinaryRegistration(data []byte) (ordinaryRegistrationSpans, uint64, *Error) {
-	var result ordinaryRegistrationSpans
-	result.root = map[string]ordinaryJSONSpan{}
-	result.arrays = map[string][]ordinaryJSONSpan{}
+// scanOrdinaryRegistration defers shape errors until syntax/depth/value checks finish.
+// Cached headers are adjudicated in contract order, independently of JSON member order.
+func (b *eligibilityBudget) scanOrdinaryRegistration(data []byte) (ordinaryRegistrationSpans, *Error) {
+	result := ordinaryRegistrationSpans{root: map[string]ordinaryJSONSpan{}, arrays: map[string][]ordinaryRegistrationRow{}}
+	const doc = "ordinary-registration"
+	shape, e := b.typedJSONShapeFor(doc, reflect.TypeFor[OrdinaryRegistration](), false, true)
+	if e != nil {
+		return result, e
+	}
+	ordinaryTypedNulls(shape)
+	// One streaming decoder, copied token strings and bounded error/name buffers; no typed row containers.
+	if e := b.charge(1, 4*uint64(len(data))+32768, doc); e != nil {
+		return result, e
+	}
 	dec := jsontext.NewDecoder(bytes.NewReader(data))
 	var visits uint64
-	if err := b.scanOrdinaryRegistrationValue(dec, 0, &visits, &result, ""); err != nil {
-		return result, visits, err
+	if e := b.scanOrdinaryRegistrationValue(dec, 0, &visits, shape, &result, nil, ""); e != nil {
+		return result, e
 	}
 	if _, err := dec.ReadToken(); err != io.EOF {
-		return result, visits, fail(KindInvalidInput, "ORDINARY_JSON", "ordinary-registration", err)
+		return result, fail(KindInvalidInput, "ORDINARY_JSON", doc, err)
 	}
-	return result, visits, nil
+	return result, result.shapeError
 }
 
-func (b *eligibilityBudget) scanOrdinaryRegistrationValue(dec *jsontext.Decoder, depth int, visits *uint64, spans *ordinaryRegistrationSpans, rootKey string) *Error {
+func (b *eligibilityBudget) scanOrdinaryRegistrationValue(dec *jsontext.Decoder, depth int, visits *uint64, shape *typedJSONShape, spans *ordinaryRegistrationSpans, row *ordinaryRegistrationRow, field string) *Error {
 	const doc = "ordinary-registration-index"
 	if e := b.r.check(); e != nil {
 		return e
@@ -308,79 +275,96 @@ func (b *eligibilityBudget) scanOrdinaryRegistrationValue(dec *jsontext.Decoder,
 		return jsonError(doc, "", err)
 	}
 	*visits++
-	if *visits > 2000000 {
+	if *visits > 2000000 && !(depth == 0 && field != "") {
 		return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
 	}
 	if e := b.charge(1, 16, doc); e != nil {
 		return e
 	}
+	shapeError := func(code string) {
+		if spans.shapeError == nil {
+			spans.shapeError = typedJSONError("ordinary-registration", code, dec)
+		}
+	}
+	if shape != nil {
+		want := byte('"')
+		switch shape.kind {
+		case reflect.Struct:
+			want = '{'
+		case reflect.Slice:
+			want = '['
+			if shape.base64 {
+				want = '"'
+			}
+		case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int64:
+			want = '0'
+		case reflect.Bool:
+			want = 't'
+			if tok.Kind() == 'f' {
+				want = 'f'
+			}
+		}
+		if byte(tok.Kind()) != want {
+			code := "JSON_TYPE"
+			if tok.Kind() == 'n' {
+				code = "JSON_NULL"
+			}
+			shapeError(code)
+			shape = nil
+		}
+	}
 	switch tok.Kind() {
 	case '{':
-		seen := map[string]bool{}
+		var seen uint64
 		for dec.PeekKind() != '}' {
 			nameToken, err := dec.ReadToken()
 			if err != nil {
 				return jsonError(doc, "", err)
 			}
 			*visits++
-			if e := b.charge(1, 16, doc); e != nil {
+			name := nameToken.String()
+			var f typedJSONField
+			var known bool
+			if shape != nil {
+				f, known = shape.fields[name]
+			}
+			nameLogical := uint64(16)
+			if !known {
+				// Unknown objects can grow the decoder's duplicate-name table without a schema bound.
+				nameLogical = 256
+			}
+			if e := b.charge(1, nameLogical, doc); e != nil {
 				return e
 			}
-			name := nameToken.String()
-			if seen[name] {
-				return fail(KindInvalidInput, "JSON_DUPLICATE_FIELD", doc, nil)
+			var child *typedJSONShape
+			if shape != nil {
+				if known {
+					seen |= f.bit
+					child = f.shape
+					if f.nullable && dec.PeekKind() == 'n' {
+						child = nil
+					}
+				} else {
+					shapeError("JSON_UNKNOWN_FIELD")
+				}
 			}
-			seen[name] = true
-			valueStart := int(dec.InputOffset())
-			if depth == 0 && (name == "cases" || name == "queries" || name == "required") {
+			start := int(dec.InputOffset())
+			rootArray := depth == 0 && (name == "cases" || name == "queries" || name == "required")
+			childDepth := depth + 1
+			if rootArray {
 				if dec.PeekKind() != '[' {
 					return fail(KindInvalidInput, "ORDINARY_REGISTRATION_ARRAY", doc, nil)
 				}
-				_, _ = dec.ReadToken()
-				*visits++
-				if e := b.charge(1, 0, doc); e != nil {
-					return e
-				}
-				for dec.PeekKind() != ']' {
-					rowStart := int(dec.InputOffset())
-					if e := b.scanOrdinaryRegistrationValue(dec, depth+1, visits, spans, name); e != nil {
-						return e
-					}
-					if e := b.charge(0, 16, "ordinary-registration-index"); e != nil {
-						return e
-					}
-					spans.arrays[name] = append(spans.arrays[name], ordinaryJSONSpan{rowStart, int(dec.InputOffset())})
-				}
-				_, err := dec.ReadToken()
-				if err != nil {
-					return jsonError(doc, "", err)
-				}
-				*visits++
-				if e := b.charge(1, 0, doc); e != nil {
-					return e
-				}
-			} else {
-				if e := b.scanOrdinaryRegistrationValue(dec, depth+1, visits, spans, name); e != nil {
-					return e
-				}
+				childDepth = depth
 			}
-			if depth == 0 {
-				spans.root[name] = ordinaryJSONSpan{valueStart, int(dec.InputOffset())}
-			}
-		}
-		_, err = dec.ReadToken()
-		if err != nil {
-			return jsonError(doc, "", err)
-		}
-		*visits++
-		if e := b.charge(1, 0, doc); e != nil {
-			return e
-		}
-	case '[':
-		for dec.PeekKind() != ']' {
-			if e := b.scanOrdinaryRegistrationValue(dec, depth+1, visits, spans, rootKey); e != nil {
+			if e := b.scanOrdinaryRegistrationValue(dec, childDepth, visits, child, spans, row, name); e != nil {
 				return e
 			}
+			if depth == 0 && shape != nil {
+				if _, known := shape.fields[name]; known {
+					spans.root[name] = ordinaryJSONSpan{start, int(dec.InputOffset())}
+				}
+			}
 		}
 		_, err = dec.ReadToken()
 		if err != nil {
@@ -389,107 +373,97 @@ func (b *eligibilityBudget) scanOrdinaryRegistrationValue(dec *jsontext.Decoder,
 		*visits++
 		if e := b.charge(1, 0, doc); e != nil {
 			return e
+		}
+		if shape != nil {
+			if e := b.charge(uint64(len(shape.fields)), 0, doc); e != nil {
+				return e
+			}
+			for name, f := range shape.fields {
+				if seen&f.bit == 0 && !f.optional && spans.shapeError == nil {
+					shapeError("JSON_MISSING_FIELD")
+					spans.shapeError.Path += "/" + name
+				}
+			}
+		}
+	case '[':
+		rootArray := depth == 0 && field != ""
+		if rootArray {
+			spans.arrays[field] = nil
+		}
+		var child *typedJSONShape
+		if shape != nil {
+			child = shape.elem
+		}
+		count := uint32(0)
+		for dec.PeekKind() != ']' {
+			start := int(dec.InputOffset())
+			current := row
+			var header ordinaryRegistrationRow
+			if rootArray {
+				current = &header
+			}
+			if e := b.scanOrdinaryRegistrationValue(dec, depth+1, visits, child, spans, current, ""); e != nil {
+				return e
+			}
+			count++
+			if rootArray {
+				header.span = ordinaryJSONSpan{start, int(dec.InputOffset())}
+				rows := spans.arrays[field]
+				if len(rows) == cap(rows) {
+					capacity := max(8, 2*cap(rows))
+					if e := b.charge(uint64(len(rows))+1, uint64(capacity)*uint64(reflect.TypeFor[ordinaryRegistrationRow]().Size()), "ordinary-registration-headers"); e != nil {
+						return e
+					}
+					grown := make([]ordinaryRegistrationRow, len(rows), capacity)
+					copy(grown, rows)
+					rows = grown
+				}
+				spans.arrays[field] = append(rows, header)
+			}
+		}
+		_, err = dec.ReadToken()
+		if err != nil {
+			return jsonError(doc, "", err)
+		}
+		*visits++
+		if e := b.charge(1, 0, doc); e != nil {
+			return e
+		}
+		if row != nil && field == "version_pins" {
+			row.steps = count
 		}
 	default:
 		if tok.Kind() == '}' || tok.Kind() == ']' {
 			return fail(KindInvalidInput, "ORDINARY_JSON", doc, nil)
 		}
+		if shape != nil && (shape.kind == reflect.Uint || shape.kind == reflect.Uint32 || shape.kind == reflect.Uint64) {
+			value, code := jsonUint(tok.String())
+			if code != "" {
+				shapeError(code)
+			}
+			if row != nil && field == "step" {
+				row.coordinate.step = uint32(value)
+				row.stepOverflow = value > uint64(^uint32(0))
+			}
+		}
+		if row != nil && tok.Kind() == '"' {
+			switch field {
+			case "case_id", "id", "obligation_id":
+				row.id = tok.String()
+			case "case":
+				row.coordinate.caseID = tok.String()
+			case "query":
+				row.coordinate.queryID = tok.String()
+			case "tree_role":
+				row.coordinate.role = tok.String()
+			}
+		}
 	}
-	_ = rootKey
 	return nil
 }
 
 func ordinarySpanBytes(data []byte, span ordinaryJSONSpan) []byte {
 	return bytes.TrimSpace(bytes.Trim(data[span.start:span.end], " \t\r\n,:"))
-}
-
-func (b *eligibilityBudget) ordinaryRegistrationArrayLength(data []byte, field string) (int, *Error) {
-	if e := b.charge(uint64(len(data)), 0, "ordinary-registration-case-index"); e != nil {
-		return 0, e
-	}
-	dec := jsontext.NewDecoder(bytes.NewReader(data))
-	if _, err := dec.ReadToken(); err != nil {
-		return 0, jsonError("ordinary-registration-case-index", "", err)
-	}
-	for dec.PeekKind() != '}' {
-		name, err := dec.ReadToken()
-		if err != nil {
-			return 0, jsonError("ordinary-registration-case-index", "", err)
-		}
-		if name.String() == field {
-			if dec.PeekKind() != '[' {
-				return 0, fail(KindInvalidInput, "JSON_TYPE", "ordinary-registration-case-index", nil)
-			}
-			_, _ = dec.ReadToken()
-			count := 0
-			for dec.PeekKind() != ']' {
-				if e := b.skipOrdinaryRegistrationValue(dec, 0); e != nil {
-					return 0, e
-				}
-				count++
-			}
-			_, err = dec.ReadToken()
-			if err != nil {
-				return 0, jsonError("ordinary-registration-case-index", "", err)
-			}
-			return count, nil
-		}
-		if e := b.skipOrdinaryRegistrationValue(dec, 0); e != nil {
-			return 0, e
-		}
-	}
-	return 0, fail(KindInvalidInput, "JSON_MISSING_FIELD", "ordinary-registration-case-index", nil)
-}
-
-func (b *eligibilityBudget) skipOrdinaryRegistrationValue(dec *jsontext.Decoder, depth int) *Error {
-	if depth > jsonMaxDepth {
-		return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", "ordinary-registration-case-index", nil)
-	}
-	tok, err := dec.ReadToken()
-	if err != nil {
-		return jsonError("ordinary-registration-case-index", "", err)
-	}
-	if e := b.charge(1, 0, "ordinary-registration-case-index"); e != nil {
-		return e
-	}
-	switch tok.Kind() {
-	case '{':
-		seen := map[string]bool{}
-		for dec.PeekKind() != '}' {
-			name, err := dec.ReadToken()
-			if err != nil {
-				return jsonError("ordinary-registration-case-index", "", err)
-			}
-			if seen[name.String()] {
-				return fail(KindInvalidInput, "JSON_DUPLICATE_FIELD", "ordinary-registration-case-index", nil)
-			}
-			seen[name.String()] = true
-			if e := b.charge(1, 0, "ordinary-registration-case-index"); e != nil {
-				return e
-			}
-			if e := b.skipOrdinaryRegistrationValue(dec, depth+1); e != nil {
-				return e
-			}
-		}
-		_, err = dec.ReadToken()
-		if err != nil {
-			return jsonError("ordinary-registration-case-index", "", err)
-		}
-		return b.charge(1, 0, "ordinary-registration-case-index")
-	case '[':
-		for dec.PeekKind() != ']' {
-			if e := b.skipOrdinaryRegistrationValue(dec, depth+1); e != nil {
-				return e
-			}
-		}
-		_, err = dec.ReadToken()
-		if err != nil {
-			return jsonError("ordinary-registration-case-index", "", err)
-		}
-		return b.charge(1, 0, "ordinary-registration-case-index")
-	default:
-		return nil
-	}
 }
 
 func (b *eligibilityBudget) decodeOrdinaryRegistrationHeader(data []byte, spans ordinaryRegistrationSpans) (OrdinaryRegistration, *Error) {
@@ -530,16 +504,6 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationHeader(data []byte, spans 
 		return out, asError(err)
 	}
 	return out, nil
-}
-
-func (b *eligibilityBudget) decodeOrdinaryRegistrationHeaderRow(doc string, data []byte, target any) *Error {
-	if e := b.charge(uint64(len(data)), uint64(len(data)), doc); e != nil {
-		return e
-	}
-	if err := jsonv2.Unmarshal(data, target); err != nil {
-		return fail(KindInvalidInput, "JSON_SHAPE", doc, err)
-	}
-	return nil
 }
 
 func ordinarySelectedCoordinate(r OrdinaryRegistration, caseID, queryID string, step uint32, treeRole string) OrdinaryCoordinate {
