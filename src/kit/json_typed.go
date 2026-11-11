@@ -141,6 +141,10 @@ func (b *eligibilityBudget) decodeTypedDocument(doc string, data []byte, target 
 	if e := b.reserveJSONContainers(doc, data, passes, 80); e != nil {
 		return e
 	}
+	return b.decodeTypedShape(doc, data, target, witness, exact, legacyShapeLimit)
+}
+
+func (b *eligibilityBudget) decodeTypedShape(doc string, data []byte, target any, witness, exact, legacyShapeLimit bool) *Error {
 	shape, e := b.typedJSONShapeFor(doc, reflect.TypeOf(target).Elem(), witness, exact)
 	if e != nil {
 		return e

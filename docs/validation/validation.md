@@ -18,9 +18,15 @@
 
 B4는 저장 reference·witness와 기존 fixture의 registration/raw/projection·tuple 기대값·receipt r1·failure/footer를 변경 전 AST 경로와 대조한다. 독립 witness와 eligibility 결속 경로를 각각 검사하며 성공 값·오류 Kind/Code와 결정적인 오류 경로를 고정한다. Pointer-null, nullable 배열과 metadata 예외, optional/조건부 tree, non-exact unknown subtree, base64, inline registration, 정수·Unicode·중복·구문 우선순위·깊이/값 수·잘림을 포함한다. 결정적 byte 변이와 fuzz를 실행하고 FAILED exact envelope보다 full shape를 먼저 적용하는 mutant 및 witness nullable 규칙을 완화하는 mutant가 해당 차등 시험에서 실패하는지 확인한다.
 
-같은 보존 PostgreSQL9 rerun·TSQL8 A6 core와 큰 저장 reference·witness 문서에서 logical/work/read·실제 TotalAlloc의 전후를 기록한다. 원장 식을 바꾸는 경로는 test-only 실제 순회 계측으로 `계상 >= 실제`를 확인한다. 실제 할당은 heap peak/RSS 상한으로 해석하지 않으며 receipt r2·row 단일 decode의 B5 추정은 구현된 B4 절감과 구분한다. 한도나 원본 evidence를 변경하지 않는다.
+같은 보존 PostgreSQL9 rerun·TSQL8 A6 core와 큰 저장 reference·witness 문서에서 logical/work/read·실제 TotalAlloc의 전후를 기록한다. 원장 식을 바꾸는 경로는 test-only 실제 순회 계측으로 `계상 >= 실제`를 확인한다. 실제 할당은 heap peak/RSS 상한으로 해석하지 않으며 receipt r2의 B5 추정은 구현된 절감과 구분한다. 한도나 원본 evidence를 변경하지 않는다.
 
 `TestTypedJSONReferencePointWork`는 64 KiB source와 단일 root node에서도 실제 point byte 방문만큼 work가 증가하는지, 잔액이 1 부족하면 좌표 순회 전에 `reference-points`에서 거부하는지 검사한다. Shape 값 수의 정확한 경계와 배열 원소의 witness handoff를 유지하며 standalone 경로에 공유 eligibility cap을 추가하지 않는다.
+
+### #362 reference row 단일 decode 검증
+
+`TestReferenceRowDifferential`·`TestReferenceRowErrorPriority`는 B4의 두 번 decode 순서를 test-only oracle에 고정하고 저장 reference 전부·결정적 byte 변이·잘림 및 head/schema/FAILED/full 복합 오류를 대조한다. 성공 typed 값과 오류 Kind/Code·결정적인 Path를 standalone·shared ledger 각각 비교하며 여러 필수 필드 누락의 map 순서만 Path 대조에서 제외한다. 전체 구문 오류는 head보다, head 오류는 schema/full 오류보다 우선해야 한다. `FuzzReferenceRow`는 같은 차등 검사를 유한 시간 실행한다. Head 검사 제거와 FAILED extra 검사 제거 mutant가 정상 control을 통과한 시험의 assertion에서 실패해야 한다.
+
+`TestReferenceRowLedger`는 저장 행의 중복 decode 비용 제거와 logical/work 잔액 1 부족 거부를 검사한다. B4와 같은 PowerShell reference·최대 TSQL r1 receipt 및 보존 SQL core에서 logical/work/read·TotalAlloc을 전후 측정하고, test-only 계측으로 실제 token/collection 방문과 예약의 `계상 >= 실제`를 확인한다. Receipt r2·producer 저장 형식과 r2 hash mutant는 B5(a)의 별도 작업 단위이며 이 단위로 완료를 주장하지 않는다.
 
 ## #216 TSQL8 source 준비 검증
 

@@ -321,6 +321,10 @@ func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) 
 }
 
 func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passes, perValue uint64) *Error {
+	return b.reserveJSONContainersVisit(doc, data, passes, perValue, nil)
+}
+
+func (b *eligibilityBudget) reserveJSONContainersVisit(doc string, data []byte, passes, perValue uint64, visit func(*jsontext.Decoder, jsontext.Token, int, bool)) *Error {
 	if b == nil {
 		return nil
 	}
@@ -350,7 +354,8 @@ func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passe
 		if e := b.r.check(); e != nil {
 			return e
 		}
-		kind, count := dec.StackIndex(dec.StackDepth())
+		depth := dec.StackDepth()
+		kind, count := dec.StackIndex(depth)
 		if dec.StackDepth() == 0 && count > 0 {
 			if _, err := dec.ReadToken(); err == io.EOF {
 				break
@@ -374,10 +379,17 @@ func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passe
 				return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
 			}
 		}
-		if _, err := dec.ReadToken(); err == io.EOF {
+		token, err := dec.ReadToken()
+		if err == io.EOF {
 			break
 		} else if err != nil {
 			return jsonError(doc, "", err)
+		}
+		if visit != nil && depth <= 1 {
+			if e := b.charge(1, 0, doc); e != nil {
+				return e
+			}
+			visit(dec, token, depth, name)
 		}
 	}
 	work, e := eligibilityProduct(doc, values, passes)
