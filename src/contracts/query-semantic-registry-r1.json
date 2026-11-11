@@ -4,12 +4,12 @@
   "qualification_inventory": {
     "path": "src/contracts/qualification-c1.json",
     "bytes": 8297072,
-    "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+    "sha256": "43654f240a5d13a09107b9bfffb95c5b4ef81b4ae3d1f0dbd318b5b5fe731d5a"
   },
   "query_slot_inventory": {
     "path": "src/contracts/query-slot-inventory-r1.json",
     "bytes": 60490,
-    "sha256": "f24b4f0b4aad3fe165afd7950d2166fdc7e1d6a59d809faf670d5907c4f12789"
+    "sha256": "b62bc4951646dac5e1523270170d19e64797a95492cbde8c359314a33f6d5143"
   },
   "predicate_basis": [
     {
@@ -2094,7 +2094,7 @@
     "current-cohort-approval-replay"
   ],
   "content_state": "INCOMPLETE",
-  "membership_namespace_sha256": "673312167ae0becb7807b7daf6ee854f08f67a0cf89e6dae411422f3cc2b2148",
+  "membership_namespace_sha256": "fb64287cffb0751f311c1c7d7c93adcf4b870df2d58e69d2ce3a7685ee2f9927",
   "required_sets": [
     {
       "kind": "EXPECTED_REJECTION",
