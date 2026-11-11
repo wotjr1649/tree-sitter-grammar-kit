@@ -1,0 +1,33 @@
+--- a/lib/binding_rust/lib.rs
++++ b/lib/binding_rust/lib.rs
+@@ -425,0 +426 @@
++    tsgk_evaluate_predicates: bool,
+@@ -2934,0 +2936,5 @@
++    /// Read-only query pointer for the separately identified instrumentation.
++    pub fn tsgk_raw(&self) -> *const ffi::TSQuery {
++        self.ptr.as_ptr()
++    }
++
+@@ -3275,0 +3282 @@
++            tsgk_evaluate_predicates: true,
+@@ -3340,0 +3348 @@
++            tsgk_evaluate_predicates: true,
+@@ -3349,0 +3358,15 @@
++    }
++
++    /// Raw structural captures; this separate entry point never removes predicate failures.
++    pub fn captures_raw_with_options<
++        'query, 'cursor: 'query, 'tree, 'options, T: TextProvider<I>, I: AsRef<[u8]>,
++    >(
++        &'cursor mut self,
++        query: &'query Query,
++        node: Node<'tree>,
++        text_provider: T,
++        options: QueryCursorOptions<'options>,
++    ) -> QueryCaptures<'query, 'tree, 'options, T, I> {
++        let mut captures = self.captures_with_options(query, node, text_provider, options);
++        captures.tsgk_evaluate_predicates = false;
++        captures
+@@ -3663 +3686 @@
+-                    if result.satisfies_text_predicates(
++                    if !self.tsgk_evaluate_predicates || result.satisfies_text_predicates(

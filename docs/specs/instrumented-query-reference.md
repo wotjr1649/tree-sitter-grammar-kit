@@ -1,5 +1,7 @@
 # 계측 query reference 계약 (#216)
 
+[#370 V2-A pin 보존·선택](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)이 추가됐다. 기존 생산의 Rust exact pin과 현재 catalogue 비교는 V2-B 소비자 이행 전까지 적용된다. 단일 selection의 후보 원문은 보존되지만 Python/workflow는 아직 이를 읽지 않는다. 후속 V2-B에서는 생산 시작 때 선택한 승인 tuple의 rustc/cargo release를 각각 정확히 검사하고 workflow도 같은 입력을 사용하며, 과거 증거는 당시 승인 tuple로 검증해야 한다. 기존 Rust 경로 의미는 역사 reader의 기준으로 보존한다. 이 자료 보존 단계가 새 reference 실행·자격 검증을 뜻하지 않는다.
+
 ## DartPHP12 단일 frame 정의 분류
 
 Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.
