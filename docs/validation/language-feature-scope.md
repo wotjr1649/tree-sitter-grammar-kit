@@ -1,6 +1,6 @@
 # Campaign 01 언어·feature 범위
 
-필수 집합은 아래 26개 route와 Windows amd64/Linux amd64/macOS arm64다. 정확한 집합·세션 매핑은 [기계 정의](../../src/contracts/campaign-01.json), 후보 source 관측은 [source 등록부](../../src/contracts/language-sources.json), 실행 gate는 [workload](workload-matrix.md)가 소유한다. 이 등록은 제품·grammar 지원 성공 기록이 아니다.
+Campaign 설계의 필수 집합은 아래 26개 route와 Windows amd64/Linux amd64/macOS arm64다. 현재 CI는 #332의 예외에 따라 Windows·Linux 파생 52칸을 계산한다. macOS의 제외 전 근거는 역사로 보존하며 이후 실행은 NOT_RUN이다([platform](../specs/platform-support.md)). 정확한 집합·세션 매핑은 [기계 정의](../../src/contracts/campaign-01.json), 후보 source 관측은 [source 등록부](../../src/contracts/language-sources.json), 실행 gate는 [workload](workload-matrix.md)가 소유한다. 이 등록은 제품·grammar 지원 성공 기록이 아니다.
 
 ## 버전과 기준일
 
