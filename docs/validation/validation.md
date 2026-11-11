@@ -8,6 +8,8 @@
 
 `TestQualificationInventoryRouteValidationProductLimit`·`TestQualificationInventoryRouteAlternativeProductLimit`·`TestQualificationInventoryRoutePlatformProductLimit`는 coverage×expectations·alternatives×coverage·accepted 플랫폼의 반복 검색을 실제 중첩 순회 전에 work 한도로 차단한다. `TestQualificationInventoryRouteSpecialParity`는 비선택 영역의 특수 arm schema와 typed decode보다 먼저 실행되는 shape 오류 분류를 전체 파서와 대조하고, `TestQualificationInventoryRouteJSONLimits`는16MiB와2,000,000값 경계를 확인한다.
 
+K4 work 절감 검증은 동일한26 route의 변경 전후 work/logical/read와 TSQL·PostgreSQL·C#의 항목별 원장을 기록한다. test-only 실제 validator/helper 순회 계측을 구조·문자열·중첩 검색 예약과 독립적으로 대조해 모든 route에서 `계상 work >= 실제 순회 수`를 확인한다. source 검사 항을 제거한 mutant는 이 부등식에서 실패해야 하고, 첫 전역 검사를 제거한 mutant는 기존 전역 오류 parity에서 실패해야 한다. 기존 token·set·alternative·platform mutant도 유지한다. `TestQualificationInventoryRouteSourceWork`는 source를 읽지 않는 case와 UTF-8/해시를 한 번·두 번 확인하는 case의 비용 차이를 확인하고, `TestQualificationInventoryRouteGlobalBeforeLocal`은 전역 오류가 선택 내용 오류보다 먼저 유지되는지 검사한다. 상한을 별도로 입증하지 않은 SVC helper의 byte 예약은 유지한다.
+
 ## #370 V2-A 역사 자료 결속 검증
 
 [pin 계약](../specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 `TestEvidencePinsProductionSelectionDoesNotChangeHistory`는 생산 후보 A/B/C와 별도로 A의 원문·승인·판정·counter·consumed identity를 고정한다. `TestEvidencePinsRejectForgery`는 독립 승인 집합 불일치·pin 치환·자료/sidecar 동시 재해시·sidecar 위조/재사용·혼합 자료를 거부한다. `TestEvidencePinsStrictBoundaries`는 unknown/duplicate/missing/null·depth·size·scope/reader/schema·role·alias·미사용과 누락 자료의 BLOCKED를 검사하고, `TestEvidencePinsInterruptionPreservesFailure`는 확정 FAIL 뒤 자원 오류와 caller 취소를 검사한다. `TestEvidencePinsArchive`는 보관한 모든 집합의 내용 주소와 모든 원문 자료의 길이/hash 및 단일 선택 집합의 존재를 검증한다. 승인 집합 비교를 제거한 overlay mutant는 위조 반례에서 FAIL이어야 한다.
