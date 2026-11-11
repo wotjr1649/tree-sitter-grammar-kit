@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Evidence graph의 run all-pairs 대조를 세 필드 identity index로, owner별 cycle 재순회를 공유 DFS·역방향 도달성 memo로, carry 전체 규칙 scan을 node별 index로 바꿨다(Refs #362). 기존 finding 순서·첫 실패를 차등 시험으로 보존하며 실제 순회와 중복 결과 수에 맞춘 상한을 계상한다. 새 index의 logical 비용도 추가하고 한도·공개 API를 유지한다.
+
 - Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Reference/expected B4·receipt B5와 ordinary 전체 capacity는 후속 범위다.
 
 - Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다. Native/reference/expected 및 receipt 최적화는 후속 범위다.

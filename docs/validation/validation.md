@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 evidence graph 순회 검증
+
+`TestEvidenceGraphDifferential`은 변경 전 graph validator를 보존한 test-only oracle과 finding 전체(code·path·message·순서), 반환 오류와 cycle 영향 owner map을 대조한다. 사슬·fan-out·cycle 직전/직후 및 고정 seed의 임의 graph400개를 검사하며 기존 graph 반례를 유지한다. `TestEvidenceGraphRunIdentity`는 세 identity 필드 중 하나만 다른 경우와 여러 중복의 순서를, `TestEvidenceGraphCycleOwners`는 cycle 연결/분리·공유 downstream의 owner 판정을 검사한다. `TestEvidenceGraphReservation`은 duplicate pair·matching carry rule·subject별 replay 파일 scan 항목의 정확한 차분 및 work의 정확한 경계·+1 거부를 고정한다.
+
+보존 PostgreSQL9 rerun·TSQL8 A6 core와 기존 fixture, 합성 사슬·fan-out·cycle 직전/직후·중복 identity·carry 규칙 graph를 test-only Go overlay로 계측한다. 제품 loop body·DFS 진입·정렬 비교를 실제 호출 시 세고 `graph-bound work >= 실제 순회 수`를 assert한다. 전후 core logical/work/read, 합성 graph 예약과 순회 수를 구분해 기록한다. Run index가 identity 일부 필드를 생략하는 mutant와 owner memo가 다른 root 결과를 재사용하는 mutant는 각각 해당 differential 시험에서 실패해야 한다. 원장 상수만 낮추는 변경이나 한도 인상으로 통과시키지 않는다.
+
 ## #362 snapshot typed decoder 검증
 
 `TestTypedJSONSnapshotDifferential`은 기존 source/vendor synthetic fixture와 고정 오류·결정적 byte 변이를 기존 AST decoder와 비교한다. `FuzzTypedJSONSnapshot`은 같은 oracle로 임의 bytes를 대조한다. 성공 값과 오류 Kind/Code가 같아야 하며, `TestTypedJSONPaths`는 escape가 포함된 unknown/missing/number 오류 경로도 확인한다. `TestTypedJSONLimits`는 document/value 초과, logical/work의 정확 경계와 +1, 취소를 검사한다. 전체 strict preflight 뒤 streaming shape와 typed unmarshal을 실행해 뒤쪽 구문 오류가 앞쪽 shape 오류보다 우선하는 기존 분류를 유지한다.

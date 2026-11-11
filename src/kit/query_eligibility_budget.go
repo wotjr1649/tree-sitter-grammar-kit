@@ -7,6 +7,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"io"
+	"math/bits"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -390,12 +391,28 @@ func (b *eligibilityBudget) reserveGraph(nodes []EvidenceNode, pol evidencePolic
 	if b == nil {
 		return nil
 	}
-	var edges, fields uint64
+	var edges, fields, sorts, pairs, carries, replayFiles uint64
+	indexBytes, e := eligibilityProduct("graph-bound", 512, 1+uint64(len(nodes))+uint64(len(pol.CarryForward)))
+	if e != nil {
+		return e
+	}
+	if e := b.charge(0, indexBytes, "graph-bound"); e != nil {
+		return e
+	}
+	runCounts := map[[3]string]uint64{}
+	ruleCounts := map[string]uint64{}
+	for _, rule := range pol.CarryForward {
+		if e := b.charge(1, 0, "graph-bound"); e != nil {
+			return e
+		}
+		ruleCounts[rule.Node]++
+	}
 	for _, n := range nodes {
 		if e := b.charge(1, 0, "graph-bound"); e != nil {
 			return e
 		}
 		edges += uint64(len(n.Refs) + len(n.Files) + len(n.Identities))
+		sorts += uint64(len(n.Identities)) * uint64(bits.Len(uint(len(n.Identities))))
 		fields += uint64(len(n.ID) + len(n.Kind) + len(n.ExecutionStatus) + len(n.EvidenceMode) + len(n.Assessment) + len(n.RecordedAssessment))
 		for k, v := range n.Identities {
 			fields += uint64(len(k) + len(v))
@@ -403,21 +420,48 @@ func (b *eligibilityBudget) reserveGraph(nodes []EvidenceNode, pol evidencePolic
 		for _, f := range n.Files {
 			fields += uint64(len(f.Path) + len(f.Role) + len(f.SHA256))
 		}
-		for _, r := range n.Refs {
-			fields += uint64(len(r.Relation) + len(r.Node))
+		for _, ref := range n.Refs {
+			fields += uint64(len(ref.Relation) + len(ref.Node))
+			if ref.Relation == "carries" {
+				carries += ruleCounts[n.ID]
+			}
+			if ref.Relation == "subject" {
+				replayFiles += uint64(len(n.Files))
+			}
+		}
+		if n.Kind != "replay" && n.Kind != "carry" {
+			key := evidenceRunIdentity(&n)
+			if e := b.charge(16*uint64(len(key[0])+len(key[1])+len(key[2])), 0, "graph-bound"); e != nil {
+				return e
+			}
+			pairs += runCounts[key]
+			runCounts[key]++
 		}
 	}
 	n := uint64(len(nodes))
-	// Includes all pair comparisons, per-root cycle walks, carry rules and owner scans.
-	work, e := eligibilityProduct("graph-bound", 64, n+1, n+edges+uint64(len(pol.Required)+len(pol.CarryForward))+1)
+	rules := uint64(len(pol.Required) + len(pol.CarryForward))
+	policyVisits := uint64(0)
+	for _, req := range pol.Required {
+		policyVisits += uint64(len(req.Identities)) * (1 + uint64(bits.Len(uint(len(req.Identities)))))
+	}
+	if el := pol.Eligibility; el != nil {
+		policyVisits += uint64(len(el.Nodes)) * (1 + uint64(len(el.Modes)))
+	}
+	// Indexed walks are linear except sorting and required duplicate/rule findings.
+	work, e := eligibilityProduct("graph-bound", 64, 1+n+edges+rules+sorts+n*uint64(bits.Len(uint(len(nodes))))+policyVisits+pairs+carries+replayFiles)
 	if e != nil {
 		return e
 	}
-	logical, e := eligibilityProduct("graph-bound", fields+1, n+uint64(len(pol.Required)+len(pol.CarryForward))+1)
+	logical, e := eligibilityProduct("graph-bound", fields+1, n+rules+1)
 	if e != nil {
 		return e
 	}
-	return b.charge(work, logical, "graph-bound")
+	// Keep the previous string reservation and cover the new indexes and reverse edges.
+	extra, e := eligibilityProduct("graph-bound", 512, edges+uint64(len(pol.Required)))
+	if e != nil {
+		return e
+	}
+	return b.charge(work, logical+extra, "graph-bound")
 }
 
 func (b *eligibilityBudget) reserveReference(ref *instrumentedReference, versions [][]byte) *Error {

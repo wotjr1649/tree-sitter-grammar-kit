@@ -983,6 +983,7 @@ func TestQueryReferenceEligibilityBudgetReservations(t *testing.T) {
 			r.eligibility = b
 			switch kind {
 			case "graph":
+				b.work = eligibilityWorkLimit - 1
 				e = b.reserveGraph(make([]EvidenceNode, 1000), evidencePolicy{})
 			case "unit":
 				s := &eligibilitySession{r: r, b: b}
