@@ -121,7 +121,7 @@ func (b *eligibilityBudget) ordinarySnapshotIdentity(root *os.Root, s *eligibili
 	return b.r.check()
 }
 
-func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession, res *OrdinaryQuerySemanticsResult) *Error {
+func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession, res *OrdinaryQuerySemanticsResult, replay bool) *Error {
 	if e := b.ordinarySnapshotIdentity(root, s); e != nil {
 		res.Complete, res.ProcessingComplete, res.Semantic = false, false, AssessBlocked
 		// A changed shared prerequisite invalidates positive judgments made from it.
@@ -148,6 +148,9 @@ func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession,
 		}
 	}
 	res.Complete = true
+	if replay {
+		return nil // The outer seal checks the nested JSON with the same output limit.
+	}
 	upper, e := b.ordinaryOutputBound(reflect.ValueOf(res))
 	if e != nil {
 		return e

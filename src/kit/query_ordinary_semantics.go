@@ -277,7 +277,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 		return res, e
 	}
 	ordinaryCopyEligibilityFindings(&res, s)
-	if e := b.ordinaryFinish(root, s, &res); e != nil {
+	if e := b.ordinaryFinish(root, s, &res, replay != nil); e != nil {
 		return res, e
 	}
 	return res, nil

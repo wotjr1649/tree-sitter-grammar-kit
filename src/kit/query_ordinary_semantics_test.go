@@ -48,7 +48,7 @@ func TestOrdinaryFinishRechecksMutableSnapshotBeforeVerifiedSeal(t *testing.T) {
 	res.BaseVerified = Verdict{ExecutionStatus: StatusCompleted, Assessment: AssessPass}
 	res.Tuple = QueryEligibilityCounts{Required: 1, Verified: 1}
 	res.Obligations = []OrdinaryQuerySemanticsTuple{{ID: "obligation", State: ordinaryTupleVerified}}
-	if err := f.b.ordinaryFinish(f.root, s, &res); err == nil || asError(err).Code != "SOURCE_CHANGED" {
+	if err := f.b.ordinaryFinish(f.root, s, &res, false); err == nil || asError(err).Code != "SOURCE_CHANGED" {
 		t.Fatalf("final identity mutation was not rejected: %v", err)
 	}
 	if res.Semantic != AssessBlocked || res.BindingValid || res.Tuple.Verified != 0 || res.Tuple.Blocked != 1 || res.Obligations[0].State != ordinaryTupleBlocked || res.Complete {

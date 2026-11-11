@@ -1042,7 +1042,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	}
 	res.Limits = lim
 	var memberIdentity string
-	if borrowed != nil {
+	if borrowed != nil || prof.Reducer == ordinaryReplayReducerID {
 		memberIdentity, e = qualificationMembersText(prof.Members, semanticRun.eligibility)
 		if e != nil {
 			return bad(e)
@@ -1063,7 +1063,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 			return bad(e)
 		}
 	}
-	if borrowed == nil {
+	if borrowed == nil && prof.Reducer != ordinaryReplayReducerID {
 		memberIdentity = membersText(prof.Members)
 	}
 	res.Identities = append(res.Identities, IdentityRef{Role: "reducer", Schema: red.info.ID, SHA256: digestHex([]byte(reducerText(red.info)))},

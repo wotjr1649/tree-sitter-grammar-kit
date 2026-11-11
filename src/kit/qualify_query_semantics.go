@@ -178,6 +178,7 @@ func qualificationMembersText(members []ReplayMember, b *eligibilityBudget) (str
 		sorted, temp = temp, sorted
 	}
 	var text strings.Builder
+	text.Grow(int(fields + 32))
 	text.WriteString("tsgk-replay-members/r1\n")
 	for _, member := range sorted {
 		if e := b.r.check(); e != nil {

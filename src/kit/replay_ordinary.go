@@ -32,11 +32,12 @@ func replayOrdinaryQuerySemantics(x *replayEnv) (resultErr *Error) {
 	for path := range x.directories {
 		paths += uint64(len(path) + 1)
 	}
-	if e := x.r.eligibility.charge(16*paths+1, 8*paths+256*uint64(len(x.files)+len(x.directories)+1), "ordinary-replay-scope"); e != nil {
+	if e := x.r.eligibility.charge(16*paths+1, 8*paths+256*uint64(len(x.files)+len(x.directories)+15), "ordinary-replay-scope"); e != nil {
 		return e
 	}
 	var req OrdinaryQuerySemanticsRequest
 	var selection []byte
+	observed := make(map[string]string, 14)
 	for _, input := range []struct {
 		role string
 		data *[]byte
@@ -61,6 +62,7 @@ func replayOrdinaryQuerySemantics(x *replayEnv) (resultErr *Error) {
 			return e
 		}
 		*input.data = data
+		observed[input.role] = member.SHA256
 	}
 	if e := x.r.eligibility.decodeOrdinaryTyped("ordinary-selection", selection, &req.Selection); e != nil {
 		return e
@@ -124,16 +126,14 @@ func replayOrdinaryQuerySemantics(x *replayEnv) (resultErr *Error) {
 	if res.ProducerRecorded.ExecutionStatus != StatusNotRun {
 		x.recorded = res.ProducerRecorded
 	}
-	for _, item := range []struct {
-		role string
-		data []byte
-	}{{"workload", req.Profile}, {"ordinary-selection", selection}, {"ordinary-registration", req.Registration},
-		{"ordinary-assets", req.AssetRegistration}, {"ordinary-plan-commitment", req.PlanCommitment},
-		{"registry", req.Registry}, {"semantics-run-binding", req.RunBinding}, {"evidence-policy", req.Evidence.Policy}} {
-		if e := x.r.eligibility.charge(uint64(len(item.data))+1, 64, "ordinary-replay-observed-digests"); e != nil {
-			return e
-		}
-		x.actual[item.role] = digestHex(item.data)
+	// member verified these exact bytes before the ordinary core consumed them.
+	for _, identity := range []struct{ role, input string }{
+		{"workload", "workload-profile"}, {"ordinary-selection", "ordinary-selection"},
+		{"ordinary-registration", "ordinary-registration"}, {"ordinary-assets", "ordinary-assets"},
+		{"ordinary-plan-commitment", "ordinary-plan-commitment"}, {"registry", "ordinary-registry"},
+		{"semantics-run-binding", "semantics-run-binding"}, {"evidence-policy", "evidence-policy"},
+	} {
+		x.actual[identity.role] = observed[identity.input]
 	}
 	if scope.snapshot != nil {
 		if e := x.r.eligibility.charge(4*paths+256*uint64(len(scope.snapshot.nodes)+1), 256*uint64(len(scope.snapshot.verifiedMembers)+1), "ordinary-replay-outer-binding"); e != nil {
