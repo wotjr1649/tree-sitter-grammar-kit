@@ -1,5 +1,11 @@
 # 계측 query reference 계약 (#216)
 
+## #362 ordinary batch capture 준비 (P2-B 일부)
+
+P2-B의 첫 구현 단위는 [actual batch wire와 실패 보존](tree-and-adapter-protocol.md#362-batch-actual-capture-기반-p2-b-일부) 및 [process owner](identity-and-evidence.md#362-batch-capture의-process-소유권-p2-b-일부)다. 내부 captured 실행 primitive는 `native-query-batch`, native/r4, full tree, API=true, UTF-8, SVC·preprocess·reuse-accepted 없는 입력에 한정한다. 기존 `Oracle`의 batch source witness 금지는 아직 열지 않는다. 일반/single producer 출력과 기존 reader/reducer의 schema 허용은 그대로다.
+
+독립 expected 자산의 compact row 형식(B3)과 reference stdout의 별도 pinned member 및 `tsgk-reference-process/r2`(B5)는 이 단위에서 만들지 않는다. 이번 형식은 native actual transcript이며 expected/reference 형식을 먼저 고정하면 아직 연결되지 않은 reader·receipt 계약을 확장하게 된다. 기존 자산/receipt 비용 추정과 SQL `CAPACITY_UNPROVEN`/BLOCKED를 유지하고 B3/B5 절감액을 선반영하지 않는다. reference 실행·한도 조정·public ordinary API·reader/replay 완료를 뜻하지 않는다.
+
 ## DartPHP12 단일 frame 정의 분류
 
 Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.

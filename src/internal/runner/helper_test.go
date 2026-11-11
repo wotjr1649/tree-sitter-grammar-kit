@@ -227,6 +227,14 @@ func frameHelper(arg string) int {
 				out.Write(hdr[:])
 				out.Flush()
 				time.Sleep(time.Hour)
+			case "partial-header":
+				os.Stdout.Write([]byte{0, 0})
+				return 0
+			case "partial-body":
+				binary.BigEndian.PutUint32(hdr[:], 6)
+				os.Stdout.Write(hdr[:])
+				os.Stdout.Write([]byte("ok"))
+				return 0
 			case "fat": // a well-formed but large response that crosses the batch stdout cap
 				req = append(req, make([]byte, 1000)...)
 			case "alloc":

@@ -1,5 +1,17 @@
 # Tree와 adapter — draft/r0
 
+## #362 batch actual capture 기반 (P2-B 일부)
+
+`runner.RunBatch`의 선택적 `BatchPolicy.Capture`는 실제 stdin `Write`의 반환 길이와 interactive stdout의 실제 `Read` 구간을 동기식으로 전달한다. callback의 slice는 빌린 자료이며 수정하거나 호출 뒤 보관하지 않는다. header·payload·partial header/body·마지막 응답 뒤 bytes와 출력 상한 확인용 1-byte probe도 실제 관측 구간에 포함한다. probe는 기존처럼 `Process.StdoutBytes`에는 포함되고 `TrailingBytes`에는 포함되지 않을 수 있다. callback 오류는 첫 `CaptureError`로 남기고 기존 전송·종료·frame 상태와 byte 계수는 유지한다. 실패 sink도 이후 관측 bytes를 계속 받으므로 스스로 bounded retention을 적용해야 한다.
+
+내부 native producer의 `tsgk-native-batch-capture/r1`은 batch 번호와 유일한 `D_batch_<index>` owner, effective interactive process spec, build/executable identity, process 결과·stderr pin, stdin/stdout의 관측 길이·SHA와 보존 길이, frame 순서의 case/index/status/detail/wall 및 actual span을 기록한다. span은 header 포함 offset·길이·SHA·complete와 물리 member 목록이다. `NOT_SENT`에는 actual stdin pin이 없고, 응답을 받지 못한 `SENT`는 확보한 prefix만 보관한다. `ANSWERED`는 process 실패에도 그대로 남으며 transcript의 `accepted`를 별도로 낮춘다. 기존 batch 사례 판정은 기존 계약을 유지한다.
+
+일반 frame은 member 하나이고 4-byte header도 16 MiB file 한도에 든다. 이를 넘는 frame의 분할 member는 `BATCH_CAPTURE_MEMBER_LIMIT`의 실패 진단일 뿐 ordinary paging이나 의미 수용이 아니다. 256 MiB physical 상한 안에서 process/transcript metadata 각각의 16 MiB file cap과 stderr 64 KiB를 먼저 유보하고 actual stream prefix를 보존한다. 보존 상한을 넘으면 실제 전체 관측 길이·SHA와 bounded prefix, `CaptureError`를 남기며 `accepted=false`다. raw JSON의 공백·key 순서 등 원래 bytes를 재직렬화하지 않는다. process/stderr를 사례마다 복제하지 않는다.
+
+`SENT`는 exchange가 전송을 시도했다는 뜻이다. 첫 write가 0 bytes로 실패했으면 actual stdin span은 null이며 완전 전송을 뜻하지 않는다. captured 경로는 fatal 응답 뒤라도 시도된 frame을 다시 보내지 않고 명시적인 `not sent` tail만 새 process로 옮긴다. 응답한 사례의 base 관측은 process 실패로 덮지 않으며 transcript의 process 수용과 구분한다. 이는 semantic 승인 전의 native 관측일 뿐 지원 claim이 아니다. 기존 legacy batch의 fatal·실패 사례 처분은 유지한다.
+
+이 단계는 내부 capture primitive와 transcript 생성만 제공한다. `Oracle`의 ordinary 계획 profile 실행, batch source witness, record/r5·manifest/r8, raw API 공용 비교기와 step/role fact projection은 후속 P2-B다. 기존 single capture/r1과 legacy batch profile의 wire 출력·허용 범위는 유지한다. guarded reader와 replay는 P2-C/D이며 transcript의 local `accepted`는 외부 승인·의미 PASS가 아니다.
+
 등록된 `.svc`는 [SVC-SERVICEHOST-r2](../validation/net461-workload.md)의 composite result를 사용한다. 원본 identity와 byte/point를 directive·inline C#·등록 참조 입력에 결속한다. S05가 `tsgk-svc-composite/r2`를 생산하며 r1 profile은 context 없이 읽을 수 있다.
 
 * `schema`, `format: "SVC-SERVICEHOST-r2"`, `input`(전체 파일), `identities`(producer·source·policy).

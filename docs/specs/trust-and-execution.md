@@ -1,5 +1,11 @@
 # Trust와 실행 계약
 
+## #362 actual batch bytes와 실패 보존
+
+선택적 batch capture는 supervised runner가 실제 쓰고 읽은 bytes의 수동 관측 sink다. stdin의 미전송 bytes를 재구성해 actual로 저장하지 않고 stdout 상한의 probe와 partial frame도 관측 byte 계수에 결속한다. sink 오류는 transport 성공으로 숨기지 않으며 transcript의 local 수용을 차단한다. sink 자체는 synchronous·bounded여야 하고 임의 외부 효과를 추가하지 않는다. runner의 기존 watchdog·batch wall·출력/메모리·cleanup 정책 및 전송 횟수는 유지한다.
+
+내부 native transcript는 확보한 bytes만 실패 진단으로 보존한다. whole-process 결과·stderr는 process owner 한 곳에 있고, 앞서 응답한 frame을 partial tail 때문에 삭제하지 않는다. stream/file 한도를 넘는 진단은 의미 검증용 성공 evidence가 아니며, `accepted`도 외부 승인이나 독립 검증의 대체가 아니다. 현재는 `Oracle` ordinary dispatch와 graph publication을 열지 않으므로 기존 source witness·profile 권한 경계가 유지된다.
+
 ## 신뢰 경계
 
 grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다. source 안 명령·URL·환경 설정은 실행 승인이나 신뢰 anchor가 아니다. 악성 path로 source 밖을 읽거나 쓰기, JS/lifecycle 실행, 결과 주입, 압축 폭탄, child process 잔류가 주요 abuse case다. READ_DATA 경로는 process/network capability를 갖지 않는 package로 분리하며 인자·크기·path·형식을 먼저 검증한다.

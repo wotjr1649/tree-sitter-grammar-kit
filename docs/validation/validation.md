@@ -1,5 +1,15 @@
 # Validation and merge contract
 
+## #362 P2-B actual capture 기반 검증
+
+runner의 `TestBatchCaptureKeepsActualWireBytes`, `TestBatchCaptureKeepsPartialAndUnsentTail`, `TestBatchCaptureIncludesCapProbeAndTrailingBytes`는 비정규 JSON wire bytes와 sink 오류, partial header/body·미전송 tail, 출력 상한의 실제 probe를 검사한다. 기존 frame watchdog·batch wall/출력·crash·cleanup·request cap 회귀와 함께 실행한다. capture를 켜지 않은 기존 전송·종료와 stdout byte 계수를 유지해야 한다.
+
+native의 `TestBatchCaptureActualFrames`, `TestBatchCaptureBindingControls`, `TestBatchCapturePartialAndProcessFailure`, `TestBatchCaptureMemberLimit`, `TestBatchCaptureScope`는 process owner 유일성·정확한 frame 재연결, index/case 교환·같은 길이 stdin/response 치환·header/body 불일치·hash·계수 변조, partial·unanswered·not-sent와 process cap/truncation/cleanup 실패의 보존 및 16 MiB header 포함 경계를 검사한다. `TestBatchCaptureNative`는 환경 `TSGK_NATIVE_RUNTIME`, `TSGK_NATIVE_CC`를 명시한 실제 owned grammar로 두 case와 두 edit·incremental/fresh·API raw response 결속을 확인한다. SKIP은 실제 실행 PASS로 세지 않는다.
+
+`TestBatchCaptureRetainedPrefix`와 `TestBatchCapturePartialStdin`은 보존 손실 뒤의 전체 관측 hash/길이와 partial write, 0-byte write 시도의 `SENT`·null stdin 의미를 검사한다. `TestBatchCaptureNativeFatalDoesNotResend`는 실제 fatal resource 응답 뒤 시도된 frame의 재전송을 금지한다.
+
+최소 mutant는 actual sink에서 JSON bytes를 정규화하는 변이와 frame 순번의 case 대조를 제거하는 변이다. 각각 exact-byte 또는 frame-binding 시험이 컴파일 오류 없이 실패해야 한다. 영향 package `src/internal/runner`, `src/internal/native`, `src/kit`, `src/cmd/tsgk`, foundation 전체 및 `CGO_ENABLED=0 go vet ./src/...`, gofmt·diff 검사를 실행한다. 기존 `TestOracleBatchFailures`의 fatal/leak 무재전송 처분도 유지한다. 이 단계의 통과는 ordinary 등록·source witness·신규 record/manifest·API/fact·reader/replay나 실제 SQL capacity의 완료가 아니다.
+
 ## #216 TSQL8 source 준비 검증
 
 [TSQL8 사전 기대값과 binary paging 연결](../specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다. Native의 `TestQueryClassificationTSQL8StaticProfile`, `TestQueryClassificationTSQL8AnchorGuards`, `TestQueryClassificationTSQL8GrammarGuards`, `TestQueryClassificationTSQL8EmptyStderrCaptureMember`는 닫힌 이름·일반6+fact2의 원문/순서/SHA/metadata·빈 CST/ABI·grammar5개와 parser5 parts를 고정한다. kit의 `TestQueryClassificationTSQL8DefinitionBindings`, `TestQueryClassificationTSQL8ProfileAndPagedContext`, `TestQueryClassificationTSQL8ClosedNames`, `TestQueryClassificationTSQL8StderrBinding`은 두 원문 envelope·fact route 유일성/순서·2982 tree roles/23856 potential links·compiler argv/limits·다른 family/context·null/alias·live session 없는 projection을 검사한다.

@@ -1,5 +1,13 @@
 # Identity와 evidence — draft/r0, manifest r2 구현
 
+## #362 batch capture의 process 소유권 (P2-B 일부)
+
+내부 `tsgk-native-batch-capture/r1`의 owner는 실행 batch별 `D_batch_<index>` 하나다. 실제 stdin/stdout frame member와 partial/suffix, stderr, effective process spec과 process-result member는 이 owner의 자료다. frame은 case ID와 실제 순번 및 stream offset·길이·SHA로 결속되고 여러 case가 같은 process를 참조한다. 전체 stream 길이·SHA는 runner가 실제 write/read한 순서에서 계산한다. build identity와 실제 실행 직전 `Build.Verify`로 확인한 executable 길이·SHA를 함께 기록한다. 기록된 member의 bytes를 다시 marshal해 만든 pin으로 actual stream pin을 대체하지 않는다.
+
+`ANSWERED` frame 보존과 batch 수용을 구분하며, partial/truncation/cleanup 실패·capture 손실·상한 초과에서 local transcript는 수용되지 않는다. stream의 보존 길이가 관측 길이보다 작으면 prefix만 확보한 실패 진단이다. 물리 frame member가 16 MiB를 넘는 경우의 분할도 실패 진단이며 승인된 성공 frame을 구성하지 않는다. 정상 member의 순서대로 재연결한 bytes는 header를 포함한 stream hash·길이와 일치한다.
+
+이 단계는 evidence graph나 ordinary manifest/r8을 발행하지 않는다. 실제 graph의 owner·build closure·registration·run binding 결속과 guarded 검사는 후속 단계의 의무다. 계획용 profile/r4와 기존 public/offline API의 수용 범위는 바뀌지 않는다.
+
 ## 파일 identity
 
 manifest r0와 그 hash preimage는 아래 역사적 설계로 보존한다. S01 착수 전 채택 설계는 `tsgk-manifest/r1`이며 `algorithm: sha256`, `mode_policy`, `files`를 가진다. 각 파일은 portable `path`, `role`, `mode`(`100644` 또는 `100755`), `mode_provenance`, `size`(bytes), 소문자 64자리 `sha256`으로 나타낸다. path의 UTF-8 bytes 오름차순으로 정렬하고 중복을 거부한다. 디렉터리·symlink·special file은 파일 항목이 아니다. 기본 `mode_policy=portable-default`, `mode_provenance=POLICY_DEFAULT`, mode `100644`는 관측된 executable bit가 아니다. 별도 filesystem mode는 실제 관측 가능할 때 출처와 다른 policy로 등록한다. API/offline 경로가 Git process를 실행해 mode를 추정하지 않는다.

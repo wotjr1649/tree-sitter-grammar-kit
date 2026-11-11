@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- P2-B의 첫 단위로 runner의 선택적 actual stdin/stdout sink와 내부 native batch transcript/r1을 추가했다. 실제 header·partial frame·출력 probe·stream hash/길이와 process당 하나의 stderr/result owner를 보존하며, batch 실패가 응답한 frame의 capture를 덮지 않는다. 기존 single/legacy batch 출력과 한도는 유지한다. ordinary 실행 dispatch·source witness·record/r5·manifest/r8, API 비교기 이동·step/role fact, guarded reader/replay와 B3/B5 wire 확장은 후속 범위다(Refs #362).
+
 - P2-A에서 P0 registry core 공용화와 strict ordinary profile/asset/registration/shard-plan, source-only planner를 추가하며 106,208개 ID의 exact union과 기존 small 한도를 유지한다. 예산 재검토는 pass당 qualification-inventory+registry decode 353,877,949 B와 reference row 추정의 과소 산정을 반영한다; historical #366 anchor 진단에서 body 전 여유는 PostgreSQL −297,750,339 B, TSQL −341,653,347 B이고, reference 기존→수정 추정은 PG nominal 10,809,604→30,249,029 B, TSQL nominal 58,141,956→177,534,284 B, dense 232,269,572→708,656,264 B이며 수정값은 upper bound가 아니다. K0–K4 절감이나 cap 변경을 적용하지 않고 SQL은 `CAPACITY_UNPROVEN`/BLOCKED로 보존하며, P2-B/C producer·reader·replay는 제외한다(Refs #362).
 - P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
 

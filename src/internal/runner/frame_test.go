@@ -1,7 +1,9 @@
 package runner
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"runtime"
@@ -93,6 +95,99 @@ func controlFrameTimers(t *testing.T, pids string, at int, duration time.Duratio
 			t.Error("no frame watchdog was armed")
 		}
 	})
+}
+
+func TestBatchCaptureKeepsActualWireBytes(t *testing.T) {
+	s, pids := helperSpec(t, "frames:echo")
+	awaitStart(t, pids)
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: time.Second, FrameGrace: time.Second,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	request := []byte(`{ "key" : "\\u0061", "n" : 1 }`)
+	frames := []Frame{{ID: "odd-json-spelling", Request: request}}
+	streams := map[string][]byte{"stdin": nil, "stdout": nil}
+	pol.Capture = func(direction string, data []byte) error {
+		streams[direction] = append(streams[direction], data...)
+		return nil
+	}
+	r, err := RunBatch(context.Background(), s, pol, frames)
+	if err != nil || !r.Process.Succeeded() || r.Frames[0].Status != FrameCompleted || r.CaptureError != "" {
+		t.Fatalf("capture batch: %v %+v", err, r)
+	}
+	wire := func(payload []byte) []byte {
+		b := make([]byte, 4+len(payload))
+		binary.BigEndian.PutUint32(b, uint32(len(payload)))
+		return append(b[:4], payload...)
+	}
+	if want := wire(request); !bytes.Equal(streams["stdin"], want) {
+		t.Fatalf("stdin bytes %q, want %q", streams["stdin"], want)
+	}
+	wantResponse := append([]byte("ok:"), request...)
+	if want := wire(wantResponse); !bytes.Equal(streams["stdout"], want) {
+		t.Fatalf("stdout bytes %q, want %q", streams["stdout"], want)
+	}
+
+	s, pids = helperSpec(t, "frames:echo")
+	awaitStart(t, pids)
+	sinkErr := errors.New("sink failed")
+	pol.Capture = func(string, []byte) error { return sinkErr }
+	r, err = RunBatch(context.Background(), s, pol, frames)
+	if err != nil || r.CaptureError != sinkErr.Error() || r.Frames[0].Status != FrameCompleted || !r.Process.Succeeded() {
+		t.Fatalf("capture failure changed process result: %v %+v", err, r)
+	}
+}
+
+func TestBatchCaptureKeepsPartialAndUnsentTail(t *testing.T) {
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: time.Second, FrameGrace: time.Second,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	for _, c := range []struct {
+		mode string
+		out  []byte
+	}{
+		{"partial-header", []byte{0, 0}},
+		{"partial-body", []byte{0, 0, 0, 6, 'o', 'k'}},
+	} {
+		t.Run(c.mode, func(t *testing.T) {
+			s, pids := helperSpec(t, "frames:"+c.mode+"@0")
+			awaitStart(t, pids)
+			streams := map[string][]byte{"stdin": nil, "stdout": nil}
+			pol.Capture = func(direction string, data []byte) error {
+				streams[direction] = append(streams[direction], data...)
+				return nil
+			}
+			r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "sent", Request: []byte("x")}, {ID: "unsent", Request: []byte("y")}})
+			if err != nil || r.Frames[0].Status != FrameFailed || r.Frames[1].Status != FrameRequeued || r.Frames[1].Detail != "not sent" {
+				t.Fatalf("partial frame: %v %+v", err, r)
+			}
+			if want := []byte{0, 0, 0, 1, 'x'}; !bytes.Equal(streams["stdin"], want) {
+				t.Fatalf("stdin bytes %v, want %v", streams["stdin"], want)
+			}
+			if !bytes.Equal(streams["stdout"], c.out) {
+				t.Fatalf("stdout bytes %v, want %v", streams["stdout"], c.out)
+			}
+		})
+	}
+}
+
+func TestBatchCaptureIncludesCapProbeAndTrailingBytes(t *testing.T) {
+	s, pids := helperSpec(t, "frames:tail")
+	awaitStart(t, pids)
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: time.Second, FrameGrace: time.Second,
+		StdoutBytes: 8, BatchWall: 30 * time.Second}
+	var stdout []byte
+	pol.Capture = func(direction string, data []byte) error {
+		if direction == "stdout" {
+			stdout = append(stdout, data...)
+		}
+		return nil
+	}
+	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "one", Request: []byte("x")}})
+	if err != nil || r.Process.Reason != ReasonOutput || !r.Process.StdoutTruncated || r.Process.StdoutBytes != 9 || r.TrailingBytes != 0 {
+		t.Fatalf("cap probe: %v %+v", err, r)
+	}
+	want := []byte{0, 0, 0, 4, 'o', 'k', ':', 'x', 'j'}
+	if !bytes.Equal(stdout, want) {
+		t.Fatalf("captured stdout %v, want %v", stdout, want)
+	}
 }
 
 // The default timer still ends an unresponsive first frame. Readiness removes startup

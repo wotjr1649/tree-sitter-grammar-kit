@@ -38,6 +38,9 @@ type BatchPolicy struct {
 	FrameGrace    time.Duration // runner watchdog margin beyond FrameWall
 	StdoutBytes   int64         // whole-batch stdout, headers included
 	BatchWall     time.Duration // whole-batch process wall
+	// Capture receives borrowed actual pipe bytes synchronously in order; direction is
+	// "stdin" or "stdout". The sink must consume or copy data without modifying it.
+	Capture func(direction string, data []byte) error
 }
 
 // DefaultBatchPolicy is the adopted real-world resource policy (S04-A16): 48 MiB request
@@ -103,6 +106,8 @@ type BatchResult struct {
 	Frames        []FrameResult `json:"frames"`
 	Process       Result        `json:"process"`
 	TrailingBytes int64         `json:"trailing_bytes"`
+	// CaptureError is the first sink error. It does not change transport or process results.
+	CaptureError string `json:"capture_error,omitempty"`
 }
 
 // testHookBatchStarted, when a test sets it, runs after the process starts and before the
@@ -123,6 +128,7 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 	if err != nil {
 		return BatchResult{}, err
 	}
+	p.capture = pol.Capture
 	if testHookBatchStarted != nil {
 		testHookBatchStarted()
 	}
@@ -154,6 +160,9 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 		out.TrailingBytes, _ = io.Copy(io.Discard, p.Stdout())
 	}
 	out.Process = p.Wait()
+	if p.captureErr != nil {
+		out.CaptureError = p.captureErr.Error()
+	}
 	linger.Stop()
 	if inflight >= 0 {
 		fr := &out.Frames[inflight]
@@ -183,10 +192,10 @@ func exchange(p *Process, pol BatchPolicy, req []byte) ([]byte, error) {
 	defer stop()
 	var hdr [4]byte
 	binary.BigEndian.PutUint32(hdr[:], uint32(len(req)))
-	if _, err := p.Stdin().Write(hdr[:]); err != nil {
+	if err := writeCaptured(p, p.Stdin(), "stdin", hdr[:]); err != nil {
 		return nil, err
 	}
-	if _, err := p.Stdin().Write(req); err != nil {
+	if err := writeCaptured(p, p.Stdin(), "stdin", req); err != nil {
 		return nil, err
 	}
 	if _, err := io.ReadFull(p.Stdout(), hdr[:]); err != nil {
@@ -202,4 +211,12 @@ func exchange(p *Process, pol BatchPolicy, req []byte) ([]byte, error) {
 		return nil, err
 	}
 	return resp, nil
+}
+
+func writeCaptured(p *Process, w io.Writer, direction string, data []byte) error {
+	n, err := w.Write(data)
+	if n > 0 {
+		p.captureChunk(direction, data[:n])
+	}
+	return err
 }
