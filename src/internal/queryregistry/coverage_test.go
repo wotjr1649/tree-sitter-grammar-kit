@@ -270,4 +270,18 @@ func TestFoldKeepsConfirmedFailureOnContradiction(t *testing.T) {
 	if err == nil || out.Verdict != "FAIL" || out.Code != "REGISTRY_UNDECLARED_COORDINATE" {
 		t.Fatalf("failure after a defect counted as confirmed: %+v %v", out, err)
 	}
+	// A well-bound judgment with an invalid state or code is also a defect: a FAILED code after it
+	// is not confirmed (#365 review).
+	for _, tc := range []struct{ state, code, want string }{
+		{"BLOCKED", "", "REGISTRY_BLOCKED_CODE"},
+		{"DONE", "", "REGISTRY_COVERAGE_STATE"},
+	} {
+		defect := shard(v)
+		defect.Judgments[0].State, defect.Judgments[0].Code = tc.state, tc.code
+		defect.Judgments[1].State, defect.Judgments[1].Code = "FAILED", "AFTER_DEFECT"
+		out, err = v.Fold([]Shard{defect}, false)
+		if err == nil || out.Verdict != "FAIL" || out.Code != tc.want {
+			t.Fatalf("%s judgment: failure after it counted as confirmed: %+v %v", tc.state, out, err)
+		}
+	}
 }
