@@ -4,6 +4,8 @@ S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현
 
 ## 공통 입출력과 오류
 
+#362 P2-B 2단계의 ordinary producer는 내부 `OracleRequest.Ordinary`로 명시 선택하며 결과는 `tsgk-oracle-result/r4`다. 계획 profile/r4를 기존 `tsgk oracle record --profile`에 단독으로 전달하는 실행은 지원하지 않으며 새 CLI 입력 flag는 P2-D에 남긴다. 기존 profile과 `BATCH_SCOPE_UNSUPPORTED` 거부는 보존한다. 실제 문서·source·selected shard 결속과 record/r5·manifest/r8은 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다.
+
 root에서 실행할 CLI는 `tsgk <command>`다. 읽기 대상은 명시적 `--root PATH`(기본 현재 디렉터리), JSON 결과는 stdout, 진단은 stderr다. `--out PATH`는 새 파일만 허용한다. 기존 파일·입력 집합 내부·link 경로는 거부한다. caller-owned 같은 filesystem의 임시 파일을 완성한 뒤 충돌 없이 publish하고, 실패 partial은 별도 failure evidence로 보존한다. 결과 쓰기 실패는 성공 결과로 바꾸지 않는다. 입력 directory를 갖는 경로 검사는 [trust 계약](trust-and-execution.md)의 bounded directory identity 검사를 사용한다. outside membership 미확인은 `INPUT_PATH_UNVERIFIED`(trust/workspace, exit 2) 또는 `OUTPUT_PATH_UNVERIFIED`(publication exit 4, qualify 사전 검사 exit 2)로 거부하며, 확인된 내부 경로의 기존 code는 유지한다.
 
 exit `0`은 해당 명령이 요청한 범위의 PASS/관측 완료, `1`은 유효한 입력에서 검증 FAIL, `2`는 인자·profile·형식 오류, `3`은 필수 근거/권한/capability가 없어 BLOCKED, `4`는 I/O·tool·내부 실행 오류, `130`은 취소다. unknown layout을 관측한 inspect의 exit 0은 qualification PASS를 뜻하지 않는다. 결과 envelope는 `schema: tsgk-report/r1`, `command`, `execution_status`, `evidence_mode`, `assessment`, `identities`, `findings`, `coverage`를 가진다. finding은 안정적인 `code`, `severity`, root-relative `path`, 한국어 `message`로 표현한다. OS 절대 경로와 환경값은 기본 결과에서 제외한다.

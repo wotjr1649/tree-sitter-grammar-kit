@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -24,6 +25,7 @@ func syntheticBatchCapture(t *testing.T) *batchCapture {
 	t.Helper()
 	frames := []runner.Frame{{ID: "a", Request: []byte(" { \"id\" : \"a\" } \n")}, {ID: "b", Request: []byte("{\"id\":\"b\"}")}}
 	c := newBatchCapture(3, runner.Spec{Path: "driver", Args: []string{"batch"}, Dir: "work", StderrBytes: 65536, Grace: time.Second}, runner.DefaultBatchPolicy(), frames)
+	t.Cleanup(func() { _ = c.close() })
 	c.result.Process = runner.Result{Status: runner.StatusCompleted, Reason: runner.ReasonExited, Cleanup: runner.Cleanup{Verified: true}, Stderr: []byte("diagnostic\n"), StderrBytes: 11}
 	for _, f := range frames {
 		response := []byte(fmt.Sprintf("{ \"id\" : %q }\n", f.ID))
@@ -46,34 +48,122 @@ func capturedWire(t *testing.T, c *batchCapture) (batchCaptureWire, []captureFil
 		t.Fatal(err)
 	}
 	for _, f := range files {
-		if f.pin.Bytes != uint64(len(f.data)) || f.pin.SHA256 != sha(f.data) || len(f.data) > kit.MaxDocumentBytes {
+		var got bytes.Buffer
+		if _, err := f.WriteTo(&got); err != nil || uint64(got.Len()) != f.pin.Bytes || f.pin.SHA256 != sha(got.Bytes()) || got.Len() > kit.MaxDocumentBytes {
 			t.Fatal("invalid physical member")
+		}
+		if strings.HasSuffix(f.pin.Role, "-frame") && (f.path == "" || len(f.data) != 0) {
+			t.Fatal("frame member was buffered instead of streamed")
 		}
 	}
 	return w, files
 }
 
+func TestCaptureFileWriteToVerifiesPin(t *testing.T) {
+	c := syntheticBatchCapture(t)
+	files, err := c.files("capture/batch")
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame := files[0]
+	file, err := os.OpenFile(frame.path, os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := file.WriteAt([]byte("x"), frame.offset); err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := frame.WriteTo(&bytes.Buffer{}); err == nil {
+		t.Fatal("accepted mutated streamed member")
+	}
+	frame.pin.Bytes = kit.MaxDocumentBytes + 1
+	if _, err := frame.WriteTo(&bytes.Buffer{}); err == nil {
+		t.Fatal("accepted oversized member")
+	}
+	path := c.stdin.path
+	if err := c.close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("temporary capture remains: %v", err)
+	}
+}
+
+func readStream(t *testing.T, s *batchCaptureStream) []byte {
+	t.Helper()
+	if s.path == "" {
+		return nil
+	}
+	data, err := os.ReadFile(s.path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+func replaceStream(t *testing.T, s *batchCaptureStream, data []byte, preserveTotal bool) {
+	t.Helper()
+	fullBytes := s.n
+	if s.file != nil {
+		if err := s.file.Truncate(0); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.file.Seek(0, 0); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.file.Write(data); err != nil {
+			t.Fatal(err)
+		}
+	} else if len(data) > 0 {
+		f, err := os.CreateTemp("", "tsgk-batch-capture-test-*")
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.file, s.path = f, f.Name()
+		if _, err := f.Write(data); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s.retained = uint64(len(data))
+	s.retainedSum.Reset()
+	s.retainedSum.Write(data)
+	if preserveTotal {
+		s.n = fullBytes
+	} else {
+		s.n = uint64(len(data))
+		s.h.Reset()
+		_, _ = s.h.Write(data)
+	}
+}
+
 func TestBatchCaptureActualFrames(t *testing.T) {
 	c := syntheticBatchCapture(t)
 	w, files := capturedWire(t, c)
-	if w.Schema != batchCaptureSchema || w.Owner != "D_batch_00003" || !w.Accepted || w.Code != "" || !w.Spec.Interactive || w.Spec.Stdin != nil || w.Stdin.SHA256 != sha(c.stdin.data) || w.Stdout.SHA256 != sha(c.stdout.data) {
+	if w.Schema != batchCaptureSchema || w.Owner != "D_batch_00003" || !w.Accepted || w.Code != "" || !w.Spec.Interactive || w.Spec.Stdin != nil || w.Stdin.SHA256 != c.stdin.pin().SHA256 || w.Stdout.SHA256 != c.stdout.pin().SHA256 {
 		t.Fatalf("transcript %+v", w)
 	}
 	var stdin, stdout []byte
 	processes, stderr := 0, 0
 	for _, f := range files {
+		var got bytes.Buffer
+		if _, err := f.WriteTo(&got); err != nil {
+			t.Fatal(err)
+		}
 		switch f.pin.Role {
 		case "stdin-frame":
-			stdin = append(stdin, f.data...)
+			stdin = append(stdin, got.Bytes()...)
 		case "stdout-frame":
-			stdout = append(stdout, f.data...)
+			stdout = append(stdout, got.Bytes()...)
 		case "process":
 			processes++
 		case "stderr":
 			stderr++
 		}
 	}
-	if !bytes.Equal(stdin, c.stdin.data) || !bytes.Equal(stdout, c.stdout.data) || processes != 1 || stderr != 1 {
+	if !bytes.Equal(stdin, readStream(t, &c.stdin)) || !bytes.Equal(stdout, readStream(t, &c.stdout)) || processes != 1 || stderr != 1 {
 		t.Fatal("actual bytes or unique process ownership lost")
 	}
 	for i, f := range w.Frames {
@@ -99,9 +189,21 @@ func TestBatchCaptureBindingControls(t *testing.T) {
 		"same-length-response": func(c *batchCapture) {
 			c.result.Frames[0].Response = bytes.ReplaceAll(c.result.Frames[0].Response, []byte("a"), []byte("z"))
 		},
-		"request-header":           func(c *batchCapture) { c.stdin.data[3]++; c.stdin.h.Reset(); c.stdin.h.Write(c.stdin.data) },
-		"response-header":          func(c *batchCapture) { c.stdout.data[3]++; c.stdout.h.Reset(); c.stdout.h.Write(c.stdout.data) },
-		"actual-stream-hash":       func(c *batchCapture) { c.stdout.data[5]++ },
+		"request-header": func(c *batchCapture) {
+			data := readStream(t, &c.stdin)
+			data[3]++
+			replaceStream(t, &c.stdin, data, false)
+		},
+		"response-header": func(c *batchCapture) {
+			data := readStream(t, &c.stdout)
+			data[3]++
+			replaceStream(t, &c.stdout, data, false)
+		},
+		"actual-stream-hash": func(c *batchCapture) {
+			data := readStream(t, &c.stdout)
+			data[5]++
+			replaceStream(t, &c.stdout, data, true)
+		},
 		"process-stdout-count":     func(c *batchCapture) { c.result.Process.StdoutBytes++ },
 		"stderr-truncation-hidden": func(c *batchCapture) { c.result.Process.StderrBytes++ },
 		"stdin-suffix":             func(c *batchCapture) { c.capture("stdin", []byte("x")) },
@@ -121,10 +223,7 @@ func TestBatchCapturePartialAndProcessFailure(t *testing.T) {
 		t.Run(fmt.Sprintf("response-prefix-%d", n), func(t *testing.T) {
 			c := syntheticBatchCapture(t)
 			first := 4 + len(c.result.Frames[0].Response)
-			c.stdout.data = c.stdout.data[:first+n]
-			c.stdout.h.Reset()
-			c.stdout.h.Write(c.stdout.data)
-			c.stdout.n = uint64(len(c.stdout.data))
+			replaceStream(t, &c.stdout, readStream(t, &c.stdout)[:first+n], false)
 			c.result.Process.StdoutBytes = int64(c.stdout.n)
 			c.result.Frames[1].Status, c.result.Frames[1].Response = runner.FrameFailed, nil
 			c.frames = append(c.frames, runner.Frame{ID: "tail", Request: []byte("unwritten")})
@@ -166,9 +265,15 @@ func TestBatchCaptureMemberLimit(t *testing.T) {
 	c := syntheticBatchCapture(t)
 	// A header counts toward the physical file cap; fragments are failure diagnostics.
 	c.frames[1].Request = bytes.Repeat([]byte("x"), kit.MaxDocumentBytes-3)
-	c.stdin.data = nil
-	c.stdin.n = 0
+	if err := c.stdin.file.Truncate(0); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.stdin.file.Seek(0, 0); err != nil {
+		t.Fatal(err)
+	}
+	c.stdin.n, c.stdin.retained = 0, 0
 	c.stdin.h.Reset()
+	c.stdin.retainedSum.Reset()
 	for _, f := range c.frames {
 		c.capture("stdin", captureFrame(f.Request))
 	}
@@ -186,7 +291,7 @@ func TestBatchCaptureMemberLimit(t *testing.T) {
 func TestBatchCaptureRetainedPrefix(t *testing.T) {
 	c := syntheticBatchCapture(t)
 	actualHash, actualBytes := c.stdout.pin().SHA256, c.stdout.n
-	c.stdout.data = c.stdout.data[:5]
+	replaceStream(t, &c.stdout, readStream(t, &c.stdout)[:5], true)
 	c.result.CaptureError = "BATCH_CAPTURE_BYTES_LIMIT"
 	w, _ := capturedWire(t, c)
 	if w.Accepted || w.CaptureError == "" || w.Stdout.Bytes != actualBytes || w.Stdout.SHA256 != actualHash || w.Stdout.RetainedBytes != 5 || w.Frames[0].State != "ANSWERED" || w.Frames[0].Stdout.Complete || w.Frames[1].State != "ANSWERED" || w.Frames[1].Stdout != nil {
@@ -199,14 +304,8 @@ func TestBatchCapturePartialStdin(t *testing.T) {
 		t.Run(fmt.Sprint(n), func(t *testing.T) {
 			c := syntheticBatchCapture(t)
 			first := 4 + len(c.frames[0].Request)
-			c.stdin.data = c.stdin.data[:first+n]
-			c.stdin.h.Reset()
-			c.stdin.h.Write(c.stdin.data)
-			c.stdin.n = uint64(len(c.stdin.data))
-			c.stdout.data = c.stdout.data[:4+len(c.result.Frames[0].Response)]
-			c.stdout.h.Reset()
-			c.stdout.h.Write(c.stdout.data)
-			c.stdout.n = uint64(len(c.stdout.data))
+			replaceStream(t, &c.stdin, readStream(t, &c.stdin)[:first+n], false)
+			replaceStream(t, &c.stdout, readStream(t, &c.stdout)[:4+len(c.result.Frames[0].Response)], false)
 			c.result.Process.StdoutBytes = int64(c.stdout.n)
 			c.result.Frames[1].Status, c.result.Frames[1].Response = runner.FrameFailed, nil
 			w, _ := capturedWire(t, c)
@@ -240,6 +339,11 @@ func TestBatchCaptureNative(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	batches, captures, err := b.runOracleBatchesCaptured(ctx, x, cases, reqs, out, []int{0, 1})
+	t.Cleanup(func() {
+		for i := range captures {
+			_ = captures[i].close()
+		}
+	})
 	if err != nil || len(batches) != 1 || !batches[0].Accepted() || len(captures) != 1 {
 		t.Fatalf("%v %+v", err, batches)
 	}
@@ -248,7 +352,7 @@ func TestBatchCaptureNative(t *testing.T) {
 		t.Fatalf("native capture %+v, case %s %s", w, out[0].ExecutionStatus, out[0].Code)
 	}
 	for i, f := range w.Frames {
-		if !bytes.Equal(captures[0].stdout.data[f.Stdout.Offset+4:f.Stdout.Offset+f.Stdout.Bytes], out[i].Raw) {
+		if !captures[0].stdout.equal(int64(f.Stdout.Offset+4), out[i].Raw) {
 			t.Fatal("raw response differs from actual frame")
 		}
 	}
@@ -278,6 +382,11 @@ func TestBatchCaptureNativeFatalDoesNotResend(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	batches, captures, err := b.runOracleBatchesCaptured(ctx, x, cases, reqs, out, []int{0, 1, 2})
+	t.Cleanup(func() {
+		for i := range captures {
+			_ = captures[i].close()
+		}
+	})
 	if err != nil || len(batches) != 1 || len(captures) != 1 {
 		t.Fatalf("attempted frame resent: %v %+v", err, batches)
 	}

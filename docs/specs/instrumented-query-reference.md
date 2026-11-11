@@ -2,7 +2,13 @@
 
 ## #362 ordinary batch capture 준비 (P2-B 일부)
 
-P2-B의 첫 구현 단위는 [actual batch wire와 실패 보존](tree-and-adapter-protocol.md#362-batch-actual-capture-기반-p2-b-일부) 및 [process owner](identity-and-evidence.md#362-batch-capture의-process-소유권-p2-b-일부)다. 내부 captured 실행 primitive는 `native-query-batch`, native/r4, full tree, API=true, UTF-8, SVC·preprocess·reuse-accepted 없는 입력에 한정한다. 기존 `Oracle`의 batch source witness 금지는 아직 열지 않는다. 일반/single producer 출력과 기존 reader/reducer의 schema 허용은 그대로다.
+P2-B의 첫 구현 단위는 [actual batch wire와 실패 보존](tree-and-adapter-protocol.md#362-batch-actual-capture-기반-p2-b-일부) 및 [process owner](identity-and-evidence.md#362-batch-capture의-process-소유권-p2-b-일부)다. 내부 captured 실행 primitive는 `native-query-batch`, native/r4, full tree, API=true, UTF-8, SVC·preprocess·reuse-accepted 없는 입력에 한정한다. 일반/single producer 출력과 기존 reader/reducer의 schema 허용은 그대로다.
+
+P2-B 2단계는 내부 실행 API `OracleRequest.Ordinary`로 명시적으로 선택한다. `Profile`에는 기존 실행 profile/r1 또는 r2를, `Ordinary.Inputs`에는 P2-A의 원문 registry·qualification·slots·P1 witness·계획 profile/r4·assets·registrations와 해당 본문을, `ShardPlan`과 `Registration`에는 선택한 저장 계획과 등록 원문을 제공한다. `ShardIDs`는 실행 case 각각에 대응하는 계획의 case shard를 순서대로 명시한다. 계획은 `ValidateOrdinaryShardPlan`으로 전체 재구축·대조하고, 선택 shard의 route/platform/case 및 실행 profile의 route·host·grammar·runtime manifest·query 순서와 bytes·case 순서·전체 edits·각 source version/points를 다시 결속한다. manifest/binding의 `selected_shard_ids`와 `full_scope_complete=false`로 부분 수집을 표시한다. 이 명시 경로에만 batch source witness를 열며 legacy `BATCH_SCOPE_UNSUPPORTED`는 유지한다. CLI의 새 입력 flag나 r4 단독 실행 parser는 추가하지 않는다.
+
+수집 결과는 record/r5·manifest/r8과 caller에게 반환하는 run-binding/r2다. 실행은 source와 history를 축약하지 않고 기존 batch coordinator를 사용한다. 계획의 `CAPACITY_UNPROVEN`/BLOCKED는 수집 허가나 구조 검사로 admission PASS가 되지 않는다. case projection에는 기존 base PASS/FAIL을 보존하고 record의 `query_semantics`에는 `PRODUCER_LOCAL`, `BLOCKED`, `EXTERNAL_APPROVAL_PENDING`을 남긴다. `VerifyOracleSet`의 r8 처리는 저장 구조·물리 pin 검사이며 guarded 의미 reader·eligibility·새 replay나 qualification 지원이 아니다.
+
+일반 query 뒤 fact pack의 route query 전체를 원래 순서의 suffix로 요구한다. `FactPack`과 `FactMapping` 원문을 보존하고 `step_facts`의 `tsgk-ordinary-step-facts/r1`에 pack SHA·mapping schema/revision/SHA·동적 SQL/XML revision과 ordered query ID/kind/SHA의 길이 접두 digest를 기록한다. 각 case/step/tree_role/query의 source 길이·SHA와 실제 capture로 선언·dynamic SQL·XML을 도출한다. 편집 뒤 dynamic SQL은 해당 version bytes를, fresh는 fresh captures를 독립적으로 사용한다. 내부 재현 일치는 독립 expected나 외부 승인을 대신하지 않는다.
 
 독립 expected 자산의 compact row 형식(B3)과 reference stdout의 별도 pinned member 및 `tsgk-reference-process/r2`(B5)는 이 단위에서 만들지 않는다. 이번 형식은 native actual transcript이며 expected/reference 형식을 먼저 고정하면 아직 연결되지 않은 reader·receipt 계약을 확장하게 된다. 기존 자산/receipt 비용 추정과 SQL `CAPACITY_UNPROVEN`/BLOCKED를 유지하고 B3/B5 절감액을 선반영하지 않는다. reference 실행·한도 조정·public ordinary API·reader/replay 완료를 뜻하지 않는다.
 

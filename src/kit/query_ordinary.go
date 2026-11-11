@@ -133,7 +133,7 @@ type OrdinaryRegistration struct {
 func ordinaryBad(code string) error { return fail(KindInvalidInput, code, "ordinary", nil) }
 
 // Roundtrip shape comparison rejects absent keys and null/empty substitutions as well as unknown keys.
-func ordinaryDecode(data []byte, out any) error {
+func ordinaryDecode(data []byte, out any, options ...jsonv2.Options) error {
 	if len(data) > 16<<20 {
 		return fail(KindResourceLimit, "ORDINARY_DOCUMENT_LIMIT", "ordinary", nil)
 	}
@@ -150,10 +150,12 @@ func ordinaryDecode(data []byte, out any) error {
 			return fail(KindResourceLimit, "ORDINARY_SHAPE_LIMIT", "ordinary", nil)
 		}
 	}
-	if err := jsonv2.Unmarshal(data, out, jsonv2.RejectUnknownMembers(true)); err != nil {
+	decodeOptions := append([]jsonv2.Options{jsonv2.RejectUnknownMembers(true)}, options...)
+	if err := jsonv2.Unmarshal(data, out, decodeOptions...); err != nil {
 		return ordinaryBad("ORDINARY_JSON")
 	}
-	encoded, err := jsonv2.Marshal(out, jsonv2.FormatNilSliceAsNull(true), jsonv2.FormatNilMapAsNull(true))
+	marshalOptions := append([]jsonv2.Options{jsonv2.FormatNilSliceAsNull(true), jsonv2.FormatNilMapAsNull(true)}, options...)
+	encoded, err := jsonv2.Marshal(out, marshalOptions...)
 	if err != nil {
 		return ordinaryBad("ORDINARY_JSON")
 	}
@@ -243,7 +245,7 @@ func ordinaryMemberRole(role, encoding string) bool {
 		return encoding == "parser-paged" || encoding == "binary-paged"
 	case "driver-paged-descriptor", "driver-paged-part", "library-paged-descriptor", "library-paged-part":
 		return encoding == "binary-paged"
-	case "grammar", "native-driver", "reference-library", "source-witness", "native-request", "native-response", "native-batch-capture", "stderr", "expected-tree", "expected-captures", "expected-facts", "metadata", "build-control":
+	case "grammar", "native-driver", "reference-library", "source", "source-witness", "native-request", "native-response", "native-batch-capture", "stderr", "stdin-frame", "stdout-frame", "process", "driver", "runtime", "build", "build-manifest", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "record", "raw", "projection", "fact", "step-facts", "fact-pack", "fact-mapping", "expected-tree", "expected-captures", "expected-facts", "metadata", "build-control":
 		return true
 	}
 	return false

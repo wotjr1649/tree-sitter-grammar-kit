@@ -3,12 +3,14 @@ package native
 import (
 	"context"
 	jsonv2 "encoding/json/v2"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
 func TestAPISiblingIdentityBoundaries(t *testing.T) {
@@ -307,6 +309,37 @@ func TestAPIObservations(t *testing.T) {
 	var w WireAPI
 	if err := jsonv2.Unmarshal(resp.Steps[0].Incremental.API, &w); err != nil {
 		t.Fatal(err)
+	}
+	// The live producer judgement and the offline raw-response path use the same comparator.
+	wireResp, err := nativewire.DecodeResponse(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	offline, err := nativewire.CheckTree(wireResp.Steps[0].Incremental, uint64(len(src)), nativewire.Expect{
+		Revision: nativewire.ProtocolR2, Nodes: uint64(len(tree) + 1), API: true,
+		Points: []uint32{6, 0, uint32(len(src))},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	liveDifference, liveDivergences := compareAPI(tree, &w)
+	rawDifference, rawDivergences := nativewire.CompareAPI(tree, offline.API)
+	if !reflect.DeepEqual(liveDifference, rawDifference) || !reflect.DeepEqual(liveDivergences, rawDivergences) {
+		t.Fatalf("live/raw API comparison differs: live %v %v, raw %v %v", liveDifference, liveDivergences, rawDifference, rawDivergences)
+	}
+	reported := r.Steps[0].Incremental.API
+	if reported == nil || reported.Consistent != (rawDifference == nil) || reported.PositionNavigation != len(rawDivergences) ||
+		!reflect.DeepEqual(reported.First, rawDifference) ||
+		(len(rawDivergences) == 0 && reported.FirstDivergence != nil) ||
+		(len(rawDivergences) > 0 && !reflect.DeepEqual(reported.FirstDivergence, &rawDivergences[0])) {
+		t.Fatalf("live API judgement differs from offline raw comparison: %+v, %v, %v", reported, rawDifference, rawDivergences)
+	}
+	badPoint := *offline.API
+	badPoint.Points = slices.Clone(offline.API.Points)
+	badPoint.Points[0] = slices.Clone(offline.API.Points[0])
+	badPoint.Points[0][3]++
+	if d, _ := nativewire.CompareAPI(tree, &badPoint); d == nil || d.Check != "first_child_for_byte" {
+		t.Fatalf("raw point mutation not detected: %+v", d)
 	}
 	for _, tc := range []struct {
 		col   int

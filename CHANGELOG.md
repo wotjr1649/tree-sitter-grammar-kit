@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- P2-B 2단계에서 `OracleRequest.Ordinary`의 명시 경로로 P2-A 문서와 실제 batch source witness를 연결하고 record/r5·manifest/r8·caller-facing run-binding/r2, immutable base와 local pending, file-backed actual capture 발행을 추가했다. `nativewire.CompareAPI`를 live/offline이 공유하고 step/role/query fact는 편집 후 source와 fresh captures로 독립 도출한다. 기존 profile의 거부·한도·API 의미를 보존하며 guarded ordinary reader/replay·외부 승인·SQL capacity는 미완료다(Refs #362).
+
 - P2-B의 첫 단위로 runner의 선택적 actual stdin/stdout sink와 내부 native batch transcript/r1을 추가했다. 실제 header·partial frame·출력 probe·stream hash/길이와 process당 하나의 stderr/result owner를 보존하며, batch 실패가 응답한 frame의 capture를 덮지 않는다. 기존 single/legacy batch 출력과 한도는 유지한다. ordinary 실행 dispatch·source witness·record/r5·manifest/r8, API 비교기 이동·step/role fact, guarded reader/replay와 B3/B5 wire 확장은 후속 범위다(Refs #362).
 
 - P2-A에서 P0 registry core 공용화와 strict ordinary profile/asset/registration/shard-plan, source-only planner를 추가하며 106,208개 ID의 exact union과 기존 small 한도를 유지한다. 예산 재검토는 pass당 qualification-inventory+registry decode 353,877,949 B와 reference row 추정의 과소 산정을 반영한다; historical #366 anchor 진단에서 body 전 여유는 PostgreSQL −297,750,339 B, TSQL −341,653,347 B이고, reference 기존→수정 추정은 PG nominal 10,809,604→30,249,029 B, TSQL nominal 58,141,956→177,534,284 B, dense 232,269,572→708,656,264 B이며 수정값은 upper bound가 아니다. K0–K4 절감이나 cap 변경을 적용하지 않고 SQL은 `CAPACITY_UNPROVEN`/BLOCKED로 보존하며, P2-B/C producer·reader·replay는 제외한다(Refs #362).

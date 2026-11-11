@@ -2,13 +2,19 @@
 
 ## #362 P2-B actual capture 기반 검증
 
+2단계의 `TestOracleOrdinaryPublication`은 owned grammar로 두 case·한 case의 두 edits·incremental/fresh·API=true·일반 query와 fact suffix를 실행하고 record/r5·manifest/r8, process/stderr owner 단일성, caller binding, immutable base PASS/FAIL과 pending을 검사한다. 이 시험은 전체 P0 문서 사전 검증과 분리된 내부 publication 경로를 사용하며 실제 qualification route의 full ordinary 수집 근거는 아니다. `TestOrdinaryExecutionBindsSourcesHistoryQueriesAndRuntime`은 실행 직전 source/version·edit/point·query·runtime·case 순서 대조를 검사하고, public `Oracle`의 잘못된 context/문서 없는 거부는 출력 생성 전에 확인한다.
+
+`TestOrdinaryStepFactsUsesEditedVersionAndIndependentFreshCaptures`와 suffix/pin 음성은 편집 후 source의 dynamic SQL, fresh의 독립 capture, 선언 재현 불일치 뒤에도 후속 query 검사, pack/mapping/query 순서·hash 결속을 검사한다. 초기 source를 도출에 사용하는 mutant와 process owner를 case마다 복제하는 mutant는 컴파일 성공 뒤 assertion으로 실패해야 한다. `TestOrdinaryFailureKeepsKnownBaseFailure`는 후속 resource/unsupported/cancelled 오류에서도 최초 FAIL을 보존한다. `nativewire`의 comparator 시험과 native `TestAPIObservations`는 live/offline raw의 zero-width·field·point 판정 일치를 확인한다. file-backed capture의 pin 변조 거부와 cleanup도 검사한다.
+
+r8 저장 검사와 caller binding 음성은 member/owner 중복·case/frame/raw·projection/source pin·잘린 frame·과대한 span을 다룬다. file/read/work/logical/entries/wall은 기존 small 한도를 사용하고 JSON 해석·span 할당 전에 예산을 예약한다. `src/cmd/tsgk` 전체를 포함한 아래 기존 검증 범위를 유지하며 SKIP을 actual native PASS로 세지 않는다. guarded ordinary reader/replay·외부 reference·SQL capacity·다른 OS 실제 수집은 별도 검증이다.
+
 runner의 `TestBatchCaptureKeepsActualWireBytes`, `TestBatchCaptureKeepsPartialAndUnsentTail`, `TestBatchCaptureIncludesCapProbeAndTrailingBytes`는 비정규 JSON wire bytes와 sink 오류, partial header/body·미전송 tail, 출력 상한의 실제 probe를 검사한다. 기존 frame watchdog·batch wall/출력·crash·cleanup·request cap 회귀와 함께 실행한다. capture를 켜지 않은 기존 전송·종료와 stdout byte 계수를 유지해야 한다.
 
 native의 `TestBatchCaptureActualFrames`, `TestBatchCaptureBindingControls`, `TestBatchCapturePartialAndProcessFailure`, `TestBatchCaptureMemberLimit`, `TestBatchCaptureScope`는 process owner 유일성·정확한 frame 재연결, index/case 교환·같은 길이 stdin/response 치환·header/body 불일치·hash·계수 변조, partial·unanswered·not-sent와 process cap/truncation/cleanup 실패의 보존 및 16 MiB header 포함 경계를 검사한다. `TestBatchCaptureNative`는 환경 `TSGK_NATIVE_RUNTIME`, `TSGK_NATIVE_CC`를 명시한 실제 owned grammar로 두 case와 두 edit·incremental/fresh·API raw response 결속을 확인한다. SKIP은 실제 실행 PASS로 세지 않는다.
 
 `TestBatchCaptureRetainedPrefix`와 `TestBatchCapturePartialStdin`은 보존 손실 뒤의 전체 관측 hash/길이와 partial write, 0-byte write 시도의 `SENT`·null stdin 의미를 검사한다. `TestBatchCaptureNativeFatalDoesNotResend`는 실제 fatal resource 응답 뒤 시도된 frame의 재전송을 금지한다.
 
-최소 mutant는 actual sink에서 JSON bytes를 정규화하는 변이와 frame 순번의 case 대조를 제거하는 변이다. 각각 exact-byte 또는 frame-binding 시험이 컴파일 오류 없이 실패해야 한다. 영향 package `src/internal/runner`, `src/internal/native`, `src/kit`, `src/cmd/tsgk`, foundation 전체 및 `CGO_ENABLED=0 go vet ./src/...`, gofmt·diff 검사를 실행한다. 기존 `TestOracleBatchFailures`의 fatal/leak 무재전송 처분도 유지한다. 이 단계의 통과는 ordinary 등록·source witness·신규 record/manifest·API/fact·reader/replay나 실제 SQL capacity의 완료가 아니다.
+첫 단위의 최소 mutant는 actual sink에서 JSON bytes를 정규화하는 변이와 frame 순번의 case 대조를 제거하는 변이다. 각각 exact-byte 또는 frame-binding 시험이 컴파일 오류 없이 실패해야 한다. 영향 package `src/internal/runner`, `src/internal/native`, `src/kit`, `src/cmd/tsgk`, foundation 전체 및 `CGO_ENABLED=0 go vet ./src/...`, gofmt·diff 검사를 실행한다. 기존 `TestOracleBatchFailures`의 fatal/leak 무재전송 처분도 유지한다. capture primitive 시험만으로 ordinary 연결의 완료를 주장하지 않으며 2단계의 추가 검증은 위 계약을 따른다. 어느 단계도 guarded reader/replay나 실제 SQL capacity의 완료가 아니다.
 
 ## #216 TSQL8 source 준비 검증
 

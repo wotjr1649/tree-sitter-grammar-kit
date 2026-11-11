@@ -1,10 +1,15 @@
 package native
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"slices"
 	"time"
 
@@ -53,8 +58,44 @@ type processCapture struct {
 }
 
 type captureFile struct {
-	pin  kit.ReplayMember
-	data []byte
+	pin    kit.ReplayMember
+	data   []byte
+	path   string
+	offset int64
+}
+
+// WriteTo verifies a captured member while copying it to the publication writer.
+func (f captureFile) WriteTo(dst io.Writer) (written int64, retErr error) {
+	if f.pin.Bytes > kit.MaxDocumentBytes {
+		return 0, fmt.Errorf("capture member limit")
+	}
+	var src io.Reader
+	if f.path != "" {
+		file, err := os.Open(f.path)
+		if err != nil {
+			return 0, err
+		}
+		defer func() { retErr = errors.Join(retErr, file.Close()) }()
+		info, err := file.Stat()
+		if err != nil || f.offset < 0 || f.pin.Bytes > uint64(max(int64(0), info.Size()-f.offset)) {
+			return 0, fmt.Errorf("capture member range")
+		}
+		src = io.NewSectionReader(file, f.offset, int64(f.pin.Bytes))
+	} else {
+		if uint64(len(f.data)) != f.pin.Bytes {
+			return 0, fmt.Errorf("capture member length")
+		}
+		src = bytes.NewReader(f.data)
+	}
+	h := sha256.New()
+	n, err := io.Copy(io.MultiWriter(dst, h), src)
+	if err != nil {
+		return n, err
+	}
+	if uint64(n) != f.pin.Bytes || hex.EncodeToString(h.Sum(nil)) != f.pin.SHA256 {
+		return n, fmt.Errorf("capture member pin mismatch")
+	}
+	return n, nil
 }
 
 func projectCaptureError(err error) *captureError {

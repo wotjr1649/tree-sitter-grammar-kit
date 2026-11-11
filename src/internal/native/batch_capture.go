@@ -6,8 +6,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
+	"io"
+	"os"
 	"slices"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/runner"
@@ -16,11 +19,13 @@ import (
 
 const batchCaptureSchema = "tsgk-native-batch-capture/r1"
 
-// shortcut: retain bounded stream prefixes in memory; stream to files when ordinary publication is wired.
 type batchCaptureStream struct {
-	data []byte
-	n    uint64
-	h    hash.Hash
+	file        *os.File
+	path        string
+	n           uint64
+	retained    uint64
+	h           hash.Hash
+	retainedSum hash.Hash
 }
 
 type batchCapture struct {
@@ -84,6 +89,7 @@ func newBatchCapture(index int, spec runner.Spec, pol runner.BatchPolicy, frames
 	spec.Wall, spec.StdoutBytes, spec.Interactive, spec.Stdin = pol.BatchWall, pol.StdoutBytes, true, nil
 	c := &batchCapture{index: index, spec: spec, frames: slices.Clone(frames)}
 	c.stdin.h, c.stdout.h = sha256.New(), sha256.New()
+	c.stdin.retainedSum, c.stdout.retainedSum = sha256.New(), sha256.New()
 	return c
 }
 
@@ -97,16 +103,147 @@ func (c *batchCapture) capture(direction string, data []byte) error {
 	s.n += uint64(len(data))
 	s.h.Write(data)
 	// Reserve both metadata members' file caps and stderr within the existing physical limit.
-	room := int(kit.ReplayOperations()["evidence-replay"].TotalBytes) - 2*kit.MaxDocumentBytes - 65536 - len(c.stdin.data) - len(c.stdout.data)
-	s.data = append(s.data, data[:min(len(data), max(0, room))]...)
-	if room < len(data) {
+	room := int(kit.ReplayOperations()["evidence-replay"].TotalBytes) - 2*kit.MaxDocumentBytes - 65536 - int(c.stdin.retained) - int(c.stdout.retained)
+	keep := min(len(data), max(0, room))
+	if keep > 0 {
+		if s.file == nil {
+			f, err := os.CreateTemp("", "tsgk-batch-capture-*")
+			if err != nil {
+				return err
+			}
+			s.file, s.path = f, f.Name()
+		}
+		n, err := s.file.Write(data[:keep])
+		if n > 0 {
+			s.retained += uint64(n)
+			s.retainedSum.Write(data[:n])
+		}
+		if err != nil {
+			return err
+		}
+		if n != keep {
+			return io.ErrShortWrite
+		}
+	}
+	if keep < len(data) {
 		return fmt.Errorf("BATCH_CAPTURE_BYTES_LIMIT")
 	}
 	return nil
 }
 
 func (s *batchCaptureStream) pin() batchCaptureStreamPin {
-	return batchCaptureStreamPin{Bytes: s.n, SHA256: hex.EncodeToString(s.h.Sum(nil)), RetainedBytes: uint64(len(s.data))}
+	return batchCaptureStreamPin{Bytes: s.n, SHA256: hex.EncodeToString(s.h.Sum(nil)), RetainedBytes: s.retained}
+}
+
+func (s *batchCaptureStream) close() error {
+	var err error
+	if s.file != nil {
+		err = s.file.Close()
+		s.file = nil
+	}
+	if s.path != "" {
+		if removeErr := os.Remove(s.path); removeErr != nil && !os.IsNotExist(removeErr) {
+			err = errors.Join(err, removeErr)
+		}
+		s.path = ""
+	}
+	return err
+}
+
+func (c *batchCapture) close() error {
+	return errors.Join(c.stdin.close(), c.stdout.close())
+}
+
+func (s *batchCaptureStream) verify() error {
+	if s.retained == 0 {
+		if s.path != "" || s.file != nil {
+			return fmt.Errorf("BATCH_CAPTURE_STREAM_FILE")
+		}
+		return nil
+	}
+	if s.path == "" {
+		return fmt.Errorf("BATCH_CAPTURE_STREAM_FILE")
+	}
+	f, err := os.Open(s.path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if info, err := f.Stat(); err != nil || uint64(info.Size()) != s.retained {
+		return fmt.Errorf("BATCH_CAPTURE_STREAM_LENGTH")
+	}
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	if !bytes.Equal(h.Sum(nil), s.retainedSum.Sum(nil)) || s.retained > s.n {
+		return fmt.Errorf("BATCH_CAPTURE_STREAM_HASH")
+	}
+	if s.retained == s.n && !bytes.Equal(h.Sum(nil), s.h.Sum(nil)) {
+		return fmt.Errorf("BATCH_CAPTURE_STREAM_HASH")
+	}
+	return nil
+}
+
+func (s *batchCaptureStream) equal(offset int64, expected []byte) bool {
+	if offset < 0 || uint64(offset)+uint64(len(expected)) > s.retained || s.path == "" {
+		return false
+	}
+	f, err := os.Open(s.path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	var buf [32 * 1024]byte
+	for len(expected) > 0 {
+		n := min(len(expected), len(buf))
+		read, err := f.ReadAt(buf[:n], offset)
+		if err != nil && err != io.EOF || read != n {
+			return false
+		}
+		if !bytes.Equal(buf[:n], expected[:n]) {
+			return false
+		}
+		offset += int64(n)
+		expected = expected[n:]
+	}
+	return true
+}
+
+func (s *batchCaptureStream) readAt(offset int64, dst []byte) error {
+	if offset < 0 || uint64(offset)+uint64(len(dst)) > s.retained || s.path == "" {
+		return io.ErrUnexpectedEOF
+	}
+	f, err := os.Open(s.path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	n, err := f.ReadAt(dst, offset)
+	if err != nil && !(err == io.EOF && n == len(dst)) {
+		return err
+	}
+	if n != len(dst) {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func hashRange(path string, offset, length int64) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	n, err := io.Copy(h, io.NewSectionReader(f, offset, length))
+	if err != nil {
+		return "", err
+	}
+	if n != length {
+		return "", io.ErrUnexpectedEOF
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 // files validates the transport binding and preserves actual bytes, including failed suffixes.
@@ -116,7 +253,7 @@ func (c *batchCapture) files(prefix string) ([]captureFile, error) {
 		return nil, fmt.Errorf("BATCH_CAPTURE_BINDING")
 	}
 	p := c.result.Process
-	if c.stdin.n == uint64(len(c.stdin.data)) && sha(c.stdin.data) != c.stdin.pin().SHA256 || c.stdout.n == uint64(len(c.stdout.data)) && sha(c.stdout.data) != c.stdout.pin().SHA256 {
+	if c.stdin.verify() != nil || c.stdout.verify() != nil {
 		return nil, fmt.Errorf("BATCH_CAPTURE_STREAM_HASH")
 	}
 	if p.StderrBytes < int64(len(p.Stderr)) || (!p.StderrTruncated && p.StderrBytes != int64(len(p.Stderr))) || int64(len(p.Stderr)) > c.spec.StderrBytes {
@@ -134,31 +271,50 @@ func (c *batchCapture) files(prefix string) ([]captureFile, error) {
 		files = append(files, captureFile{pin: pin, data: slices.Clone(data)})
 		return pin
 	}
+	addStream := func(path, role string, stream *batchCaptureStream, offset, length int64) (kit.ReplayMember, error) {
+		digest, err := hashRange(stream.path, offset, length)
+		if err != nil {
+			return kit.ReplayMember{}, err
+		}
+		member := captureFile{path: stream.path, offset: offset}
+		member.pin = kit.ReplayMember{Path: prefix + path, Role: role, Bytes: uint64(length), SHA256: digest}
+		files = append(files, member)
+		return member.pin, nil
+	}
 	block := func(code string) {
 		w.Accepted = false
 		if w.Code == "" {
 			w.Code = code
 		}
 	}
-	if c.stdin.n != uint64(len(c.stdin.data)) || c.stdout.n != uint64(len(c.stdout.data)) || c.result.CaptureError != "" {
+	if c.stdin.n != c.stdin.retained || c.stdout.n != c.stdout.retained || c.result.CaptureError != "" {
 		block("BATCH_CAPTURE_BYTES_LIMIT")
 	}
-	span := func(direction string, index int, offset int, data []byte, complete bool) *batchCaptureSpan {
-		if len(data) == 0 {
-			return nil
+	span := func(direction string, index int, stream *batchCaptureStream, offset int64, length int64, complete bool) (*batchCaptureSpan, error) {
+		if length == 0 {
+			return nil, nil
 		}
-		s := &batchCaptureSpan{Offset: uint64(offset), Bytes: uint64(len(data)), SHA256: sha(data), Complete: complete, Members: []kit.ReplayMember{}}
-		if len(data) > kit.MaxDocumentBytes {
+		digest, err := hashRange(stream.path, offset, length)
+		if err != nil {
+			return nil, err
+		}
+		s := &batchCaptureSpan{Offset: uint64(offset), Bytes: uint64(length), SHA256: digest, Complete: complete, Members: []kit.ReplayMember{}}
+		if length > kit.MaxDocumentBytes {
 			block("BATCH_CAPTURE_MEMBER_LIMIT")
 		}
-		for part, start := 0, 0; start < len(data); part++ {
-			end := min(start+kit.MaxDocumentBytes, len(data))
-			s.Members = append(s.Members, add(fmt.Sprintf("-frame-%05d-%s-%03d.bin", index, direction, part), direction+"-frame", data[start:end]))
+		for part, start := 0, int64(0); start < length; part++ {
+			end := min(start+kit.MaxDocumentBytes, length)
+			member, err := addStream(fmt.Sprintf("-frame-%05d-%s-%03d.bin", index, direction, part), direction+"-frame", stream, offset+start, end-start)
+			if err != nil {
+				return nil, err
+			}
+			s.Members = append(s.Members, member)
 			start = end
 		}
-		return s
+		return s, nil
 	}
-	requestOffset, responseOffset := 0, 0
+	requestOffset, responseOffset := int64(0), int64(0)
+	var err error
 	ended := false
 	for i, fr := range c.result.Frames {
 		if fr.ID != c.frames[i].ID {
@@ -180,47 +336,67 @@ func (c *batchCapture) files(prefix string) ([]captureFile, error) {
 			req := c.frames[i].Request
 			var header [4]byte
 			binary.BigEndian.PutUint32(header[:], uint32(len(req)))
-			n := min(4+len(req), len(c.stdin.data)-requestOffset)
-			actual := c.stdin.data[requestOffset : requestOffset+n]
-			if !bytes.Equal(actual[:min(n, 4)], header[:min(n, 4)]) || n > 4 && !bytes.Equal(actual[4:], req[:n-4]) {
+			n := min(4+len(req), int(c.stdin.retained)-int(requestOffset))
+			if n < 0 {
+				n = 0
+			}
+			if !c.stdin.equal(requestOffset, header[:min(n, 4)]) || n > 4 && !c.stdin.equal(requestOffset+4, req[:n-4]) {
 				return nil, fmt.Errorf("BATCH_CAPTURE_STDIN_BINDING")
 			}
-			f.Stdin = span("stdin", i, requestOffset, actual, n == 4+len(req))
-			requestOffset += n
+			f.Stdin, err = span("stdin", i, &c.stdin, requestOffset, int64(n), n == 4+len(req))
+			if err != nil {
+				return nil, err
+			}
+			requestOffset += int64(n)
 			if fr.Status == runner.FrameCompleted {
-				if n != 4+len(req) && c.stdin.n == uint64(len(c.stdin.data)) {
+				if n != 4+len(req) && c.stdin.n == c.stdin.retained {
 					return nil, fmt.Errorf("BATCH_CAPTURE_STDIN_INCOMPLETE")
 				}
 				n = 4 + len(fr.Response)
-				if n > len(c.stdout.data)-responseOffset {
-					if c.stdout.n == uint64(len(c.stdout.data)) {
+				if n > int(c.stdout.retained)-int(responseOffset) {
+					if c.stdout.n == c.stdout.retained {
 						return nil, fmt.Errorf("BATCH_CAPTURE_STDOUT_INCOMPLETE")
 					}
-					n = len(c.stdout.data) - responseOffset
+					n = max(0, int(c.stdout.retained)-int(responseOffset))
 				}
-				actual = c.stdout.data[responseOffset : responseOffset+n]
 				binary.BigEndian.PutUint32(header[:], uint32(len(fr.Response)))
-				if !bytes.Equal(actual[:min(n, 4)], header[:min(n, 4)]) || n > 4 && !bytes.Equal(actual[4:], fr.Response[:n-4]) {
+				if !c.stdout.equal(responseOffset, header[:min(n, 4)]) || n > 4 && !c.stdout.equal(responseOffset+4, fr.Response[:n-4]) {
 					return nil, fmt.Errorf("BATCH_CAPTURE_STDOUT_BINDING")
 				}
-				f.State, f.Stdout = "ANSWERED", span("stdout", i, responseOffset, actual, n == 4+len(fr.Response))
-				responseOffset += n
+				f.State = "ANSWERED"
+				f.Stdout, err = span("stdout", i, &c.stdout, responseOffset, int64(n), n == 4+len(fr.Response))
+				if err != nil {
+					return nil, err
+				}
+				responseOffset += int64(n)
 			} else {
-				actual = c.stdout.data[responseOffset:]
-				complete := len(actual) >= 4 && uint64(binary.BigEndian.Uint32(actual[:4])) == uint64(len(actual)-4)
-				f.Stdout = span("stdout", i, responseOffset, actual, complete)
-				responseOffset += len(actual)
+				length := int64(c.stdout.retained) - responseOffset
+				complete := false
+				if length >= 4 {
+					var responseHeader [4]byte
+					if c.stdout.readAt(responseOffset, responseHeader[:]) == nil {
+						complete = uint64(binary.BigEndian.Uint32(responseHeader[:])) == uint64(length-4)
+					}
+				}
+				f.Stdout, err = span("stdout", i, &c.stdout, responseOffset, length, complete)
+				if err != nil {
+					return nil, err
+				}
+				responseOffset += length
 				ended = true
 				block("BATCH_CAPTURE_UNANSWERED")
 			}
 		}
 		w.Frames = append(w.Frames, f)
 	}
-	if requestOffset != len(c.stdin.data) {
+	if requestOffset != int64(c.stdin.retained) {
 		return nil, fmt.Errorf("BATCH_CAPTURE_STDIN_SUFFIX")
 	}
-	if responseOffset < len(c.stdout.data) {
-		w.Suffix = span("stdout", len(c.frames), responseOffset, c.stdout.data[responseOffset:], false)
+	if responseOffset < int64(c.stdout.retained) {
+		w.Suffix, err = span("stdout", len(c.frames), &c.stdout, responseOffset, int64(c.stdout.retained)-responseOffset, false)
+		if err != nil {
+			return nil, err
+		}
 		block("BATCH_CAPTURE_STDOUT_SUFFIX")
 	}
 	if !p.Succeeded() || p.StdoutTruncated || p.StderrTruncated {

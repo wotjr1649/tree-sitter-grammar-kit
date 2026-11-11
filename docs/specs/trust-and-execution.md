@@ -4,7 +4,9 @@
 
 선택적 batch capture는 supervised runner가 실제 쓰고 읽은 bytes의 수동 관측 sink다. stdin의 미전송 bytes를 재구성해 actual로 저장하지 않고 stdout 상한의 probe와 partial frame도 관측 byte 계수에 결속한다. sink 오류는 transport 성공으로 숨기지 않으며 transcript의 local 수용을 차단한다. sink 자체는 synchronous·bounded여야 하고 임의 외부 효과를 추가하지 않는다. runner의 기존 watchdog·batch wall·출력/메모리·cleanup 정책 및 전송 횟수는 유지한다.
 
-내부 native transcript는 확보한 bytes만 실패 진단으로 보존한다. whole-process 결과·stderr는 process owner 한 곳에 있고, 앞서 응답한 frame을 partial tail 때문에 삭제하지 않는다. stream/file 한도를 넘는 진단은 의미 검증용 성공 evidence가 아니며, `accepted`도 외부 승인이나 독립 검증의 대체가 아니다. 현재는 `Oracle` ordinary dispatch와 graph publication을 열지 않으므로 기존 source witness·profile 권한 경계가 유지된다.
+내부 native transcript는 확보한 bytes만 실패 진단으로 보존한다. whole-process 결과·stderr는 process owner 한 곳에 있고, 앞서 응답한 frame을 partial tail 때문에 삭제하지 않는다. stream/file 한도를 넘는 진단은 의미 검증용 성공 evidence가 아니며, `accepted`도 외부 승인이나 독립 검증의 대체가 아니다. legacy source witness·profile 권한 경계는 유지하며 ordinary의 명시적 실행 경로만 다음 조건으로 연다.
+
+P2-B 2단계의 ordinary 실행은 기존 BUILD_NATIVE·EXEC_NATIVE 허가를 모두 요구하며 P2-A 문서·source history 결속을 build와 output 생성 전에 검사한다. 수집한 actual stream은 task 임시 파일의 bounded prefix이고, 출력은 caller-held `os.Root` 아래 새 파일의 `O_EXCL` 생성으로만 발행한다. file 16 MiB·전체 physical read 256 MiB·entries 10,000과 기존 runner 한도를 유지한다. capture 파일/빌드 제거 실패를 성공으로 숨기지 않으며 정상 완료 manifest를 먼저 쓰지 않는다. Reference 실행 권한이나 producer 자체 승인을 추가하지 않는다.
 
 ## 신뢰 경계
 

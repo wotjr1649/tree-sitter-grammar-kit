@@ -6,7 +6,9 @@
 
 `ANSWERED` frame 보존과 batch 수용을 구분하며, partial/truncation/cleanup 실패·capture 손실·상한 초과에서 local transcript는 수용되지 않는다. stream의 보존 길이가 관측 길이보다 작으면 prefix만 확보한 실패 진단이다. 물리 frame member가 16 MiB를 넘는 경우의 분할도 실패 진단이며 승인된 성공 frame을 구성하지 않는다. 정상 member의 순서대로 재연결한 bytes는 header를 포함한 stream hash·길이와 일치한다.
 
-이 단계는 evidence graph나 ordinary manifest/r8을 발행하지 않는다. 실제 graph의 owner·build closure·registration·run binding 결속과 guarded 검사는 후속 단계의 의무다. 계획용 profile/r4와 기존 public/offline API의 수용 범위는 바뀌지 않는다.
+P2-B 2단계는 `tsgk-oracle-manifest/r8`의 `members`에 owner/path/role/case_or_batch와 물리 pin을 저장한다. process·stderr·actual frame·transcript는 `D_batch_%05d` 하나에, 공통 driver/build closure는 `D_build`에, source·raw·immutable base projection·case record·fact pack/mapping은 `O`에 속한다. `batches`는 index/owner/cases와 `native-batch-capture` member를 가리킨다. 같은 process를 case마다 새 owner나 복제된 stderr로 만들지 않는다. `tsgk-oracle-record/r5`는 case/workload, `base_projection`, pending `query_semantics`, actual `transport`, `step_facts`, 마지막 `complete:true`를 가진다. base projection은 pending leaf를 넣기 전의 기존 판정이다.
+
+manifest/r8은 context·closure encoding·실행 profile·P2-A profile·registration·assets·plan의 pin, candidate/cohort/run, policy/operation, producer identity, 상태·case 목록 및 실제 member를 결속한다. `OracleResult.OrdinaryBinding`의 `tsgk-query-semantics-run-binding/r2`는 같은 input pin과 실제 owner/member/batch를 caller에게 반환하며 owned 증거 member나 외부 승인이 아니다. Registry·등록·binding·승인 문서는 evidence 밖 caller 입력이라는 경계를 유지한다. `VerifyOracleSet`은 r8의 strict 저장 구조와 물리 pin을 검사한다. 실제 graph·eligibility approval·독립 expected·guarded 재계산은 후속 P2-C/D의 의무이며 기존 semantic API/reducer는 r8을 수용하지 않는다.
 
 ## 파일 identity
 

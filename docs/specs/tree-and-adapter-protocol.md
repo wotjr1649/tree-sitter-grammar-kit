@@ -10,7 +10,9 @@
 
 `SENT`는 exchange가 전송을 시도했다는 뜻이다. 첫 write가 0 bytes로 실패했으면 actual stdin span은 null이며 완전 전송을 뜻하지 않는다. captured 경로는 fatal 응답 뒤라도 시도된 frame을 다시 보내지 않고 명시적인 `not sent` tail만 새 process로 옮긴다. 응답한 사례의 base 관측은 process 실패로 덮지 않으며 transcript의 process 수용과 구분한다. 이는 semantic 승인 전의 native 관측일 뿐 지원 claim이 아니다. 기존 legacy batch의 fatal·실패 사례 처분은 유지한다.
 
-이 단계는 내부 capture primitive와 transcript 생성만 제공한다. `Oracle`의 ordinary 계획 profile 실행, batch source witness, record/r5·manifest/r8, raw API 공용 비교기와 step/role fact projection은 후속 P2-B다. 기존 single capture/r1과 legacy batch profile의 wire 출력·허용 범위는 유지한다. guarded reader와 replay는 P2-C/D이며 transcript의 local `accepted`는 외부 승인·의미 PASS가 아니다.
+P2-B 2단계의 ordinary 발행은 actual stream의 bounded prefix를 임시 파일에 기록한다. frame member는 해당 파일의 offset/길이를 참조하며 `captureFile.WriteTo`가 길이·SHA를 확인하면서 새 출력 파일로 복사한다. capture 파일은 발행 복사 뒤 닫고 제거하며 실패를 숨기지 않는다. case request/response의 기존 처리 본문은 유지하지만 별도의 전체 capture 복사본을 메모리에 만들지 않는다. 기존 single capture/r1과 legacy batch profile의 wire 출력·허용 범위는 유지한다.
+
+API의 순수 의미 비교기는 `src/kit/nativewire.CompareAPI` 하나를 live producer와 offline raw 소비자가 공유한다. strict wire/tree/API shape 검사를 먼저 통과한 입력을 받으며, field lookup·child field·byte point·zero-width sibling divergence의 기존 의미를 보존한다. raw API는 실제 response 안에 보존한다. ordinary record/r5의 `step_facts`는 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다. guarded reader와 replay는 P2-C/D이며 transcript의 local `accepted`는 외부 승인·의미 PASS가 아니다.
 
 등록된 `.svc`는 [SVC-SERVICEHOST-r2](../validation/net461-workload.md)의 composite result를 사용한다. 원본 identity와 byte/point를 directive·inline C#·등록 참조 입력에 결속한다. S05가 `tsgk-svc-composite/r2`를 생산하며 r1 profile은 context 없이 읽을 수 있다.
 
