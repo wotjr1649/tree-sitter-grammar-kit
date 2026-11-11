@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
+
 - 독립 승인한 sidecar·pin 집합의 원문 digest로 역사 자료를 결속하는 `ResolveEvidencePins`와 단일 생산 후보 원문을 선택하는 `SelectEvidenceProductionPin`을 추가했다. Content-addressed 보존 집합과 A/B/C 생산 선택 불변성·위조 거부 시험을 제공한다. V2-A의 PASS는 자료 결속에 한정되며 Rust/catalogue 생산·검증 이행(V2-B)과 runtime·semantic 통합(V2-C/D)은 남아 있다. Refs #370.
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.

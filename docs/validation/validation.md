@@ -1,5 +1,13 @@
 # Validation and merge contract
 
+## #362 inventory 선택 decode 검증
+
+`TestQualificationInventoryRouteDifferential`은 고정 `qualification-c1.json`의26 route와 header/index를 공개 전체 파서의 결과와 대조한다. `TestQualificationInventoryRouteGlobalParity`와 `TestQualificationInventoryRouteAcceptedPlatformParity`는 cell·platform·route·전체 set·role ID 충돌과 accepted 역할의 OS/arch 연결을 검사한다. `TestQualificationInventoryRouteTokenParity`는 비선택 case 내부를 포함한 중복 key·escape-equivalent key·문법·surrogate·UTF-8·trailing·truncation·depth 및 위조 전체 hash 거부를 확인한다. `TestQualificationInventoryRouteLocalParity`는 선택 route의 source/query/case/coverage/requirement·특수 shape 오류를 전체 파서와 대조하고 비선택 route-local 의미 검사를 수행하지 않는 경계를 고정한다. `TestQualificationInventoryRouteBoundaries`는 지원 inventory revision·escaped key·없는 route·누적 work/logical·취소를 확인한다.
+
+실제 P0 registry와 전체 guarded inventory 읽기를 포함한 test-only 측정은26 route별 logical/work/read를 전체 AST+typed 예약 기준과 비교한다. 연구 추정과 실측 원장을 구분하고 새 hash·전역 검사·buffer 예약 비용을 포함한다. 전역 set 유일성 제거 및 비선택 subtree의 중복 key 검증 제거 overlay mutant는 각각 새 음성 시험에서 실패해야 한다. 이 시험과 kit/foundation/vet은 native/reference 실행이나 P2-C producer/replay·전체 semantic completion을 대신하지 않는다.
+
+`TestQualificationInventoryRouteValidationProductLimit`·`TestQualificationInventoryRouteAlternativeProductLimit`·`TestQualificationInventoryRoutePlatformProductLimit`는 coverage×expectations·alternatives×coverage·accepted 플랫폼의 반복 검색을 실제 중첩 순회 전에 work 한도로 차단한다. `TestQualificationInventoryRouteSpecialParity`는 비선택 영역의 특수 arm schema와 typed decode보다 먼저 실행되는 shape 오류 분류를 전체 파서와 대조하고, `TestQualificationInventoryRouteJSONLimits`는16MiB와2,000,000값 경계를 확인한다.
+
 ## #370 V2-A 역사 자료 결속 검증
 
 [pin 계약](../specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 `TestEvidencePinsProductionSelectionDoesNotChangeHistory`는 생산 후보 A/B/C와 별도로 A의 원문·승인·판정·counter·consumed identity를 고정한다. `TestEvidencePinsRejectForgery`는 독립 승인 집합 불일치·pin 치환·자료/sidecar 동시 재해시·sidecar 위조/재사용·혼합 자료를 거부한다. `TestEvidencePinsStrictBoundaries`는 unknown/duplicate/missing/null·depth·size·scope/reader/schema·role·alias·미사용과 누락 자료의 BLOCKED를 검사하고, `TestEvidencePinsInterruptionPreservesFailure`는 확정 FAIL 뒤 자원 오류와 caller 취소를 검사한다. `TestEvidencePinsArchive`는 보관한 모든 집합의 내용 주소와 모든 원문 자료의 길이/hash 및 단일 선택 집합의 존재를 검증한다. 승인 집합 비교를 제거한 overlay mutant는 위조 반례에서 FAIL이어야 한다.
