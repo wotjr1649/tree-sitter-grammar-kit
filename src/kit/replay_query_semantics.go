@@ -154,6 +154,9 @@ func validSemanticCompletion(p *QuerySemanticsResult) bool {
 }
 
 func validSemanticReplayResult(rr ReplayResult) bool {
+	if rr.OrdinaryQuerySemantics != nil {
+		return false
+	}
 	if rr.Schema != ReportSchema || rr.ResultSchema != ReplaySemanticsResultSchema || !semanticReducer(rr.Reducer.ID) || (rr.Reducer.ID == "oracle-set-r4" && rr.Reducer.Revision != "r4") || (rr.Reducer.ID == "oracle-set-r5" && rr.Reducer.Revision != "r5") || (rr.Reducer.ID == "oracle-set-r6" && rr.Reducer.Revision != "r6") || rr.Operation != "evidence-replay" || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || len(rr.Gates) > 1 {
 		return false
 	}

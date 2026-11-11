@@ -73,6 +73,8 @@ type OrdinaryQuerySemanticsResult struct {
     Semantic           string
     Code               string
     SelectedShardIDs   []string
+    SelectedObligationIDs []string // exact ordered union of selected shard obligation IDs
+    CoverageSHA256     string // length-prefixed digest of SelectedObligationIDs
     Tuple              QueryEligibilityCounts
     Obligations        []OrdinaryQuerySemanticsTuple
     Eligibility        *QueryReferenceEligibilityResult
@@ -94,9 +96,15 @@ Coordinator는 하나의 `run`과 eligibility 원장을 공유한다. 먼저 cal
 
 마지막 identity 재확인은 호출 초기에 기록한 파일과 디렉터리의 `SameFile`, 크기와 수정 시각을 비교한다. 이는 기존 호출자 소유권 계약의 관측 가능한 변경 검출 범위다. 같은 inode에서 bytes를 바꾸고 크기와 수정 시각까지 복원하는 적대적 writer를 차단하는 snapshot 또는 sandbox 보장은 아니다. 호출자는 처리 중 request와 source snapshot을 변경하지 않아야 한다.
 
-이 API는 새로 노출된 시험적 진입점이다. 실제 public 양성 경로와 현재 PostgreSQL/TSQL 전체 capacity는 구현 시험에서 아직 입증되지 않았다. 내부 helper나 합성 tuple PASS를 전체 ordinary PASS 또는 SQL admission으로 해석하지 않는다. Ordinary SQL은 전체 동일 원장 pass가 변경되지 않은 small 한도 안에서 측정되기 전까지 `CAPACITY_UNPROVEN`/BLOCKED다. P2-D stored result/replay/CLI 일치는 남아 있다. 기존 `VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`, r4–r6 reducers, qualification r10의 schema와 ordinary 거부 경계는 유지된다.
+이 API는 새로 노출된 시험적 진입점이다. P2-D에서 실제 owned native producer를 ordinary reader·r9 existing replay CLI와 연결한 SKIP 0 positive fixture를 관측했다. Caller approval/reference는 synthetic overlay이므로 이는 실제 reference 실행이나 실제 caller-approved workload의 증거가 아니다. PostgreSQL/TSQL 전체 capacity도 입증되지 않았고, SQL은 동일 원장 pass가 변경되지 않은 small 한도 안에서 측정되기 전까지 `CAPACITY_UNPROVEN`/BLOCKED다. P2-D의 저장 decoder와 existing replay CLI 계약은 바로 아래 별도 절에 정의하며 ordinary producer를 선택하는 `oracle record` CLI loader는 deferred다. 기존 `VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`, r4–r6 reducers, qualification r10의 schema와 ordinary 거부 경계는 유지된다.
 
 `VerifyQuerySemantics(ctx, QuerySemanticsRequest)`는 process를 실행하지 않는다. `Evidence`는 caller가 승인한 policy와 evidence root이고, `Profile`·`Registration`·`RunBinding`·`EligibilityApproval`·`EligibilityRegistration`·`WitnessRegistration`은 graph 밖의 caller 원문이다. root의 `oracle/`에 저장된 profile/r3 생산 set을 같은 evidence pass에서 읽는다. 첫 구현 범위는 단일 UTF-8 full-input `native-query` case이며 [계측 reference 계약](instrumented-query-reference.md)의 사전 등록과 기존 eligibility/r1 closure를 사용한다. SVC·전처리·batch·large 및 새 macOS claim은 이 진입점의 완료 근거가 아니다.
+
+### #362 P2-D ordinary 저장 결과와 replay
+
+P2-D는 `DecodeOrdinaryQuerySemanticsResult(data []byte) (OrdinaryQuerySemanticsResult, error)`로 caller가 저장한 `tsgk-query-semantics-result/r2`를 strict-decode한다. Result의 `selected_obligation_ids`는 selected shard의 exact ordered union이고 `coverage_sha256`는 domain-separated SHA-256이며 각 ID 앞에 8-byte big-endian 길이를 둔 순서 민감 digest다. Decoder는 schema·counter, selected ID uniqueness, 선택된 ID 순서의 obligation-row prefix, digest 및 기존 small budget 경계를 검증한다. 저장 result는 native/reference 증거를 다시 판독하거나 membership을 외부 plan으로 재증명하지 않으므로 이 decoder만으로 approval, provenance 또는 semantic PASS를 만들 수 없다. Replay core는 pinned plan/registration에 의무 ID와 coverage digest를 다시 대조한다. `processing_complete`, selected shard counters와 `full_scope_complete`는 별도 값이며 shard PASS가 full-scope 완료를 뜻하지 않는다.
+
+`Replay`의 `oracle-set-r9`는 ordinary record/member와 caller 등록 문서를 같은 replay `run`에서 `VerifyOrdinaryQuerySemantics`의 내부 경로로 전달한다. 바깥 replay inventory의 `records`는 선택된 obligation ID의 고정 순서 exact union이어야 한다. API와 replay는 assessment·최초 code·selected obligation IDs·coverage digest·typed counters에서 같아야 한다. Replay wrapper가 더하는 scope·member 검사 비용은 실제 원장에 반영되어 nested result의 `bytes_read`/`work`/`logical_bytes`가 outer replay totals와 같고, naked API totals보다 커질 수 있다. 이 delta는 wrapper overhead로 따로 보고하며 숫자 동등성을 주장하지 않는다. Replay는 ordinary 입력 문서와 evidence snapshot을 두 번 읽거나 별도 budget ledger를 열지 않는다. 출력은 `tsgk-replay-result/r4`의 `ordinary_query_semantics` payload이며 nested result schema는 r2다. Reducer r9만 ordinary context를 선택하며 r4–r6와 qualification r10의 계약은 그대로 유지한다.
 
 `tsgk-query-semantics-result/r1`은 `producer_recorded`, `producer_fold_valid`, `base_verified`, `query_semantics`와 최종 E0 판정을 구분한다. producer의 local pending leaf는 저장된 그대로 남는다. `producer_fold_valid`는 저장된 기존 claim과 pending leaf의 producer 집계 관계를 확인했는지 나타내며 실행 진위나 최종 PASS가 아니다. `tuple`은 사전 등록에서 먼저 고정한 `required`를 `verified`·`failed`·`blocked`·`unprocessed`로 나누며, 승인 ABSENT라도 분모를 없애지 않는다. ABSENT에서는 graph·producer set·실제 request·native·projection과 기존 base claim을 검증하지만 semantic PASS는 만들지 않는다. BOUND에서는 같은 run·누적 예산·held root·한 번의 evidence snapshot과 eligibility가 이미 검사한 native/tree/query/evaluation을 재사용한다. 실패가 확인된 뒤의 취소·자원 한도는 그 FAIL·최초 code·부분 counter를 지우지 않는다.
 

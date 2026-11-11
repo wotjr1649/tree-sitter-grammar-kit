@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,37 @@ import (
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+type failedWriter struct{}
+
+func (failedWriter) Write([]byte) (int, error) { return 0, errors.New("closed") }
+
+func TestOrdinaryReplayFailureExitSurvivesCancellationAndOutputErrors(t *testing.T) {
+	result := kit.ReplayResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "replay", ExecutionStatus: kit.StatusCompleted, EvidenceMode: kit.ModeReplayedRaw, Assessment: kit.AssessFail},
+		ResultSchema: kit.ReplayOrdinaryResultSchema, Reducer: kit.ReducerInfo{ID: "oracle-set-r9", Revision: "r9"}, Operation: "evidence-replay",
+		OrdinaryQuerySemantics: &kit.OrdinaryQuerySemanticsResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "ordinary query semantics", ExecutionStatus: kit.StatusCompleted, EvidenceMode: kit.ModeReplayedRaw, Assessment: kit.AssessFail},
+			ResultSchema: kit.OrdinaryQuerySemanticsResultSchema, Code: "EXPECTATION_FAILED", Tuple: kit.QueryEligibilityCounts{Required: 1, Failed: 1}}}
+	cancelled := &kit.Error{Kind: kit.KindCancelled, Code: "CANCELLED"}
+	var out, stderr bytes.Buffer
+	if code := finish(result, cancelled, "", "", &out, &stderr); code != exitFail {
+		t.Fatalf("cancelled after known FAIL returned %d", code)
+	}
+	if code := finish(result, nil, "", "", failedWriter{}, &stderr); code != exitFail {
+		t.Fatalf("stdout failure after known FAIL returned %d", code)
+	}
+	existing := filepath.Join(t.TempDir(), "existing.json")
+	if err := os.WriteFile(existing, []byte("keep"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if code := finish(result, nil, existing, "", &out, &stderr); code != exitFail {
+		t.Fatalf("publication failure after known FAIL returned %d", code)
+	}
+	legacy := result
+	legacy.ResultSchema, legacy.Reducer = kit.ReplaySemanticsResultSchema, kit.ReducerInfo{ID: "oracle-set-r4", Revision: "r4"}
+	if code := finish(legacy, cancelled, "", "", &out, &stderr); code != exitCanceled {
+		t.Fatalf("legacy replay cancellation changed to %d", code)
+	}
+}
 
 func gateSet(t *testing.T, recomputedStatus string) (string, string) {
 	t.Helper()

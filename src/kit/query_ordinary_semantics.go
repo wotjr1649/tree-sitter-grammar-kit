@@ -3,6 +3,7 @@ package kit
 import (
 	"context"
 	"errors"
+	"os"
 	"slices"
 )
 
@@ -40,29 +41,31 @@ type OrdinaryQuerySemanticsTuple struct {
 
 type OrdinaryQuerySemanticsResult struct {
 	Report
-	ResultSchema       string                           `json:"result_schema"`
-	BindingValid       bool                             `json:"binding_valid"`
-	ProducerRecorded   Verdict                          `json:"producer_recorded"`
-	BaseVerified       Verdict                          `json:"base_verified"`
-	Semantic           string                           `json:"query_semantics"`
-	Code               string                           `json:"code"`
-	SelectedShardIDs   []string                         `json:"selected_shard_ids"`
-	Tuple              QueryEligibilityCounts           `json:"tuple"`
-	Obligations        []OrdinaryQuerySemanticsTuple    `json:"obligations"`
-	Eligibility        *QueryReferenceEligibilityResult `json:"eligibility"`
-	Gates              []ReplayGate                     `json:"gates"`
-	BytesRead          uint64                           `json:"bytes_read"`
-	Work               uint64                           `json:"work"`
-	LogicalBytes       uint64                           `json:"logical_bytes"`
-	ProcessingComplete bool                             `json:"processing_complete"`
-	FullScopeComplete  bool                             `json:"full_scope_complete"`
-	Complete           bool                             `json:"complete"`
+	ResultSchema          string                           `json:"result_schema"`
+	BindingValid          bool                             `json:"binding_valid"`
+	ProducerRecorded      Verdict                          `json:"producer_recorded"`
+	BaseVerified          Verdict                          `json:"base_verified"`
+	Semantic              string                           `json:"query_semantics"`
+	Code                  string                           `json:"code"`
+	SelectedShardIDs      []string                         `json:"selected_shard_ids"`
+	SelectedObligationIDs []string                         `json:"selected_obligation_ids"`
+	CoverageSHA256        string                           `json:"coverage_sha256"`
+	Tuple                 QueryEligibilityCounts           `json:"tuple"`
+	Obligations           []OrdinaryQuerySemanticsTuple    `json:"obligations"`
+	Eligibility           *QueryReferenceEligibilityResult `json:"eligibility"`
+	Gates                 []ReplayGate                     `json:"gates"`
+	BytesRead             uint64                           `json:"bytes_read"`
+	Work                  uint64                           `json:"work"`
+	LogicalBytes          uint64                           `json:"logical_bytes"`
+	ProcessingComplete    bool                             `json:"processing_complete"`
+	FullScopeComplete     bool                             `json:"full_scope_complete"`
+	Complete              bool                             `json:"complete"`
 }
 
 func newOrdinarySemanticsResult() OrdinaryQuerySemanticsResult {
 	res := OrdinaryQuerySemanticsResult{Report: newReport("ordinary query semantics"), ResultSchema: OrdinaryQuerySemanticsResultSchema,
 		ProducerRecorded: Verdict{StatusNotRun, AssessBlocked}, BaseVerified: Verdict{StatusNotRun, AssessBlocked}, Semantic: AssessBlocked,
-		SelectedShardIDs: []string{}, Obligations: []OrdinaryQuerySemanticsTuple{}, Gates: []ReplayGate{}}
+		SelectedShardIDs: []string{}, SelectedObligationIDs: []string{}, Obligations: []OrdinaryQuerySemanticsTuple{}, Gates: []ReplayGate{}}
 	res.ExecutionStatus, res.EvidenceMode, res.Assessment = StatusCompleted, ModeReplayedRaw, AssessBlocked
 	return res
 }
@@ -80,16 +83,26 @@ func (res *OrdinaryQuerySemanticsResult) finding(code, path, message string) {
 // VerifyOrdinaryQuerySemantics evaluates selected ordinary shards in one guarded pass.
 // PASS remains conditional on the independent caller approval and expected assets.
 func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemanticsRequest) (res OrdinaryQuerySemanticsResult, resultErr error) {
+	return verifyOrdinaryQuerySemanticsInRun(ctx, req, nil, nil)
+}
+
+func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySemanticsRequest, r *run, replay *ordinaryReplayScope) (res OrdinaryQuerySemanticsResult, resultErr error) {
 	res = newOrdinarySemanticsResult()
-	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
-	if e != nil {
-		failReport(&res.Report, e)
-		res.Code = e.Code
-		return res, e
+	var e *Error
+	if r == nil {
+		r, e = startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
+		if e != nil {
+			failReport(&res.Report, e)
+			res.Code = e.Code
+			return res, e
+		}
+		defer r.cancel()
 	}
-	defer r.cancel()
-	b := &eligibilityBudget{r: r}
-	r.eligibility = b
+	b := r.eligibility
+	if b == nil {
+		b = &eligibilityBudget{r: r}
+		r.eligibility = b
+	}
 	defer func() {
 		ordinaryResultError(&res, resultErr, r.totalRead, b.work, b.logical)
 	}()
@@ -102,6 +115,9 @@ func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemantic
 		{"asset-registration", req.AssetRegistration}, {"plan-commitment", req.PlanCommitment}, {"registry", req.Registry},
 		{"qualification-inventory", req.QualificationInventory}, {"slot-inventory", req.SlotInventory},
 		{"run-binding", req.RunBinding}, {"reference-selection", req.ReferenceSelection}} {
+		if replay != nil {
+			continue // The replay member reader already charged these physical bytes.
+		}
 		if e := ordinaryCallerRead(r, doc.name, doc.data); e != nil {
 			return res, e
 		}
@@ -110,6 +126,9 @@ func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemantic
 		return res, fail(KindResourceLimit, "ORDINARY_PLAN_SELECTION_LIMIT", "shard-proofs", nil)
 	}
 	for _, proof := range req.ShardProofs {
+		if replay != nil {
+			continue
+		}
 		if e := ordinaryCallerRead(r, "shard-proof", proof); e != nil {
 			return res, e
 		}
@@ -131,8 +150,10 @@ func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemantic
 	if selectionBytes > MaxDocumentBytes {
 		return res, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", "selection", nil)
 	}
-	if e := r.chargeRead(selectionBytes, ReplayOperations()["evidence-replay"].TotalBytes, "selection"); e != nil {
-		return res, e
+	if replay == nil {
+		if e := r.chargeRead(selectionBytes, ReplayOperations()["evidence-replay"].TotalBytes, "selection"); e != nil {
+			return res, e
+		}
 	}
 	if e := b.charge(32*selectionBytes+1, 8*selectionBytes+2048, "ordinary-selection-binding"); e != nil {
 		return res, e
@@ -146,7 +167,23 @@ func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemantic
 	if e := b.charge(uint64(len(in.registration.Required))+1, 512*uint64(len(in.registration.Required)+len(binding.ShardIDs)), "ordinary-coordinator-selection"); e != nil {
 		return res, e
 	}
+	var idBytes uint64
+	for _, shard := range in.plan.Shards {
+		for _, id := range shard.ObligationIDs {
+			idBytes += uint64(len(id)) + 8
+		}
+	}
+	if e := b.charge(idBytes+32, idBytes+32*uint64(len(in.registration.Required)), "ordinary-result-selected-ids"); e != nil {
+		return res, e
+	}
 	res.SelectedShardIDs = slices.Clone(binding.ShardIDs)
+	for _, shard := range in.plan.Shards {
+		res.SelectedObligationIDs = append(res.SelectedObligationIDs, shard.ObligationIDs...)
+	}
+	res.CoverageSHA256 = ordinaryIDDigest(res.SelectedObligationIDs)
+	if replay != nil {
+		replay.selected = res.SelectedObligationIDs
+	}
 	res.Tuple = QueryEligibilityCounts{Required: uint64(len(in.registration.Required)), Unprocessed: uint64(len(in.registration.Required))}
 	if len(req.EligibilityApproval) == 0 {
 		res.Tuple.Blocked, res.Tuple.Unprocessed = res.Tuple.Required, 0
@@ -168,20 +205,38 @@ func VerifyOrdinaryQuerySemantics(ctx context.Context, req OrdinaryQuerySemantic
 	if !ordinaryPinMatchesBytes(binding.Profile, req.Profile) {
 		return res, fail(KindInvalidInput, "ORDINARY_PROFILE_PIN", "profile", nil)
 	}
-	root, _, e := openRoot(req.Evidence.Root)
-	if e != nil {
-		return res, e
-	}
-	defer func() {
-		if err := root.Close(); err != nil {
-			resultErr = errors.Join(resultErr, fail(KindIO, "ROOT_CLOSE_FAILED", "", err))
+	var root *os.Root
+	if replay != nil {
+		root = replay.root
+	} else {
+		root, _, e = openRoot(req.Evidence.Root)
+		if e != nil {
+			return res, e
 		}
-	}()
+		defer func() {
+			if err := root.Close(); err != nil {
+				resultErr = errors.Join(resultErr, fail(KindIO, "ROOT_CLOSE_FAILED", "", err))
+			}
+		}()
+	}
+	if r.semanticEntries == nil {
+		r.semanticEntries = newSemanticEntryBudget(ReplayOperations()["evidence-replay"].Files)
+		var entries uint64
+		if e := r.semanticEntries.begin(root, &entries, ReplayOperations()["evidence-replay"].Files); e != nil {
+			return res, e
+		}
+	}
 	ordinary := &ordinaryEligibilityScope{Binding: binding, ClosureEncoding: binding.ClosureEncoding, TupleRequired: res.Tuple.Required}
 	scope := &eligibilityScope{r: r, root: root, ordinary: ordinary}
+	if replay != nil {
+		scope.documentsRead, scope.walked, scope.walkedDirectories = true, replay.walked, replay.walkedDirectories
+	}
 	eligibility, err := verifyQueryReferenceEligibilityInRun(ctx, QueryReferenceEligibilityRequest{
 		Evidence: req.Evidence, Approval: req.EligibilityApproval, Registration: req.EligibilityRegistration}, scope)
 	res.Eligibility = &eligibility
+	if replay != nil && scope.session != nil {
+		replay.snapshot = scope.session.snapshot
+	}
 	ordinaryCopyEligibilityFindings(&res, scope.session)
 	if err != nil {
 		return res, err

@@ -510,9 +510,10 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			Reducer      struct {
 				ID string `json:"id"`
 			} `json:"reducer"`
-			QueryReference jsontext.Value `json:"query_reference"`
-			QuerySemantics jsontext.Value `json:"query_semantics"`
-			Subject        struct {
+			QueryReference         jsontext.Value `json:"query_reference"`
+			QuerySemantics         jsontext.Value `json:"query_semantics"`
+			OrdinaryQuerySemantics jsontext.Value `json:"ordinary_query_semantics"`
+			Subject                struct {
 				Run      string `json:"run"`
 				Attempt  uint64 `json:"attempt"`
 				Platform string `json:"platform"`
@@ -537,12 +538,19 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			continue
 		}
 		valid := false
-		if selection == ReplaySemanticsResultSchema {
-			full, e := decodeSemanticReplayResult(data, x.r)
+		if selection == ReplaySemanticsResultSchema || selection == ReplayOrdinaryResultSchema {
+			decode := decodeSemanticReplayResult
+			if selection == ReplayOrdinaryResultSchema {
+				decode = decodeOrdinaryReplayResult
+			}
+			full, e := decode(data, x.r)
 			if e != nil && (e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO) {
 				return e
 			}
 			valid = e == nil && validSemanticReplayResult(full)
+			if selection == ReplayOrdinaryResultSchema {
+				valid = e == nil && validOrdinaryReplayResult(full)
+			}
 			if valid && full.ExecutionStatus == StatusCompleted && full.EvidenceValid && (full.Subject.ExecutionStatus != subject.ExecutionStatus || full.Subject.Assessment != subject.Assessment || full.Subject.EvidenceMode != subject.EvidenceMode) {
 				valid = false
 			}
@@ -563,10 +571,10 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 				continue
 			}
 			referenceAbsent := len(rr.QueryReference) == 0 || bytes.Equal(bytes.TrimSpace(rr.QueryReference), []byte("null"))
-			valid = rr.ResultSchema == ReplayResultSchema && referenceAbsent && len(rr.QuerySemantics) == 0 && rr.Reducer.ID != "query-reference-connection-r1" && !semanticReducer(rr.Reducer.ID)
+			valid = rr.ResultSchema == ReplayResultSchema && referenceAbsent && len(rr.QuerySemantics) == 0 && len(rr.OrdinaryQuerySemantics) == 0 && rr.Reducer.ID != "query-reference-connection-r1" && !semanticReducer(rr.Reducer.ID) && rr.Reducer.ID != "oracle-set-r9"
 			if rr.ResultSchema == ReplayReferenceResultSchema {
 				var full ReplayResult
-				valid = len(rr.QuerySemantics) == 0 && decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
+				valid = len(rr.QuerySemantics) == 0 && len(rr.OrdinaryQuerySemantics) == 0 && decodeTyped("replay-result", data, &full) == nil && validReferenceReplayResult(full)
 			}
 		}
 
@@ -586,7 +594,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 
 // This selector scans delimiters and bounded schema strings only; the selected decoder validates JSON.
 func replayResultRevision(data []byte, r *run) (string, *Error) {
-	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema})
+	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema, ReplayOrdinaryResultSchema}, ReplayOrdinaryResultSchema)
 }
 
 func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string, alternatives ...string) (selected string, resultErr *Error) {

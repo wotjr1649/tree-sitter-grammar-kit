@@ -255,6 +255,8 @@ func eligibilityShape(t typed, v *jv, typ reflect.Type, exact bool, budget *valu
 // Nullable wire arms do not permit null primitives or null compact-array elements.
 func eligibilityNativeNullable(typ reflect.Type, name string) bool {
 	switch typ {
+	case reflect.TypeFor[OrdinaryQuerySemanticsResult]():
+		return name == "eligibility"
 	case reflect.TypeFor[QuerySemanticsResult]():
 		return name == "evidence" || name == "eligibility"
 	case reflect.TypeFor[QueryReferenceEligibilityResult]():

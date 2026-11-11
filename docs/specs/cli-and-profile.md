@@ -4,7 +4,13 @@ S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현
 
 ## 공통 입출력과 오류
 
-#362 P2-B 2단계의 ordinary producer는 내부 `OracleRequest.Ordinary`로 명시 선택하며 결과는 `tsgk-oracle-result/r4`다. 계획 profile/r4를 기존 `tsgk oracle record --profile`에 단독으로 전달하는 실행은 지원하지 않으며 새 CLI 입력 flag는 P2-D에 남긴다. 기존 profile과 `BATCH_SCOPE_UNSUPPORTED` 거부는 보존한다. 실제 문서·source·selected shard 결속과 record/r5·manifest/r8은 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다.
+#362 P2-B ordinary producer는 내부 `OracleRequest.Ordinary`로 명시 선택하며 결과는 `tsgk-oracle-result/r4`다. 기존 profile과 `BATCH_SCOPE_UNSUPPORTED` 거부는 보존한다. 실제 문서·source·selected shard 결속과 record/r5·manifest/r8은 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다. Ordinary producer를 `oracle record` CLI에서 선택하는 flag/loader는 현재 제공하지 않는다.
+
+### #362 P2-D ordinary replay CLI
+
+Ordinary `oracle record` CLI admission은 deferred다. Reviewer가 신규 loader의 source read에 work/logical/wall 회계가 없고 path reopen 경계가 완성되지 않았다고 지적해 flag/loader 구현을 scope에서 제외했다. 이를 통해 내부 `OracleRequest.Ordinary` 지원을 CLI 경로의 완성으로 해석하지 않는다.
+
+Ordinary replay는 기존 `tsgk replay --input DIR --profile FILE`을 사용한다. Profile r1의 reducer가 `oracle-set-r9`이면 ordinary 경로를 선택하고 outer records는 선택 obligation ID들을 registry가 고정한 순서로 담는다. Ordinary 출력은 nested `ordinary_query_semantics`에 저장되고 `tsgk-replay-result/r4`를 사용한다. `oracle-set-r4/r5/r6`와 `qualification r10`을 ordinary 용도로 자동 재시도하지 않는다. Exit는 기존 replay 규칙을 따른다. 이미 확인한 FAIL 뒤 취소·resource·출력 오류가 생기면 FAIL exit를 보존하고 report publication 실패는 별도 실행 오류로 보고한다. 현재 양성 replay fixture는 synthetic reference overlay를 사용하므로 P2-B native producer부터 시작하는 CLI end-to-end 양성은 아니다.
 
 root에서 실행할 CLI는 `tsgk <command>`다. 읽기 대상은 명시적 `--root PATH`(기본 현재 디렉터리), JSON 결과는 stdout, 진단은 stderr다. `--out PATH`는 새 파일만 허용한다. 기존 파일·입력 집합 내부·link 경로는 거부한다. caller-owned 같은 filesystem의 임시 파일을 완성한 뒤 충돌 없이 publish하고, 실패 partial은 별도 failure evidence로 보존한다. 결과 쓰기 실패는 성공 결과로 바꾸지 않는다. 입력 directory를 갖는 경로 검사는 [trust 계약](trust-and-execution.md)의 bounded directory identity 검사를 사용한다. outside membership 미확인은 `INPUT_PATH_UNVERIFIED`(trust/workspace, exit 2) 또는 `OUTPUT_PATH_UNVERIFIED`(publication exit 4, qualify 사전 검사 exit 2)로 거부하며, 확인된 내부 경로의 기존 code는 유지한다.
 

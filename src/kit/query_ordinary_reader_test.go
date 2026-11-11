@@ -24,7 +24,7 @@ type ordinaryReaderFixture struct {
 	runBinding   []byte
 }
 
-func newOrdinaryReaderFixture(t *testing.T) ordinaryReaderFixture {
+func newOrdinaryReaderFixture(t *testing.T, caseIDs ...string) ordinaryReaderFixture {
 	t.Helper()
 	dir := t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, "oracle"), 0700); err != nil {
@@ -46,6 +46,9 @@ func newOrdinaryReaderFixture(t *testing.T) ordinaryReaderFixture {
 	r.eligibility = b
 	op := NativeOperations()["native-query-batch"]
 	caseID, queryID, query := "c1", "q1", "(source_file) @root"
+	if len(caseIDs) != 0 {
+		caseID = caseIDs[0]
+	}
 	source := []byte("select 1")
 	profileBytes := []byte("executable profile pin")
 	profilePin := OrdinaryPin{Path: "profile/executable.json", Bytes: uint64(len(profileBytes)), SHA256: digestHex(profileBytes)}
@@ -111,7 +114,7 @@ func newOrdinaryReaderFixture(t *testing.T) ordinaryReaderFixture {
 	capPin := put(owner, "capture/batch.json", "native-batch-capture", owner, capBytes)
 	put("O", "source/00000-"+caseID+".bin", "source", caseID, source)
 	put("O", "raw/00000-"+caseID+".json", "raw", caseID, responseBytes)
-	projectionBytes := []byte(`{"id":"c1","input":{"role":"","path":"source/c1.bin","bytes":8,"sha256":"` + digestHex(source) + `"},"encoding":"utf8","execution_status":"FAILED","assessment":"BLOCKED","code":"INVALID_REQUEST"}`)
+	projectionBytes := []byte(`{"id":"` + caseID + `","input":{"role":"","path":"source/` + caseID + `.bin","bytes":8,"sha256":"` + digestHex(source) + `"},"encoding":"utf8","execution_status":"FAILED","assessment":"BLOCKED","code":"INVALID_REQUEST"}`)
 	projectionPin := put("O", "projection/00000-"+caseID+".json", "projection", caseID, projectionBytes)
 	registrationSHA := registrationPin.SHA256
 	pending := &OracleQuerySemantics{Phase: "PRODUCER_LOCAL", Claim: "BLOCKED", Code: "EXTERNAL_APPROVAL_PENDING", RegistrationSHA256: registrationSHA, Capture: &capPin, Projection: projectionPin}

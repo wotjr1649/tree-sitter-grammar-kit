@@ -117,8 +117,9 @@ func TestOrdinaryOracleSetOwnersFramesAndPins(t *testing.T) {
 			var m map[string]any
 			_ = json.Unmarshal(manifestBytes, &m)
 			fn(clone, m)
+			delete(m, "complete")
 			data, _ := json.Marshal(m)
-			clone["manifest.json"].Data = append(data, '\n')
+			clone["manifest.json"].Data = append(data[:len(data)-1], []byte(",\"complete\":true}\n")...)
 			if report := VerifyOracleSet(clone); report.Valid {
 				t.Fatalf("accepted mutation; manifest fixture: %+v", manifest)
 			}
@@ -134,6 +135,16 @@ func TestOrdinaryOracleSetOwnersFramesAndPins(t *testing.T) {
 		}
 	})
 	mutate("selected-scope-cannot-be-promoted", func(_ fstest.MapFS, m map[string]any) { m["full_scope_complete"] = true })
+	mutate("declared-record-deleted", func(clone fstest.MapFS, m map[string]any) {
+		for _, value := range m["members"].([]any) {
+			member := value.(map[string]any)
+			if member["role"] == "record" {
+				delete(clone, member["path"].(string))
+				return
+			}
+		}
+		t.Fatal("fixture has no declared record")
+	})
 	mutate("span-allocation-is-bounded", func(clone fstest.MapFS, m map[string]any) {
 		members := m["members"].([]any)
 		for _, value := range members {
@@ -165,6 +176,37 @@ func TestOrdinaryOracleSetOwnersFramesAndPins(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestOrdinaryOracleSetRequiresProducerPendingAfterRecordRehash(t *testing.T) {
+	files, manifest, _ := ordinarySetFixture()
+	changed := false
+	for i, member := range manifest.Members {
+		if member.Role != "record" {
+			continue
+		}
+		var record OrdinaryOracleRecord
+		if err := json.Unmarshal(files[member.Path].Data, &record); err != nil {
+			t.Fatal(err)
+		}
+		record.QuerySemantics = nil
+		data := ordinaryJSON(t, record)
+		files[member.Path].Data = data
+		manifest.Members[i].Pin.Bytes, manifest.Members[i].Pin.SHA256 = uint64(len(data)), digestHex(data)
+		changed = true
+		break
+	}
+	if !changed {
+		t.Fatal("fixture has no ordinary record")
+	}
+	manifestBytes, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files["manifest.json"].Data = append(manifestBytes, '\n')
+	if result := VerifyOracleSet(files); result.Valid {
+		t.Fatal("rehashed record without producer-local pending was accepted")
+	}
 }
 
 func TestOrdinaryRunBindingMatchesCallerOutput(t *testing.T) {

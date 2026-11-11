@@ -261,6 +261,11 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 		return stop(fail(KindIO, "ROOT_UNREADABLE", "oracle", openErr))
 	}
 	defer func() { _ = physical.Close() }()
+	if b.r.semanticEntries != nil {
+		if e := b.r.semanticEntries.bindChild(root, "oracle", physical); e != nil {
+			return stop(e)
+		}
+	}
 	if e := b.semanticSnapshotIdentity(root, physical, s.snapshot); e != nil {
 		return stop(e)
 	}
@@ -314,16 +319,24 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 	} else if !ordinaryRunBindingMatchesManifest(runBinding, manifest) || !ordinaryRunBindingMatchesEligibility(runBinding, ordinary) {
 		add("ORDINARY_BINDING_MISMATCH", "run-binding", "caller r2 binding과 r8 manifest의 전체 member·batch 소유권이 다르다")
 	}
+	var memberPathBytes uint64
+	for _, member := range manifest.Members {
+		memberPathBytes += uint64(len(member.Path))
+	}
+	if e := b.charge(uint64(len(manifest.Members))+4*memberPathBytes+1, 1024*uint64(len(manifest.Members)+1)+4*memberPathBytes, "ordinary-member-index"); e != nil {
+		return stop(e)
+	}
 	memberByPath := make(map[string]OrdinaryMember, len(manifest.Members))
 	listed := map[string]bool{"manifest.json": true}
+	folded := map[string]bool{"manifest.json": true}
 	var total uint64 = uint64(len(manifestBytes))
 	for _, m := range manifest.Members {
 		key := strings.ToLower(m.Path)
-		if !ordinaryPath(m.Path) || m.Pin.Path != m.Path || !ordinaryPin(m.Pin) || listed[key] || !ordinaryMemberOwnerRole(m) || !ordinaryMemberRole(m.Role, manifest.ClosureEncoding) || m.Pin.Bytes > OrdinaryPlanLimits().FileBytes || total > OrdinaryPlanLimits().ReadBytes-m.Pin.Bytes {
+		if !ordinaryPath(m.Path) || m.Pin.Path != m.Path || !ordinaryPin(m.Pin) || folded[key] || !ordinaryMemberOwnerRole(m) || !ordinaryMemberRole(m.Role, manifest.ClosureEncoding) || m.Pin.Bytes > OrdinaryPlanLimits().FileBytes || total > OrdinaryPlanLimits().ReadBytes-m.Pin.Bytes {
 			add("ORDINARY_MEMBER_INVALID", m.Path, "r8 member 경로·owner·역할·pin 또는 한도가 다르다")
 			continue
 		}
-		listed[key] = true
+		folded[key], listed[m.Path] = true, true
 		memberByPath[m.Path] = m
 		total += m.Pin.Bytes
 		path := "oracle/" + m.Path
@@ -338,9 +351,6 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 	}
 	if total > OrdinaryPlanLimits().ReadBytes {
 		return stop(fail(KindResourceLimit, "ORDINARY_SET_LIMIT", "oracle/manifest.json", nil))
-	}
-	if e := b.charge(uint64(len(manifest.Members))+1, 1024*uint64(len(manifest.Members)+1), "ordinary-member-index"); e != nil {
-		return stop(e)
 	}
 	if e = ordinaryCheckManifestMembers(manifest, registration, profile, memberByPath, add); e != nil {
 		return stop(e)

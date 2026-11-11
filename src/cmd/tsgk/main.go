@@ -421,20 +421,24 @@ func finishWithRoots(result any, err error, out, publishRoot string, stdout, std
 		q, semantic := result.(kit.QualificationResult)
 		semantic = semantic && q.ResultSchema == kit.QualificationSemanticsResultSchema && q.QuerySemantics != nil
 		knownSemanticFailure := semantic && q.Assessment == kit.AssessFail
-		if n, werr := stdout.Write(data); semantic && (werr != nil || n != len(data)) {
+		ordinaryFailure := ordinaryReplayFailure(result)
+		if n, werr := stdout.Write(data); (semantic || ordinaryFailure) && (werr != nil || n != len(data)) {
 			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 부분 semantic report를 쓰지 못했다")
+			if ordinaryFailure {
+				return exitFail
+			}
 			return exitIO
 		}
 		var ke *kit.Error
 		if errors.As(err, &ke) {
 			fmt.Fprintf(stderr, "tsgk: %s: %s %s\n", ke.Kind, ke.Code, printable(ke.Path))
-			if knownSemanticFailure {
+			if knownSemanticFailure || ordinaryFailure {
 				return exitFail
 			}
 			return exitFor(ke.Kind)
 		}
 		fmt.Fprintln(stderr, "tsgk: IO:", err)
-		if knownSemanticFailure {
+		if knownSemanticFailure || ordinaryFailure {
 			return exitFail
 		}
 		return exitIO
@@ -449,7 +453,11 @@ func finishWithRoots(result any, err error, out, publishRoot string, stdout, std
 	case kit.SchemaDiffResult:
 		code = assessExit(v.Assessment)
 	case kit.ReplayResult:
-		code = replayExit(v.Assessment)
+		if ordinaryReplayFailure(v) {
+			code = exitFail
+		} else {
+			code = replayExit(v.Assessment)
+		}
 	case kit.EvidenceResult:
 		code = replayExit(v.Assessment)
 	case kit.QueryReferenceConnectionResult:
@@ -460,6 +468,9 @@ func finishWithRoots(result any, err error, out, publishRoot string, stdout, std
 	if out == "" {
 		if _, werr := stdout.Write(data); werr != nil {
 			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 완전한 report를 쓰지 못했다")
+			if ordinaryReplayFailure(result) {
+				return exitFail
+			}
 			return exitIO
 		}
 		return code
@@ -470,9 +481,20 @@ func finishWithRoots(result any, err error, out, publishRoot string, stdout, std
 			return finish(stopQualifyEmission(q, ke), ke, "", "", stdout, stderr)
 		}
 		fmt.Fprintf(stderr, "tsgk: %s: 분석은 끝났지만 결과 publication이 실패했다: %v\n", pcode, perr)
+		if ordinaryReplayFailure(result) {
+			return exitFail
+		}
 		return exitIO
 	}
 	return code
+}
+
+func ordinaryReplayFailure(result any) bool {
+	replay, ok := result.(kit.ReplayResult)
+	return ok && replay.Schema == kit.ReportSchema && replay.ResultSchema == kit.ReplayOrdinaryResultSchema &&
+		replay.Reducer.ID == "oracle-set-r9" && replay.Reducer.Revision == "r9" && replay.Operation == "evidence-replay" &&
+		replay.QuerySemantics == nil && replay.QueryReference == nil && replay.OrdinaryQuerySemantics != nil &&
+		replay.OrdinaryQuerySemantics.Assessment == kit.AssessFail && replay.OrdinaryQuerySemantics.Code != ""
 }
 
 func stopQualifyEmission(q kit.QualificationResult, err *kit.Error) kit.QualificationResult {
