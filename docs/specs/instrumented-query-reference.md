@@ -101,7 +101,7 @@ JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는
 
 `TSGK_QUERY_CLASSIFICATION_PROFILE=csharp15-empty`는 [독립 사전 기대값](../../src/testdata/query-semantics/csharp15-classification-anchors.json)의 빈 UTF-8 source, 편집 없음, API 관측 없음, 단일 `compilation_unit` root와 15개 query를 선택한다. `native-query`와 `Args=["single"]`을 사용한다. ABI 기대값은15/15/13/654/26이며, query metadata는 합계91 patterns·125 capture-name 항목과 명시적 `predicates:[]`다. 각 초기 incremental query의 structural/expected capture는 빈 배열이다. 이는 이 입력의 사전 기대값이며 실제 compiler/native/reference 관측을 대신하지 않는다.
 
-C# parser 원문51,472,926바이트는 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
+16 MiB를 넘는 C# parser 원문(#233 이전 51,472,926바이트, C1–C4 반영 뒤 53,114,064바이트. 크기는 `native-routes.json`의 등록 pin에서 읽는다)은 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
 
 `definitions` stage는 새 graph에 대한 외부 caller approval과 같은 guarded eligibility·CST·request/frame·compiler/library·native/reference metadata·public parity 검사를 통과해야 한다. 일반 query13개와 fact query2개의 원본 bytes를 각각 `csharp.json` 및 `fact-query-pack.json` pin으로 연결한다. 원장의 `csharp/s06-csharp`에 등록된390 cases·125 edits·515 case steps·640 tree roles에서 정의당640개, 합계9,600개 잠재 연결을 재구성한다. 이 분모는 qualification의 API 관측을 포함한 원래 배치 사례에 속하며, 이번 API=false 단일 입력 관측으로 그 사례들을 검증하지 않는다. 결과는 정의15개의 조건부 `STRUCTURAL_ONLY` 분류이며 사례별·semantic 완료와 r1/r10 상태는 유지한다. 출력 보호와 reader/관측 revision 구분은 Go 정의 분류와 같은 조건을 따른다.
 
@@ -374,7 +374,7 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
-이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=662는 #233 C1–C4 반영 parser의 SYMBOL_COUNT658+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
 
 ## #216 binary paging
 
