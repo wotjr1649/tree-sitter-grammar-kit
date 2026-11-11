@@ -360,7 +360,7 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
-이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=662는 #233 C1–C4 반영 parser의 SYMBOL_COUNT658+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
 
 ## #216 binary paging
 

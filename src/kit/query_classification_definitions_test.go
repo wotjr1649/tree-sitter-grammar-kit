@@ -412,7 +412,7 @@ func classificationGoDefinitionLoadInputs(a classificationAnchors, plan classifi
 
 func classificationCSharpDefinitionLoadInputs(a classificationAnchors, plan classificationPlan, inventoryData, qualificationData, queryData []byte) (classificationCSharpDefinitionInputs, error) {
 	var out classificationCSharpDefinitionInputs
-	if a.sha256 != classificationCSharpAnchorsSHA || a.Case != "csharp15-empty-definitions" || a.Route != "csharp" || a.Workload != "csharp15-empty-definition-single-frame" || a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.Bytes != 0 || a.Source.UTF8 != "" || a.Source.SHA256 != digestHex(nil) || len(a.Queries) != 15 || len(a.Required) != 15 || len(a.Edits) != 0 || len(a.Nodes) != 1 || !reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 654, FieldCount: 26}) {
+	if a.sha256 != classificationCSharpAnchorsSHA || a.Case != "csharp15-empty-definitions" || a.Route != "csharp" || a.Workload != "csharp15-empty-definition-single-frame" || a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.Bytes != 0 || a.Source.UTF8 != "" || a.Source.SHA256 != digestHex(nil) || len(a.Queries) != 15 || len(a.Required) != 15 || len(a.Edits) != 0 || len(a.Nodes) != 1 || !reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 662, FieldCount: 26}) {
 		return out, fmt.Errorf("definition anchors are not the closed C# 15 single-frame profile")
 	}
 	root := a.Nodes[0]
