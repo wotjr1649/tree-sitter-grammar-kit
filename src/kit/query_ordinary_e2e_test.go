@@ -271,6 +271,17 @@ func ordinaryE2ESyntheticResponse(t *testing.T, queryID, querySource, symbol, li
 
 func ordinaryE2ESyntheticResponseWithExpected(t *testing.T, queryID, querySource, symbol, librarySHA string, source []byte, nodes []TreeNode, metadata QueryWitnessMetadata, captures []Capture) []byte {
 	t.Helper()
+	matches := uint64(0)
+	for _, c := range captures {
+		matches = max(matches, uint64(c.Match)+1)
+	}
+	mapping := make([]struct {
+		Match     uint32 `json:"match"`
+		RuntimeID uint32 `json:"runtime_id"`
+	}, matches)
+	for i := range mapping {
+		mapping[i].Match, mapping[i].RuntimeID = uint32(i), uint32(i)
+	}
 	return ordinaryJSON(t, instrumentedReference{
 		Schema: instrumentedReferenceSchema, Status: StatusCompleted, Code: "", Upstream: instrumentedReferenceCommit,
 		Input: struct {
@@ -298,10 +309,7 @@ func ordinaryE2ESyntheticResponseWithExpected(t *testing.T, queryID, querySource
 			} `json:"match_mapping"`
 			Structural []Capture `json:"structural"`
 			Evaluated  []Capture `json:"evaluated"`
-		}{ID: queryID, SHA256: digestHex([]byte(querySource)), Patterns: metadata.Patterns, CaptureNames: metadata.CaptureNames, Predicates: metadata.Predicates, Matches: uint64(len(captures)), MatchMapping: []struct {
-			Match     uint32 `json:"match"`
-			RuntimeID uint32 `json:"runtime_id"`
-		}{}, Structural: captures, Evaluated: captures},
+		}{ID: queryID, SHA256: digestHex([]byte(querySource)), Patterns: metadata.Patterns, CaptureNames: metadata.CaptureNames, Predicates: metadata.Predicates, Matches: matches, MatchMapping: mapping, Structural: captures, Evaluated: captures},
 		Limits: struct {
 			Nodes         uint64 `json:"nodes"`
 			Captures      uint64 `json:"captures"`

@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- 선택 TSQL shard `alt-tsql-B01-r001`의 독립 expected asset 107개(metadata 8·full CST 9·ordered captures 72·facts 18)를 grammar.json·scanner 원문·query cursor 규칙에서 손으로 작성하고 native 실행 전에 봉인했다(Refs #362). Opt-in `TestOrdinaryTSQLExpectedAgainstNative`가 같은 actual owned r8에서 72/72 tuple을 제품 adjudicator로 VERIFIED 판정하고 node·capture·fact 변조가 해당 tuple만 FAILED로 만드는지 검사한다. 공개 pass는 합성 reference row 40개의 decode 비용(logical 222,514,364 B)이 남은 logical을 넘어 `reference-rows`에서 `CAPACITY_UNPROVEN`으로 멈추며 한도와 PostgreSQL 9/9 VERIFIED는 바꾸지 않았다. 새 시험 파일 2개가 추가되며 제품 코드는 바꾸지 않았다.
+
 - Ordinary base fact의 공통 capture 제곱×source 예약을 종류별 실제 순회 상한으로 교정했다(Refs #362). Declaration은 depth·parent 검색·frontier 복제/정렬·출력 전에 예약하고, TSQL은 capture pair와 실제 span/exec/errwith 수, XML은 이름별 count 비용을 계상한다. 기존 재계산 의미·음성 시험·한도와 expected 부재의 BLOCKED를 유지하며 test-only 실제 순회·결과 payload 계측과 예약 항 제거 mutant로 검증한다.
 
 - Ordinary base의 소비 필드만 input marshal 예약에 포함하고 replay decode·node/capture/observation·기대값 검색 순회에 맞춰 work 상한을 분리했다(Refs #362). 공용 reducer 검사·fact 재계산·base FAIL과 legacy 원장·한도를 유지하며 SQL capacity는 공개 호출의 실제 중단 단계로 보고한다.

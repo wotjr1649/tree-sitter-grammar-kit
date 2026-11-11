@@ -73,6 +73,26 @@ P2-C 회귀는 `VerifyOrdinaryQuerySemantics`의 필수 caller `Selection`으로
 
 TSQL은 `ordinary-base-tree-projection`의 다음 logical 예약 1,731,872 B에 1,265,854 B가 부족했다. Error code `ELIGIBILITY_WORK_LIMIT`는 work와 logical을 공유하므로 이 실패의 실제 원인은 logical이다. Reference row 40개는 합성 placeholder이고 독립 SQL expected는 UNAVAILABLE이며, 중단 뒤의 semantic reference/expected/fold/seal 비용을 측정했다고 표시하지 않는다. TSQL은 `CAPACITY_UNPROVEN`/BLOCKED다. 이 부족분은 다음 예약 하나의 부족량일 뿐 전체 완료에 필요한 추가량의 상한이 아니다. 한도를 올리거나 원장만 낮추지 않는다. 이 표는 해당 선택 shard와 명시한 body의 관측이며 full P0·전체 SQL route·실제 reference 실행·P2-D·다른 OS·CI/main 통합을 완료하지 않는다.
 
+2026-11-12 TSQL 독립 expected 후속 검증은 선택 shard `alt-tsql-B01-r001`(원문 267 B, 4 edits, 5 versions, 8 query, 72 tuple = 8 query × [step0 incremental + step1–4 incremental/fresh] 9개)의 expected asset 107개(metadata 8, full CST 9, ordered captures 72, facts 18)를 손으로 작성해 pin한다. CST는 prepared `grammar.json`의 production(`program`/`batch`/`statement`/`select`/`term`/`field`/`invocation`/`window_function`/`set_statement` 등)과 external scanner 원문(GO 줄 끝, `marginalia`, `QUOTED_IDENTIFIER` 상태)에서 도출하고 byte 범위만 원문에서 토큰을 찾아 계산한다. 쿼리 metadata는 query 원문의 pattern 수와 capture 이름 최초 출현 순서이며, ordered capture는 손으로 쓴 tree와 pinned runtime `query.c`의 capture cursor 규칙(finished-state heap의 start byte·pattern index·완료 순서, match id는 첫 yield 시 부여, 복사 state는 원본의 id·consumed 수를 물려받음)에서 도출한다. 작성 시 parser·native·reference 출력은 사용하지 않았고 native 첫 실행 전에 asset 본문의 SHA-256을 먼저 기록했다.
+
+같은 actual owned r8에서 실제 raw 응답을 `nativewire.Check`로 검증한 뒤 제품 tuple adjudicator(`adjudicateOrdinaryTuple`)에 직접 넣는 `TestOrdinaryTSQLExpectedAgainstNative`(opt-in)는 72/72 tuple을 VERIFIED로 판정한다. 첫 대조에서 dynamic SQL capture 8개 asset(step1–4 × incremental/fresh)의 match 구성이 달랐다. 원인은 작성 모델이 `ts_query_cursor__copy_state`(`query.c`)의 복사 방향을 반대로 가정한 것이었고, 복사본이 원본의 id·consumed 수를 물려받는다는 소스 근거로 교정했다. 이 교정은 봉인 대비 8개 asset만 바꾸며 나머지 99개는 같다. Root capture를 가진 wildcard child pattern의 definite 여부(`tsqlDefinite[12]`)는 생성된 parse table의 정적 분석 결과라 grammar.json만으로 손으로 증명하지 못한 모델 매개변수다. 이 값은 native 관측과 일치하도록 정했으므로 해당 pattern에 한해 독립 증거로 세지 않는다. 같은 test는 expected의 node 하나·capture 하나·fact 하나를 변조하면 변조를 소비하는 tuple만 FAILED(`ORDINARY_EXPECTED_TREE_MISMATCH` 8개 query tuple, `ORDINARY_CAPTURE_MISMATCH` 1개, `ORDINARY_FACT_MISMATCH` 1개)가 되고 나머지는 VERIFIED로 남음을 확인한다.
+
+공개 `TestOrdinarySQLPublicPassCapacity`의 TSQL 경로는 expected 107개를 소비하지만 `reference-rows` 단계에서 `reference-response` 결정 예약이 logical 한도를 넘어 `ELIGIBILITY_WORK_LIMIT`(실제 원인 logical)으로 멈춘다. 중단 시 logical 1,073,740,361 B, work 25,817,475, read 129,947,595 B였고 72 tuple은 모두 unprocessed, `CAPACITY_UNPROVEN`/BLOCKED다. Reference row 40개는 여전히 합성이지만 독립 expected와 비교하려면 expected와 같은 full CST·ordered captures를 담아야 하며, 같은 제품 계상으로 측정한 40행의 decode+reserve 비용은 logical 222,514,364 B, work 2,923,400이다(단계 진입 시 남은 logical 135,172,615 B). 따라서 지금 한도에서는 TSQL 공개 pass가 `independent-tuples`에 도달하지 못한다. 한도는 바꾸지 않았다. PostgreSQL은 같은 공개 pass에서 9/9 VERIFIED를 유지한다. Reference executable/library는 실행·load하지 않았고 approval·reference row는 합성이므로 외부 reference와의 실행 독립성은 입증하지 않는다.
+
+다음은 최종 expected로 실행한 TSQL 공개 호출 하나의 같은 누적 원장이다. 마지막 거절 요청은 `reference-response` 6,400 B이고 부족분은 4,937 B지만 이는 다음 예약 하나의 값일 뿐이며 40행 전체는 위 222,514,364 B가 필요하다.
+
+| TSQL 공개 pass 단계 | logical B | work | read B | 남은 logical B | 남은 work | 남은 read B |
+|---|---:|---:|---:|---:|---:|---:|
+| caller-documents | 0 | 0 | 19,605,002 | 1,073,741,824 | 32,000,000 | 248,830,454 |
+| ordinary-inputs | 230,095,790 | 7,188,567 | 19,605,942 | 843,646,034 | 24,811,433 | 248,829,514 |
+| eligibility-evidence | 722,372,272 | 9,218,022 | 129,947,595 | 351,369,552 | 22,781,978 | 138,487,861 |
+| r8-reader | 787,870,981 | 13,734,305 | 129,947,595 | 285,870,843 | 18,265,695 | 138,487,861 |
+| native-closure | 793,970,324 | 15,191,541 | 129,947,595 | 279,771,500 | 16,808,459 | 138,487,861 |
+| fact-inputs | 795,398,760 | 15,233,997 | 129,947,595 | 278,343,064 | 16,766,003 | 138,487,861 |
+| base-recomputation | 938,569,209 | 24,624,793 | 129,947,595 | 135,172,615 | 7,375,207 | 138,487,861 |
+| reference-rows (거절) | 1,073,740,361 | 25,817,475 | 129,947,595 | 1,463 | 6,182,525 | 138,487,861 |
+
+
 ## #362 P2-B actual capture 기반 검증
 
 2단계의 `TestOracleOrdinaryPublication`은 owned grammar로 두 case·한 case의 두 edits·incremental/fresh·API=true·일반 query와 fact suffix를 실행하고 record/r5·manifest/r8, process/stderr owner 단일성, caller binding, immutable base PASS/FAIL과 pending을 검사한다. 이 시험은 전체 P0 문서 사전 검증과 분리된 내부 publication 경로를 사용하며 실제 qualification route의 full ordinary 수집 근거는 아니다. `TestOrdinaryExecutionBindsSourcesHistoryQueriesAndRuntime`은 실행 직전 source/version·edit/point·query·runtime·case 순서 대조를 검사하고, public `Oracle`의 잘못된 context/문서 없는 거부는 출력 생성 전에 확인한다.
