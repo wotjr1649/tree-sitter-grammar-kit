@@ -173,7 +173,7 @@ func (x *replayEnv) replayAccepted(c *rcCase, raw []byte, index int, registered 
 		expected.Revision = x.observationWire
 	}
 	if top.Build != nil {
-		expected.Observation = &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: top.ObservationRunID, ProducerSHA256: top.Build.Identity}
+		expected.Observation = &nativewire.Binding{Manifest: reuseobs.DefaultRuntimeManifest(), RunID: top.ObservationRunID, ProducerSHA256: top.Build.Identity}
 		if x.acceptedRuntime != nil {
 			expected.Observation.Manifest, expected.Observation.Runtime = x.acceptedRuntime.tuple.ManifestSHA256, &x.acceptedRuntime.logger
 		}

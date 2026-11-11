@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- V2-E에서 legacy Rust release·runtime ABI/closure·logger allowlist의 코드 고정값을 `src/contracts/evidence-pins/`의 검토된 기본 승인 집합으로 옮겼다. 기본 승인은 `repository-default`로 구분하며 `RepositoryEvidenceDefaults()`가 정확한 provenance를 별도로 반환한다. 기존 판정·counter·schema·fixture와 logger 전용 과거 scope를 보존하고 생산 선택과 독립적으로 소비한다. `reuseobs.RuntimeManifestSHA256`는 deprecated snapshot 변수로 바뀌므로 compile-time constant 사용자는 `DefaultRuntimeManifest()`로 이행해야 한다. Refs #370.
+
 - V2-D에서 Roslyn 기대값 생성의 현재 release 비교를 승인 observation/cases/tuple 결속으로 바꿨다. 보존 5.9/r2와 기존 inventory는 유지하고, 새 r3 producer는 build SDK identity와 실제 oracle/Roslyn DLL SHA를 기록한다. 미보존 legacy SDK/DLL provenance는 BLOCKED다. Standalone replay·qualification의 외부 pin admission은 기존 bounded inline 규칙을 공유한다. 기존 nil API·schema·한도와 원본 증거를 보존한다. Refs #370.
 
 - V2-C3에서 accepted-event와 preprocess-CST의 공개 API·replay·qualification에 historical runtime opt-in을 연결했다. 승인 tuple에 별도 reader 자료를 결속하고 source·primary/fresh·producer·ABI 검사를 유지한다. 새 replay r6/qualification r13과 직접 API r2는 소비한 승인 범위를 기록하며 기존 nil 호출·저장 원본·생산 선택·한도를 보존한다. Roslyn 및 standalone CLI admission(V2-D), 미보존 실제 과거 실행 자료는 남아 있다. Refs #370.

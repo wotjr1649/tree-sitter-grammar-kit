@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 type eligibilityScope struct {
@@ -34,6 +36,7 @@ type eligibilitySession struct {
 	witness                           eligibilityWitness
 	referenceTuple                    *eligibilityReferenceTuple
 	runtime                           *eligibilityRuntimePins
+	defaultRuntime                    *evidencepins.Runtime
 	catalogue                         eligibilityCatalogue
 	snapshot                          *evidenceSnapshot
 	cohorts                           map[string]eligibilityCohort
@@ -128,8 +131,10 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	}
 	// A shared budget must not carry another subject's runtime authority.
 	previousRuntime := b.runtime
+	previousDefaultRuntime := b.defaultRuntime
 	b.runtime = nil
-	defer func() { b.runtime = previousRuntime }()
+	b.defaultRuntime = nil
+	defer func() { b.runtime, b.defaultRuntime = previousRuntime, previousDefaultRuntime }()
 
 	s := &eligibilitySession{r: r, b: b, res: &res, bound: true, invocationTuples: map[string][]int{}, failedInvocations: map[string]bool{}, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, invocations: map[string]*eligibilityInvocation{}, catalogueInvocations: map[string]*eligibilityInvocation{}, tools: map[string]eligibilityTool{}, owned: map[string]eligibilityMember{}, nodes: map[string]EvidenceNode{}, owners: map[string]string{}, ready: map[string]bool{}, build: map[string]string{}, units: map[string]string{}, control: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, outputs: map[string]*eligibilityOutput{}}
 	if scope != nil {

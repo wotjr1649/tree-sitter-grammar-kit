@@ -1,5 +1,25 @@
 # Query reference offline eligibility 계약 (#216)
 
+## #370 V2-E legacy 기본 승인 집합
+
+`Pins`/`RuntimePins`가 없는 경로의 도구 identity는 `src/contracts/evidence-pins/repository-defaults.json`이 승인한 보존 자료에서 읽는다. 이는 `approval_source=repository-default`인 **저장소 검토 승인**이며 caller가 특정 evidence subject에 독립 승인한 `caller` 등급과 구분한다. 기본 승인은 기존 eligibility Approval, graph/member 결속, reader 의무 또는 실제 실행 증명을 대신하지 않는다. 명시 Pins의 승인 실패를 기본 집합으로 재시도하지 않는다. Reference-only Pins가 runtime tuple을 지정하지 않은 경우에만 기존과 같이 runtime 기본 정책을 사용한다.
+
+검토된 기본 문서는 content-addressed 집합과 policy의 raw SHA-256을 데이터로 고정한다. 내장 자료의 집합 digest, descriptor 및 object의 원문 길이·digest를 대조한 뒤에만 tuple과 정책을 해석한다. 이 문서와 코드 자체를 함께 바꿀 수 있는 저장소 게시자는 신뢰 기점이다. 같은 권한으로 기본 승인값까지 바꾼 행위를 hash만으로 탐지하는 서명 체계는 아니다. Evidence 안의 자기 hash, 현재 설치 도구, 생산 `selection.json` 또는 live driver 원문에서 기본 승인을 발견하거나 자동 발행하지 않는다. 기존 object/set은 불변이며 새 자료와 집합만 추가한다.
+
+기본 문서는 `tsgk-repository-default-selection/r1`이며 `set_sha256`, reference fallback catalogue/tuple, runtime fallback manifest, reference/runtime obligations와 기존 logger 집합의 digest를 고정한다. `default-sets/<sha256>.json`의 `tsgk-repository-default-set/r1`은 `reader=tsgk-repository-defaults/r1`, policy의 raw SHA/bytes와 object SHA/bytes 목록을 가진다. 이는 기존 `sets/`의 caller용 `tsgk-evidence-pin-set/r1`과 별도 형식이다. `objects/<sha256>`의 `tsgk-repository-default-policy/r1`은 같은 fallback·의무 anchor를 반복해 결속하고 reference tuple 목록, runtime tuple/manifest와 `logger`/`closure` scope를 기록한다. 기존 logger 집합의 항목을 추가 승인 과정에서 삭제할 수 없다. 이 형식은 기본 자료 전용이며 임의 외부 파일이나 새로운 reader를 동적으로 불러오지 않는다.
+
+Reference 기본 tuple은 정확한 catalogue와 rustc/cargo release 조합을, runtime 기본 tuple은 manifest·ABI·driver·CP949·shim 조합을 결속한다. 승인된 추가 catalogue/closure는 등록에 기록된 identity로 선택한다. 모르는 identity에 맞춰 기대값을 생성하지 않는다. 안정된 fallback anchor는 B/C 항목을 추가해도 A를 가리키며, A 자료와 승인 scope를 그대로 보존한다. 과거 logger 전용 entry는 logger만 허용한다. 이를 전체 native closure, accepted-event 또는 preprocess-CST 승인으로 승격하지 않는다. 현재 지원 reader의 의미·필수 의무·분모·한도는 기본 정책으로 줄일 수 없다.
+
+기존 legacy 결과의 schema·판정·code·counter·소비 identity와 JSON bytes를 보존한다. 새 `approval_source` 필드를 과거 결과에 삽입하지 않으며, 승인 출처는 호출의 Pins 선택과 기존 nested pin 결과로 구분한다. `RepositoryEvidenceDefaults()`의 별도 `tsgk-repository-evidence-approval/r1` 결과는 `approval_source=repository-default`, 기본 승인 문서의 raw `approval_sha256`, 실제 `pin_set_sha256`, `policy_sha256`을 반환하므로 caller는 원래 결과를 다시 쓰지 않고 이 provenance를 함께 기록할 수 있다. 명시 Pins의 승인 출처는 `caller`이며 실제 approval/set/subject digest는 기존 nested 결과가 소유한다. 기본 자료를 읽을 수 없거나 무결성이 모순되면 승인하지 않는다.
+
+이 보조 provenance는 개별 legacy 결과나 subject에 암호학적으로 결속한 sidecar가 아니다. 결과와 호출의 Pins 선택·보조 provenance를 함께 보관할 책임은 caller에게 있으며, 나중에 최신 기본 집합을 조회한 것만으로 과거 결과의 승인 출처를 소급 인증하지 않는다.
+
+기본 자료는 배포한 소스에 포함된 유한한 신뢰 fixture이며 초기 검증 뒤 불변 상태로 공유한다. 증거마다 policy를 다시 읽거나 승인 자료 비용을 새로운 evidence counter에 더하지 않는다. 기존 catalogue decode/digest와 native manifest/driver/CP949/shim의 원장 비용은 같은 bytes에 대해 그대로 유지한다. 명시 caller Pins는 기존 상속 원장에서 계속 비용을 낸다. Legacy 판독은 최신 생산 source를 참조하지 않으며 새 생산은 실제 driver/runtime 결속을 계속 검사한다.
+
+“버전 literal 금지”는 검증 코드에 새 release·ABI·manifest allowlist를 박아 넣는 행위를 뜻한다. 보존 원문 SHA·tuple의 ABI/release와 schema/reader ID는 검토 대상 데이터 또는 구현한 판독 의미다. `rust-path-1.97.1/r1`처럼 의미를 식별하는 reader를 버전 문자열로 자동 재해석하지 않는다. 새 identity가 같은 reader 의미와 맞는지는 승인 항목 추가 때 검토한다. 승인 정책의 scope를 늘리거나 A를 철회하는 변경은 단순 도구 업그레이드와 별도 계약 변경이다.
+
+아래 V2-A~D의 “기존/current/legacy” 설명은 원래 결과와 지원 scope를 보존한다는 뜻이다. 해당 기본값의 **저장 위치와 신뢰 출처**는 이 V2-E 절이 소유한다.
+
 ## #370 V2-D Roslyn 승인 관측과 provenance
 
 `src/internal/ppexpect`의 reader는 현재 설치 SDK, 생산 selection, 고정 Roslyn release를 조회하지 않는다. 기대값 생성 전에 caller가 신뢰한 `roslyn-pins.json`의 두 독립 승인 digest와 exact observation subject를 기존 `ResolveEvidencePins`로 검증한다. 필수 자료는 정확히 `roslyn/tuple.json`(`roslyn-tuple`), `roslyn/observed.json`(`roslyn-observation`), `roslyn/cases.json`(`roslyn-cases`) 세 개다. 이름·역할·원문 SHA·bytes·필수 개수의 축소나 교환을 허용하지 않는다. 이 집합은 reference build 생산 집합을 대체하지 않는다.

@@ -1,5 +1,7 @@
 # Trust와 실행 계약
 
+V2-E의 [기본 승인 집합](query-reference-eligibility.md#370-v2-e-legacy-기본-승인-집합)은 저장소 게시자가 검토한 `repository-default` 신뢰 fixture다. 별도 subject를 승인한 `caller` 입력과 구분한다. 내장 문서의 data pin으로 content-addressed 집합·정책·자료의 raw digest를 대조하며, 현재 생산 선택·설치 도구·evidence의 자기 hash는 승인 기점이 아니다. 기본 승인 파일 자체와 코드를 바꿀 수 있는 게시자의 악의를 인증하는 기능은 없다. Logger 전용 승인은 전체 closure나 다른 proof scope를 만들지 않으며, caller 승인 실패에 대한 기본 fallback도 없다.
+
 V2-D의 [Roslyn 개발 envelope](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)는 caller가 별도로 검토한 신뢰 입력이다. 관측 옆에 있다는 사실은 승인이 아니며, 새 관측으로 envelope/독립 승인값을 자동 생성해 수용하지 않는다. 생산 pointer와 과거 승인은 분리한다. 승인된 raw metadata의 일관성은 실제 실행 진위나 SDK 배포본 전체 인증이 아니다. Standalone CLI의 외부 pin envelope에도 기존 qualification inline admission의 파일 identity·별칭·문서/bytes·deadline 경계를 적용한다.
 
 ## 신뢰 경계

@@ -256,7 +256,7 @@ func checkPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 		response.Producer.LanguageVersion < r.runtime.tuple.RuntimeMinCompatible || response.Producer.LanguageVersion > r.runtime.tuple.RuntimeLanguageVersion) {
 		return bad()
 	}
-	manifest := reuseobs.RuntimeManifestSHA256
+	manifest := reuseobs.DefaultRuntimeManifest()
 	var logger *reuseobs.RuntimePin
 	if r.runtime != nil {
 		manifest, logger = r.runtime.tuple.ManifestSHA256, &r.runtime.logger

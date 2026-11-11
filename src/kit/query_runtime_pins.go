@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
@@ -88,7 +89,10 @@ func (b *eligibilityBudget) runtimeManifest() string {
 	if b.runtime != nil {
 		return b.runtime.tuple.ManifestSHA256
 	}
-	return reuseobs.RuntimeManifestSHA256
+	if b.defaultRuntime != nil {
+		return b.defaultRuntime.ManifestSHA256
+	}
+	return reuseobs.DefaultRuntimeManifest()
 }
 
 func (b *eligibilityBudget) runtimeMatches(manifest string) bool {
@@ -109,12 +113,44 @@ func (b *eligibilityBudget) runtimeABI(abi eligibilityProducerABI) bool {
 	if b.runtime != nil {
 		return abi.RuntimeLanguageVersion == b.runtime.tuple.RuntimeLanguageVersion && abi.RuntimeMinCompatible == b.runtime.tuple.RuntimeMinCompatible
 	}
-	return abi.RuntimeLanguageVersion == 15 && abi.RuntimeMinCompatible == 13
+	runtime, err := b.repositoryRuntime()
+	return err == nil && abi.RuntimeLanguageVersion == runtime.RuntimeLanguageVersion && abi.RuntimeMinCompatible == runtime.RuntimeMinCompatible
+}
+
+func (b *eligibilityBudget) repositoryRuntime() (evidencepins.Runtime, error) {
+	if b.defaultRuntime != nil {
+		return *b.defaultRuntime, nil
+	}
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return evidencepins.Runtime{}, err
+	}
+	return store.Runtime()
+}
+
+func repositoryRuntimeClosure(manifest string) bool {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return false
+	}
+	runtime, ok := store.RuntimeFor(manifest)
+	return ok && runtime.Closure
+}
+
+func (s *eligibilitySession) repositoryRuntime() *Error {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "runtime", err)
+	}
+	if runtime, ok := store.RuntimeFor(s.witness.Native.RuntimeManifestSHA256); ok && runtime.Closure {
+		s.defaultRuntime, s.b.defaultRuntime = &runtime, &runtime
+	}
+	return nil
 }
 
 func (s *eligibilitySession) runtimePins(req *EvidencePinsRequest) *Error {
 	if req == nil {
-		return nil
+		return s.repositoryRuntime()
 	}
 	const tupleName = "native/runtime-tuple.json"
 	materials := map[string]EvidencePinMaterial{}
@@ -128,7 +164,7 @@ func (s *eligibilitySession) runtimePins(req *EvidencePinsRequest) *Error {
 		materials[m.Name] = m
 	}
 	if _, selected := materials[tupleName]; !selected {
-		return nil
+		return s.repositoryRuntime()
 	}
 	material := func(name, role string) ([]byte, bool) {
 		m, ok := materials[name]

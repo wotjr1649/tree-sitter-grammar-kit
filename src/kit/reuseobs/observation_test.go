@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 var (
@@ -70,6 +72,33 @@ func TestObservationStates(t *testing.T) {
 	o.Status, o.Reason, o.Events, o.Bytes, o.Counts = "UNAVAILABLE", "LOGGER_MISSING", 0, 0, &Counts{}
 	if _, err := Decode(encode(t, o), b); err != nil {
 		t.Fatal("missing logger erased actual old-tree argument:", err)
+	}
+}
+
+func TestRepositoryDefaultLoggerApproval(t *testing.T) {
+	manifest := DefaultRuntimeManifest()
+	if manifest == "" || !VerifiedRuntimeManifest(manifest) {
+		t.Fatal("repository default manifest is not logger-approved")
+	}
+	store, err := evidencepins.Repository()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := store.Runtime()
+	if err != nil || runtime.ManifestSHA256 != manifest {
+		t.Fatalf("repository default runtime mismatch: runtime=%+v err=%v", runtime, err)
+	}
+	for _, forged := range []string{"", strings.Repeat("d", 64), strings.Repeat("f", 64)} {
+		if VerifiedRuntimeManifest(forged) {
+			t.Fatalf("unapproved logger manifest accepted: %q", forged)
+		}
+	}
+
+	legacy := RuntimeManifestSHA256
+	RuntimeManifestSHA256 = strings.Repeat("f", 64)
+	t.Cleanup(func() { RuntimeManifestSHA256 = legacy })
+	if DefaultRuntimeManifest() != manifest || !VerifiedRuntimeManifest(manifest) || VerifiedRuntimeManifest(RuntimeManifestSHA256) {
+		t.Fatal("mutable compatibility value changed default approval")
 	}
 }
 

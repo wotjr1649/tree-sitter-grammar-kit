@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"reflect"
 	"regexp"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 // This reader's obligations stay fixed when the production catalogue changes.
@@ -24,11 +26,26 @@ var referenceRelease = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 
 func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest) *Error {
 	if req.Pins == nil {
-		data := []byte(eligibilityCatalogueJSON)
+		store, err := evidencepins.Repository()
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "repository-defaults", err)
+		}
+		ref, err := store.Reference()
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "reference", err)
+		}
+		if selected, ok := store.ReferenceFor(s.reg.CatalogueSHA256); ok {
+			ref = selected
+		}
+		data, err := store.Object(ref.CatalogueSHA256)
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "catalogue", err)
+		}
 		if e := s.b.charge(1, uint64(len(data)), "catalogue-digest"); e != nil {
 			return e
 		}
 		s.res.CatalogueSHA256 = digestHex(data)
+		s.referenceTuple = &eligibilityReferenceTuple{RustcRelease: ref.RustcRelease, CargoRelease: ref.CargoRelease}
 		return s.b.decode("catalogue", data, &s.catalogue, true)
 	}
 	s.res.ResultSchema = QueryReferenceEligibilityPinsResultSchema

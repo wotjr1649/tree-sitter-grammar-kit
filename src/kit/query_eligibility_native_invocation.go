@@ -124,7 +124,7 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 			s.finding("ELIGIBILITY_R4_HEADER", inv.ID, true)
 		}
 		abi, p := a.ProducerABI, record.raw.Producer
-		if (s.b.runtime != nil || a.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256) && !s.b.runtimeABI(abi) {
+		if (s.b.runtime != nil || a.RuntimeManifestSHA256 == s.b.runtimeManifest()) && !s.b.runtimeABI(abi) {
 			s.finding("ELIGIBILITY_NATIVE_RUNTIME_ABI", inv.ID, true)
 		}
 		if abi.LanguageVersion == 0 || abi.RuntimeMinCompatible == 0 || abi.RuntimeMinCompatible > abi.LanguageVersion || abi.LanguageVersion > abi.RuntimeLanguageVersion || abi.SymbolCount == 0 || p.LanguageVersion != abi.LanguageVersion || p.RuntimeLanguageVersion != abi.RuntimeLanguageVersion || p.RuntimeMinCompatible != abi.RuntimeMinCompatible || p.SymbolCount == nil || *p.SymbolCount != abi.SymbolCount || p.FieldCount == nil || *p.FieldCount != abi.FieldCount || p.Query != "tsgk-query/r1" || p.API == nil || *p.API != "tsgk-api/r1" {

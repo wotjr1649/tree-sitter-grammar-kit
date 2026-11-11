@@ -2,9 +2,10 @@ package kit
 
 import (
 	"reflect"
-	"slices"
 	"strings"
 	"unicode/utf8"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 type eligibilityBuildIdentity struct {
@@ -162,18 +163,39 @@ func (s *eligibilitySession) verifyBuild() *Error {
 					groupReady = false
 				}
 			}
-			for _, name := range []string{"rustc", "cargo"} {
-				expected := "1.97.1"
-				if s.referenceTuple != nil {
-					expected = s.referenceTuple.RustcRelease
+			var defaults *evidencepins.Store
+			if s.res.Pins == nil {
+				var err error
+				defaults, err = evidencepins.Repository()
+				if err != nil {
+					return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "reference", err)
+				}
+			}
+			releases, versionsReady := [2]string{}, true
+			for i, name := range []string{"rustc", "cargo"} {
+				release, e := s.recordedRelease(identity.Versions[name])
+				if e != nil {
+					return e
+				}
+				releases[i] = release
+				pinned := false
+				if defaults != nil {
+					pinned = defaults.ReferenceReleaseAllowed(s.res.CatalogueSHA256, name, release)
+				} else {
+					expected := s.referenceTuple.RustcRelease
 					if name == "cargo" {
 						expected = s.referenceTuple.CargoRelease
 					}
+					pinned = release == expected
 				}
-				if pinned, e := s.pinnedRelease(identity.Versions[name], expected); e != nil {
-					return e
-				} else if !pinned {
+				if !pinned {
 					s.finding("ELIGIBILITY_TOOL_VERSION", name, true)
+					groupReady, versionsReady = false, false
+				}
+			}
+			if defaults != nil && versionsReady {
+				if _, approved := defaults.ReferenceForToolchain(s.res.CatalogueSHA256, releases[0], releases[1]); !approved {
+					s.finding("ELIGIBILITY_TOOL_VERSION", "cargo", true)
 					groupReady = false
 				}
 			}
@@ -331,16 +353,16 @@ func (s *eligibilitySession) verifyBuild() *Error {
 	return nil
 }
 
-func (s *eligibilitySession) pinnedRelease(text, expected string) (bool, *Error) {
+func (s *eligibilitySession) recordedRelease(text string) (string, *Error) {
 	if e := s.b.charge(uint64(len(text))+1, 8*uint64(len(text)), "pinned-version-scan"); e != nil {
-		return false, e
+		return "", e
 	}
 	releases := []string{}
 	rows := 0
 	for line := range strings.Lines(text) {
 		if rows%1024 == 0 {
 			if e := s.r.check(); e != nil {
-				return false, e
+				return "", e
 			}
 		}
 		rows++
@@ -349,7 +371,10 @@ func (s *eligibilitySession) pinnedRelease(text, expected string) (bool, *Error)
 			releases = append(releases, strings.TrimSpace(v))
 		}
 	}
-	return slices.Equal(releases, []string{expected}), nil
+	if len(releases) != 1 {
+		return "", nil
+	}
+	return releases[0], nil
 }
 
 func (s *eligibilitySession) unitSet(stdout []byte) (bool, *Error) {

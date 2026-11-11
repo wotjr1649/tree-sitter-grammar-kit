@@ -1,0 +1,60 @@
+{
+  "schema": "tsgk-repository-default-set/r1",
+  "reader": "tsgk-repository-defaults/r1",
+  "policy_sha256": "6b67cfd04d925b6ec8f9c2893bfa5dc997e5b41fb7b32e17d211e3e0a6cfd7b2",
+  "policy_bytes": 1407,
+  "objects": [
+    {
+      "sha256": "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541",
+      "bytes": 15188
+    },
+    {
+      "sha256": "282d67dac6df7e8cd862cb596f2d5e7bc28bd1a94b6f176791dd8b8e9058d018",
+      "bytes": 56722
+    },
+    {
+      "sha256": "36aebcfae0117b158edec0c1bce6d8f05548c304f2dd2c2eb855d0f7b70d1933",
+      "bytes": 57528
+    },
+    {
+      "sha256": "391eac02ad82ef22f05a5935382921ec92371a4bea00eb3e7a6a351106a84d91",
+      "bytes": 82113
+    },
+    {
+      "sha256": "43e1e2f828832935f595280bcca86c5a9a384717be7b1995be6560dd8a7d20fd",
+      "bytes": 3329
+    },
+    {
+      "sha256": "486b43e6336f3f3c5ecaf936a4f072d1a90c5bbc5c2856d47032e92d9e02bbdf",
+      "bytes": 112
+    },
+    {
+      "sha256": "4b632382710133a711ad208ce6a7d6776df045f77fe008ec9997fa1096dd44d8",
+      "bytes": 550
+    },
+    {
+      "sha256": "760264ac9c7bf4f56afc1567528093191a0a0f32c1148f58f40d26a93e7fda98",
+      "bytes": 85529
+    },
+    {
+      "sha256": "940e42b71e057f4bc31d91f4ae59d46b6790bd554eb522897c160806abc0975e",
+      "bytes": 169573
+    },
+    {
+      "sha256": "a7b06e467cf642bfd6e80ca21ababbff9443e9504b341727c53a3a2593f9bf9d",
+      "bytes": 240
+    },
+    {
+      "sha256": "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080",
+      "bytes": 15143
+    },
+    {
+      "sha256": "fff45a626a39b92157de93772fd0ef49945047e34a5bd2a07175a64346873476",
+      "bytes": 550
+    },
+    {
+      "sha256": "646badeaebca5bfe441101178e58f2ae8f03fbd0a90d5ae2d9fb6d436d1f2ae4",
+      "bytes": 231
+    }
+  ]
+}

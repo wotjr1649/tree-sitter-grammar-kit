@@ -5,14 +5,13 @@ import (
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/drivers"
-	"io/fs"
 	"reflect"
 	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
@@ -1019,18 +1018,23 @@ func (b *eligibilityBudget) nativeStaticClosure(symbol string) (map[string]eligi
 	if b.runtime != nil {
 		return b.historicalNativeClosure(symbol)
 	}
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return nil, "", fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", "repository-defaults", err)
+	}
+	approved, err := b.repositoryRuntime()
+	if err != nil {
+		return nil, "", fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", "runtime", err)
+	}
 	files := map[string]eligibilitySnapshotRow{}
 	read := func(name string) ([]byte, *Error) {
-		info, err := fs.Stat(drivers.NativeC, "native-c/"+name)
-		if err != nil || info.Size() < 0 || info.Size() > 4<<20 {
+		sha := map[string]string{"runtime-manifest.json": approved.ManifestSHA256, "driver.c": approved.DriverSHA256, "cp949_table.h": approved.CP949SHA256}[name]
+		data, err := store.Object(sha)
+		if err != nil || len(data) > 4<<20 {
 			return nil, fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", name, err)
 		}
-		if e := b.charge(1, 4*uint64(info.Size()), "native-static"); e != nil {
+		if e := b.charge(1, 4*uint64(len(data)), "native-static"); e != nil {
 			return nil, e
-		}
-		data, err := drivers.NativeC.ReadFile("native-c/" + name)
-		if err != nil {
-			return nil, fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", name, err)
 		}
 		return data, nil
 	}
@@ -1052,7 +1056,7 @@ func (b *eligibilityBudget) nativeStaticClosure(symbol string) (map[string]eligi
 	if err := jsonv2.Unmarshal(manifest, &runtime); err != nil {
 		return nil, "", fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", "manifest", err)
 	}
-	if digestHex(manifest) != reuseobs.RuntimeManifestSHA256 {
+	if digestHex(manifest) != approved.ManifestSHA256 {
 		return nil, "", fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", "manifest", nil)
 	}
 	for _, row := range runtime.Files {
@@ -1065,7 +1069,11 @@ func (b *eligibilityBudget) nativeStaticClosure(symbol string) (map[string]eligi
 		}
 		files["driver driver/"+name] = eligibilitySnapshotRow{Bytes: uint64(len(data)), SHA256: digestHex(data)}
 	}
-	shim := []byte(fmt.Sprintf("#include <tree_sitter/api.h>\nconst TSLanguage *%s(void);\nconst TSLanguage *tsgk_language(void) { return %s(); }\n", symbol, symbol))
+	template, err := store.Object(approved.ShimTemplateSHA256)
+	if err != nil {
+		return nil, "", fail(KindInvalidInput, "NATIVE_STATIC_CLOSURE", "shim-template", err)
+	}
+	shim := []byte(fmt.Sprintf(string(template), symbol, symbol))
 	if e := b.charge(1, 2*uint64(len(shim)), "native-shim"); e != nil {
 		return nil, "", e
 	}
@@ -1102,7 +1110,7 @@ func eligibilityBuildStep(text string) (string, []string, bool) {
 	return name, args, len(args) > 0 && fmt.Sprintf("%q", args) == list
 }
 
-// Rust 1.97.1 Path::is_absolute differs from Go for Windows prefixes.
+// The approved Rust path reader differs from Go for Windows prefixes.
 func eligibilityReferenceAbsolutePath(value, platform string) bool {
 	if platform != "windows/amd64" {
 		return eligibilityAbsolutePath(value, platform)

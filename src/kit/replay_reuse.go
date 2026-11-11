@@ -77,7 +77,7 @@ func recordManifest(c *rcCase) (manifest string, declared bool) {
 		if m, ok := observationProducer(c.Producer.ReuseObservation); ok {
 			return m, true
 		}
-		return reuseobs.RuntimeManifestSHA256, false
+		return reuseobs.DefaultRuntimeManifest(), false
 	}
 	for _, s := range c.Steps {
 		var markers []struct {
@@ -90,7 +90,7 @@ func recordManifest(c *rcCase) (manifest string, declared bool) {
 			break
 		}
 	}
-	return reuseobs.RuntimeManifestSHA256, false
+	return reuseobs.DefaultRuntimeManifest(), false
 }
 
 // responseManifest is the readable manifest a raw response declared, or "" if none.
@@ -281,7 +281,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
 	// Legacy qualification binds to current; explicit approval binds to the subject runtime.
-	g.check(x.observationWire != "tsgk-native/r4" || x.observationRuntime != nil && x.observationRuntime.Matches(manifest) || x.observationRuntime == nil && manifest == reuseobs.RuntimeManifestSHA256, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "qualification 관측이 선택한 runtime manifest와 다르다")
+	g.check(x.observationWire != "tsgk-native/r4" || x.observationRuntime != nil && x.observationRuntime.Matches(manifest) || x.observationRuntime == nil && repositoryRuntimeClosure(manifest), c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "qualification 관측이 선택한 runtime manifest와 다르다")
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
 	// the source length and API point bytes of the request of the response starting at a

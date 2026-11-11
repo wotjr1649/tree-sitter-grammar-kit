@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #370 V2-E 기본 승인 집합 검사
+
+기본 집합의 raw set/object digest·tuple·scope와 strict 형식을 검사하고 미승인 identity, 위조·재해시·필수 자료 축소를 거부한다. B/C 승인 항목을 같은 기본 집합에 추가한 뒤 A의 reference/runtime/logger 선택과 실제 legacy 호출 결과·counter가 같아야 한다. 변경 전 HEAD source를 read-only Go overlay로 사용해 같은 legacy fixture의 전체 결과를 비교하며, 기존 fixture와 기대값도 유지한다. 과거 logger 전용 manifest가 전체 native closure로 승격되지 않는지 검사한다. `RepositoryEvidenceDefaults()`는 결과 재작성 없이 실제 승인 출처와 집합·정책 digest를 제공한다.
+
+기본 집합 digest 대조를 제거한 overlay mutant는 위조 반례의 assertion으로 실패해야 한다. 예전 Rust release·runtime ABI/manifest allowlist 또는 current embedded closure를 다시 넣으면 `TestNoHardcodedToolVersions`가 실패해야 한다. Compile 오류·미선택은 mutant 검출이 아니다. `CGO_ENABLED=0`에서 gofmt·vet/build·kit 전체·CLI 전체·영향 native·foundation 전체를 직접 실행한다. 미추적 파일의 module-proxy export 누락은 표준 실패와 제품/consumer assertion을 유지한 test-only packaging overlay 결과를 구분해 기록한다. 실제 과거 실행·새 toolchain/ABI 자격·필수 CI·PR/main 통합은 별도다.
+
 ## #370 V2-D Roslyn·CLI 검사
 
 `TestRoslynPinsProductionIndependence`는 보존 관측 A가 새 B/C 생산 선택 뒤에도 같은 metadata·사례 기대값을 내는지 검사한다. 승인 r3 합성 관측은 SDK·oracle/Roslyn DLL identity를 정확한 tuple에 결속한다. `TestRoslynPinsRejectForgery`는 미승인 digest·원문 치환·SDK/DLL 혼합·provenance 누락·사례 축소·미지원 reader/scope를 거부한다. Inventory의 A/B/C 대조와 기본 `TestQualificationInventory`는 과거 fixture 원문 불변 및 새 승인 관측에서 기대값을 도출하는 경로를 검사한다. `TestNoHardcodedToolVersions`는 시험을 포함한 Roslyn/SDK version equality와 C#·MSBuild 파일을 검사하며 content hash와 과거 관측 payload는 release equality로 취급하지 않는다.

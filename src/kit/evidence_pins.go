@@ -3,7 +3,30 @@ package kit
 import (
 	"context"
 	"strings"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
+
+// RepositoryEvidenceApproval identifies the reviewed fallback, not caller approval or execution.
+type RepositoryEvidenceApproval struct {
+	ResultSchema   string `json:"result_schema"`
+	ApprovalSource string `json:"approval_source"`
+	ApprovalSHA256 string `json:"approval_sha256"`
+	PinSetSHA256   string `json:"pin_set_sha256"`
+	PolicySHA256   string `json:"policy_sha256"`
+}
+
+// RepositoryEvidenceDefaults returns provenance separately to preserve legacy result bytes.
+// Explicit Pins/RuntimePins remain caller-approved and do not inherit this approval.
+func RepositoryEvidenceDefaults() (RepositoryEvidenceApproval, error) {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return RepositoryEvidenceApproval{}, err
+	}
+	id := store.Identity()
+	return RepositoryEvidenceApproval{ResultSchema: "tsgk-repository-evidence-approval/r1",
+		ApprovalSource: id.ApprovalSource, ApprovalSHA256: id.SelectionSHA256, PinSetSHA256: id.PinSetSHA256, PolicySHA256: id.PolicySHA256}, nil
+}
 
 const (
 	EvidencePinSetSchema       = "tsgk-evidence-pin-set/r1"

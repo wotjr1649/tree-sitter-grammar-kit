@@ -7,17 +7,22 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"strings"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 const (
-	Schema                = "tsgk-reuse-observation/r1"
-	Policy                = "tsgk-reuse-log/r1"
-	RuntimeManifestSHA256 = "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541"
-	MaxEvents             = 16384
-	MaxBytes              = 1048576
-	MaxMessageBytes       = 1024
-	MaxRecordBytes        = 4096
+	Schema          = "tsgk-reuse-observation/r1"
+	Policy          = "tsgk-reuse-log/r1"
+	MaxEvents       = 16384
+	MaxBytes        = 1048576
+	MaxMessageBytes = 1024
+	MaxRecordBytes  = 4096
 )
+
+// RuntimeManifestSHA256 is retained as a compatibility snapshot; internal decisions use DefaultRuntimeManifest.
+// Deprecated: this variable is mutable and is not an approval source.
+var RuntimeManifestSHA256 = DefaultRuntimeManifest()
 
 const RuntimeLoggerReader = "tsgk-runtime-logger/r1"
 
@@ -47,11 +52,23 @@ func (p RuntimePin) Valid() bool {
 	return p.Matches(p.manifest)
 }
 
-// VerifiedRuntimeManifest reports whether recorded observations bound to this runtime
-// manifest are read under this policy: the current RuntimeManifestSHA256 (v0.27.1), which
-// live runs must declare, and 659cda7's, whose parser log formats were checked identical (#213).
+// DefaultRuntimeManifest returns the repository-approved runtime used by legacy producers.
+func DefaultRuntimeManifest() string {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return ""
+	}
+	runtime, err := store.Runtime()
+	if err != nil {
+		return ""
+	}
+	return runtime.ManifestSHA256
+}
+
+// VerifiedRuntimeManifest reports whether the repository-approved logger reader accepts the manifest.
 func VerifiedRuntimeManifest(sha string) bool {
-	return sha == RuntimeManifestSHA256 || sha == "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+	store, err := evidencepins.Repository()
+	return err == nil && store.LoggerAllowed(sha)
 }
 
 // Counts contains only recognized parse events, never logger text or node addresses.

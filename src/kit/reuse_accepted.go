@@ -195,7 +195,7 @@ func judgeReuseAccepted(req ReuseAcceptedRequest, omitControl bool) (ReuseAccept
 		fail("REUSE_ACCEPTED_POLICY_MISMATCH")
 	}
 	hasExpected := e.Observation != nil || req.Raw != nil
-	expectedManifest := reuseobs.RuntimeManifestSHA256
+	expectedManifest := reuseobs.DefaultRuntimeManifest()
 	if req.runtime != nil {
 		expectedManifest = req.runtime.tuple.ManifestSHA256
 	}

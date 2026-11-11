@@ -1,5 +1,11 @@
 # 공개 offline Go API — 설계 r2 (S01 구현)
 
+## #370 V2-E 기본 승인 provenance
+
+`RepositoryEvidenceDefaults() (RepositoryEvidenceApproval, error)`는 내장 기본 승인 자료의 무결성을 검사한 뒤 `result_schema=tsgk-repository-evidence-approval/r1`, `approval_source=repository-default`, `approval_sha256`, `pin_set_sha256`, `policy_sha256`을 반환한다. Process·network·host 파일 조회는 없다. 기존 legacy 결과 bytes·schema·counter를 유지하기 위한 별도 provenance 결과이며, caller가 원래 결과와 함께 보관할 수 있다. 명시적 `Pins`/`RuntimePins`는 계속 `caller` 승인이고 기존 nested 결과에 실제 digest를 기록한다. 기본 승인으로 caller 승인의 실패를 대체하지 않는다. 기본 runtime만 사용하는 reference-only Pins의 scope도 구분한다. 자세한 신뢰 기점·scope·자료 보존은 [V2-E 정본](query-reference-eligibility.md#370-v2-e-legacy-기본-승인-집합)을 따른다.
+
+`reuseobs.DefaultRuntimeManifest()`는 검토된 기본 runtime manifest를 반환한다. 기존 `reuseobs.RuntimeManifestSHA256` 식별자는 소스 호환을 위한 deprecated snapshot 변수로 남지만 더 이상 compile-time constant가 아니다. 기존 consumer가 `const` 식에 사용했다면 함수 호출 또는 변수 초기화로 옮겨야 한다. 해당 공개 snapshot을 변경해도 reader 승인·fallback·native 기대값은 바뀌지 않는다.
+
 이 문서는 S01에서 구현한 첫 공개 계약이다. root module의 `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`이 entry이고, CLI `src/cmd/tsgk`는 같은 operation을 호출하며 API가 CLI를 실행하지 않는다. r1 초안 대비 r2는 kit 설정 wall, encoding 선언, identity 한정 대용량 예외, 비공개 corpus 진입점과 결과의 policy 공개를 더했다. 고급 native/replay API 전체 공개는 약속하지 않는다.
 
 ## #370 역사 자료 pin의 실험적 offline 진입점
