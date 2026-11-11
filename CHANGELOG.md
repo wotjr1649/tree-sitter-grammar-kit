@@ -4,6 +4,8 @@
 
 - Ordinary base의 소비 필드만 input marshal 예약에 포함하고 replay decode·node/capture/observation·기대값 검색 순회에 맞춰 work 상한을 분리했다(Refs #362). 공용 reducer 검사·fact 재계산·base FAIL과 legacy 원장·한도를 유지하며 SQL capacity는 공개 호출의 실제 중단 단계로 보고한다.
 
+- Ordinary required ID의 prefix·hex 검사와 고정 길이 key 복사를 한 순회로 합치고 전역 ID 유일성·tuple union 검사를 유지한다. 선택 plan header의 전역 의미 검사는 유지하면서 실제 검사하는 row·문자열에 맞게 work 예약을 교정한다(Refs #362). 기존 한도에서 선택 TSQL 공개 호출을 seal까지 측정했지만 expected 부재·synthetic reference 때문에 SQL은 계속 `CAPACITY_UNPROVEN`/BLOCKED다. Differential·변조·실제 순회 계측·mutant로 원장과 오류 우선순위를 확인한다.
+
 - Ordinary registration의 전체 strict shape·span index와 case/query/required header 재해석을 단일 strict scan과 cached header로 합쳤다(Refs #362). 전역 ID·coordinate 유일성·exact union·교차 참조와 선택 typed decode, 구문 우선 오류 분류를 유지하며 실제 decoder·token·header backing-array·문자열 검사에 맞춰 원장을 계상한다. 비선택 typed container의 예약은 실제 중복 해석 제거와 함께 없애고 한도는 유지한다. 기존 decoder와의 differential, 전역 ID 검사 mutant, 독립 할당·방문 계측 및 SQL 공개 호출 재측정으로 검증한다.
 
 - Ordinary base adapter가 pinned fact pack/mapping과 ordered suffix에 결속된 각 step·role·query의 facts를 raw captures와 편집 후 source에서 재계산하고 저장 step facts 및 base projection과 대조한다(Refs #362). 공용 base reducer의 step0 claim 의미와 독립 expected 경계, legacy r4–r6/r10 및 한도를 유지한다. 실제 owned PostgreSQL `alt-postgresql-sql-B04-22` 공개 재측정은 base/semantic PASS·9/9 VERIFIED이며 logical 698,039,669 B/work 14,108,124/read 134,443,451 B다. Approval/reference는 합성 시험 자료이고 전체 SQL route/P0 admission은 미입증이다.

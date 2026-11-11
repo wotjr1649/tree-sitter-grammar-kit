@@ -26,6 +26,15 @@ Registration의 전체 strict shape와 header 추출은 같은 token scan을 사
 
 Test-only overlay는 실제 token 읽기·header backing-array 할당과 row 복사·선택 typed row를 관찰하고 대응 label별 예약이 실제 이상임을 assert한다. 별도 직렬 프로세스에서 `runtime.MemStats.TotalAlloc` 차분으로 scan 및 전체 registration decode의 누적 할당도 확인한다. 이 값은 retained heap peak가 아니며 다른 원장 단계의 여유로 누락을 숨기지 않는다. PostgreSQL/TSQL public 측정은 실제 owned-native r8과 같은 stage observer를 사용하고 native 1 GiB/30초, compiler 4 GiB/120초 HARD receipt·검증된 cleanup·잔류 0을 확인한다. 원장 한도는 그대로이며 뒤 base/reference/expected gate에 남은 미완료를 semantic PASS로 바꾸지 않는다.
 
+
+### #362 required tuple·plan header work 검증
+
+Required ID의 prefix와 64-byte lowercase hex suffix는 한 순회에서 검사·복사하고 전역 고정 key map과 전체 tuple union을 유지한다. `TestOrdinaryRequiredIDKey`는 각 byte 위치의 256개 값과 길이 경계를 기존 regexp 의미와 대조하며, `TestOrdinaryRequiredIDUnselectedFormatAndPrecedence`는 비선택 malformed ID와 늦은 syntax 오류 우선순위를 기존 differential oracle로 확인한다. Suffix 검사 mutant는 대응 assertion에서 실패해야 한다. 기존 regonce·shardplan differential과 전역 유일성·cross-link 음성도 유지한다.
+
+Plan header는 비선택 route/binding/member까지 종전 validator를 그대로 호출한다. `TestOrdinaryPlanHeaderGlobalMeaningAndPrecedence`는 caller가 commitment까지 다시 결속한 전역 header 변조가 뒤쪽 malformed proof보다 먼저 같은 오류 Kind/Code/Path로 거부되는지 검사한다. `TestOrdinaryPlanHeaderReservationTracksVisitedData`는 검사하지 않는 note의 길이가 의미 검사 work를 늘리지 않고 실제 query ID가 늘면 예약이 증가하는지 확인한다. 일반 실행에서는 `TestOrdinaryPlanHeaderValidationAccountingOverlay`가 명시적으로 SKIP하며, 독립 test-only overlay에서만 실제 validator/helper loop·ID byte 검사·key 복사를 계측해 대응 label의 `계상 >= 실제`를 assert한다. 이 측정은 Go runtime hash/regexp 내부 instruction이나 RSS 측정이 아니다.
+
+같은 actual owned-native r8 경로로 SQL 공개 호출의 변경 전후 stage/label 원장과 HARD receipt를 보존한다. 2026-11-12 Windows 선택 TSQL run은 `seal`까지 work 31,240,589/32,000,000, logical 942,338,579/1,073,741,824 B, read 126,923,146/268,435,456 B에서 완료했다. Expected `UNAVAILABLE`과 synthetic reference 40행으로 인해 semantic/admission은 계속 `CAPACITY_UNPROVEN`/BLOCKED다. 이 결과는 선택 fixture의 전체 공개 제어 흐름 측정이며 독립 expected를 소비한 full SQL capacity 증명이 아니다. Base 두 항목의 구현·한도는 바꾸지 않는다.
+
 ## #362 P2-C ordinary guarded reader 활성화 전 검증 계약
 
 이 검증 계약은 exported experimental `VerifyOrdinaryQuerySemantics`의 acceptance gate다. 구현에서 helper를 coordinator로 연결한 사실만으로 end-to-end API, ordinary PASS 또는 full SQL capacity가 확인되지는 않는다.

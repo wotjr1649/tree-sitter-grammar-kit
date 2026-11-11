@@ -38,7 +38,10 @@ func (b *eligibilityBudget) ordinarySelectedPlan(data []byte, selection ordinary
 	if e := b.decodeOrdinaryTyped("ordinary-plan-header", commitment.Header, &plan); e != nil {
 		return plan, e
 	}
-	if e := b.charge(32*uint64(len(commitment.Header)), 4*uint64(len(commitment.Header)), "ordinary-plan-header-validation"); e != nil {
+	if e := b.charge(0, 4*uint64(len(commitment.Header)), "ordinary-plan-header-validation"); e != nil {
+		return plan, e
+	}
+	if e := b.chargeOrdinaryPlanHeaderValidation(plan); e != nil {
 		return plan, e
 	}
 	if err := validateOrdinaryPlanHeader(plan, false); err != nil {
@@ -77,6 +80,66 @@ func (b *eligibilityBudget) ordinarySelectedPlan(data []byte, selection ordinary
 		plan.Shards = append(plan.Shards, shard)
 	}
 	return plan, b.r.check()
+}
+
+// chargeOrdinaryPlanHeaderValidation bounds the rows and strings inspected by the
+// selected-header validator; the commitment header also contains uninspected estimates.
+func (b *eligibilityBudget) chargeOrdinaryPlanHeaderValidation(plan OrdinaryShardPlan) *Error {
+	const label = "ordinary-plan-header-validation"
+	if e := b.charge(1024, 0, label); e != nil {
+		return e
+	}
+	for _, pin := range []OrdinaryPin{plan.Registry, plan.Witness, plan.Profile, plan.Assets} {
+		work := uint64(64+8*len(pin.SHA256)) + 64*uint64(len(pin.Path))
+		if e := b.charge(work, 0, label); e != nil {
+			return e
+		}
+	}
+	for _, value := range plan.CapacityUnknown {
+		if e := b.charge(32+8*uint64(len(value)), 0, label); e != nil {
+			return e
+		}
+	}
+	for _, budget := range plan.Budget.SQL {
+		if e := b.charge(96+8*uint64(len(budget.Route)), 0, label); e != nil {
+			return e
+		}
+	}
+	for _, route := range plan.Budget.ReferenceRoutes {
+		if e := b.charge(64+8*uint64(len(route.Route)+len(route.Set)), 0, label); e != nil {
+			return e
+		}
+	}
+	for _, route := range plan.Routes {
+		if e := b.charge(128+8*uint64(len(route.Route)+len(route.Set)), 0, label); e != nil {
+			return e
+		}
+		for _, query := range route.NativeQueryIDs {
+			if e := b.charge(32+8*uint64(len(query)), 0, label); e != nil {
+				return e
+			}
+		}
+	}
+	for _, binding := range plan.Bindings {
+		if e := b.charge(128+8*uint64(len(binding.Route)+len(binding.Platform)+len(binding.Subject)+len(binding.ClosureEncoding)), 0, label); e != nil {
+			return e
+		}
+		for _, member := range binding.Members {
+			work := uint64(128 + 8*(len(member.Owner)+len(member.CaseOrBatch)+len(member.Role)))
+			work += 64*uint64(len(member.Path)+len(member.Pin.Path)) + 8*uint64(len(member.Pin.SHA256))
+			if e := b.charge(work, 0, label); e != nil {
+				return e
+			}
+		}
+	}
+	for _, route := range plan.Routes {
+		for _, host := range []string{"windows-amd64", "linux-amd64"} {
+			if e := b.charge(32+8*uint64(len(route.Route)+len(host)), 0, label); e != nil {
+				return e
+			}
+		}
+	}
+	return b.r.check()
 }
 
 func (b *eligibilityBudget) ordinarySelectedShard(plan OrdinaryShardPlan, shard OrdinaryPlanShard) *Error {
