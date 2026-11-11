@@ -103,7 +103,7 @@ func (b *eligibilityBudget) pinDescriptors(set evidencePinSet) (map[string]bool,
 			return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", pin.Name, nil)
 		}
 		switch pin.Role {
-		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-tuple", "runtime-manifest", "runtime-patch", "runtime-readers", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
+		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-tuple", "runtime-manifest", "runtime-patch", "runtime-readers", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases", "roslyn-tuple":
 		default:
 			return nil, fail(KindUnsupported, "PIN_ROLE_UNSUPPORTED", pin.Name, nil)
 		}

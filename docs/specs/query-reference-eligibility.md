@@ -1,10 +1,24 @@
 # Query reference offline eligibility 계약 (#216)
 
+## #370 V2-D Roslyn 승인 관측과 provenance
+
+`src/internal/ppexpect`의 reader는 현재 설치 SDK, 생산 selection, 고정 Roslyn release를 조회하지 않는다. 기대값 생성 전에 caller가 신뢰한 `roslyn-pins.json`의 두 독립 승인 digest와 exact observation subject를 기존 `ResolveEvidencePins`로 검증한다. 필수 자료는 정확히 `roslyn/tuple.json`(`roslyn-tuple`), `roslyn/observed.json`(`roslyn-observation`), `roslyn/cases.json`(`roslyn-cases`) 세 개다. 이름·역할·원문 SHA·bytes·필수 개수의 축소나 교환을 허용하지 않는다. 이 집합은 reference build 생산 집합을 대체하지 않는다.
+
+Tuple은 `schema=tsgk-roslyn-pin-tuple/r1`, `reader=tsgk-roslyn-selection/r1`, `observation_sha256`, `cases_sha256`, `observation_schema`, `roslyn`, `language_version`, `scope`를 결속한다. `language_version=Latest`는 구현한 reader 의미이며 서로 다른 Roslyn의 Latest가 같다는 자동 승인이 아니다. 사례의 순서·ID·분모와 cases 원문을 대조하고 선택 기대값은 승인 관측에서만 도출한다. 관측은 평가기를 호출해 생성하지 않는다.
+
+`scope=legacy-observation`은 보존 r2 관측으로 기대값을 생성하는 범위다. 기존 5.9 관측, cases, inventory와 content-addressed object는 그대로 보존한다. 과거 SDK·DLL 원본과 측정값은 없으므로 SDK/DLL provenance 주장은 **BLOCKED**다. Legacy tuple에 provenance를 붙여 과거 측정으로 소급하지 않는다. 새 tuple/object/set은 추가하며 생산 pointer를 바꾸지 않는다.
+
+`scope=sdk-dll-provenance`는 r3 관측과 tuple에 같은 `provenance`를 요구한다. 필드는 `sdk`, `oracle_sha256`, `code_analysis_sha256`, `csharp_sha256`다. SDK identity는 build 시 `NETCoreSdkVersion`을 assembly metadata에 넣고, producer는 자신의 실제 DLL 및 loaded Roslyn 두 DLL을 hash한다. SDK release나 DLL SHA를 현재값과 비교하지 않고 승인 tuple의 정확한 조합에 결속한다. 누락·불일치·미지원 reader/scope는 수용하지 않는다. 이 값의 일관성은 외부 승인에 조건부이며 SDK 배포본 전체 또는 실제 실행 진위를 독립 인증하지 않는다.
+
+`roslyn-pins.json`은 `approved_approval_sha256`, `approval_base64`, `approved_pin_set_sha256`, `pin_set_base64`, `tuple_base64`를 가진 caller-trusted 개발 입력이다. Base64는 원문 bytes를 보존한다. 16 MiB 문서 한도와 strict JSON을 적용한 뒤 공유 resolver의 기존 read/work/logical 한도를 그대로 적용한다. 기본 차분 시험과 inventory 생성기는 저장소가 검토한 fixture envelope를 쓴다. 로컬 differential batch는 `observed-*.json.pins.json`을 별도로 공급해야 하며 새 관측을 자동 승인하지 않는다. 새 inventory 생성은 `TSGK_PP_INVENTORY_DIR`로 `cases.json`, `roslyn-observed.json`, `roslyn-pins.json`이 있는 별도 검토 디렉터리를 명시한다. 기본 호출은 기존 inventory bytes·schema를 유지한다. 새 관측을 채택할 때 syntax·CST 수동 등록의 유효성도 별도로 검토해야 한다.
+
+Standalone replay·qualification의 외부 pin 전달은 [V2-D CLI admission](cli-and-profile.md)을 따른다. 기존 API·reducer의 opt-in 없는 의미와 schema를 유지한다. 실제 새 Roslyn/SDK 자격은 합성 자료 시험으로 주장하지 않는다.
+
 이 experimental API는 caller가 evidence 밖에서 신뢰한 승인 문서에 조건부인 저장 근거의 일관성을 검사한다. 실제 실행 진위·서명·게시자 인증이나 전체 route의 qualification 완료를 증명하지 않는다. 검증 중 process·network·임시 파일·원래 호스트 경로 조회를 수행하지 않는다. 기존 [reference connection](instrumented-query-reference.md)의 r1 및 native/r2 의미는 유지한다.
 
 ## #370 V2-A 역사 자료 pin 입력
 
-`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1, 생산 및 공개 호출 전달은 V2-B2 계약을 따른다. Runtime은 아래 V2-C의 명시적 tuple, 일반 logger replay·qualification은 V2-C2, accepted·preprocess-CST는 V2-C3의 별도 reader 범위에서 지원한다. Roslyn 이행은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
+`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1, 생산 및 공개 호출 전달은 V2-B2 계약을 따른다. Runtime은 아래 V2-C의 명시적 tuple, 일반 logger replay·qualification은 V2-C2, accepted·preprocess-CST는 V2-C3의 별도 reader 범위에서 지원한다. Roslyn 기대값 생성과 provenance는 위 V2-D 계약을 따른다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
 
 `EvidencePinsRequest`의 `Approval`, `PinSet`, `Subject`는 원문 bytes이고 `Materials`는 정확한 논리 이름→원문 bytes map이다. Caller는 graph 밖에서 **독립 승인한** `ApprovedApprovalSHA256`와 `ApprovedPinSetSHA256`를 제공한다. 증거나 sidecar의 자기 hash를 그대로 이 두 field에 복사하는 것은 독립 승인이 아니다. API는 승인 작성자의 진위를 인증하지 않는다. Caller는 호출 중 slice/map을 변경하지 않는다. 함수는 입력을 수정하거나 file/process/network에 접근하지 않고 결과는 원문 slice/map을 소유하지 않는다.
 
@@ -16,7 +30,7 @@
 | `tsgk-evidence-pin-set/r1` | `schema`, `reader`, 비어 있지 않은 `materials` 배열. 행은 `name`, `role`, `bytes`, `sha256`이다. |
 | `tsgk-evidence-pin-approval/r1` | `schema`, `pin_set_sha256`, `subject_sha256`, `reader`, `scope`. 기존 approval/registration/profile 등 caller가 선택한 **하나의 원본 subject 전체 bytes**에 결속한다. 다른 graph/profile/candidate를 대표하는 원문으로 sidecar를 재사용하면 FAIL이다. 복수 문서 closure의 의미 검증은 해당 소비 API가 담당한다. |
 
-지원 reader는 `tsgk-evidence-materials/r1`, scope는 `historical-materials`뿐이다. 이 reader는 자료를 opaque bytes로 결속하며 catalogue 규칙·Rust version stdout·ABI·Roslyn diagnostic을 해석하지 않는다. 역할은 `reference-catalogue`, `reference-input`, `reference-tuple`, `runtime-tuple`, `runtime-manifest`, `runtime-patch`, `runtime-readers`, `driver`, `cp949`, `shim-template`, `roslyn-observation`, `roslyn-cases`다. 알 수 없는 schema/reader/scope/role은 UNSUPPORTED이며 PASS가 아니다. 더 강한 scope는 승인 문서가 요구해도 지원하지 않는다. 후속 semantic reader는 고정 의무·분모·known-rule를 자체 소유해야 하며 이 배열로 줄일 수 없다.
+지원 reader는 `tsgk-evidence-materials/r1`, scope는 `historical-materials`뿐이다. 이 reader는 자료를 opaque bytes로 결속하며 catalogue 규칙·Rust version stdout·ABI·Roslyn diagnostic을 해석하지 않는다. 역할은 `reference-catalogue`, `reference-input`, `reference-tuple`, `runtime-tuple`, `runtime-manifest`, `runtime-patch`, `runtime-readers`, `driver`, `cp949`, `shim-template`, `roslyn-observation`, `roslyn-cases`, `roslyn-tuple`이다. 알 수 없는 schema/reader/scope/role은 UNSUPPORTED이며 PASS가 아니다. 더 강한 scope는 승인 문서가 요구해도 지원하지 않는다. 후속 semantic reader는 고정 의무·분모·known-rule를 자체 소유해야 하며 이 배열로 줄일 수 없다.
 
 이름은 host 경로로 열지 않는다. 기존 portable 상대 경로 검사, 1,024 bytes 상한과 대소문자 접기 중복 거부를 적용하고 입력 map은 정확한 이름으로 결속한다. 미사용·다른 대소문자 이름은 잘못된 입력이다. 동일 내용의 여러 역할은 각 정확한 이름을 제공한다. 역할·bytes·hash·순서는 승인된 집합 원문 digest에 함께 결속된다.
 
@@ -52,7 +66,7 @@ V2-B1의 직접 eligibility reference 검증에 이어 V2-B2는 아래 공개 �
 
 Pin 자료를 새 원장에서 다시 검증하지 않는다. 기존 semantic/replay/qualification 원장에 resolve·의미 검사·자료 비용을 합산하고 small 한도와 확정 FAIL/최초 code/부분 counter 보존 규칙을 유지한다. 생산 selection과 설치 도구는 역사 검증 입력이 아니다. Raw subject·run-binding·producer의 recorded verdict·NEW_RUN과 기존 approval/registration/witness schema는 다시 쓰지 않는다.
 
-Replay·qualification 및 CLI의 명시적 opt-in은 [identity/evidence](identity-and-evidence.md#370-v2-b2-공개-pin-context와-저장-결과)와 [CLI admission](cli-and-profile.md#370-v2-b2-historical-reference-pin-admission)을 따른다. 기존 reducer의 의미를 넓히지 않는다. Historical runtime tuple의 추가 소비는 아래 V2-C를 따른다. Accepted·preprocess-CST와 Roslyn provenance는 후속 범위다.
+Replay·qualification 및 CLI의 명시적 opt-in은 [identity/evidence](identity-and-evidence.md#370-v2-b2-공개-pin-context와-저장-결과)와 [CLI admission](cli-and-profile.md#370-v2-b2-historical-reference-pin-admission)을 따른다. 기존 reducer의 의미를 넓히지 않는다. Historical runtime tuple의 추가 소비는 아래 V2-C를 따른다. Accepted·preprocess-CST는 아래 V2-C3, Roslyn provenance는 위 V2-D를 따른다.
 
 ## #370 V2-C 승인 historical runtime 검증
 
@@ -70,7 +84,7 @@ Semantic record의 producer·ABI·static closure, BOUND native cache와 raw Expe
 
 보존 집합 `6cd6a117001a1d90ab174e65df6fd735773e6af682c5ede43978cdfedb50f408`은 V2-A의 현재 원문과 runtime tuple, `d301defb285c098a95bb5d6e4e7e01209eee545761969bca14cdd54994416801`은 runtime 상향 직전 repository commit `29dd21a`의 manifest·driver와 같은 CP949·patch·shim 생성식에 결속한다. 원래 object/set과 생산 selection은 바꾸지 않는다. 이 자료는 승인 후보이며 외부 caller 승인이 아니다. 당시 실제 evidence의 build identity가 이 driver를 사용했는지도 별도로 대조해야 한다.
 
-과거 runtime checkout 원문83개와 당시 실제 r4/build/승인 graph를 복원하거나 실행하지 않았다. 기존 verifier와 같은 **승인 manifest inventory에 대한 저장 closure 일관성**을 검증할 수 있을 뿐, 미보존 실제 실행 증거를 PASS로 생성하지 않는다. Logger 호환만으로 accepted event나 preprocess-CST 지원을 추정하지 않는다. 일반 logger replay·qualification은 아래 V2-C2의 새 opt-in으로 확장한다. Accepted API/replay와 preprocess-CST API/replay의 historical runtime 전달은 미구현이며 기존 current-only 경계를 유지한다. Roslyn·독립 provenance와 standalone replay CLI admission은 V2-D/후속 범위다.
+과거 runtime checkout 원문83개와 당시 실제 r4/build/승인 graph를 복원하거나 실행하지 않았다. 기존 verifier와 같은 **승인 manifest inventory에 대한 저장 closure 일관성**을 검증할 수 있을 뿐, 미보존 실제 실행 증거를 PASS로 생성하지 않는다. Logger 호환만으로 accepted event나 preprocess-CST 지원을 추정하지 않는다. 일반 logger replay·qualification은 아래 V2-C2의 새 opt-in으로 확장한다. Accepted API/replay와 preprocess-CST API/replay의 historical runtime 전달은 V2-C3에서 추가했다. Roslyn 및 standalone replay CLI admission은 위 V2-D, 미보존 실제 역사 provenance는 BLOCKED 경계를 따른다.
 
 ## 호출과 판정
 
@@ -180,7 +194,7 @@ Logger 판독 권한은 accepted-event 또는 preprocess-CST 권한을 포함하
 
 Replay는 exact Profile 원문 subject를 사용한다. 새 `native-result-r11`은 기존 accepted/r8, `oracle-set-r8`은 accepted/r3, `native-result-r12`는 CST/r7의 판독 의미에 해당 reader 승인을 더한다. `RuntimePins` 없는 새 reducer 또는 기존 reducer에 승인 입력을 붙이면 거부한다. 결과는 `tsgk-replay-result/r6`이며 nested `RuntimeEvidenceResult.reader`로 범위를 기록한다. 저장 PASS reader는 승인·tuple identity·고정8개 자료와 reader 자료, 필수 proof gate의 PASS·consumption·graph subject 일관성을 검사한다. CST 사례는 유일한 ID와 원본 r1/PASS·빈 code·중첩 승인 부재·비어 있지 않은 step을 요구한다. 원본 incremental/Oracle/CST/accepted projection schema는 그대로다.
 
-Qualification은 inventory/r8과 host의 exact run-identity subject를 유지한다. Reader 자료를 명시한 host가 있으면 `tsgk-qualification-result/r13`을 사용한다. 제출된 accepted/symbol workload마다 같은 host 원장에서 해당 scope를 확인하고 `QualSet.runtime_pins`에 실제 소비 범위를 남긴다. 검증된 private token만 내부 replay로 전달하고 다음 set/host로 권한을 유출하지 않는다. Candidate·cohort·platform·당시 NEW_RUN·등록 runtime commit·고정 original/target/control 분모는 유지한다. `QuerySemantics` 동시 입력과 이전 inventory admission, standalone CLI admission은 추가하지 않는다.
+Qualification은 inventory/r8과 host의 exact run-identity subject를 유지한다. Reader 자료를 명시한 host가 있으면 `tsgk-qualification-result/r13`을 사용한다. 제출된 accepted/symbol workload마다 같은 host 원장에서 해당 scope를 확인하고 `QualSet.runtime_pins`에 실제 소비 범위를 남긴다. 검증된 private token만 내부 replay로 전달하고 다음 set/host로 권한을 유출하지 않는다. Candidate·cohort·platform·당시 NEW_RUN·등록 runtime commit·고정 original/target/control 분모는 유지한다. `QuerySemantics` 동시 입력과 이전 inventory admission은 지원하지 않는다. Standalone CLI admission은 V2-D에서 추가했다.
 
 자료 결속 PASS는 실행 진위나 새 runtime의 실제 자격이 아니다. 미보존 raw/build/checkout·독립 provenance를 추측하지 않으며 실제 역사 자료가 없으면 BLOCKED다. 생산 pointer 변경은 동일 과거 승인·증거의 결과를 바꾸지 않는다.
 
@@ -196,4 +210,4 @@ Qualification은 inventory/r8과 host의 exact run-identity subject를 유지한
 
 자료/tuple 누락은 BLOCKED이고 승인/실제 bytes 또는 subject 모순은 FAIL, 미지원 reader는 UNSUPPORTED다. 확정 FAIL과 부분 counter는 뒤의 취소·한도 오류에도 남는다. Resolve와 runtime 의미 검사는 기존 read/work/logical/wall 원장을 공유하며 새 한도를 만들거나 완화하지 않는다. Context는 검증 함수와 ordinary set 종료 때 복원된다. 기존 nil 호출의 schema·current 검증·오류 순서는 유지한다.
 
-이번 opt-in은 ordinary host set logger 판독과 native-result logger replay만 지원한다. Accepted API/`native-result-r8`/`oracle-set-r3`, preprocess-CST API/`native-result-r7`/symbol qualification에는 historical 권한을 전달하지 않는다. Standalone replay·qualification CLI에는 새 logger pin admission을 추가하지 않았다. 이 경로들과 Roslyn/V2-D, 실제 역사 build/raw/provenance가 없는 자료는 후속 작업 또는 BLOCKED이며 자료를 추측해 PASS로 만들지 않는다.
+V2-C2 단계의 opt-in은 ordinary host set logger 판독과 native-result logger replay를 지원한다. Accepted·preprocess-CST의 별도 reader 전달은 V2-C3, standalone replay·qualification CLI admission과 Roslyn은 V2-D에서 추가했다. 실제 역사 build/raw/provenance가 없는 자료는 계속 BLOCKED이며 자료를 추측해 PASS로 만들지 않는다.

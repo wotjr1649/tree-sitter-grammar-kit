@@ -1,5 +1,7 @@
 # Identity와 evidence — draft/r0, manifest r2 구현
 
+[#370 V2-D](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)는 Roslyn/r2 역사 관측과 r3 신규 SDK/DLL provenance를 구분한다. 기대값 생성은 exact subject·세 필수 자료의 독립 승인 뒤에 수행하며 생산 pointer 변경으로 과거 관측을 무효화하지 않는다. 신규 provenance는 build SDK identity와 실제 loaded DLL hash를 결속하고 미보존 과거 SDK/DLL은 BLOCKED다. 기본 inventory와 기존 관측 원문은 유지한다.
+
 [#370 V2-C](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)는 기존 historical Pins의 선택적 runtime tuple과 eligibility r2의 `runtime_pin`을 추가한다. 원본 subject/approval/run/NEW_RUN은 그대로 보존하며, semantic r2·`oracle-set-r7`/replay r4·qualification r11은 검증한 동일 runtime identity를 소비한다. 저장 PASS는 nested pin result의 tuple/manifest identity와 driver·CP949·shim·patch3개를 포함한 고정8개 descriptor의 존재·역할·비어 있지 않은 bytes를 모두 대조한다. Legacy reducer, 일반 native-result logger·accepted·preprocess-CST의 historical runtime 전달은 이 단위에서 확장하지 않는다.
 
 [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 원본 subject·승인·pin 집합·자료 bytes를 수정하지 않는 별도 자료 결속 API다. 생산 pin 갱신만으로 동일한 승인 historical subject 자료의 새 실행을 요구하지 않는다. 기록 verdict·NEW_RUN은 당시 subject의 기록이며 오늘의 실행으로 바꾸지 않는다. 기존 reducer와 fixed-runtime qualification 의미는 유지한다. 새 plan/source/policy의 재판정 의무나 full runtime·semantic closure 검증을 materials PASS가 대체하지 않는다. Roslyn5.9/r2 원문은 역사 출처로 보관하며 새 관측·SDK/DLL provenance를 소급 생성하지 않는다.

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -22,8 +23,10 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 	out := fs.String("out", "", "new result file outside every host directory (no clobber)")
 	querySemantics := fs.String("query-semantics", "", "tsgk-qualification-query-semantics-input/r1 manifest; document paths are relative to its directory; approval and context are optional")
 	var hosts multi
+	var runtimePins multi
 	fs.Var(&hosts, "host", "PLATFORM=DIR host run directory (repeat per platform)")
-	usage := "tsgk: USAGE: tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--query-semantics FILE] [--out PATH]"
+	fs.Var(&runtimePins, "runtime-pins", "PLATFORM=FILE bounded external runtime pin envelope (repeat per platform)")
+	usage := "tsgk: USAGE: tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--query-semantics FILE | --runtime-pins PLATFORM=FILE ...] [--out PATH]"
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
@@ -32,15 +35,24 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		return exitUsage
 	}
 	semanticsProvided := false
+	runtimePinsProvided := false
 	fs.Visit(func(f *flag.Flag) {
 		semanticsProvided = semanticsProvided || f.Name == "query-semantics"
+		runtimePinsProvided = runtimePinsProvided || f.Name == "runtime-pins"
 	})
 	if semanticsProvided {
+		if runtimePinsProvided {
+			fmt.Fprintln(stderr, "tsgk: USAGE: --query-semantics and --runtime-pins cannot be combined")
+			return exitUsage
+		}
 		if *querySemantics == "" {
 			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: SEMANTIC_MANIFEST_PATH_REQUIRED")
 			return exitUsage
 		}
 		return runQualifySemantics(ctx, *inventory, *candidate, *out, *querySemantics, hosts, stdout, stderr)
+	}
+	if runtimePinsProvided {
+		return runQualifyWithRuntimePins(ctx, *inventory, *candidate, *out, hosts, runtimePins, stdout, stderr)
 	}
 	req := kit.QualifyRequest{Candidate: *candidate}
 	for _, h := range hosts {
@@ -91,4 +103,138 @@ func runQualify(ctx context.Context, args []string, stdout, stderr io.Writer) in
 		}
 	}
 	return finish(res, qerr, *out, publishRoot, stdout, stderr, additionalRoots...)
+}
+
+func runQualifyWithRuntimePins(ctx context.Context, inventory, candidate, out string, rawHosts, rawPins []string, stdout, stderr io.Writer) int {
+	started := time.Now()
+	wallDeadline := started.Add(kit.QualificationLimits().Wall)
+	if callerDeadline, ok := ctx.Deadline(); ok && callerDeadline.Before(wallDeadline) {
+		wallDeadline = callerDeadline
+	}
+	admissionDeadline := started.Add(qualifyAdmissionWall)
+	if wallDeadline.Before(admissionDeadline) {
+		admissionDeadline = wallDeadline
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", inventory)
+	}
+	if len(rawHosts) == 0 || len(rawHosts) > 3 || len(rawPins) == 0 || len(rawPins) > len(rawHosts) {
+		fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: HOST_OR_RUNTIME_PIN_COUNT")
+		return exitUsage
+	}
+	roots := make([]qualifySemanticRoot, 0, len(rawHosts))
+	closeRoots := func() {
+		for _, root := range roots {
+			_ = root.root.Close()
+		}
+	}
+	defer closeRoots()
+	hosts := make([]kit.QualifyHost, 0, len(rawHosts))
+	hostIndex := map[string]int{}
+	for _, raw := range rawHosts {
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", raw)
+		}
+		platform, path, ok := strings.Cut(raw, "=")
+		if !ok || platform == "" || path == "" {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: HOST_INVALID")
+			return exitUsage
+		}
+		if _, exists := hostIndex[platform]; exists {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: HOST_INVALID")
+			return exitUsage
+		}
+		root, err := openQualifySemanticRoot(path, admissionDeadline)
+		if err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", path)
+		}
+		roots = append(roots, root)
+		hostIndex[platform] = len(hosts)
+		hosts = append(hosts, kit.QualifyHost{Platform: platform, Root: root.path, ExpectedRootIdentity: root.info})
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", path)
+		}
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", "hosts")
+	}
+	if err := disjointQualifySemanticRoots(roots, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "HOST_ROOT_OVERLAP_OR_ALIAS", "hosts")
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", "hosts")
+	}
+	pinPaths := make(map[string]string, len(rawPins))
+	docPaths := []string{inventory}
+	for _, raw := range rawPins {
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", raw)
+		}
+		platform, path, ok := strings.Cut(raw, "=")
+		if !ok || platform == "" || path == "" {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: RUNTIME_PINS_HOST_INVALID")
+			return exitUsage
+		}
+		if _, exists := hostIndex[platform]; !exists {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: RUNTIME_PINS_HOST_INVALID")
+			return exitUsage
+		}
+		if _, exists := pinPaths[platform]; exists {
+			fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: RUNTIME_PINS_DUPLICATE_HOST")
+			return exitUsage
+		}
+		pinPaths[platform] = path
+		docPaths = append(docPaths, path)
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", inventory)
+	}
+	docs, err := openCLIEvidencePinsDocuments(docPaths, roots, admissionDeadline)
+	if err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", inventory)
+	}
+	defer func() {
+		for _, doc := range docs {
+			_ = doc.file.Close()
+			_ = doc.parent.Close()
+		}
+	}()
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", inventory)
+	}
+	req := kit.QualifyRequest{Candidate: candidate, Inventory: docs[0].data, Hosts: hosts}
+	runtimeByPlatform := make(map[string]*kit.EvidencePinsRequest, len(rawPins))
+	for i, raw := range rawPins {
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "RUNTIME_PINS_ENVELOPE_INVALID", raw)
+		}
+		platform, path, _ := strings.Cut(raw, "=")
+		runtimeByPlatform[platform], err = decodeCLIEvidencePins(docs[i+1].data, nil)
+		if err != nil {
+			if stop := checkCLIAdmission(ctx, admissionDeadline); stop != nil {
+				return reportCLIAdmissionFailure(stderr, ctx, stop, "RUNTIME_PINS_ENVELOPE_INVALID", path)
+			}
+			fmt.Fprintf(stderr, "tsgk: INVALID_INPUT: RUNTIME_PINS_ENVELOPE_INVALID %s: %s\n", printable(path), printable(err.Error()))
+			return exitUsage
+		}
+	}
+	for i, host := range req.Hosts {
+		req.Hosts[i].RuntimePins = runtimeByPlatform[host.Platform]
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "RUNTIME_PINS_ENVELOPE_INVALID", inventory)
+	}
+	wallCtx, cancelWall := context.WithDeadlineCause(ctx, wallDeadline, errQualifyCLIWall)
+	defer cancelWall()
+	res, qerr := kit.Qualify(wallCtx, req)
+	res, qerr = convertQualifyCLIWall(ctx, wallCtx, res, qerr)
+	var additionalRoots []string
+	for _, host := range req.Hosts[1:] {
+		additionalRoots = append(additionalRoots, host.Root)
+	}
+	heldRoots := make([]*os.Root, len(roots))
+	for i, root := range roots {
+		heldRoots[i] = root.root
+	}
+	return finishWithRoots(res, qerr, out, req.Hosts[0].Root, stdout, stderr, additionalRoots, heldRoots, wallDeadline, ctx)
 }

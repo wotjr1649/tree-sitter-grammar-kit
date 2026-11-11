@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- V2-D에서 Roslyn 기대값 생성의 현재 release 비교를 승인 observation/cases/tuple 결속으로 바꿨다. 보존 5.9/r2와 기존 inventory는 유지하고, 새 r3 producer는 build SDK identity와 실제 oracle/Roslyn DLL SHA를 기록한다. 미보존 legacy SDK/DLL provenance는 BLOCKED다. Standalone replay·qualification의 외부 pin admission은 기존 bounded inline 규칙을 공유한다. 기존 nil API·schema·한도와 원본 증거를 보존한다. Refs #370.
+
 - V2-C3에서 accepted-event와 preprocess-CST의 공개 API·replay·qualification에 historical runtime opt-in을 연결했다. 승인 tuple에 별도 reader 자료를 결속하고 source·primary/fresh·producer·ABI 검사를 유지한다. 새 replay r6/qualification r13과 직접 API r2는 소비한 승인 범위를 기록하며 기존 nil 호출·저장 원본·생산 선택·한도를 보존한다. Roslyn 및 standalone CLI admission(V2-D), 미보존 실제 과거 실행 자료는 남아 있다. Refs #370.
 
 - V2-C2에서 일반 logger replay/native-result r9·r10과 ordinary qualification에 외부 `RuntimePins` opt-in을 연결했다. Exact profile/host run identity 승인과 V2-C tuple·reader 의무를 공유하고 projection/raw/marker·ABI·runtime commit·mandatory claim을 검증한다. Replay r5·qualification r12에 소비 identity를 보존하며 nil 호출의 schema/current 검증을 유지한다. Accepted·preprocess-CST·logger CLI admission과 Roslyn/V2-D는 남아 있다. Refs #370.

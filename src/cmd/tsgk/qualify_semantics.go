@@ -21,6 +21,7 @@ import (
 const (
 	qualifySemanticsInputSchema     = "tsgk-qualification-query-semantics-input/r1"
 	qualifySemanticsPinsInputSchema = "tsgk-qualification-query-semantics-input/r2"
+	cliEvidencePinsInputSchema      = "tsgk-cli-evidence-pins-input/r1"
 	qualifyAdmissionFileLimit       = uint64(16 << 20)
 	qualifyAdmissionTotalLimit      = uint64(256 << 20)
 	qualifyAdmissionWall            = 120 * time.Second
@@ -32,6 +33,38 @@ var (
 	errQualifyAdmissionDeadline = errors.New("qualification admission deadline exceeded")
 	errQualifyPathLimit         = errors.New("qualification path identity limit exceeded")
 )
+
+func checkCLIAdmission(ctx context.Context, deadline time.Time) error {
+	if ctx == nil {
+		return errors.New("nil admission context")
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !time.Now().Before(deadline) {
+		return errQualifyAdmissionDeadline
+	}
+	return nil
+}
+
+func classifyCLIAdmissionFailure(ctx context.Context, err error, fallback string) (string, int) {
+	if ctx != nil && ctx.Err() != nil {
+		return "CANCELLED", exitCanceled
+	}
+	if errors.Is(err, errQualifyAdmissionDeadline) {
+		return "WALL_LIMIT", exitBlocked
+	}
+	if qualifySemanticPathLimit(err) {
+		return "PATH_IDENTITY_LIMIT", exitBlocked
+	}
+	return fallback, exitUsage
+}
+
+func reportCLIAdmissionFailure(stderr io.Writer, ctx context.Context, err error, fallback, path string) int {
+	code, exit := classifyCLIAdmissionFailure(ctx, err, fallback)
+	fmt.Fprintf(stderr, "tsgk: %s: %s\n", code, printable(path))
+	return exit
+}
 
 type qualifySemanticsManifest struct {
 	Schema  string                            `json:"schema"`
@@ -55,6 +88,12 @@ type qualifySemanticsPins struct {
 	ApprovedPinSetSHA256   string            `json:"approved_pin_set_sha256"`
 	PinSetBase64           string            `json:"pin_set_base64"`
 	MaterialsBase64        map[string]string `json:"materials_base64"`
+}
+
+type cliEvidencePinsInput struct {
+	Schema        string `json:"schema"`
+	SubjectBase64 string `json:"subject_base64"`
+	qualifySemanticsPins
 }
 
 type qualifySemanticRoot struct {
@@ -543,6 +582,76 @@ func decodeQualifySemanticPins(input *qualifySemanticsPins, subject []byte) (*ki
 	}
 	return &kit.EvidencePinsRequest{Approval: approval, ApprovedApprovalSHA256: input.ApprovedApprovalSHA256,
 		PinSet: pinSet, ApprovedPinSetSHA256: input.ApprovedPinSetSHA256, Subject: subject, Materials: materials}, nil
+}
+
+func decodeCLIEvidencePins(data, expectedSubject []byte) (*kit.EvidencePinsRequest, error) {
+	if uint64(len(data)) > qualifyAdmissionFileLimit {
+		return nil, errors.New("pin envelope exceeds the admission limit")
+	}
+	if err := rejectDuplicateJSONKeys(data); err != nil {
+		return nil, err
+	}
+	var input cliEvidencePinsInput
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&input); err != nil || dec.Decode(new(any)) != io.EOF || input.Schema != cliEvidencePinsInputSchema {
+		return nil, errors.New("pin envelope schema or shape is invalid")
+	}
+	if input.SubjectBase64 == "" || uint64(len(input.SubjectBase64)) > uint64(base64.StdEncoding.EncodedLen(int(qualifyAdmissionFileLimit))) {
+		return nil, errors.New("pin subject is missing or exceeds the admission limit")
+	}
+	subject, err := base64.StdEncoding.Strict().DecodeString(input.SubjectBase64)
+	if err != nil || base64.StdEncoding.EncodeToString(subject) != input.SubjectBase64 || uint64(len(subject)) > qualifyAdmissionFileLimit {
+		return nil, errors.New("pin subject is not canonical bounded base64")
+	}
+	if len(expectedSubject) > 0 && !bytes.Equal(subject, expectedSubject) {
+		return nil, errors.New("pin subject does not match the selected request")
+	}
+	return decodeQualifySemanticPins(&input.qualifySemanticsPins, subject)
+}
+
+func openCLIEvidencePinsDocuments(paths []string, roots []qualifySemanticRoot, deadline time.Time) ([]*qualifySemanticDocument, error) {
+	docs := make([]*qualifySemanticDocument, 0, len(paths))
+	closeDocs := func() {
+		for _, doc := range docs {
+			if doc.file != nil {
+				_ = doc.file.Close()
+			}
+			if doc.parent != nil {
+				_ = doc.parent.Close()
+			}
+		}
+	}
+	for _, path := range paths {
+		doc, err := openQualifySemanticDocument(path, roots, deadline)
+		if err != nil {
+			closeDocs()
+			return nil, err
+		}
+		docs = append(docs, doc)
+	}
+	if err := preflightQualifySemanticDocuments(docs); err != nil {
+		closeDocs()
+		return nil, err
+	}
+	if err := duplicateQualifySemanticDocuments(docs); err != nil {
+		closeDocs()
+		return nil, err
+	}
+	if err := rejectQualifySemanticFileAliases(docs, roots, deadline); err != nil {
+		closeDocs()
+		return nil, err
+	}
+	var admitted uint64
+	for _, doc := range docs {
+		read, err := readQualifySemanticDocument(doc, qualifyAdmissionTotalLimit-admitted, deadline)
+		admitted += read
+		if err != nil {
+			closeDocs()
+			return nil, err
+		}
+	}
+	return docs, nil
 }
 
 func makeQualifySemanticInput(target qualifySemanticsManifestTarget, docs qualifySemanticTargetDocuments, root qualifySemanticRoot) (kit.QualificationQuerySemanticsInput, error) {

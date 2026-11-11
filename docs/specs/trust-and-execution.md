@@ -1,5 +1,7 @@
 # Trust와 실행 계약
 
+V2-D의 [Roslyn 개발 envelope](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)는 caller가 별도로 검토한 신뢰 입력이다. 관측 옆에 있다는 사실은 승인이 아니며, 새 관측으로 envelope/독립 승인값을 자동 생성해 수용하지 않는다. 생산 pointer와 과거 승인은 분리한다. 승인된 raw metadata의 일관성은 실제 실행 진위나 SDK 배포본 전체 인증이 아니다. Standalone CLI의 외부 pin envelope에도 기존 qualification inline admission의 파일 identity·별칭·문서/bytes·deadline 경계를 적용한다.
+
 ## 신뢰 경계
 
 V2-C의 [historical runtime tuple](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)은 같은 외부 두 승인 digest와 eligibility approval subject를 요구한다. Manifest·driver·CP949·shim·patch·ABI를 승인한 정확한 조합으로 검증하고 reader가 소유하는83-file/3-patch 의무를 축소하지 않는다. Runtime logger token 생성은 provenance 인증이 아니다. 원문 bytes는 caller가 호출 동안 유지하며 기존 shared budget 안에서만 처리한다. Shared budget의 runtime 권한은 subject 사이에 전달하지 않는다. Runtime checkout이나 누락한 증거를 호스트/network에서 자동 취득하지 않는다.

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -517,13 +518,31 @@ func runReplay(ctx context.Context, name string, args []string, stdout, stderr i
 	fs.SetOutput(stderr)
 	input := fs.String("input", "", "evidence set root (read only)")
 	profile := fs.String("profile", "", "replay registration (tsgk-replay/r1) or evidence policy (tsgk-evidence-policy/r1), outside the input")
+	pinsPath := fs.String("pins", "", "bounded external evidence pin envelope for replay")
+	runtimePinsPath := fs.String("runtime-pins", "", "bounded external runtime pin envelope for replay")
 	out := fs.String("out", "", "new result file outside the input (no clobber)")
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
 	if fs.NArg() != 0 || *input == "" || *profile == "" {
-		fmt.Fprintf(stderr, "tsgk: USAGE: tsgk %s --input DIR --profile FILE [--out PATH]\n", name)
+		fmt.Fprintf(stderr, "tsgk: USAGE: tsgk %s --input DIR --profile FILE [--pins FILE] [--runtime-pins FILE] [--out PATH]\n", name)
 		return exitUsage
+	}
+	pinsProvided, runtimePinsProvided := false, false
+	fs.Visit(func(f *flag.Flag) {
+		pinsProvided = pinsProvided || f.Name == "pins"
+		runtimePinsProvided = runtimePinsProvided || f.Name == "runtime-pins"
+	})
+	if (pinsProvided || runtimePinsProvided) && name != "replay" {
+		fmt.Fprintln(stderr, "tsgk: USAGE: pin envelopes are supported by replay only")
+		return exitUsage
+	}
+	if pinsProvided && *pinsPath == "" || runtimePinsProvided && *runtimePinsPath == "" {
+		fmt.Fprintln(stderr, "tsgk: INVALID_INPUT: PIN_ENVELOPE_PATH_REQUIRED")
+		return exitUsage
+	}
+	if pinsProvided || runtimePinsProvided {
+		return runReplayWithPins(ctx, *input, *profile, *pinsPath, *runtimePinsPath, *out, stdout, stderr)
 	}
 	contained, err := documentInside(*profile, *input)
 	if err != nil {
@@ -552,6 +571,115 @@ func runReplay(ctx context.Context, name string, args []string, stdout, stderr i
 		result, err = kit.VerifyEvidence(cctx, kit.EvidenceRequest{Root: *input, Policy: data})
 	}
 	return finish(result, err, *out, *input, stdout, stderr)
+}
+
+func runReplayWithPins(ctx context.Context, input, profile, pinsPath, runtimePinsPath, out string, stdout, stderr io.Writer) int {
+	started := time.Now()
+	wall := time.Duration(0)
+	for _, limits := range kit.ReplayOperations() {
+		wall = max(wall, limits.Wall)
+	}
+	operationDeadline := started.Add(wall)
+	if callerDeadline, ok := ctx.Deadline(); ok && callerDeadline.Before(operationDeadline) {
+		operationDeadline = callerDeadline
+	}
+	admissionDeadline := started.Add(qualifyAdmissionWall)
+	if operationDeadline.Before(admissionDeadline) {
+		admissionDeadline = operationDeadline
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", input)
+	}
+	inputRoot, err := openQualifySemanticRoot(input, admissionDeadline)
+	if err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", input)
+	}
+	defer inputRoot.root.Close()
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "INPUT_PATH_UNVERIFIED", input)
+	}
+	paths := []string{profile}
+	if pinsPath != "" {
+		paths = append(paths, pinsPath)
+	}
+	if runtimePinsPath != "" {
+		paths = append(paths, runtimePinsPath)
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", profile)
+	}
+	docs, err := openCLIEvidencePinsDocuments(paths, []qualifySemanticRoot{inputRoot}, admissionDeadline)
+	if err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", profile)
+	}
+	defer func() {
+		for _, doc := range docs {
+			_ = doc.file.Close()
+			_ = doc.parent.Close()
+		}
+	}()
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "TRUST_DOCUMENT_UNREADABLE", profile)
+	}
+	req := kit.ReplayRequest{Root: input, Profile: docs[0].data}
+	index := 1
+	if pinsPath != "" {
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "PINS_ENVELOPE_INVALID", pinsPath)
+		}
+		req.Pins, err = decodeCLIEvidencePins(docs[index].data, nil)
+		index++
+		if err != nil {
+			if stop := checkCLIAdmission(ctx, admissionDeadline); stop != nil {
+				return reportCLIAdmissionFailure(stderr, ctx, stop, "PINS_ENVELOPE_INVALID", pinsPath)
+			}
+			fmt.Fprintf(stderr, "tsgk: INVALID_INPUT: PINS_ENVELOPE_INVALID: %s\n", printable(err.Error()))
+			return exitUsage
+		}
+	}
+	if runtimePinsPath != "" {
+		if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+			return reportCLIAdmissionFailure(stderr, ctx, err, "RUNTIME_PINS_ENVELOPE_INVALID", runtimePinsPath)
+		}
+		req.RuntimePins, err = decodeCLIEvidencePins(docs[index].data, req.Profile)
+		if err != nil {
+			if stop := checkCLIAdmission(ctx, admissionDeadline); stop != nil {
+				return reportCLIAdmissionFailure(stderr, ctx, stop, "RUNTIME_PINS_ENVELOPE_INVALID", runtimePinsPath)
+			}
+			fmt.Fprintf(stderr, "tsgk: INVALID_INPUT: RUNTIME_PINS_ENVELOPE_INVALID: %s\n", printable(err.Error()))
+			return exitUsage
+		}
+	}
+	if err := checkCLIAdmission(ctx, admissionDeadline); err != nil {
+		return reportCLIAdmissionFailure(stderr, ctx, err, "RUNTIME_PINS_ENVELOPE_INVALID", profile)
+	}
+	cctx, cancel := context.WithDeadlineCause(ctx, operationDeadline, errQualifyCLIWall)
+	defer cancel()
+	result, replayErr := kit.Replay(cctx, req)
+	result, replayErr = convertReplayCLIWall(ctx, cctx, result, replayErr)
+	return finishWithRoots(result, replayErr, out, input, stdout, stderr, nil, []*os.Root{inputRoot.root}, operationDeadline, ctx)
+}
+
+func convertReplayCLIWall(caller, operation context.Context, result kit.ReplayResult, err error) (kit.ReplayResult, error) {
+	var ke *kit.Error
+	if err == nil || !errors.As(err, &ke) || ke.Kind != kit.KindCancelled || caller.Err() != nil || !errors.Is(context.Cause(operation), errQualifyCLIWall) {
+		return result, err
+	}
+	converted := *ke
+	converted.Kind, converted.Code = kit.KindResourceLimit, "WALL_LIMIT"
+	result.ExecutionStatus = kit.StatusResourceLimit
+	if result.Assessment != kit.AssessFail {
+		result.Assessment = kit.AssessBlocked
+	}
+	result.Explanation = []string{"CLI 전체 wall 한도에 도달해 replay를 완성하지 못했다"}
+	result.Findings = slices.Clone(result.Findings)
+	for i := range result.Findings {
+		if result.Findings[i].Code == ke.Code && ke.Code == "CANCELLED" {
+			result.Findings[i].Code = converted.Code
+			result.Findings[i].Message = "CLI 전체 wall 한도에 도달했다"
+		}
+	}
+	return result, &converted
 }
 
 // printable quotes a diagnostic path that could carry terminal control bytes (archive
