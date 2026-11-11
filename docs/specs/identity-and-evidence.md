@@ -295,3 +295,11 @@ Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 �
 ## #370 V2-B1 역사 reference 결과 identity
 
 직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.
+
+## #362 full-scope registry P0 membership contract
+
+P0 구현은 `src/internal/queryregistry`에 한정되며 public `kit` API를 추가하지 않는다. 고정 manifest는 `go run ./src/dev/query-registry -root . -write`로 명시 생성하고 일반 validation은 writer를 호출하지 않는다. Root selector는 pinned qualification 원본의 route/case/query/source/edit를 참조해 별도 case catalogue를 복제하지 않는다. Registry selection은 결과 취득 전에 caller가 고정한 registry hash에 결속한다. Registry 안의 ID namespace는 membership 원문에서 계산하고 registry 자기 hash를 포함하지 않는다. 검증은 고정 qualification/slot 원본을 독립적으로 전개한 ID 집합과 registry의 exact set을 비교한다. Shard를 소비하는 후속 결과는 caller가 pin한 같은 registry와 실제 consumed ID·coordinate·shard 집합에 결속해야 하며, 중복·누락·미등록 tuple을 count 또는 digest 일치로 통과시키지 않는다.
+
+Typed coverage는 structural, predicate-positive와 expected-rejection을 분리한다. Known Windows large workload는 완료3개와 자원 제한 control1개를 `LARGE_WORKLOAD_POSITIVE`·`LARGE_WORKLOAD_CONTROL`로 별도 등록한다. 전체 coordinate는 ordinary106,208, predicate40, control94, large4로106,346개다. Large node/occurrence/page/footer와 SVC 하위 분모는 아직 null이다. `verified`, `failed`, `blocked`, `unprocessed`의 합은 알려진 required 분모와 같아야 한다. Fold 입력은 이미 adjudicated state이며 runtime raw claim/evidence parser가 아니다. P0의 독립 expected와 실행·승인 asset은 unavailable이므로 positive 의무는 BLOCKED로 남고 control은 별도 typed 상태로 집계할 수 있다. 확인된 불일치와 변조는 FAIL 및 최초 code를 유지하며, 취소·자원 한도·finding cap이 먼저 확정된 FAIL을 덮지 않는다. P0의 `full_scope_complete`는 모든 상태가 VERIFIED여도 항상 false다.
+
+이 P0 계약은 r9 baseline과 small-only r10의 schema·판정·scope 의미를 변경하지 않으며 full-scope result schema, public stored replay, CLI 또는 CI completion gate를 추가하지 않는다. 이후 결과 revision과 reducer는 별도 변경에서 정하고, caller의 사전 registry 선택과 사후 승인 문서를 분리해야 한다. Caller 문서 자체의 hash 일치만으로 독립 검토나 실행을 증명하지 않는다.

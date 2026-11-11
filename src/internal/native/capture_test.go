@@ -159,8 +159,14 @@ func TestDriverCaptureActualInvocation(t *testing.T) {
 		t.Fatalf("captured run %+v %v", result, err)
 	}
 	legacy, err := b.Exec(ctx, "single", before, 30*time.Second, x.Op, os.Getenv("TSGK_CGROUP_PARENT"))
-	if err != nil || !legacy.Succeeded() || !bytes.Equal(normalFrame(legacy.Stdout), normalFrame(result.Stdout)) {
-		t.Fatalf("legacy path changed %+v %v", legacy, err)
+	if err != nil || !legacy.Succeeded() {
+		t.Fatalf("legacy path failed %+v %v", legacy, err)
+	}
+	// Compare bodies: timing digits change the frame length header between runs.
+	legacyBody, legacyErr := SplitFrame(legacy.Stdout)
+	capturedBody, capturedErr := SplitFrame(result.Stdout)
+	if legacyErr != nil || capturedErr != nil || !bytes.Equal(normalFrame(legacyBody), normalFrame(capturedBody)) {
+		t.Fatalf("legacy path changed %v %v\nlegacy:   %s\ncaptured: %s", legacyErr, capturedErr, legacyBody, capturedBody)
 	}
 	stdout := bytes.Clone(result.Stdout)
 	stdin[0] ^= 0xff

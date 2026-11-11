@@ -1127,11 +1127,15 @@ func (s *eligibilitySession) nativePagedParser(n *eligibilityNative, pin eligibi
 		return false, e
 	}
 	used := map[string]bool{pin.Member.Path: true}
-	good, e := s.b.semanticPagedParser(data, input, index, func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(pin, "oracle/", used)
+	if e != nil {
+		return false, e
+	}
+	good, e := s.b.semanticPagedParserVerified(data, input, index, func(part ReplayMember) ([]byte, bool, *Error) {
 		part.Path = "oracle/" + part.Path
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: inv.Node.ID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return false, e
 	}
@@ -1155,10 +1159,14 @@ func (s *eligibilitySession) nativePagedLibrary(pin eligibilityMember) (semantic
 		return semanticBinaryLogical{}, false, e
 	}
 	used := map[string]bool{pin.Member.Path: true}
-	logical, good, e := s.b.semanticPagedBinary(data, pin.NodeID, "library", path, path, func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(pin, "", used)
+	if e != nil {
+		return semanticBinaryLogical{}, false, e
+	}
+	logical, good, e := s.b.semanticPagedBinaryVerified(data, pin.NodeID, "library", path, path, func(part ReplayMember) ([]byte, bool, *Error) {
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: pin.NodeID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return semanticBinaryLogical{}, false, e
 	}
@@ -1182,11 +1190,15 @@ func (s *eligibilitySession) nativePagedDriver(inv *eligibilityInvocation) (sema
 		return semanticBinaryLogical{}, false, e
 	}
 	used := map[string]bool{exe.Member.Path: true}
-	logical, good, e := s.b.semanticPagedBinary(data, "D", "driver", "capture/driver.bin", "capture/driver", func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(*exe, "oracle/", used)
+	if e != nil {
+		return semanticBinaryLogical{}, false, e
+	}
+	logical, good, e := s.b.semanticPagedBinaryVerified(data, "D", "driver", "capture/driver.bin", "capture/driver", func(part ReplayMember) ([]byte, bool, *Error) {
 		part.Path = "oracle/" + part.Path
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: inv.Node.ID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return semanticBinaryLogical{}, false, e
 	}
