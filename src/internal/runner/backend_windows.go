@@ -37,6 +37,21 @@ type jobAccounting struct {
 	TotalTerminatedProcesses  uint32
 }
 
+// The x/sys Job Object wrappers take the buffer as a plain uintptr and are not
+// themselves system calls, so unsafe.Pointer rule 4 does not hold across them:
+// a stack buffer could move while the kernel reads or writes it (#330).
+// go:uintptrescapes moves such buffers to the heap and keeps them alive for the call.
+
+//go:uintptrescapes
+func setJobInformation(job windows.Handle, class uint32, info uintptr, length uint32) (int, error) {
+	return windows.SetInformationJobObject(job, class, info, length)
+}
+
+//go:uintptrescapes
+func queryJobInformation(job windows.Handle, class int32, info uintptr, length uint32, retlen *uint32) error {
+	return windows.QueryInformationJobObject(job, class, info, length, retlen)
+}
+
 // jobTree places the process in a new Job Object before its first instruction: the
 // process starts suspended, is assigned, then resumed. Every descendant inherits the job
 // (breakaway is not allowed), so TerminateJobObject reaches escaped descendants as well.
@@ -63,7 +78,7 @@ func newTree(s *Spec, probe bool) (tree, Capabilities, error) {
 	var info windows.JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 	info.BasicLimitInformation.LimitFlags = windows.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | windows.JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION | windows.JOB_OBJECT_LIMIT_JOB_MEMORY
 	info.JobMemoryLimit = uintptr(s.Memory.Bytes)
-	if _, err := windows.SetInformationJobObject(job, windows.JobObjectExtendedLimitInformation, uintptr(unsafe.Pointer(&info)), uint32(unsafe.Sizeof(info))); err != nil {
+	if _, err := setJobInformation(job, windows.JobObjectExtendedLimitInformation, uintptr(unsafe.Pointer(&info)), uint32(unsafe.Sizeof(info))); err != nil {
 		windows.CloseHandle(job)
 		caps.Memory = MemoryUnsupported
 		return nil, caps, &Error{Code: "BACKEND_UNAVAILABLE", Blocked: true, Cause: err}
@@ -77,7 +92,7 @@ func newTree(s *Spec, probe bool) (tree, Capabilities, error) {
 		return nil, caps, &Error{Code: "BACKEND_UNAVAILABLE", Blocked: true, Cause: err}
 	}
 	assoc := jobCompletionPort{CompletionKey: 1, CompletionPort: port}
-	if _, err := windows.SetInformationJobObject(job, windows.JobObjectAssociateCompletionPortInformation, uintptr(unsafe.Pointer(&assoc)), uint32(unsafe.Sizeof(assoc))); err != nil {
+	if _, err := setJobInformation(job, windows.JobObjectAssociateCompletionPortInformation, uintptr(unsafe.Pointer(&assoc)), uint32(unsafe.Sizeof(assoc))); err != nil {
 		windows.CloseHandle(port)
 		windows.CloseHandle(job)
 		return nil, caps, &Error{Code: "BACKEND_UNAVAILABLE", Blocked: true, Cause: err}
@@ -161,7 +176,7 @@ func (t *jobTree) rootExited() { t.rootDone.Store(true) }
 func (t *jobTree) live() (int, error) {
 	rootDone := t.rootDone.Load()
 	var acc jobAccounting
-	if err := windows.QueryInformationJobObject(t.job, windows.JobObjectBasicAccountingInformation, uintptr(unsafe.Pointer(&acc)), uint32(unsafe.Sizeof(acc)), nil); err != nil {
+	if err := queryJobInformation(t.job, windows.JobObjectBasicAccountingInformation, uintptr(unsafe.Pointer(&acc)), uint32(unsafe.Sizeof(acc)), nil); err != nil {
 		return 0, err
 	}
 	return jobActiveProcesses(acc, rootDone), nil
@@ -183,7 +198,7 @@ func (t *jobTree) limitHit() bool {
 
 func (t *jobTree) peak() (uint64, bool) {
 	var info windows.JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-	if err := windows.QueryInformationJobObject(t.job, windows.JobObjectExtendedLimitInformation, uintptr(unsafe.Pointer(&info)), uint32(unsafe.Sizeof(info)), nil); err != nil {
+	if err := queryJobInformation(t.job, windows.JobObjectExtendedLimitInformation, uintptr(unsafe.Pointer(&info)), uint32(unsafe.Sizeof(info)), nil); err != nil {
 		return 0, false
 	}
 	return uint64(info.PeakJobMemoryUsed), true
