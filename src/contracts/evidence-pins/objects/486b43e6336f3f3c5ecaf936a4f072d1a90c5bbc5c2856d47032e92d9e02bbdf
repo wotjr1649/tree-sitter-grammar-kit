@@ -1,0 +1,3 @@
+#include <tree_sitter/api.h>
+const TSLanguage *%s(void);
+const TSLanguage *tsgk_language(void) { return %s(); }
