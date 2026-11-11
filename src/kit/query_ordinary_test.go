@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 func ordinaryJSON(t *testing.T, v any) []byte {

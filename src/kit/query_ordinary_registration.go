@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 // Parse the existing qualification contract before constructing the dependency-free view.

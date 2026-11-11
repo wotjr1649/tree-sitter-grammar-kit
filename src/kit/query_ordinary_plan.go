@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/queryregistrycore"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 const ordinaryShardPlanSchema = "tsgk-query-ordinary-shard-plan/r1"
