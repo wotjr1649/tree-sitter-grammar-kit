@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 $toolchain=& (Join-Path $PSScriptRoot 'approval.ps1') -Profile $AcquisitionProfile -Subject $AcquisitionApprovalSubject -Execution -ExecutionSubject $ExecutionApprovalSubject -ImageProfile $ToolchainProfile -ImageSubject $ToolchainApprovalSubject -RemedyStage $RemedyStage -RemedySubject $RemedyApprovalSubject
 if(-not $toolchain){throw 'Explicit toolchain profile required'}
 $script:acquisitionLimit=[long]$toolchain.acquisition_limit_bytes
-if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -ne 7){throw 'P05 requires hosted Linux and PowerShell 7'}
+if(-not $IsLinux -or $PSVersionTable.PSVersion.Major -lt 7){throw 'P05 requires hosted Linux and PowerShell 7'}
 $root=[IO.Path]::GetFullPath($Destination)
 $runnerRoot=[IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('/')+'/'
 $rootPattern=if($RemedyStage){'^tsgk-p05-remedy-[0-9]+-[0-9]+$'}else{'^tsgk-p05-[0-9]+-[0-9]+$'}

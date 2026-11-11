@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	classificationGoDefinitionInventorySHA     = "f24b4f0b4aad3fe165afd7950d2166fdc7e1d6a59d809faf670d5907c4f12789"
-	classificationGoDefinitionQualificationSHA = "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+	classificationGoDefinitionInventorySHA     = "bca429d4e02729db4e66ae53ad31b835ec0b95471504d9b9ef0499b8b19bc0b6"
+	classificationGoDefinitionQualificationSHA = "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
 	classificationGoDefinitionQueriesSHA       = "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
 	classificationCSharpDefinitionQueriesSHA   = "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
 	classificationCSharpFactQueryPackSHA       = "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
@@ -412,7 +412,7 @@ func classificationGoDefinitionLoadInputs(a classificationAnchors, plan classifi
 
 func classificationCSharpDefinitionLoadInputs(a classificationAnchors, plan classificationPlan, inventoryData, qualificationData, queryData []byte) (classificationCSharpDefinitionInputs, error) {
 	var out classificationCSharpDefinitionInputs
-	if a.sha256 != classificationCSharpAnchorsSHA || a.Case != "csharp15-empty-definitions" || a.Route != "csharp" || a.Workload != "csharp15-empty-definition-single-frame" || a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.Bytes != 0 || a.Source.UTF8 != "" || a.Source.SHA256 != digestHex(nil) || len(a.Queries) != 15 || len(a.Required) != 15 || len(a.Edits) != 0 || len(a.Nodes) != 1 || !reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 654, FieldCount: 26}) {
+	if a.sha256 != classificationCSharpAnchorsSHA || a.Case != "csharp15-empty-definitions" || a.Route != "csharp" || a.Workload != "csharp15-empty-definition-single-frame" || a.Operation != "native-query" || a.DriverMode != "single" || a.API || a.Source.Bytes != 0 || a.Source.UTF8 != "" || a.Source.SHA256 != digestHex(nil) || len(a.Queries) != 15 || len(a.Required) != 15 || len(a.Edits) != 0 || len(a.Nodes) != 1 || !reflect.DeepEqual(a.Expect, []StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}) || a.ABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 662, FieldCount: 26}) {
 		return out, fmt.Errorf("definition anchors are not the closed C# 15 single-frame profile")
 	}
 	root := a.Nodes[0]
@@ -1258,7 +1258,7 @@ func TestQueryClassificationCSharpDefinitionProjectionMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 15 || fixture.inputs.ordinary.coordinates.Cases != 390 || fixture.inputs.ordinary.coordinates.Edits != 125 || fixture.inputs.ordinary.coordinates.CaseSteps != 515 || fixture.inputs.ordinary.coordinates.TreeRoles != 640 || fixture.inputs.ordinary.coordinates.Definitions != 15 || fixture.inputs.ordinary.coordinates.TreeRolesPerDefinition != 640 || fixture.inputs.ordinary.coordinates.PotentialQueryTreeRoles != 9600 || fixture.inputs.ordinary.coordinates.QuerySourceFileSHA256 != "" || len(fixture.inputs.ordinary.coordinates.QuerySourceFiles) != 2 || plan.NativeContext != semanticPagedContext || len(plan.Grammar) != 5 || plan.Grammar[0].Path != "src/parser.c" || plan.Grammar[0].Role != "parser" || plan.Grammar[0].Bytes != 51472926 || plan.Grammar[0].SHA256 != "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb" {
+	if len(rows) != 15 || fixture.inputs.ordinary.coordinates.Cases != 390 || fixture.inputs.ordinary.coordinates.Edits != 125 || fixture.inputs.ordinary.coordinates.CaseSteps != 515 || fixture.inputs.ordinary.coordinates.TreeRoles != 640 || fixture.inputs.ordinary.coordinates.Definitions != 15 || fixture.inputs.ordinary.coordinates.TreeRolesPerDefinition != 640 || fixture.inputs.ordinary.coordinates.PotentialQueryTreeRoles != 9600 || fixture.inputs.ordinary.coordinates.QuerySourceFileSHA256 != "" || len(fixture.inputs.ordinary.coordinates.QuerySourceFiles) != 2 || plan.NativeContext != semanticPagedContext || len(plan.Grammar) != 5 || plan.Grammar[0].Path != "src/parser.c" || plan.Grammar[0].Role != "parser" || plan.Grammar[0].Bytes != 53114064 || plan.Grammar[0].SHA256 != "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6" {
 		t.Fatalf("C# definition denominator or dual source pins differ: rows=%d inventory=%#v", len(rows), fixture.inputs.ordinary.coordinates)
 	}
 	if fixture.inputs.ordinary.coordinates.QuerySourceFiles[0].Path != "src/testdata/native/queries/csharp.json" || fixture.inputs.ordinary.coordinates.QuerySourceFiles[1].Path != "src/contracts/fact-query-pack.json" {

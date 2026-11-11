@@ -135,8 +135,9 @@ func TestNativePreprocessCST(t *testing.T) {
 			if positions, fixed := anchors[source.ID]; fixed && !slices.Equal(r.PreprocessCST.Steps[0].CSTHashes, positions) {
 				t.Fatalf("primary positions %v; independent anchors %v", r.PreprocessCST.Steps[0].CSTHashes, positions)
 			}
-			if syntax == "ERROR" && !slices.ContainsFunc(r.Steps[0].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError }) {
-				t.Fatal("malformed literal lost its genuine ERROR node")
+			hasError := slices.ContainsFunc(r.Steps[0].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError })
+			if (syntax == "ERROR") != hasError {
+				t.Fatalf("syntax=%s but native ERROR node present=%t", syntax, hasError)
 			}
 		})
 	}
@@ -170,6 +171,10 @@ func testCSharpLexicalBoundaries(t *testing.T, b *Build) {
 		{"line-filename-normal-empty", "#line 10 \"\"\nclass C {}", "NO_ERROR"},
 		{"line-filename-enhanced-normal", "#line (1, 1) - (2, 1) \"file.cs\"\nclass C {}", "NO_ERROR"},
 		{"line-filename-enhanced-comment", "#line (1, 1) - (2, 1) /* c */ \"file.cs\"\nclass C {}", "ERROR"},
+		{"directive-undef-line-tail", "#undef A // comment\nclass C {}", "NO_ERROR"},
+		{"directive-endif-line-tail", "#if true\n#endif // comment\nclass C {}", "NO_ERROR"},
+		{"directive-if-block-tail", "#if A /* c */\nclass C {}\n#endif\n", "ERROR"},
+		{"pragma-line-comment-tail", "#pragma warning disable 123 // text\nclass C {}\n", "NO_ERROR"},
 	} {
 		t.Run(tc.id, func(t *testing.T) {
 			c := kit.IncrementalCase{ID: tc.id, Encoding: kit.EncodingUTF8, Expect: []kit.StepExpectation{{Step: 0, Syntax: tc.syntax}}}
@@ -177,8 +182,193 @@ func testCSharpLexicalBoundaries(t *testing.T, b *Build) {
 			if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass {
 				t.Fatalf("lexical boundary %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
 			}
+			if tc.id == "pragma-line-comment-tail" {
+				nodes := r.Steps[0].Incremental.Tree.Nodes
+				if !slices.ContainsFunc(nodes, func(n kit.TreeNode) bool {
+					return n.Type == "preproc_arg" && n.StartByte == 28 && n.EndByte == 35 && n.Named && !n.Extra
+				}) || slices.ContainsFunc(nodes, func(n kit.TreeNode) bool { return n.Type == "comment" }) {
+					t.Fatal("pragma line-comment tail lost its baseline preproc_arg ownership")
+				}
+			}
 		})
 	}
+	t.Run("pragma-string-boundaries", func(t *testing.T) { testCSharpPragmaStringBoundaries(t, b) })
+	t.Run("residual-oracle-controls", func(t *testing.T) { testCSharpResidualOracleControls(t, b) })
+	t.Run("registered-define-trailing-comment", func(t *testing.T) { testCSharpRegisteredDefineTrailingComment(t, b) })
+}
+
+func testCSharpPragmaStringBoundaries(t *testing.T, b *Build) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "csharp-pp", "pragma-string-boundaries.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Schema string `json:"schema"`
+		Cases  []struct {
+			ID         string `json:"id"`
+			Source     string `json:"source"`
+			UndefStart uint32 `json:"undef_start"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Schema != "tsgk-csharp-pragma-string-boundaries/r1" || len(fixture.Cases) != 30 {
+		t.Fatal("pragma string boundary fixture is incomplete")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, tc := range fixture.Cases {
+		t.Run(tc.ID, func(t *testing.T) {
+			if int(tc.UndefStart) != strings.Index(tc.Source, "#undef") {
+				t.Fatal("independent directive anchor does not match source")
+			}
+			c := kit.IncrementalCase{ID: tc.ID, Encoding: kit.EncodingUTF8, Expect: []kit.StepExpectation{{Step: 0, Syntax: "NO_ERROR"}}}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(tc.Source))
+			if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass || len(r.Steps) != 1 {
+				t.Fatalf("pragma boundary %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+			}
+			nodes := r.Steps[0].Incremental.Tree.Nodes
+			for _, want := range []struct {
+				kind       string
+				start, end uint32
+			}{
+				{"preproc_pragma", 0, tc.UndefStart},
+				{"preproc_arg", 8, tc.UndefStart - 1},
+				{"#undef", tc.UndefStart, tc.UndefStart + 6},
+			} {
+				if !slices.ContainsFunc(nodes, func(n kit.TreeNode) bool {
+					return n.Type == want.kind && n.StartByte == want.start && n.EndByte == want.end && !n.IsMissing
+				}) {
+					t.Fatalf("pragma tail lost %s [%d,%d)", want.kind, want.start, want.end)
+				}
+			}
+		})
+	}
+}
+
+func testCSharpResidualOracleControls(t *testing.T, b *Build) {
+	// These source bytes and Roslyn spans are the selected all-v3 oracle records, bound by the file pins below.
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "csharp-pp", "residual-controls.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Schema          string `json:"schema"`
+		Roslyn          string `json:"roslyn"`
+		LanguageVersion string `json:"language_version"`
+		CasesSHA256     string `json:"cases_sha256"`
+		ObservedSHA256  string `json:"observed_sha256"`
+		RoslynDLLSHA256 string `json:"roslyn_dll_sha256"`
+		Cases           []struct {
+			ID        string   `json:"id"`
+			Source    []byte   `json:"source"`
+			SourceSHA string   `json:"source_sha256"`
+			Symbols   []string `json:"symbols"`
+			Roslyn    struct {
+				Hashes      []uint32 `json:"directive_hashes"`
+				Errors      []string `json:"errors"`
+				Diagnostics []struct {
+					ID      string `json:"id"`
+					Start   uint32 `json:"start"`
+					End     uint32 `json:"end"`
+					Context string `json:"context"`
+				} `json:"diagnostics"`
+			} `json:"roslyn"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Schema != "tsgk-csharp-pp-residual-controls/r1" || fixture.Roslyn != "5.9.0.0" || fixture.LanguageVersion != "Latest" || fixture.CasesSHA256 != "437b4d345fa86f5b95fce494e79af551731ed9dfa6485c89f8b33ecdc6f7c55d" || fixture.ObservedSHA256 != "14c62706f61cc8f6a79830fdbf9e7898000a3b1826754565e3e97ff96337ab13" || fixture.RoslynDLLSHA256 != "12b0428203faae6555858d2ff856cef7450d2764cf00c57e7516587a04885870" {
+		t.Fatal("residual controls lost their pinned Roslyn observation identity")
+	}
+	if len(fixture.Cases) != 20 {
+		t.Fatalf("residual oracle fixture has %d cases, want 20", len(fixture.Cases))
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, tc := range fixture.Cases {
+		t.Run(tc.ID, func(t *testing.T) {
+			if sha(tc.Source) != tc.SourceSHA {
+				t.Fatal("residual source bytes do not match the pinned SHA256")
+			}
+			observedErrors := make(map[string]bool, len(tc.Roslyn.Diagnostics))
+			for _, diagnostic := range tc.Roslyn.Diagnostics {
+				if int(diagnostic.Start) > len(tc.Source) || int(diagnostic.End) > len(tc.Source) || diagnostic.Start > diagnostic.End {
+					t.Fatalf("invalid Roslyn diagnostic span: %+v", diagnostic)
+				}
+				observedErrors[diagnostic.ID] = true
+			}
+			for _, id := range tc.Roslyn.Errors {
+				if !observedErrors[id] {
+					t.Fatalf("Roslyn error %s has no diagnostic span", id)
+				}
+			}
+			syntax := "ERROR"
+			if len(tc.Roslyn.Errors) == 0 {
+				syntax = "NO_ERROR"
+			}
+			c := kit.IncrementalCase{ID: strings.ReplaceAll(tc.ID, "/", "-"), Input: kit.NativeInput{SHA256: tc.SourceSHA, Bytes: uint64(len(tc.Source))}, Encoding: kit.EncodingUTF8,
+				Expect: []kit.StepExpectation{{Step: 0, Syntax: syntax}}}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, tc.Source)
+			if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass || r.Claims.Expectations != ClaimPass || len(r.Steps) != 1 || r.Steps[0].Incremental == nil || r.Steps[0].Incremental.Tree == nil {
+				t.Fatalf("residual source/diagnostic parity failed: %s/%s/%s %+v", r.ExecutionStatus, r.Assessment, r.Code, r.PreprocessCST)
+			}
+			var hashes []uint32
+			for _, node := range r.Steps[0].Incremental.Tree.Nodes {
+				if !node.IsMissing && node.StartByte < node.EndByte && slices.Contains([]string{"#region", "#endregion", "#line", "#pragma", "#nullable", "#error", "#warning", "#define", "#undef", "#if", "#endif", "#else", "#elif"}, node.Type) {
+					hashes = append(hashes, node.StartByte)
+				}
+			}
+			if !slices.Equal(hashes, tc.Roslyn.Hashes) {
+				t.Fatalf("directive hashes %v, Roslyn %v", hashes, tc.Roslyn.Hashes)
+			}
+			hasError := slices.ContainsFunc(r.Steps[0].Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError })
+			if (syntax == "ERROR") != hasError {
+				t.Fatalf("Roslyn syntax=%s but native ERROR node present=%t", syntax, hasError)
+			}
+		})
+	}
+}
+
+func testCSharpRegisteredDefineTrailingComment(t *testing.T, b *Build) {
+	// Reuse the independent disposition in the existing native gaps registry.
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "native", "gaps", "csharp.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Cases []struct {
+			ID         string `json:"id"`
+			SourceUTF8 string `json:"source_utf8"`
+			Expect     []struct {
+				Step   int    `json:"step"`
+				Syntax string `json:"syntax"`
+			} `json:"expect"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range fixture.Cases {
+		if tc.ID != "csharp-issue157-pp-define-ok-12-r1" {
+			continue
+		}
+		if tc.SourceUTF8 != "#define A // comment\nclass C {}" || len(tc.Expect) != 1 || tc.Expect[0].Step != 0 || tc.Expect[0].Syntax != "NO_ERROR" {
+			t.Fatal("registered define trailing-comment control changed")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		c := kit.IncrementalCase{ID: tc.ID, Input: kit.NativeInput{SHA256: sha([]byte(tc.SourceUTF8)), Bytes: uint64(len(tc.SourceUTF8))}, Encoding: kit.EncodingUTF8,
+			Expect: []kit.StepExpectation{{Step: tc.Expect[0].Step, Syntax: tc.Expect[0].Syntax}}}
+		r := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(tc.SourceUTF8))
+		if r.ExecutionStatus != kit.StatusCompleted || r.Assessment != kit.AssessPass || r.Claims.Expectations != ClaimPass || len(r.Steps) != 1 || !parsed(t, r, 0, tc.SourceUTF8, "class C {}") {
+			t.Fatalf("registered directive-comment control failed: %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+		}
+		return
+	}
+	t.Fatal("registered define trailing-comment control is missing")
 }
 
 func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
@@ -252,6 +442,71 @@ func testCSharpLexicalEditRevert(t *testing.T, b *Build) {
 	}
 	if len(changes) != 0 {
 		t.Fatalf("missing edit/revert cases: %v", changes)
+	}
+	t.Run("residual", func(t *testing.T) { testCSharpResidualEditRevert(t, b) })
+}
+
+func testCSharpResidualEditRevert(t *testing.T, b *Build) {
+	type residualCase struct {
+		id, source string
+		edits      []edit
+		syntax     []string
+	}
+	const rawQ2Single = "x = $$\"\"\"x\"\";\n#if A\nclass X {}\n#endif\n"
+	const rawQ2Multi = "x = $$\"\"\"\nx\n\"\";\n#if A\nclass X {}\n#endif\n"
+	const q2Close = "\"\";\n#if A"
+	const q3Close = "\"\"\";\n#if A"
+	const q4Close = "\"\"\"\";\n#if A"
+	rawC1 := "\"\"\"\n#if HIDDEN\n\"\"\""
+	validC1 := "\"file.cs\""
+	pragma := "#pragma warning disable \"\"\"\n#if A\n\"\"\"\n#if A\nclass X {}\n#endif\n"
+	line := "#line 10 \"file.cs\"\nclass C {}"
+	commentedLine := " /* c\n*/\n"
+	cases := []residualCase{
+		{"c1-raw-filename", "#line 1 " + rawC1 + "\n#if A\nclass X {}\n#endif\n", []edit{{rawC1, validC1}, {validC1, rawC1}}, []string{"ERROR", "NO_ERROR", "ERROR"}},
+		{"c2-raw-q3-close-single", rawQ2Single, []edit{{q2Close, q3Close}, {q3Close, q4Close}, {q4Close, q3Close}, {q3Close, q2Close}}, []string{"ERROR", "NO_ERROR", "ERROR", "NO_ERROR", "ERROR"}},
+		{"c2-raw-q3-close-multi", rawQ2Multi, []edit{{q2Close, q3Close}, {q3Close, q4Close}, {q4Close, q3Close}, {q3Close, q2Close}}, []string{"ERROR", "NO_ERROR", "ERROR", "NO_ERROR", "ERROR"}},
+		{"c3-pragma-raw-tail", pragma, []edit{{"#if A", "#if B"}, {"#if B", "#if A"}}, []string{"NO_ERROR", "NO_ERROR", "NO_ERROR"}},
+		{"c4-line-filename-after-comment", line, []edit{{"\n", commentedLine}, {commentedLine, "\n"}}, []string{"NO_ERROR", "ERROR", "NO_ERROR"}},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	for _, tc := range cases {
+		t.Run(tc.id, func(t *testing.T) {
+			expect := make([]kit.StepExpectation, len(tc.syntax))
+			for step, syntax := range tc.syntax {
+				expect[step] = kit.StepExpectation{Step: step, Syntax: syntax}
+			}
+			c := kit.IncrementalCase{ID: tc.id, Encoding: kit.EncodingUTF8, Edits: editsBy(tc.source, tc.edits...), Expect: expect}
+			r := b.RunCase(ctx, testContext("native-parse-edit"), c, []byte(tc.source))
+			if r.ExecutionStatus != kit.StatusCompleted || len(r.Steps) != len(tc.edits)+1 || r.Claims.IncrementalEquality != ClaimPass || (len(tc.syntax) > 0 && r.Claims.Expectations != ClaimPass) {
+				t.Fatalf("residual edit/revert CST unverified: %s/%s/%s", r.ExecutionStatus, r.Assessment, r.Code)
+			}
+			for i, step := range r.Steps {
+				if step.Incremental == nil || step.Incremental.Tree == nil {
+					t.Fatalf("missing incremental full CST at step %d", step.Step)
+				}
+				if step.Step == 0 {
+					if step.Fresh != nil {
+						t.Fatal("initial parse unexpectedly has a fresh counterpart")
+					}
+					continue
+				}
+				if step.Fresh == nil || step.Fresh.Tree == nil || kit.CompareTrees(step.Incremental.Tree.Nodes, step.Fresh.Tree.Nodes) != nil {
+					t.Fatalf("incremental/fresh full CST differs at step %d", step.Step)
+				}
+				if len(tc.syntax) > 0 {
+					hasError := slices.ContainsFunc(step.Incremental.Tree.Nodes, func(n kit.TreeNode) bool { return n.IsError })
+					if (tc.syntax[i] == "ERROR") != hasError {
+						t.Fatalf("step %d: syntax=%s but native ERROR node present=%t", step.Step, tc.syntax[i], hasError)
+					}
+				}
+			}
+			last := len(r.Steps) - 1
+			if r.Steps[0].SourceSHA256 != r.Steps[last].SourceSHA256 || kit.CompareTrees(r.Steps[0].Incremental.Tree.Nodes, r.Steps[last].Fresh.Tree.Nodes) != nil {
+				t.Fatal("reverted residual source did not restore the full CST")
+			}
+		})
 	}
 }
 

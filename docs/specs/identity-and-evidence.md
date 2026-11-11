@@ -1,5 +1,7 @@
 # Identity와 evidence — draft/r0, manifest r2 구현
 
+[#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 원본 subject·승인·pin 집합·자료 bytes를 수정하지 않는 별도 자료 결속 API다. 생산 pin 갱신만으로 동일한 승인 historical subject 자료의 새 실행을 요구하지 않는다. 기록 verdict·NEW_RUN은 당시 subject의 기록이며 오늘의 실행으로 바꾸지 않는다. 기존 reducer와 fixed-runtime qualification 의미는 유지한다. 새 plan/source/policy의 재판정 의무나 full runtime·semantic closure 검증을 materials PASS가 대체하지 않는다. Roslyn5.9/r2 원문은 역사 출처로 보관하며 새 관측·SDK/DLL provenance를 소급 생성하지 않는다.
+
 ## 파일 identity
 
 manifest r0와 그 hash preimage는 아래 역사적 설계로 보존한다. S01 착수 전 채택 설계는 `tsgk-manifest/r1`이며 `algorithm: sha256`, `mode_policy`, `files`를 가진다. 각 파일은 portable `path`, `role`, `mode`(`100644` 또는 `100755`), `mode_provenance`, `size`(bytes), 소문자 64자리 `sha256`으로 나타낸다. path의 UTF-8 bytes 오름차순으로 정렬하고 중복을 거부한다. 디렉터리·symlink·special file은 파일 항목이 아니다. 기본 `mode_policy=portable-default`, `mode_provenance=POLICY_DEFAULT`, mode `100644`는 관측된 executable bit가 아니다. 별도 filesystem mode는 실제 관측 가능할 때 출처와 다른 policy로 등록한다. API/offline 경로가 Git process를 실행해 mode를 추정하지 않는다.

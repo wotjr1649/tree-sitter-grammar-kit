@@ -1,6 +1,6 @@
 param([Parameter(Mandatory)][string]$Root,[string]$RemedyStage,[string]$RemedyApprovalSubject)
 $ErrorActionPreference='Stop'
-if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}
+if($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell 7 required'}
 $script:collectionClock=[Diagnostics.Stopwatch]::StartNew()
 function CheckCollectionTime {if($script:collectionClock.Elapsed.TotalSeconds -gt 120){throw 'Total evidence collection time limit'}}
 function CollectionHash([string]$path){

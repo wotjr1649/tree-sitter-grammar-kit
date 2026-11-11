@@ -3,12 +3,12 @@
   "registry": {
     "path": "src/contracts/query-semantic-registry-r1.json",
     "bytes": 82475,
-    "sha256": "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+    "sha256": "296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5"
   },
   "qualification_inventory": {
     "path": "src/contracts/qualification-c1.json",
     "bytes": 8297072,
-    "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+    "sha256": "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
   },
   "state": "SKELETON_UNREVIEWED",
   "routes": [
@@ -19,14 +19,14 @@
         {
           "path": "src/parser.c",
           "role": "parser",
-          "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-          "bytes": 51472926
+          "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+          "bytes": 53114064
         },
         {
           "path": "src/scanner.c",
           "role": "scanner",
-          "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-          "bytes": 46552
+          "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+          "bytes": 61493
         },
         {
           "path": "src/tree_sitter/alloc.h",
@@ -50,8 +50,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/0",
         "case": "csharp"
@@ -95,8 +95,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/1",
         "case": "go"
@@ -140,8 +140,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/2",
         "case": "python"
@@ -185,8 +185,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/3",
         "case": "javascript"
@@ -230,8 +230,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/4",
         "case": "jsx"
@@ -281,8 +281,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/5",
         "case": "typescript"
@@ -332,8 +332,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/6",
         "case": "tsx"
@@ -371,8 +371,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/7",
         "case": "java"
@@ -416,8 +416,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/8",
         "case": "kotlin"
@@ -455,8 +455,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/9",
         "case": "c"
@@ -500,8 +500,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/10",
         "case": "cpp"
@@ -545,8 +545,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/11",
         "case": "rust"
@@ -590,8 +590,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/12",
         "case": "swift"
@@ -635,8 +635,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/13",
         "case": "dart"
@@ -686,8 +686,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/14",
         "case": "php"
@@ -731,8 +731,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/15",
         "case": "ruby"
@@ -776,8 +776,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/16",
         "case": "r"
@@ -821,8 +821,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/17",
         "case": "bash"
@@ -866,8 +866,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/18",
         "case": "powershell"
@@ -917,8 +917,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/19",
         "case": "html"
@@ -962,8 +962,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/20",
         "case": "css"
@@ -1001,8 +1001,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/21",
         "case": "json"
@@ -1064,8 +1064,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/22",
         "case": "yaml"
@@ -1115,8 +1115,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/23",
         "case": "xml"
@@ -1160,8 +1160,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/24",
         "case": "tsql"
@@ -1205,8 +1205,8 @@
       "language_source": {
         "file": {
           "path": "src/contracts/language-sources.json",
-          "bytes": 77481,
-          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+          "bytes": 67756,
+          "sha256": "27e3fba580d5363743a888d99061a1f62ed6083aae8872de503d8abb4d7b3536"
         },
         "selector": "#/routes/25",
         "case": "postgresql-sql"
