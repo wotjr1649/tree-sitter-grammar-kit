@@ -81,7 +81,7 @@ func TestQueryClassificationDefinitionOutput(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			script := "$ErrorActionPreference='Stop'; if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
+			script := "$ErrorActionPreference='Stop'; if($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell 7 required'}; $item=[Console]::In.ReadToEnd()|ConvertFrom-Json; New-Item -ItemType Junction -Path . -Name $item.name -Target $item.target|Out-Null"
 			cmd := exec.CommandContext(ctx, command, "-NoLogo", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
 			cmd.Dir = filepath.Dir(name)
 			cmd.Stdin = strings.NewReader(string(eligibilityJSON(t, map[string]string{"name": filepath.Base(name), "target": target})))
