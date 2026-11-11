@@ -54,6 +54,48 @@ func TestQualificationInventoryRouteDifferential(t *testing.T) {
 	}
 }
 
+func TestQualificationInventoryRouteSourceWork(t *testing.T) {
+	f := newQfx(t)
+	r := f.inv.Routes[0]
+	r.Workload.Cases = []QualCase{{}}
+	c := &r.Workload.Cases[0]
+	source := strings.Repeat("x", 100000)
+	c.Source = &source
+	measure := func() uint64 {
+		b := inventorySelectionBudget(t)
+		if e := inventoryRouteValidationWork(r, b); e != nil {
+			t.Fatal(e)
+		}
+		return b.work
+	}
+	unchecked := measure()
+	c.QueryExpect = []QueryExpectation{{Query: "query"}}
+	queried := measure()
+	if queried-unchecked < 2*uint64(len(source)) {
+		t.Fatal("source UTF-8 and hash traversals are not covered")
+	}
+	c.QueryExpect = nil
+	r.Workload.Format = SvcFormat
+	if got := measure(); got-unchecked != 2*uint64(len(source)) {
+		t.Fatalf("SVC source traversal work=%d", got-unchecked)
+	}
+	c.QueryExpect = []QueryExpectation{{Query: "query"}}
+	if got := measure(); got-queried != 2*uint64(len(source)) {
+		t.Fatalf("both source guards must be counted: extra=%d", got-queried)
+	}
+}
+
+func TestQualificationInventoryRouteGlobalBeforeLocal(t *testing.T) {
+	f := newQfx(t)
+	f.inv.Cells++
+	f.inv.Routes[0].Requirements = nil
+	data := f.invBytes(t)
+	_, e := parseQualificationInventoryRoute(data, digestHex(data), f.inv.Routes[0].Route, inventorySelectionBudget(t))
+	if e == nil || e.Code != "CELL_COUNT_MISMATCH" {
+		t.Fatalf("global violation must precede selected local violation: %v", e)
+	}
+}
+
 func inventoryErrorClass(t *testing.T, err error) string {
 	t.Helper()
 	if err == nil {
