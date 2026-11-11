@@ -1,5 +1,7 @@
 # Tree와 adapter — draft/r0
 
+현재/이전 runtime 허용 목록은 기존 logger reader의 역사 규칙이다. [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 보존 집합에는 두 manifest의 원문을 두지만 logger·accepted·ABI·full runtime 의미 검증을 넓히지 않는다. 후속 reader는 caller-approved tuple과 검토된 logger 의미·closure를 함께 사용해야 한다. Roslyn5.9/r2 관측도 원본 bytes와 당시 inventory의 출처로 남기며 신규 기대값 생성은 별도 승인 observation/provenance 이행 범위다.
+
 등록된 `.svc`는 [SVC-SERVICEHOST-r2](../validation/net461-workload.md)의 composite result를 사용한다. 원본 identity와 byte/point를 directive·inline C#·등록 참조 입력에 결속한다. S05가 `tsgk-svc-composite/r2`를 생산하며 r1 profile은 context 없이 읽을 수 있다.
 
 * `schema`, `format: "SVC-SERVICEHOST-r2"`, `input`(전체 파일), `identities`(producer·source·policy).

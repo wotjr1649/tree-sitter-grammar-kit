@@ -1,5 +1,7 @@
 # 계측 query reference 계약 (#216)
 
+[#370 V2-A pin 보존·선택](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)이 추가됐다. 기존 생산의 Rust exact pin과 현재 catalogue 비교는 V2-B 소비자 이행 전까지 적용된다. 단일 selection의 후보 원문은 보존되지만 Python/workflow는 아직 이를 읽지 않는다. 후속 V2-B에서는 생산 시작 때 선택한 승인 tuple의 rustc/cargo release를 각각 정확히 검사하고 workflow도 같은 입력을 사용하며, 과거 증거는 당시 승인 tuple로 검증해야 한다. 기존 Rust 경로 의미는 역사 reader의 기준으로 보존한다. 이 자료 보존 단계가 새 reference 실행·자격 검증을 뜻하지 않는다.
+
 ## DartPHP12 단일 frame 정의 분류
 
 Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.
@@ -345,6 +347,18 @@ producer_fold_valid는 record와 projection의 claim·상태·판정·code 관�
 `semantic_required:null`은 이 정적 원장의 값으로 남는다. 별도의 #216 r10 plan은 최대 두 Windows/Linux small full-input predicate probes의 고정 분모만 등록하며 이 53,104개 potential 좌표를 실행 분모로 바꾸지 않는다. r10 결과도 ordinary query workload·SVC·large scope가 미등록인 부분 BLOCKED다. Plan·caller context·approval·결과 fold의 canonical 규칙은 [identity/evidence](identity-and-evidence.md) `#216 small semantic qualification opt-in — r10`을 따른다.
 
 정적 문서 상한은256KiB다. 중복·미지 JSON member, 필수 null/0 필드의 누락, 원문 pin·분류·계수·추가 역할 사유의 변경을 거부한다. 재생성은 기존 `TSGK_WRITE_INVENTORY=1`을 명시한 `TestQuerySlotInventory`가 수행하고, 쓰기 모드를 끈 별도 검사로 원장과 음성 대조를 검증한다. 기본 foundation 검사는 원장 존재·정확한 값과 shape를 요구한다. 이는 기존 small/large runtime budget, producer/reducer 또는 qualification verdict를 변경하지 않으며, #216 r10의 제한된 probe scope 밖인 전체 semantic completion/fan-in gate는 후속 단위다.
+
+## #362 전체 query 의미 의무 등록부 P0
+
+[`query-semantic-registry-r1.json`](../../src/contracts/query-semantic-registry-r1.json)은 기존 `qualification-c1.json` r8과 `query-slot-inventory-r1.json` r1의 원문 bytes·SHA-256 pin을 보존하며, 두 입력에서 선택한 의무를 별도 등록한다. 기존 슬롯 원장의 `semantic_required:null`, `STATIC_CLASSIFICATION`, `NOT_ASSESSED`는 바꾸지 않는다. Root registry는 고정 입력 pin과 qualification의 route/case/query/source/edit selector를 사용하며, 원문·case catalogue·106,208개 행을 복제하지 않는다. 미등록 independent expected asset은 명시적으로 `UNAVAILABLE`이다.
+
+Ordinary 범위는 26개 route의 모든 case·query·step·tree_role을 `ALL`로 전개하고 Windows/Linux를 각각 포함하는 106,208개 `STRUCTURAL_ONLY` tuple이다. Step 0에는 `incremental`만 있고 각 편집 뒤에는 `incremental`, `fresh` 순서로 둔다. Predicate 의미 의무 20개/host, 합계40개 `PREDICATE_REQUIRED`와 host 정책 대조 47개/host, 합계94개 `EXPECTED_REJECTION`은 서로 다른 typed 분모다. Windows large의 알려진 workload도 정상 완료3개 `LARGE_WORKLOAD_POSITIVE`와 기대 자원 제한1개 `LARGE_WORKLOAD_CONTROL`로 별도 등록한다. 알려진 coordinate 합계는106,346개이며 large node/occurrence/page/footer 세부 분모는 `required:null`과 `missing_scopes`로 남는다. SVC segment/range/history/CodeBehind 하위 분모도 null이다. 기존 8개 extra role의 status·reason·platform·적용 불가·유예 사유도 보존한다. 예상 거부 대조는 positive 의미 PASS를 채우지 않고 subject의 원 상태를 바꾸지 않는다.
+
+Coordinate와 obligation ID는 원문 pin, policy, route, host ID/subject, role, set, case, query, step, tree role 및 context discriminator를 포함하는 canonical tuple에서 계산한다. Registry 자기 hash를 ID 안에 넣지 않는다. Caller가 고정한 registry hash는 ID와 별도로 결속하며, count나 digest만 비교해 membership을 인정하지 않는다. Canonical JSON은 Go `encoding/json`(v1) encoder 규칙으로 만든다: UTF-8, struct field·array의 고정 순서, 정렬된 map key, HTML escaping 없음, U+2028/U+2029는 `\u` escape, 마지막 newline 없음. Coordinate digest는 canonical coordinate bytes를 정렬하고 각 행 앞에 uint64 big-endian byte length를 붙여 SHA-256으로 계산한다. Strict decoder는 256 KiB, 깊이64, JSON token 100,000개를 제한하고 duplicate/unknown field, 필수 누락과 잘못된 null/shape를 거부한다. Foundation 검사는 qualification과 슬롯 원장을 독립 경로로 다시 전개해 ID와 coordinate 모두 exact 비교한다. `go run ./src/dev/query-registry -root . -write`는 고정 manifest만 쓰는 명시 생성 단계이며 일반 validation은 generator를 호출하거나 registry를 쓰지 않는다. Generator와 verifier는 internal package이며 public `kit` API를 추가하지 않는다.
+
+Coverage fold는 caller가 제출한 adjudicated state만 집계하며 각 typed set에서 `required = verified + failed + blocked + unprocessed`를 유지한다. 이 P0 fold는 runtime raw claim이나 actual native/reference evidence를 판정하지 않는다. Source witness, independent metadata/expected, full CST/API, capture, current observation, caller approval과 replay asset은 모두 `UNAVAILABLE`이므로 positive coordinate는 VERIFIED가 될 수 없고 known required 분모에서 BLOCKED다. Control은 원 status/code/capture를 보존해 별도 집계한다. 확인된 registry 모순·변조는 FAIL이며, 그 앞에서 이미 확인된 최초 FAIL code를 보존한다. Coverage counter의 합계는 등록된 집합의 합일 뿐이며 미등록 SVC/large 하위 의무를 포함한 전체 분모가 아니다. Namespace는 predicate basis 두 파일(`src/dev/query-reference/check.py`, `src/internal/native/query_policy_test.go`)의 bytes에도 결속된다. 둘 중 하나를 바꾸면 검증이 `REGISTRY_BASIS_PIN`으로 실패하고, registry를 다시 생성하면 모든 obligation ID가 바뀐다. 중단 뒤 판정하지 못한 항목은 unprocessed로 남되, 이미 확인된 필수 asset/input 부재는 blocked로 유지한다. 완전한 빈 expected `[]`와 미확보 expected `null`은 다르다.
+
+P0 registry가 유효해도 독립 기대 자료, 실행 관측, 승인, replay 및 SVC/large 전수 하위 원장이 갖춰지지 않았으므로 `full_scope_complete=false`다. P0 fold는 모든 adjudicated row가 VERIFIED여도 이를 true로 바꾸지 않는다. 이는 #362 전체 완료, r9/r10 승격, release gate, runtime 예산, producer/reducer, CLI 또는 workflow 활성화를 뜻하지 않는다. 전체 완료는 모든 필수 집합의 exact membership, positive·control 검증, 현재 cohort·승인·저장 재계산, SVC/large 전수성 및 미완료 상태 0을 별도 확인한 뒤에만 가능하다.
 
 ## #216 parser-only paging
 
