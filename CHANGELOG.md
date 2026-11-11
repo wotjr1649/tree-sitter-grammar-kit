@@ -5,6 +5,7 @@
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
+- 같은 guarded semantic session에서 paging part의 검증 identity와 완성된 logical identity를 재사용한다(Refs #362). Private record가 retained bytes를 소유하고 일반 caller에는 복사본을 주며, 전체 chain·외부 profile/build pin과 set의 member/owner/closure 검증을 유지한다. Record 관리 비용을 별도 과금하고 semantic/replay의 1 GiB와 standalone의 기존 검증 경로를 유지한다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.
 - `src/internal/native` 시험의 중복 C 문법 compile을 줄였다(#352). batch 대조 시험은 set을 한 번 만들어 복사본을 변형하고, 순차 Oracle을 실행하는 두 시험은 시험 전용 build cache를 공유한다. 전역을 쓰지 않는 직렬 시험 6개는 병렬로 돌린다. 시험 수와 판정은 같다(PASS 916·SKIP 23). 로컬 Windows 교대 측정에서 base 146.1·145.4·143.9초, head 106.3·108.2초였다. CI 여유는 자연 표본으로 따로 판정한다.
 - Windows·Linux foundation의 13분 step과 native 명령 wall(420초 한도에 대한 보수적 대용값)을 margin 계측에 추가하고, 다른 source의 과거 report에 신규 4개 ID 누락을 제한적으로 허용한다(#352). 성능 개선이 아니며 새 구성 표본은 n=1부터 시작하므로 n20·70% 여유 달성은 별도 관측이 필요하다.
 - 보호된 파일 읽기가 파일마다 1 MiB 버퍼를 0으로 채워 할당하던 비용을 없앴다(#303). 버퍼를 `min(1 MiB, 파일 크기+1)`로 잡으며 읽은 bytes·hash·오류 판정은 같다. 로컬 Windows `src/kit` 시험 3쌍에서 63.9→46.4·81.3→66.7·74.8→55.9초였고, host 부하 변동이 포함된 값이라 CI 여유는 자연 표본으로 따로 판정한다.
