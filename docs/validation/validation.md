@@ -1,5 +1,19 @@
 # Validation and merge contract
 
+## #362 P2-C ordinary guarded reader 활성화 전 검증 계약
+
+이 검증 계약은 public `VerifyOrdinaryQuerySemantics`의 활성화 gate다. P2-C internal helpers/shape 시험의 존재만으로 end-to-end API, ordinary PASS 또는 full SQL capacity를 통과로 기록하지 않는다.
+
+현재 분할 단위에는 ordinary native build closure, 원래 base reducer 재계산, guarded asset resolution 및 helper 간 coordinator 연결이 남아 있다. Private fold의 PASS는 검증자가 제공한 선택 tuple 상태의 합계일 뿐 eligibility/base gate를 통과한 결과가 아니다. 합성 전체 plan과 선택 JSON/PostgreSQL/TSQL 입력 검사는 한도 안의 거부 원장을 기록하며, evidence/body를 포함한 전체 ordinary pass의 capacity 측정으로 세지 않는다.
+
+P2-C 회귀는 `VerifyOrdinaryQuerySemantics`의 private ordinary eligibility scope를 통해서만 ordinary context와 `approval.ordinary` block을 받아야 한다는 점을 확인한다. Block은 실행/계획 profile·registration·assets·plan·reference selection·run-binding의 path/bytes/SHA와 closure encoding, current cohort, candidate/run, selected shard order를 전부 결속한다. Legacy `VerifyQueryReferenceEligibility`로 ordinary context를 보내거나 block을 기존 context에 끼우는 반례는 거부되어야 한다. #366 rehash/profile replacement와 unbound fallback 시험은 같은 run/root/session/cohort/policy/physical identity authority를 보존하는지 확인한다. Ordinary paging은 verified-part 재사용을 켜도 logical 1 GiB cap을 유지해야 한다.
+
+한 pass의 수치는 하나의 `run`/`eligibilityBudget`에서 qualification route 선택 decode, typed P0 registry/ordinary plan validation, graph/evidence, build/control eligibility, r8/r5/transcript read, reference row decode, independent adjudication과 result seal의 실제 누적이다. `parseQualificationInventoryRoute`가 선택 route 외의 inventory를 typed decode하지 않는지 확인한다. Verified part 및 fallback은 같은 root에 대한 physical identity와 원래 full hashing/limit 검사를 유지해야 한다. Per-shard ledger reset, 공개 bool로 authority 주입, 기존 single-frame eligibility로 batch 결과를 확인하는 경로는 허용하지 않는다.
+
+양성·음성 fixture는 세 `closure_encoding` 표현, 다중 case/frame/history, incremental/fresh tuple, reference row 재사용, recovery/error CST, empty ordered capture, metadata의 explicit empty predicate, API raw table의 shape 후 의미 차이, fact expected의 독립 pin, original base claim 재계산 및 부분 shard counter를 다룬다. Negative fixture는 root/session/cohort를 바꾼 verified part, source/frame owner·profile mismatch, 동일 hash의 다른 case/step 재연결, missing/duplicate/reordered capture, null↔empty, node/query link 오류, valid field-only CST 차이와 별도 metadata FAIL 동시 발생, missing approval/member, partial/truncated frame, finding cap 뒤 FAIL, budget/cancel 뒤 최초 FAIL 보존을 검사한다. 독립 expected 입력에 producer projection·querypolicy/reference 출력을 재사용하지 않는다. P2-B `step_facts`의 내부 일치는 fact expected로 세지 않는다.
+
+두 핵심 mutant는 다른 root/session/cohort의 part record를 같은 것으로 받아들이는 변이와 capture 순서·중복 검사를 제거하는 변이다. Baseline은 먼저 PASS하고 각 overlay 변이는 컴파일이 아닌 대응 assertion에서 실패해야 한다. API/source 구조 변경 뒤 `gofmt`, `CGO_ENABLED=0 go vet ./src/...`, `go build ./src/...`, `src/kit/*` 및 `src/internal/native`, `./src/cmd/tsgk` 전체, foundation과 관련 CLI 소비를 실행한다. Native가 필요한 검사는 brief의 runtime/compiler 환경과 `TSGK_NATIVE_REQUIRED=1`로 실행하며 SKIP을 PASS로 집계하지 않는다. 보존 PostgreSQL9/TSQL8 자료의 shared ledger logical/work/read와 한도 초과분을 따로 기록한다. SQL의 current full ordinary capacity는 수치 상한과 실제 확인이 없으면 `CAPACITY_UNPROVEN`/BLOCKED다. 이 절의 계약은 테스트 완료 결과나 SQL 수용 PASS를 선언하지 않는다.
+
 ## #362 P2-B actual capture 기반 검증
 
 2단계의 `TestOracleOrdinaryPublication`은 owned grammar로 두 case·한 case의 두 edits·incremental/fresh·API=true·일반 query와 fact suffix를 실행하고 record/r5·manifest/r8, process/stderr owner 단일성, caller binding, immutable base PASS/FAIL과 pending을 검사한다. 이 시험은 전체 P0 문서 사전 검증과 분리된 내부 publication 경로를 사용하며 실제 qualification route의 full ordinary 수집 근거는 아니다. `TestOrdinaryExecutionBindsSourcesHistoryQueriesAndRuntime`은 실행 직전 source/version·edit/point·query·runtime·case 순서 대조를 검사하고, public `Oracle`의 잘못된 context/문서 없는 거부는 출력 생성 전에 확인한다.

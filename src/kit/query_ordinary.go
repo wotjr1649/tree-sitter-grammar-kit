@@ -187,6 +187,10 @@ func ParseOrdinaryProfile(data []byte) (OrdinaryProfile, error) {
 	if err := ordinaryDecode(data, &p); err != nil {
 		return p, err
 	}
+	return validateOrdinaryProfile(p)
+}
+
+func validateOrdinaryProfile(p OrdinaryProfile) (OrdinaryProfile, error) {
 	if p.Schema != "tsgk-oracle/r4" || p.Context != OrdinaryContext || p.Candidate == "" || p.SemanticCohort == "" || !ordinaryPin(p.NativePolicy) || p.Limits != OrdinaryPlanLimits() || p.InheritedLimits != p.Limits {
 		return p, ordinaryBad("ORDINARY_PROFILE")
 	}
@@ -316,6 +320,10 @@ func ParseOrdinaryAssets(data []byte) (OrdinaryAssetRegistration, error) {
 	if err := ordinaryDecode(data, &a); err != nil {
 		return a, err
 	}
+	return validateOrdinaryAssets(a)
+}
+
+func validateOrdinaryAssets(a OrdinaryAssetRegistration) (OrdinaryAssetRegistration, error) {
 	if a.Schema != "tsgk-query-ordinary-assets/r1" || !ordinaryPin(a.Registry) || a.Candidate == "" || a.SemanticCohort == "" || a.Assets == nil {
 		return a, ordinaryBad("ORDINARY_ASSETS")
 	}
@@ -346,6 +354,10 @@ func ParseOrdinaryRegistration(data []byte) (OrdinaryRegistration, error) {
 	if err := ordinaryDecode(data, &r); err != nil {
 		return r, err
 	}
+	return validateOrdinaryRegistrationShape(r)
+}
+
+func validateOrdinaryRegistrationShape(r OrdinaryRegistration) (OrdinaryRegistration, error) {
 	if r.Schema != "tsgk-query-semantics-registration/r2" || r.Context != OrdinaryContext || r.MembershipContext != "qualification/r8" || !ordinaryClosure(r.ClosureEncoding) || !ordinaryHost(r.Platform, r.Subject) || r.Route == "" || r.Set == "" || r.Candidate == "" || r.SemanticCohort == "" || !hex64.MatchString(r.Namespace) || len(r.Cases) == 0 || len(r.Queries) == 0 || len(r.Required) == 0 {
 		return r, ordinaryBad("ORDINARY_REGISTRATION")
 	}

@@ -21,11 +21,13 @@ type eligibilityScope struct {
 	wanted            map[string]bool
 	session           *eligibilitySession
 	native            *semanticNativeCache
+	ordinary          *ordinaryEligibilityScope
 }
 
 type eligibilitySession struct {
 	firstFailure                      string
 	semantic                          *semanticNativeCache
+	ordinary                          *ordinaryEligibilityScope
 	r                                 *run
 	b                                 *eligibilityBudget
 	res                               *QueryReferenceEligibilityResult
@@ -145,6 +147,16 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		name string
 		data []byte
 	}{{"approval", req.Approval}, {"registration", req.Registration}, {"witness-registration", req.WitnessRegistration}, {"policy", req.Evidence.Policy}}
+	if scope != nil && scope.ordinary != nil {
+		if len(req.WitnessRegistration) != 0 {
+			return res, fail(KindInvalidInput, "ORDINARY_LEGACY_WITNESS", "witness-registration", nil)
+		}
+		docs = docs[:2]
+		docs = append(docs, struct {
+			name string
+			data []byte
+		}{"policy", req.Evidence.Policy})
+	}
 	for _, doc := range docs {
 		if uint64(len(doc.data)) > MaxDocumentBytes {
 			return res, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc.name, nil)
@@ -174,14 +186,21 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	if e := b.decode("registration", req.Registration, &s.reg, true); e != nil {
 		return res, e
 	}
-	if e := b.decodeWitnessTyped("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
-		return res, e
+	if scope != nil && scope.ordinary != nil {
+		s.ordinary = scope.ordinary
+		s.ordinary.session = s
+		res.Tuple.Required = s.ordinary.TupleRequired
+		res.Tuple.Unprocessed = s.ordinary.TupleRequired
+	} else {
+		if e := b.decodeWitnessTyped("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
+			return res, e
+		}
+		if _, e := validateQueryWitnessRegistration(s.witness.QueryWitnessRegistration, queryEligibilityWitnessSchema); e != nil {
+			return res, e
+		}
+		res.Tuple.Required = uint64(len(s.witness.Required))
+		res.Tuple.Unprocessed = res.Tuple.Required
 	}
-	if _, e := validateQueryWitnessRegistration(s.witness.QueryWitnessRegistration, queryEligibilityWitnessSchema); e != nil {
-		return res, e
-	}
-	res.Tuple.Required = uint64(len(s.witness.Required))
-	res.Tuple.Unprocessed = res.Tuple.Required
 	if e := b.charge(4, uint64(len(req.Approval)+len(req.Registration)+len(req.WitnessRegistration)+len(eligibilityCatalogueJSON)), "caller-digests"); e != nil {
 		return res, e
 	}
@@ -216,11 +235,15 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		return res, e
 	}
 	s.snapshot = &evidenceSnapshot{wanted: wanted, wantedNodes: wantedNodes, approved: approved, retained: retained, identityOnly: true}
-	if scope != nil && heldRoot != nil && s.bound && eligibilityPagedContext(s.reg.Context) {
+	if scope != nil && heldRoot != nil && s.bound && (eligibilityPagedContext(s.reg.Context) || ordinaryPagingEnabled(s.ordinary)) {
 		if e := b.charge(1, 2048, "verified-paging-session"); e != nil {
 			return res, e
 		}
-		s.snapshot.paging = &verifiedPaging{owner: s, r: r, b: b, snapshot: s.snapshot, root: heldRoot, binding: s.pagingBinding(), records: map[string]verifiedLogical{}}
+		binding, e := s.pagingBinding()
+		if e != nil {
+			return res, e
+		}
+		s.snapshot.paging = &verifiedPaging{owner: s, r: r, b: b, snapshot: s.snapshot, root: heldRoot, binding: binding, records: map[string]verifiedLogical{}}
 	}
 	if scope != nil {
 		s.snapshot.walked, s.snapshot.walkedDirectories = scope.walked, scope.walkedDirectories
@@ -267,10 +290,12 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		return res, e
 	}
 	s.verifyAssertions()
-	if e := s.verifyNative(); e != nil {
-		return res, e
+	if s.ordinary == nil {
+		if e := s.verifyNative(); e != nil {
+			return res, e
+		}
 	}
-	if res.Tuple.Required == 0 {
+	if s.ordinary == nil && res.Tuple.Required == 0 {
 		s.finding("ELIGIBILITY_REQUIRED_ZERO", "witness-registration", false)
 	}
 	if e := r.check(); e != nil {
@@ -278,7 +303,7 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	}
 	res.Complete = true
 	s.counts(true)
-	if res.Build.Verified != 9 || res.Unit.Verified != 4 || res.Control.Verified != 53 || res.Assertion.Verified != 36 || res.Tuple.Verified != res.Tuple.Required {
+	if res.Build.Verified != 9 || res.Unit.Verified != 4 || res.Control.Verified != 53 || res.Assertion.Verified != 36 || s.ordinary == nil && res.Tuple.Verified != res.Tuple.Required {
 		s.finding("ELIGIBILITY_INCOMPLETE", "counts", false)
 	}
 	if e := b.charge(20000, 16<<20, "result-encoding"); e != nil {
@@ -335,18 +360,29 @@ func (s *eligibilitySession) counts(complete bool) {
 	s.res.Unit = count(4, values(s.catalogue.Units, s.units))
 	s.res.Control = count(53, values(controls, s.control))
 	s.res.Assertion = count(36, values(assertions, s.assertions))
-	tupleStates := make([]string, 0, len(s.tuples))
-	for _, state := range s.tuples {
-		tupleStates = append(tupleStates, state)
+	if s.ordinary == nil {
+		tupleStates := make([]string, 0, len(s.tuples))
+		for _, state := range s.tuples {
+			tupleStates = append(tupleStates, state)
+		}
+		s.res.Tuple = count(s.res.Tuple.Required, tupleStates)
 	}
-	s.res.Tuple = count(s.res.Tuple.Required, tupleStates)
 }
 
 func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Error {
 	a, g := s.approval, s.reg
 	bad := func(at string) *Error { return fail(KindInvalidInput, "ELIGIBILITY_REGISTRATION_INVALID", at, nil) }
-	if a.Schema != QueryReferenceEligibilityApprovalSchema || g.Schema != QueryReferenceEligibilityRegistrationSchema || (g.Context != "full-input-utf8/r2" && !semanticParserPagingContext(g.Context)) {
+	if a.Schema != QueryReferenceEligibilityApprovalSchema || g.Schema != QueryReferenceEligibilityRegistrationSchema || (g.Context != "full-input-utf8/r2" && !semanticParserPagingContext(g.Context) && g.Context != OrdinaryContext) {
 		return fail(KindUnsupported, "SCHEMA_UNSUPPORTED", "eligibility", nil)
+	}
+	if s.ordinary == nil && !ordinaryEligibilityScopeMatches(g.Context, a.Ordinary, nil) {
+		return fail(KindUnsupported, "ELIGIBILITY_ORDINARY_SCOPE_REQUIRED", "eligibility", nil)
+	}
+	if s.ordinary != nil {
+		if !ordinaryEligibilityScopeMatches(g.Context, a.Ordinary, s.ordinary) || g.Native != nil || len(g.Observations) != 0 {
+			s.bound = false
+			s.finding("ORDINARY_ELIGIBILITY_BINDING", "approval/ordinary", true)
+		}
 	}
 	if semanticParserPagingContext(g.Context) && g.Native == nil {
 		return bad("native-paged-parser-required")
@@ -382,6 +418,19 @@ func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Err
 		if c.Purpose == "current" && (c.SourceRevision != a.Candidate.SourceRevision || c.Platform != a.Candidate.Platform || c.Run != a.Candidate.Run || c.Attempt != a.Candidate.Attempt) {
 			s.bound = false
 			s.finding("ELIGIBILITY_CURRENT_MISMATCH", c.ID, true)
+		}
+	}
+	if s.ordinary != nil {
+		current, found := false, false
+		for _, cohort := range a.Cohorts {
+			if cohort.Purpose == "current" {
+				found = true
+				current = cohort.ID == s.ordinary.Binding.SemanticCohort
+			}
+		}
+		if !found || !current {
+			s.bound = false
+			s.finding("ORDINARY_ELIGIBILITY_COHORT", "approval/ordinary", true)
 		}
 	}
 	for _, p := range a.Provenance {
@@ -544,7 +593,11 @@ func (s *eligibilitySession) validate(req QueryReferenceEligibilityRequest) *Err
 		s.invocationTuples[o.InvocationID] = append(s.invocationTuples[o.InvocationID], requiredTuples[key]-1)
 		seen[key] = true
 	}
-	if s.witness.Encoding != EncodingUTF8 || s.witness.Platform != a.Candidate.Platform {
+	if s.ordinary != nil {
+		if len(g.Observations) != 0 {
+			return bad("ordinary-observations")
+		}
+	} else if s.witness.Encoding != EncodingUTF8 || s.witness.Platform != a.Candidate.Platform {
 		s.bound = false
 		s.finding("ELIGIBILITY_WITNESS_CONTEXT", "witness-registration", true)
 	}

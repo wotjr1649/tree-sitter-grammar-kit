@@ -131,6 +131,10 @@ func parseOrdinaryRecord(data []byte) (OrdinaryOracleRecord, error) {
 	if err := ordinaryDecode(data, &rec); err != nil {
 		return rec, err
 	}
+	return validateOrdinaryRecordShape(rec)
+}
+
+func validateOrdinaryRecordShape(rec OrdinaryOracleRecord) (OrdinaryOracleRecord, error) {
 	if rec.Schema != OracleOrdinaryRecordSchema || rec.Case == "" || rec.Workload == "" || !rec.Complete || rec.BaseProjection.Role != "projection" || !ordinaryReplayPinValid(rec.BaseProjection) || rec.QuerySemantics == nil || rec.QuerySemantics.Phase != "PRODUCER_LOCAL" || rec.QuerySemantics.Claim != "BLOCKED" || rec.QuerySemantics.Code != "EXTERNAL_APPROVAL_PENDING" {
 		return rec, ordinaryBad("ORDINARY_RECORD")
 	}
@@ -145,6 +149,10 @@ func parseOrdinaryRunBinding(data []byte) (OrdinaryRunBinding, error) {
 	if err := ordinaryDecode(data, &b); err != nil {
 		return b, err
 	}
+	return validateOrdinaryRunBindingShape(b)
+}
+
+func validateOrdinaryRunBindingShape(b OrdinaryRunBinding) (OrdinaryRunBinding, error) {
 	if b.Schema != OracleOrdinaryBindingSchema || b.Context != OrdinaryContext || b.ProducerOwner != "O" || b.RunID == "" || b.Candidate == "" || b.SemanticCohort == "" || b.ShardIDs == nil || len(b.ShardIDs) == 0 || b.FullScopeComplete || b.Members == nil || b.Batches == nil {
 		return b, ordinaryBad("ORDINARY_BINDING")
 	}
@@ -171,6 +179,10 @@ func parseOrdinaryManifest(data []byte) (OrdinaryOracleManifest, error) {
 	if err := ordinaryDecode(data, &m, jsonv1.FormatDurationAsNano(true)); err != nil {
 		return m, err
 	}
+	return validateOrdinaryManifestShape(m)
+}
+
+func validateOrdinaryManifestShape(m OrdinaryOracleManifest) (OrdinaryOracleManifest, error) {
 	if m.Schema != OracleOrdinaryManifestSchema || m.Context != OrdinaryContext || !ordinaryClosure(m.ClosureEncoding) || m.ProducerOwner != "O" || m.RunID == "" || m.Candidate == "" || m.SemanticCohort == "" || m.Cases == nil || m.ShardIDs == nil || len(m.ShardIDs) == 0 || len(m.ShardIDs) != len(m.Cases) || m.FullScopeComplete || m.Members == nil || m.Batches == nil || m.Producer == nil || !m.Complete {
 		return m, ordinaryBad("ORDINARY_MANIFEST")
 	}
@@ -246,19 +258,9 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 	listed := map[string]bool{"manifest.json": true}
 	memberByPath := map[string]OrdinaryMember{}
 	var total uint64 = uint64(len(manifestBytes))
-	ownerRole := func(m OrdinaryMember) bool {
-		switch m.Role {
-		case "native-batch-capture", "process", "stderr", "stdin-frame", "stdout-frame", "native-request", "native-response":
-			return strings.HasPrefix(m.Owner, "D_batch_") && m.CaseOrBatch == m.Owner
-		case "driver", "native-driver", "grammar", "reference-library", "build-control", "runtime", "build", "build-manifest", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "grammar-paged-descriptor", "grammar-paged-part", "driver-paged-descriptor", "driver-paged-part", "library-paged-descriptor", "library-paged-part":
-			return m.Owner == "D_build" && m.CaseOrBatch == "build"
-		default:
-			return m.Owner == "O" && m.CaseOrBatch != ""
-		}
-	}
 	for _, mem := range manifest.Members {
 		key := strings.ToLower(mem.Path)
-		if !ordinaryPath(mem.Path) || mem.Pin.Path != mem.Path || !ordinaryPin(mem.Pin) || listed[key] || !ownerRole(mem) || !ordinaryMemberRole(mem.Role, manifest.ClosureEncoding) || mem.Pin.Bytes > lim.FileBytes || total > lim.TotalBytes-mem.Pin.Bytes {
+		if !ordinaryPath(mem.Path) || mem.Pin.Path != mem.Path || !ordinaryPin(mem.Pin) || listed[key] || !ordinaryMemberOwnerRole(mem) || !ordinaryMemberRole(mem.Role, manifest.ClosureEncoding) || mem.Pin.Bytes > lim.FileBytes || total > lim.TotalBytes-mem.Pin.Bytes {
 			add("ORDINARY_MEMBER_INVALID", mem.Path)
 			continue
 		}
@@ -530,6 +532,17 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 	r.Records = len(manifest.Cases)
 	r.Valid = len(r.Findings) == 0
 	return r
+}
+
+func ordinaryMemberOwnerRole(m OrdinaryMember) bool {
+	switch m.Role {
+	case "native-batch-capture", "process", "stderr", "stdin-frame", "stdout-frame", "native-request", "native-response":
+		return strings.HasPrefix(m.Owner, "D_batch_") && m.CaseOrBatch == m.Owner
+	case "driver", "native-driver", "grammar", "reference-library", "build-control", "runtime", "build", "build-manifest", "build-input", "grammar-parser", "grammar-scanner", "grammar-header", "grammar-paged-descriptor", "grammar-paged-part", "driver-paged-descriptor", "driver-paged-part", "library-paged-descriptor", "library-paged-part":
+		return m.Owner == "D_build" && m.CaseOrBatch == "build"
+	default:
+		return m.Owner == "O" && m.CaseOrBatch != ""
+	}
 }
 
 func verifyOrdinaryMember(fsys fs.FS, pin OrdinaryPin, b *eligibilityBudget, lim ReplayLimits) error {

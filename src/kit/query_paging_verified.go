@@ -29,6 +29,8 @@ type pagingBinding struct {
 	policy, context, invocation     string
 	candidate                       eligibilityCandidate
 	cohort                          eligibilityCohort
+	ordinaryDigest                  [32]byte
+	ordinaryShardCount              uint32
 }
 
 type verifiedPaging struct {
@@ -55,21 +57,54 @@ type verifiedLogical struct {
 	cohort     eligibilityCohort
 }
 
-func (s *eligibilitySession) pagingBinding() pagingBinding {
+func (s *eligibilitySession) pagingBinding() (pagingBinding, *Error) {
 	x := pagingBinding{graph: s.reg.Graph, approval: s.res.ApprovalSHA256, registration: s.res.RegistrationSHA256,
 		witness: s.res.WitnessSHA256, policy: s.approval.EvidencePolicySHA256, context: s.reg.Context, candidate: s.approval.Candidate}
+	if s.ordinary != nil {
+		ordinary := s.ordinary.Binding
+		if s.approval.Ordinary == nil || !ordinaryEligibilityBindingMatches(*s.approval.Ordinary, ordinary) {
+			return x, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", "approval/ordinary", nil)
+		}
+		bytes := uint64(8*7*3 + 128 + 8*len(ordinary.ShardIDs))
+		for _, pin := range []OrdinaryPin{ordinary.Profile, ordinary.PlanningProfile, ordinary.Registration, ordinary.Assets, ordinary.Plan, ordinary.ReferenceSelection, ordinary.RunBinding} {
+			bytes += uint64(len(pin.Path) + len(pin.SHA256))
+		}
+		for _, value := range []string{ordinary.Schema, ordinary.Context, ordinary.ClosureEncoding, ordinary.Candidate, ordinary.SemanticCohort, ordinary.RunID} {
+			bytes += uint64(len(value))
+		}
+		for _, id := range ordinary.ShardIDs {
+			bytes += uint64(len(id))
+		}
+		if e := s.b.charge(bytes+uint64(16+len(ordinary.ShardIDs)), bytes, "ordinary-paging-binding"); e != nil {
+			return x, e
+		}
+		x.ordinaryDigest = ordinaryPagingDigest(ordinary)
+		x.ordinaryShardCount = uint32(len(ordinary.ShardIDs))
+		for _, cohort := range s.approval.Cohorts {
+			if cohort.Purpose == "current" {
+				x.cohort = cohort
+				break
+			}
+		}
+	}
 	if s.reg.Native != nil {
 		x.invocation = s.reg.Native.InvocationID
 		if inv := s.invocations[x.invocation]; inv != nil {
 			x.cohort = s.cohorts[inv.CohortID]
 		}
 	}
-	return x
+	return x, nil
 }
 
-func (p *verifiedPaging) valid(s *eligibilitySession) bool {
-	return p != nil && p.owner == s && p.snapshot == s.snapshot && s.snapshot.paging == p && s.snapshot.graphBound &&
-		p.binding == s.pagingBinding() && s.bound && p.r == s.r && p.b == s.b && s.r == s.b.r && p.root != nil
+func (p *verifiedPaging) valid(s *eligibilitySession) (bool, *Error) {
+	if p == nil || s == nil || s.snapshot == nil || s.b == nil || p.owner != s || p.snapshot != s.snapshot || s.snapshot.paging != p || !s.snapshot.graphBound || !s.bound || p.r != s.r || p.b != s.b || s.r != s.b.r || p.root == nil {
+		return false, nil
+	}
+	binding, e := s.pagingBinding()
+	if e != nil || p.binding != binding {
+		return false, e
+	}
+	return true, nil
 }
 
 // memberPin validates ownership without exporting the retained bytes.
@@ -112,13 +147,17 @@ func (s *eligibilitySession) checkMemberPin(pin *eligibilityMember, record bool)
 // part returns rejected=true only when the ownership check itself failed (and, if record, was
 // already reported), so callers do not run the same check again and duplicate the finding.
 func (p *verifiedPaging) part(s *eligibilitySession, pin eligibilityMember, record bool) (_ *guardedPart, ok bool, rejected bool, _ *Error) {
-	if !p.valid(s) {
+	valid, e := p.valid(s)
+	if e != nil {
+		return nil, false, false, e
+	}
+	if !valid {
 		return nil, false, false, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Member.Path, nil)
 	}
 	if p.snapshot.invalidNodes[pin.NodeID] {
 		return nil, false, false, nil
 	}
-	ok, e := s.checkMemberPin(&pin, record)
+	ok, e = s.checkMemberPin(&pin, record)
 	if e != nil || !ok {
 		return nil, false, e == nil, e
 	}
@@ -155,7 +194,11 @@ func (s *eligibilitySession) pageSource(pin eligibilityMember, prefix string, us
 	if p == nil {
 		return nil, nil
 	}
-	if !p.valid(s) || s.snapshot.invalidNodes[pin.NodeID] {
+	valid, e := p.valid(s)
+	if e != nil {
+		return nil, e
+	}
+	if !valid || s.snapshot.invalidNodes[pin.NodeID] {
 		// Unbound input keeps the full callback/hash path and its original findings.
 		return nil, nil
 	}
@@ -269,7 +312,11 @@ func (v *verifiedPageSource) reuse(data []byte, owner, kind, partPrefix string, 
 	if e := v.paging.owner.b.charge(uint64(len(data))+1, 256, "verified-logical-rebind"); e != nil {
 		return semanticBinaryLogical{}, true, false, e
 	}
-	if !v.paging.valid(v.paging.owner) || r.descriptor != v.descriptor || r.data != string(data) || r.owner != owner || r.kind != kind || r.partPrefix != partPrefix || r.index != index || r.input != input || r.cohort != v.cohort {
+	valid, e := v.paging.valid(v.paging.owner)
+	if e != nil {
+		return semanticBinaryLogical{}, true, false, e
+	}
+	if !valid || r.descriptor != v.descriptor || r.data != string(data) || r.owner != owner || r.kind != kind || r.partPrefix != partPrefix || r.index != index || r.input != input || r.cohort != v.cohort {
 		return semanticBinaryLogical{}, true, false, nil
 	}
 	for _, pin := range r.parts {
@@ -286,7 +333,14 @@ func (b *eligibilityBudget) setPageSource(state *semanticSetState, pin OracleMem
 		return nil, nil
 	}
 	s := state.paging.owner
-	if s.b != b || !state.paging.valid(s) {
+	if s.b != b {
+		return nil, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Path, nil)
+	}
+	valid, e := state.paging.valid(s)
+	if e != nil {
+		return nil, e
+	}
+	if !valid {
 		return nil, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Path, nil)
 	}
 	p := eligibilityMember{NodeID: s.owners["oracle/"+pin.Path], Member: ReplayMember{Path: "oracle/" + pin.Path, Role: pin.Role, Bytes: pin.Bytes, SHA256: pin.SHA256}}

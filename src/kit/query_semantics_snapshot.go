@@ -11,10 +11,16 @@ import (
 func (b *eligibilityBudget) semanticSnapshot(parent, child *os.Root, snapshot *evidenceSnapshot, reg semanticRegistration, add func(string, string, string)) (OracleManifest, map[string][]byte, semanticSetState, *Error) {
 	var manifest OracleManifest
 	state := semanticSetState{producerFailure: add}
-	if snapshot != nil && snapshot.paging != nil && snapshot.paging.owner.b == b && snapshot.paging.root == parent && snapshot.paging.valid(snapshot.paging.owner) {
-		state.paging = snapshot.paging
-	}
 	files := map[string][]byte{}
+	if snapshot != nil && snapshot.paging != nil && snapshot.paging.owner.b == b && snapshot.paging.root == parent {
+		valid, e := snapshot.paging.valid(snapshot.paging.owner)
+		if e != nil {
+			return manifest, files, state, e
+		}
+		if valid {
+			state.paging = snapshot.paging
+		}
+	}
 	if snapshot == nil || !snapshot.graphBound {
 		return manifest, files, state, fail(KindInvalidInput, "SEMANTICS_GRAPH_UNBOUND", "evidence.json", nil)
 	}

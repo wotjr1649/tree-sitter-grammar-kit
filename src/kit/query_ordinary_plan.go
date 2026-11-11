@@ -608,6 +608,10 @@ func ParseOrdinaryShardPlan(data []byte) (OrdinaryShardPlan, error) {
 	if err := ordinaryDecode(data, &plan); err != nil {
 		return plan, err
 	}
+	return validateOrdinaryPlanShape(plan)
+}
+
+func validateOrdinaryPlanShape(plan OrdinaryShardPlan) (OrdinaryShardPlan, error) {
 	if plan.Schema != ordinaryShardPlanSchema || !ordinaryPin(plan.Registry) || !ordinaryPin(plan.Witness) || !ordinaryPin(plan.Profile) || !ordinaryPin(plan.Assets) ||
 		plan.Namespace == "" || !hex64.MatchString(plan.Namespace) || plan.Candidate == "" || plan.SemanticCohort == "" || plan.Registrations == nil || plan.Shards == nil || plan.Bindings == nil || plan.Routes == nil ||
 		!reflect.DeepEqual(plan.CapacityUnknown, ordinaryCapacityUnknown) || plan.Budget.LogicalLimit != OrdinaryPlanLimits().Logical ||

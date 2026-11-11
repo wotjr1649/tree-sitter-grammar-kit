@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- P2-C internal ordinary approval/scope/paging binding과 typed input/reader/adjudicator/reference 구성요소를 준비한다(Refs #362). Verified page authority는 ordinary caller pins, reference selection, cohort/run, closure encoding과 ordered selected shard IDs에 결속하며 선택 case 수는 기존 `native-query-batch`의 1000 상한을 따른다. Public `VerifyOrdinaryQuerySemantics`/result contract는 활성화하지 않았으며 ordinary PASS나 full SQL capacity를 주장하지 않는다. 공개 entry/end-to-end 원장 검증과 SQL capacity는 남겨 `CAPACITY_UNPROVEN`/BLOCKED로 기록하고, P2-D stored reducer/CLI parity도 후속으로 둔다.
+
 - P2-B 2단계에서 `OracleRequest.Ordinary`의 명시 경로로 P2-A 문서와 실제 batch source witness를 연결하고 record/r5·manifest/r8·caller-facing run-binding/r2, immutable base와 local pending, file-backed actual capture 발행을 추가했다. `nativewire.CompareAPI`를 live/offline이 공유하고 step/role/query fact는 편집 후 source와 fresh captures로 독립 도출한다. 기존 profile의 거부·한도·API 의미를 보존하며 guarded ordinary reader/replay·외부 승인·SQL capacity는 미완료다(Refs #362).
 
 - P2-B의 첫 단위로 runner의 선택적 actual stdin/stdout sink와 내부 native batch transcript/r1을 추가했다. 실제 header·partial frame·출력 probe·stream hash/길이와 process당 하나의 stderr/result owner를 보존하며, batch 실패가 응답한 frame의 capture를 덮지 않는다. 기존 single/legacy batch 출력과 한도는 유지한다. ordinary 실행 dispatch·source witness·record/r5·manifest/r8, API 비교기 이동·step/role fact, guarded reader/replay와 B3/B5 wire 확장은 후속 범위다(Refs #362).
