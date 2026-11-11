@@ -113,7 +113,7 @@ jobs:
       - name: Verify clean validation input
         timeout-minutes: 1
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching
           if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }
           if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }
@@ -126,7 +126,7 @@ jobs:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if ([string]::IsNullOrWhiteSpace($env:ImageOS) -or [string]::IsNullOrWhiteSpace($env:ImageVersion)) { throw 'Runner image identity missing' }
           $goIdentity = go version
           if ($LASTEXITCODE -ne 0) { throw 'go version failed' }
@@ -613,7 +613,7 @@ jobs:
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
@@ -711,7 +711,7 @@ jobs:
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
@@ -921,7 +921,7 @@ jobs:
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
@@ -1008,7 +1008,7 @@ jobs:
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.sha }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
           if ((git rev-parse HEAD) -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           Write-Output "checkout_sha=$env:EXPECTED_CHECKOUT_SHA image=$env:ImageOS/$env:ImageVersion run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
@@ -1127,7 +1127,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PRODUCER_RESULTS: ${{ toJSON(needs) }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           $sha = git rev-parse HEAD
           if ($LASTEXITCODE -ne 0 -or $sha -ne $env:EXPECTED_CHECKOUT_SHA) { throw 'checkout SHA mismatch' }
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
