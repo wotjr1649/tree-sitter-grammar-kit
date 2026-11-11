@@ -4,7 +4,7 @@
 
 내부 `tsgk-native-batch-capture/r1`의 owner는 실행 batch별 `D_batch_<index>` 하나다. 실제 stdin/stdout frame member와 partial/suffix, stderr, effective process spec과 process-result member는 이 owner의 자료다. frame은 case ID와 실제 순번 및 stream offset·길이·SHA로 결속되고 여러 case가 같은 process를 참조한다. 전체 stream 길이·SHA는 runner가 실제 write/read한 순서에서 계산한다. build identity와 실제 실행 직전 `Build.Verify`로 확인한 executable 길이·SHA를 함께 기록한다. 기록된 member의 bytes를 다시 marshal해 만든 pin으로 actual stream pin을 대체하지 않는다. Ordinary r8 reader에서는 nested `Spec.Args`와 `Spec.Env`의 `null`을 허용하고 JSON 값으로 그대로 보존한다. `Env:null`은 빈 환경으로 처리하며 runner도 `nil` 환경을 빈 환경으로 정규화한다. 이 허용은 ordinary process spec에만 적용하며 independent expected metadata/CST/capture/fact에서 `null`과 `[]`의 기존 구별을 유지한다.
 
-Ordinary reader는 `Spec.StdoutBytes`가 `manifest.Operation.OutputBytes+4`인지 확인한다. 추가 4바이트는 batch protocol의 frame header다. Producer가 stdout 제한을 payload 한도에만 맞추고 header bytes를 제외하면 capture 정책과 맞지 않아 batch를 수용하지 않는다.
+Ordinary reader는 `Spec.StdoutBytes`가 batch의 case(frame) 수 n에 대해 `n × (manifest.Operation.OutputBytes+4)`인지 확인한다. 추가 4바이트는 frame마다 붙는 batch protocol header이고, producer는 batch에 담은 case마다 이 크기를 stdout 제한에 더한다. Producer가 stdout 제한을 payload 한도에만 맞추고 header bytes를 제외하거나, 여러 case를 담은 batch를 한 frame의 크기로만 확인하면 capture 정책과 맞지 않아 batch를 수용하지 않는다. 한 process에 case가 둘 이상인 실제 owned-native r8이 이 검사에서 거부되던 결함을 #362 전체 양성 확대에서 고쳤다(`ordinaryBatchStdoutBudget`, `TestOrdinaryBatchStdoutBudgetCountsEveryFrame`).
 
 `ANSWERED` frame 보존과 batch 수용을 구분하며, partial/truncation/cleanup 실패·capture 손실·상한 초과에서 local transcript는 수용되지 않는다. stream의 보존 길이가 관측 길이보다 작으면 prefix만 확보한 실패 진단이다. 물리 frame member가 16 MiB를 넘는 경우의 분할도 실패 진단이며 승인된 성공 frame을 구성하지 않는다. 정상 member의 순서대로 재연결한 bytes는 header를 포함한 stream hash·길이와 일치한다.
 

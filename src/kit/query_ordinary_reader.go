@@ -411,7 +411,7 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 		if process.Status != "COMPLETED" || process.ExitCode != 0 || !process.Cleanup.Verified || process.Cleanup.ResidualAfterExit != 0 || process.StdoutTruncated || process.StderrTruncated {
 			batchCache.Accepted = false
 		}
-		if capture.Spec.Path == "" || !capture.Spec.Interactive || len(capture.Spec.Stdin) != 0 && string(capture.Spec.Stdin) != "null" || capture.Spec.StdoutBytes <= 0 || capture.Spec.StderrBytes <= 0 || uint64(capture.Spec.StdoutBytes) != manifest.Operation.OutputBytes+4 || capture.Spec.Wall <= 0 || capture.TrailingBytes != 0 || capture.CaptureError != "" {
+		if capture.Spec.Path == "" || !capture.Spec.Interactive || len(capture.Spec.Stdin) != 0 && string(capture.Spec.Stdin) != "null" || capture.Spec.StdoutBytes <= 0 || capture.Spec.StderrBytes <= 0 || uint64(capture.Spec.StdoutBytes) != ordinaryBatchStdoutBudget(manifest.Operation.OutputBytes, len(batch.Cases)) || capture.Spec.Wall <= 0 || capture.TrailingBytes != 0 || capture.CaptureError != "" {
 			batchCache.Accepted = false
 			add("ORDINARY_BATCH_SPEC", capMember.Path, "interactive process spec·capture 상태가 일반 batch 정책과 다르다")
 		}
@@ -1008,6 +1008,12 @@ func ordinaryVersionPinsDigest(pins []OrdinaryPin) string {
 }
 
 func containsString(xs []string, x string) bool { return slices.Contains(xs, x) }
+
+// ordinaryBatchStdoutBudget is the whole-batch stdout limit the producer sets: every case in the process
+// is one response frame of at most OutputBytes plus its four-byte length header.
+func ordinaryBatchStdoutBudget(outputBytes uint64, frames int) uint64 {
+	return (outputBytes + 4) * uint64(frames)
+}
 
 // ordinaryMemberIndexReservation prices the exact-path, folded-path and member maps built from n manifest
 // members whose paths total p bytes. It keeps both merged parents' terms: the case-index entries

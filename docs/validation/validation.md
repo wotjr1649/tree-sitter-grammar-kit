@@ -24,6 +24,17 @@ Record 종료 우선순위는 `TestOrdinaryRecordKeepsAnEstablishedFailAheadOfLa
 
 `ordinaryMemberIndexReservation`은 `TestOrdinaryMemberIndexReservationCoversMaps`가 독립 순회 모델과 실제 map 할당 측정에 대조한다. `4P` 항을 제거한 변이는 이 시험에서 실패해야 한다.
 
+## #362 ordinary 전체 양성의 Git-tracked 회귀와 범위 확대
+
+`TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase`와 `TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase`(`query_ordinary_full_positive_run_test.go`)는 미추적 입력 없이 저장소의 tracked 자료로 만든 ordinary 전체 양성이다. 입력 grammar는 `src/testdata/ordinary-json/parser.c`(23,126 B, P0 JSON route가 pin한 generated parser.c와 같은 SHA-256)와 tracked plain grammar fixture의 세 runtime header(P0 pin과 byte 동일)로 시험 때 임시 grammar root에 조립한다. 조립한 모든 파일의 길이·SHA-256을 P0 registry의 grammar pin과 대조한다. native 실행만 `TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC`(`TSGK_NATIVE_REQUIRED` 계열) gate가 건너뛰고, 두 환경 변수가 있으면 owned native producer를 한 번에 하나씩 실행한다.
+
+- **여러 case를 가진 선택(zero-edit):** `alt-json-B01-05`(`null`)와 `alt-json-B01-09`(중첩 배열·객체) 두 shard를 한 record로 만들고 공개 API→in-process r9 replay→`tsgk replay`가 2/2 VERIFIED, 같은 coverage digest·같은 nested 원장(read·work·logical)으로 일치해야 한다.
+- **편집 이력이 있는 case:** `json-feature-r1`과 `json-query-r1`(같은 3 edit·4 version 이력, 서로 다른 case ID)을 한 record로 만들고 version 0 incremental과 version 1~3의 incremental·fresh role, 14개 tuple이 모두 VERIFIED여야 한다. 두 selection 순서(commitment의 정렬된 shard ID와 registration/producer의 case 순서)가 같은 선택만 허용하는 기존 제약을 따른다.
+- **독립 expected:** CST와 `q.structure` ordered capture는 native·reference 출력이 아니라 JSON grammar(생성된 `parser.c`의 lexer 상태와 production)만으로 시험 코드가 도출한다(`query_ordinary_json_expected_test.go`). 도출기는 native 없이 일반 `go test`에서 고정 독립 자료와 대조된다: tracked anchor의 `null` tree, 손으로 쓴 `{"a": []}` 노드 목록, 그리고 earlier campaign의 `json-query-r1` 13개 capture 목록(이름·type·text 순서). 편집으로 syntax ERROR가 되는 version(P0의 `probe-json-*-R-*` 계열 step 1)은 error recovery tree를 grammar만으로 쓸 수 없으므로 expected 없이 BLOCKED로 두며, 이 회귀는 모든 version이 오류 없는 case만 고른다.
+- **Counterexample:** 같은 owned r8에 대해 step 2의 reference row 삭제(`ORDINARY_REFERENCE_SELECTION_GAP`), step 1·2 또는 두 case의 row 순서 교환(`ORDINARY_REFERENCE_ORDER`)은 14/14 모두 BLOCKED여야 한다. 독립 expected 쪽은 모든 pin을 일관되게 다시 계산한 별도 owned r8에서, 두 version의 expected 교환은 정확히 그 4 tuple만 FAIL(`ORDINARY_EXPECTED_TREE_INVALID`)하고 나머지 10개는 VERIFIED여야 하며, 두 case의 expected 교환 또는 한 case가 다른 case의 asset을 가리키는 registration은 해당 tuple만 FAIL(`ORDINARY_EXPECTED_TREE_BINDING`)해야 한다. case ID 비교를 expected tree·capture identity에서 뺀 변이는 마지막 반례(14/14 PASS로 수용)에서 실패하고, 배치 stdout 한도를 한 frame 크기로 되돌린 변이는 두 시험이 모두 실패한다.
+
+`TestOrdinaryBinaryPagedOwnedTSQLPublicReplayAndPageCounterexamples`(`TSGK_ORDINARY_SQL_E2E=1`)는 준비된 68 MB TSQL grammar(tracked 불가)로 실제 owned binary-paged closure를 실행한다. P0 `alt-tsql-B04-r144`의 8개 tuple은 독립 expected body가 없어 모두 BLOCKED(`ORDINARY_INCOMPLETE`)이며 이는 경로가 끝까지 실행됨을 보이는 것이지 semantic 판정이 아니다. 공개 API, r9 replay와 `tsgk replay`는 같은 결과·원장을 내야 하고, r8은 driver page 3개와 grammar page 5개의 paged descriptor를 가져야 한다. driver/grammar page 누락, descriptor의 page 순서 교환(index·offset은 유지하고 두 page의 path·hash만 교환), page 내용 교환은 모든 pin을 일관되게 다시 계산한 r8에서도 비교 대상 결과와 달라져야 한다(`ORDINARY_BUILD_DRIVER_PART`, `ORDINARY_BINDING_MISMATCH`).
+
 ## #362 ordinary base fact 예약 검증
 
 `TestOrdinaryBaseFactReservationIgnoresUnusedSource`는 declaration/XML 도출 예약이 소비하지 않는 source 길이에 따라 커지지 않는지 확인한다. `TestOrdinaryBaseDeclarationBudgetStopsBeforeHugeDepth`는 빈 level을 포함한 숫자 depth 반복 전에 자원 한도로 중단하고, `TestOrdinaryBaseDeclarationBudgetStopsFrontierExpansion`은 여러 parent 경로의 중복 frontier가 다음 clone·sort·출력 전에 차단되는지 검사한다. 기존 fact 재계산의 모든 step·role·pin·suffix·payload 음성과 독립 expected 경계를 유지한다.
