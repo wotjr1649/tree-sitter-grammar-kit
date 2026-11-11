@@ -548,10 +548,7 @@ func (s *eligibilitySession) nativeResponse(inv *eligibilityInvocation, versions
 	if e != nil || !haveRaw {
 		return raw, false, e
 	}
-	if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
-		return raw, false, e
-	}
-	if e := s.b.decode(inv.ID+"/native-response-shape", data, &raw, true); e != nil {
+	if e := s.b.decodeNativeResponse(inv.ID+"/native-response-shape", data, &raw); e != nil {
 		return raw, false, e
 	}
 	var capability struct {

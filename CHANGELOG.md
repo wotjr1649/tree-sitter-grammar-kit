@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Reference/expected B4·receipt B5와 ordinary 전체 capacity는 후속 범위다.
+
 - Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다. Native/reference/expected 및 receipt 최적화는 후속 범위다.
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.

@@ -2198,6 +2198,12 @@ func TestQueryReferenceEligibilityNativeShape(t *testing.T) {
 					r.eligibility = b
 					var decoded nativewire.Response
 					e = b.decode("native-shape", eligibilityJSON(t, changed), &decoded, true)
+					var streamed nativewire.Response
+					b.work, b.logical, b.err = 0, 0, nil
+					got := b.decodeNativeResponse("native-shape", eligibilityJSON(t, changed), &streamed)
+					if (e == nil) != (got == nil) || e != nil && (e.Kind != got.Kind || e.Code != got.Code) || e == nil && !reflect.DeepEqual(decoded, streamed) {
+						t.Fatalf("native parity: AST=%v typed=%v", e, got)
+					}
 					optional := index == 3 && (field == "reason" || field == "errors" || field == "partial_trees")
 					if bad == "missing" && optional || bad == "null" && nullable {
 						if e != nil {
