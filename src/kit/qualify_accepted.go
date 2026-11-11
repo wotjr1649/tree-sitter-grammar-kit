@@ -75,7 +75,7 @@ func qualAcceptedWorkload(w QualWorkload) bool {
 }
 
 func qualAcceptedRole(r QualRole, platforms []QualPlatform) bool {
-	if r.ID != "reuse-accepted" || r.Role != "owned" || r.Status != RoleExecuted || len(r.Workloads) != 4 || len(r.NotApplicable) != 0 {
+	if !qualAcceptedRoleHeader(r, platforms) {
 		return false
 	}
 	seen := map[string]bool{}
@@ -88,6 +88,13 @@ func qualAcceptedRole(r QualRole, platforms []QualPlatform) bool {
 			return false
 		}
 		seen[key] = true
+	}
+	return true
+}
+
+func qualAcceptedRoleHeader(r QualRole, platforms []QualPlatform) bool {
+	if r.ID != "reuse-accepted" || r.Role != "owned" || r.Status != RoleExecuted || len(r.Workloads) != 4 || len(r.NotApplicable) != 0 {
+		return false
 	}
 	for _, p := range platforms {
 		execute := p.pair() == "windows/amd64" || p.pair() == "linux/amd64"

@@ -1,5 +1,13 @@
 # Validation and merge contract
 
+## #362 inventory 선택 decode 검증
+
+`TestQualificationInventoryRouteDifferential`은 고정 `qualification-c1.json`의26 route와 header/index를 공개 전체 파서의 결과와 대조한다. `TestQualificationInventoryRouteGlobalParity`와 `TestQualificationInventoryRouteAcceptedPlatformParity`는 cell·platform·route·전체 set·role ID 충돌과 accepted 역할의 OS/arch 연결을 검사한다. `TestQualificationInventoryRouteTokenParity`는 비선택 case 내부를 포함한 중복 key·escape-equivalent key·문법·surrogate·UTF-8·trailing·truncation·depth 및 위조 전체 hash 거부를 확인한다. `TestQualificationInventoryRouteLocalParity`는 선택 route의 source/query/case/coverage/requirement·특수 shape 오류를 전체 파서와 대조하고 비선택 route-local 의미 검사를 수행하지 않는 경계를 고정한다. `TestQualificationInventoryRouteBoundaries`는 지원 inventory revision·escaped key·없는 route·누적 work/logical·취소를 확인한다.
+
+실제 P0 registry와 전체 guarded inventory 읽기를 포함한 test-only 측정은26 route별 logical/work/read를 전체 AST+typed 예약 기준과 비교한다. 연구 추정과 실측 원장을 구분하고 새 hash·전역 검사·buffer 예약 비용을 포함한다. 전역 set 유일성 제거 및 비선택 subtree의 중복 key 검증 제거 overlay mutant는 각각 새 음성 시험에서 실패해야 한다. 이 시험과 kit/foundation/vet은 native/reference 실행이나 P2-C producer/replay·전체 semantic completion을 대신하지 않는다.
+
+`TestQualificationInventoryRouteValidationProductLimit`·`TestQualificationInventoryRouteAlternativeProductLimit`·`TestQualificationInventoryRoutePlatformProductLimit`는 coverage×expectations·alternatives×coverage·accepted 플랫폼의 반복 검색을 실제 중첩 순회 전에 work 한도로 차단한다. `TestQualificationInventoryRouteSpecialParity`는 비선택 영역의 특수 arm schema와 typed decode보다 먼저 실행되는 shape 오류 분류를 전체 파서와 대조하고, `TestQualificationInventoryRouteJSONLimits`는16MiB와2,000,000값 경계를 확인한다.
+
 ## #216 TSQL8 source 준비 검증
 
 [TSQL8 사전 기대값과 binary paging 연결](../specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다. Native의 `TestQueryClassificationTSQL8StaticProfile`, `TestQueryClassificationTSQL8AnchorGuards`, `TestQueryClassificationTSQL8GrammarGuards`, `TestQueryClassificationTSQL8EmptyStderrCaptureMember`는 닫힌 이름·일반6+fact2의 원문/순서/SHA/metadata·빈 CST/ABI·grammar5개와 parser5 parts를 고정한다. kit의 `TestQueryClassificationTSQL8DefinitionBindings`, `TestQueryClassificationTSQL8ProfileAndPagedContext`, `TestQueryClassificationTSQL8ClosedNames`, `TestQueryClassificationTSQL8StderrBinding`은 두 원문 envelope·fact route 유일성/순서·2982 tree roles/23856 potential links·compiler argv/limits·다른 family/context·null/alias·live session 없는 projection을 검사한다.

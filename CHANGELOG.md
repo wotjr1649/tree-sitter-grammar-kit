@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
