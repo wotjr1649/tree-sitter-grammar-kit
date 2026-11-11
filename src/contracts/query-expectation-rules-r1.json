@@ -1,0 +1,4471 @@
+{
+  "schema": "tsgk-query-expectation-rules/r1",
+  "registry": {
+    "path": "src/contracts/query-semantic-registry-r1.json",
+    "bytes": 82475,
+    "sha256": "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+  },
+  "qualification_inventory": {
+    "path": "src/contracts/qualification-c1.json",
+    "bytes": 8297072,
+    "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+  },
+  "state": "SKELETON_UNREVIEWED",
+  "routes": [
+    {
+      "route": "csharp",
+      "grammar_ref": "qualification_inventory#/routes/0/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
+          "bytes": 51472926
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
+          "bytes": 46552
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/0",
+        "case": "csharp"
+      }
+    },
+    {
+      "route": "go",
+      "grammar_ref": "qualification_inventory#/routes/1/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "ec699b64a1133af5747071fc5a7eb5d7024ab7403d3f6b767479f589dbaf5436",
+          "bytes": 1695280
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "808af6eb05206fd5ebd26c40fc7990f08e3cb34c9667c1693520e9809a949159",
+          "bytes": 4041
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/1",
+        "case": "go"
+      }
+    },
+    {
+      "route": "python",
+      "grammar_ref": "qualification_inventory#/routes/2/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "5f91970298858b745730783d9c7063fd87aababe81f4214689e2554dbe8189c4",
+          "bytes": 3797134
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "899c800d80ef85fe0e9978607e4a3f622942e479d439f78db4e38dacffe21c7b",
+          "bytes": 17885
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/2",
+        "case": "python"
+      }
+    },
+    {
+      "route": "javascript",
+      "grammar_ref": "qualification_inventory#/routes/3/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+          "bytes": 4395417
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+          "bytes": 23108
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/3",
+        "case": "javascript"
+      }
+    },
+    {
+      "route": "jsx",
+      "grammar_ref": "qualification_inventory#/routes/4/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "6b46785fd55c74dfed0d13929a0aaef8b6e5f3786b31dc5c5ab76e4bb615f05c",
+          "bytes": 4395417
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "59803ef7202faca8624465d4f2dde8a23b07195a19ac55f8d17664da1b6327f5",
+          "bytes": 23108
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/4",
+        "case": "jsx"
+      }
+    },
+    {
+      "route": "typescript",
+      "grammar_ref": "qualification_inventory#/routes/5/workload/grammar",
+      "grammar": [
+        {
+          "path": "common/scanner.h",
+          "role": "header",
+          "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c",
+          "bytes": 10097
+        },
+        {
+          "path": "typescript/src/parser.c",
+          "role": "parser",
+          "sha256": "d5a8cbe3c229abddae6fcc360ac39704bc46f1d39d40c0a1798da8eef96c3bfa",
+          "bytes": 8845184
+        },
+        {
+          "path": "typescript/src/scanner.c",
+          "role": "scanner",
+          "sha256": "9125013b42cb888379d9be909f1d73dfb75a37626c2cdbf4122718a2b431a6d3",
+          "bytes": 573
+        },
+        {
+          "path": "typescript/src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "typescript/src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "typescript/src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/5",
+        "case": "typescript"
+      }
+    },
+    {
+      "route": "tsx",
+      "grammar_ref": "qualification_inventory#/routes/6/workload/grammar",
+      "grammar": [
+        {
+          "path": "common/scanner.h",
+          "role": "header",
+          "sha256": "da66ef2bd14a3f7ea743e25ba068c6c9aae2c3509db200ff80c4a0e6116e564c",
+          "bytes": 10097
+        },
+        {
+          "path": "tsx/src/parser.c",
+          "role": "parser",
+          "sha256": "5024cdeddb5833348203acc0c3bcc60347034064f0fb86e8d8abc8e0b2a8ad62",
+          "bytes": 9178103
+        },
+        {
+          "path": "tsx/src/scanner.c",
+          "role": "scanner",
+          "sha256": "d563cd30b2f39718c9ae4292795c5ce03a2ad01954ba3a86ef84c2781a736673",
+          "bytes": 538
+        },
+        {
+          "path": "tsx/src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "tsx/src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "tsx/src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/6",
+        "case": "tsx"
+      }
+    },
+    {
+      "route": "java",
+      "grammar_ref": "qualification_inventory#/routes/7/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "7c427c9538452461d5d658a93eff64b5e375049b244614a12563ef6adac8e8e6",
+          "bytes": 2600326
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/7",
+        "case": "java"
+      }
+    },
+    {
+      "route": "kotlin",
+      "grammar_ref": "qualification_inventory#/routes/8/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "c13a776638ead65def356f8feeda4f612121cc96485fb4c78eed80757d906097",
+          "bytes": 33870017
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "8b51cea2bd9560201c1d681f56a329f3e637495eac2aaafba3622600c8abdf83",
+          "bytes": 25985
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/8",
+        "case": "kotlin"
+      }
+    },
+    {
+      "route": "c",
+      "grammar_ref": "qualification_inventory#/routes/9/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "e18ba3335e75a2d029ced1b302b8ecb50bd2539c7b0c4394f9abbfdb1719cd5b",
+          "bytes": 5611460
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/9",
+        "case": "c"
+      }
+    },
+    {
+      "route": "cpp",
+      "grammar_ref": "qualification_inventory#/routes/10/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "3856d51ead4b6ecf5d4e1ec3fd39c52c9ba0cb535e69ea1785822280c45b75fc",
+          "bytes": 49598509
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "55b66d60ce5551e354112bc0c050237e786402764d59893d0296ac5f88176546",
+          "bytes": 6772
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/10",
+        "case": "cpp"
+      }
+    },
+    {
+      "route": "rust",
+      "grammar_ref": "qualification_inventory#/routes/11/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "be00454d4938a698e56f0c00a42b7e40ed761a2fe3d5c01533380b1e5b21ea5b",
+          "bytes": 7448615
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "caecbcba33fa87f7a75d56a0c47aa2938744bae5cd358db7911ec0d97b141cae",
+          "bytes": 12532
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/11",
+        "case": "rust"
+      }
+    },
+    {
+      "route": "swift",
+      "grammar_ref": "qualification_inventory#/routes/12/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "512ac3affb50c25a5f7b3106c4c1577aaa28e03e68f268fe4f037759af9e0ae4",
+          "bytes": 30636167
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "aee1af6476556021d0ff0cbad064818e21fde836eea3a8b919f31a2a326cdd9d",
+          "bytes": 39994
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/12",
+        "case": "swift"
+      }
+    },
+    {
+      "route": "dart",
+      "grammar_ref": "qualification_inventory#/routes/13/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "a246324fd0a090bb4640c51ad4022e18bfe0d7e708b864a8a1346e94c4f1bf43",
+          "bytes": 7872952
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "07a7b7818b175e9460523e705dd88d20f7b5141bac95c593d4426e6d52284996",
+          "bytes": 3839
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/13",
+        "case": "dart"
+      }
+    },
+    {
+      "route": "php",
+      "grammar_ref": "qualification_inventory#/routes/14/workload/grammar",
+      "grammar": [
+        {
+          "path": "common/scanner.h",
+          "role": "header",
+          "sha256": "6a5bc955ec2610f94a3fccb26ad0d6400cf4f462a04d7854d1ee43fe0d8285c1",
+          "bytes": 19725
+        },
+        {
+          "path": "php/src/parser.c",
+          "role": "parser",
+          "sha256": "2a57b3e51fc97f543cca681f3ee551005638d094eff7a9d348f71469ac698373",
+          "bytes": 8115395
+        },
+        {
+          "path": "php/src/scanner.c",
+          "role": "scanner",
+          "sha256": "58c92cafe4ebda509c3ad3864fa6fc0e9877bbac26e17a03d23ea2101c291ad5",
+          "bytes": 595
+        },
+        {
+          "path": "php/src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "php/src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "php/src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/14",
+        "case": "php"
+      }
+    },
+    {
+      "route": "ruby",
+      "grammar_ref": "qualification_inventory#/routes/15/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "42b9c0f15b2b3ab44282b3428ff0cdd5e323473a4b898ae249811ce5b0f7260e",
+          "bytes": 16268990
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "bb703322baf000e97640392d9fb4a1803cf1bcba011768cd387b1b386acf392f",
+          "bytes": 38674
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/15",
+        "case": "ruby"
+      }
+    },
+    {
+      "route": "r",
+      "grammar_ref": "qualification_inventory#/routes/16/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "01500bdc75697611e436f2746e1340c41ff80b82e85d7a8447ed185653e821e2",
+          "bytes": 4035569
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "7452b0420d474808710749c21541cdc40200562025e432d2030428f25477c042",
+          "bytes": 32040
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/16",
+        "case": "r"
+      }
+    },
+    {
+      "route": "bash",
+      "grammar_ref": "qualification_inventory#/routes/17/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "47c390de497085a147eccd7115e80ae378bf373aedffea45686b1727d38e6db2",
+          "bytes": 11527793
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "c53690b749988bb728f5cbd3b4e83e76af225c632da977da1b7f9f5eeaf4c663",
+          "bytes": 51153
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/17",
+        "case": "bash"
+      }
+    },
+    {
+      "route": "powershell",
+      "grammar_ref": "qualification_inventory#/routes/18/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "f4e94eb6e43095b7ccf626b6bad17f98b2eba5757efb73b9a31d9ae482eb5644",
+          "bytes": 6290093
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "96b4f68773813c25de43b10d23cdbc1bae5009d46f077a5919a7294474939ad0",
+          "bytes": 3607
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/18",
+        "case": "powershell"
+      }
+    },
+    {
+      "route": "html",
+      "grammar_ref": "qualification_inventory#/routes/19/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "317e913c913010533392e292bae2c18e5948c09ecfb13c0d2e566809cb905f39",
+          "bytes": 80228
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "f72e0d923bf00dd8d871872f16a5db4eaeefeb84b2fd1f6901a3c0015922977a",
+          "bytes": 23782
+        },
+        {
+          "path": "src/tag.h",
+          "role": "header",
+          "sha256": "9a0aabd64e992987f3cfa87c342e246544135d9c6159536506268ece38f95b9b",
+          "bytes": 9180
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/19",
+        "case": "html"
+      }
+    },
+    {
+      "route": "css",
+      "grammar_ref": "qualification_inventory#/routes/20/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "9010ec18975e886f2c274139a58fb3c2ae0f39aec02bb9d754857b089f44a2b0",
+          "bytes": 970839
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "e7f2c01186235209f16f83624a44b154ca62ce22e2f9de3276250b321b67cbdd",
+          "bytes": 8438
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/20",
+        "case": "css"
+      }
+    },
+    {
+      "route": "json",
+      "grammar_ref": "qualification_inventory#/routes/21/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "86971e7cb4e6dae9c5395bedf51abf525b2b662c6bcb632d33b72e4519aaab83",
+          "bytes": 23126
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/21",
+        "case": "json"
+      }
+    },
+    {
+      "route": "yaml",
+      "grammar_ref": "qualification_inventory#/routes/22/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "02dc8c5f297936b198d1371874b8f5226f8dd35b75f6a82894d12a2cbc219eba",
+          "bytes": 1289038
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "548ec6777a474b9d9b6d61779e8da4977863535a264260499be056eb36a81402",
+          "bytes": 52836
+        },
+        {
+          "path": "src/schema.core.c",
+          "role": "header",
+          "sha256": "91e56c3f3ae6fad1803b739ce4eb4568a782a9aec710f733db2f3e38d407a4d5",
+          "bytes": 6630
+        },
+        {
+          "path": "src/schema.json.c",
+          "role": "header",
+          "sha256": "3a18e4406aa8cdaea2806483e11c50e1a392fd72cf8f54ab7f189b3728836949",
+          "bytes": 3065
+        },
+        {
+          "path": "src/schema.legacy.c",
+          "role": "header",
+          "sha256": "4f7ca12361e848214beceaa95ae615048317039ea4736c6eec956e3e8da4694c",
+          "bytes": 18624
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/22",
+        "case": "yaml"
+      }
+    },
+    {
+      "route": "xml",
+      "grammar_ref": "qualification_inventory#/routes/23/workload/grammar",
+      "grammar": [
+        {
+          "path": "common/scanner.h",
+          "role": "header",
+          "sha256": "55023e3643dc84b54ff52a967f0a5f15152d8e10c880c12e94a94ca9148693d3",
+          "bytes": 5012
+        },
+        {
+          "path": "xml/src/parser.c",
+          "role": "parser",
+          "sha256": "129f6c0d2f4c422098e83f93c75f4abe496a5dc74a6b7ddeaca7e06b33ae39e2",
+          "bytes": 231195
+        },
+        {
+          "path": "xml/src/scanner.c",
+          "role": "scanner",
+          "sha256": "8f9bede7fa8a2936012844f584176c68cdf2733d85d2d64c1564648b28fba736",
+          "bytes": 8457
+        },
+        {
+          "path": "xml/src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "xml/src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "xml/src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/23",
+        "case": "xml"
+      }
+    },
+    {
+      "route": "tsql",
+      "grammar_ref": "qualification_inventory#/routes/24/workload/grammar",
+      "grammar": [
+        {
+          "path": "src/parser.c",
+          "role": "parser",
+          "sha256": "542db94c263993ff68c0dddabcc12252dbb0bcf309e0d1acf2de8d4cd18abc24",
+          "bytes": 68647192
+        },
+        {
+          "path": "src/scanner.c",
+          "role": "scanner",
+          "sha256": "1efec197937cc59be09e480baae01008bbf8a2bec22ab95a7e731a670238bea4",
+          "bytes": 14415
+        },
+        {
+          "path": "src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/24",
+        "case": "tsql"
+      }
+    },
+    {
+      "route": "postgresql-sql",
+      "grammar_ref": "qualification_inventory#/routes/25/workload/grammar",
+      "grammar": [
+        {
+          "path": "postgres/src/parser.c",
+          "role": "parser",
+          "sha256": "0db8885c7e1f6c57d3c9dabf066f1397b4d3ec41e934079d02aa74998fc2882e",
+          "bytes": 104285731
+        },
+        {
+          "path": "postgres/src/scanner.c",
+          "role": "scanner",
+          "sha256": "ccbf351fc4e04def876cd2ae07ff081c860f4c2f53265723855d1c36729849a7",
+          "bytes": 4855
+        },
+        {
+          "path": "postgres/src/tree_sitter/alloc.h",
+          "role": "header",
+          "sha256": "b29c1c9fb7cc82f58c84b376df1297d6e2737a1d655fd356db0859e3c29c2fea",
+          "bytes": 985
+        },
+        {
+          "path": "postgres/src/tree_sitter/array.h",
+          "role": "header",
+          "sha256": "20e6ba85abb9d5b7e2e6dedf675c9424a057a06feee03aa3e2dd48a1cb4bf8a2",
+          "bytes": 13453
+        },
+        {
+          "path": "postgres/src/tree_sitter/parser.h",
+          "role": "header",
+          "sha256": "180b893c8734778fd32f372dfbc27bd6ad1cd2221f26150b31256ff6716320d2",
+          "bytes": 7624
+        }
+      ],
+      "language_source": {
+        "file": {
+          "path": "src/contracts/language-sources.json",
+          "bytes": 77481,
+          "sha256": "de9405331074c4c740e368821e6d3fa83b5089495bd5d67aad4fb9d8f9402990"
+        },
+        "selector": "#/routes/25",
+        "case": "postgresql-sql"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "route": "csharp",
+      "query": "q.structure",
+      "query_sha256": "3b7d516c6ab1ab1eb5c9d913b22c86d486ac8b15250a2d2644bc221184257f1f",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(record_declaration name: (identifier) @record)\n(enum_declaration name: (identifier) @enum)\n(class_declaration name: (identifier) @class)\n(method_declaration name: (identifier) @method)\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-B02",
+      "query_sha256": "246b031e0c9b66f4b3156e97a8f2e4b861c41778e9ca2bd4200c8009585855a6",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-B02"
+      },
+      "declaration": "(nullable_type) @nullable\n(array_type) @array\n(pointer_type) @pointer\n(tuple_type) @tuple\n(generic_name) @generic\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-B03",
+      "query_sha256": "3a3bc698fc26d0f0ff218f6fdbccbb0f61325cdad8118ec65ddac8b1efb46f7b",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-B03"
+      },
+      "declaration": "(from_clause name: (identifier) @range)\n(where_clause) @where\n(select_clause) @select\n(lambda_expression) @lambda\n(anonymous_object_creation_expression) @anonymous\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V73",
+      "query_sha256": "4edae94ce8a6a065380bee3ab92b6a83e7919d7daf2691f5c6896543ce91e873",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-V73"
+      },
+      "declaration": "(type_parameter_constraint) @constraint\n(attribute_target_specifier) @target\n(ref_expression) @ref\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V08",
+      "query_sha256": "bd23b9f6887d31348c0f1ee918c12faf6f40067d61d0c1033ebdf4c3058a5ea6",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-V08"
+      },
+      "declaration": "(switch_expression_arm) @arm\n(range_expression) @range\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V10",
+      "query_sha256": "3baa19f32357bc7d3f37adb3e5a5e94dedcc059edd57bdc3786d125fae4b9777",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-V10"
+      },
+      "declaration": "(using_directive) @using\n(file_scoped_namespace_declaration name: (qualified_name) @namespace)\n(record_declaration name: (identifier) @record)\n(lambda_expression type: (predefined_type) @lambda_return)\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V11",
+      "query_sha256": "338d5c82dd5a0b1add4e367eff308e8389be6596c1fb347e887188c0569afa08",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-V11"
+      },
+      "declaration": "(raw_string_literal) @raw\n(list_pattern) @list\n(slice_pattern) @slice\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V12",
+      "query_sha256": "b7e172079e66843334b9b35887b3ff1219ef71df13e07939e13ed27e024a42dc",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/7/source",
+        "case": "q.probe-V12"
+      },
+      "declaration": "(using_directive name: (identifier) @alias)\n(class_declaration name: (identifier) @class (parameter_list) @primary)\n(collection_expression) @collection\n(spread_element) @spread\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V13",
+      "query_sha256": "39ee7a69cf656fd7528d7a0af4c7a4a9e2a7d92c48863f134415829daa66971b",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/8/source",
+        "case": "q.probe-V13"
+      },
+      "declaration": "(indexer_declaration (modifier) @indexer_modifier)\n(escape_sequence) @escape\n(type_parameter_constraints_clause) @where\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V14a",
+      "query_sha256": "747800b442389fc7b3db2caef6dc8d62e45414f76193c7ef7bc584e3afb80ace",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/9/source",
+        "case": "q.probe-V14a"
+      },
+      "declaration": "(receiver_parameter) @receiver\n(assignment_expression left: (conditional_access_expression) @target)\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.probe-V14b",
+      "query_sha256": "e9505d002fef25a6895165a3532cf5dbabd9045ae7ccebe5bb22b0a34b125024",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/10/source",
+        "case": "q.probe-V14b"
+      },
+      "declaration": "(constructor_declaration name: (identifier) @ctor)\n(event_declaration name: (identifier) @event)\n(accessor_declaration body: (arrow_expression_clause) @field_accessor)\n(operator_declaration operator: _ @op)\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.issue152-name",
+      "query_sha256": "01df7a8b868b88c4f6bb650924118ba96095c65cee321629fb0917c10227d5b1",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/11/source",
+        "case": "q.issue152-name"
+      },
+      "declaration": "(variable_declarator name: (identifier) @name)",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "q.issue153-eof",
+      "query_sha256": "c40403f570069875add4a3eab115c280673f9048c286426338ac0e5419ff92e3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/csharp.json",
+          "bytes": 23714,
+          "sha256": "95d0b9a52015452d80877505041a4e85478fe050480a432d74aad19e2b0d4dfd"
+        },
+        "selector": "#/queries/12/source",
+        "case": "q.issue153-eof"
+      },
+      "declaration": "(preproc_define) @define\n(preproc_if) @conditional",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "facts.declarations",
+      "query_sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/0/queries/0/source",
+        "case": "facts.declarations"
+      },
+      "declaration": "(class_declaration) @c.0.0.0\n(class_declaration name: _ @c.0.1.1) @c.0.1.0\n(struct_declaration) @c.1.0.0\n(struct_declaration name: _ @c.1.1.1) @c.1.1.0\n(interface_declaration) @c.2.0.0\n(interface_declaration name: _ @c.2.1.1) @c.2.1.0\n(enum_declaration) @c.3.0.0\n(enum_declaration name: _ @c.3.1.1) @c.3.1.0\n(record_declaration) @c.4.0.0\n(record_declaration name: _ @c.4.1.1) @c.4.1.0\n(delegate_declaration) @c.5.0.0\n(delegate_declaration name: _ @c.5.1.1) @c.5.1.0\n(namespace_declaration) @c.6.0.0\n(namespace_declaration name: _ @c.6.1.1) @c.6.1.0\n(file_scoped_namespace_declaration) @c.7.0.0\n(file_scoped_namespace_declaration name: _ @c.7.1.1) @c.7.1.0\n(method_declaration) @c.8.0.0\n(method_declaration name: _ @c.8.1.1) @c.8.1.0\n(constructor_declaration) @c.9.0.0\n(constructor_declaration name: _ @c.9.1.1) @c.9.1.0\n(destructor_declaration) @c.10.0.0\n(destructor_declaration name: _ @c.10.1.1) @c.10.1.0\n(property_declaration) @c.11.0.0\n(property_declaration name: _ @c.11.1.1) @c.11.1.0\n(event_declaration) @c.12.0.0\n(event_declaration name: _ @c.12.1.1) @c.12.1.0\n(enum_member_declaration) @c.13.0.0\n(enum_member_declaration name: _ @c.13.1.1) @c.13.1.0\n(field_declaration) @c.14.0.0\n(field_declaration (variable_declaration) @c.14.1.1) @c.14.1.0\n(field_declaration (variable_declaration (variable_declarator name: _ @c.14.3.3) @c.14.3.2) @c.14.3.1)\n(event_field_declaration) @c.15.0.0\n(event_field_declaration (variable_declaration) @c.15.1.1) @c.15.1.0\n(event_field_declaration (variable_declaration (variable_declarator name: _ @c.15.3.3) @c.15.3.2) @c.15.3.1)\n(indexer_declaration) @c.16.0.0\n(operator_declaration) @c.17.0.0\n(operator_declaration operator: _ @c.17.1.1) @c.17.1.0\n(conversion_operator_declaration) @c.18.0.0\n(conversion_operator_declaration type: _ @c.18.1.1) @c.18.1.0\n(extension_declaration) @c.19.0.0\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "csharp",
+      "query": "facts.dynamic_sql",
+      "query_sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/0/queries/1/source",
+        "case": "facts.dynamic_sql"
+      },
+      "declaration": "(object_creation_expression type: _ @oc.type) @oc\n(object_creation_expression arguments: (argument_list . (argument) @oc.arg)) @oc.a\n(argument (_) @arg.expr) @arg\n(qualified_name name: _ @qn.name) @qn\n(alias_qualified_name name: _ @aq.name) @aq\n(generic_name . (identifier) @gn.name) @gn\n(initializer_expression (assignment_expression left: (identifier) @ini.left right: _ @ini.right) @ini.as)\n(assignment_expression left: (member_access_expression name: (identifier) @ma.name) right: _ @ma.right) @ma.as\n(binary_expression operator: _ @bin.op) @bin\n",
+      "grammar_basis": "#/routes/0",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "go",
+      "query": "q.structure",
+      "query_sha256": "ce0ace9af2164936693efb63dcc12574cf64eda21fe78a4d9ad1ce7950df15eb",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/go.json",
+          "bytes": 4398,
+          "sha256": "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(type_spec name: (type_identifier) @type)\n(method_declaration name: (field_identifier) @method)\n(function_declaration name: (identifier) @function)\n(call_expression function: (selector_expression field: (field_identifier) @call))\n",
+      "grammar_basis": "#/routes/1",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "go",
+      "query": "q.probe-v18",
+      "query_sha256": "d0bde1d011f6faff3d6ffeff5990639afe92e5f05492b79e60c93466a52a9416",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/go.json",
+          "bytes": 4398,
+          "sha256": "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v18"
+      },
+      "declaration": "(type_parameter_declaration name: (identifier) @tparam)\n(type_alias name: (type_identifier) @alias)\n",
+      "grammar_basis": "#/routes/1",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "go",
+      "query": "q.probe-v27",
+      "query_sha256": "30695fe32e69f8e31a1d1051b64251a747d2380e151e9fe1af598b6163d6c1d9",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/go.json",
+          "bytes": 4398,
+          "sha256": "9ba4b6c5ca375214844811aeb06a6fedda92163189cf2b8d1bd42801dd94a192"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v27"
+      },
+      "declaration": "(method_declaration name: (field_identifier) @method)\n(type_parameter_declaration name: (identifier) @tparam)\n(keyed_element key: (literal_element) @key)\n",
+      "grammar_basis": "#/routes/1",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.structure",
+      "query_sha256": "065cf5de0604363066c0c39759638dcec9af935a0b1373696f691040fc9723a9",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(import_statement name: (dotted_name) @import)\n(class_definition name: (identifier) @class)\n(function_definition name: (identifier) @function)\n(type_alias_statement left: (type) @type_alias)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-b02",
+      "query_sha256": "cde154e002ca7e2f37c90a6e6bc801ddb89fa6a0e9864ddad4c36c180d4f43f0",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b02"
+      },
+      "declaration": "(call function: (identifier) @function arguments: (generator_expression) @genexp)\n(dictionary_comprehension body: (pair key: (identifier) @key value: (binary_operator) @value))\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v38",
+      "query_sha256": "5241a4423ad724acd2b33cdb765a642190e4e1ac8f095baec3034112b5cf13ad",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v38"
+      },
+      "declaration": "(parameters (positional_separator) @slash)\n(named_expression name: (identifier) @name value: (_) @value)\n(interpolation expression: (identifier) @debug)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v39",
+      "query_sha256": "31d97eeb189767f0ad59f0b0db5620eee6d9994b90521685488f006feec67989",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v39"
+      },
+      "declaration": "(decorator (_) @expr)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v310",
+      "query_sha256": "30fd3966fac0a83b53e0cd6369d17ab7b7a9ca67bb587a28ff880146fe3c5664",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v310"
+      },
+      "declaration": "(match_statement subject: (_) @subject)\n(case_clause guard: (if_clause) @guard)\n(class_pattern (dotted_name) @class)\n(with_item) @item\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v311",
+      "query_sha256": "3d277f382dd112715ae031529c21aee61258f81a426a532c0055d5d4c68e96c2",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-v311"
+      },
+      "declaration": "(typed_parameter type: (type) @annotation)\n(function_definition return_type: (type) @return)\n(except_clause value: (_) @handler)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v313",
+      "query_sha256": "82ee085ab918978502e7bcf95185693374bfabed52f758823a1db9fe57cd3707",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-v313"
+      },
+      "declaration": "(class_definition name: (identifier) @class type_parameters: (type_parameter) @params)\n(function_definition type_parameters: (type_parameter) @params)\n(type_alias_statement left: (type) @alias)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "python",
+      "query": "q.probe-v314",
+      "query_sha256": "413712877f31e7200e9b2307cd3ff9cf78ce5d3e22cf50e99490ae3097f84d2c",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/python.json",
+          "bytes": 9291,
+          "sha256": "76ed74d8a6176f11165842a097766e48bcecdae36f66d0ef60baea7dc4542ad5"
+        },
+        "selector": "#/queries/7/source",
+        "case": "q.probe-v314"
+      },
+      "declaration": "(interpolation expression: (identifier) @expr)\n(interpolation type_conversion: (type_conversion) @conversion)\n(interpolation format_specifier: (format_specifier) @spec)\n",
+      "grammar_basis": "#/routes/2",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "javascript",
+      "query": "q.structure",
+      "query_sha256": "d5c47480683d350ed43669b6cd07d1aec567d585093237d5f96c1f405a35a2bd",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/javascript.json",
+          "bytes": 6270,
+          "sha256": "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(import_statement source: (string) @source)\n(function_declaration name: (identifier) @function)\n(class_declaration name: (identifier) @class)\n(method_definition name: (property_identifier) @method)\n",
+      "grammar_basis": "#/routes/3",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "javascript",
+      "query": "q.probe-v16",
+      "query_sha256": "68b529ff3343a0b6d713e6a37c50a335fb7e6bb46e51576dcd6d71d5aac4aa48",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/javascript.json",
+          "bytes": 6270,
+          "sha256": "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v16"
+      },
+      "declaration": "(object_pattern (rest_pattern) @rest)\n(await_expression) @await\n(binary_expression left: (_) @base operator: \"**\" right: (_) @exponent)\n(catch_clause !parameter body: (statement_block) @catch_body)\n(spread_element) @spread\n",
+      "grammar_basis": "#/routes/3",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "javascript",
+      "query": "q.probe-v20",
+      "query_sha256": "f29a1a2a4be3ea9faff06653dca56216af779280e97939cf7a183ee2d8a75791",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/javascript.json",
+          "bytes": 6270,
+          "sha256": "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v20"
+      },
+      "declaration": "(binary_expression operator: \"??\" right: (_) @fallback)\n(variable_declarator name: (identifier) @big_name value: (number) @big)\n(augmented_assignment_expression left: (identifier) @target right: (number) @value)\n(meta_property) @meta\n",
+      "grammar_basis": "#/routes/3",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "javascript",
+      "query": "q.probe-v22",
+      "query_sha256": "1411fa645026d8454339cd78d8d171d7cc1ffebee4a6d38d65eab314e788abe8",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/javascript.json",
+          "bytes": 6270,
+          "sha256": "f33a5feb0eae85a5f467d36b9cb42084799dc4a5b2d67b8dcfd9d267b8f5e505"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v22"
+      },
+      "declaration": "(import_attribute) @attributes\n(field_definition property: (private_property_identifier) @private_field)\n(field_definition property: (property_identifier) @public_field)\n(class_static_block) @static_block\n",
+      "grammar_basis": "#/routes/3",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "jsx",
+      "query": "q.structure",
+      "query_sha256": "8704313cbd2b50ca5899acab82b2da3a193a0ba12c4efca916cb2581650f5416",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/jsx.json",
+          "bytes": 4366,
+          "sha256": "036457f6bba87231d75fb55d768adef9ab8f03c8e2d43231da093aa18f8ffb62"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(jsx_opening_element name: (identifier) @open)\n(jsx_closing_element name: (identifier) @close)\n(jsx_self_closing_element name: (identifier) @self_closing)\n",
+      "grammar_basis": "#/routes/4",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "jsx",
+      "query": "q.probe-b02",
+      "query_sha256": "99c375a77d619da22005303b03932f8e01007c4feb464756dbd8ea1de7c3c55d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/jsx.json",
+          "bytes": 4366,
+          "sha256": "036457f6bba87231d75fb55d768adef9ab8f03c8e2d43231da093aa18f8ffb62"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b02"
+      },
+      "declaration": "(jsx_attribute (property_identifier) @attr_name)\n(jsx_self_closing_element attribute: (jsx_expression (spread_element) @spread_attr))\n",
+      "grammar_basis": "#/routes/4",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "jsx",
+      "query": "q.probe-b03",
+      "query_sha256": "b4d71bd30038f1ca36248ea80ebb0d6947d8a9625ed62b52966ff59c93f5d4fd",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/jsx.json",
+          "bytes": 4366,
+          "sha256": "036457f6bba87231d75fb55d768adef9ab8f03c8e2d43231da093aa18f8ffb62"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-b03"
+      },
+      "declaration": "(jsx_element (jsx_expression (spread_element) @spread_child))\n(html_character_reference) @entity\n",
+      "grammar_basis": "#/routes/4",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.structure",
+      "query_sha256": "94b718ea5696901a19e30582397afe6037fe0ebf65855f6a765a83ba41022a2f",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(interface_declaration name: (type_identifier) @interface)\n(type_alias_declaration name: (type_identifier) @type)\n(enum_declaration name: (identifier) @enum)\n(method_definition name: (property_identifier) @method)\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V28",
+      "query_sha256": "d9a7639fba1f7cf108bdca789ab6800702f8bc38b57c3c7c362865b6a6837255",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-V28"
+      },
+      "declaration": "(conditional_type) @conditional\n(infer_type) @infer\n(mapped_type_clause) @mapping\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V3",
+      "query_sha256": "a8b2f1c046976f9f6b5cc20776ed8b8377ec0421618ef1a8aa2c6a472a7ce9ef",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-V3"
+      },
+      "declaration": "(tuple_type) @tuple\n(optional_type) @optional\n(rest_type) @rest\n(asserts) @asserts\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V40",
+      "query_sha256": "47f632cb4424a761e3047d2107698843bf5285957af9e3278b8361963d0712ae",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-V40"
+      },
+      "declaration": "(template_literal_type) @template\n(override_modifier) @override\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V45",
+      "query_sha256": "2b4202215cb85c8d4f2e03f979b67677c089c2ee7d063f9ed3b74d14e13d5136",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-V45"
+      },
+      "declaration": "(instantiation_expression) @instantiation\n(satisfies_expression) @satisfies\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V50",
+      "query_sha256": "65afc82d65c1525e8d7284e88dce96aa39fa56128960cd0176fc31f631f3556d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-V50"
+      },
+      "declaration": "(import_attribute) @attributes\n(decorator) @decorator\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "typescript",
+      "query": "q.probe-V59",
+      "query_sha256": "1baa54c41379035e935e4db7e43b3c9ab3c27251d29ce63ad548d77b7a64a901",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/typescript.json",
+          "bytes": 7706,
+          "sha256": "240790a7f8dbfee7c1fc0f4fc1e73098d75a519f86ec7a3a213cf7f2d9672067"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-V59"
+      },
+      "declaration": "(namespace_import (identifier) @deferred)\n(module name: (identifier) @legacy_module)\n(internal_module name: (identifier) @namespace)\n",
+      "grammar_basis": "#/routes/5",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsx",
+      "query": "q.structure",
+      "query_sha256": "9c7ac03567566d0b379fda0303f5db461cea457732bc8104e76101a118c44064",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsx.json",
+          "bytes": 2814,
+          "sha256": "9ff203465bdcda7bcee4ab553e92aff327da72ed23d03ed559dd9b5d5fd72374"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(type_alias_declaration name: (type_identifier) @type)\n(interface_declaration name: (type_identifier) @interface)\n(function_declaration name: (identifier) @function)\n(jsx_self_closing_element name: (identifier) @component)\n",
+      "grammar_basis": "#/routes/6",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsx",
+      "query": "q.probe-B02",
+      "query_sha256": "29f60a58af9943e2c546263bebc105379ee5cd82d41c9709cc6c3d5fb9a9ae19",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsx.json",
+          "bytes": 2814,
+          "sha256": "9ff203465bdcda7bcee4ab553e92aff327da72ed23d03ed559dd9b5d5fd72374"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-B02"
+      },
+      "declaration": "(arrow_function type_parameters: (type_parameters) @type_params)\n(as_expression) @as\n(jsx_opening_element name: (identifier) @tag)\n",
+      "grammar_basis": "#/routes/6",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "java",
+      "query": "q.structure",
+      "query_sha256": "6b31aaa0626f4d2ef8e0e542cfcd3e3102581f267e6ac3482c5265616b478d01",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/java.json",
+          "bytes": 5565,
+          "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(class_declaration name: (identifier) @class)\n(interface_declaration name: (identifier) @interface)\n(record_declaration name: (identifier) @record)\n(method_declaration name: (identifier) @method)\n",
+      "grammar_basis": "#/routes/7",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "java",
+      "query": "q.probe-v9",
+      "query_sha256": "956f820c26bf247d5877cc8450aa7c639496ee332b34217c85edc318c1916bf6",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/java.json",
+          "bytes": 5565,
+          "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v9"
+      },
+      "declaration": "(module_declaration name: (_) @module)\n(requires_module_directive module: (_) @requires)\n",
+      "grammar_basis": "#/routes/7",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "java",
+      "query": "q.probe-v21",
+      "query_sha256": "e163eac14537175162a1865aeb315fd470d2ac2e215de2d491abfc908ee16763",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/java.json",
+          "bytes": 5565,
+          "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v21"
+      },
+      "declaration": "(record_pattern (identifier) @record)\n(guard) @guard\n",
+      "grammar_basis": "#/routes/7",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "java",
+      "query": "q.probe-v25-compact",
+      "query_sha256": "bd65786741e63b7da62527a2241064c04583045523824f0d4adb963c4d533dff",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/java.json",
+          "bytes": 5565,
+          "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v25-compact"
+      },
+      "declaration": "(program (method_declaration name: (identifier) @method))\n",
+      "grammar_basis": "#/routes/7",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "java",
+      "query": "q.probe-v25-ctor",
+      "query_sha256": "30c5ee77cc3d50b374cdaf7ad8faaa13f0154fa8dc169d1f7deec57a67250280",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/java.json",
+          "bytes": 5565,
+          "sha256": "ca65cb697b4fc3d89de01c2874e3d01360d48f446d6e4e8d6ac0582643998c42"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v25-ctor"
+      },
+      "declaration": "(constructor_body (explicit_constructor_invocation constructor: (_) @invocation))\n",
+      "grammar_basis": "#/routes/7",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "kotlin",
+      "query": "q.structure",
+      "query_sha256": "3948d9b3b28919dc7d78644ed99c383b8a0d0287b499393fe87719c08026a2cc",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/kotlin.json",
+          "bytes": 7135,
+          "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(class_declaration name: (identifier) @class)\n(function_declaration name: (identifier) @function)\n",
+      "grammar_basis": "#/routes/8",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "kotlin",
+      "query": "q.probe-b02",
+      "query_sha256": "22d934886244d3623cabdf879e9dd38c1be8e93496a25a60a4f639bc86ae3104",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/kotlin.json",
+          "bytes": 7135,
+          "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b02"
+      },
+      "declaration": "(when_entry condition: (_) @condition)\n(catch_block (identifier) @catch_var)\n",
+      "grammar_basis": "#/routes/8",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "kotlin",
+      "query": "q.probe-v14",
+      "query_sha256": "ea6b48fdac43474737477653de739b92c41d28282adf63e711c7763429f8af19",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/kotlin.json",
+          "bytes": 7135,
+          "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v14"
+      },
+      "declaration": "(class_declaration name: (identifier) @class)\n(object_declaration name: (identifier) @object)\n(non_nullable_type) @dnn\n(range_expression) @range\n",
+      "grammar_basis": "#/routes/8",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "kotlin",
+      "query": "q.probe-v22",
+      "query_sha256": "01e3fc670a0c7656a4e5c516e7cf150ce2a2018c2bc7529a9288c436a5d0c916",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/kotlin.json",
+          "bytes": 7135,
+          "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v22"
+      },
+      "declaration": "(class_declaration name: (identifier) @class)\n(object_declaration name: (identifier) @object)\n(type_alias type: (identifier) @alias)\n",
+      "grammar_basis": "#/routes/8",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "kotlin",
+      "query": "q.probe-v24",
+      "query_sha256": "d4f39e572fa9004ae8b3e7f0eb62c68a511e143e013127ca0617076baa99036e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/kotlin.json",
+          "bytes": 7135,
+          "sha256": "a32e41d67ec2c3f9b7eb50274a740408edf22d962927fa9735670619b13ced55"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v24"
+      },
+      "declaration": "(class_declaration name: (identifier) @class)\n(function_declaration name: (identifier) @function)\n(property_declaration (variable_declaration (identifier) @property))\n",
+      "grammar_basis": "#/routes/8",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "c",
+      "query": "q.structure",
+      "query_sha256": "e9eba020e1b34816c5f12c21545fbea0b895e03996974593562cb23e1ff911a7",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/c.json",
+          "bytes": 6204,
+          "sha256": "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(type_definition declarator: (type_identifier) @type)\n(function_definition declarator: (function_declarator declarator: (identifier) @function))\n(call_expression function: (identifier) @call)\n",
+      "grammar_basis": "#/routes/9",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "c",
+      "query": "q.probe-c-V11",
+      "query_sha256": "d3930fba7799c448bbe5fdf9a75fb102d7b5ffd896228600d140dfea3202a0e3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/c.json",
+          "bytes": 6204,
+          "sha256": "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-c-V11"
+      },
+      "declaration": "(alignas_qualifier (number_literal) @align)\n(alignof_expression type: (type_descriptor type: (primitive_type) @alignof))\n(generic_expression (type_descriptor type: (primitive_type) @assoc))\n",
+      "grammar_basis": "#/routes/9",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "c",
+      "query": "q.probe-c-V23",
+      "query_sha256": "0d001ee87956853e839787e05f3da182b14d8a06777426fb984d7dfea2c0b757",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/c.json",
+          "bytes": 6204,
+          "sha256": "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-c-V23"
+      },
+      "declaration": "(attribute_declaration (attribute name: (identifier) @attr))\n(true) @true\n(false) @false\n(null) @null\n",
+      "grammar_basis": "#/routes/9",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "c",
+      "query": "q.probe-c-L01",
+      "query_sha256": "6e33506bbd6c2914ca580874e90c3ec8fe65a70f26e2b9a1beb8b66f58656f1f",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/c.json",
+          "bytes": 6204,
+          "sha256": "7089c8e7b84a224076b431782070fc675735420bc7971689d5530b08197533fd"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-c-L01"
+      },
+      "declaration": "(function_definition declarator: (function_declarator parameters: (parameter_list (identifier) @param)))\n(function_definition (declaration declarator: (identifier) @decl))\n",
+      "grammar_basis": "#/routes/9",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "cpp",
+      "query": "q.structure",
+      "query_sha256": "2a57e6e5cb3c6136878e5d27ced7c7a090d491ec2e9e5e3d51f6305c6227945e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/cpp.json",
+          "bytes": 4734,
+          "sha256": "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(namespace_definition name: (namespace_identifier) @namespace)\n(struct_specifier name: (type_identifier) @struct)\n(concept_definition name: (identifier) @concept)\n(class_specifier name: (type_identifier) @class)\n",
+      "grammar_basis": "#/routes/10",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "cpp",
+      "query": "q.probe-cpp-V14",
+      "query_sha256": "1077f4c6e42da4eb404eb4a819b5338f3c2aeeabbfeb1605678e3a4dd3d28f31",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/cpp.json",
+          "bytes": 4734,
+          "sha256": "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-cpp-V14"
+      },
+      "declaration": "(lambda_capture_initializer left: (identifier) @init)\n(template_declaration (declaration declarator: (init_declarator declarator: (identifier) @vartemplate)))\n(number_literal) @num\n",
+      "grammar_basis": "#/routes/10",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "cpp",
+      "query": "q.probe-cpp-V17",
+      "query_sha256": "29e660f47b5bb900c4321ea914fe6ea74f94d4662912773075e3aac7bf744c49",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/cpp.json",
+          "bytes": 4734,
+          "sha256": "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-cpp-V17"
+      },
+      "declaration": "(nested_namespace_specifier (namespace_identifier) @ns)\n(structured_binding_declarator (identifier) @binding)\n",
+      "grammar_basis": "#/routes/10",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "cpp",
+      "query": "q.probe-cpp-V23",
+      "query_sha256": "fde3be27ac5b9a89fa6e366ed03a24f035e1f21d0ea4434a80e1d666aef3a467",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/cpp.json",
+          "bytes": 4734,
+          "sha256": "fc90268c86c9133e2801b2fb7a20bda479137aacc0445911fa5046f11fd65766"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-cpp-V23"
+      },
+      "declaration": "(explicit_object_parameter_declaration (this) @self)\n(subscript_argument_list (number_literal) @index)\n",
+      "grammar_basis": "#/routes/10",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "rust",
+      "query": "q.structure",
+      "query_sha256": "e3bddbcb1621ba8a3c546d30532ff349d0073b2a2728972d291f1a3b5d9c56a2",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/rust.json",
+          "bytes": 5349,
+          "sha256": "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(struct_item name: (type_identifier) @struct)\n(enum_item name: (type_identifier) @enum)\n(trait_item name: (type_identifier) @trait)\n(function_item name: (identifier) @function)\n",
+      "grammar_basis": "#/routes/11",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "rust",
+      "query": "q.probe-rust-B02",
+      "query_sha256": "138adb98d09e76d140e5895c158c948c5eacfe53577f8cd297bb190d8ff8d2b9",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/rust.json",
+          "bytes": 5349,
+          "sha256": "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-rust-B02"
+      },
+      "declaration": "(token_binding_pattern name: (metavariable) @meta)\n(closure_parameters (parameter pattern: (identifier) @param))\n(macro_invocation macro: (identifier) @macro)\n",
+      "grammar_basis": "#/routes/11",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "rust",
+      "query": "q.probe-rust-V18",
+      "query_sha256": "39db79528b589ba56f1e88a5797302065732f5e87d5b5d72c095ba780e6407bb",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/rust.json",
+          "bytes": 5349,
+          "sha256": "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-rust-V18"
+      },
+      "declaration": "(const_parameter name: (identifier) @constparam)\n(async_block) @async\n(const_block) @const\n(let_declaration alternative: (block) @else)\n",
+      "grammar_basis": "#/routes/11",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "rust",
+      "query": "q.probe-rust-V24",
+      "query_sha256": "5297a5811821401bc11f7881d439c135076abc6760147b56223bc496701d16f2",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/rust.json",
+          "bytes": 5349,
+          "sha256": "43fb6848561cb11d855c194d617b3deb976c73f715fbf180009e70366da31ab5"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-rust-V24"
+      },
+      "declaration": "(use_bounds (lifetime) @captured)\n(use_bounds (type_identifier) @captured)\n(fragment_specifier) @frag\n(let_chain (let_condition pattern: (tuple_struct_pattern) @letpat))\n",
+      "grammar_basis": "#/routes/11",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.structure",
+      "query_sha256": "6d88d7735d57a8811212c5b2a1530bb38edba699c2410fe88e776df4c5bb1459",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(class_declaration name: (type_identifier) @type)\n(protocol_declaration name: (type_identifier) @protocol)\n(protocol_function_declaration name: (simple_identifier) @requirement)\n(function_declaration name: (simple_identifier) @function)\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-b02",
+      "query_sha256": "633bb081a17c16f86332a6342d67f80fa14a1d6800ca6e5f1e118ff094dc490b",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b02"
+      },
+      "declaration": "(capture_list_item name: (simple_identifier) @capture)\n(key_path_expression) @keypath\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v51",
+      "query_sha256": "593535bc4f0c3366d2cbfca37ae26365609b21e0f8e0fa51a595e6258d03728e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v51"
+      },
+      "declaration": "(opaque_type) @opaque\n(raw_string_literal) @raw\n(call_suffix name: (simple_identifier) @trailing_label)\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v55",
+      "query_sha256": "be22a5c1e67ccf88e9c21ff5ec8a9d3e87fede0c98d7e2107ff56724f95618db",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v55"
+      },
+      "declaration": "(class_declaration declaration_kind: \"actor\" name: (type_identifier) @actor)\n(existential_type) @existential\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v59",
+      "query_sha256": "3fd8897fa2284fb0e46e430ed8eb25e4db523756ec5dfa49ae53d43a6a0c2088",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v59"
+      },
+      "declaration": "(macro_declaration (simple_identifier) @macro)\n(throws_clause type: (_) @thrown)\n(type_pack_expansion) @expansion\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v61",
+      "query_sha256": "1053aec87985bcc9739a03cc87e6d5f2d54e9a77432d345d0b2ea401a6ef2018",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-v61"
+      },
+      "declaration": "(class_declaration declaration_kind: \"extension\" name: (user_type) @extension)\n(type_parameter (type_identifier) @tparam)\n(capture_list_item name: (simple_identifier) @capture)\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v62",
+      "query_sha256": "ff3f2f1a325e9f09f80b6ef9a6184e764ddbb132f2eff2708f7ad58eaa7d5a37",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-v62"
+      },
+      "declaration": "(attribute (user_type (type_identifier) @attr))\n(unsafe_expression) @unsafe\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "swift",
+      "query": "q.probe-v64",
+      "query_sha256": "aa4d6b32c8c84ce015800e49dc64f07132b5fe695ce8096c537112c6eff44745",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/swift.json",
+          "bytes": 9390,
+          "sha256": "29ae544ed6d729af5abf6d72653ab2df3829eec0cf8dfcfaf1fe8ddfb342c12c"
+        },
+        "selector": "#/queries/7/source",
+        "case": "q.probe-v64"
+      },
+      "declaration": "(optional_type) @optional\n(attribute (user_type (type_identifier) @attr))\n",
+      "grammar_basis": "#/routes/12",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.structure",
+      "query_sha256": "9be21f392aaa4a7b47ca93c8d4150af880520dbe1c884e8e881015d6b258a52d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(class_definition name: (identifier) @class)\n(enum_declaration name: (identifier) @enum)\n(function_signature name: (identifier) @function)\n(getter_signature name: (identifier) @getter)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-B02",
+      "query_sha256": "5f8d4ba8ceaabd923cca46c0d557b415733227eb99b40d549ff7f3a9e19ed598",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-dart-B02"
+      },
+      "declaration": "(if_element consequence: (_) @then alternative: (_) @else)\n(for_element body: (identifier) @body)\n(spread_element (identifier) @spread)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-V213",
+      "query_sha256": "f9d341d65ec3667741775ca19458a44ca67dbad00ca1ecce16054129130adf13",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-dart-V213"
+      },
+      "declaration": "(type_alias . (type_identifier) @alias)\n(super_formal_parameter (identifier) @superparam)\n(constructor_tearoff (type_identifier) @tearoff)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-V30",
+      "query_sha256": "4dd168f6989acfea5b2059d37709b3239d510fd5a20e48a1ab5bda25dc2f5846",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-dart-V30"
+      },
+      "declaration": "(class_definition name: (identifier) @class)\n(extension_type_declaration name: (identifier) @exttype)\n(representation_declaration name: (identifier) @rep)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-V36",
+      "query_sha256": "085280dddc558a58a2650baabdaaa0f7512b5dfd60a2b5dc4e82089cd9c03c8b",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-dart-V36"
+      },
+      "declaration": "(decimal_integer_literal) @int\n(hex_integer_literal) @hex\n(decimal_floating_point_literal) @float\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-V310",
+      "query_sha256": "6cbc215635bcb2888fada030d7ac8945eb51eaf5905124dd422858574cacbc55",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-dart-V310"
+      },
+      "declaration": "(constructor_param (identifier) @ctorparam)\n(dot_shorthand (identifier) @shorthand)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "dart",
+      "query": "q.probe-dart-L01",
+      "query_sha256": "9d3e9c99f7545318e2f1d93104413b8fd3e221812d099ea1df8980aab0de3a3a",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/dart.json",
+          "bytes": 10437,
+          "sha256": "c853a16a12fe1d51eab89779146541dc0442c8b80f98fe15bd17051d1b343755"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-dart-L01"
+      },
+      "declaration": "(optional_formal_parameters (decimal_integer_literal) @default)\n(optional_formal_parameters (string_literal) @default)\n",
+      "grammar_basis": "#/routes/13",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "php",
+      "query": "q.structure",
+      "query_sha256": "8a679972baa8493da206d5cedb2c0bedf68e82af503185a41281ab0b64de0d51",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/php.json",
+          "bytes": 7603,
+          "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(enum_declaration name: (name) @enum)\n(class_declaration name: (name) @class)\n(method_declaration name: (name) @method)\n(function_definition name: (name) @function)\n",
+      "grammar_basis": "#/routes/14",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "php",
+      "query": "q.probe-v56",
+      "query_sha256": "95f1911dfbfa7e2bbe61b967b8be979d118f1201ac2c135f624c7a8b6049745d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/php.json",
+          "bytes": 7603,
+          "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v56"
+      },
+      "declaration": "(namespace_use_group (namespace_use_clause) @group_item)\n(variadic_parameter name: (variable_name) @variadic)\n(optional_type) @nullable\n(binary_expression operator: \"\u003c=\u003e\") @spaceship\n(variadic_unpacking) @unpack\n(catch_clause type: (type_list) @catch_types)\n",
+      "grammar_basis": "#/routes/14",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "php",
+      "query": "q.probe-v72",
+      "query_sha256": "260d4f5dcc6720772b4a2ca705c77b79f8c5703fffcc902ea0a9b7312165c9ab",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/php.json",
+          "bytes": 7603,
+          "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v72"
+      },
+      "declaration": "(property_declaration type: (_) @property_type)\n(heredoc) @heredoc\n(augmented_assignment_expression operator: \"??=\") @coalesce_assign\n(arrow_function body: (_) @arrow_body)\n",
+      "grammar_basis": "#/routes/14",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "php",
+      "query": "q.probe-v82",
+      "query_sha256": "4b97a5952f1301c1df3f47bdf7dfaa20cc12360f00e66e4c2a7d045920ccb4c3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/php.json",
+          "bytes": 7603,
+          "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v82"
+      },
+      "declaration": "(class_declaration (readonly_modifier) @readonly name: (name) @class)\n(const_declaration type: (_) @const_type)\n(disjunctive_normal_form_type) @dnf\n(class_constant_access_expression) @dynamic_fetch\n",
+      "grammar_basis": "#/routes/14",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "php",
+      "query": "q.probe-v84",
+      "query_sha256": "80ee339d6c2f7a0aacab439200e8f48161aa193805ffbefd68d2f1df362d8f8d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/php.json",
+          "bytes": 7603,
+          "sha256": "4d2e3d204fa36c01eea491a21ec06eb39f7dba2bc30c0038983f1299f8e75a4a"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v84"
+      },
+      "declaration": "(property_declaration (visibility_modifier) @visibility)\n(property_hook (name) @hook)\n(member_access_expression object: (object_creation_expression) @new_object)\n(binary_expression operator: \"|\u003e\" right: (_) @pipe_target)\n",
+      "grammar_basis": "#/routes/14",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "ruby",
+      "query": "q.structure",
+      "query_sha256": "a5cc4a7dc40c57581cdf56094b8b3673cdb3ea6ff393d0b6114c7b0671cf2587",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/ruby.json",
+          "bytes": 6291,
+          "sha256": "265972373a9dedd0650675954b659f35348e929fc8d1791038c9e3ad37fbc8c4"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(module name: (constant) @module)\n(class name: (constant) @class)\n(method name: (identifier) @method)\n(singleton_method name: (identifier) @singleton_method)\n",
+      "grammar_basis": "#/routes/15",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "ruby",
+      "query": "q.probe-b01",
+      "query_sha256": "dc33a0856cab4045ed1909eeac8894a50b243bea26dce84cd64244f1d3208028",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/ruby.json",
+          "bytes": 6291,
+          "sha256": "265972373a9dedd0650675954b659f35348e929fc8d1791038c9e3ad37fbc8c4"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b01"
+      },
+      "declaration": "(string (interpolation) @interpolation)\n(regex) @regex\n(heredoc_body (interpolation) @heredoc_interpolation)\n(assignment left: (identifier) @lambda_name right: (lambda) @lambda)\n",
+      "grammar_basis": "#/routes/15",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "ruby",
+      "query": "q.probe-v27",
+      "query_sha256": "136c749e65d6b58678a32d1b959d8d75767663fab50eb9413bbcac7c0d55db4e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/ruby.json",
+          "bytes": 6291,
+          "sha256": "265972373a9dedd0650675954b659f35348e929fc8d1791038c9e3ad37fbc8c4"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v27"
+      },
+      "declaration": "(in_clause pattern: (_) @pattern)\n(if_guard) @guard\n(match_pattern pattern: (_) @rightward)\n(test_pattern pattern: (_) @test)\n",
+      "grammar_basis": "#/routes/15",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "ruby",
+      "query": "q.probe-v31",
+      "query_sha256": "b897352ef19ee12be7f3a7f2b975b51e38c95009978cd721508cbd188fcdf827",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/ruby.json",
+          "bytes": 6291,
+          "sha256": "265972373a9dedd0650675954b659f35348e929fc8d1791038c9e3ad37fbc8c4"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v31"
+      },
+      "declaration": "(pair) @pair\n(argument_list (splat_argument) @rest)\n(argument_list (hash_splat_argument) @keyrest)\n(argument_list (block_argument) @block)\n(call receiver: (identifier) @receiver method: (identifier) @method)\n",
+      "grammar_basis": "#/routes/15",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "r",
+      "query": "q.structure",
+      "query_sha256": "c792db5a2edb3d3a48cbeb61a6b2607bc95e65aef05ca6a65f14532c383ee6b3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/r.json",
+          "bytes": 5850,
+          "sha256": "5fae6fb13622e4eb18bde54a89436af437b1eb874f6be1f20040ad71eba42fb3"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(binary_operator lhs: (identifier) @function rhs: (function_definition))\n(call function: (identifier) @call)\n",
+      "grammar_basis": "#/routes/16",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "r",
+      "query": "q.probe-v40",
+      "query_sha256": "9e5dce7edc8aa9e381da11611e1f263d994e92e89e6ac0a5ba06e402396ed663",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/r.json",
+          "bytes": 5850,
+          "sha256": "5fae6fb13622e4eb18bde54a89436af437b1eb874f6be1f20040ad71eba42fb3"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v40"
+      },
+      "declaration": "(string) @raw_string\n(function_definition name: \"\\\\\") @lambda\n(binary_operator operator: \"|\u003e\" rhs: (_) @pipe_rhs)\n",
+      "grammar_basis": "#/routes/16",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "r",
+      "query": "q.probe-v42",
+      "query_sha256": "3f65de0b8c997711434d558b4eb0a00c554e1f16612e0c3314ca283f94211e26",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/r.json",
+          "bytes": 5850,
+          "sha256": "5fae6fb13622e4eb18bde54a89436af437b1eb874f6be1f20040ad71eba42fb3"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v42"
+      },
+      "declaration": "(binary_operator operator: \"|\u003e\" rhs: (_) @pipe_rhs)\n(argument name: (identifier) @arg_name value: (identifier) @placeholder)\n",
+      "grammar_basis": "#/routes/16",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "bash",
+      "query": "q.structure",
+      "query_sha256": "c9f77947f4ea7b77754a9b447dc6e66af76b827c70bbf1237a0aef1a048bd355",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/bash.json",
+          "bytes": 3186,
+          "sha256": "996b3b155f5fb9a534fe26c8b103fc09a9b1b5699e8c6bb382efd5356b9da359"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(function_definition name: (word) @function)\n(for_statement variable: (variable_name) @loop)\n(variable_assignment name: (variable_name) @variable)\n",
+      "grammar_basis": "#/routes/17",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "bash",
+      "query": "q.probe-v4",
+      "query_sha256": "ad30db7ad9f830aab2136d3a579ab585d99f10126811f677b3de98b1dfc41578",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/bash.json",
+          "bytes": 3186,
+          "sha256": "996b3b155f5fb9a534fe26c8b103fc09a9b1b5699e8c6bb382efd5356b9da359"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v4"
+      },
+      "declaration": "(subscript name: (variable_name) @assoc_name index: (word) @assoc_key)\n(case_item fallthrough: _) @fallthrough_item\n",
+      "grammar_basis": "#/routes/17",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "powershell",
+      "query": "q.structure",
+      "query_sha256": "36efa2ef8b8d235827d03a487b4f8296a3c3daf4e308a3a7a02b31b843ad13f4",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/powershell.json",
+          "bytes": 3451,
+          "sha256": "d53b1588703d33fb033cbbc87d5f8e0508e05dc1038ecd942b6665ebc53eb79a"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(enum_statement (simple_name) @enum)\n(class_statement (simple_name) @class)\n(function_statement (function_name) @function)\n(command command_name: (command_name) @command)\n",
+      "grammar_basis": "#/routes/18",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "powershell",
+      "query": "q.probe-v7-chain",
+      "query_sha256": "82a52a565141daed32602f0f8861abcb2a0da3806f2875e726d32584f7a544b6",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/powershell.json",
+          "bytes": 3451,
+          "sha256": "d53b1588703d33fb033cbbc87d5f8e0508e05dc1038ecd942b6665ebc53eb79a"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-v7-chain"
+      },
+      "declaration": "(pipeline_chain_tail) @chain_op\n",
+      "grammar_basis": "#/routes/18",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "powershell",
+      "query": "q.probe-v7-blocks",
+      "query_sha256": "b842c7bff54bb402d9fa90c3c66a6ece314dca6cc0b9e62dc9aa40bb59017fa0",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/powershell.json",
+          "bytes": 3451,
+          "sha256": "d53b1588703d33fb033cbbc87d5f8e0508e05dc1038ecd942b6665ebc53eb79a"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-v7-blocks"
+      },
+      "declaration": "(named_block (block_name) @block_name)\n",
+      "grammar_basis": "#/routes/18",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "html",
+      "query": "q.structure",
+      "query_sha256": "a2ec6d274471dae0d094c63445488f0463f0f7593fe82020f909f40aabbc5a18",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/html.json",
+          "bytes": 5003,
+          "sha256": "dca8b1397376a0f013d8180b439d1c5c0cc639971b53c9abd0c4769d0bb59955"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(attribute (attribute_name) @attribute)\n(style_element (start_tag (tag_name) @raw_text_tag))\n(script_element (start_tag (tag_name) @raw_text_tag))\n(self_closing_tag (tag_name) @self_closing)\n",
+      "grammar_basis": "#/routes/19",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "html",
+      "query": "q.source",
+      "query_sha256": "a3502f6c81bdbccb69b3f08a337201d23eb87539f3cba989bd53a8bb1075cd20",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/html.json",
+          "bytes": 5003,
+          "sha256": "dca8b1397376a0f013d8180b439d1c5c0cc639971b53c9abd0c4769d0bb59955"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.source"
+      },
+      "declaration": "(start_tag (tag_name) @tag)\n(attribute (attribute_name) @attribute)\n(attribute (attribute_value) @unquoted)\n(quoted_attribute_value (attribute_value) @quoted)\n",
+      "grammar_basis": "#/routes/19",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.structure",
+      "query_sha256": "aa9dedcc031ca2bf19d116d552647078ebb0b864bf7f176729662c58fc9d874d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(namespace_statement (namespace_name) @namespace)\n(declaration (property_name) @property)\n(feature_query (feature_name) @feature)\n(keyframes_statement (keyframes_name) @keyframes)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.property",
+      "query_sha256": "c13e3ce0363023caa52de753923408d6916f25e8d870dcb7dfc6d84b00523c56",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.property"
+      },
+      "declaration": "(declaration (property_name) @property)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.value",
+      "query_sha256": "51fdcb6dd0235bf191f1c54bbc836aeab687ba0167fdfd39016eee1a7ddf48c3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.value"
+      },
+      "declaration": "(declaration [(plain_value) (integer_value) (float_value) (color_value) (string_value) (call_expression) (binary_expression) (grid_value) (parenthesized_value)] @value)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.call",
+      "query_sha256": "793d2aeb5b2600e6c4188b7d6e65b9a07fd7cc388dc6203c0129465af160e1b3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.call"
+      },
+      "declaration": "(call_expression (function_name) @function)\n(arguments [(plain_value) (integer_value) (float_value) (color_value) (string_value) (call_expression)] @arg)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.selectors",
+      "query_sha256": "08c73efedba5fd7eb31c88d0819d5b7d99ffec0765e3f653b013f69ae40c461a",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.selectors"
+      },
+      "declaration": "(class_selector (class_name) @class)\n(attribute_selector (attribute_name) @attribute)\n(pseudo_class_selector (class_name) @pseudo_class)\n(pseudo_element_selector (tag_name) @pseudo_element .)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.import",
+      "query_sha256": "b107565df1c734022b1007cfb48d814addb229381ec96641acfadbdb0ec3f077",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.import"
+      },
+      "declaration": "(import_statement (call_expression (function_name) @function))\n(import_statement (keyword_query) @media_type)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.calc",
+      "query_sha256": "6b01dffaa02b5e6785dd84e8a02716ffc178cad130db72535555caee371f70b1",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.calc"
+      },
+      "declaration": "(binary_expression (binary_expression) @operand)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.at",
+      "query_sha256": "523ef692141f6cbd74188feee0a0852b178341a91fbf1be1d9d72f4c187efe5e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/7/source",
+        "case": "q.at"
+      },
+      "declaration": "(at_rule (at_keyword) @at_keyword)\n(at_rule (keyword_query) @prelude)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.media",
+      "query_sha256": "55bed83b0e371591bb6a02d1262d7f9ed04801b6984c557e8f64174adfa3fd7c",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/8/source",
+        "case": "q.media"
+      },
+      "declaration": "(binary_query) @condition\n(feature_name) @feature\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.grid",
+      "query_sha256": "d9aab723cca20750c5f32ac7a7ce95b78f941e4664194271cca704355f877902",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/9/source",
+        "case": "q.grid"
+      },
+      "declaration": "(grid_value) @line_names\n(call_expression (function_name) @function)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "css",
+      "query": "q.supports",
+      "query_sha256": "429b5b96421b1ad469caf87a89c7301ac41b9d3e800d1a947ac2be6ff12d6509",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/css.json",
+          "bytes": 36030,
+          "sha256": "92de676cf8ebf4234ee97dcebe531edd4f5cbc569c50e4dc2fe6d51d20e4bb21"
+        },
+        "selector": "#/queries/10/source",
+        "case": "q.supports"
+      },
+      "declaration": "(selector_query (child_selector) @selector)\n",
+      "grammar_basis": "#/routes/20",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "json",
+      "query": "q.structure",
+      "query_sha256": "1862753c69e51b6365315be1d0e788969e3a899a7e05a22cdbbea3e096ff0f41",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/json.json",
+          "bytes": 2321,
+          "sha256": "3b1c4cac01ee08056098e6a5a7fa463158222bc0b3c345155925d1cc1e4373c3"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(pair key: (string) @array_key value: (array))\n(pair key: (string) @object_key value: (object))\n(pair key: (string) @key value: (string) @value)\n",
+      "grammar_basis": "#/routes/21",
+      "expectation_rule": "JSON_OBJECT_MEMBERS/r1: RFC 8259 §4의 object member를 byte 순서로 방문한다. array 값의 key string 전체(따옴표 포함)는 pattern0/array_key, object 값은 pattern1/object_key, string 값은 pattern2/key 다음 value로 선택한다. 각 pattern의 match_index는 발견 순서, capture_index는 key=0/value=1이다. 중첩 member도 방문하고 결과는 start_byte 순서다. Go encoding/json Token·InputOffset으로 원문의 span을 계산하며 중복 key·escape·Unicode 원문을 보존한다. Tree-sitter pair의 key/value와 string/array/object mapping은 고정 query 선언 및 route grammar pin에 연결한다.",
+      "automation": "IMPLEMENTED_VALID_JSON_SUBSET",
+      "scope": "ORDERED_CAPTURE_SPANS_ONLY; max 65536 bytes/depth64; comments·multiple roots·malformed/recovery·full CST/API·compiled metadata·fact는 미지원이며 후속 예외 처분 필요",
+      "manual_exceptions": {
+        "state": "PARTIAL_MAPPING",
+        "manual_count": null,
+        "items": [
+          "RFC JSON 밖의 comment·multiple-root·malformed/recovery source version은 별도 규칙이 필요하다.",
+          "전체 JSON version의 자동화/예외 분류 및 독립 검토는 아직 수행하지 않았다."
+        ]
+      },
+      "independent_review": null
+    },
+    {
+      "route": "yaml",
+      "query": "q.structure",
+      "query_sha256": "7f2d2c9782a06629b02bd0213e13de72334ced48e686fe2ee9637a009d7689f1",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/yaml.json",
+          "bytes": 2426,
+          "sha256": "008d4d04351a7e9a4eb39e38f1820de313fcb2c7f6bc0527caf4efc4695e79b1"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(block_mapping_pair key: (flow_node) @block_key value: (block_node))\n(block_node (anchor) @anchor)\n(block_mapping_pair value: (flow_node (alias) @alias))\n(flow_pair key: (flow_node) @flow_key)\n",
+      "grammar_basis": "#/routes/22",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "xml",
+      "query": "q.structure",
+      "query_sha256": "bc3851a4b2a54ae9bfdb6b4f910479c955cae7cf38f31722f7ab1abff16ff227",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/xml.json",
+          "bytes": 2409,
+          "sha256": "32e54336d7a2189cbf497644717ccee3d6ccfb2d35db2686c6c4b21ef0f12847"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(GEDecl (Name) @entity)\n(document root: (element (STag (Name) @root)))\n(content (element (STag (Name) @child_tag)))\n(Attribute (Name) @attribute)\n",
+      "grammar_basis": "#/routes/23",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "xml",
+      "query": "facts.xml_structure",
+      "query_sha256": "5aa16c3d6107e93005486a5e720fb06c2fef9c279fdcd85267942cdc14de19d6",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/3/queries/0/source",
+        "case": "facts.xml_structure"
+      },
+      "declaration": "(STag (Name) @element.name) @element\n(EmptyElemTag (Name) @element.name) @element\n(Attribute (Name) @attribute.name (AttValue) @attribute.value) @attribute\n",
+      "grammar_basis": "#/routes/23",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.structure",
+      "query_sha256": "b251c313124e45c4db8fc470a5963f54d7b53df488a4ad9928203bd81d7e0a41",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(create_table name: (object_reference name: (identifier) @table))\n(column_definition name: (identifier) @column)\n(create_procedure name: (object_reference name: (identifier) @procedure))\n(execute_statement procedure: (object_reference name: (identifier) @exec))\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.r6-structure",
+      "query_sha256": "3873c504301578837306f5fbe483433cfc58fb3ae30cebe913c12d029825ba63",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.r6-structure"
+      },
+      "declaration": "(execute_statement procedure: (object_reference name: (identifier) @exec))\n(column_definition . name: (identifier) @column)\n(restore_statement name: (identifier) @restore)\n(restore_move logical_file: (literal) @move_from os_file: (literal) @move_to)\n(restore_move logical_file: (identifier) @move_from_name)\n(assignment left: (field name: (identifier) @assigned))\n(query_specification (select (top_clause)) (order_by (order_target (field name: (identifier) @branch_order))))\n(set_operation (offset_fetch) @union_offset)\n(relation (object_reference name: (identifier) @table))\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.r6-begin",
+      "query_sha256": "5cca4ecb56cff2f575328d63276e1745a21021cb2944b276e845c8885e871674",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.r6-begin"
+      },
+      "declaration": "(block (statement (cte (identifier) @block_cte)))\n(block (block (statement (query_specification (select (select_expression (term alias: (identifier) @nested_alias)))))))\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.probe-v16",
+      "query_sha256": "4159b9338522a4f7509f9d638f5817c6928f4677b2a31edbf4b38c4901f10aa8",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v16"
+      },
+      "declaration": "(period_for_system_time (identifier) @period_column)\n(graph_match_predicate) @graph_match\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.probe-v22",
+      "query_sha256": "3fc130b6a79d424a3a07f06f7d1a7769b158c69c67099ae5be37cac60feba949",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v22"
+      },
+      "declaration": "(named_window name: (identifier) @window_name)\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "q.issue128-ownership",
+      "query_sha256": "c52218d06db46e4c9db7a8024626bce15236127ee15a43794b0d28281385f0ad",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/tsql.json",
+          "bytes": 11934,
+          "sha256": "bce6ada698526ee5a162f4187b5fc0fb9e957ed279e6d0a954da9571a4eab71d"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.issue128-ownership"
+      },
+      "declaration": "(procedure_body \";\" @module.semi)\n(procedure_body (statement (query_specification (select (select_expression (term (literal) @module.value))))))\n(batch (statement (query_specification (select (select_expression (term (literal) @batch.value))))))\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "facts.declarations",
+      "query_sha256": "bfca18365c23af4a2cbcff969760772237fe443be4b6d8f4585f92f64489df23",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/1/queries/0/source",
+        "case": "facts.declarations"
+      },
+      "declaration": "(create_procedure) @c.0.0.0\n(create_procedure name: _ @c.0.1.1) @c.0.1.0\n(create_function) @c.1.0.0\n(create_function name: _ @c.1.1.1) @c.1.1.0\n(create_view) @c.2.0.0\n(create_view name: _ @c.2.1.1) @c.2.1.0\n(create_table) @c.3.0.0\n(create_table name: _ @c.3.1.1) @c.3.1.0\n(create_trigger) @c.4.0.0\n(create_trigger (object_reference) @c.4.1.1) @c.4.1.0\n(create_type) @c.5.0.0\n(create_type name: _ @c.5.1.1) @c.5.1.0\n(create_schema) @c.6.0.0\n(create_schema name: _ @c.6.1.1) @c.6.1.0\n(create_synonym) @c.7.0.0\n(create_synonym name: _ @c.7.1.1) @c.7.1.0\n(create_sequence) @c.8.0.0\n(create_sequence name: _ @c.8.1.1) @c.8.1.0\n(create_index) @c.9.0.0\n(create_index name: _ @c.9.1.1) @c.9.1.0\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "tsql",
+      "query": "facts.dynamic_sql",
+      "query_sha256": "fa5fad90879b878dd42a2fae18dd43312a0c165e6ac8c9d0ffe96369138ae418",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/1/queries/1/source",
+        "case": "facts.dynamic_sql"
+      },
+      "declaration": "(execute_statement) @exec\n(execute_statement _ @exec.child) @exec.parent\n(execute_statement procedure: (object_reference) @proc) @proc.exec\n(object_reference name: _ @ref.name) @ref\n(object_reference schema: _ @ref.schema) @ref.s\n(exec_argument name: _ @arg.name) @arg\n(exec_argument value: _ @arg.value) @arg.v\n(binary_expression operator: _ @bin.op) @bin\n(field name: _ @field.name) @field\n\";\" @semi\n(ERROR . (identifier) @err.first) @err\n(ERROR . (keyword_with) @errwith.first) @errwith\n(program _ @batch.child) @batch.program\n(batch _ @batch.child)\n",
+      "grammar_basis": "#/routes/24",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.structure",
+      "query_sha256": "35e55e9d63eafae23dfd6fd23e9f52018574905884d99d78227fa7abad0a0a4e",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/0/source",
+        "case": "q.structure"
+      },
+      "declaration": "(CreateStmt (qualified_name) @table)\n(columnDef (ColId) @column)\n(common_table_expr (name) @cte)\n(CreateFunctionStmt (func_name) @function)\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-b01-strings",
+      "query_sha256": "9004103236ba4fdcb76b71442a6c2ba5a3b14ec031416f313633b974e92253fa",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/1/source",
+        "case": "q.probe-b01-strings"
+      },
+      "declaration": "(dollar_quoted_string) @dollar\n(escape_string_literal) @escape\n(bit_string_literal) @bit\n(hex_string_literal) @hex\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-b04-utility",
+      "query_sha256": "b4264eb4db18dd8c652f890dce53b1b07a82b628b80c583b0a73c8b4d7e080c7",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/2/source",
+        "case": "q.probe-b04-utility"
+      },
+      "declaration": "(ListenStmt (ColId) @listen_channel)\n(NotifyStmt (ColId) @notify_channel)\n(PrepareStmt (name) @prepared_name)\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-v10-partition",
+      "query_sha256": "01d1260c7c90dd7c0ee0286f4f6bbb850a84a903314ba94db7207dd10ca54da2",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/3/source",
+        "case": "q.probe-v10-partition"
+      },
+      "declaration": "(PartitionSpec) @partition_spec\n(PartitionBoundSpec) @partition_bound\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-v13-merge",
+      "query_sha256": "b5e10f700059e1cfc7712a3dd2ca091ea3b76f152dc50d23894015946239c1ad",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/4/source",
+        "case": "q.probe-v13-merge"
+      },
+      "declaration": "(merge_when_clause) @merge_when\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-v16-json-table",
+      "query_sha256": "37e8d705152701242987e07600c6aff590be3f2b6ae9b75f907e179999175f8f",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/5/source",
+        "case": "q.probe-v16-json-table"
+      },
+      "declaration": "(json_table_column_definition) @jt_column\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-v18-returning",
+      "query_sha256": "0fbedd7084e35b58bd9f50c787e3015d3049c8b62dc145cdb548ef632199a6f3",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/6/source",
+        "case": "q.probe-v18-returning"
+      },
+      "declaration": "(returning_option) @returning_alias\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "q.probe-l01-oids",
+      "query_sha256": "b72a313c2f8e47b0fa1022d89a26983808000413e8634fb5bffc9143667d334d",
+      "query_source": {
+        "file": {
+          "path": "src/testdata/native/queries/postgresql-sql.json",
+          "bytes": 8110,
+          "sha256": "2ed90fffb67dda344fd85b6f01c1647d1dad4dce1d6befd2a05e5960676edebd"
+        },
+        "selector": "#/queries/7/source",
+        "case": "q.probe-l01-oids"
+      },
+      "declaration": "(OptWith) @opt_with\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    },
+    {
+      "route": "postgresql-sql",
+      "query": "facts.declarations",
+      "query_sha256": "1f2284ae901d05903ec6fc8418420a9a459806e2e15ea9d1e45033aeeba528aa",
+      "query_source": {
+        "file": {
+          "path": "src/contracts/fact-query-pack.json",
+          "bytes": 9702,
+          "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+        },
+        "selector": "#/routes/2/queries/0/source",
+        "case": "facts.declarations"
+      },
+      "declaration": "(CreateStmt) @c.0.0.0\n(CreateStmt (qualified_name) @c.0.1.1) @c.0.1.0\n(ViewStmt) @c.1.0.0\n(ViewStmt (qualified_name) @c.1.1.1) @c.1.1.0\n(CreateFunctionStmt) @c.2.0.0\n(CreateFunctionStmt (func_name) @c.2.1.1) @c.2.1.0\n(IndexStmt) @c.3.0.0\n(IndexStmt (opt_single_name) @c.3.1.1) @c.3.1.0\n(CreateTrigStmt) @c.4.0.0\n(CreateTrigStmt (name) @c.4.1.1) @c.4.1.0\n(CreateSchemaStmt) @c.5.0.0\n(CreateSchemaStmt (opt_single_name) @c.5.1.1) @c.5.1.0\n(CreateSeqStmt) @c.6.0.0\n(CreateSeqStmt (qualified_name) @c.6.1.1) @c.6.1.0\n(DefineStmt) @c.7.0.0\n(DefineStmt (any_name) @c.7.1.1) @c.7.1.0\n",
+      "grammar_basis": "#/routes/25",
+      "expectation_rule": "고정 query 선언의 node·field·capture 선택을 따른다. 문법별 CST/API·metadata·순서·fact mapping 규칙은 후속 자료 검토에서 작성한다.",
+      "automation": "UNASSESSED",
+      "scope": "PENDING_FULL_CST_API_METADATA_ORDERED_CAPTURES_FACTS",
+      "manual_exceptions": {
+        "state": "UNASSESSED",
+        "manual_count": null,
+        "items": []
+      },
+      "independent_review": null
+    }
+  ]
+}
