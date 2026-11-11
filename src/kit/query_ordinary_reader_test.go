@@ -100,7 +100,7 @@ func newOrdinaryReaderFixture(t *testing.T) ordinaryReaderFixture {
 	}
 	capture := map[string]any{
 		"schema": "tsgk-native-batch-capture/r1", "owner": owner, "batch": 0, "build_identity": digestHex([]byte("build-identity")), "executable_sha256": digestHex([]byte("exe")), "executable_bytes": 3,
-		"spec":    map[string]any{"Path": "C:/test/driver.exe", "Args": []string{}, "Dir": "C:/test", "Env": []string{}, "Stdin": nil, "Interactive": true, "StdoutBytes": operation.OutputBytes, "StderrBytes": int64(65536), "Wall": int64(operation.BatchWall), "Grace": int64(timeSecond), "Memory": map[string]any{"Bytes": operation.MemoryBytes, "Hard": false}, "CgroupParent": ""},
+		"spec":    map[string]any{"Path": "C:/test/driver.exe", "Args": []string{}, "Dir": "C:/test", "Env": []string{}, "Stdin": nil, "Interactive": true, "StdoutBytes": operation.OutputBytes + 4, "StderrBytes": int64(65536), "Wall": int64(operation.BatchWall), "Grace": int64(timeSecond), "Memory": map[string]any{"Bytes": operation.MemoryBytes, "Hard": false}, "CgroupParent": ""},
 		"process": processPin, "stderr": stderrPin,
 		"stdin":         map[string]any{"bytes": len(requestFrame), "sha256": digestHex(requestFrame), "retained_bytes": len(requestFrame)},
 		"stdout":        map[string]any{"bytes": len(responseFrame), "sha256": digestHex(responseFrame), "retained_bytes": len(responseFrame)},

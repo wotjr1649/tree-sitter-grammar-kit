@@ -13,14 +13,16 @@ import (
 
 // Retain the same checked native execution; semantic consumers must not evaluate it again.
 type semanticNativeCache struct {
-	tuples    []QueryWitnessTuple
-	record    eligibilityNativeRecord
-	checked   []nativewire.CheckedStep
-	versions  [][]byte
-	points    []EditPoints
-	values    []witnessEvaluation
-	evaluated []bool
-	ready     bool
+	tuples         []QueryWitnessTuple
+	queryClaims    []string
+	ordinaryClaims map[string]string
+	record         eligibilityNativeRecord
+	checked        []nativewire.CheckedStep
+	versions       [][]byte
+	points         []EditPoints
+	values         []witnessEvaluation
+	evaluated      []bool
+	ready          bool
 }
 
 func (b *eligibilityBudget) semanticNative(req QuerySemanticsRequest, profile OracleProfile, reg semanticRegistration, manifest OracleManifest, files map[string][]byte, state semanticSetState, session *eligibilitySession, cache *semanticNativeCache, res *QuerySemanticsResult, add func(string, string, string)) *Error {

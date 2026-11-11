@@ -24,6 +24,12 @@ func ordinaryTypedNulls(s *typedJSONShape) {
 			f.nullable = name == "edits" || name == "edit_points"
 		case reflect.TypeFor[OracleQuerySemantics]():
 			f.nullable = name == "capture"
+		case reflect.TypeFor[ordinaryGuardedCaptureSpec]():
+			f.nullable = name == "Env" || name == "Args"
+		case reflect.TypeFor[witnessQueryProjection]():
+			f.nullable = name == "error" || name == "captures" || name == "predicates" || name == "capture_names"
+		case reflect.TypeFor[ordinaryBaseAPISummary]():
+			f.nullable = name == "first_difference" || name == "first_divergence"
 		}
 		s.fields[name] = f
 		ordinaryTypedNulls(f.shape)
@@ -34,13 +40,17 @@ func ordinaryTypedNulls(s *typedJSONShape) {
 }
 
 func (b *eligibilityBudget) decodeOrdinaryTyped(doc string, data []byte, target any, options ...jsonv2.Options) *Error {
+	return b.decodeOrdinaryTypedShape(doc, data, target, true, options...)
+}
+
+func (b *eligibilityBudget) decodeOrdinaryTypedShape(doc string, data []byte, target any, exact bool, options ...jsonv2.Options) *Error {
 	if e := b.charge(1, uint64(len(data)), doc); e != nil {
 		return e
 	}
 	if e := b.reserveJSONContainers(doc, data, 3, 80); e != nil {
 		return e
 	}
-	shape, e := b.typedJSONShapeFor(doc, reflect.TypeOf(target).Elem(), false, true)
+	shape, e := b.typedJSONShapeFor(doc, reflect.TypeOf(target).Elem(), false, exact)
 	if e != nil {
 		return e
 	}
@@ -53,7 +63,7 @@ func (b *eligibilityBudget) decodeOrdinaryTyped(doc string, data []byte, target 
 	if e := b.charge(values, 0, doc); e != nil {
 		return e
 	}
-	options = append(options, jsonv2.RejectUnknownMembers(true))
+	options = append(options, jsonv2.RejectUnknownMembers(exact))
 	if err := jsonv2.Unmarshal(data, target, options...); err != nil {
 		return fail(KindInvalidInput, "JSON_SHAPE", doc, err)
 	}

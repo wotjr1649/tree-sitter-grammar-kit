@@ -63,6 +63,8 @@ type ordinaryCaseCache struct {
 	record                      OrdinaryOracleRecord
 	projection                  []byte
 	stepFacts                   []byte
+	recordedBase                Verdict
+	recordedBaseCode            string
 	ready                       bool
 	BatchAccepted               bool
 }
@@ -398,7 +400,7 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 		if process.Status != "COMPLETED" || process.ExitCode != 0 || !process.Cleanup.Verified || process.Cleanup.ResidualAfterExit != 0 || process.StdoutTruncated || process.StderrTruncated {
 			batchCache.Accepted = false
 		}
-		if capture.Spec.Path == "" || !capture.Spec.Interactive || len(capture.Spec.Stdin) != 0 && string(capture.Spec.Stdin) != "null" || capture.Spec.StdoutBytes <= 0 || capture.Spec.StderrBytes <= 0 || uint64(capture.Spec.StdoutBytes) != manifest.Operation.OutputBytes || capture.Spec.Wall <= 0 || capture.TrailingBytes != 0 || capture.CaptureError != "" {
+		if capture.Spec.Path == "" || !capture.Spec.Interactive || len(capture.Spec.Stdin) != 0 && string(capture.Spec.Stdin) != "null" || capture.Spec.StdoutBytes <= 0 || capture.Spec.StderrBytes <= 0 || uint64(capture.Spec.StdoutBytes) != manifest.Operation.OutputBytes+4 || capture.Spec.Wall <= 0 || capture.TrailingBytes != 0 || capture.CaptureError != "" {
 			batchCache.Accepted = false
 			add("ORDINARY_BATCH_SPEC", capMember.Path, "interactive process spec·capture 상태가 일반 batch 정책과 다르다")
 		}
@@ -501,6 +503,7 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 		}
 		if cache := out.Cases[record.Case]; cache != nil {
 			cache.record, cache.projection = record, projection
+			cache.recordedBase, cache.recordedBaseCode = Verdict{base.ExecutionStatus, base.Assessment}, base.Code
 			cache.stepFacts = append([]byte(nil), wire.StepFacts...)
 		}
 		out.Records[record.Case] = ordinaryGuardedRecord{Record: record, Transport: wire.Transport, StepFacts: wire.StepFacts, Projection: projection}
@@ -870,7 +873,12 @@ func (b *eligibilityBudget) ordinaryCase(s *eligibilitySession, registration Ord
 	for i, p := range request.Points {
 		editPoints[i] = p.Byte
 	}
-	expect := nativewire.Expect{Check: func() error { return b.r.check() }, Revision: request.Protocol, ID: request.ID, Nodes: request.Limits.Nodes, Queries: request.queries, API: request.API, SourceBytes: uint64(len(source)), EditPoints: points, Exit: &proc.ExitCode,
+	expect := nativewire.Expect{Check: func() error {
+		if e := b.r.check(); e != nil {
+			return e
+		}
+		return nil
+	}, Revision: request.Protocol, ID: request.ID, Nodes: request.Limits.Nodes, Queries: request.queries, API: request.API, SourceBytes: uint64(len(source)), EditPoints: points, Exit: &proc.ExitCode,
 		Observation: &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: request.ObservationRunID, ProducerSHA256: request.ObservationProducerSHA256, HistoryStart: request.ObservationHistoryStart}}
 	expect.Points = editPoints
 	for _, edit := range request.edits {

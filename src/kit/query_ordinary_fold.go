@@ -17,7 +17,11 @@ func (b *eligibilityBudget) foldOrdinaryRuntime(reg OrdinaryRegistration, select
 	}
 	known := map[string]OrdinaryCoordinate{}
 	for _, required := range reg.Required {
-		if _, exists := known[required.ID]; exists || required.Coordinate.ID(reg.Namespace) != required.ID {
+		id, e := b.ordinaryCoordinateID(required.Coordinate, reg.Namespace)
+		if e != nil {
+			return out, e
+		}
+		if _, exists := known[required.ID]; exists || id != required.ID {
 			return out, fail(KindInvalidInput, "ORDINARY_RUNTIME_MEMBERSHIP", required.ID, nil)
 		}
 		known[required.ID] = required.Coordinate

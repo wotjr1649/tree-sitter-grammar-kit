@@ -22,11 +22,79 @@ P2-C shard selection은 현재 public surface를 늘리지 않는다. Source-onl
 
 ### #362 P2-C ordinary public API readiness
 
-공개화 전에 ordinary native build closure(plain/parser-paged/binary-paged), 원래 base 판정의 재계산, 독립 asset의 guarded resolution, reference와 tuple 판정·부분 fold를 묶는 내부 coordinator도 완성해야 한다. 현재 내부 helper를 각각 직접 시험한 결과는 이 통합 경로를 실행한 결과가 아니다.
+P2-C 통합에서 `VerifyOrdinaryQuerySemantics`와 아래 request/result 타입을 추가했다. 이 offline API는 caller bytes만 읽고 process를 시작하지 않는다. 실행 profile, planning profile, ordinary registration, asset registration, plan commitment 및 선택 proofs, fixed P0 registry/inventory/slot bytes, run-binding/reference-selection, evidence root와 eligibility approval을 입력으로 받는다. Input pins는 approval의 strict `ordinary` block 및 r8/r2와 대조된다. Evidence members와 expected assets는 그 승인된 root·graph snapshot에서만 읽는다.
 
-`VerifyOrdinaryQuerySemantics`는 현재 exported API가 아니다. P2-C 작업은 internal reader·adjudicator 구성요소와 테스트 범위까지만 진행했으며 공개 request/result 계약, 호출 한도, 실제 caller 경험 또는 ordinary PASS를 확정하지 않는다. 이 섹션은 공개 API 추가를 구현 완료로 오해하지 않도록 경계를 기록한다. 현재 제공되는 public ordinary 표면은 위 P2-A의 strict parser/planner helper뿐이다.
+```go
+const OrdinaryQuerySemanticsResultSchema = "tsgk-query-semantics-result/r2"
 
-Future offline verifier를 공개하기 전에 request가 caller-selected profile·planning profile·registration·assets·plan·run-binding·reference selection·P0 registry inputs·eligibility approval을 같은 evidence snapshot에 결속하는지와 result가 base claim·selected tuple counters·registry incomplete·partial/cancel/resource outcomes를 명확히 표현하는지 정본 계약으로 확정해야 한다. Shared `run`/held root와 1 GiB·32 M work·256 MiB read·10,000 entry·120초 한도를 통합해 측정하고, `src/cmd/tsgk` 등 external consumer build를 확인해야 한다. 이러한 activation gate가 끝날 때까지 기존 `VerifyQueryReferenceEligibility`, `VerifyQuerySemantics`, r4–r6 reducer 및 qualification r10은 ordinary batch를 수용하지 않는다. SQL full ordinary capacity와 P2-D stored result/replay/CLI는 각각 미완료다.
+type OrdinaryQuerySemanticsRequest struct {
+    Evidence                EvidenceRequest
+    Selection               OrdinaryQuerySemanticsBinding
+    Profile                 []byte // executable native-query-batch profile
+    PlanningProfile         []byte
+    Registration            []byte
+    AssetRegistration       []byte
+    PlanCommitment          []byte
+    ShardProofs             [][]byte
+    Registry                []byte
+    RegistrySHA256          string
+    QualificationInventory  []byte
+    SlotInventory           []byte
+    RunBinding              []byte
+    ReferenceSelection      []byte
+    EligibilityApproval     []byte
+    EligibilityRegistration []byte
+}
+
+// Same caller-owned pin bundle carried by approval.ordinary.
+type OrdinaryQuerySemanticsBinding = ordinaryEligibilityBinding
+
+// OrdinaryQuerySemanticsBinding fields and approval.ordinary JSON names:
+// Schema (schema), Context (context), ClosureEncoding (closure_encoding),
+// Profile (profile_pin), PlanningProfile (planning_profile_pin),
+// Registration (registration_pin), Assets (asset_registration_pin),
+// Plan (shard_plan_pin), Commitment (plan_commitment_pin),
+// ReferenceSelection (reference_selection_pin), RunBinding (run_binding_pin),
+// Candidate (candidate), SemanticCohort (semantic_cohort), RunID (run_id),
+// ShardIDs (selected_shard_ids)
+
+type OrdinaryQuerySemanticsTuple struct {
+    ID    string // selected P0 obligation ID
+    State string // VERIFIED, FAILED, BLOCKED, or UNPROCESSED
+    Code  string
+}
+
+type OrdinaryQuerySemanticsResult struct {
+    Report
+    ResultSchema       string
+    BindingValid       bool
+    ProducerRecorded   Verdict
+    BaseVerified       Verdict
+    Semantic           string
+    Code               string
+    SelectedShardIDs   []string
+    Tuple              QueryEligibilityCounts
+    Obligations        []OrdinaryQuerySemanticsTuple
+    Eligibility        *QueryReferenceEligibilityResult
+    Gates              []ReplayGate
+    BytesRead          uint64
+    Work               uint64
+    LogicalBytes       uint64
+    ProcessingComplete bool
+    FullScopeComplete  bool // always false for a shard-local P2-C evaluation
+    Complete           bool
+}
+```
+
+Coordinator는 하나의 `run`과 eligibility 원장을 공유한다. 먼저 caller `Selection`과 plan commitment/proofs/registration을 검증해 분모를 고정하고, approval이 주어지면 기존 Build/Control 및 evidence snapshot을 검증해 같은 session에 결속한다. 이어 r8/r5/transcript set과 native build closure를 검사한다. 그 다음 각 raw case에 기존 base reducer를 적용해 projection·query expectation·기존 FAIL을 재계산한다. 이후 reference row와 fact 입력을 확인하고, guarded independent metadata/CST/capture/fact를 해석해 required tuple을 adjudicate한 뒤 selected counters를 fold한다. 정상 경로의 끝에서 기존 snapshot 관측의 물리 identity와 paging authority를 재확인하고 결과를 봉인한다. Base 재계산에서 확인한 FAIL은 뒤의 reference 또는 asset 읽기가 중단돼도 유지된다.
+
+`Selection`은 `approval.ordinary`와 같은 pin 묶음 필드와 직렬화 이름을 가진 필수 caller 입력이고, `ShardProofs`는 그 선택에 맞는 순서 있는 Merkle proofs다. Coordinator는 외부 approval을 확인하기 전에 plan commitment, 선택 proofs, registration과 pin 묶음을 대조하여 selected plan에서 required 분모를 고정한다. 비어 있거나 유효하지 않은 selection은 입력 오류이며 의무가 0개인 완료 결과를 만들지 못한다. Caller selection만으로는 권한이 생기지 않는다. 현재 cohort까지 포함한 pin 묶음 전체가 `approval.ordinary`와 정확히 일치해야 eligibility session이 결속된다. Selection을 검증한 뒤 approval이 없으면 선택된 모든 의무를 BLOCKED로 두고 `Complete`와 `ProcessingComplete`는 false로 남는다. 이 중도 반환은 결과를 seal하지 않으므로 완료된 결과로 소비할 수 없다. 예산·취소·read 오류도 부분 상태와 이미 확인한 첫 FAIL을 반환하지만 `Complete=false`이며 결과는 봉인되지 않는다.
+
+정상 경로의 `Complete`는 offline 평가와 결과 봉인이 끝났다는 뜻이다. `ProcessingComplete`는 선택된 모든 의무가 최종 상태에 도달했다는 뜻이며, 둘 다 전체 registry 완료를 뜻하지 않는다. `FullScopeComplete`는 false고 P0의 미해결 범위와 `INCOMPLETE` 상태는 그대로다. `query_semantics=PASS`는 마지막 identity 확인 뒤 ordinary binding, eligibility, base verdict, 선택 tuple 전부가 통과해야 나온다. 내부 `cache.ready`, 저장 projection, reference 결과 또는 runtime fold PASS만으로 tuple을 올리지 않는다. CST field만 다른 경우는 BLOCKED/`INELIGIBLE`로 남고 따로 확인된 실패는 FAILED로 보존한다. 정상 처리 흐름을 끝내지 못한 조기 반환은 `Complete=false`이며 결과가 봉인되지 않는다.
+
+마지막 identity 재확인은 호출 초기에 기록한 파일과 디렉터리의 `SameFile`, 크기와 수정 시각을 비교한다. 이는 기존 호출자 소유권 계약의 관측 가능한 변경 검출 범위다. 같은 inode에서 bytes를 바꾸고 크기와 수정 시각까지 복원하는 적대적 writer를 차단하는 snapshot 또는 sandbox 보장은 아니다. 호출자는 처리 중 request와 source snapshot을 변경하지 않아야 한다.
+
+이 API는 새로 노출된 시험적 진입점이다. 실제 public 양성 경로와 현재 PostgreSQL/TSQL 전체 capacity는 구현 시험에서 아직 입증되지 않았다. 내부 helper나 합성 tuple PASS를 전체 ordinary PASS 또는 SQL admission으로 해석하지 않는다. Ordinary SQL은 전체 동일 원장 pass가 변경되지 않은 small 한도 안에서 측정되기 전까지 `CAPACITY_UNPROVEN`/BLOCKED다. P2-D stored result/replay/CLI 일치는 남아 있다. 기존 `VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`, r4–r6 reducers, qualification r10의 schema와 ordinary 거부 경계는 유지된다.
 
 `VerifyQuerySemantics(ctx, QuerySemanticsRequest)`는 process를 실행하지 않는다. `Evidence`는 caller가 승인한 policy와 evidence root이고, `Profile`·`Registration`·`RunBinding`·`EligibilityApproval`·`EligibilityRegistration`·`WitnessRegistration`은 graph 밖의 caller 원문이다. root의 `oracle/`에 저장된 profile/r3 생산 set을 같은 evidence pass에서 읽는다. 첫 구현 범위는 단일 UTF-8 full-input `native-query` case이며 [계측 reference 계약](instrumented-query-reference.md)의 사전 등록과 기존 eligibility/r1 closure를 사용한다. SVC·전처리·batch·large 및 새 macOS claim은 이 진입점의 완료 근거가 아니다.
 
