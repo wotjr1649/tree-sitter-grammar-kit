@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 ordinary base fact 재계산 검증
+
+`TestOrdinaryBaseFactsRecomputeEveryStepAndRole`와 `TestOrdinaryBaseFactsRejectTampering`은 편집 후 source version, 독립 fresh capture stream, pack/mapping pin, suffix 순서·digest/query SHA, 저장 fact와 base projection 변조 및 전체 step/role 분모를 검사한다. `TestOrdinarySQLPublicPassCapacity/postgresql-sql`은 같은 실제 owned-native r8/독립 expected 공개 경로에서 base PASS와 9/9 VERIFIED를 요구한다. Fact 내부 일치를 독립 expected로 사용하지 않는다.
+
+Test-only overlay는 새로운 fact 경로와 기존 derivation의 실제 loop/비교·source/hash byte 방문과 구체화한 record/capture/fact payload를 관찰해 대응 원장이 실제 이상인지 assert한다. Process 전체 TotalAlloc은 함수별 logical 검증과 분리한 진단값이다. 저장 step fact와 재계산 payload의 대조를 제거한 mutant는 변조 시험의 assertion에서 실패해야 한다. Compiler 4 GiB/120초, native 1 GiB/30초 HARD와 순차 실행, 기존 logical/work/read 한도를 유지한다. 아래 2026-11-11 PostgreSQL BLOCKED 원장은 변경 전 기록이며, 2026-11-12 후속 공개 pass는 logical 698,039,669 B/work 14,108,124/read 134,443,451 B에서 9/9 VERIFIED로 끝났다. 전체 route/P0 admission은 주장하지 않는다.
+
 ## #362 ordinary shard plan commitment 검증
 
 `BuildOrdinaryShardPlan`와 `ValidateOrdinaryShardPlan`은 full source-only plan을 만들어 P0 fixed registry/qualification inputs에 대한 106,208 ordinary ID의 exact union을 검증한다. `src/internal/ordinarycommit.Build`는 이 semantic 증명을 대체하지 않고 검증 성공한 full plan의 6,402개 정렬 shard 원문을 commitment/root와 ordered inclusion proofs로 묶는다. Caller approval이 full plan pin 및 commitment pin을 함께 고정해야 한다. Pass는 commitment와 선택된 shard/proofs만 읽어 strict decode하고, inclusion·승인된 ID 순서·coordinate 재구성·shard digest를 검사한다. r8/r2의 기존 full `shard_plan_pin`은 같은 complete-plan pin에 대조한다.

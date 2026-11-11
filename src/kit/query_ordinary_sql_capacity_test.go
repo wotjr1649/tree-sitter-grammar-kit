@@ -675,8 +675,8 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 			}
 			stages, lastStage, lastRejected := ordinarySQLLedgerStages(t, filepath.Join(routeDir, "public-ledger.jsonl"))
 			capacity := "CAPACITY_UNPROVEN"
-			if len(assetBodies) != 0 && verifyErr == nil {
-				capacity = "FULL_BODY_MEASURED_BASE_BLOCKED"
+			if len(assetBodies) != 0 && verifyErr == nil && result.Semantic == AssessPass && result.Complete {
+				capacity = "FULL_BODY_MEASURED_VERIFIED"
 			}
 			stopRecord := struct {
 				Capacity, Boundary string
@@ -696,13 +696,13 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 				t.Fatalf("synthetic SQL references without independent expected assets were incorrectly treated as verified: %+v", result)
 			}
 			if len(assetBodies) != 0 && verifyErr == nil {
-				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessBlocked || result.Tuple.Required == 0 ||
-					result.Tuple.Failed != 0 || result.Tuple.Verified != 0 || result.Tuple.Blocked != result.Tuple.Required {
-					t.Fatalf("PostgreSQL body adjudication did not finish behind the known blocked base gate: %+v", result)
+				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessPass || result.Semantic != AssessPass || result.Assessment != AssessPass || result.Tuple.Required == 0 ||
+					result.Tuple.Failed != 0 || result.Tuple.Verified != result.Tuple.Required || result.Tuple.Blocked != 0 {
+					t.Fatalf("PostgreSQL body adjudication did not finish with a recomputed base PASS: %+v", result)
 				}
 				for _, obligation := range result.Obligations {
-					if obligation.State != ordinaryTupleBlocked || obligation.Code != "ORDINARY_PREREQUISITE_INCOMPLETE" {
-						t.Fatalf("PostgreSQL body result differs before the known base gate: %+v", obligation)
+					if obligation.State != ordinaryTupleVerified || obligation.Code != "" {
+						t.Fatalf("PostgreSQL independent tuple was not VERIFIED: %+v", obligation)
 					}
 				}
 			}

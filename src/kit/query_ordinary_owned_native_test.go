@@ -75,7 +75,7 @@ func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
 		}
 		t.Fatalf("reader did not accept both native versions: cache=%+v profileCase=%s regCases=%d manifestCases=%v batches=%v batchFrames=%v frameCache=%v records=%v assessment=%s findings=%+v", cache, profile.Native.Cases[0].ID, len(fixture.registration.Cases), set.Manifest.Cases, mapKeys(set.Batches), frames, batchKeys(batch), mapKeys(set.Records), set.Assessment, set.Findings)
 	}
-	base, baseErr := fixture.b.recomputeOrdinaryBase(profile, 0, cache)
+	base, baseErr := fixture.b.recomputeOrdinaryBase(profile, 0, cache, nil)
 	if baseErr != nil || base.Verdict.Assessment != AssessPass {
 		t.Fatalf("owned native raw base recomputation: err=%v verdict=%+v gates=%+v findings=%+v", baseErr, base.Verdict, base.Gates, base.Findings)
 	}
