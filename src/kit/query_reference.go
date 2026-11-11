@@ -609,10 +609,10 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 }
 
 func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg QueryReferenceRegistration, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
-	return decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, q, queryKnown, versions, r)
+	return decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, instrumentedReferenceCommit, q, queryKnown, versions, r)
 }
 
-func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
+func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol, upstream string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
 	var head struct {
 		Schema   string `json:"schema"`
 		Status   string `json:"status"`
@@ -662,7 +662,7 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 	if int(obs.Step) < len(versions) && !utf8.Valid(versions[obs.Step]) {
 		return nil, "REFERENCE_SOURCE_ENCODING_INVALID", false, nil
 	}
-	if ref.Upstream != instrumentedReferenceCommit || ref.Input.Encoding != EncodingUTF8 || r.eligibility != nil && !hex64.MatchString(ref.Input.SHA256) || (r.eligibility == nil || obs.SourceSHA256 != "") && (ref.Input.Bytes != obs.SourceBytes || ref.Input.SHA256 != obs.SourceSHA256) || ref.Grammar.LibrarySHA256 != librarySHA256 || ref.Grammar.Symbol != symbol || ref.Query.ID != obs.Query || !hex64.MatchString(ref.Query.SHA256) || queryKnown && ref.Query.SHA256 != digestHex([]byte(q.Source)) {
+	if ref.Upstream != upstream || ref.Input.Encoding != EncodingUTF8 || r.eligibility != nil && !hex64.MatchString(ref.Input.SHA256) || (r.eligibility == nil || obs.SourceSHA256 != "") && (ref.Input.Bytes != obs.SourceBytes || ref.Input.SHA256 != obs.SourceSHA256) || ref.Grammar.LibrarySHA256 != librarySHA256 || ref.Grammar.Symbol != symbol || ref.Query.ID != obs.Query || !hex64.MatchString(ref.Query.SHA256) || queryKnown && ref.Query.SHA256 != digestHex([]byte(q.Source)) {
 		return nil, "REFERENCE_CONTEXT_MISMATCH", false, nil
 	}
 	l := ref.Limits

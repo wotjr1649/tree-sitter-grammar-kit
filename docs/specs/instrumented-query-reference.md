@@ -400,3 +400,7 @@ Native node의 `run`은 invocation ID `native-go3`이며 별도 관측 run은 pr
 세 정의가 모두 적격일 때만 별도 수동 결과에 동일한 승인 cohort의 `STRUCTURAL_ONLY`를 기록한다. 이 결과는 caller 승인에 조건부인 저장 일관성이며 실행 진위·서명·EVALUATED 또는 전체 query 슬롯·qualification/fan-in 완료가 아니다. 기본 시험의 수동 helper SKIP도 실제 실행 성공이 아니다. 신규 검증 범위는 Windows Go3로 한정하며 Linux의 새 current 실행과 나머지26 route·SVC·large 의무, macOS 신규 검증 제외를 유지한다.
 
 Go3 anchor의 세 정의는 ordinary `go/s06-go` 원장의 정의와 ID·정확한 UTF-8 원문·계산 hash로 연결한다. 이 정적 연결에는 새 원장 상태나 schema가 필요하지 않으며 r1의 `STRUCTURAL_CANDIDATE`·`compiled_metadata:UNVERIFIED`, `semantic_required:null`·`NOT_ASSESSED`를 유지한다. [Windows Go3 보고서](../reports/issue-216-go3-classification.md)는 당시 grammar/runtime·compiler/driver/reference/library·source snapshot과 외부 승인 graph에 한정한 역사적 관측이다. Query 정의가 같아도 그 실행 context가 달라지거나 확인되지 않으면 현재 compile/metadata 검증으로 승격하지 않는다. CI의 추적 파일 연결 검사는 미추적 raw evidence·caller 승인이나 당시 실행을 재검증하지 않는다.
+
+## #370 V2-B1 reference 검증과 생산 이행 경계
+
+[Historical reference opt-in](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)은 직접 eligibility에서 승인 tuple의 rustc/cargo release와 각각 정확히 비교한다. 과거 증거를 현재 생산 pin과 비교하지 않는다. Python build/test/check/acquire와 workflow의 단일 선택 입력 이행은 후속 작업이며 위 생산 명령의 기존 exact pin은 이 단위에서 바꾸지 않았다. 새 생산 전에 하나의 선택 집합을 고정해 모든 생산 도구에 전달하는 전체 V2-B 완료로 해석하지 않는다.

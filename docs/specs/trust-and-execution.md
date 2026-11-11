@@ -89,3 +89,7 @@ source/tool 확보와 offline 제품 호출을 분리한다. 승인 기록은 �
 새 Go dependency는 필요한 이유·source/version/license·전이 dependency·CGO·script·호환성과 실행 효과를 검토한 뒤 준비 목록에 승인 등록한다. `x/sys`도 자동 허용하지 않지만 dependency 수를 줄이기 위해 위험한 unsafe OS API를 새로 구현하지 않는다. 언어별 SDK/DB server·전역 PATH·WSL·PowerShell 5·유료 모델 호출은 기본 준비 효과가 아니다.
 
 모든 연산은 input files/bytes/depth, decoded/archive 누적량, output/records/nodes/captures, wall time, storage와 지원 가능한 memory/process control을 명시한다. 0/null은 무제한 승인이나 capability 증거가 아니다. sampled memory 관측은 hard cap이 아니며 필요한 cap이 없으면 해당 strict operation이 BLOCKED다. 상세 실행값과 소모량은 승인된 준비/Session receipt가 소유하며 공개 제품 동작은 local prompt를 읽지 않는다.
+
+## #370 V2-B1 직접 reference opt-in 경계
+
+직접 eligibility의 `Pins`는 [historical reference 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. 독립 승인 sidecar와 pin 집합을 기존 eligibility Approval 원문에 결속하며 catalogue·tuple·controller 원문은 같은 상속 원장에서 처리한다. Materials 결속 PASS에 의미 검증 권한을 암묵적으로 주지 않는다. Reader 소유 의무와 기존 build/control/native 검사가 추가로 필요하다. 현재 생산 선택을 역사 신뢰 입력으로 사용하지 않는다. CLI file admission과 semantic/replay/qualification 전달은 이 분할에 포함되지 않는다.

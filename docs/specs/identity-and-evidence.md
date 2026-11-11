@@ -291,3 +291,7 @@ CLI는 최대9개 trust 문서의 열린 file identity도 `QualificationQuerySem
 이 scope에서는 `full_scope_complete=false`와 `ordinary-query-workloads`, `svc-query-workloads`, `large-query-workloads` 누락이 항상 남는다. 모든 probe와 baseline이 PASS여도 `support_claim=BLOCKED`, platform claims BLOCKED, top assessment BLOCKED다. Baseline 또는 semantic의 확인된 FAIL은 top FAIL로 우선한다. 미처리 분모는 unprocessed로 남고 input 부재는 고정 plan N개를 blocked로 남긴다. `r10`의 생성 invariant만 추가되며 저장 r10의 public decoder·r9 CI gate 변경·workflow 활성화는 포함하지 않는다. 이 scope는 전체 #216/#195, 전체26 route, SVC 또는 large 완료 근거가 아니다.
 
 Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 복사하지 않는다. 알려진 host rejection과 semantic FAIL·최초 code는 typed 취소·resource·I/O 중단 뒤에도 보존한다. CLI는 이 r10 FAIL report를 출력하면 중단의 원래 error kind와 execution status를 유지하면서 exit1을 우선한다. 알려진 FAIL이 없으면 기존 typed exit를 따르고, report 쓰기 또는 publication 실패는 exit4다. Nil opt-in의 r9 exit는 바뀌지 않는다.
+
+## #370 V2-B1 역사 reference 결과 identity
+
+직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.

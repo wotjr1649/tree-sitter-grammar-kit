@@ -4,7 +4,13 @@
 
 [pin 계약](../specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 `TestEvidencePinsProductionSelectionDoesNotChangeHistory`는 생산 후보 A/B/C와 별도로 A의 원문·승인·판정·counter·consumed identity를 고정한다. `TestEvidencePinsRejectForgery`는 독립 승인 집합 불일치·pin 치환·자료/sidecar 동시 재해시·sidecar 위조/재사용·혼합 자료를 거부한다. `TestEvidencePinsStrictBoundaries`는 unknown/duplicate/missing/null·depth·size·scope/reader/schema·role·alias·미사용과 누락 자료의 BLOCKED를 검사하고, `TestEvidencePinsInterruptionPreservesFailure`는 확정 FAIL 뒤 자원 오류와 caller 취소를 검사한다. `TestEvidencePinsArchive`는 보관한 모든 집합의 내용 주소와 모든 원문 자료의 길이/hash 및 단일 선택 집합의 존재를 검증한다. 승인 집합 비교를 제거한 overlay mutant는 위조 반례에서 FAIL이어야 한다.
 
-`CGO_ENABLED=0`으로 gofmt·영향 시험·kit 전체·foundation 전체(`TestNoHardcodedToolVersions` 포함)·`go vet ./src/...`를 실행한다. 역사 자료 결속 PASS는 새 Rust/runtime/Oracle의 실제 자격 검증이나 full eligibility·semantic PASS가 아니다. V2-B의 stdout/tool/receipt/catalogue와 V2-C/D의 전체 전달 검증은 이 단계에서 미구현이다.
+`CGO_ENABLED=0`으로 gofmt·영향 시험·kit 전체·foundation 전체(`TestNoHardcodedToolVersions` 포함)·`go vet ./src/...`를 실행한다. 역사 자료 결속 PASS는 새 Rust/runtime/Oracle의 실제 자격 검증이나 full eligibility·semantic PASS가 아니다. 직접 eligibility의 stdout/tool/receipt/catalogue는 아래 V2-B1 검증을 따른다. 생산 도구 및 V2-C/D의 전체 전달은 남아 있다.
+
+## #370 V2-B1 historical reference 검증
+
+[직접 opt-in 계약](../specs/query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)의 `TestEligibilityPinsProductionIndependence`는 old approval/build/control/stdout/catalogue를 고정하고, 다른 Rust tuple·controller 원문·upstream commit·catalogue를 가진 B/C 생산 후보를 선택한 뒤 old 결과 전체가 같고 새 승인 tuple도 통과하는지 확인한다. 합성 tuple은 실제 새 Rust release의 자격 관측이 아니다. `TestEligibilityPinsCatalogueObligations`는 네 분모 축소·필수 invocation 삭제·known-rule/ID/한도/response/input 변조를 거부한다. 고정 의무 대조를 제거한 overlay mutant는 축소 위조 leaf에서 지정 assertion으로 FAIL이어야 한다.
+
+`TestEligibilityPinsForgery`는 외부 승인 불일치·재해시·sidecar 재사용·다른 subject·catalogue 치환·rustc/cargo 혼합·중복 release·접미사·input/receipt/tool/source/vendor 및 응답 upstream 결속·미지원/형식/누락을 검사한다. `TestEligibilityPinsSharedBudget`는 pin resolver가 상속 원장을 새로 시작하지 않는지 확인한다. `TestEligibilityPinsTruncatedFindingsPreserveFailure`는 경고1,000개 뒤 finding 상한 때문에 nested FAIL의 상세가 잘려도 바깥 FAIL이 유지되는지 확인한다. `TestEligibilityPinsEarlyResults`는 초기 오류 응답의 schema를, `TestEligibilityPinsReaderIdentity`는 고정 reader 의무 원문 digest를 보존한다. 기존 kit 및 foundation 전체와 `CGO_ENABLED=0 go vet ./src/...`를 유지한다. Python/workflow·classification donor·semantic/replay 통합은 이 분할의 완료 범위 밖이다.
 
 ## #216 TSQL8 source 준비 검증
 
