@@ -174,7 +174,7 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	if e := b.decode("registration", req.Registration, &s.reg, true); e != nil {
 		return res, e
 	}
-	if e := b.decode("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
+	if e := b.decodeWitnessTyped("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
 		return res, e
 	}
 	if _, e := validateQueryWitnessRegistration(s.witness.QueryWitnessRegistration, queryEligibilityWitnessSchema); e != nil {
@@ -211,7 +211,17 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 			wanted[path] = true
 		}
 	}
-	s.snapshot = &evidenceSnapshot{wanted: wanted, wantedNodes: wantedNodes, approved: approved}
+	retained, e := s.retainedCandidates()
+	if e != nil {
+		return res, e
+	}
+	s.snapshot = &evidenceSnapshot{wanted: wanted, wantedNodes: wantedNodes, approved: approved, retained: retained, identityOnly: true}
+	if scope != nil && heldRoot != nil && s.bound && eligibilityPagedContext(s.reg.Context) {
+		if e := b.charge(1, 2048, "verified-paging-session"); e != nil {
+			return res, e
+		}
+		s.snapshot.paging = &verifiedPaging{owner: s, r: r, b: b, snapshot: s.snapshot, root: heldRoot, binding: s.pagingBinding(), records: map[string]verifiedLogical{}}
+	}
 	if scope != nil {
 		s.snapshot.walked, s.snapshot.walkedDirectories = scope.walked, scope.walkedDirectories
 	}
@@ -241,12 +251,12 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		}
 	}
 	for _, pin := range s.reg.OwnedMembers {
-		if _, _, e := s.member(&pin); e != nil {
+		if _, e := s.memberPin(&pin); e != nil {
 			return res, e
 		}
 	}
 	for _, tool := range s.reg.Tools {
-		if _, _, e := s.member(&tool.IdentityMember); e != nil {
+		if _, e := s.memberAvailable(&tool.IdentityMember); e != nil {
 			return res, e
 		}
 	}
@@ -276,6 +286,9 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	}
 	if e := sealOutput(res, ReplayOperations()["evidence-replay"].OutputBytes); e != nil {
 		return res, e
+	}
+	if s.snapshot.paging != nil && res.Complete && res.Assessment == AssessPass {
+		s.snapshot.paging.finished = true
 	}
 	return res, nil
 }
@@ -572,21 +585,24 @@ func (s *eligibilitySession) validateInput(x eligibilityInput) *Error {
 }
 
 func (s *eligibilitySession) member(pin *eligibilityMember) ([]byte, bool, *Error) {
-	if pin == nil {
-		return nil, false, nil
-	}
-	if e := s.b.charge(1, uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256)), pin.Member.Path); e != nil {
+	ok, e := s.memberPin(pin)
+	if e != nil || !ok {
 		return nil, false, e
 	}
-	expected, ok := s.owned[pin.Member.Path]
-	if !ok || expected != *pin || s.owners[pin.Member.Path] != pin.NodeID {
-		s.finding("ELIGIBILITY_MEMBER_OWNER", pin.Member.Path, true)
-		return nil, false, nil
+	if identity, found := s.snapshot.identities[pin.Member.Path]; found {
+		if identity.owner != pin.NodeID || identity.member != pin.Member || !identityOnlyRole(pin.Member.Role) {
+			return nil, false, fail(KindInvalidInput, "ELIGIBILITY_MEMBER_IDENTITY", pin.Member.Path, nil)
+		}
+		return nil, false, fail(KindInvalidInput, "ELIGIBILITY_MEMBER_BYTES_UNAVAILABLE", pin.Member.Path, nil)
 	}
-	actual, ok := s.snapshot.verifiedMembers[pin.Member.Path]
-	if !ok || actual != pin.Member {
-		s.finding("ELIGIBILITY_MEMBER_UNVERIFIED", pin.Member.Path, true)
-		return nil, false, nil
+	if part := s.snapshot.parts[pin.Member.Path]; part != nil {
+		if part.chain != nil {
+			return nil, false, fail(KindInvalidInput, "ELIGIBILITY_MEMBER_BYTES_UNAVAILABLE", pin.Member.Path, nil)
+		}
+		if e := s.b.charge(1, part.size+1, "verified-part-copy"); e != nil {
+			return nil, false, e
+		}
+		return slices.Clone(part.content), true, nil
 	}
 	data, ok := s.snapshot.files[pin.Member.Path]
 	if !ok {
@@ -647,7 +663,7 @@ func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) *Error {
 	}
 	for _, pin := range []*eligibilityMember{inv.Request, inv.Receipt, inv.Response, inv.Process} {
 		if pin != nil {
-			if _, ok, e := s.member(pin); e != nil {
+			if ok, e := s.memberAvailable(pin); e != nil {
 				return e
 			} else if !ok {
 				ready = false
@@ -660,7 +676,7 @@ func (s *eligibilitySession) bindInvocation(inv eligibilityInvocation) *Error {
 	}
 	for _, input := range inv.Inputs {
 		if input.MemberPin != nil {
-			if _, ok, e := s.member(input.MemberPin); e != nil {
+			if ok, e := s.memberAvailable(input.MemberPin); e != nil {
 				return e
 			} else if !ok {
 				ready = false

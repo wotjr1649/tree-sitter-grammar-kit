@@ -79,10 +79,7 @@ func (b *eligibilityBudget) semanticNative(req QuerySemanticsRequest, profile Or
 		}
 		cache.versions, cache.points = versions, points
 		if rawData != nil {
-			if e := b.reserveJSON("semantic-native-response", rawData, 12); e != nil {
-				return e
-			}
-			if e := b.decode("semantic-native-response", rawData, &cache.record.raw, true); e != nil {
+			if e := b.decodeNativeResponse("semantic-native-response", rawData, &cache.record.raw); e != nil {
 				return e
 			}
 			cache.record.haveRaw = true

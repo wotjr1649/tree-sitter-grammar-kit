@@ -71,7 +71,7 @@ jobs:
           EXPECTED_SHA: ${{ github.sha }}
           REVIEWED_SHA: ${{ inputs.reviewed_commit }}
         run: |
-          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }
           if ($env:APPROVAL_REFERENCE -cne 'b28d726cf456472b8d37117818930500188f730aafb18bcb6b636214d34ec752') { throw 'Approved receipt reference mismatch' }
           if ($env:REVIEWED_SHA -notmatch '^[0-9a-f]{40}$' -or $env:EXPECTED_SHA -cne $env:REVIEWED_SHA) { throw 'Reviewed main commit mismatch' }
           if ((git rev-parse HEAD) -cne $env:EXPECTED_SHA -or $LASTEXITCODE -ne 0) { throw 'Checkout mismatch' }

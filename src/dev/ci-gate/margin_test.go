@@ -919,13 +919,10 @@ func TestMarginWorkflowJobCount(t *testing.T) {
 	}
 }
 
-// TestMarginToolchain pins the toolchain each report accepts (#261): the current report only
-// the pinned Go, a historical one also the listed former pins, both for every measured configuration
-// and for the report's own run.
+// TestMarginToolchain pins the toolchain each report accepts (#261, #360): the current report only
+// the go.mod Go, a historical one any well-formed Go release (no list to extend on a bump), both for
+// every measured configuration and for the report's own run.
 func TestMarginToolchain(t *testing.T) {
-	saved := marginFormerGo
-	marginFormerGo = []string{"go1.28.3", "go1.28.1"}
-	defer func() { marginFormerGo = saved }()
 	const module = "module example.com/test\n\ngo 1.28.4\n"
 	version, err := foundation.ModuleGoVersion([]byte(module))
 	if err != nil {
@@ -936,7 +933,8 @@ func TestMarginToolchain(t *testing.T) {
 	for _, tc := range []struct {
 		version             string
 		current, historical bool
-	}{{expectedGo, true, true}, {"go1.28.3", false, true}, {"go1.28.1", false, true}, {"go1.28.2", false, false}, {"go1.27.3", false, false}, {"", false, false}} {
+	}{{expectedGo, true, true}, {"go1.28.3", false, true}, {"go1.28.1", false, true}, {"go1.27.3", false, true}, {"go1.29.0", false, true},
+		{"go1.28", false, false}, {"go1.28.4rc1", false, false}, {"go1.28.04", false, false}, {"devel go1.29", false, false}, {"1.28.3", false, false}, {"", false, false}} {
 		for _, historical := range []bool{false, true} {
 			want := tc.current
 			if historical {

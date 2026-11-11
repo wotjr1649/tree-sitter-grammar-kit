@@ -9,10 +9,25 @@
 - P2-A에서 P0 registry core 공용화와 strict ordinary profile/asset/registration/shard-plan, source-only planner를 추가하며 106,208개 ID의 exact union과 기존 small 한도를 유지한다. 예산 재검토는 pass당 qualification-inventory+registry decode 353,877,949 B와 reference row 추정의 과소 산정을 반영한다; historical #366 anchor 진단에서 body 전 여유는 PostgreSQL −297,750,339 B, TSQL −341,653,347 B이고, reference 기존→수정 추정은 PG nominal 10,809,604→30,249,029 B, TSQL nominal 58,141,956→177,534,284 B, dense 232,269,572→708,656,264 B이며 수정값은 upper bound가 아니다. K0–K4 절감이나 cap 변경을 적용하지 않고 SQL은 `CAPACITY_UNPROVEN`/BLOCKED로 보존하며, P2-B/C producer·reader·replay는 제외한다(Refs #362).
 - P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
 
+- Reference·expected·witness와 reference receipt r1·failure/footer를 기존 strict streaming typed decoder로 옮겼다(Refs #362 B4). Pointer-null·nullable/optional·non-exact projection 및 FAILED head/full의 오류 우선순위를 기존 AST와 차등 검사하며, reference 좌표 검증의 source byte 순회 예약 누락을 보완했다. Wire schema·공개 API·한도를 유지하며 receipt r2·row 단일 decode(B5)와 ordinary 전체 수용은 후속 범위다.
+
+- Evidence graph의 run all-pairs 대조를 세 필드 identity index로, owner별 cycle 재순회를 공유 DFS·역방향 도달성 memo로, carry 전체 규칙 scan을 node별 index로 바꿨다(Refs #362). 기존 finding 순서·첫 실패를 차등 시험으로 보존하며 실제 순회와 중복 결과 수에 맞춘 상한을 계상한다. 새 index의 logical 비용도 추가하고 한도·공개 API를 유지한다.
+
+- Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Receipt/row B5와 ordinary 전체 capacity는 후속 범위다.
+
+- Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
+- foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
+- Offline core에서 쓰지 않는 encoding detector와 binary bytes 보관을 없애고, 같은 guarded session의 연속·index 순 paging part는 읽는 자리에서 전체 chain을 hash한다(Refs #362). Identity-only member·streamed part와 retained fallback의 실제 처리에 맞춰 원장과 관리 비용을 계상하며, owner·개별/전체 pin·SameFile/size/mtime 및 실패 분류를 유지한다. 기존 검증 identity·완성 logical identity 재사용과 1 GiB/기존 standalone 한도는 그대로다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.
+- 도구 버전을 올려도 필수 CI가 막히지 않게 했다(#360).
+  - margin gate는 과거 보고서의 Go 버전을 이전 버전 목록 대신 release 형식으로 받는다. 그래서 Go 기준을 올릴 때 `go.mod`만 바꾸면 된다.
+  - 재현 등록부 시험은 tree-sitter·Node 버전 리터럴 대신 형식과 asset 이름의 일관성을 검사한다.
+  - PowerShell 버전 검사 15곳은 `Major -lt 7`(하한)로 바꿨다. Windows PowerShell 5는 계속 거부한다.
+  - guard 시험 `TestNoHardcodedToolVersions`가 정확한 PowerShell major 비교와, 시험 밖에 쓴 Go release 리터럴의 재유입을 막는다.
 - `src/internal/native` 시험의 중복 C 문법 compile을 줄였다(#352). batch 대조 시험은 set을 한 번 만들어 복사본을 변형하고, 순차 Oracle을 실행하는 두 시험은 시험 전용 build cache를 공유한다. 전역을 쓰지 않는 직렬 시험 6개는 병렬로 돌린다. 시험 수와 판정은 같다(PASS 916·SKIP 23). 로컬 Windows 교대 측정에서 base 146.1·145.4·143.9초, head 106.3·108.2초였다. CI 여유는 자연 표본으로 따로 판정한다.
 - Windows·Linux foundation의 13분 step과 native 명령 wall(420초 한도에 대한 보수적 대용값)을 margin 계측에 추가하고, 다른 source의 과거 report에 신규 4개 ID 누락을 제한적으로 허용한다(#352). 성능 개선이 아니며 새 구성 표본은 n=1부터 시작하므로 n20·70% 여유 달성은 별도 관측이 필요하다.
 - 보호된 파일 읽기가 파일마다 1 MiB 버퍼를 0으로 채워 할당하던 비용을 없앴다(#303). 버퍼를 `min(1 MiB, 파일 크기+1)`로 잡으며 읽은 bytes·hash·오류 판정은 같다. 로컬 Windows `src/kit` 시험 3쌍에서 63.9→46.4·81.3→66.7·74.8→55.9초였고, host 부하 변동이 포함된 값이라 CI 여유는 자연 표본으로 따로 판정한다.

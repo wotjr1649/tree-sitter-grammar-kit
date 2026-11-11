@@ -274,6 +274,7 @@ type readStats struct {
 	sha256   string
 	encoding *detector
 	content  []byte // kept only when keep > 0 and the file fits
+	part     *guardedPart
 }
 
 // sink receives every chunk read (encoding, newline and marker observers).
@@ -285,6 +286,10 @@ type sink interface{ Write([]byte) (int, error) }
 // hardMax is the largest size the caller can accept; the caller judges sizes between
 // its ordinary per-file bound and hardMax (registered large-file exceptions).
 func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, totalLimit, keep uint64, sinks ...sink) (*readStats, *Error) {
+	return g.readFileContent(r, name, before, hardMax, totalLimit, keep, true, false, sinks...)
+}
+
+func (g *guard) readFileContent(r *run, name string, before fs.FileInfo, hardMax, totalLimit, keep uint64, detect, seal bool, sinks ...sink) (*readStats, *Error) {
 	if e := r.check(); e != nil {
 		return nil, e
 	}
@@ -302,7 +307,10 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 		}
 	}
 	if r.eligibility != nil {
-		passes := uint64(3 + len(sinks))
+		passes := uint64(2 + len(sinks))
+		if detect {
+			passes++
+		}
 		if keep > 0 {
 			passes++
 		}
@@ -353,8 +361,10 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 		return nil, e
 	}
 	h := sha256.New()
-	det := newDetector()
-	st := &readStats{encoding: det}
+	st := &readStats{}
+	if detect {
+		st.encoding = newDetector()
+	}
 	// Size+1 still reads a small file in one call and then sees EOF, without zeroing 1 MiB per file (#303).
 	buf := make([]byte, min(uint64(readChunk), confirmedSize+1))
 	for {
@@ -392,7 +402,9 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 			}
 			chunk := buf[:n]
 			h.Write(chunk)
-			det.Write(chunk)
+			if st.encoding != nil {
+				st.encoding.Write(chunk)
+			}
 			for _, s := range sinks {
 				s.Write(chunk)
 			}
@@ -428,6 +440,22 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 		st.content = nil
 	}
 	st.sha256 = hex.EncodeToString(h.Sum(nil))
+	var chain *streamedChain
+	if len(sinks) == 1 && keep == 0 {
+		chain, _ = sinks[0].(*streamedChain)
+	}
+	if seal && (keep > 0 && st.size <= keep && len(sinks) == 0 || chain != nil) {
+		if e := r.eligibility.charge(1, 512+uint64(len(name)), "verified-part-record"); e != nil {
+			return nil, e
+		}
+		// Transfer the retained slice or streamed identity; no mutable view leaves this record.
+		st.part = &guardedPart{root: g.root, path: name, info: after, size: st.size, sha256: st.sha256, content: st.content, chain: chain}
+		if chain != nil {
+			st.part.ordinal = chain.next
+			chain.next++
+		}
+		st.content = nil
+	}
 	return st, nil
 }
 

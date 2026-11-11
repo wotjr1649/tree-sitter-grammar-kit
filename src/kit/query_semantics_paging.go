@@ -2,7 +2,6 @@ package kit
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 )
 
@@ -82,6 +81,10 @@ type semanticBinaryDescriptor struct {
 
 // Parts come from the same verified snapshot; the logical file is never reassembled.
 func (b *eligibilityBudget) semanticPagedParser(data []byte, input semanticBuildInput, index int, part func(ReplayMember) ([]byte, bool, *Error)) (bool, *Error) {
+	return b.semanticPagedParserVerified(data, input, index, part, nil)
+}
+
+func (b *eligibilityBudget) semanticPagedParserVerified(data []byte, input semanticBuildInput, index int, part func(ReplayMember) ([]byte, bool, *Error), source *verifiedPageSource) (bool, *Error) {
 	var d semanticParserDescriptor
 	if e := b.decode("parser-descriptor", data, &d, true); e != nil {
 		return false, e
@@ -92,6 +95,10 @@ func (b *eligibilityBudget) semanticPagedParser(data []byte, input semanticBuild
 		uint64(len(d.Parts)) != (input.Bytes+MaxDocumentBytes-1)/MaxDocumentBytes {
 		return false, nil
 	}
+	partPrefix := fmt.Sprintf("capture/build-input-%05d", index)
+	if _, found, ok, e := source.reuse(data, "D", "parser", partPrefix, index, input); found || e != nil {
+		return ok, e
+	}
 	h := sha256.New()
 	for i, p := range d.Parts {
 		offset := uint64(i) * MaxDocumentBytes
@@ -99,23 +106,23 @@ func (b *eligibilityBudget) semanticPagedParser(data []byte, input semanticBuild
 		if p.Index != uint64(i) || p.Offset != offset || p.Bytes != size || p.Path != fmt.Sprintf("capture/build-input-%05d.part-%05d.bin", index, i) || !hex64.MatchString(p.SHA256) {
 			return false, nil
 		}
-		bytes, ok, e := part(ReplayMember{Path: p.Path, Role: "grammar-paged-part", Bytes: p.Bytes, SHA256: p.SHA256})
+		ok, e := b.pageHash(h, ReplayMember{Path: p.Path, Role: "grammar-paged-part", Bytes: p.Bytes, SHA256: p.SHA256}, part, source, "parser-part-hash")
 		if e != nil || !ok {
 			return false, e
 		}
-		if e := b.charge(1, 2*(p.Bytes+1), "parser-part-hash"); e != nil {
-			return false, e
-		}
-		if uint64(len(bytes)) != p.Bytes || digestHex(bytes) != p.SHA256 {
-			return false, nil
-		}
-		_, _ = h.Write(bytes)
 	}
-	return hex.EncodeToString(h.Sum(nil)) == input.SHA256, nil
+	if source.chainSum(h) != input.SHA256 {
+		return false, nil
+	}
+	return true, source.remember(data, "D", "parser", partPrefix, index, input, semanticBinaryLogical{Kind: "parser", Path: input.Path, Bytes: input.Bytes, SHA256: input.SHA256})
 }
 
 // The logical value is trusted only after the concatenated part hash equals it; callers compare it with their own trusted source.
 func (b *eligibilityBudget) semanticPagedBinary(data []byte, owner, kind, path, partPrefix string, part func(ReplayMember) ([]byte, bool, *Error)) (semanticBinaryLogical, bool, *Error) {
+	return b.semanticPagedBinaryVerified(data, owner, kind, path, partPrefix, part, nil)
+}
+
+func (b *eligibilityBudget) semanticPagedBinaryVerified(data []byte, owner, kind, path, partPrefix string, part func(ReplayMember) ([]byte, bool, *Error), source *verifiedPageSource) (semanticBinaryLogical, bool, *Error) {
 	var d semanticBinaryDescriptor
 	if e := b.decode("binary-descriptor", data, &d, true); e != nil {
 		return semanticBinaryLogical{}, false, e
@@ -125,6 +132,9 @@ func (b *eligibilityBudget) semanticPagedBinary(data []byte, owner, kind, path, 
 		uint64(len(d.Parts)) != (l.Bytes+MaxDocumentBytes-1)/MaxDocumentBytes {
 		return semanticBinaryLogical{}, false, nil
 	}
+	if logical, found, ok, e := source.reuse(data, owner, kind, partPrefix, -1, semanticBuildInput{}); found || e != nil {
+		return logical, ok, e
+	}
 	h := sha256.New()
 	for i, p := range d.Parts {
 		offset := uint64(i) * MaxDocumentBytes
@@ -132,20 +142,13 @@ func (b *eligibilityBudget) semanticPagedBinary(data []byte, owner, kind, path, 
 		if p.Index != uint64(i) || p.Offset != offset || p.Bytes != size || p.Path != fmt.Sprintf("%s.part-%05d.bin", partPrefix, i) || !hex64.MatchString(p.SHA256) {
 			return semanticBinaryLogical{}, false, nil
 		}
-		bytes, ok, e := part(ReplayMember{Path: p.Path, Role: kind + "-paged-part", Bytes: p.Bytes, SHA256: p.SHA256})
+		ok, e := b.pageHash(h, ReplayMember{Path: p.Path, Role: kind + "-paged-part", Bytes: p.Bytes, SHA256: p.SHA256}, part, source, kind+"-part-hash")
 		if e != nil || !ok {
 			return semanticBinaryLogical{}, false, e
 		}
-		if e := b.charge(1, 2*(p.Bytes+1), kind+"-part-hash"); e != nil {
-			return semanticBinaryLogical{}, false, e
-		}
-		if uint64(len(bytes)) != p.Bytes || digestHex(bytes) != p.SHA256 {
-			return semanticBinaryLogical{}, false, nil
-		}
-		_, _ = h.Write(bytes)
 	}
-	if hex.EncodeToString(h.Sum(nil)) != l.SHA256 {
+	if source.chainSum(h) != l.SHA256 {
 		return semanticBinaryLogical{}, false, nil
 	}
-	return l, true, nil
+	return l, true, source.remember(data, owner, kind, partPrefix, -1, semanticBuildInput{}, l)
 }

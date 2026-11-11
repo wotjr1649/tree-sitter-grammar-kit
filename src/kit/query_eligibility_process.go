@@ -200,7 +200,7 @@ func (s *eligibilitySession) receipt(inv *eligibilityInvocation, request eligibi
 		return nil, false, nil
 	}
 	var receipt eligibilityReceipt
-	if e := s.b.decode(inv.ID+"/receipt", data, &receipt, true); e != nil {
+	if e := s.b.decodeWitnessTyped(inv.ID+"/receipt", data, &receipt, true); e != nil {
 		return nil, false, e
 	}
 	if receipt.Schema != "tsgk-reference-process/r1" {

@@ -548,10 +548,7 @@ func (s *eligibilitySession) nativeResponse(inv *eligibilityInvocation, versions
 	if e != nil || !haveRaw {
 		return raw, false, e
 	}
-	if e := s.b.reserveJSON(inv.ID+"/native-response", data, 12); e != nil {
-		return raw, false, e
-	}
-	if e := s.b.decode(inv.ID+"/native-response-shape", data, &raw, true); e != nil {
+	if e := s.b.decodeNativeResponse(inv.ID+"/native-response-shape", data, &raw); e != nil {
 		return raw, false, e
 	}
 	var capability struct {
@@ -723,7 +720,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			s.finding("ELIGIBILITY_CURRENT_EXECUTABLE", inv.ID, true)
 			ready = false
 		}
-		_, exeOK, e := s.member(inv.Executable)
+		exeOK, e := s.memberAvailable(inv.Executable)
 		if e != nil {
 			return e
 		}
@@ -937,7 +934,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 				continue
 			}
 			var footer eligibilityBatchFooter
-			if e := s.b.decode(inv.ID+"/footer", out.rows[pairs], &footer, true); e != nil {
+			if e := s.b.decodeWitnessTyped(inv.ID+"/footer", out.rows[pairs], &footer, true); e != nil {
 				return e
 			}
 			if footer.Schema != "tsgk-instrumented-query-reference-batch/r1" || footer.Status != StatusCompleted || !footer.Complete || !slices.Equal(footer.Queries, ids) || footer.ResponsesCompleted != uint64(pairs) {
@@ -1127,11 +1124,15 @@ func (s *eligibilitySession) nativePagedParser(n *eligibilityNative, pin eligibi
 		return false, e
 	}
 	used := map[string]bool{pin.Member.Path: true}
-	good, e := s.b.semanticPagedParser(data, input, index, func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(pin, "oracle/", used)
+	if e != nil {
+		return false, e
+	}
+	good, e := s.b.semanticPagedParserVerified(data, input, index, func(part ReplayMember) ([]byte, bool, *Error) {
 		part.Path = "oracle/" + part.Path
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: inv.Node.ID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return false, e
 	}
@@ -1155,10 +1156,14 @@ func (s *eligibilitySession) nativePagedLibrary(pin eligibilityMember) (semantic
 		return semanticBinaryLogical{}, false, e
 	}
 	used := map[string]bool{pin.Member.Path: true}
-	logical, good, e := s.b.semanticPagedBinary(data, pin.NodeID, "library", path, path, func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(pin, "", used)
+	if e != nil {
+		return semanticBinaryLogical{}, false, e
+	}
+	logical, good, e := s.b.semanticPagedBinaryVerified(data, pin.NodeID, "library", path, path, func(part ReplayMember) ([]byte, bool, *Error) {
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: pin.NodeID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return semanticBinaryLogical{}, false, e
 	}
@@ -1182,11 +1187,15 @@ func (s *eligibilitySession) nativePagedDriver(inv *eligibilityInvocation) (sema
 		return semanticBinaryLogical{}, false, e
 	}
 	used := map[string]bool{exe.Member.Path: true}
-	logical, good, e := s.b.semanticPagedBinary(data, "D", "driver", "capture/driver.bin", "capture/driver", func(part ReplayMember) ([]byte, bool, *Error) {
+	source, e := s.pageSource(*exe, "oracle/", used)
+	if e != nil {
+		return semanticBinaryLogical{}, false, e
+	}
+	logical, good, e := s.b.semanticPagedBinaryVerified(data, "D", "driver", "capture/driver.bin", "capture/driver", func(part ReplayMember) ([]byte, bool, *Error) {
 		part.Path = "oracle/" + part.Path
 		used[part.Path] = true
 		return s.member(&eligibilityMember{NodeID: inv.Node.ID, Member: part})
-	})
+	}, source)
 	if e != nil || !good {
 		return semanticBinaryLogical{}, false, e
 	}

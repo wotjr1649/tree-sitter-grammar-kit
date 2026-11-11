@@ -56,7 +56,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 				return e
 			}
 		}
-		_, libraryReady, e := s.member(group.Library)
+		libraryReady, e := s.memberAvailable(group.Library)
 		if e != nil {
 			return e
 		}
@@ -168,7 +168,7 @@ func (s *eligibilitySession) verifyControls() *Error {
 					ready = false
 				}
 			} else {
-				_, executableReady, e := s.member(inv.Executable)
+				executableReady, e := s.memberAvailable(inv.Executable)
 				if e != nil {
 					return e
 				}
@@ -321,7 +321,7 @@ func (s *eligibilitySession) controlResponses(rule eligibilityControlRule, out *
 	}
 	if rule.Negative {
 		var failed eligibilityFailureResponse
-		if e := s.b.decode(rule.ID+"/failure", out.rows[len(rule.Responses)], &failed, true); e != nil {
+		if e := s.b.decodeWitnessTyped(rule.ID+"/failure", out.rows[len(rule.Responses)], &failed, true); e != nil {
 			return false, e
 		}
 		if failed.Schema != instrumentedReferenceSchema || failed.Status != StatusFailed || failed.Code != rule.FailureCode || failed.Complete {
@@ -331,7 +331,7 @@ func (s *eligibilitySession) controlResponses(rule eligibilityControlRule, out *
 	}
 	if batch {
 		var footer eligibilityBatchFooter
-		if e := s.b.decode(rule.ID+"/footer", out.rows[len(out.rows)-1], &footer, true); e != nil {
+		if e := s.b.decodeWitnessTyped(rule.ID+"/footer", out.rows[len(out.rows)-1], &footer, true); e != nil {
 			return false, e
 		}
 		status := StatusCompleted

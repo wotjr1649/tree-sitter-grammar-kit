@@ -109,6 +109,54 @@ P2-A 산출은 strict preregistration과 shard-plan 무결성만 검사한다. A
 
 `OrdinaryBinding.Runtime` pin은 caller의 profile·plan identity에 결속된다. 해당 runtime 자료가 `Members`에 별도로 선언되지 않았다면 그 본문 검증과 크기는 `declared_member_bytes`에 포함되지 않으며 current closure의 미확정 비용으로 남는다. 이 필드를 전체 closure 크기나 actual runtime 검증으로 읽지 않는다.
 
+### 같은 session의 paging identity 재사용 (Refs #362)
+
+Semantic caller가 같은 run·원장과 열린 root를 전달한 approval-bound paged session에서만 guarded read의 paging part를 private record로 보관한다. Graph의 같은 owner·role·prefix에 속하는 part가 연속된 index 순서이면 읽기 loop의 같은 chunk를 개별 SHA-256과 전체 chain에 함께 넣고 part bytes를 retain하지 않는다. Descriptor는 뒤의 기존 검증 단계에서 owner·kind·index·offset·경로·크기·개별 pin·전체 logical pin을 모두 대조한다. Chain record의 순서와 소비한 part 집합도 정확히 같아야 한다. Graph/policy/node의 후속 검증이 owner를 무효화할 수 있는 경우와 비연속·역순 group은 bytes를 retain해 기존 검증과 실패 finding 순서를 보존한다. Retained record는 유일한 backing slice를 소유하며 일반 `member()`에 별도 과금한 복사본만 준다. Streamed part의 bytes 요청은 빈 slice 대신 내부 typed 오류 `ELIGIBILITY_MEMBER_BYTES_UNAVAILABLE`다. Callback·standalone eligibility·미검증 snapshot은 기존 part SHA-256과 전체 chain 검증을 유지한다.
+
+내부 record는 live session/run/원장, 열린 root와 read 전후 physical identity, snapshot, graph·approval·registration·witness·policy pin, candidate/cohort, owner/node·role·path·bytes·SHA-256에 결속한다. Open 전후와 읽기 완료 뒤 SameFile·size·mtime, link·regular-file 및 읽기 한도 검사는 그대로다. Streamed chain은 같은 guarded read의 실제 bytes만 hash한다. Retained 경로는 기존 `h.Write`를 수행하고 두 경로 모두 외부 build/approval logical pin과 대조한다. Descriptor도 bytes·digest를 다시 확인해 immutable한 문자열과 ordered part pins로 보관한다.
+
+Eligibility가 전체 검사와 output sealing까지 정상 완료한 같은 session에서만 semantic set이 그 logical identity를 재사용한다. 저장된 PASS 문자열이나 공개 bool/hash는 권한이 아니다. Set은 manifest 전체 member/plan 집합과 `Case=""`, descriptor 물리 pin, ordered part pins, build closure index·grammar/static closure, producer/runtime/compiler/build manifest, 외부 profile·registration·정책·candidate/cohort를 계속 대조한다. Descriptor 또는 build/profile pin이 다르면 재사용으로 치환을 승인하지 않는다. `semanticSnapshotIdentity`의 앞뒤 physical 검사는 유지한다.
+
+Encoding 결과를 소비하지 않는 discovery metadata/source scan·evidence·replay·qualification read는 detector를 생성하거나 실행하지 않는다. Corpus·grammar와 별도 ZIP 검증의 encoding 판정은 유지한다. Guarded read의 논리 비용은 `(bytes+1)*(2+detector+retain+sink 수)`다. `detector`와 `retain`은 실제 실행/보관할 때만 1이다. Streamed part는 retain 없이 chain sink 하나를 쓰므로 추가 chain pass를 계상하지 않는다. Retained verified part는 추가 chain에 `bytes+1`, generic callback은 part digest와 chain에 `2*(bytes+1)`를 계속 계상한다. Set은 완료된 같은 logical identity의 두 추가 hash pass를 회피한다.
+
+Eligibility registration의 bytes 소비 계획을 확인한 snapshot에서만, bytes를 소비하지 않는 `driver`·`native-executable`·`reference-executable`·`runtime-library`·`compiler` member의 identity만 보관한다. 같은 guarded read에서 전 bytes와 pin을 검증한 owner·role·path·bytes·SHA-256이다. Presence-only 소비자는 이 identity를 다시 결속하고 bytes 요청은 `ELIGIBILITY_MEMBER_BYTES_UNAVAILABLE`로 거부한다. Request·receipt·source·query·manifest·descriptor와 기타 실제 bytes 소비 경로는 retain을 유지한다. Registration이 이 bytes 소비 pin에 binary/part role을 붙이더라도 해당 경로는 retain하며, 예외 보관 경로마다 `256+len(path)` B를 예약한다. Role 문자열만으로 bytes 불필요를 판단하지 않는다. 해당 eligibility snapshot을 소비하는 semantic set의 plain driver도 같은 snapshot의 identity로 존재와 manifest pin을 대조한다. Standalone reference connection·승인 없는 semantic snapshot처럼 이 계획이 없는 호출자는 기존 bytes 보관을 유지한다.
+
+새 관리 비용 `E`는 별도 과금한다: session 2,048 B, guarded part `512+len(path)` B, source 512 B, part 결속·ordered pin 보관 `256+len(path)+len(role)+len(SHA256)` B, logical record `1,024+2*(descriptor_bytes+1)` B, set logical 재결속 256 B 및 기존 member metadata 비용이다. Streamed group은 1,024 B와 part마다 `128+len(path)+len(role)+len(SHA256)` B, identity-only member는 `256+len(path)+len(role)+len(SHA256)` B를 더한다. 일반 retained bytes 복사에는 `bytes+1` B를 더한다. Descriptor decode와 신뢰 경계 검증 비용은 남고 신규 결속·비교·planning의 work/checkpoint도 공유 원장을 사용한다. 이 절감은 한도 인상, standalone 1.5 GiB의 상속 또는 ordinary 전체 수용을 뜻하지 않는다.
+
+### Source/vendor snapshot의 typed decode (Refs #362)
+
+Source/vendor snapshot의 고정 `map[string]eligibilitySnapshotRow`는 전체 strict token preflight, AST 없는 streaming shape 검사, typed unmarshal로 읽는다. 구문 검사를 shape보다 먼저 끝내며 unknown·중복·필수 필드 누락·null·타입·정수 형식/범위·UTF-8·trailing data와 기존 depth/value/document 한도를 유지한다. 행별 portable path·case 충돌·SHA·크기/합계 검사도 그대로다. Native response와 아래 reference·witness 문서도 같은 엔진을 사용한다.
+
+현재 내부 엔진은 string/bool/uint/uint32/uint64/int/int64, string-key map, 명시적 tag의 struct와 slice/array/pointer 및 opaque `jsontext.Value`를 지원한다. Eligibility의 inline struct와 `[]byte`의 base64 문자열도 지원하며 null·필수 필드는 소비 경로의 기존 규칙을 따른다. 임의 custom unmarshal을 지원하는 범용 decoder는 아니다.
+
+이 경로의 decode 기본 logical 예약은 `5n + 32z + 32768 + 80v`다(`n`: 원문 bytes, `z`: 공백을 뺀 유효 bytes, `v`: JSON 값 수). AST와 행마다 생성하던 reflection 필드 표를 보관하지 않는다. 기존 snapshot 행별 1,280 B의 보수적 container/validation 예약은 유지하며, 문서당 shape descriptor에 type마다 256 B와 struct field마다 512 B를 추가한다. Snapshot 전체 descriptor는 2,048 B다. Work는 공통 preflight의 `4v+1`에 decode 진입 1, streaming shape의 값·member name·필수 field 순회, typed pass의 `v`와 descriptor 구축을 더한다. 정상 snapshot 행 수가 `r`이면 decode work는 기존 `24r+9`에서 `23r+14`가 된다. Guarded read와 후속 snapshot 의미 검증의 비용은 별도다. 80 B/value는 typed container 예약이며 실제 heap peak를 뜻하지 않는다. 이 절감으로 work/logical/read 한도를 늘리거나 ordinary 전체 수용을 주장하지 않는다.
+
+### Native response의 typed decode (Refs #362 B1)
+
+Eligibility의 `nativeResponse`와 승인 없는 semantic native 응답은 `decodeNativeResponse`를 공유한다. 전체 문서의 strict preflight 뒤 streaming shape와 typed unmarshal을 실행하며 중간 AST를 만들지 않는다. `Producer`·`Step`의 omitempty 필드도 기존처럼 필수이고, native nullable arm만 null을 허용한다. `WireTree`의 status/form 조건부 필수 필드는 member 순서와 무관하게 검사하되, 존재하는 필드의 잘못된 shape를 실패 envelope로 숨기지 않는다. Opaque query/API/observation의 전체 문법을 검사하고 후속 원래 검증도 유지한다. 고정 배열은 원래 AST 경로처럼 길이 오류가 원소 shape 오류보다 우선한다.
+
+기존 `reserveJSON(12)`와 AST decode의 기본 logical `20n + 64z + 65536 + 896v`를 `17n + 32z + 32768 + 80v`로 대체한다. 새 식은 snapshot 기본 예약에 `Check`의 기존 work `12v`·logical `12n`을 더한 것이다. Descriptor와 struct container/validation 예약은 별도이며, 고정 배열마다 길이 우선 검사를 위한 borrowed raw slice와 두 decoder의 `배열 bytes + 2048 B`, 추가 값 순회 work를 별도로 예약한다. 최종 typed pass의 값 수에는 같은 배열을 중복 합산하지 않는다. `nativeReservation`·`nativewire.Check`/`CheckStep`·source/history/points·query/API 검사는 그대로 모든 step/role에 적용한다. Receipt/row B5 및 전체 ordinary capacity는 이 단위의 완료 범위가 아니다.
+
+### Reference·expected·witness의 typed decode (Refs #362 B4)
+
+Reference connection의 registration/build/native projection과 response, query witness의 registration/raw/projection 및 eligibility의 witness registration·reference receipt r1·failure/footer는 같은 streaming 엔진을 쓴다. 기존 witness tuple의 `structural`·`expected`가 독립 capture 기대값이며 이 base에 별도의 ordinary expected wire 형식은 없다. 새 schema를 만들거나 기대값을 producer 결과에서 채우지 않는다.
+
+Eligibility에 결속된 문서는 기존 eligibility shape를 따르며 `TreeNode`·`Capture`·predicate step·witness query/metadata/tuple의 하위 구조만 기존 witness 규칙으로 전환한다. 독립 witness 경로는 처음부터 witness 규칙을 따른다. Witness의 pointer-null, 지정된 nullable 배열, metadata/registration의 non-null 배열, `encoding_source`와 optional/조건부 tree 필드를 유지한다. Non-exact projection은 알 수 없는 subtree의 shape를 적용하지 않지만 전체 문법·중복·깊이·값 수는 먼저 검사한다. 독립 경로에 eligibility의 공유 logical/work 한도를 새로 부여하지 않으며 기존 document/depth/value·caller/wall 한도를 유지한다.
+
+Reference는 non-exact head를 읽고 schema를 확인한 뒤 FAILED envelope의 exact head 또는 성공 response의 full shape를 검사한다. FAILED의 extra 필드·잘못된 failure code 및 뒤쪽 구문 오류의 우선순위는 기존과 같다. Head와 full은 이번에도 각각 decode하며 receipt r1의 stdout/stderr base64와 row 분할·offset·hash 결속도 유지한다. B5의 receipt r2와 row 단일 decode는 구현하지 않는다.
+
+각 decode의 기본 logical 예약은 snapshot과 같은 `5n + 32z + 32768 + 80v`이고 descriptor·struct container·고정 배열 비용은 별도다. 중간 AST를 만들지 않는 실제 경로에만 적용하며 후속 tree/capture/predicate 비교·guarded read·base64 비용은 별도 원장에 남는다. 기존 pointer·eligibility→witness handoff를 포함한 shape 값 수 한도도 별도 계수로 유지하되 제거된 AST 순회를 work로 계상하지 않는다. Reference의 source 좌표 검증은 분리된 span을 EOF까지 한 번 순회하므로 실제 검증 직전에 선택 source의 byte 길이를 `reference-points` work로 예약한다. Node 수만의 예약으로 긴 source 순회를 대신하지 않는다. 한도 변경이나 전체 ordinary 수용 근거가 아니다.
+
+### Evidence graph의 순회 원장 (Refs #362)
+
+Run 중복은 `(run, attempt, platform)`의 세 문자열을 key로 한 index에서만 찾는다. 정렬된 node 순서와 bucket의 뒤쪽 순서를 사용해 기존 all-pairs 검사의 finding code·순서·첫 실패를 보존한다. 같은 identity의 실제 중복 쌍은 모두 방문한다. Cycle은 정렬된 root와 원래 ref 순서의 DFS 한 번으로 최초 back-edge를 정하고, 역방향 edge의 도달성 memo로 cycle에 도달하는 owner를 구한다. 요청에만 있고 graph에는 없는 node는 cycle owner가 아니다. Carry 규칙은 node별로 policy 순서를 유지해 모으며, 각 carries ref는 그 node의 규칙만 검사한다. 파일 owner·approval·동일 guarded snapshot 결속은 유지한다. Paging의 별도 group 안전성 scan은 기존 `streamed-chain-plan`에서 계속 계상한다.
+
+`N`은 입력 node 수, `E`는 모든 ref·file·identity entry 수의 합, `R=Required+CarryForward` 행 수다. `B(m)=bits.Len(m)`이며 `B(0)=0`, `S=Σ identity_count·B(identity_count)`다. `P`는 required identity마다 `m·(1+B(m))`의 합에 eligibility node 수와 `(1+허용 mode 수)`의 곱을 더한다. `D`는 replay/carry를 제외한 입력 node의 동일 run tuple 쌍 수, `J`는 carries ref마다 그 node에 해당하는 carry rule 수의 합이다. `Q`는 subject ref마다 해당 node의 file 수를 더한 값으로, replay-result 파일 목록의 반복 scan을 포함한다. 중복/잘못된 node도 예약에서는 포함해 실제 수용 graph보다 작아지지 않게 한다. `H`는 replay/carry 밖 node의 run·attempt·platform 문자열 byte 길이 합이다.
+
+Graph work 상한은 `N + CarryForward + 16H + 64·(1+N+E+R+S+N·B(N)+P+D+J+Q)`다. 앞의 `N+CarryForward`는 estimator의 행 방문이고 `16H`는 estimator와 검증 index의 문자열 hashing 예약이며 무거운 처리 전에 차감한다. 64배 항은 estimator·node/role/file/ref 검사·집합 구축·관계 검사·DFS·역방향 closure·owner 판정·finding 생성·replay 파일 목록 scan의 정수 개수 순회와 정렬 비교를 포함한다. 실제 중복 finding `D`와 같은 node의 규칙 결과 `J`는 이차가 될 수 있으므로 제거하지 않는다. 이 상한은 collection 방문·비교 및 명시적 byte 처리의 logical work 원장이며 CPU instruction 수·Go map의 충돌 최악 시간 보장은 아니다. Replay-result decode·파일 hash/read·streamed plan 등 별도 원장은 중복 없이 유지한다.
+
+기존 graph 문자열 logical 예약 `(fields+1)·(N+R+1)`을 유지하고 새 map·slice·역방향 edge를 위해 `512·(1+N+E+R)` B를 더한다. Estimator의 map 공간은 만들기 전에 일부를 예약하며 나머지는 graph 검증 전에 예약한다. Work32,000,000과 기존 context별 logical 한도는 바꾸지 않는다. 계측은 test-only Go overlay에서 실제 loop body 진입·DFS node 진입·정렬 comparator 호출을 세며, 동일 SQL core·기존 fixture·합성 사슬/fan-out/cycle 직전과 cycle에서 예약이 계측값 이상인지 확인한다. 이는 새로운 runtime 관측이나 ordinary 전체 capacity의 증거가 아니다.
+
 ## Parser-only paging 문맥
 
 `full-input-utf8-paged-parser/r1`은 단일 작은 UTF-8 native-query source의 큰 grammar parser에 한정된다. 세 approval/registration/result r1과 witness r2의 필드 의미는 유지하며 Windows/Linux만 받는다. `Native.Grammar[original_path]`는 실제 `grammar-paged-descriptor` 물리 pin을 가진다. 실제 `Native.InvocationID`의 NATIVE_DRIVER node가 descriptor와 모든 part의 owner여야 하며, 조각은 동일 guard의 검증된 cached bytes에서만 소비한다. 참조하지 않은 paged member와 다른 owner는 거부한다. 전체 logical pin은 승인된 원본 plain build manifest에 대조하고 선언된 descriptor 해시만으로 승인하지 않는다. 정확한 분할 규칙과 변경되지 않는 small 예산은 [계측 계약](instrumented-query-reference.md#216-parser-only-paging)이 소유한다. 이 문맥에서 eligibility 검증이 직접 시작한 원장(approval 결속)의 논리 처리량은 1.5 GiB이며 다른 small 한도는 같다. `VerifyQuerySemantics`·Replay처럼 원장을 상속하는 경로는 이 문맥에서도 1 GiB다. 큰 source/CST 또는 새 macOS 검증을 추가하지 않는다.
