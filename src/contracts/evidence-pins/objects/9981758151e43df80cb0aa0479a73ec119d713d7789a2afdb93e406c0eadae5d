@@ -1,0 +1,944 @@
+{
+ "schema": "tsgk-csharp-pp-cases/r1",
+ "cases": [
+  {
+   "id": "issue198-inactive-broken",
+   "source": "I2lmIE5FVkVSCmNsYXNzIEMgeyBpbnQgTSgpIHsgcmV0dXJuIDEgKyA7IH0gfQojZWxzZQpjbGFzcyBDIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "issue198-undef-inactive",
+   "source": "I3VuZGVmIEVOQUJMRUQKI2lmIEVOQUJMRUQKaW52YWxpZCArIDsKI2Vsc2UKY2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": [
+    "ENABLED"
+   ]
+  },
+  {
+   "id": "issue198-nested-directives",
+   "source": "I2lmIEEKI2lmIEIKaW52YWxpZCArIDsKI2VsaWYgQwpjbGFzcyBDIHt9CiNlbHNlCmNsYXNzIEQge30KI2VuZGlmCiNlbmRpZgo=",
+   "symbols": [
+    "A",
+    "C"
+   ]
+  },
+  {
+   "id": "ops-a",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "ops-ab",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "ops-cd",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "ops-c",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "C"
+   ]
+  },
+  {
+   "id": "ops-none",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "equality-false",
+   "source": "I2lmIEEgPT0gZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "not-equal",
+   "source": "I2lmIEEgIT0gQgpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "B"
+   ]
+  },
+  {
+   "id": "elif-b",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQojZWxpZiBCCmNsYXNzIFkge30KI2VsaWYgQwpjbGFzcyBaIHt9CiNlbHNlCmNsYXNzIFcge30KI2VuZGlmCg==",
+   "symbols": [
+    "B"
+   ]
+  },
+  {
+   "id": "elif-ab",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQojZWxpZiBCCmNsYXNzIFkge30KI2VsaWYgQwpjbGFzcyBaIHt9CiNlbHNlCmNsYXNzIFcge30KI2VuZGlmCg==",
+   "symbols": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "id": "elif-none",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQojZWxpZiBCCmNsYXNzIFkge30KI2VsaWYgQwpjbGFzcyBaIHt9CiNlbHNlCmNsYXNzIFcge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "literal-true",
+   "source": "I2lmIHRydWUKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "literal-paren-false",
+   "source": "I2lmIChmYWxzZSkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "literal-not-true",
+   "source": "I2lmICEodHJ1ZSkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "unicode-escape",
+   "source": "I2lmIFx1MDA0MQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "define-undef-order",
+   "source": "I2RlZmluZSBBCiN1bmRlZiBBCiNpZiBBCmNsYXNzIFgge30KI2Vsc2UKY2xhc3MgWSB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "define-after-token",
+   "source": "Y2xhc3MgWiB7fQojZGVmaW5lIEEKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "define-inactive",
+   "source": "I2lmIE5PCiNkZWZpbmUgQQojZW5kaWYKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "nested-in-inactive",
+   "source": "I2lmIE5PCiNpZiBZRVMKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgojZW5kaWYK",
+   "symbols": [
+    "YES"
+   ]
+  },
+  {
+   "id": "verbatim-string",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gQCIKI2lmIEEKIjsgfQojaWYgQgpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-string",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gIiIiCiNpZiBBCiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "interpolated-verbatim",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAiezF9CiNpZiBBCiI7IH0K",
+   "symbols": []
+  },
+  {
+   "id": "interpolated-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIiIKe3sxfX0KI2lmIEEKIiIiOyB9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "block-comment",
+   "source": "LyoKI2lmIEEKKi8KY2xhc3MgQyB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "line-comment",
+   "source": "Ly8gI2lmIEEKY2xhc3MgQyB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "char-literal",
+   "source": "Y2xhc3MgQyB7IGNoYXIgYyA9ICcjJzsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "directive-after-code",
+   "source": "Y2xhc3MgQyB7fSAjaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "trailing-line-comment",
+   "source": "I2lmIEEgLy8gbm90ZQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "trailing-block-comment",
+   "source": "I2lmIEEgLyogYyAqLwpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "region-slash-star",
+   "source": "I3JlZ2lvbiB4LyoKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYKI2VuZHJlZ2lvbgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "nullable-kept",
+   "source": "I251bGxhYmxlIGVuYWJsZQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "indented-directive",
+   "source": "ICAJI2lmIEEKY2xhc3MgWCB7fQogICNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "crlf",
+   "source": "I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkNCmNsYXNzIFgge30NCiNlbHNlDQpjbGFzcyBZIHt9DQojZW5kaWYNCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "bom",
+   "source": "77u/I2lmIEEgJiYgIUIgfHwgKEMgPT0gRCkKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "C",
+    "D"
+   ]
+  },
+  {
+   "id": "eof-no-newline",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQojZW5kaWY=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "lone-cr",
+   "source": "I2lmIEENY2xhc3MgWCB7fQ0jZW5kaWYN",
+   "symbols": []
+  },
+  {
+   "id": "line-separator",
+   "source": "I2lmIEHigKhjbGFzcyBYIHt94oCoI2VuZGlm4oCo",
+   "symbols": []
+  },
+  {
+   "id": "non-ascii",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gIu2VnOq4gCI7IH0KI2lmIEEKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "interp-format",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTIzOiMsIyMwfSI7IH0KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-format-slashes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTovKngvL30iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-nested-string",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KCJ9IiArICJ7Iil9IjsgfQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-ternary",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KHRydWUgPyAxIDogMik6RDJ9IjsgfQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-global-alias",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7Z2xvYmFsOjpTeXN0ZW0uTWF0aC5QSX0iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "interp-verbatim-hole-multiline",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAiezEgKwoyfQojaWYgQQoiOyB9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "raw-four-quotes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gIiIiIgojaWYgQQoiIiIgc3RpbGwKIiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-interp-two-dollars",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIiIKe3sxOiN9fXt4fQojaWYgQQoiIiI7IH0K",
+   "symbols": []
+  },
+  {
+   "id": "escape-upper",
+   "source": "I2lmIFxVMDAwMDAwNDEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "cf-symbol",
+   "source": "I2RlZmluZSBBXHUyMDBDCiNpZiBBCmNsYXNzIFgge30KI2Vsc2UKY2xhc3MgWSB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "define-undef-define",
+   "source": "I2RlZmluZSBBCiN1bmRlZiBBCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "inactive-define-before-token",
+   "source": "I2lmIE5PCiNkZWZpbmUgQQojZW5kaWYKY2xhc3MgWiB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "inactive-malformed-symbol",
+   "source": "I2lmIE5PCiNkZWZpbmUgMUEKI2VuZGlmCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "inactive-unknown-directive",
+   "source": "I2lmIE5PCiNmb28KI2VuZGlmCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-line-before-define",
+   "source": "wqAKI2RlZmluZSBBCiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-comment-before-define",
+   "source": "wqAvLyBjCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "nbsp-indented-directive",
+   "source": "wqAjaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "pragma-warning",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgQ1MwMTY4CmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "pragma-warning-nbsp",
+   "source": "I3ByYWdtYSB3YXJuaW5nwqBkaXNhYmxlIENTMDE2OApjbGFzcyBYIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "pragma-checksum",
+   "source": "I3ByYWdtYSBjaGVja3N1bSAiZi5jcyIgIns0MDZFQTY2MC02NENGLTRDODItQjZGMC00MkQ0ODE3MkE3OTl9IiAiYWIiCmNsYXNzIFgge30K",
+   "symbols": []
+  },
+  {
+   "id": "pragma-bare",
+   "source": "I3ByYWdtYQpjbGFzcyBYIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "nel",
+   "source": "I2lmIEHChWNsYXNzIFgge33ChSNlbmRpZsKF",
+   "symbols": []
+  },
+  {
+   "id": "paragraph-separator",
+   "source": "I2lmIEHigKljbGFzcyBYIHt94oCpI2VuZGlm4oCp",
+   "symbols": []
+  },
+  {
+   "id": "bom-non-ascii",
+   "source": "77u/Ly8g7ZWcCiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "inactive-define-after-token",
+   "source": "Y2xhc3MgQyB7fQojaWYgZmFsc2UKI2RlZmluZSBBCiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "region-crosses-endif-inactive",
+   "source": "I2lmIGZhbHNlCiNyZWdpb24gUgojZW5kaWYKY2xhc3MgQyB7fQo=",
+   "symbols": []
+  },
+  {
+   "id": "unclosed-region",
+   "source": "I3JlZ2lvbiBSCmNsYXNzIEMge30K",
+   "symbols": []
+  },
+  {
+   "id": "endregion-inside-group",
+   "source": "I3JlZ2lvbiBSCiNpZiBmYWxzZQojZW5kcmVnaW9uCiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "region-crosses-else",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbHNlCiNlbmRyZWdpb24KI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "region-crosses-elif",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbGlmIEIKI2VuZHJlZ2lvbgojZW5kaWYKY2xhc3MgQyB7fQo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "region-in-group",
+   "source": "I2lmIEEKI3JlZ2lvbiBSCiNlbmRyZWdpb24KI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "escaped-true",
+   "source": "I2lmIFx1MDA3NHJ1ZQpjbGFzcyBYIHt9CiNlbHNlCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "upper-true",
+   "source": "I2lmIFRSVUUKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "mixed-false",
+   "source": "I2lmIEZhTHNFCmNsYXNzIFgge30KI2Vsc2UKY2xhc3MgWSB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "supplementary-escape-symbol",
+   "source": "I2RlZmluZSBcVTAwMDEwNDAwCiNpZiBcVTAwMDEwNDAwCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "supplementary-symbol",
+   "source": "I2RlZmluZSDwkJCACiNpZiDwkJCACmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "shebang",
+   "source": "IyEvdXNyL2Jpbi9lbnYgZG90bmV0CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-sdk",
+   "source": "IzpzZGsgTWljcm9zb2Z0Lk5FVC5TZGsKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-in-inactive",
+   "source": "I2lmIE5PCiM6cGFja2FnZSBGb29AMS4wCiNlbmRpZgpjbGFzcyBYIHt9Cg==",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-after-token",
+   "source": "Y2xhc3MgQyB7fQojOnNkayBNaWNyb3NvZnQuTkVULlNkawo=",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-in-active-if",
+   "source": "I2lmIHRydWUKIzpzZGsgTWljcm9zb2Z0Lk5FVC5TZGsKI2VuZGlmCmNsYXNzIEMge30K",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "file-based-after-endif",
+   "source": "I2lmIE5PCiNlbmRpZgojOnNkayBNaWNyb3NvZnQuTkVULlNkawpjbGFzcyBDIHt9Cg==",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "long-s-symbol",
+   "source": "I2RlZmluZSBmYWxcdTAxN0ZlCiNpZiBmYWxcdTAxN0ZlCmNsYXNzIFNlbGVjdGVkIHt9CiNlbHNlCmNsYXNzIE90aGVyIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "caller-cf-symbol",
+   "source": "I2lmIEEKY2xhc3MgU2VsZWN0ZWQge30KI2Vsc2UKY2xhc3MgT3RoZXIge30KI2VuZGlmCg==",
+   "symbols": [
+    "A\u200c"
+   ]
+  },
+  {
+   "id": "caller-plain-matches-cf-source",
+   "source": "I2lmIEFcdTIwMEMKY2xhc3MgU2VsZWN0ZWQge30KI2Vsc2UKY2xhc3MgT3RoZXIge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "shebang-after-bom",
+   "source": "77u/IyEvdXNyL2Jpbi9lbnYgZG90bmV0CmNsYXNzIEMge30K",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "shebang-not-first",
+   "source": "Y2xhc3MgQyB7fQojIS91c3IvYmluL2VudiBkb3RuZXQK",
+   "symbols": [],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "feff-before-directive",
+   "source": "Cu+7vyNpZiBBCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-in-directive",
+   "source": "I2lm77u/QQpjbGFzcyBDIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-line-before-define",
+   "source": "77u/Cu+7vwojZGVmaW5lIEEKI2lmIEEKY2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "ctrl-z-space",
+   "source": "I2lmGkEKY2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "raw-single-line-unterminated",
+   "source": "eCA9ICIiIjsgCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "interp-raw-single-line-unterminated",
+   "source": "eCA9ICQiIiJ7MX07IAojZGVmaW5lIEEK",
+   "symbols": []
+  },
+  {
+   "id": "dollars-two-quotes-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIgp7ezE6I319e3h9CiNpZiBBCiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "dollars-at-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCRAIiIiIgp7ezE6I319e3h9CmYgQQoiIiI7IH0K",
+   "symbols": []
+  },
+  {
+   "id": "at-dollar-at-raw",
+   "source": "eCA9IEAkQCJhCiNpZiBBCmIiOwo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "bad-string-prefix",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAkInsiezF9CiNpZiBBCiI7IH0K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-hash-no-directive",
+   "source": "eCA9ICQiezEgKwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgoyfSI7Cg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-paren-then-brace",
+   "source": "eCA9ICQieyhhfSI7CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "hole-mismatch-runaway",
+   "source": "eCA9ICQieyhhIEAiYn0iOyB9CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "verbatim-runaway-two-quotes",
+   "source": "eCA9ICRAInsxICsKI3gKIiIKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "verbatim-error-content-quotes",
+   "source": "eCA9ICRAInsxICsKI2EKfSIiOyAKY2xhc3MgQyB7fSAjaWYgQQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "raw-runaway-quote",
+   "source": "eCA9ICQkIiIie3sxICsKI3gKIgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "regular-lone-close-brace-runaway",
+   "source": "eCA9ICQifXsxIiAKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "lone-close-brace-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJEAifXsxIiAKMn0KI2lmIEEKIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "nested-string-open-no-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7KCJ9IiArICJ7I2Vsc2UKIil9IjsgfQojIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "format-clause-quote",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCJ7MTIzOiMsIyIiIiMwfSI7IH0KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "format-after-global-colon",
+   "source": "eCA9ICQie2dsb2JhbDo6QSAvL30iOwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-after-hash",
+   "source": "I++7v2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "feff-before-condition",
+   "source": "I2lmIO+7v0EKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "reference-directive",
+   "source": "I2lmIE5PCiNyIHgKI2VuZGlmCiNyICJhIgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-name-backslash",
+   "source": "I3JcdTBlZ2lvbn0gUgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-name-then-backslash",
+   "source": "I3JcZ2lvbn0gUgpjbGFzcyBDIHt9Cg==",
+   "symbols": []
+  },
+  {
+   "id": "dollars-raw-quote-no-runaway",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiIgp7eyIxOiN9fXt4fQojaT09ZiBBCiIiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-content-close-braces",
+   "source": "eCA9ICQiIiIifXsxIiAKI2lmIEEKI3JlZ2lvbgpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "multi-line-raw-runaway-quote-content",
+   "source": "eCA9ICQkIiIiCnt7MSArCiN4CiIKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "single-line-raw-runaway-then-comment",
+   "source": "eCA9ICQkIiIie3sxICsKI3gKIi8qCmNsYXNzIFgge30KI3VuZGVmIEIK",
+   "symbols": []
+  },
+  {
+   "id": "format-escaped-quote",
+   "source": "dmFyIHMgPSAkInsxOlwiLyp9IjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "body-escaped-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx7ezEiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "body-unicode-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx1MDA3QnsxIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "body-hex-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx4N2J7MSI7CiNpZiBmYWxzZQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "body-short-unicode-brace-runaway",
+   "source": "dmFyIHMgPSAkIlx1N0J7MSI7CiNpZiBmYWxzZQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "body-escape-takes-line-break",
+   "source": "dmFyIHMgPSAkIlwKeDdiezEiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "body-escape-takes-cr-of-crlf",
+   "source": "dmFyIHMgPSAkIlwNCng3YnsxIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "regular-escape-takes-line-break",
+   "source": "dmFyIHMgPSJcCng3YiNlbmRyZWdpb24KezEiOwojaWYgZmFsc2UKY2wgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "regular-escape-line-break-then-close",
+   "source": "dmFyIHMgPSJcCng3YnsxIjsjZW5kcmVnaW9uCgojaWYgZmFsc2UKY2xhc3MgWAojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "format-escape-brace-then-hole",
+   "source": "dmFyIHMgPSAkInsxOlx7fXsyIjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "format-open-brace-then-hole",
+   "source": "dmFyIHMgPSAkInsxOnt9ezIiOwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "directive-string-no-escape",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiXCIgIiIiCiNpZiBBCiIiIgpjbGFzcyBDIHt9Cg==",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-transition-is-token",
+   "source": "QDoKI2RlZmluZSBBCiNpZiBBCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "body-escaped-quote",
+   "source": "dmFyIHMgPSAkIlwiezF9IjsKI2lmIGZhbHNlCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "directive-raw-reopened",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiIiIKIiIiICIiIgojaWYgQQoiIiIKY2xhc3MgQyB7fQo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "define-feff-tail-127",
+   "source": "I2RlZmluZSBB77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/77u/CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "razor-line-transition",
+   "source": "eCA9IEA6IwojaWYgZmFsc2UKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "razor-comment-lines",
+   "source": "eCA9IEAqIGMKI2lmIEEKKkAKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-comment-unterminated",
+   "source": "eCA9IEAqIGMgKi8KI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "razor-comment-not-a-token",
+   "source": "QCogYyAqQAojZGVmaW5lIEIK",
+   "symbols": []
+  },
+  {
+   "id": "raw-too-many-open-braces",
+   "source": "eCA9ICQiIiJ7ezEgKwoiLyoKY2xhc3MgWCB7fQojdW5kZWYgQgo=",
+   "symbols": []
+  },
+  {
+   "id": "raw-open-braces-within-limit",
+   "source": "eCA9ICQkIiIie3t7MSArCiIvKgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "at-run-verbatim",
+   "source": "eCA9IEBAImEKI2lmIEEKYiAiOwo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "one-quote-raw-hole-quote-closes",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiCnt7IjE6IyYmfX17eH0KI2k9PWYgQQoiIiI7IH0K",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "few-quotes-single-line-raw-runaway",
+   "source": "eCA9ICQkIiIpInt7MSArCiIvKgpjbGFzcyBYIHt9CiN1bmRlZiBCCg==",
+   "symbols": []
+  },
+  {
+   "id": "dollars-at-run-raw",
+   "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCRAQCIKIiIiIgp7ezE6I319e3h9CmYgQQoiIjsgfQo=",
+   "symbols": []
+  },
+  {
+   "id": "shebang-not-equals",
+   "source": "IyE9PXIvYmluL2VudiBkb3RuZXQKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ],
+   "features": [
+    "FileBasedProgram"
+   ]
+  },
+  {
+   "id": "elif-sees-skipped-define",
+   "source": "I2lmIE5PCiNkZWZpbmUgQgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "elif-skips-earlier-branch",
+   "source": "I2lmIE5PCiNkZWZpbmUgQgojZWxpZiBOTzIKI2VsaWYgQgpjbGFzcyBZIHt9CiNlbmRpZgo=",
+   "symbols": []
+  },
+  {
+   "id": "elif-sees-skipped-region-define",
+   "source": "I2lmIE5PCiNyZWdpb24gcgojZGVmaW5lIEIKI2VuZHJlZ2lvbgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "elif-skips-nested-group-define",
+   "source": "I2lmIE5PCiNpZiBZRVMKI2RlZmluZSBCCiNlbmRpZgojZWxpZiBCCmNsYXNzIFkge30KI2VuZGlmCg==",
+   "symbols": [
+    "YES"
+   ]
+  },
+  {
+   "id": "elif-sees-skipped-undef",
+   "source": "I2RlZmluZSBCCiNpZiBOTwojdW5kZWYgQgojZWxpZiBCCmNsYXNzIFkge30KI2Vsc2UKY2xhc3MgWiB7fQojZW5kaWYK",
+   "symbols": []
+  },
+  {
+   "id": "pragma-raw-takes-lines",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgIiIiCiNpZiBBCiIiIgojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "inactive-pragma-raw-takes-endif",
+   "source": "I2lmIE5PCiNwcmFnbWEgd2FybmluZyBkaXNhYmxlICIiIgojZW5kaWYKIiIiCmNsYXNzIEMge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "nullable-raw-to-eof",
+   "source": "I251bGxhYmxlIGVuYWJsZSAiIiIKI2lmIEEK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "pragma-single-line-raw",
+   "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgIiIieCIiIgojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "malformed-expression",
+   "source": "I2lmIEEgJiYKY2xhc3MgWCB7fQojZW5kaWYK",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "unterminated",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQo=",
+   "symbols": [
+    "A"
+   ]
+  },
+  {
+   "id": "else-after-else",
+   "source": "I2lmIEEKY2xhc3MgWCB7fQojZWxzZQpjbGFzcyBZIHt9CiNlbHNlCmNsYXNzIFoge30KI2VuZGlmCg==",
+   "symbols": []
+  },
+  {
+   "id": "endif-without-if",
+   "source": "Y2xhc3MgQyB7fQojZW5kaWYK",
+   "symbols": []
+  }
+ ]
+}
