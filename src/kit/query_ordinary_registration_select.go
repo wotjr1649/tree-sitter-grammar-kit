@@ -194,22 +194,23 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 	if len(expected) == 0 {
 		return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_GAP", doc, nil)
 	}
-	if e := b.charge(uint64(len(spans.arrays["required"])), 32*uint64(len(spans.arrays["required"])), "ordinary-registration-required-index"); e != nil {
+	if e := b.charge(uint64(len(spans.arrays["required"])), 96*uint64(len(spans.arrays["required"])), "ordinary-registration-required-index"); e != nil {
 		return out, e
 	}
-	seenRequiredIDs := make(map[string]bool, len(spans.arrays["required"]))
+	seenRequiredIDs := make(map[[64]byte]bool, len(spans.arrays["required"]))
 	for _, row := range spans.arrays["required"] {
 		if row.stepOverflow {
 			return out, fail(KindInvalidInput, "JSON_SHAPE", "ordinary-registration-required-index", nil)
 		}
 		tuple := row.coordinate
-		if e := b.charge(uint64(2*len(row.id)+len(tuple.caseID)+len(tuple.queryID)+len(tuple.role)), 0, "ordinary-registration-required-index"); e != nil {
+		if e := b.charge(uint64(8+len(row.id)+len(tuple.caseID)+len(tuple.queryID)+len(tuple.role)), 0, "ordinary-registration-required-index"); e != nil {
 			return out, e
 		}
-		if !expected[tuple] || seenRequiredIDs[row.id] || !strings.HasPrefix(row.id, "qsem1:") || len(row.id) != len("qsem1:")+64 || !hex64.MatchString(strings.TrimPrefix(row.id, "qsem1:")) {
+		idKey, validID := ordinaryRequiredIDKey(row.id)
+		if !expected[tuple] || !validID || seenRequiredIDs[idKey] {
 			return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_COORDINATE", doc, nil)
 		}
-		seenRequiredIDs[row.id] = true
+		seenRequiredIDs[idKey] = true
 		delete(expected, tuple)
 		if coord, selected := selectedExpected[row.id]; selected {
 			id, er := b.ordinaryCoordinateID(coord, header.Namespace)
@@ -235,6 +236,23 @@ func (b *eligibilityBudget) decodeOrdinaryRegistrationSelection(data []byte, sel
 		return out, fail(KindInvalidInput, "ORDINARY_REQUIRED_GAP", doc, nil)
 	}
 	return out, b.r.check()
+}
+
+// Fixed-width keys avoid rehashing ID strings; validation and key copying share one pass.
+func ordinaryRequiredIDKey(id string) ([64]byte, bool) {
+	var key [64]byte
+	const prefix = "qsem1:"
+	if len(id) != len(prefix)+len(key) || !strings.HasPrefix(id, prefix) {
+		return key, false
+	}
+	for i := range key {
+		c := id[len(prefix)+i]
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			return key, false
+		}
+		key[i] = c
+	}
+	return key, true
 }
 
 // scanOrdinaryRegistration defers shape errors until syntax/depth/value checks finish.
