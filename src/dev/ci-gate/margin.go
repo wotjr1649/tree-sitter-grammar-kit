@@ -156,7 +156,7 @@ func saveMarginConfig(identity, compiler, nativeWall, out string) error {
 }
 
 // Historical reports may also carry listed former pins, separate configurations by their keys (#261).
-var marginFormerGo = []string{"go1.27.1", "go1.27.2"}
+var marginFormerGo = []string{"go1.27.1", "go1.27.2", "go1.27.3"}
 
 func marginToolchain(v, expectedGo string, historical bool) bool {
 	return v == expectedGo || historical && slices.Contains(marginFormerGo, v)
