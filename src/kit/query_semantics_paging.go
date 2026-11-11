@@ -38,7 +38,7 @@ func semanticContextManifest(context string) string {
 }
 
 func semanticReducer(id string) bool {
-	return id == "oracle-set-r4" || id == "oracle-set-r5" || id == "oracle-set-r6"
+	return id == "oracle-set-r4" || id == "oracle-set-r5" || id == "oracle-set-r6" || id == "oracle-set-r7"
 }
 
 type semanticParserDescriptor struct {

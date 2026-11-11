@@ -11,6 +11,9 @@ import (
 )
 
 func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
+	if x.prof.Reducer == "oracle-set-r7" && x.pins == nil || x.prof.Reducer != "oracle-set-r7" && x.pins != nil {
+		return fail(KindInvalidInput, "REPLAY_PINS_REDUCER_MISMATCH", "replay", nil)
+	}
 	var req QuerySemanticsRequest
 	for _, input := range []struct {
 		role string
@@ -33,11 +36,14 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 		}
 		*input.data = data
 	}
+	req.Pins = x.pins
 	scope := &semanticReplayScope{expectedContext: "full-input-utf8/r2", documentsRead: true, pins: map[string]ReplayMember{}, walked: map[string]fs.FileInfo{}, walkedDirectories: map[string]fs.FileInfo{}}
 	if x.prof.Reducer == "oracle-set-r5" {
 		scope.expectedContext = semanticPagedContext
 	} else if x.prof.Reducer == "oracle-set-r6" {
 		scope.expectedContext = semanticPagedBinariesContext
+	} else if x.prof.Reducer == "oracle-set-r7" {
+		scope.expectedContext = ""
 	}
 	for _, member := range x.prof.Members {
 		inside := strings.HasPrefix(member.Path, "evidence/")
@@ -147,14 +153,78 @@ func replayQuerySemantics(x *replayEnv) (resultErr *Error) {
 }
 
 func validSemanticCompletion(p *QuerySemanticsResult) bool {
+	if p == nil {
+		return false
+	}
+	eligibilitySchema := QueryReferenceEligibilityResultSchema
+	if p != nil && p.ResultSchema == QuerySemanticsPinsResultSchema {
+		eligibilitySchema = QueryReferenceEligibilityPinsResultSchema
+	}
 	return !p.Complete || p.ExecutionStatus == StatusCompleted && p.Evidence != nil && p.Eligibility != nil &&
 		executionStatuses[p.BaseVerified.ExecutionStatus] && slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.BaseVerified.Assessment) &&
 		p.Evidence.Schema == ReportSchema && p.Evidence.ResultSchema == EvidenceResultSchema && p.Evidence.ExecutionStatus == StatusCompleted &&
-		p.Eligibility.Schema == ReportSchema && p.Eligibility.ResultSchema == QueryReferenceEligibilityResultSchema && p.Eligibility.ExecutionStatus == StatusCompleted
+		p.Eligibility.Schema == ReportSchema && p.Eligibility.ResultSchema == eligibilitySchema && p.Eligibility.ExecutionStatus == StatusCompleted
+}
+
+func validEvidencePinsResult(p *EvidencePinsResult) bool {
+	if p == nil || p.Schema != ReportSchema || p.ResultSchema != EvidencePinResultSchema || p.Reader != EvidencePinReader || p.Scope != EvidencePinScope ||
+		!executionStatuses[p.ExecutionStatus] || !assessmentValues[p.Assessment] || !evidenceModes[p.EvidenceMode] ||
+		p.Required > ReplayOperations()["evidence-replay"].Files || p.Verified > p.Required || uint64(len(p.Materials)) != p.Verified ||
+		p.BytesRead > ReplayOperations()["evidence-replay"].TotalBytes || p.Work > eligibilityWorkLimit || p.LogicalBytes > eligibilityLogicalLimit {
+		return false
+	}
+	if p.Required == 0 {
+		return !p.Complete && p.Assessment != AssessPass && len(p.Materials) == 0 &&
+			(p.ApprovalSHA256 == "" || hex64.MatchString(p.ApprovalSHA256)) &&
+			(p.PinSetSHA256 == "" || hex64.MatchString(p.PinSetSHA256)) &&
+			(p.SubjectSHA256 == "" || hex64.MatchString(p.SubjectSHA256))
+	}
+	if !hex64.MatchString(p.ApprovalSHA256) || !hex64.MatchString(p.PinSetSHA256) || !hex64.MatchString(p.SubjectSHA256) {
+		return false
+	}
+	if p.Complete && p.ExecutionStatus != StatusCompleted || p.Assessment == AssessPass && (!p.Complete || p.Verified != p.Required) {
+		return false
+	}
+	seen := map[string]bool{}
+	for _, material := range p.Materials {
+		name := strings.ToLower(material.Name)
+		if len(material.Name) > 1024 || !portable(material.Name, false) || seen[name] || !hex64.MatchString(material.SHA256) || material.Bytes > ReplayOperations()["evidence-replay"].FileBytes {
+			return false
+		}
+		switch material.Role {
+		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-manifest", "runtime-patch", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
+		default:
+			return false
+		}
+		seen[name] = true
+	}
+	return true
+}
+
+func validPassedPinnedEligibility(p *QueryReferenceEligibilityResult) bool {
+	if p == nil || p.Assessment != AssessPass || !p.Complete || p.Pins == nil || p.Pins.Assessment != AssessPass || !p.Pins.Complete || p.Pins.Verified != p.Pins.Required ||
+		p.Pins.SubjectSHA256 != p.ApprovalSHA256 || !hex64.MatchString(p.CatalogueSHA256) || !hex64.MatchString(p.ReferenceTupleSHA256) || p.ReferencePathReader != "rust-path-1.97.1/r1" {
+		return false
+	}
+	catalogue, tuple := false, false
+	for _, material := range p.Pins.Materials {
+		switch material.Name {
+		case "reference/catalogue.json":
+			catalogue = material.Role == "reference-catalogue" && material.SHA256 == p.CatalogueSHA256
+		case "reference/tuple.json":
+			tuple = material.Role == "reference-tuple" && material.SHA256 == p.ReferenceTupleSHA256
+		}
+	}
+	return catalogue && tuple
 }
 
 func validSemanticReplayResult(rr ReplayResult) bool {
-	if rr.Schema != ReportSchema || rr.ResultSchema != ReplaySemanticsResultSchema || !semanticReducer(rr.Reducer.ID) || (rr.Reducer.ID == "oracle-set-r4" && rr.Reducer.Revision != "r4") || (rr.Reducer.ID == "oracle-set-r5" && rr.Reducer.Revision != "r5") || (rr.Reducer.ID == "oracle-set-r6" && rr.Reducer.Revision != "r6") || rr.Operation != "evidence-replay" || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || len(rr.Gates) > 1 {
+	pinned := rr.Reducer.ID == "oracle-set-r7"
+	wantResult, wantQuery := ReplaySemanticsResultSchema, QuerySemanticsResultSchema
+	if pinned {
+		wantResult, wantQuery = ReplaySemanticsPinsResultSchema, QuerySemanticsPinsResultSchema
+	}
+	if rr.Schema != ReportSchema || rr.ResultSchema != wantResult || !semanticReducer(rr.Reducer.ID) || (rr.Reducer.ID == "oracle-set-r4" && rr.Reducer.Revision != "r4") || (rr.Reducer.ID == "oracle-set-r5" && rr.Reducer.Revision != "r5") || (rr.Reducer.ID == "oracle-set-r6" && rr.Reducer.Revision != "r6") || (pinned && rr.Reducer.Revision != "r7") || rr.Operation != "evidence-replay" || rr.QueryReference != nil || len(rr.PreprocessCST) != 0 || !executionStatuses[rr.ExecutionStatus] || !assessmentValues[rr.Assessment] || !evidenceModes[rr.EvidenceMode] || len(rr.Gates) > 1 {
 		return false
 	}
 	if rr.Assessment == AssessPass && (rr.ExecutionStatus != StatusCompleted || !rr.EvidenceValid || rr.EvidenceMode != ModeReplayedRaw) {
@@ -172,12 +242,12 @@ func validSemanticReplayResult(rr ReplayResult) bool {
 		return false
 	}
 	if p == nil {
-		return len(rr.Gates) == 0 && (recordedOnly || !rr.EvidenceValid && rr.Assessment != AssessPass && rr.Recomputed == (Verdict{})) && rr.Consumption == (Consumption{})
+		return !pinned && len(rr.Gates) == 0 && (recordedOnly || !rr.EvidenceValid && rr.Assessment != AssessPass && rr.Recomputed == (Verdict{})) && rr.Consumption == (Consumption{})
 	}
 	if !executionStatuses[p.BaseVerified.ExecutionStatus] || !slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.BaseVerified.Assessment) {
 		return false
 	}
-	if p.Schema != ReportSchema || p.ResultSchema != QuerySemanticsResultSchema || !executionStatuses[p.ExecutionStatus] || !assessmentValues[p.Assessment] || !evidenceModes[p.EvidenceMode] || !slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.Semantic) {
+	if p.Schema != ReportSchema || p.ResultSchema != wantQuery || !executionStatuses[p.ExecutionStatus] || !assessmentValues[p.Assessment] || !evidenceModes[p.EvidenceMode] || !slices.Contains([]string{AssessPass, AssessFail, AssessBlocked}, p.Semantic) {
 		return false
 	}
 	if p.ProducerFoldValid && (!executionStatuses[p.ProducerRecorded.ExecutionStatus] || !assessmentValues[p.ProducerRecorded.Assessment]) || p.ProducerRecorded.ExecutionStatus != "" && rr.Recorded != p.ProducerRecorded {
@@ -208,7 +278,17 @@ func validSemanticReplayResult(rr ReplayResult) bool {
 		}
 	}
 	if p.Eligibility != nil {
-		if !validReport(p.Eligibility.Report) || p.Eligibility.ResultSchema != QueryReferenceEligibilityResultSchema {
+		wantEligibility := QueryReferenceEligibilityResultSchema
+		if pinned {
+			wantEligibility = QueryReferenceEligibilityPinsResultSchema
+		}
+		if !validReport(p.Eligibility.Report) || p.Eligibility.ResultSchema != wantEligibility {
+			return false
+		}
+		if pinned && !validEvidencePinsResult(p.Eligibility.Pins) || !pinned && p.Eligibility.Pins != nil {
+			return false
+		}
+		if pinned && p.Eligibility.Assessment == AssessPass && !validPassedPinnedEligibility(p.Eligibility) {
 			return false
 		}
 		if p.Eligibility.Assessment == AssessPass && (!p.Eligibility.Complete || p.Eligibility.Tuple.Required == 0 || p.Eligibility.Evidence == nil || p.Eligibility.Evidence.Assessment != AssessPass) {

@@ -419,7 +419,7 @@ func finishWithRoots(result any, err error, out, publishRoot string, stdout, std
 	if err != nil {
 		// A failure report goes to stdout only; --out receives complete results only.
 		q, semantic := result.(kit.QualificationResult)
-		semantic = semantic && q.ResultSchema == kit.QualificationSemanticsResultSchema && q.QuerySemantics != nil
+		semantic = semantic && (q.ResultSchema == kit.QualificationSemanticsResultSchema || q.ResultSchema == kit.QualificationSemanticsPinsResultSchema) && q.QuerySemantics != nil
 		knownSemanticFailure := semantic && q.Assessment == kit.AssessFail
 		if n, werr := stdout.Write(data); semantic && (werr != nil || n != len(data)) {
 			fmt.Fprintln(stderr, "tsgk: STDOUT_FAILED: 부분 semantic report를 쓰지 못했다")

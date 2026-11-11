@@ -99,18 +99,11 @@ func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest)
 	if e := s.b.decode("historical-catalogue", data, &s.catalogue, true); e != nil {
 		return e
 	}
-	var obligations eligibilityCatalogue
-	if e := s.b.decode("reader-obligations", eligibilityObligationsR1, &obligations, true); e != nil {
+	valid, e := s.b.referenceCatalogueObligations(s.catalogue, uint64(len(data)))
+	if e != nil {
 		return e
 	}
-	// Only independently bound provenance may vary; rules, inputs and limits belong to the reader.
-	actual := s.catalogue
-	actual.UpstreamCommit, actual.ArchiveSHA256, actual.BindingSHA256 = "", "", ""
-	actual.ControllerSHA256, actual.ReferenceInputs = map[string]string{}, map[string]string{}
-	if e := s.b.charge(uint64(len(data))+uint64(len(eligibilityObligationsR1)), 0, "catalogue-obligations"); e != nil {
-		return e
-	}
-	if !reflect.DeepEqual(actual, obligations) {
+	if !valid {
 		s.bound = false
 		s.finding("PIN_CATALOGUE_OBLIGATIONS", "historical-catalogue", true)
 		return nil
@@ -136,4 +129,18 @@ func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest)
 	}
 	s.referenceTuple = &tuple
 	return nil
+}
+
+func (b *eligibilityBudget) referenceCatalogueObligations(catalogue eligibilityCatalogue, catalogueBytes uint64) (bool, *Error) {
+	var obligations eligibilityCatalogue
+	if e := b.decode("reader-obligations", eligibilityObligationsR1, &obligations, true); e != nil {
+		return false, e
+	}
+	// Only independently bound provenance may vary; rules, inputs and limits belong to the reader.
+	catalogue.UpstreamCommit, catalogue.ArchiveSHA256, catalogue.BindingSHA256 = "", "", ""
+	catalogue.ControllerSHA256, catalogue.ReferenceInputs = map[string]string{}, map[string]string{}
+	if e := b.charge(catalogueBytes+uint64(len(eligibilityObligationsR1)), 0, "catalogue-obligations"); e != nil {
+		return false, e
+	}
+	return reflect.DeepEqual(catalogue, obligations), nil
 }

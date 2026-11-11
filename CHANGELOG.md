@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- V2-B2에서 Rust reference 생산의 selection/set/tuple을 한 context로 고정해 Python acquire/build/test/check와 workflow에 전달하고, semantic API·replay·qualification·CLI에 외부 `Pins` opt-in을 연결했다. 새 semantic r2·`oracle-set-r7`/replay r4·qualification r11은 historical catalogue·tuple의 소비 identity를 보존하며 기존 호출의 schema와 reader 의무·한도를 유지한다. Classification donor/assembly도 독립 승인 context를 사용한다. Historical runtime 전체와 Roslyn(V2-C/D), 실제 새 toolchain 자격 관측은 남아 있다. Refs #370.
+
 - 직접 eligibility에 승인 historical catalogue·Rust tuple을 쓰는 `Pins` opt-in과 r2 결과를 추가했다. 생산 후보가 바뀌어도 같은 과거 증거·승인의 판정을 보존하고 고정 의무9/4/53/36·known-rule와 기존 tool/receipt/source/vendor 검사를 유지한다. V2-B1 Go verifier 분할이며 Python/workflow·classification 및 semantic/replay/CLI/runtime 전달은 남아 있다. Refs #370.
 
 - 독립 승인한 sidecar·pin 집합의 원문 digest로 역사 자료를 결속하는 `ResolveEvidencePins`와 단일 생산 후보 원문을 선택하는 `SelectEvidenceProductionPin`을 추가했다. Content-addressed 보존 집합과 A/B/C 생산 선택 불변성·위조 거부 시험을 제공한다. V2-A의 PASS는 자료 결속에 한정되며 Rust/catalogue 생산·검증 이행(V2-B)과 runtime·semantic 통합(V2-C/D)은 남아 있다. Refs #370.

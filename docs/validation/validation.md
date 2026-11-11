@@ -1,5 +1,15 @@
 # Validation and merge contract
 
+## #370 V2-B2 생산·공개 pin 전달 검증
+
+`TestSemanticPinsForwarding`, `TestReplaySemanticPinsForwardingAndProductionIndependence`는 생산 A/B/C 선택과 별도로 같은 historical 승인·자료를 semantic API와 replay에 전달해 nested eligibility의 r2·소비 identity·공유 counter 및 결과 불변성을 확인한다. 이 source-only fixture는 실제 eligibility를 평가한 뒤 의도적으로 불완전한 Oracle set에서 중단한다. 이를 전체 semantic PASS나 실제 native/reference 실행 관측으로 세지 않는다. `TestSemanticPinsRejectForgery`와 `TestReplaySemanticPinsRejectUnapprovedAndReducedCatalogue`는 미승인·위조·축소 catalogue가 전달 경계에서 사라지지 않는지 검사한다. `TestSemanticPinsEarlySchema`는 조기 오류의 opt-in schema를 보존한다.
+
+`TestQueryClassificationHistoricalDonorCataloguePins`는 외부 승인 donor registration·historical catalogue의 결속과 의무를 검사한다. CLI의 `TestQualifySemanticsPinsManifestAndForwarding`, `TestQualifySemanticsPinsForwardingRetainsIndependentApproval` 및 qualification/replay 회귀는 외부 context 전달과 legacy schema 보존을 검사한다. 기존 canonical/private catalogue equality와 reader 의무9/4/53/36·known-rule, file identity·alias·누적 예산 검사를 유지한다. 진입점의 Pins 전달을 제거한 overlay mutant는 forwarding assertion으로 실패해야 한다.
+
+`TestQualificationPinsForwardingAndProductionIndependence`는 target의 Pins만 제공하고 `Replay.Pins=nil`인 실제 `Qualify` 요청에서 replay→semantic→eligibility까지 r2 소비가 도달하는지 확인한다. A/B/C 생산 선택 변경 뒤 결과 전체가 같아야 하며 `TestQualificationPinsRejectUnapprovedAndReducedCatalogue`는 동일 경로의 승인 누락·재해시 축소를 거부한다. 이 fixture도 불완전한 Oracle set의 예상 오류 전까지 nested eligibility를 검증하며 전체 semantic PASS를 주장하지 않는다. Qualification의 replay 전달을 제거한 별도 mutant도 이 forwarding assertion으로 실패해야 한다. `TestStoredPinnedEligibilityCannotClaimUnverifiedPass`는 저장 r4에서 nested Pins가 BLOCKED이거나 catalogue/subject가 모순되는데 eligibility가 PASS로 주장하는 경우를 거부한다.
+
+변경 Python의 `python -B src/dev/query-reference/test_pipeline.py -v`와 foundation 전체(기존 workflow 검사·`TestNoHardcodedToolVersions` 포함), `CGO_ENABLED=0 go vet ./src/...`, kit 전체·CLI 전체를 실행한다. Python 양성 대조는 선택을 한 번 고정한 뒤 B/C pointer 변경에도 같은 context를 소비하고, 음성 대조는 raw SHA·자료·source/controller 모순을 거부해야 한다. 실제 Rust/native/reference 빌드와 hosted workflow 실행은 별도 자격 관측이며 source-only 검증이 대신하지 않는다.
+
 ## #370 V2-A 역사 자료 결속 검증
 
 [pin 계약](../specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 `TestEvidencePinsProductionSelectionDoesNotChangeHistory`는 생산 후보 A/B/C와 별도로 A의 원문·승인·판정·counter·consumed identity를 고정한다. `TestEvidencePinsRejectForgery`는 독립 승인 집합 불일치·pin 치환·자료/sidecar 동시 재해시·sidecar 위조/재사용·혼합 자료를 거부한다. `TestEvidencePinsStrictBoundaries`는 unknown/duplicate/missing/null·depth·size·scope/reader/schema·role·alias·미사용과 누락 자료의 BLOCKED를 검사하고, `TestEvidencePinsInterruptionPreservesFailure`는 확정 FAIL 뒤 자원 오류와 caller 취소를 검사한다. `TestEvidencePinsArchive`는 보관한 모든 집합의 내용 주소와 모든 원문 자료의 길이/hash 및 단일 선택 집합의 존재를 검증한다. 승인 집합 비교를 제거한 overlay mutant는 위조 반례에서 FAIL이어야 한다.

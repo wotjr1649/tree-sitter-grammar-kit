@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-[#370 V2-A 역사 자료 pin](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)은 Go byte-input API만 제공한다. CLI flag·profile·reducer revision은 추가하지 않는다. 후속 CLI opt-in은 graph 밖 caller 승인 문서와 정확한 집합 digest를 받고 기존 trust-document file identity·hardlink/reparse/alias·문서 수·공유 예산 admission을 함께 유지해야 한다.
+[#370 역사 자료 pin](query-reference-eligibility.md#370-v2-b2-공개-reference-pin-전달)의 Go byte-input API와 아래 V2-B2 CLI opt-in은 graph 밖 caller의 독립 승인값을 요구한다. 기존 trust-document file identity·hardlink/reparse/alias·문서 수·공유 예산 admission을 유지한다.
 
 S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을(C2는 둘을 기대값 anchor가 있는 r2로 바꿨다), S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했고 C2는 이를 r2를 거쳐 r3으로 바꿨다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
@@ -319,6 +319,16 @@ CLI admission은 처음 경로 검사 전에 시작하며 host 최대3개·seman
 명시적 opt-in은 항상 r10을 출력한다. 두 probe와 baseline이 모두 PASS여도 이 부분 scope의 결과는 `BLOCKED` exit 3이며 `support_claim`은 BLOCKED다. 알려진 baseline/semantic FAIL은 FAIL exit 1이다. Nil opt-in의 r9 결과와 exit 의미는 유지한다. API와 CLI admission의 별도 예산, 결과 분모와 fold는 [identity/evidence](identity-and-evidence.md) 및 [trust](trust-and-execution.md)를 따른다.
 
 `--query-semantics=`처럼 빈 경로를 명시하면 usage/input 오류이며 legacy로 돌아가지 않는다. CLI 전체360초 기한은 첫 경로 검사 전에 시작해 API 및 출력 경로 검사에 전달한다. Admission은 그 안의120초다. 열린 trust file identity를 root별 bounded metadata walk의 실제 file identity와 비교하므로 file-only bind alias도 거부하며, 각 walk의 한도는 루트 포함10,000 entries·깊이64·최대10초이고 전체 admission 기한도 적용한다. Root identity는 API 첫 read에 다시 확인하고 출력에는 CLI가 끝까지 보유한 root handle을 사용한다. 알려진 r10 FAIL 뒤에 취소·wall·resource·I/O 중단이 오면 원래 typed 상태와 stderr 원인을 보존하면서 exit1을 우선한다. 알려진 FAIL이 없는 typed 오류는 기존 exit를 따르며 report 쓰기·publication 실패는 exit4다.
+
+### #370 V2-B2 historical reference pin admission
+
+`qualify --query-semantics FILE`의 `tsgk-qualification-query-semantics-input/r2`는 r1의 필드와 경로 규칙을 유지하며 target에 선택적 `pins`를 추가한다. r2에는 pin opt-in target이 하나 이상 있어야 하며, 해당 target의 외부 eligibility `approval` 문서도 필요하다. r1은 pin 입력을 받지 않는다. 새 CLI flag는 없다.
+
+`pins`의 필수 필드는 `approved_approval_sha256`, `approval_base64`, `approved_pin_set_sha256`, `pin_set_base64`, `materials_base64`다. 두 digest는 caller가 독립 승인한 sidecar·집합 raw SHA-256이고, 두 Base64는 해당 원문이다. `materials_base64`는 정확한 논리 자료 이름→canonical Base64 원문 map이다. Subject를 manifest에서 별도로 지정하지 않고 admission을 통과한 target eligibility approval 원문으로 고정한다. 바깥 manifest도 caller trust document이며 producer graph 안의 사본을 승인 근거로 삼지 않는다.
+
+Pin 원문은 이미 admission한 manifest 안에 있으므로 새 파일 경로·추가 trust document를 만들지 않는다. 기존 최대9개 문서·파일16MiB·총읽기256MiB·wall120초, 실제 file identity·hardlink/reparse/alias·root 겹침 검사를 유지한다. Base64·digest·map은 같은 deadline 아래 검사하고 semantic core의 shared read/work/logical 예산에서 원문을 다시 검증한다. Manifest r2의 pin opt-in은 qualification r11, replay r4와 semantic/eligibility r2 결과를 사용한다. Pins 없는 r1 입력의 r10 결과와 nil opt-in의 r9는 유지한다.
+
+이 CLI opt-in은 qualification manifest admission 경로다. Standalone `tsgk replay`에는 별도의 pin 문서 flag를 추가하지 않았으므로 `oracle-set-r7`에 필요한 외부 Pins를 제공할 수 없다. Standalone r7은 공개 Go `ReplayRequest.Pins`로 사용하며 CLI의 기존 reducer 동작은 유지한다.
 
 ## discovery와 strict profile
 

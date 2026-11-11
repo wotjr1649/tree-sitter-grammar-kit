@@ -617,7 +617,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			continue
 		}
 		valid := false
-		if selection == ReplaySemanticsResultSchema {
+		if selection == ReplaySemanticsResultSchema || selection == ReplaySemanticsPinsResultSchema {
 			full, e := decodeSemanticReplayResult(data, x.r)
 			if e != nil && (e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO) {
 				return e
@@ -666,7 +666,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 
 // This selector scans delimiters and bounded schema strings only; the selected decoder validates JSON.
 func replayResultRevision(data []byte, r *run) (string, *Error) {
-	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema})
+	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema, ReplaySemanticsPinsResultSchema})
 }
 
 func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string, alternatives ...string) (selected string, resultErr *Error) {

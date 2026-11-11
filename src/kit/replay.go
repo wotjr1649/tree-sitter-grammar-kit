@@ -21,10 +21,11 @@ import (
 
 // Replay schemas and the evidence modes and assessments S07 adds to E0.
 const (
-	ReplaySchema                = "tsgk-replay/r1"
-	ReplayResultSchema          = "tsgk-replay-result/r1"
-	ReplayReferenceResultSchema = "tsgk-replay-result/r2"
-	ReplaySemanticsResultSchema = "tsgk-replay-result/r3"
+	ReplaySchema                    = "tsgk-replay/r1"
+	ReplayResultSchema              = "tsgk-replay-result/r1"
+	ReplayReferenceResultSchema     = "tsgk-replay-result/r2"
+	ReplaySemanticsResultSchema     = "tsgk-replay-result/r3"
+	ReplaySemanticsPinsResultSchema = "tsgk-replay-result/r4"
 
 	ModeReplayedRaw           = "REPLAYED_RAW"
 	ModeCarriedForward        = "CARRIED_FORWARD"
@@ -153,6 +154,8 @@ type ReplayResult struct {
 type ReplayRequest struct {
 	Root    string
 	Profile []byte
+	// Pins is caller-trusted historical material approval; it is never read from the graph.
+	Pins *EvidencePinsRequest
 }
 
 // ParseReplayProfile strictly decodes a tsgk-replay/r1 registration.
@@ -314,6 +317,11 @@ func reducerTable() map[string]reducer {
 			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
 			Gates:  []string{"query-semantics"}, Recorded: []string{"execution authenticity", "unrecomputed API/fact/dynamic claims"},
 			Description: "Paged-binaries query semantics with immutable producer verdict, recomputed base and caller-approved reference closure under one run and guarded snapshot"}, replayQuerySemantics},
+		"oracle-set-r7": {ReducerInfo{ID: "oracle-set-r7", Revision: "r7", Operation: "evidence-replay",
+			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph", "caller-approved historical reference materials"},
+			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
+			Gates:  []string{"query-semantics"}, Recorded: []string{"execution authenticity", "unrecomputed API/fact/dynamic claims"},
+			Description: "Pinned historical query semantics across the registered full-input and parser/binaries paging contexts"}, replayQuerySemantics},
 		"oracle-set-r5": {ReducerInfo{ID: "oracle-set-r5", Revision: "r5", Operation: "evidence-replay",
 			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r6 and record/r4"},
 			Roles:  []string{"workload-profile", "semantics-registration", "semantics-run-binding", "eligibility-approval", "eligibility-registration", "query-registration", "evidence-policy", "semantics-evidence", "retained"},
@@ -534,6 +542,7 @@ type replayEnv struct {
 	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
 	querySemantics               *QuerySemanticsResult
+	pins                         *EvidencePinsRequest
 	recomputedOracle             map[string]string
 }
 
@@ -895,7 +904,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
-		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || partial.reuseAccepted) {
+		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || partial.reuseAccepted) {
 			res.QuerySemantics = partial.querySemantics
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
 			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
@@ -932,7 +941,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		if e := borrowed.owner.r.eligibility.charge(uint64(len(req.Profile))+1, 0, "qualification-replay-profile-identity"); e != nil {
 			return bad(e)
 		}
-		if borrowed.profile == nil || borrowed.profile.Reducer != "oracle-set-r4" || digestHex(req.Profile) != borrowed.profile.SHA256 {
+		if borrowed.profile == nil || (borrowed.profile.Reducer != "oracle-set-r4" && borrowed.profile.Reducer != "oracle-set-r7") || digestHex(req.Profile) != borrowed.profile.SHA256 {
 			return bad(fail(KindInvalidInput, "SEMANTICS_REPLAY_PROFILE_CHANGED", "replay", nil))
 		}
 		if e := borrowed.owner.r.check(); e != nil {
@@ -940,11 +949,14 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		}
 		selected = borrowed.profile.Reducer
 	} else {
-		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6")
+		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6", "oracle-set-r7")
 	}
 	// A non-selected revision keeps its existing decoder's error ordering.
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		return bad(selectionErr)
+	}
+	if selected == "oracle-set-r7" {
+		res.ResultSchema = ReplaySemanticsPinsResultSchema
 	}
 	rootValue := bytes.TrimLeft(req.Profile, " \t\r\n")
 	if selected == "" && len(rootValue) > 0 && rootValue[0] != '{' {
@@ -984,6 +996,9 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	if e != nil {
 		return bad(e)
 	}
+	if prof.Reducer == "oracle-set-r7" && req.Pins == nil || prof.Reducer != "oracle-set-r7" && req.Pins != nil {
+		return bad(fail(KindInvalidInput, "REPLAY_PINS_REDUCER_MISMATCH", "replay", nil))
+	}
 	res.ProfileID, res.Subject, res.Operation = prof.ID, prof.Subject, prof.Operation
 	res.Recorded = Verdict{prof.Subject.ExecutionStatus, prof.Subject.Assessment}
 	res.Identities = append(res.Identities, IdentityRef{Role: "replay-profile", Schema: ReplaySchema, SHA256: prof.SHA256})
@@ -994,6 +1009,9 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	res.Reducer = red.info
 	if semanticReducer(red.info.ID) {
 		res.ResultSchema = ReplaySemanticsResultSchema
+	}
+	if prof.Reducer == "oracle-set-r7" {
+		res.ResultSchema = ReplaySemanticsPinsResultSchema
 	}
 	if red.info.ID == "query-reference-connection-r1" {
 		res.ResultSchema = ReplayReferenceResultSchema
@@ -1071,7 +1089,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		defer root.Close()
 	}
 	x := &replayEnv{r: r, g: newGuard(root), lim: lim, prof: prof, files: map[string]fs.FileInfo{}, members: map[string]ReplayMember{},
-		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}}
+		verified: map[string]bool{}, consumed: map[string]bool{}, seen: map[string]map[string]bool{}, covered: map[string]bool{}, actual: map[string]string{}, pins: req.Pins}
 	if budget != nil {
 		x.acceptedControl = budget.acceptedControl
 		x.acceptedConsumer = budget.acceptedConsumer
@@ -1106,7 +1124,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	res.QuerySemantics = x.querySemantics
 	res.QueryReference = x.queryReference
 	res.PreprocessCST = x.preprocessCSTResults
-	if (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema) && x.recorded.ExecutionStatus != "" {
+	if (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema) && x.recorded.ExecutionStatus != "" {
 		if x.recorded != res.Recorded {
 			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
 		}

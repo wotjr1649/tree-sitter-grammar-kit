@@ -4,7 +4,7 @@
 
 ## #370 V2-A 역사 자료 pin 입력
 
-`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1 opt-in으로 구현한다. Python/workflow·classification 생산 이행과 runtime 전체 전달·semantic/replay/CLI 통합은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
+`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1, 생산 및 공개 호출 전달은 V2-B2 계약을 따른다. Runtime 전체와 Roslyn 이행은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
 
 `EvidencePinsRequest`의 `Approval`, `PinSet`, `Subject`는 원문 bytes이고 `Materials`는 정확한 논리 이름→원문 bytes map이다. Caller는 graph 밖에서 **독립 승인한** `ApprovedApprovalSHA256`와 `ApprovedPinSetSHA256`를 제공한다. 증거나 sidecar의 자기 hash를 그대로 이 두 field에 복사하는 것은 독립 승인이 아니다. API는 승인 작성자의 진위를 인증하지 않는다. Caller는 호출 중 slice/map을 변경하지 않는다. 함수는 입력을 수정하거나 file/process/network에 접근하지 않고 결과는 원문 slice/map을 소유하지 않는다.
 
@@ -28,7 +28,7 @@ Caller deadline은 필수다. 기존 evidence-replay wall120초·문서/자료�
 
 `src/contracts/evidence-pins/selection.json`은 단일 후보 선택이다. `sets/<raw-sha256>.json`과 `objects/<raw-sha256>`는 내용 주소의 보존 자료이며 승인 기관이 아니다. 기존 객체를 갱신하지 않고 새 객체/집합을 추가해 선택만 옮긴다. `.gitattributes`의 `-text`는 원본 개행을 보존한다. 최초 집합은 catalogue와 reference controller 입력, 현재 manifest/patch/driver/CP949·실제 shim 생성식 template, 기존 Roslyn/r2 원문·cases 및 기존 logger가 허용한 과거 manifest를 보관한다. 과거 manifest는 repository commit `10c65c8`의 원문이며 기존 digest `affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080`과 대조했다. Shim template와 reference tuple은 이행 metadata이며 과거 실행 관측으로 소급하지 않는다. Runtime 원본 checkout 전체·과거 driver closure·Roslyn DLL/SDK provenance는 복원하지 않았다. 자료 보관만으로 full historical eligibility를 주장하지 않는다.
 
-현재 생산 Python/workflow는 아직 이 pointer를 소비하지 않는다. 기존 verifier의 opt-in 없는 호출도 이 pointer를 소비하지 않는다. 기존의 현재 catalogue 전용, 현재 runtime 완결 검증 및 과거 runtime BLOCKED 규칙은 해당 legacy API에 계속 적용된다. 후속 opt-in은 caller가 정확한 digest와 reader를 승인한 historical catalogue/closure를 사용하고 과거 결과를 새 reference의 관측으로 승격하지 않아야 한다.
+생산 Python/workflow의 선택 입력은 [생산 연결 계약](instrumented-query-reference.md#370-v2-b2-단일-생산-pin)을 따른다. 기존 verifier의 opt-in 없는 호출은 이 pointer를 소비하지 않는다. 기존의 현재 catalogue 전용, 현재 runtime 완결 검증 및 과거 runtime BLOCKED 규칙은 해당 legacy API에 계속 적용된다. Historical opt-in도 과거 결과를 새 reference의 관측으로 승격하지 않는다.
 
 ## #370 V2-B1 승인 historical reference 검증
 
@@ -44,7 +44,15 @@ Catalogue 원문 digest는 tuple, 기존 approval, registration과 모두 같아
 
 r2 결과의 `pins`는 실제 resolver 결과이며 추가 `reference_tuple_sha256`, `reference_path_reader`와 기존 `catalogue_sha256`은 소비한 역사 identity다. Outer `bytes_read/work/logical_bytes`에는 pin resolve와 의미 검증 비용이 모두 포함되고, nested `pins` counter는 resolver 구간의 차분이다. 바깥 한도를 새로 시작하거나 늘리지 않는다. 이 API는 현재 생산 selection이나 설치 도구를 조회하지 않는다. 같은 역사 입력·승인·reader를 고정하면 생산 선택 A/B/C 변경 뒤 결과·counter·소비 identity가 같다.
 
-이 단위는 **직접 eligibility reference 검증**만 구현한다. `QuerySemanticsRequest`, replay/qualification/CLI의 context 전달, classification donor·assembly, Python build/test/check/acquire와 workflow의 단일 생산 입력은 남아 있다. Runtime 완결 검증은 기존 current-only 경계를 유지하며, 역사 reference PASS를 새 reference 또는 historical runtime의 실제 qualification으로 승격하지 않는다.
+V2-B1의 직접 eligibility reference 검증에 이어 V2-B2는 아래 공개 전달 계약과 [생산 연결 계약](instrumented-query-reference.md#370-v2-b2-단일-생산-pin)을 사용한다. Runtime 완결 검증은 기존 current-only 경계를 유지하며, 역사 reference PASS를 새 reference 또는 historical runtime의 실제 qualification으로 승격하지 않는다.
+
+## #370 V2-B2 공개 reference pin 전달
+
+`QuerySemanticsRequest.Pins *EvidencePinsRequest`는 내부 eligibility에 같은 원문·독립 승인값을 전달한다. Subject는 `EligibilityApproval` 원문이다. Opt-in 결과는 `QuerySemanticsPinsResultSchema`(`tsgk-query-semantics-result/r2`)이며 내부 `eligibility`는 V2-B1 r2와 실제 소비한 `pins`, tuple/catalogue identity를 보존한다. 취소·승인 누락·형식 오류에서도 선택한 바깥 schema를 유지한다. `Pins=nil`이면 기존 semantic r1과 eligibility r1을 유지한다.
+
+Pin 자료를 새 원장에서 다시 검증하지 않는다. 기존 semantic/replay/qualification 원장에 resolve·의미 검사·자료 비용을 합산하고 small 한도와 확정 FAIL/최초 code/부분 counter 보존 규칙을 유지한다. 생산 selection과 설치 도구는 역사 검증 입력이 아니다. Raw subject·run-binding·producer의 recorded verdict·NEW_RUN과 기존 approval/registration/witness schema는 다시 쓰지 않는다.
+
+Replay·qualification 및 CLI의 명시적 opt-in은 [identity/evidence](identity-and-evidence.md#370-v2-b2-공개-pin-context와-저장-결과)와 [CLI admission](cli-and-profile.md#370-v2-b2-historical-reference-pin-admission)을 따른다. 기존 reducer의 의미를 넓히지 않는다. 이 전달은 historical reference 검증이며 V2-C/D의 historical runtime 전체 closure·ABI/logger·accepted·preprocess-CST 또는 Roslyn provenance 지원이 아니다.
 
 ## 호출과 판정
 

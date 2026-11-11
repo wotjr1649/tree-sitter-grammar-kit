@@ -895,6 +895,12 @@ func qualifyWithOptions(ctx context.Context, req QualifyRequest, opts *runOption
 	res.Assessment = AssessNotAssessed
 	if req.QuerySemantics != nil {
 		res.ResultSchema = QualificationSemanticsResultSchema
+		for _, target := range req.QuerySemantics.Targets {
+			if target.Pins != nil || target.Replay.Pins != nil {
+				res.ResultSchema = QualificationSemanticsPinsResultSchema
+				break
+			}
+		}
 		res.QuerySemantics = newQualSemanticsAxisWithOptions(opts)
 		res.Baseline = &QualBaselineSummary{Assessment: AssessNotAssessed, Completeness: AssessBlocked, MechanismGate: AssessBlocked, SupportClaim: "BLOCKED", PlatformClaims: map[string]string{}}
 	}

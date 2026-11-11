@@ -295,3 +295,11 @@ Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 �
 ## #370 V2-B1 역사 reference 결과 identity
 
 직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.
+
+## #370 V2-B2 공개 pin context와 저장 결과
+
+`ReplayRequest.Pins`는 graph 밖 caller가 제공하는 `*EvidencePinsRequest`다. `oracle-set-r7`은 이 입력을 semantic API와 내부 eligibility에 그대로 전달한다. Subject는 replay의 외부 `eligibility-approval` 원문과 같아야 한다. 기존 일곱 trust document, evidence owner/member·run-binding·subject·consumption·누적 예산 검사를 유지한다. Pin 승인이나 materials를 producer graph에서 발견해 신뢰하지 않는다.
+
+`oracle-set-r7`/revision `r7`은 full-input/r2, paged-parser/r1, paged-binaries/r1의 기존 등록 문맥별 검사를 사용한다. Result는 `ReplaySemanticsPinsResultSchema`(`tsgk-replay-result/r4`), 내부 semantic은 `QuerySemanticsPinsResultSchema`(r2), 내부 eligibility는 r2다. 새 reducer와 외부 Pins는 함께 명시해야 한다. 기존 `oracle-set-r4/r5/r6`·replay-result/r3·semantic/r1의 의미를 넓히지 않으며 Pins 없는 호출의 schema와 결과를 유지한다. 저장 결과 검증도 reducer revision·바깥/중첩 schema와 소비 identity를 함께 대조한다.
+
+`QualificationQuerySemanticsInput.Pins`는 해당 target의 replay에 전달하는 같은 외부 context다. Pin opt-in이 있는 qualification은 `tsgk-qualification-result/r11`을 사용한다. 기존 small predicate probe의 plan·host·caller approval/context·등록 분모 검사를 유지하며, full-input 문맥에서만 qualification을 수행한다. r7이 standalone replay에서 paging을 지원한다고 qualification의 small scope가 커지지 않는다. Probe와 baseline이 모두 통과해도 `full_scope_complete=false`, 전체 support 및 platform claim BLOCKED 규칙을 유지한다. Pins 없는 semantic qualification은 기존 r10이고 nil semantic 요청은 기존 r9다.

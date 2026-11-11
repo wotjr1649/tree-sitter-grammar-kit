@@ -362,7 +362,7 @@ func classificationPagedDefinitionProjection(p classificationCPP4Profile, anchor
 		return result, err
 	}
 	wantTuple := QueryEligibilityCounts{Required: uint64(p.QueryCount), Verified: uint64(p.QueryCount)}
-	if core.ResultSchema != QueryReferenceEligibilityResultSchema || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != wantTuple ||
+	if !classificationEligibilityResultMatches(plan, core) || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != wantTuple ||
 		s.res.ResultSchema != core.ResultSchema || s.res.ExecutionStatus != core.ExecutionStatus || s.res.Assessment != core.Assessment || s.res.Complete != core.Complete || s.res.Tuple != wantTuple ||
 		s.res.ApprovalSHA256 != core.ApprovalSHA256 || s.res.RegistrationSHA256 != core.RegistrationSHA256 || s.res.WitnessSHA256 != core.WitnessSHA256 || s.res.CatalogueSHA256 != core.CatalogueSHA256 || s.res.GraphSHA256 != core.GraphSHA256 {
 		return result, fmt.Errorf("%s definition projection requires the same completed %d-tuple guarded result", p.Label, p.QueryCount)
