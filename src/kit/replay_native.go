@@ -501,7 +501,7 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 	var observed []string // r4: each step's mandatory observation claim
 	if x.mandatoryObservation {
 		var claim string
-		claim, observed = mandatoryObservations(c)
+		claim, observed = mandatoryObservationsWithRuntime(c, x.observationRuntime)
 		claims = append(claims, claim)
 	}
 	segments := [][2]int{}

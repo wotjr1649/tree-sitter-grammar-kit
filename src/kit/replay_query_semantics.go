@@ -192,7 +192,7 @@ func validEvidencePinsResult(p *EvidencePinsResult) bool {
 			return false
 		}
 		switch material.Role {
-		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-manifest", "runtime-patch", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
+		case "reference-catalogue", "reference-input", "reference-tuple", "runtime-tuple", "runtime-manifest", "runtime-patch", "driver", "cp949", "shim-template", "roslyn-observation", "roslyn-cases":
 		default:
 			return false
 		}
@@ -207,12 +207,40 @@ func validPassedPinnedEligibility(p *QueryReferenceEligibilityResult) bool {
 		return false
 	}
 	catalogue, tuple := false, false
+	runtimeTuple, runtimeManifest := false, false
 	for _, material := range p.Pins.Materials {
 		switch material.Name {
 		case "reference/catalogue.json":
 			catalogue = material.Role == "reference-catalogue" && material.SHA256 == p.CatalogueSHA256
 		case "reference/tuple.json":
 			tuple = material.Role == "reference-tuple" && material.SHA256 == p.ReferenceTupleSHA256
+		case "native/runtime-tuple.json":
+			if p.RuntimePin == nil {
+				return false
+			}
+			runtimeTuple = material.Role == "runtime-tuple" && material.SHA256 == p.RuntimePin.TupleSHA256
+		case "native/runtime-manifest.json":
+			runtimeManifest = material.Role == "runtime-manifest" && p.RuntimePin != nil && material.SHA256 == p.RuntimePin.ManifestSHA256
+		}
+	}
+	if p.RuntimePin != nil {
+		r := p.RuntimePin
+		if !runtimeTuple || !runtimeManifest || !hex64.MatchString(r.TupleSHA256) || !hex64.MatchString(r.ManifestSHA256) || r.Reader != runtimeClosureReader || r.LoggerReader != "tsgk-runtime-logger/r1" || r.RuntimeMinCompatible == 0 || r.RuntimeMinCompatible > r.RuntimeLanguageVersion {
+			return false
+		}
+		for _, required := range runtimePinRolesR1 {
+			found := 0
+			for _, material := range p.Pins.Materials {
+				if material.Name == required.name {
+					if material.Role != required.role || material.Bytes == 0 {
+						return false
+					}
+					found++
+				}
+			}
+			if found != 1 {
+				return false
+			}
 		}
 	}
 	return catalogue && tuple

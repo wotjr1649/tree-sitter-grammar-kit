@@ -139,7 +139,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 					return e
 				}
 				return nil
-			}, Revision: nativewire.ProtocolR4, ID: w.Native.RequestID, Nodes: w.Native.NodeLimit, API: w.Native.API, Points: w.Native.Points, SourceBytes: w.Input.Bytes, Exit: &process.ExitCode, Observation: &nativewire.Binding{Manifest: w.Native.RuntimeManifestSHA256, RunID: w.Native.ObservationRunID, ProducerSHA256: w.Native.ProducerSHA256, HistoryStart: w.Native.HistoryStart}}
+			}, Revision: nativewire.ProtocolR4, ID: w.Native.RequestID, Nodes: w.Native.NodeLimit, API: w.Native.API, Points: w.Native.Points, SourceBytes: w.Input.Bytes, Exit: &process.ExitCode, Observation: &nativewire.Binding{Runtime: s.b.runtimeLogger(), Manifest: w.Native.RuntimeManifestSHA256, RunID: w.Native.ObservationRunID, ProducerSHA256: w.Native.ProducerSHA256, HistoryStart: w.Native.HistoryStart}}
 			for _, q := range w.Queries {
 				expect.Queries = append(expect.Queries, querywire.Source{ID: q.ID, Source: []byte(q.Source)})
 			}
@@ -194,7 +194,7 @@ func (s *eligibilitySession) verifyNative() *Error {
 					s.finding("ELIGIBILITY_R4_END", inv.ID, true)
 					nativeReady = false
 				}
-				mandatory, full := reuseobs.CaseClaim(reuseSteps, raw.Status == StatusCompleted), reuseobs.Judge(all)
+				mandatory, full := reuseobs.CaseClaimWithRuntime(reuseSteps, raw.Status == StatusCompleted, s.b.runtimeLogger()), reuseobs.JudgeWithRuntime(all, s.b.runtimeLogger())
 				if mandatory == "FAIL" || full == "FAIL" {
 					s.finding("ELIGIBILITY_LOGGER_CONTRADICTION", inv.ID, true)
 					nativeReady = false
@@ -398,8 +398,12 @@ func (s *eligibilitySession) nativeBuild(n *eligibilityNative, w eligibilityNati
 	if e != nil {
 		return false, e
 	}
-	if w.RuntimeManifestSHA256 != reuseobs.RuntimeManifestSHA256 {
-		s.finding("ELIGIBILITY_NATIVE_HISTORICAL_RUNTIME", "native", false)
+	if w.RuntimeManifestSHA256 != s.b.runtimeManifest() {
+		if s.b.runtime != nil {
+			s.finding("ELIGIBILITY_NATIVE_RUNTIME_BINDING", "native", true)
+		} else {
+			s.finding("ELIGIBILITY_NATIVE_HISTORICAL_RUNTIME", "native", false)
+		}
 		return false, nil
 	}
 	lines := strings.Split(string(data[:len(data)-1]), "\n")
@@ -1012,6 +1016,9 @@ func eligibilityAllVerified(states map[string]string, n int) bool {
 }
 
 func (b *eligibilityBudget) nativeStaticClosure(symbol string) (map[string]eligibilitySnapshotRow, string, *Error) {
+	if b.runtime != nil {
+		return b.historicalNativeClosure(symbol)
+	}
 	files := map[string]eligibilitySnapshotRow{}
 	read := func(name string) ([]byte, *Error) {
 		info, err := fs.Stat(drivers.NativeC, "native-c/"+name)

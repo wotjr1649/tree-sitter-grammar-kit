@@ -11,6 +11,10 @@ import (
 )
 
 func qualificationPinnedFixture(t *testing.T, reducedCatalogue bool) QualifyRequest {
+	return qualificationPinnedFixtureWithRuntime(t, reducedCatalogue, nil)
+}
+
+func qualificationPinnedFixtureWithRuntime(t *testing.T, reducedCatalogue bool, runtimeMaterials map[string][]byte) QualifyRequest {
 	t.Helper()
 	const platform = "linux/amd64"
 	f := newEligibilityFixture(t)
@@ -27,6 +31,9 @@ func qualificationPinnedFixture(t *testing.T, reducedCatalogue bool) QualifyRequ
 		node.Identities["source"] = qfxCandidate
 		f.nodes[inv.ID] = node
 		inv.Node.Identities = node.Identities
+	}
+	if runtimeMaterials != nil {
+		runtimePinRebind(t, f, runtimeMaterials)
 	}
 	eligibility := f.request()
 	var approval eligibilityApproval
@@ -58,7 +65,11 @@ func qualificationPinnedFixture(t *testing.T, reducedCatalogue bool) QualifyRequ
 		materials["reference/catalogue.json"] = eligibilityJSON(t, f.cat)
 		eligibilityPinTuple(t, materials, func(tuple *eligibilityReferenceTuple) { tuple.CatalogueSHA256 = f.reg.CatalogueSHA256 })
 	}
-	eligibility = eligibilityPinRequest(t, eligibility, materials)
+	if runtimeMaterials != nil {
+		eligibility = runtimePinRequestFor(t, eligibility, runtimeMaterials)
+	} else {
+		eligibility = eligibilityPinRequest(t, eligibility, materials)
+	}
 	semantic := semanticPinsRequest(t, eligibility)
 	var parsed semanticRegistration
 	if err := json.Unmarshal(semantic.Registration, &parsed); err != nil {

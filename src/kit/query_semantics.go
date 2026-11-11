@@ -90,6 +90,9 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 		b = &eligibilityBudget{r: r}
 		r.eligibility = b
 	}
+	previousRuntime := b.runtime
+	b.runtime = nil
+	defer func() { b.runtime = previousRuntime }()
 	defer func() {
 		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead, b.work, b.logical
 		if resultErr != nil {
@@ -228,6 +231,7 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 	if eligibilityErr != nil {
 		return res, eligibilityErr
 	}
+	b.runtime = scope.session.runtime
 	snapshot := scope.session.snapshot
 	if len(req.EligibilityApproval) == 0 {
 		snapshot = &evidenceSnapshot{wanted: wanted}

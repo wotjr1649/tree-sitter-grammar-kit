@@ -3,11 +3,25 @@ package reuseobs
 // Judge is only the completed logger/parse-argument axis, never CST equality or
 // node identity reuse. Host-only markers do not count as native observations.
 func Judge(observations []Observation) string {
+	return judge(observations, nil, true)
+}
+
+// JudgeWithRuntime evaluates observations under an independently approved logger context.
+func JudgeWithRuntime(observations []Observation, runtime *RuntimePin) string {
+	return judge(observations, runtime, runtime == nil || runtime.Valid())
+}
+
+func judge(observations []Observation, runtime *RuntimePin, valid bool) string {
+	if !valid {
+		return "FAIL"
+	}
 	claim, native := "PASS", false
 	for _, o := range observations {
-		if _, err := validate(o, selfBinding(o)); err != nil {
+		if _, err := validate(o, selfBinding(o, runtime)); err != nil {
 			native = true
-			if claim != "FAIL" {
+			if runtime != nil && !runtime.Matches(o.RuntimeManifestSHA256) {
+				claim = "FAIL"
+			} else if claim != "FAIL" {
 				claim = "BLOCKED"
 			}
 			continue
@@ -45,10 +59,22 @@ func Judge(observations []Observation) string {
 // is FAIL in a completed case, whose parses all ran, and BLOCKED in one that ended early.
 // Host NO_NATIVE_PARSE markers are not native observations.
 func Mandatory(observations []Observation, completed bool) string {
+	return mandatory(observations, completed, nil, true)
+}
+
+// MandatoryWithRuntime evaluates the mandatory logger claim under an approved logger context.
+func MandatoryWithRuntime(observations []Observation, completed bool, runtime *RuntimePin) string {
+	return mandatory(observations, completed, runtime, runtime == nil || runtime.Valid())
+}
+
+func mandatory(observations []Observation, completed bool, runtime *RuntimePin, valid bool) string {
+	if !valid {
+		return "FAIL"
+	}
 	claim := "NOT_CLAIMED"
 	for _, o := range observations {
 		v := "PASS"
-		_, err := validate(o, selfBinding(o))
+		_, err := validate(o, selfBinding(o, runtime))
 		switch {
 		case err != nil:
 			v = "FAIL"
@@ -83,13 +109,13 @@ var rank = map[string]int{"NOT_CLAIMED": 0, "PASS": 1, "BLOCKED": 2, "FAIL": 3}
 
 // selfBinding checks an observation's internal consistency only; callers bind it to the
 // request or replayed step separately.
-func selfBinding(o Observation) Binding {
+func selfBinding(o Observation, runtime *RuntimePin) Binding {
 	previous := ""
 	if o.OldSourceSHA256 != nil {
 		previous = *o.OldSourceSHA256
 	}
 	return Binding{RuntimeManifestSHA256: o.RuntimeManifestSHA256, RequestID: o.RequestID, RunID: o.RunID, ProducerSHA256: o.ProducerSHA256,
-		HistoryStart: o.HistoryStart, Step: o.Step, Role: o.Role, SourceSHA256: o.SourceSHA256, SourceBytes: o.SourceBytes, PreviousSourceSHA256: previous}
+		HistoryStart: o.HistoryStart, Step: o.Step, Role: o.Role, SourceSHA256: o.SourceSHA256, SourceBytes: o.SourceBytes, PreviousSourceSHA256: previous, Runtime: runtime}
 }
 
 // Step is one public step of a case: Native says a native parse ran in it and Edit that the
@@ -104,6 +130,18 @@ type Step struct {
 // native parse is missing: FAIL in a completed case, BLOCKED in one that ended early. Live
 // execution and replay share it so both read the same steps the same way.
 func CaseClaim(steps []Step, completed bool) string {
+	return caseClaim(steps, completed, nil, true)
+}
+
+// CaseClaimWithRuntime evaluates a case's logger claim under an approved logger context.
+func CaseClaimWithRuntime(steps []Step, completed bool, runtime *RuntimePin) string {
+	return caseClaim(steps, completed, runtime, runtime == nil || runtime.Valid())
+}
+
+func caseClaim(steps []Step, completed bool, runtime *RuntimePin, valid bool) string {
+	if !valid {
+		return "FAIL"
+	}
 	var all []Observation
 	missing := false
 	for _, s := range steps {
@@ -117,7 +155,7 @@ func CaseClaim(steps []Step, completed bool) string {
 		}
 		all = append(all, s.Observations...)
 	}
-	claim := Mandatory(all, completed)
+	claim := mandatory(all, completed, runtime, true)
 	if v := map[bool]string{true: "FAIL", false: "BLOCKED"}[completed]; missing && rank[v] > rank[claim] {
 		claim = v
 	}

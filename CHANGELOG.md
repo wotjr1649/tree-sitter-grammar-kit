@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- V2-C의 historical Pins에 runtime tuple을 추가해 eligibility manifest·전체 runtime hash inventory·당시 driver/CP949/shim·ABI와 logger/nativewire를 같은 승인 조합으로 검증한다. Semantic set/raw/cache와 기존 Pins replay/qualification도 같은 context를 소비하며 legacy nil 호출의 결과·schema·한도는 유지한다. Reader 소유83-file/3-patch 의무·위조 거부·생산 A/B/C 불변성을 검사하고 과거 driver 원문을 보존했다. 일반 logger replay·accepted·preprocess-CST와 Roslyn/V2-D, 실제 과거 실행 증거 재평가는 남아 있다. Refs #370.
+
 - V2-B2에서 Rust reference 생산의 selection/set/tuple을 한 context로 고정해 Python acquire/build/test/check와 workflow에 전달하고, semantic API·replay·qualification·CLI에 외부 `Pins` opt-in을 연결했다. 새 semantic r2·`oracle-set-r7`/replay r4·qualification r11은 historical catalogue·tuple의 소비 identity를 보존하며 기존 호출의 schema와 reader 의무·한도를 유지한다. Classification donor/assembly도 독립 승인 context를 사용한다. Historical runtime 전체와 Roslyn(V2-C/D), 실제 새 toolchain 자격 관측은 남아 있다. Refs #370.
 
 - 직접 eligibility에 승인 historical catalogue·Rust tuple을 쓰는 `Pins` opt-in과 r2 결과를 추가했다. 생산 후보가 바뀌어도 같은 과거 증거·승인의 판정을 보존하고 고정 의무9/4/53/36·known-rule와 기존 tool/receipt/source/vendor 검사를 유지한다. V2-B1 Go verifier 분할이며 Python/workflow·classification 및 semantic/replay/CLI/runtime 전달은 남아 있다. Refs #370.

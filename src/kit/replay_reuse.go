@@ -639,6 +639,10 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 // with the raw responses are the reuse-observation gate's (replayObservations). An unreadable
 // step list reads as missing.
 func mandatoryObservations(c *rcCase) (string, []string) {
+	return mandatoryObservationsWithRuntime(c, nil)
+}
+
+func mandatoryObservationsWithRuntime(c *rcCase, runtime *reuseobs.RuntimePin) (string, []string) {
 	steps := make([]reuseobs.Step, len(c.Steps))
 	claims := make([]string, len(c.Steps))
 	for i, s := range c.Steps {
@@ -647,9 +651,9 @@ func mandatoryObservations(c *rcCase) (string, []string) {
 			observations = nil
 		}
 		steps[i] = reuseobs.Step{Native: s.Incremental != nil || s.Composite != nil && s.Composite.Inline != nil, Edit: s.Step > 0 && !s.Restarted, Observations: observations}
-		claims[i] = reuseobs.CaseClaim(steps[i:i+1], true)
+		claims[i] = reuseobs.CaseClaimWithRuntime(steps[i:i+1], true, runtime)
 	}
-	return reuseobs.CaseClaim(steps, c.ExecutionStatus == StatusCompleted), claims
+	return reuseobs.CaseClaimWithRuntime(steps, c.ExecutionStatus == StatusCompleted, runtime), claims
 }
 
 // stepsCounted reports whether a raw response's steps_completed fits its count steps: all of

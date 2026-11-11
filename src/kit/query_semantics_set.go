@@ -316,8 +316,14 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		if e != nil {
 			return e
 		}
-		if policy != reuseobs.Policy || manifest != reuseobs.RuntimeManifestSHA256 {
+		if policy != reuseobs.Policy || manifest != b.runtimeManifest() {
 			return t.bad("SEMANTICS_PRODUCER_INVALID", producer)
+		}
+		if b.runtime != nil {
+			abi := eligibilityProducerABI{LanguageVersion: uint32(numbers["language_version"]), RuntimeLanguageVersion: uint32(numbers["runtime_language_version"]), RuntimeMinCompatible: uint32(numbers["runtime_min_compatible"])}
+			if !b.runtimeABI(abi) {
+				return t.bad("SEMANTICS_PRODUCER_INVALID", producer)
+			}
 		}
 	}
 	projectionValid := true

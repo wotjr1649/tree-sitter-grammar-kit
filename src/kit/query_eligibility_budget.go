@@ -67,6 +67,7 @@ func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
 // One ledger covers repeated work, including conservative reservations for shared leaves.
 type eligibilityBudget struct {
 	r             *run
+	runtime       *eligibilityRuntimePins
 	work, logical uint64
 	logicalLimit  uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
 	err           *Error

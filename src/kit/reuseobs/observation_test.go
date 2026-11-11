@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+var (
+	_ func([]Observation) string       = Judge
+	_ func([]Observation, bool) string = Mandatory
+	_ func([]Step, bool) string        = CaseClaim
+)
+
 func sample() (Observation, Binding) {
 	b := Binding{RuntimeManifestSHA256: RuntimeManifestSHA256, RequestID: "case",
 		RunID: "run-1", ProducerSHA256: strings.Repeat("a", 64),
@@ -115,5 +121,74 @@ func TestObservationRejectsAmbiguousOrUnboundData(t *testing.T) {
 				t.Fatal("accepted ambiguous or unbound observation")
 			}
 		})
+	}
+}
+
+func TestApprovedHistoricalRuntimeLogger(t *testing.T) {
+	historical := strings.Repeat("d", 64)
+	o, b := sample()
+	o.RuntimeManifestSHA256, b.RuntimeManifestSHA256 = historical, historical
+	raw := encode(t, o)
+	if _, err := Decode(raw, b); err == nil {
+		t.Fatal("legacy binding accepted an unlisted runtime")
+	}
+	pin, err := NewRuntimePin(historical, RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b.Runtime = &pin
+	if _, err := Decode(raw, b); err != nil {
+		t.Fatalf("approved historical binding rejected: %v", err)
+	}
+	wrong, err := NewRuntimePin(strings.Repeat("e", 64), RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b.Runtime = &wrong
+	if _, err := Decode(raw, b); err == nil {
+		t.Fatal("binding accepted a different approved manifest")
+	}
+	if _, err := NewRuntimePin(historical, "tsgk-runtime-logger/r2"); err == nil {
+		t.Fatal("accepted an unsupported logger reader")
+	}
+	if _, err := NewRuntimePin("not-a-digest", RuntimeLoggerReader); err == nil {
+		t.Fatal("accepted a malformed manifest digest")
+	}
+}
+
+func TestClaimsCarryApprovedHistoricalRuntime(t *testing.T) {
+	historical := strings.Repeat("d", 64)
+	o, _ := sample()
+	o.RuntimeManifestSHA256 = historical
+	pin, err := NewRuntimePin(historical, RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := Judge([]Observation{o}); got != "BLOCKED" {
+		t.Fatalf("legacy Judge accepted historical manifest: %s", got)
+	}
+	if got := Mandatory([]Observation{o}, true); got != "FAIL" {
+		t.Fatalf("legacy Mandatory accepted historical manifest: %s", got)
+	}
+	steps := []Step{{Native: true, Observations: []Observation{o}}}
+	if got := CaseClaim(steps, true); got != "FAIL" {
+		t.Fatalf("legacy CaseClaim accepted historical manifest: %s", got)
+	}
+	if got := JudgeWithRuntime([]Observation{o}, &pin); got != "PASS" {
+		t.Fatalf("approved historical Judge: %s", got)
+	}
+	if got := MandatoryWithRuntime([]Observation{o}, true, &pin); got != "PASS" {
+		t.Fatalf("approved historical Mandatory: %s", got)
+	}
+	if got := CaseClaimWithRuntime(steps, true, &pin); got != "PASS" {
+		t.Fatalf("approved historical CaseClaim: %s", got)
+	}
+	if got := JudgeWithRuntime([]Observation{o}, &RuntimePin{}); got != "FAIL" {
+		t.Fatalf("zero-value pin accepted: %s", got)
+	}
+	otherObservation := o
+	otherObservation.RuntimeManifestSHA256 = strings.Repeat("e", 64)
+	if got := JudgeWithRuntime([]Observation{o, otherObservation}, &pin); got != "FAIL" {
+		t.Fatalf("mixed manifest claim did not fail closed: %s", got)
 	}
 }

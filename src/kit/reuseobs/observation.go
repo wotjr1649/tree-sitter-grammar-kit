@@ -19,6 +19,34 @@ const (
 	MaxRecordBytes        = 4096
 )
 
+const RuntimeLoggerReader = "tsgk-runtime-logger/r1"
+
+// RuntimePin selects the fixed logger reader for one caller-approved manifest.
+// Construct it only after independently approving the manifest and its evidence scope.
+type RuntimePin struct {
+	manifest string
+	reader   string
+}
+
+// NewRuntimePin records a caller-approved manifest for the fixed logger reader.
+// It validates the identity's form, not its provenance or runtime closure.
+func NewRuntimePin(manifestSHA256, reader string) (RuntimePin, error) {
+	if !hash(manifestSHA256) || reader != RuntimeLoggerReader {
+		return RuntimePin{}, errors.New("runtime pin")
+	}
+	return RuntimePin{manifest: manifestSHA256, reader: reader}, nil
+}
+
+// Matches reports whether this pin selects manifest under the supported logger reader.
+func (p RuntimePin) Matches(manifestSHA256 string) bool {
+	return p.reader == RuntimeLoggerReader && hash(p.manifest) && p.manifest == manifestSHA256
+}
+
+// Valid reports whether this value was constructed for the supported logger reader.
+func (p RuntimePin) Valid() bool {
+	return p.Matches(p.manifest)
+}
+
 // VerifiedRuntimeManifest reports whether recorded observations bound to this runtime
 // manifest are read under this policy: the current RuntimeManifestSHA256 (v0.27.1), which
 // live runs must declare, and 659cda7's, whose parser log formats were checked identical (#213).
@@ -71,6 +99,7 @@ type Binding struct {
 	HistoryStart                                                                                      uint64
 	RuntimeManifestSHA256, RequestID, RunID, ProducerSHA256, Role, SourceSHA256, PreviousSourceSHA256 string
 	Step, SourceBytes                                                                                 uint64
+	Runtime                                                                                           *RuntimePin `json:"-"`
 }
 
 func hash(s string) bool { return len(s) == 64 && strings.Trim(s, "0123456789abcdef") == "" }
@@ -158,8 +187,12 @@ func Parse(raw []byte) (Observation, error) {
 }
 
 func validate(o Observation, b Binding) (Observation, error) {
+	approvedManifest := VerifiedRuntimeManifest(b.RuntimeManifestSHA256)
+	if b.Runtime != nil {
+		approvedManifest = b.Runtime.Matches(b.RuntimeManifestSHA256)
+	}
 	if o.Schema != Schema || o.Policy != Policy ||
-		!VerifiedRuntimeManifest(b.RuntimeManifestSHA256) || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
+		!approvedManifest || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
 		!hash(b.SourceSHA256) || o.SourceSHA256 != b.SourceSHA256 ||
 		o.SourceBytes != b.SourceBytes || len(b.RequestID) == 0 || len(b.RequestID) > 128 ||
 		len(b.RunID) == 0 || len(b.RunID) > 128 || o.RunID != b.RunID ||

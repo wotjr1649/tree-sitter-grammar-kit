@@ -22,7 +22,7 @@ func (b *eligibilityBudget) semanticBase(profile OracleProfile, data []byte, cac
 		add("ORACLE_CLAIMS_MISSING", c.ID, "등록된 query/API에 필요한 기존 Oracle claim이 없다")
 	}
 	x := &replayEnv{r: b.r, lim: ReplayOperations()["evidence-replay"], seen: map[string]map[string]bool{},
-		reuseObservation: true, mandatoryObservation: true, errorTreeRoute: true}
+		reuseObservation: true, mandatoryObservation: true, errorTreeRoute: true, observationRuntime: b.runtimeLogger()}
 	claim, computed, e := b.semanticQueryExpectations(profile, cache)
 	if claim == claimFail {
 		res.BaseVerified = Verdict{StatusCompleted, AssessFail}

@@ -1,5 +1,15 @@
 # Validation and merge contract
 
+## #370 V2-C historical runtime 검증
+
+`TestRuntimePinsProductionIndependence`는 pre-#213 manifest/driver에 결속한 합성 저장 증거를 B/C 생산 후보와 독립적으로 판독하고 판정·counter·소비 identity 전체를 비교한다. 새 ABI 상하한과 driver를 가진 승인 조합도 검증하며 legacy historical BLOCKED는 유지한다. `TestRuntimePinsRejectForgery`는 tuple/manifest/driver/ABI·marker/capability/build 결속, 누락,83-file/3-patch 의무 축소·중복·shim·reader·외부 승인 모순을 검사한다. Tuple과 승인 자료 비교를 제거한 overlay mutant는 해당 위조 assertion으로 실패해야 한다.
+
+`TestRuntimePinsSharedAuthority`는 같은 budget을 재사용해도 runtime 권한이 다른 subject로 새지 않는지 확인한다. `TestRuntimePinsStoredIdentity`는 저장 PASS의 tuple/manifest/reader/ABI identity 모순을, `TestRuntimePinsStoredClosureCannotShrink`는 고정8개 자료를 하나씩 삭제하고 counter를 줄인 위조를 거부한다. Runtime 보존 object/set은 기존 `TestEvidencePinsArchive`로 함께 검사한다. 저수준 reuseobs/nativewire의 역사 token 검사와 의미·source/run binding, 기존 nil 함수 signature도 유지한다.
+
+`TestSemanticRuntimePinsProductionIndependence`는 기존 전체 native fixture의 manifest Note만 바꾼 합성 비현재 identity로 semantic API와 `oracle-set-r7` replay의 전체 PASS와 B/C 결과 불변성을 검사한다. 실제 보존된 runtime body·driver를 유지하며 미보존 pre-#213 checkout을 만들어 내지 않는다. Semantic base의 mandatory logger 재계산도 같은 context를 사용해야 한다. `TestQualificationRuntimePinsProductionIndependence`와 `TestQualificationRuntimePinsRejectForgery`는 별도의 합성 비현재 manifest를 실제 qualification→replay→eligibility까지 전달하고 A/B/C·미승인·tuple/driver 모순·필수 driver 누락을 검사한다. 이 qualification fixture는 의도적으로 불완전한 Oracle set에서 중단하므로 전체 qualification PASS가 아니다. 지정 runtime 환경의 SKIP은 PASS로 세지 않으며, 합성 관측은 실제 historical runtime 실행이나 새 ABI 자격 근거가 아니다.
+
+`CGO_ENABLED=0`에서 gofmt·`go vet ./src/...`·`go build ./src/...`, kit 전체·CLI 전체·영향 native·foundation 전체(`TestNoHardcodedToolVersions` 포함)를 실행한다. Native 환경은 지정한 `TSGK_NATIVE_RUNTIME`와 `TSGK_NATIVE_CC`를 사용한다. Accepted·preprocess-CST·일반 logger replay의 historical 통합과 실제 reference 실행·필수 CI/PR/main 통합은 별도 범위다.
+
 ## #370 V2-B2 생산·공개 pin 전달 검증
 
 `TestSemanticPinsForwarding`, `TestReplaySemanticPinsForwardingAndProductionIndependence`는 생산 A/B/C 선택과 별도로 같은 historical 승인·자료를 semantic API와 replay에 전달해 nested eligibility의 r2·소비 identity·공유 counter 및 결과 불변성을 확인한다. 이 source-only fixture는 실제 eligibility를 평가한 뒤 의도적으로 불완전한 Oracle set에서 중단한다. 이를 전체 semantic PASS나 실제 native/reference 실행 관측으로 세지 않는다. `TestSemanticPinsRejectForgery`와 `TestReplaySemanticPinsRejectUnapprovedAndReducedCatalogue`는 미승인·위조·축소 catalogue가 전달 경계에서 사라지지 않는지 검사한다. `TestSemanticPinsEarlySchema`는 조기 오류의 opt-in schema를 보존한다.

@@ -33,6 +33,7 @@ type eligibilitySession struct {
 	reg                               eligibilityRegistration
 	witness                           eligibilityWitness
 	referenceTuple                    *eligibilityReferenceTuple
+	runtime                           *eligibilityRuntimePins
 	catalogue                         eligibilityCatalogue
 	snapshot                          *evidenceSnapshot
 	cohorts                           map[string]eligibilityCohort
@@ -125,6 +126,10 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		b = &eligibilityBudget{r: r}
 		r.eligibility = b
 	}
+	// A shared budget must not carry another subject's runtime authority.
+	previousRuntime := b.runtime
+	b.runtime = nil
+	defer func() { b.runtime = previousRuntime }()
 
 	s := &eligibilitySession{r: r, b: b, res: &res, bound: true, invocationTuples: map[string][]int{}, failedInvocations: map[string]bool{}, cohorts: map[string]eligibilityCohort{}, provenance: map[string]eligibilityProvenance{}, invocations: map[string]*eligibilityInvocation{}, catalogueInvocations: map[string]*eligibilityInvocation{}, tools: map[string]eligibilityTool{}, owned: map[string]eligibilityMember{}, nodes: map[string]EvidenceNode{}, owners: map[string]string{}, ready: map[string]bool{}, build: map[string]string{}, units: map[string]string{}, control: map[string]string{}, assertions: map[string]string{}, tuples: map[int]string{}, outputs: map[string]*eligibilityOutput{}}
 	if scope != nil {
@@ -190,6 +195,12 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		return res, e
 	}
 	if req.Pins != nil && (res.Pins == nil || res.Pins.Assessment != AssessPass || !s.bound) {
+		return res, nil
+	}
+	if e := s.runtimePins(req.Pins); e != nil {
+		return res, e
+	}
+	if !s.bound {
 		return res, nil
 	}
 	if e := b.charge(3, uint64(len(req.Approval)+len(req.Registration)+len(req.WitnessRegistration)), "caller-digests"); e != nil {

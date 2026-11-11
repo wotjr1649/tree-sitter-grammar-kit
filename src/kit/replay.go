@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 // Replay schemas and the evidence modes and assessments S07 adds to E0.
@@ -523,12 +524,13 @@ type replayEnv struct {
 	acceptedLegacyConsumer func(string, caseOutcome, string)
 	nativeInputBytes       uint64
 	reuseObservation       bool
-	mandatoryObservation   bool             // r4: the observation claim is mandatory and folds into the verdict
-	preprocess             bool             // r5: the C# symbol mode (#218)
-	preprocessTrees        []preprocessTree // r5: every symbol-mode tree, for its policy
-	selectionRoute         bool             // r6: a disjoint active-selection switch can block reuse
-	selectionSteps         []PreprocessStep // recomputed from the guarded original witness
-	selectionBytes         []uint64         // source version lengths, never recorded projections
+	observationRuntime     *reuseobs.RuntimePin // Set only by an approved historical semantic consumer.
+	mandatoryObservation   bool                 // r4: the observation claim is mandatory and folds into the verdict
+	preprocess             bool                 // r5: the C# symbol mode (#218)
+	preprocessTrees        []preprocessTree     // r5: every symbol-mode tree, for its policy
+	selectionRoute         bool                 // r6: a disjoint active-selection switch can block reuse
+	selectionSteps         []PreprocessStep     // recomputed from the guarded original witness
+	selectionBytes         []uint64             // source version lengths, never recorded projections
 	preprocessCST          bool
 	currentCST             *PreprocessCSTResult
 	preprocessCSTResults   []PreprocessCSTCase

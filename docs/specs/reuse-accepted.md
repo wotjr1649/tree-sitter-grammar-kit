@@ -1,5 +1,7 @@
 # Accepted reuse 증거 계약 (#264)
 
+[#370 V2-C](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)의 eligibility/semantic runtime 지원은 이 accepted API와 replay의 current-only 제약을 변경하지 않는다. Historical accepted-event reader와 공개·중첩 context 전달은 남은 구현 범위다.
+
 이 문서의 현재 runtime manifest 제약은 기존 accepted reader의 경계다. [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 자료 결속만 추가하며 이를 완화하지 않는다. 후속 accepted opt-in은 독립 승인된 기록 manifest·accepted-event reader·전체 closure를 같은 문맥으로 전달해야 한다. event≥1·full fresh CST·source/edit 재계산 의무는 유지한다.
 
 이 기능은 실험적이며 caller가 `--reuse-accepted FILE`로 고정 원장을 명시한 실행에만 적용한다. `FILE`은 [original 원장](../../src/testdata/native/reuse-holdouts.json)이며 입력 root 밖에 있어야 한다. 기존 `reuseobs.Mandatory`, `CaseClaim`, `Judge`, public `TSNode.id` 교집합으로 계산한 `route.proven`과 과거 revision의 판정은 유지한다.
