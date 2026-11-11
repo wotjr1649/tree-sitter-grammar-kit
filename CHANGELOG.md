@@ -4,6 +4,7 @@
 
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
+- Go 기준을 1.27.4로 올렸다(#358). go1.27.4는 cgo, `go` 명령, 컴파일러, 링커, `net/http`의 보안 수정을 담는다. 공개 module의 최소 Go 버전도 1.27.4가 된다. 과거 margin report는 기록 당시의 `go1.27.3`으로 계속 검증된다.
 - foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
 - 도구 버전을 올려도 필수 CI가 막히지 않게 했다(#360).
