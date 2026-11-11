@@ -1,5 +1,7 @@
 # 계측 query reference 계약 (#216)
 
+[#370 V2-A pin 보존·선택](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)이 추가됐다. 기존 생산의 Rust exact pin과 현재 catalogue 비교는 V2-B 소비자 이행 전까지 적용된다. 단일 selection의 후보 원문은 보존되지만 Python/workflow는 아직 이를 읽지 않는다. 후속 V2-B에서는 생산 시작 때 선택한 승인 tuple의 rustc/cargo release를 각각 정확히 검사하고 workflow도 같은 입력을 사용하며, 과거 증거는 당시 승인 tuple로 검증해야 한다. 기존 Rust 경로 의미는 역사 reader의 기준으로 보존한다. 이 자료 보존 단계가 새 reference 실행·자격 검증을 뜻하지 않는다.
+
 ## DartPHP12 단일 frame 정의 분류
 
 Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.
@@ -99,7 +101,7 @@ JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는
 
 `TSGK_QUERY_CLASSIFICATION_PROFILE=csharp15-empty`는 [독립 사전 기대값](../../src/testdata/query-semantics/csharp15-classification-anchors.json)의 빈 UTF-8 source, 편집 없음, API 관측 없음, 단일 `compilation_unit` root와 15개 query를 선택한다. `native-query`와 `Args=["single"]`을 사용한다. ABI 기대값은15/15/13/654/26이며, query metadata는 합계91 patterns·125 capture-name 항목과 명시적 `predicates:[]`다. 각 초기 incremental query의 structural/expected capture는 빈 배열이다. 이는 이 입력의 사전 기대값이며 실제 compiler/native/reference 관측을 대신하지 않는다.
 
-C# parser 원문51,472,926바이트는 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
+16 MiB를 넘는 C# parser 원문(#233 이전 51,472,926바이트, C1–C4 반영 뒤 53,114,064바이트. 크기는 `native-routes.json`의 등록 pin에서 읽는다)은 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
 
 `definitions` stage는 새 graph에 대한 외부 caller approval과 같은 guarded eligibility·CST·request/frame·compiler/library·native/reference metadata·public parity 검사를 통과해야 한다. 일반 query13개와 fact query2개의 원본 bytes를 각각 `csharp.json` 및 `fact-query-pack.json` pin으로 연결한다. 원장의 `csharp/s06-csharp`에 등록된390 cases·125 edits·515 case steps·640 tree roles에서 정의당640개, 합계9,600개 잠재 연결을 재구성한다. 이 분모는 qualification의 API 관측을 포함한 원래 배치 사례에 속하며, 이번 API=false 단일 입력 관측으로 그 사례들을 검증하지 않는다. 결과는 정의15개의 조건부 `STRUCTURAL_ONLY` 분류이며 사례별·semantic 완료와 r1/r10 상태는 유지한다. 출력 보호와 reader/관측 revision 구분은 Go 정의 분류와 같은 조건을 따른다.
 
@@ -151,7 +153,7 @@ PostgreSQL ordinary loader는 원장의 유일한 `postgresql-sql/s06-postgresql
 
 ## TSQL 8개 정의의 binary paging 분류 준비
 
-닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=tsql8-empty`는 [TSQL8 사전 기대값](../../src/testdata/query-semantics/tsql8-classification-anchors.json)의 빈 UTF-8·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 선택한다. 상태는 관측 전 **NOT_RUN**이다. 고정 parser의 시작 state1은 EOF action5에서 `program`을 자식0개·production0으로 reduce하고, goto29728의 EOF action42546에서 accept한다. root 하나는 named·parent−1·field null·모든 error/extra/missing flag false·byte/point0이다. scanner의 초기 상태는 quoted identifier ON·pending GO 없음이며 EOF에서 token을 만들지 않는다. 공개 ABI 기대값은 language15, runtime15/min13, symbols **1386**(`SYMBOL_COUNT1385+ALIAS_COUNT1`), fields88이다. 실제 parse·compiled metadata·reference 실행 결과를 기대값 근거로 사용하지 않았다.
+닫힌 수동 profile `TSGK_QUERY_CLASSIFICATION_PROFILE=tsql8-empty`는 [TSQL8 사전 기대값](../../src/testdata/query-semantics/tsql8-classification-anchors.json)의 빈 UTF-8·편집 없음·API=false·`native-query`·`Args=["single"]`·step0 `NO_ERROR`를 선택한다. source 준비 당시 관측 상태는 **NOT_RUN**이었다. 이후 실제 관측과 조건부 분류는 [TSQL8 보고서](../reports/issue-216-tsql8-classification.md)에 기록한다. 고정 parser의 시작 state1은 EOF action5에서 `program`을 자식0개·production0으로 reduce하고, goto29728의 EOF action42546에서 accept한다. root 하나는 named·parent−1·field null·모든 error/extra/missing flag false·byte/point0이다. scanner의 초기 상태는 quoted identifier ON·pending GO 없음이며 EOF에서 token을 만들지 않는다. 공개 ABI 기대값은 language15, runtime15/min13, symbols **1386**(`SYMBOL_COUNT1385+ALIAS_COUNT1`), fields88이다. 실제 parse·compiled metadata·reference 실행 결과를 기대값 근거로 사용하지 않았다.
 
 원장의 유일한 `tsql/s06-tsql` 그룹은 일반 query6개(`q.structure`, `q.r6-structure`, `q.r6-begin`, `q.probe-v16`, `q.probe-v22`, `q.issue128-ownership`) 뒤에 `facts.declarations`, `facts.dynamic_sql` 순서다. query file11,934바이트와 fact pack9,702바이트를 각각 원문 envelope·길이·SHA·원장 `query_sources`로 결속한다. 사전 pattern 수는 **4/9/2/2/1/3/20/14**, capture-name 수는 **4/10/2/2/1/3/30/24**이며 최초 등장 순서와 명시적 `predicates:[]`를 고정한다. dynamic SQL query의 독립 `";"`도 한 pattern이고 `(program _)`는 자식을 요구하므로 빈 root에서 capture하지 않는다. 원래 분모1000 cases·991 edits·1991 case steps·2982 tree roles·23856 potential links와 ordinary batch/API=true 등록을 보존한다. 이 분모는 빈 입력 관측 횟수가 아니다.
 
@@ -161,7 +163,7 @@ route는 `tsql`, symbol은 `tree_sitter_mssql`, grammar는 고정 parser68,647,1
 
 guarded compiler 재검사는 같은 live `s.member` snapshot의 library descriptor를 decode해 `Logical.Bytes`·`SHA256`를 얻고, compiler 출력과 reference library의 물리 pin 일치 및 8개 response의 hex64 `Grammar.LibrarySHA256` 동일성을 확인한다. descriptor의 schema·owner·logical kind/path·크기·SHA도 교차 확인한다. library를 재조립하지 않고 크기만 compiler 검증기로 넘기며 D3(a)의 compiler byte work·library part work·logical `2×(bytes+parts)`는 유지한다. projection은 같은 완료된 live cache/result에서 binary context·native invocation ID/kind·registration invocation 일치와 driver descriptor path/role/NodeID를 확인한 뒤 witness의 `Native.ExecutableSHA256`를 재사용한다. library SHA는 위 response·descriptor 결속으로 재사용하며 driver/library part를 다시 읽거나 hash하지 않는다. part-swap·missing·extra 및 전체 hash 반례는 core paging 시험이 담당하고 합성 동등성 시험이 재사용 SHA와 `nativePagedDriver`/`nativePagedLibrary` 결과를 대조한다. descriptor 읽기/decode charge는 남는다. 물리16MiB, logical binary64MiB, shared256MiB, work32,000,000, owner/bound eligibility1.5GiB를 변경하지 않는다. Γ1에서 남은 charge로 두 원장의 예상치를 갱신하며 실제 rehearsal 전 90% gate 통과를 주장하지 않는다.
 
-새 외부 approval, 같은 guarded snapshot의 CST/ABI/metadata·compiler/library·8개 서로 다른 reference invocation·공개 API parity를 실제로 통과한 뒤에만 `definitions` 결과를 채택한다. source 시험은 실행 관측이나 8/8 분류 PASS가 아니다. 원장 `STRUCTURAL_CANDIDATE`·`compiled_metadata=UNVERIFIED`·`semantic_required:null`, r10 `full_scope_complete=false`, 기존 누계122/130과 #216/#195의 미완료 상태를 유지한다.
+새 외부 approval, 같은 guarded snapshot의 CST/ABI/metadata·compiler/library·8개 서로 다른 reference invocation·공개 API parity를 실제로 통과한 뒤에만 `definitions` 결과를 채택한다. source 시험은 실행 관측이나 8/8 분류 PASS가 아니다. 원장 `STRUCTURAL_CANDIDATE`·`compiled_metadata=UNVERIFIED`·`semantic_required:null`, r10 `full_scope_complete=false`, source 준비 당시 누계122/130을 승격하지 않았다. 이후 A6의 조건부 구조 분류 누계는130/130 local candidate이며([TSQL8 보고서](../reports/issue-216-tsql8-classification.md)), 의미 미평가와 #216/#195 미완료는 유지한다.
 
 Windows의 source/reader `29ecdef`에서 실제 관측·외부 caller approval·guarded 정의 검증을 확인한 범위는 [TSQL8 보고서](../reports/issue-216-tsql8-classification.md)에 기록한다. 8개는 조건부 구조 분류이며 130/130은 서로 다른 source/profile 실행의 local candidate 누계로, 원장의 미검증 metadata·semantic 미평가와 #216/#195 미완료를 유지한다.
 
@@ -212,7 +214,7 @@ Supervisor receipt는 명시적 `tsgk-reference-process/r1`이며 정확히 `sch
 
 ## 결과와 완료 조건
 
-Emitter 인자는 절대 library path, symbol, source path, query path, query ID, 사전 등록 library SHA-256이다. Source는 UTF-8 32 MiB 이하, query는 UTF-8 64 KiB 이하, library는 64 MiB 이하의 regular file이다. Source·query는 읽은 bytes에서 hash와 결과를 계산한다. Library는 실행 전 예상 hash와 비교하고 실행 후 다시 비교한다. 이 검사는 악의적인 동시 파일 교체나 native code 자체를 격리한다는 보장이 아니다. Build archive는 128 MiB 상한의 단일 buffer로 읽어 pinned SHA-256을 확인하고 동일 bytes에서만 tar를 해석한다. 완료 identity 직전 원 archive 경로도 다시 hash하여 남아 있는 변경을 거부한다. 검토·고정한 생성 grammar만 별도 process에서 실행한다. 출력 소유권의 #215 미완료 보장을 이 경로의 hash 검사로 대체하지 않는다.
+Emitter 인자는 절대 library path, symbol, source path, query path, query ID, 사전 등록 library SHA-256이다. Source는 UTF-8 32 MiB 이하, query는 UTF-8 64 KiB 이하, library는 64 MiB 이하의 regular file이다. Source·query는 읽은 bytes에서 hash와 결과를 계산한다. Library는 실행 전 예상 hash와 비교하고 실행 후 다시 비교한다. 이 검사는 악의적인 동시 파일 교체나 native code 자체를 격리한다는 보장이 아니다. Build archive는 128 MiB 상한의 단일 buffer로 읽어 pinned SHA-256을 확인하고 동일 bytes에서만 tar를 해석한다. 완료 identity 직전 원 archive 경로도 다시 hash하여 남아 있는 변경을 거부한다. 검토·고정한 생성 grammar만 별도 process에서 실행한다. 출력 소유권은 완료된 [#215](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/215)의 조건부 범위와 [trust/execution](trust-and-execution.md#215-출력-handle-결속과-미완료-경계)을 따른다. 이 경로의 hash 검사는 그 소유권 보장을 대체하지 않는다.
 
 `tsgk-instrumented-query-reference/r1`은 다음을 제공한다.
 
@@ -259,7 +261,7 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 
 `python src/dev/query-reference/acquire.py --upstream <pinned-checkout> --git <git> --out <new-directory>`는 build·실행 없이 입력만 준비한다. 고정 commit과 pristine checkout을 확인하고 `git archive --format=tar` bytes가 위 archive SHA-256과 같은지 먼저 검사한다. upstream `Cargo.lock`의 registry package만 `static.crates.io`에서 받아 lock checksum과 대조하고, 크기·개수·시간·경로를 제한해 `vendor/`와 `.cargo-checksum.json`, `acquisition.json`을 쓴다. 같은 입력에서 이 결과의 vendor snapshot은 Windows build9–build12 입력과 같다(13,738 file, `8fec9dcc2dc84590867a7add1b33ad36be98c0a1b58634f228a5ce3a2632171c`).
 
-수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, Rust 1.97.1 toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. build identity의 vendor snapshot이 위 값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. 2026-10-25 사용자 결정으로 macOS(`aarch64-apple-darwin`) 신규 검증은 수행하지 않으며 #243은 NOT_PLANNED로 종료했다. 기존 macOS CI와 과거 근거는 유지하고 신규 claim은 macOS SUPPORTED로 승격하지 않는다.
+수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, Rust 1.97.1 toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. build identity의 vendor snapshot이 위 값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. 2026-10-25 사용자 결정으로 macOS(`aarch64-apple-darwin`) 신규 검증은 수행하지 않으며 #243은 NOT_PLANNED로 종료했다. 당시에는 기존 macOS CI와 과거 근거를 유지했다. 이후 #332의 2026-11-07 결정으로 macOS CI도 일시 제외했다([platform](platform-support.md)). 제외 전 근거는 역사로 보존하며 이후 macOS는 NOT_RUN이다. 신규 claim을 macOS SUPPORTED로 승격하지 않는다.
 
 ## 전체 지원 대상 연결의 자격 기준
 
@@ -283,7 +285,7 @@ Caller는 승인 member에 정확히 결속하는 witness 등록 원문도 필�
 
 기존 graph/policy가 선언한 member가 없거나 hash·identity·context·완료 상태가 모순이면 FAIL이다. 유효한 graph에 아직 관측 node/member가 선언되지 않았거나 일관된 producer 실패·native full CST 부재는 BLOCKED다. 실패 response의 code는 고정된 emitter가 실제 직렬화하는 오류 집합에 속해야 하며, 알 수 없는 code는 `REFERENCE_FAILURE_CODE_INVALID`/FAIL이다. 알려진 code라는 사실은 그 실패 원인의 실제 발생을 입증하지 않는다. 누락이 있어도 확보한 다른 response의 모순 검사는 계속한다. 유효한 두 full CST의 차이는 `REFERENCE_CST_INELIGIBLE`/BLOCKED이며 field를 보충하지 않는다. Native와 reference metadata의 확인 가능한 모순은 이 부적격 판정으로 가리지 않는다.
 
-PASS는 외부 승인 기준에 연결한 저장 데이터의 일관성만 뜻한다. 복사한 승인 header를 붙인 fabricated response의 실제 실행 진위는 증명하지 못한다. Manifest의 전체 selected-tree/tool/source/vendor receipt closure 재검증, 독립 실행 진위, qualification eligibility·claim/reducer/inventory/fan-in은 별도 미완료 영역이다. Stock CLI full-field parity의 BLOCKED와 #215의 생성 순간 소유권 공백도 유지한다.
+PASS는 외부 승인 기준에 연결한 저장 데이터의 일관성만 뜻한다. 복사한 승인 header를 붙인 fabricated response의 실제 실행 진위는 증명하지 못한다. Manifest의 전체 selected-tree/tool/source/vendor receipt closure 재검증, 독립 실행 진위, qualification eligibility·claim/reducer/inventory/fan-in은 별도 미완료 영역이다. Stock CLI full-field parity의 BLOCKED는 유지한다. 출력 소유권은 [#215의 조건부 완료 범위](trust-and-execution.md#215-출력-handle-결속과-미완료-경계)를 따르며, macOS 생성 순간의 소유권 공백은 남는다.
 
 입력 identity JSON은 1 MiB, reference binary는 64 MiB 한도를 파일 열기 전 stat과 열린 regular file의 fstat에서 확인한다. JSON은 상한+1까지만 읽고 binary는 스트리밍 hash를 사용한다. 실행 중 파일 크기가 늘어나도 상한을 넘으면 거부한다. `complete`는 JSON boolean `true`만 허용하며 truthy 문자열·숫자로 완료를 대신하지 않는다. Owned control은 identity가 결속한 selected-tree receipt도 직접 확인하고 종료 직전 보존 bytes를 재확인한다. `test_pipeline.py`는 1 GiB sparse 입력의 사전 거부와 완료 값 타입 반례를 포함한다.
 
@@ -376,7 +378,7 @@ P0 registry가 유효해도 독립 기대 자료, 실행 관측, 승인, replay 
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
 
-P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
+P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
 
 `src/kit`의 ordinary planning helpers는 `OrdinaryProfile` (`tsgk-oracle/r4`, `Context OrdinaryContext`), `ParseOrdinaryProfile`, `ParseOrdinaryAssets` (`tsgk-query-ordinary-assets/r1`), `ParseOrdinaryRegistration` (`tsgk-query-semantics-registration/r2`), `BuildOrdinaryShardPlan`, `ParseOrdinaryShardPlan`, `ValidateOrdinaryShardPlan`을 제공한다. Registration은 `registry_pin`, membership namespace, qualification/slot 원문 pin, route/set/platform 및 subject, execution context/closure, candidate/cohort, profile/asset pin, 원래 case selector와 초기 source pin, 순서 있는 전체 edit/version pin/points, query 원문·metadata asset pin, asset basis/review pin, full P0 coordinate·ID, planned members를 연결한다. Policy/limits는 pinned profile을 통해 결속한다. Plan은 registration pin을 단방향으로 참조한다. P0 ID는 기존 membership namespace와 전체 canonical coordinate로만 계산한다. 새 execution context를 P0 `context`에 덮어쓰거나 registry 전체를 다시 hash해 기존 selector를 대체하지 않는다. ID 분리 기준의 context는 P0 membership context다. 같은 source bytes를 쓰는 다른 case·history·host의 기존 membership coordinate는 각각 보존하고, 새 execution context는 그 P0 ID를 바꾸지 않는다.
 
@@ -421,7 +423,7 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
-이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=662는 #233 C1–C4 반영 parser의 SYMBOL_COUNT658+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
 
 ## #216 binary paging
 

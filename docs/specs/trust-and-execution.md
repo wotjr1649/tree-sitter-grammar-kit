@@ -2,6 +2,8 @@
 
 ## 신뢰 경계
 
+[#370 V2-A pin resolver](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 graph 밖 caller의 승인 sidecar digest와 pin 집합 digest를 별도로 요구한다. 저장소의 selection pointer·집합·evidence 내부 승인 목록은 신뢰 root가 아니다. 이 byte-input API는 경로를 열지 않으며 입력 이름의 portable/중복/미사용 검사를 수행한다. PASS는 역사 자료의 원문 결속에 한정된다. 후속 CLI·nested API 통합에서 기존 admission·alias·공유 예산을 생략할 수 없다.
+
 grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다. source 안 명령·URL·환경 설정은 실행 승인이나 신뢰 anchor가 아니다. 악성 path로 source 밖을 읽거나 쓰기, JS/lifecycle 실행, 결과 주입, 압축 폭탄, child process 잔류가 주요 abuse case다. READ_DATA 경로는 process/network capability를 갖지 않는 package로 분리하며 인자·크기·path·형식을 먼저 검증한다.
 
 | capability | 범위 |

@@ -110,10 +110,7 @@ func (v *Validated) Fold(shards []Shard, missingInput bool) (Coverage, error) {
 			}
 		}
 	}
-	missingAssets := false
-	for _, asset := range v.registry.Assets {
-		missingAssets = missingAssets || asset.State == "UNAVAILABLE"
-	}
+	missingAssets := v.missingAssets()
 	for _, coordinate := range v.coordinates {
 		counter := &out.Counters[indices[setKey(coordinate)]]
 		j, exists := judgments[coordinate.ID(v.registry.Namespace)]
@@ -125,39 +122,18 @@ func (v *Validated) Fold(shards []Shard, missingInput bool) (Coverage, error) {
 			}
 			continue
 		}
+		if err := v.checkJudgment(coordinate, j, missingAssets); err != nil {
+			return fail(err)
+		}
 		switch j.State {
 		case "VERIFIED":
-			// shortcut: large subjects are blocked in P0; add subject checks with the large adjudicator.
-			if missingAssets && coordinate.Kind != Control || j.Code != "" {
-				return fail(invalid("REGISTRY_UNAVAILABLE_VERIFIED", nil))
-			}
-			if coordinate.Kind == Control {
-				var probe *Probe
-				for i := range v.registry.Probes {
-					if v.registry.Probes[i].ID == coordinate.Case {
-						probe = &v.registry.Probes[i]
-						break
-					}
-				}
-				if probe == nil || j.Subject == nil || *j.Subject != (Subject{probe.Status, probe.Code, probe.Evaluation, probe.Partial, probe.Structural, probe.Expected}) {
-					return fail(invalid("REGISTRY_CONTROL_SUBJECT", nil))
-				}
-			} else if j.Subject != nil {
-				return fail(invalid("REGISTRY_POSITIVE_RECLASSIFIED", nil))
-			}
 			counter.Verified++
 		case "FAILED":
-			if j.Code == "" {
-				return fail(invalid("REGISTRY_FAILURE_CODE", nil))
-			}
 			counter.Failed++
 			if out.Verdict != "FAIL" {
 				out.Verdict, out.Code = "FAIL", j.Code
 			}
 		case "BLOCKED":
-			if j.Code == "" {
-				return fail(invalid("REGISTRY_BLOCKED_CODE", nil))
-			}
 			counter.Blocked++
 		case "UNPROCESSED":
 			if missingInput || missingAssets && coordinate.Kind != Control {
@@ -165,18 +141,64 @@ func (v *Validated) Fold(shards []Shard, missingInput bool) (Coverage, error) {
 			} else {
 				counter.Unprocessed++
 			}
-		default:
-			return fail(invalid("REGISTRY_COVERAGE_STATE", nil))
 		}
 	}
 	return out, nil
 }
 
+func (v *Validated) missingAssets() bool {
+	for _, asset := range v.registry.Assets {
+		if asset.State == "UNAVAILABLE" {
+			return true
+		}
+	}
+	return false
+}
+
+// checkJudgment validates one judgment's state, code and subject against its coordinate.
+func (v *Validated) checkJudgment(coordinate Coordinate, j Judgment, missingAssets bool) error {
+	switch j.State {
+	case "VERIFIED":
+		// shortcut: large subjects are blocked in P0; add subject checks with the large adjudicator.
+		if missingAssets && coordinate.Kind != Control || j.Code != "" {
+			return invalid("REGISTRY_UNAVAILABLE_VERIFIED", nil)
+		}
+		if coordinate.Kind == Control {
+			var probe *Probe
+			for i := range v.registry.Probes {
+				if v.registry.Probes[i].ID == coordinate.Case {
+					probe = &v.registry.Probes[i]
+					break
+				}
+			}
+			if probe == nil || j.Subject == nil || *j.Subject != (Subject{probe.Status, probe.Code, probe.Evaluation, probe.Partial, probe.Structural, probe.Expected}) {
+				return invalid("REGISTRY_CONTROL_SUBJECT", nil)
+			}
+		} else if j.Subject != nil {
+			return invalid("REGISTRY_POSITIVE_RECLASSIFIED", nil)
+		}
+	case "FAILED":
+		if j.Code == "" {
+			return invalid("REGISTRY_FAILURE_CODE", nil)
+		}
+	case "BLOCKED":
+		if j.Code == "" {
+			return invalid("REGISTRY_BLOCKED_CODE", nil)
+		}
+	case "UNPROCESSED":
+	default:
+		return invalid("REGISTRY_COVERAGE_STATE", nil)
+	}
+	return nil
+}
+
 // firstConfirmedFailure is the code of the first FAILED judgment, in consumption order, whose
-// shard binding and coordinate are valid; anything after the first defect is not confirmed.
+// shard binding, coordinate, state, code and subject are valid and follow only valid judgments;
+// anything after the first defect is not confirmed.
 func (v *Validated) firstConfirmedFailure(shards []Shard) string {
 	seenShards := map[string]bool{}
 	seen := map[string]bool{}
+	missingAssets := v.missingAssets()
 	for _, shard := range shards {
 		if shard.ID == "" || seenShards[shard.ID] || shard.RegistrySHA256 != v.sha {
 			return ""
@@ -184,7 +206,7 @@ func (v *Validated) firstConfirmedFailure(shards []Shard) string {
 		seenShards[shard.ID] = true
 		for _, j := range shard.Judgments {
 			c, exists := v.byID[j.ID]
-			if !exists || c != j.Coordinate || c.ID(v.registry.Namespace) != j.ID || seen[j.ID] {
+			if !exists || c != j.Coordinate || c.ID(v.registry.Namespace) != j.ID || seen[j.ID] || v.checkJudgment(c, j, missingAssets) != nil {
 				return ""
 			}
 			seen[j.ID] = true

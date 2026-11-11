@@ -1,6 +1,6 @@
 param([Parameter(Mandatory)][string]$Destination)
 $ErrorActionPreference='Stop'
-if($PSVersionTable.PSVersion.Major -ne 7){throw 'PowerShell 7 required'}
+if($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell 7 required'}
 $approval=Join-Path $PSScriptRoot 'approval.ps1'
 $subject='9e07792474be6b96406cba915c30c90696a42299ffa9dd8ac60324b3b7a69367'
 & $approval -Profile archive-r1

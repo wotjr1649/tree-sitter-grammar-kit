@@ -5,10 +5,26 @@
 - P2-A에서 P0 registry core 공용화와 strict ordinary profile/asset/registration/shard-plan, source-only planner를 추가하며 106,208개 ID의 exact union과 기존 small 한도를 유지한다. 예산 재검토는 pass당 qualification-inventory+registry decode 353,877,949 B와 reference row 추정의 과소 산정을 반영한다; historical #366 anchor 진단에서 body 전 여유는 PostgreSQL −297,750,339 B, TSQL −341,653,347 B이고, reference 기존→수정 추정은 PG nominal 10,809,604→30,249,029 B, TSQL nominal 58,141,956→177,534,284 B, dense 232,269,572→708,656,264 B이며 수정값은 upper bound가 아니다. K0–K4 절감이나 cap 변경을 적용하지 않고 SQL은 `CAPACITY_UNPROVEN`/BLOCKED로 보존하며, P2-B/C producer·reader·replay는 제외한다(Refs #362).
 - P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
 
+- C# pragma tail에서 verbatim 문자열의 doubled quote를 raw opener로 오인해 다음 실제 directive를 잃던 회귀를 교정했다(#233). `@`·`$@`·`@$`, 일반 문자열 escape 및 char literal의 정상30개 native 회귀를 추가하고 scanner와 파생 registry identity를 갱신했다.
+
+- C#의 #233 lexical recovery 잔여 후보(C1–C4)를 제품 C2 patch chain에 반영했다: malformed single-line raw token의 newline 소유, q−1/q+1 raw closing, `#pragma` raw tail의 내부 directive 차단, `#line` filename 뒤 block comment의 오류 유지. directive 뒤 `//` comment는 정상 comment로 받고 pragma 꼬리는 기존 `preproc_arg` CST를 보존한다. 원본 157개 중 정상 88개의 CST 변화는 0이고, 허용된 교정은 고정 Roslyn 근거의 raw 2·pragma 2·`#if A // note` 1, 총 5건이다. S05 C# 361·S06 C# 390이 모두 통과하고 SVC는 기존 BLOCKED 1건 외 통과한다.
+
+- ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
+
+- 독립 승인한 sidecar·pin 집합의 원문 digest로 역사 자료를 결속하는 `ResolveEvidencePins`와 단일 생산 후보 원문을 선택하는 `SelectEvidenceProductionPin`을 추가했다. Content-addressed 보존 집합과 A/B/C 생산 선택 불변성·위조 거부 시험을 제공한다. V2-A의 PASS는 자료 결속에 한정되며 Rust/catalogue 생산·검증 이행(V2-B)과 runtime·semantic 통합(V2-C/D)은 남아 있다. Refs #370.
+
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
+- Go 기준을 1.27.4로 올렸다(#358). go1.27.4는 cgo, `go` 명령, 컴파일러, 링커, `net/http`의 보안 수정을 담는다. 공개 module의 최소 Go 버전도 1.27.4가 된다. 과거 margin report는 기록 당시의 `go1.27.3`으로 계속 검증된다.
+- foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
+- 같은 guarded semantic session에서 paging part의 검증 identity와 완성된 logical identity를 재사용한다(Refs #362). Private record가 retained bytes를 소유하고 일반 caller에는 복사본을 주며, 전체 chain·외부 profile/build pin과 set의 member/owner/closure 검증을 유지한다. Record 관리 비용을 별도 과금하고 semantic/replay의 1 GiB와 standalone의 기존 검증 경로를 유지한다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.
+- 도구 버전을 올려도 필수 CI가 막히지 않게 했다(#360).
+  - margin gate는 과거 보고서의 Go 버전을 이전 버전 목록 대신 release 형식으로 받는다. 그래서 Go 기준을 올릴 때 `go.mod`만 바꾸면 된다.
+  - 재현 등록부 시험은 tree-sitter·Node 버전 리터럴 대신 형식과 asset 이름의 일관성을 검사한다.
+  - PowerShell 버전 검사 15곳은 `Major -lt 7`(하한)로 바꿨다. Windows PowerShell 5는 계속 거부한다.
+  - guard 시험 `TestNoHardcodedToolVersions`가 정확한 PowerShell major 비교와, 시험 밖에 쓴 Go release 리터럴의 재유입을 막는다.
 - `src/internal/native` 시험의 중복 C 문법 compile을 줄였다(#352). batch 대조 시험은 set을 한 번 만들어 복사본을 변형하고, 순차 Oracle을 실행하는 두 시험은 시험 전용 build cache를 공유한다. 전역을 쓰지 않는 직렬 시험 6개는 병렬로 돌린다. 시험 수와 판정은 같다(PASS 916·SKIP 23). 로컬 Windows 교대 측정에서 base 146.1·145.4·143.9초, head 106.3·108.2초였다. CI 여유는 자연 표본으로 따로 판정한다.
 - Windows·Linux foundation의 13분 step과 native 명령 wall(420초 한도에 대한 보수적 대용값)을 margin 계측에 추가하고, 다른 source의 과거 report에 신규 4개 ID 누락을 제한적으로 허용한다(#352). 성능 개선이 아니며 새 구성 표본은 n=1부터 시작하므로 n20·70% 여유 달성은 별도 관측이 필요하다.
 - 보호된 파일 읽기가 파일마다 1 MiB 버퍼를 0으로 채워 할당하던 비용을 없앴다(#303). 버퍼를 `min(1 MiB, 파일 크기+1)`로 잡으며 읽은 bytes·hash·오류 판정은 같다. 로컬 Windows `src/kit` 시험 3쌍에서 63.9→46.4·81.3→66.7·74.8→55.9초였고, host 부하 변동이 포함된 값이라 CI 여유는 자연 표본으로 따로 판정한다.

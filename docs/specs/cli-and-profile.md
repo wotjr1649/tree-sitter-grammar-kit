@@ -1,5 +1,7 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
+[#370 V2-A 역사 자료 pin](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)은 Go byte-input API만 제공한다. CLI flag·profile·reducer revision은 추가하지 않는다. 후속 CLI opt-in은 graph 밖 caller 승인 문서와 정확한 집합 digest를 받고 기존 trust-document file identity·hardlink/reparse/alias·문서 수·공유 예산 admission을 함께 유지해야 한다.
+
 S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을(C2는 둘을 기대값 anchor가 있는 r2로 바꿨다), S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했고 C2는 이를 r2를 거쳐 r3으로 바꿨다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
 ## 공통 입출력과 오류
