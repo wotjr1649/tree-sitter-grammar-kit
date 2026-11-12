@@ -9,6 +9,15 @@
 - `go run ./src/dev/csharp-g1-ledger -root .`는 추적 asset이 유도 결과와 같음을 확인한다.
 - 아직 검증하지 않는 것: 대안별 기대값(G1-2 이후), `LITERAL_MATCH`의 구문 정확성, Roslyn 관측.
 
+## #233 G1-3a 기대값·매핑표 검증
+
+- 계약: [기대값·매핑표 계약](../specs/csharp-g1-expected.md). 기대값 asset은 native를 처음 실행하기 전의 봉인이며 native 결과를 읽지 않는다. `kit` 시험과 생성 명령(`go run ./src/dev/csharp-g1-expected`, `csharp-g1-kindmap`)은 native·Roslyn·`dotnet`을 실행하지 않는다.
+- `kit` 시험(native 없음): `TestCSharpG1ExpectedSealedAndBound`는 기대값 asset과 매핑표의 크기·SHA-256을 고정하고, 대안 505개의 순서·상태(EXPECTED 426·BLOCKED 79, 근거 spec-derived 350·differential-oracle 76)·witness 한도와 span·어휘, 처분 없는 불일치 0, 표본 감사 26개(B01 21·B02 5, 불일치 0), 변형 80개(모두 구조 동일), symbols 문맥 13건, 원장이 정확히 EXPECTED 426개를 `SEALED`로 봉인함을 확인한다. `TestCSharpG1KindMap`은 Roslyn 종류 461종 전부(1:1 365·1:n 68·대응 없음 28)와 등록 사례의 기대 type 203종이 어휘에 있음, 고정 lexeme과 관측의 일치를 확인한다.
+- 분리: `TestCSharpG1ExpectedSeparation`은 도출 경로가 파일·process·native 패키지를 import하지 않고 native 입력을 가리키는 식별자가 없으며, 명세 도출기가 관측·매핑표·기대값을 가리키지 않고, asset의 pin이 선언·사례 fixture·관측·매핑표뿐임을 코드 구문 분석으로 보인다.
+- 반례: `TestCSharpG1ExpectedRejectsTampering`(pin, 대안 누락·중복·교환·승격, witness 이동·추가·삭제, type·근거·사유·절 변조, 대조·symbols·감사·변형·집계 변조, 봉인되지 않은 변형, 잘린·빈·크기 초과·알 수 없는 member·schema·정규 bytes 위반), `TestCSharpG1KindMapRejectsTampering`, `TestCSharpG1AuditDetectsWrongHand`(손 도출이 기대값과 다른 경우를 감사가 보고함), `TestCSharpG1SpecForms`(어휘 형식·escape·주석·지시문 단위 시험)와 원장 시험의 SEALED 반례를 정해진 code로 거부한다.
+- mutant: 기대값 verifier(pin·비교·처분·봉인·bytes·크기·알 수 없는 member·schema), 원장 봉인 규칙, 명세 대조(예약어·구두점·지시문·수락 필터), 표본 선택·손 도출 비교, 변형 생성, 위치 찾기 규칙, 명세 형식, 매핑표 verifier를 각각 끈 mutant가 모두 시험으로 검출된다.
+- 아직 검증하지 않는 것: native 비교(`EXECUTED`), BLOCKED 대안, B03 이후 행, 표본 밖의 Roslyn 오류율, 이 관측을 다른 SDK·OS에서 다시 만든 결과(Q6 nightly).
+
 ## #233 G1-2 Roslyn 관측 검증
 
 - 계약: [Roslyn 관측 계약](../specs/csharp-g1-ledger.md#roslyn-관측-계약-g1-2). 관측 asset은 SDK 10.0.401의 Roslyn DLL이 원장 사례 source 514개에서 보인 행동이며 기대값이 아니다. `kit` 시험과 `go run ./src/dev/csharp-g1-roslyn-asset`은 native·Roslyn·`dotnet`을 실행하지 않는다. 관측 도구(`src/dev/csharp-g1-roslyn`, 모드 `g1`·`pp-r2`·`pp-r3`. 옛 `csharp-pp-oracle`을 대체했다)는 개발용이며 CI에서 실행하지 않는다.

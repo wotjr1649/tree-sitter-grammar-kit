@@ -5,7 +5,7 @@
 ## 범위와 상태
 
 - 대상은 inventory(`qualification-c1.json`)의 `csharp` route 15행(B01–B05, V73, V08–V13, V14a/b/c)의 필수 kind 의무 65개(P15·N15·R9·E12·Q12·W2), `feature-alternatives.json`의 production 1,425·fact 106 = 대안 1,531개, 등록 사례 389개(514 step), 선언 node 20종, 그리고 C#을 실행하는 추가 역할(`n461-svc`, `n461-large`, `csharp-symbols`)이다.
-- 의무의 상태는 `NO_EXPECTED`, `SEALED`, `EXECUTED` 중 하나다. 이 revision은 모든 의무가 `NO_EXPECTED`이며 verifier는 다른 상태를 `G1_LEDGER_STATUS`로 거부한다. `SEALED`(독립 기대값 봉인)와 `EXECUTED`(실행 근거 대조)는 기대값 asset을 갖춘 뒤의 revision이 허용한다.
+- 의무의 상태는 `NO_EXPECTED`, `SEALED`, `EXECUTED` 중 하나다. `SEALED`는 독립 기대값이 봉인됐다는 뜻이고 `EXECUTED`는 실행 근거와 대조했다는 뜻이다. `csharp-B01`·`csharp-B02`의 대안은 기대값 asset([기대값 계약](csharp-g1-expected.md))이 `EXPECTED`로 가진 것만 `SEALED`이고 나머지(`BLOCKED` 대안과 다른 행의 모든 대안)는 `NO_EXPECTED`다. 한 행의 P 의무는 그 행의 모든 대안이 `SEALED`일 때만 `SEALED`다. verifier는 상태가 기대값 asset의 `EXPECTED` 집합과 같을 때만 받아들이며(`G1_LEDGER_ALTERNATIVE`·`G1_LEDGER_ROWS`), `EXECUTED`와 그 밖의 값은 `G1_LEDGER_STATUS`로 거부한다. 원장은 기대값 asset의 bytes를 pin하지 않는다(관측 asset이 원장을, 기대값 asset이 관측 asset을 pin하므로 되돌아 pin하면 순환이다). 기대값 asset은 `SEALED`가 없는 원장 유도 결과(상태 미설정)에서 나온다.
 - 원장은 기대값을 만들지도 베끼지도 않는다. 사례가 이미 등록한 기대 node type(`contains`와 anchor의 type)을 사례 step별로 옮겨 적을 뿐이며, 이는 대안별 기대값이 아니다.
 
 ## 입력과 결속
@@ -55,7 +55,7 @@
 |---|---|
 | `G1_LEDGER_JSON`, `_SCHEMA`, `_SIZE` | 형식, schema, 크기 |
 | `G1_LEDGER_PIN` | 입력 파일의 경로·bytes·SHA-256, fixture pin 목록 |
-| `G1_LEDGER_STATUS` | `NO_EXPECTED` 아닌 상태(사실상의 기대값 주장) |
+| `G1_LEDGER_STATUS` | `NO_EXPECTED`·`SEALED` 밖의 상태(`EXECUTED` 등) |
 | `G1_LEDGER_ROWS` | 행·kind 의무·분모·사례 연결의 변조 |
 | `G1_LEDGER_ALTERNATIVE_MISSING`, `_DUPLICATE`, `_EXTRA`, `_ORDER` | 대안의 누락·중복·추가·순서 |
 | `G1_LEDGER_ALTERNATIVE`, `_CASES`, `_DECLARATIONS`, `_OUTSIDE_MAPPING`, `_ROLES`, `_COUNTS` | 각 절의 내용 |

@@ -38,6 +38,7 @@ func g1Load(t *testing.T) g1Assets {
 			Alternatives: read("../contracts/feature-alternatives.json"),
 			FactMapping:  read("../contracts/fact-mapping.json"),
 			Fixtures:     map[string][]byte{},
+			Expected:     read("../contracts/csharp-g1-expected-b01b02-r1.json"),
 		}
 		for _, dir := range csharpG1Fixtures {
 			a.src.Fixtures[dir] = read("../testdata/native/" + dir + "/csharp.json")
@@ -62,7 +63,7 @@ func g1Code(err error) string {
 
 func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	a := g1Load(t)
-	if len(a.asset) != 713396 || digestHex(a.asset) != "85ad5f9754bfa015c586818e29da2d5e729b4f8d6b7a7913ea402709c1a28290" {
+	if len(a.asset) != 711266 || digestHex(a.asset) != "42863f7c74ab81b09183c42759b4c929c2dd5604473b0d8f17dbb7bbad7a27d1" {
 		t.Fatalf("sealed ledger changed: %d/%s", len(a.asset), digestHex(a.asset))
 	}
 	x, err := ParseCSharpG1Ledger(a.asset, a.src)
@@ -81,6 +82,7 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	for _, r := range x.Rows {
 		got[r.Row] = r.Alternatives
 		for _, o := range r.Obligations {
+			// no row has every alternative sealed (blocked alternatives stay NO_EXPECTED), so no obligation is SEALED
 			if o.Status != G1NoExpected || len(o.Links) == 0 {
 				t.Errorf("%s %s: status %q links %d", r.Row, o.Kind, o.Status, len(o.Links))
 			}
@@ -107,6 +109,24 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 			}
 		}
 	}
+	// SEALED is exactly the set the expected asset holds EXPECTED (G1-3a); the asset is verified in its own test
+	var expDoc struct {
+		Alternatives []struct {
+			ID, Status string
+		}
+	}
+	if err := json.Unmarshal(a.src.Expected, &expDoc); err != nil {
+		t.Fatal(err)
+	}
+	sealed := map[string]bool{}
+	for _, e := range expDoc.Alternatives {
+		if e.Status == G1ExpExpected {
+			sealed[e.ID] = true
+		}
+	}
+	if len(sealed) != 426 {
+		t.Fatalf("sealed alternatives %d", len(sealed))
+	}
 	var ids []string
 	cases := map[string]bool{}
 	for _, c := range x.Cases {
@@ -114,8 +134,12 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	}
 	for _, alt := range x.Alternatives {
 		ids = append(ids, alt.ID)
-		if alt.Status != G1NoExpected || len(alt.Links) == 0 {
-			t.Errorf("%s: status %q links %d", alt.ID, alt.Status, len(alt.Links))
+		wantStatus := G1NoExpected
+		if sealed[alt.ID] {
+			wantStatus = G1Sealed
+		}
+		if alt.Status != wantStatus || len(alt.Links) == 0 {
+			t.Errorf("%s: status %q want %q links %d", alt.ID, alt.Status, wantStatus, len(alt.Links))
 		}
 		for _, l := range alt.Links {
 			if !cases[l.Case] || len(l.Steps) == 0 {
@@ -274,9 +298,11 @@ func TestCSharpG1LedgerForgeries(t *testing.T) {
 		{"presence promoted", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { last(l).Presence.Status = G1PresenceMatch }},
 		{"literal changed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[0].Presence.Literals = []string{"nothing"} }},
 		{"alternative row changed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[0].Row = "csharp-B02" }},
-		{"alternative sealed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Alternatives[0].Status = G1Sealed }},
+		{"alternative sealed without an expectation", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[0].Status = G1Sealed }},
+		{"sealed alternative unsealed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = G1NoExpected }},
+		{"alternative executed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = G1Executed }},
 		{"obligation executed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Rows[0].Obligations[0].Status = G1Executed }},
-		{"declaration sealed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Declarations[0].Status = G1Sealed }},
+		{"declaration sealed", "G1_LEDGER_DECLARATIONS", func(l *CSharpG1Ledger) { l.Declarations[0].Status = G1Sealed }},
 		{"role status", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.ExtraRoles[0].Status = "PASS" }},
 		{"row dropped", "G1_LEDGER_ROWS", func(l *CSharpG1Ledger) { l.Rows = l.Rows[1:] }},
 		{"kind dropped", "G1_LEDGER_ROWS", func(l *CSharpG1Ledger) { l.Rows[0].Obligations = l.Rows[0].Obligations[1:] }},

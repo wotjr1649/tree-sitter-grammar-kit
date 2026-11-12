@@ -26,8 +26,9 @@ const (
 	// shortcut: the asset is about 1 MiB today; raise only with a new ledger revision.
 	csharpG1MaxBytes = 4 << 20
 
-	// Obligation states. Only NO_EXPECTED is derivable now: SEALED and EXECUTED need a sealed
-	// expected asset (G1-2 and later) and are rejected until the ledger revision admits them.
+	// Obligation states. NO_EXPECTED: no sealed expectation. SEALED: the alternative has an EXPECTED
+	// record in the sealed expected asset (a P obligation is SEALED when every alternative of its row
+	// is). EXECUTED needs a native comparison (G1-3 native commit) and is rejected until then.
 	G1NoExpected = "NO_EXPECTED"
 	G1Sealed     = "SEALED"
 	G1Executed   = "EXECUTED"
@@ -57,6 +58,11 @@ type CSharpG1Sources struct {
 	Alternatives []byte
 	FactMapping  []byte
 	Fixtures     map[string][]byte // by directory: routes, gaps, n461, queries
+	// Expected is the sealed expected asset of the lexical and type-name rows (G1-3a), or nil. When it
+	// is set, the alternatives it holds EXPECTED become SEALED. The ledger does not pin the asset's
+	// bytes: the observation pins the ledger and the expected asset pins the observation, so a pin
+	// back to the expected asset would be a cycle.
+	Expected []byte
 }
 
 type CSharpG1Inputs struct {
@@ -712,6 +718,12 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 		out.OutsideMapping = append(out.OutsideMapping, o)
 	}
 
+	if src.Expected != nil {
+		if err := g1ApplySealed(&out, src.Expected); err != nil {
+			return out, nil, err
+		}
+	}
+
 	// extra roles that run the C# route
 	for _, role := range inv.ExtraRoles {
 		r := G1Role{ID: role.ID, Status: G1NoExpected, Workloads: []G1WorkloadRef{}}
@@ -730,6 +742,59 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 		}
 	}
 	return out, data, nil
+}
+
+// g1ApplySealed marks SEALED the alternatives the expected asset holds EXPECTED. The expected asset is
+// read here only for its alternative IDs and statuses; it is verified on its own against the same
+// pinned sources (ParseCSharpG1Expected), and the ledger test compares the two.
+func g1ApplySealed(l *CSharpG1Ledger, expected []byte) error {
+	var doc struct {
+		Alternatives []struct {
+			ID     string `json:"id"`
+			Row    string `json:"row"`
+			Status string `json:"status"`
+		} `json:"alternatives"`
+	}
+	if err := json.Unmarshal(expected, &doc); err != nil || len(doc.Alternatives) == 0 {
+		return g1Fault("G1_LEDGER_SEALED")
+	}
+	sealed := map[string]bool{}
+	for _, a := range doc.Alternatives {
+		if a.Status == G1ExpExpected {
+			sealed[a.ID] = true
+		}
+	}
+	rowAlts, rowSealed := map[string]int{}, map[string]int{}
+	known := map[string]bool{}
+	for i := range l.Alternatives {
+		a := &l.Alternatives[i]
+		known[a.ID] = true
+		if a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 {
+			continue
+		}
+		rowAlts[a.Row]++
+		if sealed[a.ID] {
+			a.Status = G1Sealed
+			rowSealed[a.Row]++
+		}
+	}
+	for _, a := range doc.Alternatives {
+		if !known[a.ID] || a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 {
+			return g1Fault("G1_LEDGER_SEALED")
+		}
+	}
+	for i := range l.Rows {
+		r := &l.Rows[i]
+		if r.Row != g1ExpRowB01 && r.Row != g1ExpRowB02 || rowAlts[r.Row] == 0 || rowSealed[r.Row] != rowAlts[r.Row] {
+			continue
+		}
+		for j := range r.Obligations {
+			if r.Obligations[j].Kind == "P" {
+				r.Obligations[j].Status = G1Sealed
+			}
+		}
+	}
+	return nil
 }
 
 // MarshalCSharpG1Ledger writes the canonical asset: one line per row, case, alternative and the
@@ -812,7 +877,7 @@ func checkCSharpG1Ledger(data []byte, want CSharpG1Ledger) (CSharpG1Ledger, erro
 		return x, g1Fault("G1_LEDGER_PIN")
 	}
 	for _, s := range g1States(x) {
-		if s != G1NoExpected && s != "" {
+		if s != G1NoExpected && s != G1Sealed && s != "" {
 			return x, g1Fault("G1_LEDGER_STATUS")
 		}
 	}

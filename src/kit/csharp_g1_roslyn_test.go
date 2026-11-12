@@ -87,7 +87,7 @@ func g1rFirst(t *testing.T, x CSharpG1RoslynObserved, what string, ok func(s G1R
 
 func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
 	a := g1rLoad(t)
-	if len(a.data) != 2142812 || digestHex(a.data) != "257304af279cd2634c23287b8d1da0ef45a0ddc6835c5bb0f0864602c4b97f8d" {
+	if len(a.data) != 2142812 || digestHex(a.data) != "3a0e1b459d7c8a869206a24fd0ff4b57df3b34e05746707d3be1d6d8cbbf22d7" {
 		t.Fatalf("sealed observation changed: %d/%s", len(a.data), digestHex(a.data))
 	}
 	x, err := checkCSharpG1Roslyn(a.data, a.pin, a.input, a.sources)
@@ -409,7 +409,7 @@ func TestCSharpG1RoslynRejectsMalformedBytes(t *testing.T) {
 	check("source member renamed", bytes.Replace(a.data, []byte(`"accepted"`), []byte(`"acceptd"`), 1), "G1_ROSLYN_JSON")
 
 	// the public entry point rejects a ledger that is not the derivation of the sources
-	if _, err := ParseCSharpG1RoslynObserved(a.data, bytes.Replace(a.ledger, []byte(`"NO_EXPECTED"`), []byte(`"SEALED"`), 1), a.src); g1Code(err) != "G1_LEDGER_STATUS" {
+	if _, err := ParseCSharpG1RoslynObserved(a.data, bytes.Replace(a.ledger, []byte(`"NO_EXPECTED"`), []byte(`"SEALED"`), 1), a.src); g1Code(err) != "G1_LEDGER_ROWS" {
 		t.Errorf("tampered ledger: %v", err)
 	}
 	// and an observation bound to another ledger revision

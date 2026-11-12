@@ -35,6 +35,10 @@ func run(root string, write bool) error {
 			return err
 		}
 	}
+	// the sealed expected asset, when present, turns its EXPECTED alternatives into SEALED
+	if exp, err := read(kit.CSharpG1ExpectedPath); err == nil {
+		src.Expected = exp
+	}
 	l, err := kit.DeriveCSharpG1Ledger(src)
 	if err != nil {
 		return err
