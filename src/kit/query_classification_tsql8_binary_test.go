@@ -153,6 +153,7 @@ func classificationTSQL8BinarySession(t *testing.T) (*eligibilitySession, *eligi
 }
 
 func TestQueryClassificationTSQL8BinaryBindings(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"normal", "response-sha-mismatch", "response-sha-invalid", "response-missing", "response-count", "driver-id", "driver-kind", "driver-path", "driver-role", "driver-node", "driver-invocation", "driver-registration", "driver-sha-invalid", "library-pin-sha", "library-pin-owner", "library-pin-role", "context", "descriptor-schema", "descriptor-owner", "descriptor-kind", "descriptor-path", "descriptor-sha", "descriptor-size", "descriptor-large"} {
 		t.Run(name, func(t *testing.T) {
 			s, inv := classificationTSQL8BinarySession(t)

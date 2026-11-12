@@ -174,6 +174,7 @@ func runtimePinGeneration(t *testing.T, upper, lower uint32, label string) Query
 }
 
 func TestRuntimePinsProductionIndependence(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	materials := runtimePinArchive(t, "d301defb285c098a95bb5d6e4e7e01209eee545761969bca14cdd54994416801")
 	runtimePinRebind(t, f, materials)
@@ -206,6 +207,7 @@ func TestRuntimePinsProductionIndependence(t *testing.T) {
 }
 
 func TestRuntimePinsRejectForgery(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"tuple-driver", "tuple-manifest", "abi", "marker", "capability", "build-driver", "build-runtime", "missing-driver", "missing-patch", "reduced-files", "duplicate-files", "reduced-patches", "shim", "patch", "reader", "unapproved-set"} {
 		t.Run(mode, func(t *testing.T) {
 			f, materials := newEligibilityFixture(t), runtimePinMaterials(t)

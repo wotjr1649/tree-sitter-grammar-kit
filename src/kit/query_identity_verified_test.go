@@ -26,6 +26,7 @@ func TestQueryEligibilityIdentityOnlyLeavesReferenceBytes(t *testing.T) {
 }
 
 func TestQueryEligibilityIdentityRoleStillRetainsSource(t *testing.T) {
+	t.Parallel()
 	for _, role := range []string{"driver", "native-executable", "reference-executable", "runtime-library", "compiler"} {
 		t.Run(role, func(t *testing.T) {
 			f := newEligibilityFixture(t)
