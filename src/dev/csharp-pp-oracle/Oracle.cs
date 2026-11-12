@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
@@ -98,12 +100,23 @@ public static class Oracle
             }).ToArray();
             results.Add(new { id, features = options.Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray(), directives, disabled, errors = errorIds, diagnostics = located });
         }
+        string HashAssembly(Assembly assembly) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assembly.Location))).ToLowerInvariant();
+        var producer = typeof(Oracle).Assembly;
+        string sdk = producer.GetCustomAttributes<AssemblyMetadataAttribute>().Single(x => x.Key == "TSGK.SDK").Value!;
+        if (string.IsNullOrWhiteSpace(sdk)) throw new Exception("missing build SDK identity");
         var output = new
         {
-            schema = "tsgk-csharp-pp-roslyn/r2",
+            schema = "tsgk-csharp-pp-roslyn/r3",
             cases_sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).ToLowerInvariant(),
             roslyn = typeof(CSharpSyntaxTree).Assembly.GetName().Version!.ToString(),
             language_version = "Latest",
+            provenance = new
+            {
+                sdk,
+                oracle_sha256 = HashAssembly(producer),
+                code_analysis_sha256 = HashAssembly(typeof(SyntaxTree).Assembly),
+                csharp_sha256 = HashAssembly(typeof(CSharpSyntaxTree).Assembly),
+            },
             cases = results,
         };
         File.WriteAllText(args[1], JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true, NewLine = "\n" }) + "\n", utf8);

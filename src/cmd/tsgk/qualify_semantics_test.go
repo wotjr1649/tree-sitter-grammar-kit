@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -136,16 +137,275 @@ func TestQualifySemanticsManifestStrictShapeAndCardinality(t *testing.T) {
 		t.Fatalf("valid manifest: input=%+v approvals=%v contexts=%v err=%v", input, approvals, contexts, err)
 	}
 	for name, data := range map[string]string{
-		"duplicate key": `{"schema":"tsgk-qualification-query-semantics-input/r1","schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[]}`,
-		"unknown key":   `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[],"fallback":"producer"}`,
-		"three targets": `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[{"id":"a","root":"a","profile":"a"},{"id":"b","root":"b","profile":"b"},{"id":"c","root":"c","profile":"c"}]}`,
-		"null path":     `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[{"id":"a","root":"a","profile":"a","approval":null}]}`,
+		"duplicate key":   `{"schema":"tsgk-qualification-query-semantics-input/r1","schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[]}`,
+		"unknown key":     `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[],"fallback":"producer"}`,
+		"three targets":   `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[{"id":"a","root":"a","profile":"a"},{"id":"b","root":"b","profile":"b"},{"id":"c","root":"c","profile":"c"}]}`,
+		"null path":       `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[{"id":"a","root":"a","profile":"a","approval":null}]}`,
+		"null pin opt-in": `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"p","targets":[{"id":"a","root":"a","profile":"a","pins":null}]}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, _, _, err := parseQualifySemanticsManifest([]byte(data)); err == nil {
 				t.Fatal("invalid manifest was accepted")
 			}
 		})
+	}
+}
+
+func TestQualifySemanticsPinsManifestAndForwarding(t *testing.T) {
+	legacy := `{"schema":"tsgk-qualification-query-semantics-input/r1","plan":"plan.json","targets":[{"id":"linux","root":"bundle","profile":"profile.json"}]}`
+	if _, _, _, err := parseQualifySemanticsManifest([]byte(legacy)); err != nil {
+		t.Fatalf("legacy input schema changed: %v", err)
+	}
+	withPins := `{"schema":"tsgk-qualification-query-semantics-input/r2","plan":"plan.json","targets":[{"id":"linux","root":"bundle","profile":"profile.json","approval":"approval.json","pins":{"approved_approval_sha256":"a","approval_base64":"e30=","approved_pin_set_sha256":"b","pin_set_base64":"e30=","materials_base64":{"reference/catalogue.json":"e30="}}}]}`
+	input, approvals, _, err := parseQualifySemanticsManifest([]byte(withPins))
+	if err != nil || input.Targets == nil || (*input.Targets)[0].Pins == nil || approvals[0] == nil || *approvals[0] != "approval.json" {
+		t.Fatalf("pin input schema: input=%+v approvals=%v err=%v", input, approvals, err)
+	}
+	for name, data := range map[string]string{
+		"pins require r2":      strings.Replace(withPins, "input/r2", "input/r1", 1),
+		"pins require subject": strings.Replace(withPins, `,"approval":"approval.json"`, "", 1),
+		"r2 requires pins":     `{"schema":"tsgk-qualification-query-semantics-input/r2","plan":"plan.json","targets":[{"id":"linux","root":"bundle","profile":"profile.json"}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, _, _, err := parseQualifySemanticsManifest([]byte(data)); err == nil {
+				t.Fatal("invalid pin manifest was accepted")
+			}
+		})
+	}
+
+	approval := []byte("{ \"schema\": \"approval\" }\r\n")
+	set := []byte("{\"schema\":\"set\"}\n")
+	material := []byte{0, 1, 2, 0xff}
+	bundle := &qualifySemanticsPins{ApprovedApprovalSHA256: strings.Repeat("a", 64),
+		ApprovalBase64: base64.StdEncoding.EncodeToString(approval), ApprovedPinSetSHA256: strings.Repeat("b", 64),
+		PinSetBase64: base64.StdEncoding.EncodeToString(set), MaterialsBase64: map[string]string{"reference/catalogue.json": base64.StdEncoding.EncodeToString(material)}}
+	subject := []byte("eligibility approval original bytes")
+	request, err := decodeQualifySemanticPins(bundle, subject)
+	if err != nil || request == nil || !bytes.Equal(request.Approval, approval) || !bytes.Equal(request.PinSet, set) || !bytes.Equal(request.Subject, subject) || !bytes.Equal(request.Materials["reference/catalogue.json"], material) || request.ApprovedApprovalSHA256 != bundle.ApprovedApprovalSHA256 || request.ApprovedPinSetSHA256 != bundle.ApprovedPinSetSHA256 {
+		t.Fatalf("pin request forwarding changed bytes: request=%+v err=%v", request, err)
+	}
+
+	target := qualifySemanticsManifestTarget{ID: "linux", Pins: bundle}
+	profileDoc := &qualifySemanticDocument{data: []byte("profile")}
+	approvalDoc := &qualifySemanticDocument{data: subject}
+	entry, err := makeQualifySemanticInput(target, qualifySemanticTargetDocuments{profile: profileDoc, approval: approvalDoc}, qualifySemanticRoot{path: "bundle"})
+	if err != nil || entry.Pins == nil || !bytes.Equal(entry.Pins.Subject, subject) || !bytes.Equal(entry.Pins.Approval, approval) || !bytes.Equal(entry.Replay.Profile, profileDoc.data) {
+		t.Fatalf("qualification entry did not forward the pin request: entry=%+v err=%v", entry, err)
+	}
+
+	bundle.ApprovalBase64 = "not base64"
+	if _, err := decodeQualifySemanticPins(bundle, subject); err == nil {
+		t.Fatal("malformed inline bytes accepted")
+	}
+	bundle.ApprovalBase64 = base64.StdEncoding.EncodeToString(approval)
+	if _, err := decodeQualifySemanticPins(bundle, nil); err == nil {
+		t.Fatal("pin request without its external eligibility subject accepted")
+	}
+	tooMany := *bundle
+	tooMany.MaterialsBase64 = make(map[string]string, kit.ReplayOperations()["evidence-replay"].Files+1)
+	for i := uint64(0); i <= kit.ReplayOperations()["evidence-replay"].Files; i++ {
+		tooMany.MaterialsBase64[fmt.Sprintf("material-%d", i)] = ""
+	}
+	if _, err := decodeQualifySemanticPins(&tooMany, subject); err == nil {
+		t.Fatal("over-limit pin material map accepted")
+	}
+}
+
+func TestCLIEvidencePinsEnvelopeIsStrictBoundedAndSubjectBound(t *testing.T) {
+	subject := []byte("independent request subject")
+	material := []byte("historical material")
+	materialSHA := fmt.Sprintf("%x", sha256.Sum256(material))
+	pinSet, err := json.Marshal(struct {
+		Schema    string                    `json:"schema"`
+		Reader    string                    `json:"reader"`
+		Materials []kit.EvidencePinMaterial `json:"materials"`
+	}{kit.EvidencePinSetSchema, kit.EvidencePinReader, []kit.EvidencePinMaterial{{Name: "reference/catalogue.json", Role: "reference-catalogue", Bytes: uint64(len(material)), SHA256: materialSHA}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pinSetSHA := fmt.Sprintf("%x", sha256.Sum256(pinSet))
+	approval, err := json.Marshal(struct {
+		Schema        string `json:"schema"`
+		PinSetSHA256  string `json:"pin_set_sha256"`
+		SubjectSHA256 string `json:"subject_sha256"`
+		Reader        string `json:"reader"`
+		Scope         string `json:"scope"`
+	}{kit.EvidencePinApprovalSchema, pinSetSHA, fmt.Sprintf("%x", sha256.Sum256(subject)), kit.EvidencePinReader, kit.EvidencePinScope})
+	if err != nil {
+		t.Fatal(err)
+	}
+	approvalSHA := fmt.Sprintf("%x", sha256.Sum256(approval))
+	envelope, err := json.Marshal(map[string]any{
+		"schema": cliEvidencePinsInputSchema, "subject_base64": base64.StdEncoding.EncodeToString(subject),
+		"approved_approval_sha256": approvalSHA, "approval_base64": base64.StdEncoding.EncodeToString(approval),
+		"approved_pin_set_sha256": pinSetSHA, "pin_set_base64": base64.StdEncoding.EncodeToString(pinSet),
+		"materials_base64": map[string]string{"reference/catalogue.json": base64.StdEncoding.EncodeToString(material)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := decodeCLIEvidencePins(envelope, subject)
+	if err != nil || request == nil || !bytes.Equal(request.Subject, subject) {
+		t.Fatalf("valid envelope: request=%+v err=%v", request, err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	resolved, err := kit.ResolveEvidencePins(ctx, *request)
+	if err != nil || resolved.Assessment != kit.AssessPass || !resolved.Complete {
+		t.Fatalf("approved pin envelope: result=%+v err=%v", resolved, err)
+	}
+	if _, err := decodeCLIEvidencePins(envelope, []byte("different subject")); err == nil {
+		t.Fatal("envelope subject was not checked against the selected request")
+	}
+	for name, malformed := range map[string][]byte{
+		"duplicate": []byte(strings.Replace(string(envelope), `"schema":"`+cliEvidencePinsInputSchema+`"`, `"schema":"`+cliEvidencePinsInputSchema+`","schema":"`+cliEvidencePinsInputSchema+`"`, 1)),
+		"unknown":   append(append([]byte(nil), envelope[:len(envelope)-1]...), []byte(`,"extra":true}`)...),
+		"oversized": append(bytes.Clone(envelope), bytes.Repeat([]byte(" "), int(qualifyAdmissionFileLimit)+1)...),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := decodeCLIEvidencePins(malformed, nil); err == nil {
+				t.Fatal("malformed pin envelope accepted")
+			}
+		})
+	}
+}
+
+func TestCLIAdmissionFailureMapping(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := checkCLIAdmission(ctx, time.Now().Add(time.Minute)); !errors.Is(err, context.Canceled) {
+		t.Fatalf("caller cancellation check returned %v", err)
+	}
+	if err := checkCLIAdmission(context.Background(), time.Now().Add(-time.Second)); !errors.Is(err, errQualifyAdmissionDeadline) {
+		t.Fatalf("admission deadline check returned %v", err)
+	}
+	for _, tc := range []struct {
+		name, fallback, wantCode string
+		ctx                      context.Context
+		err                      error
+		wantExit                 int
+	}{
+		{name: "cancel wins", fallback: "INPUT_PATH_UNVERIFIED", wantCode: "CANCELLED", ctx: ctx, err: errQualifyAdmissionDeadline, wantExit: exitCanceled},
+		{name: "admission wall", fallback: "INPUT_PATH_UNVERIFIED", wantCode: "WALL_LIMIT", ctx: context.Background(), err: errQualifyAdmissionDeadline, wantExit: exitBlocked},
+		{name: "identity bound", fallback: "INPUT_PATH_UNVERIFIED", wantCode: "PATH_IDENTITY_LIMIT", ctx: context.Background(), err: errQualifyPathLimit, wantExit: exitBlocked},
+		{name: "ordinary error", fallback: "INPUT_PATH_UNVERIFIED", wantCode: "INPUT_PATH_UNVERIFIED", ctx: context.Background(), err: errors.New("missing path"), wantExit: exitUsage},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			code, exit := classifyCLIAdmissionFailure(tc.ctx, tc.err, tc.fallback)
+			if code != tc.wantCode || exit != tc.wantExit {
+				t.Fatalf("got %s/%d, want %s/%d", code, exit, tc.wantCode, tc.wantExit)
+			}
+		})
+	}
+}
+
+func TestQualifyCLIRuntimePinsEnvelopeForwarding(t *testing.T) {
+	inventory, err := os.ReadFile("../../contracts/qualification-c1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	host := qualifySemanticTempDir(t)
+	hostInfo, err := os.Stat(host)
+	if err != nil {
+		t.Fatal(err)
+	}
+	material := []byte("tuple")
+	pinSet, err := json.Marshal(struct {
+		Schema    string                    `json:"schema"`
+		Reader    string                    `json:"reader"`
+		Materials []kit.EvidencePinMaterial `json:"materials"`
+	}{kit.EvidencePinSetSchema, kit.EvidencePinReader, []kit.EvidencePinMaterial{{Name: "native/runtime-tuple.json", Role: "runtime-tuple", Bytes: uint64(len(material)), SHA256: fmt.Sprintf("%x", sha256.Sum256(material))}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	envelope, err := json.Marshal(map[string]any{
+		"schema": cliEvidencePinsInputSchema, "subject_base64": base64.StdEncoding.EncodeToString([]byte("run identity subject")),
+		"approved_approval_sha256": strings.Repeat("0", 64), "approval_base64": base64.StdEncoding.EncodeToString([]byte(`{}`)),
+		"approved_pin_set_sha256": strings.Repeat("0", 64), "pin_set_base64": base64.StdEncoding.EncodeToString(pinSet),
+		"materials_base64": map[string]string{"native/runtime-tuple.json": base64.StdEncoding.EncodeToString(material)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pinsPath, inventoryPath := filepath.Join(t.TempDir(), "runtime-pins.json"), filepath.Join(t.TempDir(), "inventory.json")
+	if err := os.WriteFile(pinsPath, envelope, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(inventoryPath, inventory, 0600); err != nil {
+		t.Fatal(err)
+	}
+	pins, err := decodeCLIEvidencePins(envelope, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	req := kit.QualifyRequest{Inventory: inventory, Candidate: strings.Repeat("a", 40), Hosts: []kit.QualifyHost{{
+		Platform: "windows/amd64", Root: host, ExpectedRootIdentity: hostInfo, RuntimePins: pins,
+	}}}
+	want, wantErr := kit.Qualify(ctx, req)
+	if want.ResultSchema != kit.QualificationLoggerPinsResultSchema {
+		t.Fatalf("API did not exercise host runtime pins: schema=%s err=%v", want.ResultSchema, wantErr)
+	}
+	var out, errb bytes.Buffer
+	code := run(ctx, []string{"qualify", "--inventory", inventoryPath, "--candidate", req.Candidate,
+		"--host", "windows/amd64=" + host, "--runtime-pins", "windows/amd64=" + pinsPath}, &out, &errb)
+	wantJSON, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSuffix(out.String(), "\n") != string(wantJSON) || code != replayExit(want.Assessment) {
+		t.Fatalf("CLI did not forward the host runtime pin envelope: exit=%d want=%d stderr=%s\n%s\n%s", code, replayExit(want.Assessment), errb.String(), out.String(), wantJSON)
+	}
+	var got kit.QualificationResult
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil || got.ResultSchema != kit.QualificationLoggerPinsResultSchema {
+		t.Fatalf("CLI result lacks runtime pin opt-in: schema=%s err=%v", got.ResultSchema, err)
+	}
+}
+
+func TestQualifySemanticsPinsForwardingRetainsIndependentApproval(t *testing.T) {
+	subject := []byte(`{"eligibility":"caller-approved"}`)
+	material := []byte("historical reference catalogue")
+	materialSHA := fmt.Sprintf("%x", sha256.Sum256(material))
+	pinSet, err := json.Marshal(struct {
+		Schema    string                    `json:"schema"`
+		Reader    string                    `json:"reader"`
+		Materials []kit.EvidencePinMaterial `json:"materials"`
+	}{kit.EvidencePinSetSchema, kit.EvidencePinReader, []kit.EvidencePinMaterial{{Name: "reference/catalogue.json", Role: "reference-catalogue", Bytes: uint64(len(material)), SHA256: materialSHA}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pinSetSHA := fmt.Sprintf("%x", sha256.Sum256(pinSet))
+	approval, err := json.Marshal(struct {
+		Schema        string `json:"schema"`
+		PinSetSHA256  string `json:"pin_set_sha256"`
+		SubjectSHA256 string `json:"subject_sha256"`
+		Reader        string `json:"reader"`
+		Scope         string `json:"scope"`
+	}{kit.EvidencePinApprovalSchema, pinSetSHA, fmt.Sprintf("%x", sha256.Sum256(subject)), kit.EvidencePinReader, kit.EvidencePinScope})
+	if err != nil {
+		t.Fatal(err)
+	}
+	approvalSHA := fmt.Sprintf("%x", sha256.Sum256(approval))
+	bundle := &qualifySemanticsPins{ApprovedApprovalSHA256: approvalSHA, ApprovalBase64: base64.StdEncoding.EncodeToString(approval),
+		ApprovedPinSetSHA256: pinSetSHA, PinSetBase64: base64.StdEncoding.EncodeToString(pinSet),
+		MaterialsBase64: map[string]string{"reference/catalogue.json": base64.StdEncoding.EncodeToString(material)}}
+	target := qualifySemanticsManifestTarget{ID: "linux", Approval: json.RawMessage(`"approval.json"`), Pins: bundle}
+	entry, err := makeQualifySemanticInput(target, qualifySemanticTargetDocuments{profile: &qualifySemanticDocument{data: []byte("profile")}, approval: &qualifySemanticDocument{data: subject}}, qualifySemanticRoot{path: "bundle"})
+	if err != nil || entry.Pins == nil {
+		t.Fatalf("pin request was not forwarded: entry=%+v err=%v", entry, err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	got, err := kit.ResolveEvidencePins(ctx, *entry.Pins)
+	if err != nil || got.Assessment != kit.AssessPass || !got.Complete || got.SubjectSHA256 != fmt.Sprintf("%x", sha256.Sum256(subject)) {
+		t.Fatalf("CLI forwarded material without its external approval identity: result=%+v err=%v", got, err)
+	}
+	forged := *entry.Pins
+	forged.ApprovedPinSetSHA256 = strings.Repeat("0", 64)
+	got, err = kit.ResolveEvidencePins(ctx, forged)
+	if err != nil || got.Assessment != kit.AssessFail {
+		t.Fatalf("CLI forwarding accepted an unapproved pin-set digest: result=%+v err=%v", got, err)
 	}
 }
 
@@ -292,10 +552,12 @@ func TestConvertQualifyCLIWallPreservesCallerCancellationAndKnownFailure(t *test
 		result kit.QualificationResult
 		err    error
 	}{{converted, &kit.Error{Kind: kit.KindResourceLimit, Code: "WALL_LIMIT"}}, {unchanged, original}} {
-		interrupted.result.ResultSchema = kit.QualificationSemanticsResultSchema
-		var stdout, stderr bytes.Buffer
-		if code := finish(interrupted.result, interrupted.err, "", "", &stdout, &stderr); code != exitFail || !strings.Contains(stdout.String(), `"assessment":"FAIL"`) || !strings.Contains(stderr.String(), interrupted.err.(*kit.Error).Kind) {
-			t.Fatalf("known semantic failure erased by typed exit: code=%d stdout=%s stderr=%s", code, &stdout, &stderr)
+		for _, schema := range []string{kit.QualificationSemanticsResultSchema, kit.QualificationSemanticsPinsResultSchema} {
+			interrupted.result.ResultSchema = schema
+			var stdout, stderr bytes.Buffer
+			if code := finish(interrupted.result, interrupted.err, "", "", &stdout, &stderr); code != exitFail || !strings.Contains(stdout.String(), `"assessment":"FAIL"`) || !strings.Contains(stderr.String(), interrupted.err.(*kit.Error).Kind) {
+				t.Fatalf("known semantic failure erased by typed exit: schema=%s code=%d stdout=%s stderr=%s", schema, code, &stdout, &stderr)
+			}
 		}
 	}
 	closed, err := os.CreateTemp(qualifySemanticTempDir(t), "closed-stdout")
@@ -304,10 +566,12 @@ func TestConvertQualifyCLIWallPreservesCallerCancellationAndKnownFailure(t *test
 	}
 	closed.Close()
 	for _, assessment := range []string{kit.AssessFail, kit.AssessBlocked} {
-		result.ResultSchema, result.Assessment = kit.QualificationSemanticsResultSchema, assessment
-		var stderr bytes.Buffer
-		if code := finish(result, original, "", "", closed, &stderr); code != exitIO || !strings.Contains(stderr.String(), "STDOUT_FAILED") {
-			t.Fatalf("partial semantic report write failure: exit=%d stderr=%s", code, &stderr)
+		for _, schema := range []string{kit.QualificationSemanticsResultSchema, kit.QualificationSemanticsPinsResultSchema} {
+			result.ResultSchema, result.Assessment = schema, assessment
+			var stderr bytes.Buffer
+			if code := finish(result, original, "", "", closed, &stderr); code != exitIO || !strings.Contains(stderr.String(), "STDOUT_FAILED") {
+				t.Fatalf("partial semantic report write failure: schema=%s exit=%d stderr=%s", schema, code, &stderr)
+			}
 		}
 	}
 }

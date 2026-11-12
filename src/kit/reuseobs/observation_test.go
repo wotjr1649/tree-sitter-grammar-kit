@@ -4,6 +4,14 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
+)
+
+var (
+	_ func([]Observation) string       = Judge
+	_ func([]Observation, bool) string = Mandatory
+	_ func([]Step, bool) string        = CaseClaim
 )
 
 func sample() (Observation, Binding) {
@@ -67,6 +75,33 @@ func TestObservationStates(t *testing.T) {
 	}
 }
 
+func TestRepositoryDefaultLoggerApproval(t *testing.T) {
+	manifest := DefaultRuntimeManifest()
+	if manifest == "" || !VerifiedRuntimeManifest(manifest) {
+		t.Fatal("repository default manifest is not logger-approved")
+	}
+	store, err := evidencepins.Repository()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := store.Runtime()
+	if err != nil || runtime.ManifestSHA256 != manifest {
+		t.Fatalf("repository default runtime mismatch: runtime=%+v err=%v", runtime, err)
+	}
+	for _, forged := range []string{"", strings.Repeat("d", 64), strings.Repeat("f", 64)} {
+		if VerifiedRuntimeManifest(forged) {
+			t.Fatalf("unapproved logger manifest accepted: %q", forged)
+		}
+	}
+
+	legacy := RuntimeManifestSHA256
+	RuntimeManifestSHA256 = strings.Repeat("f", 64)
+	t.Cleanup(func() { RuntimeManifestSHA256 = legacy })
+	if DefaultRuntimeManifest() != manifest || !VerifiedRuntimeManifest(manifest) || VerifiedRuntimeManifest(RuntimeManifestSHA256) {
+		t.Fatal("mutable compatibility value changed default approval")
+	}
+}
+
 func TestObservationRejectsAmbiguousOrUnboundData(t *testing.T) {
 	base, b := sample()
 	raw := string(encode(t, base))
@@ -115,5 +150,74 @@ func TestObservationRejectsAmbiguousOrUnboundData(t *testing.T) {
 				t.Fatal("accepted ambiguous or unbound observation")
 			}
 		})
+	}
+}
+
+func TestApprovedHistoricalRuntimeLogger(t *testing.T) {
+	historical := strings.Repeat("d", 64)
+	o, b := sample()
+	o.RuntimeManifestSHA256, b.RuntimeManifestSHA256 = historical, historical
+	raw := encode(t, o)
+	if _, err := Decode(raw, b); err == nil {
+		t.Fatal("legacy binding accepted an unlisted runtime")
+	}
+	pin, err := NewRuntimePin(historical, RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b.Runtime = &pin
+	if _, err := Decode(raw, b); err != nil {
+		t.Fatalf("approved historical binding rejected: %v", err)
+	}
+	wrong, err := NewRuntimePin(strings.Repeat("e", 64), RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b.Runtime = &wrong
+	if _, err := Decode(raw, b); err == nil {
+		t.Fatal("binding accepted a different approved manifest")
+	}
+	if _, err := NewRuntimePin(historical, "tsgk-runtime-logger/r2"); err == nil {
+		t.Fatal("accepted an unsupported logger reader")
+	}
+	if _, err := NewRuntimePin("not-a-digest", RuntimeLoggerReader); err == nil {
+		t.Fatal("accepted a malformed manifest digest")
+	}
+}
+
+func TestClaimsCarryApprovedHistoricalRuntime(t *testing.T) {
+	historical := strings.Repeat("d", 64)
+	o, _ := sample()
+	o.RuntimeManifestSHA256 = historical
+	pin, err := NewRuntimePin(historical, RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := Judge([]Observation{o}); got != "BLOCKED" {
+		t.Fatalf("legacy Judge accepted historical manifest: %s", got)
+	}
+	if got := Mandatory([]Observation{o}, true); got != "FAIL" {
+		t.Fatalf("legacy Mandatory accepted historical manifest: %s", got)
+	}
+	steps := []Step{{Native: true, Observations: []Observation{o}}}
+	if got := CaseClaim(steps, true); got != "FAIL" {
+		t.Fatalf("legacy CaseClaim accepted historical manifest: %s", got)
+	}
+	if got := JudgeWithRuntime([]Observation{o}, &pin); got != "PASS" {
+		t.Fatalf("approved historical Judge: %s", got)
+	}
+	if got := MandatoryWithRuntime([]Observation{o}, true, &pin); got != "PASS" {
+		t.Fatalf("approved historical Mandatory: %s", got)
+	}
+	if got := CaseClaimWithRuntime(steps, true, &pin); got != "PASS" {
+		t.Fatalf("approved historical CaseClaim: %s", got)
+	}
+	if got := JudgeWithRuntime([]Observation{o}, &RuntimePin{}); got != "FAIL" {
+		t.Fatalf("zero-value pin accepted: %s", got)
+	}
+	otherObservation := o
+	otherObservation.RuntimeManifestSHA256 = strings.Repeat("e", 64)
+	if got := JudgeWithRuntime([]Observation{o, otherObservation}, &pin); got != "FAIL" {
+		t.Fatalf("mixed manifest claim did not fail closed: %s", got)
 	}
 }

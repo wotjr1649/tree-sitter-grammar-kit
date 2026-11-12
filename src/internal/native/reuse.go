@@ -23,7 +23,7 @@ func (x Context) observeCase(c *CaseResult) {
 			}
 			for _, role := range roles {
 				s.Observations = append(s.Observations, reuseobs.Observation{Schema: reuseobs.Schema,
-					Policy: reuseobs.Policy, RuntimeManifestSHA256: reuseobs.RuntimeManifestSHA256,
+					Policy: reuseobs.Policy, RuntimeManifestSHA256: reuseobs.DefaultRuntimeManifest(),
 					RequestID: c.ID, RunID: x.ObservationRunID, ProducerSHA256: x.ObservationProducerSHA256,
 					Step: uint64(s.Step), Role: role, SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes,
 					Status: "UNAVAILABLE", Reason: "NO_NATIVE_PARSE", Counts: &reuseobs.Counts{}})

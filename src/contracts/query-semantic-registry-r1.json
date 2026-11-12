@@ -14,8 +14,8 @@
   "predicate_basis": [
     {
       "path": "src/dev/query-reference/check.py",
-      "bytes": 17184,
-      "sha256": "32245af707c36b6e1b048e6249ffdf1baff9d78533378a8d867817970a03ef20"
+      "bytes": 18010,
+      "sha256": "5e34e6b724500325dacdafe47292d01a9feec3f11dfa30a2d5173d38d0b6f530"
     },
     {
       "path": "src/internal/native/query_policy_test.go",
@@ -2094,7 +2094,7 @@
     "current-cohort-approval-replay"
   ],
   "content_state": "INCOMPLETE",
-  "membership_namespace_sha256": "2d1720e6f5e2d035491486cc80503c101f2b960f5c4d4298d7082d090ec29fbe",
+  "membership_namespace_sha256": "4059089557e10dfaa3fe68c379d87fbd6c6c8507fa71afe0ea89f6e15407a21b",
   "required_sets": [
     {
       "kind": "EXPECTED_REJECTION",

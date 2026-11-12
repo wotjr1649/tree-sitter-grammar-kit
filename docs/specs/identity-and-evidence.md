@@ -1,5 +1,9 @@
 # Identity와 evidence — draft/r0, manifest r2 구현
 
+[#370 V2-D](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)는 Roslyn/r2 역사 관측과 r3 신규 SDK/DLL provenance를 구분한다. 기대값 생성은 exact subject·세 필수 자료의 독립 승인 뒤에 수행하며 생산 pointer 변경으로 과거 관측을 무효화하지 않는다. 신규 provenance는 build SDK identity와 실제 loaded DLL hash를 결속하고 미보존 과거 SDK/DLL은 BLOCKED다. 기본 inventory와 기존 관측 원문은 유지한다.
+
+[#370 V2-C](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)는 기존 historical Pins의 선택적 runtime tuple과 eligibility r2의 `runtime_pin`을 추가한다. 원본 subject/approval/run/NEW_RUN은 그대로 보존하며, semantic r2·`oracle-set-r7`/replay r4·qualification r11은 검증한 동일 runtime identity를 소비한다. 저장 PASS는 nested pin result의 tuple/manifest identity와 driver·CP949·shim·patch3개를 포함한 고정8개 descriptor의 존재·역할·비어 있지 않은 bytes를 모두 대조한다. Legacy reducer, 일반 native-result logger·accepted·preprocess-CST의 historical runtime 전달은 이 단위에서 확장하지 않는다.
+
 [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 원본 subject·승인·pin 집합·자료 bytes를 수정하지 않는 별도 자료 결속 API다. 생산 pin 갱신만으로 동일한 승인 historical subject 자료의 새 실행을 요구하지 않는다. 기록 verdict·NEW_RUN은 당시 subject의 기록이며 오늘의 실행으로 바꾸지 않는다. 기존 reducer와 fixed-runtime qualification 의미는 유지한다. 새 plan/source/policy의 재판정 의무나 full runtime·semantic closure 검증을 materials PASS가 대체하지 않는다. Roslyn5.9/r2 원문은 역사 출처로 보관하며 새 관측·SDK/DLL provenance를 소급 생성하지 않는다.
 
 ## 파일 identity
@@ -295,6 +299,20 @@ Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 �
 ## #370 V2-B1 역사 reference 결과 identity
 
 직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.
+
+## #370 V2-B2 공개 pin context와 저장 결과
+
+`ReplayRequest.Pins`는 graph 밖 caller가 제공하는 `*EvidencePinsRequest`다. `oracle-set-r7`은 이 입력을 semantic API와 내부 eligibility에 그대로 전달한다. Subject는 replay의 외부 `eligibility-approval` 원문과 같아야 한다. 기존 일곱 trust document, evidence owner/member·run-binding·subject·consumption·누적 예산 검사를 유지한다. Pin 승인이나 materials를 producer graph에서 발견해 신뢰하지 않는다.
+
+`oracle-set-r7`/revision `r7`은 full-input/r2, paged-parser/r1, paged-binaries/r1의 기존 등록 문맥별 검사를 사용한다. Result는 `ReplaySemanticsPinsResultSchema`(`tsgk-replay-result/r4`), 내부 semantic은 `QuerySemanticsPinsResultSchema`(r2), 내부 eligibility는 r2다. 새 reducer와 외부 Pins는 함께 명시해야 한다. 기존 `oracle-set-r4/r5/r6`·replay-result/r3·semantic/r1의 의미를 넓히지 않으며 Pins 없는 호출의 schema와 결과를 유지한다. 저장 결과 검증도 reducer revision·바깥/중첩 schema와 소비 identity를 함께 대조한다.
+
+`QualificationQuerySemanticsInput.Pins`는 해당 target의 replay에 전달하는 같은 외부 context다. Pin opt-in이 있는 qualification은 `tsgk-qualification-result/r11`을 사용한다. 기존 small predicate probe의 plan·host·caller approval/context·등록 분모 검사를 유지하며, full-input 문맥에서만 qualification을 수행한다. r7이 standalone replay에서 paging을 지원한다고 qualification의 small scope가 커지지 않는다. Probe와 baseline이 모두 통과해도 `full_scope_complete=false`, 전체 support 및 platform claim BLOCKED 규칙을 유지한다. Pins 없는 semantic qualification은 기존 r10이고 nil semantic 요청은 기존 r9다.
+
+## #370 V2-C2 historical logger 결과
+
+V2-C3은 [별도 reader scope](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)를 승인 tuple에 결속한다. Replay r6의 `native-result-r11`/`oracle-set-r8`/`native-result-r12`는 원본 accepted/CST projection을 재작성하지 않고 검증하며, qualification r13은 host별 자료 결속과 set별 `runtime_pins`를 기록한다. 저장 PASS에서 reader 자료 또는 고정8개 의무를 삭제하고 counter를 함께 줄여도 거부한다. 생산 pin 갱신은 과거 승인의 철회나 새 실행 요구를 뜻하지 않는다.
+
+[Logger opt-in](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)은 exact replay profile 또는 exact host run identity를 외부 승인 subject로 사용한다. 생산 선택 갱신은 이 승인을 대신하거나 철회하지 않는다. 원본 recorded verdict와 subject의 NEW_RUN은 보존하며 replay operation은 REPLAYED_RAW로 기록한다. `native-result-r9`/`r10`은 기존 r3/r4 logger 의미를 명시 승인 tuple로 읽고 replay-result/r5의 `runtime_pins`를 남긴다. Qualification r12도 host별 같은 부분 결과를 보존한다. 저장 r5 PASS의 nested 승인·필수8개 descriptor·gate·consumption 검사는 required/verified 동시 축소를 허용하지 않는다. Opt-in 없는 r1~r4 replay 결과 의미와 qualification current-only 검사는 바꾸지 않는다.
 
 ## #362 full-scope registry P0 membership contract
 

@@ -59,7 +59,7 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 		return record, e
 	}
 	a := record.approved
-	if a.Protocol != nativewire.ProtocolR4 || !validID(a.RequestID) || a.NodeLimit == 0 || a.NodeLimit > 1000000 || !hex64.MatchString(a.ProducerSHA256) || !reuseobs.VerifiedRuntimeManifest(a.RuntimeManifestSHA256) || !validID(a.ObservationRunID) || a.HistoryStart > 4 {
+	if a.Protocol != nativewire.ProtocolR4 || !validID(a.RequestID) || a.NodeLimit == 0 || a.NodeLimit > 1000000 || !hex64.MatchString(a.ProducerSHA256) || !s.b.runtimeMatches(a.RuntimeManifestSHA256) || !validID(a.ObservationRunID) || a.HistoryStart > 4 {
 		s.finding("ELIGIBILITY_R4_EXPECTATION", inv.ID, true)
 	}
 	haveExecutable, e := s.memberAvailable(inv.Executable)
@@ -116,7 +116,7 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 		if haveProcess && record.process.StdoutBytes != inv.Response.Member.Bytes+4 {
 			s.finding("ELIGIBILITY_NATIVE_PROCESS_STREAM", inv.ID, true)
 		}
-		expect := nativewire.Expect{Revision: a.Protocol, ID: a.RequestID, Observation: &nativewire.Binding{Manifest: a.RuntimeManifestSHA256, RunID: a.ObservationRunID, ProducerSHA256: a.ProducerSHA256, HistoryStart: a.HistoryStart}}
+		expect := nativewire.Expect{Revision: a.Protocol, ID: a.RequestID, Observation: &nativewire.Binding{Runtime: s.b.runtimeLogger(), Manifest: a.RuntimeManifestSHA256, RunID: a.ObservationRunID, ProducerSHA256: a.ProducerSHA256, HistoryStart: a.HistoryStart}}
 		if haveProcess {
 			expect.Exit = &record.process.ExitCode
 		}
@@ -124,7 +124,7 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 			s.finding("ELIGIBILITY_R4_HEADER", inv.ID, true)
 		}
 		abi, p := a.ProducerABI, record.raw.Producer
-		if a.RuntimeManifestSHA256 == reuseobs.RuntimeManifestSHA256 && (abi.RuntimeLanguageVersion != 15 || abi.RuntimeMinCompatible != 13) {
+		if (s.b.runtime != nil || a.RuntimeManifestSHA256 == s.b.runtimeManifest()) && !s.b.runtimeABI(abi) {
 			s.finding("ELIGIBILITY_NATIVE_RUNTIME_ABI", inv.ID, true)
 		}
 		if abi.LanguageVersion == 0 || abi.RuntimeMinCompatible == 0 || abi.RuntimeMinCompatible > abi.LanguageVersion || abi.LanguageVersion > abi.RuntimeLanguageVersion || abi.SymbolCount == 0 || p.LanguageVersion != abi.LanguageVersion || p.RuntimeLanguageVersion != abi.RuntimeLanguageVersion || p.RuntimeMinCompatible != abi.RuntimeMinCompatible || p.SymbolCount == nil || *p.SymbolCount != abi.SymbolCount || p.FieldCount == nil || *p.FieldCount != abi.FieldCount || p.Query != "tsgk-query/r1" || p.API == nil || *p.API != "tsgk-api/r1" {
@@ -331,7 +331,7 @@ func (s *eligibilitySession) nativeIndependent(inv *eligibilityInvocation, recor
 	if e := s.nativeIndependentError(inv.ID, "ELIGIBILITY_NATIVE_END", nativewire.CheckEnd(raw, tally, expect)); e != nil {
 		return false, e
 	}
-	mandatory, full := reuseobs.CaseClaim(steps, raw.Status == StatusCompleted), reuseobs.Judge(all)
+	mandatory, full := reuseobs.CaseClaimWithRuntime(steps, raw.Status == StatusCompleted, s.b.runtimeLogger()), reuseobs.JudgeWithRuntime(all, s.b.runtimeLogger())
 	if mandatory == "FAIL" || full == "FAIL" {
 		s.finding("ELIGIBILITY_LOGGER_CONTRADICTION", inv.ID, true)
 	} else if mandatory != "PASS" || full != "PASS" {

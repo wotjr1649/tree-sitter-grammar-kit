@@ -3,19 +3,27 @@ from pathlib import Path
 import hashlib, json, os, subprocess
 import argparse
 import sys
-from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, read_bounded, file_sha, build_identity, batch, production_pins, pinned_release
 if sys.flags.optimize:
     raise RuntimeError('assertions must be enabled')
 parser = argparse.ArgumentParser(description=__doc__)
 for name in ['reference', 'supervisor', 'cc', 'identity', 'work']:
     parser.add_argument('--' + name, type=Path, required=True)
+parser.add_argument('--pin-context', type=Path)
+parser.add_argument('--pin-context-sha256')
 parser.add_argument('--cgroup-parent', default='')
 args = parser.parse_args()
 for name in ['reference', 'supervisor', 'cc', 'identity', 'work']:
     assert getattr(args, name).is_absolute(), name
 root = Path(__file__).resolve().parents[3]
+pins, pin_context_raw, explicit_pins = production_pins(
+    root, args.pin_context, args.pin_context_sha256, args.identity.parent / 'pin-context.json')
+catalogue, toolchain = pins['catalogue'], pins['tuple']
 dest = args.work
 dest.mkdir(exist_ok=False)
+if not explicit_pins:
+    with (dest / 'pin-context.json').open('xb') as output:
+        output.write(pin_context_raw)
 (dest / 'tmp').mkdir()
 runner = args.supervisor
 binary = args.reference
@@ -27,7 +35,13 @@ selected_tree_path = args.identity.parent / 'selected-tree.json'
 selected_tree_bytes = read_bounded(selected_tree_path, 4 * 1024**2)
 assert hashlib.sha256(selected_tree_bytes).hexdigest() == identity['selected_tree_sha256']
 assert binary_sha == identity['binary_sha256']
-assert identity['upstream_commit'] == '10eb5ac119eec9cb4267a8e035066473983f5f3a'
+assert identity['upstream_commit'] == catalogue['upstream_commit']
+assert identity['archive_sha256'] == catalogue['archive_sha256']
+assert identity['binding_sha256'] == catalogue['binding_sha256']
+assert identity['inputs'] == catalogue['reference_inputs']
+assert identity['vendor_snapshot_sha256'] == pins['production']['vendor_snapshot_sha256']
+for name in ['rustc', 'cargo']:
+    pinned_release(identity['versions'][name], toolchain[name + '_release'])
 for name, digest in identity['inputs'].items():
     assert name in ['Cargo.toml', 'main.rs', 'instrumentation.patch', 'build.py', 'checks.py']
     assert hashlib.sha256((Path(__file__).resolve().parent / name).read_bytes()).hexdigest() == digest

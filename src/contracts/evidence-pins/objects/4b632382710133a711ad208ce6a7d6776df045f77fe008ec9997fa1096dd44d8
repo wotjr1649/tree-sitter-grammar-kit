@@ -1,0 +1,11 @@
+{
+  "schema": "tsgk-runtime-pin-tuple/r1",
+  "reader": "tsgk-runtime-closure/r1",
+  "logger_reader": "tsgk-runtime-logger/r1",
+  "manifest_sha256": "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541",
+  "driver_sha256": "760264ac9c7bf4f56afc1567528093191a0a0f32c1148f58f40d26a93e7fda98",
+  "cp949_sha256": "940e42b71e057f4bc31d91f4ae59d46b6790bd554eb522897c160806abc0975e",
+  "shim_template_sha256": "486b43e6336f3f3c5ecaf936a4f072d1a90c5bbc5c2856d47032e92d9e02bbdf",
+  "runtime_language_version": 15,
+  "runtime_min_compatible": 13
+}

@@ -14,10 +14,60 @@ import ast
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha, build_identity, batch, production_pins, resolve_pin_context, load_pin_context, _json
 
 
 class IntegrityTests(unittest.TestCase):
+    def test_pin_json_rejects_duplicates_nonfinite_and_excess_depth(self):
+        with self.assertRaisesRegex(RuntimeError, 'REFERENCE_PIN_JSON_DUPLICATE'):
+            _json(b'{"schema":"one","schema":"two"}')
+        with self.assertRaisesRegex(RuntimeError, 'REFERENCE_PIN_JSON_INVALID'):
+            _json(b'{"value":NaN}')
+        with self.assertRaisesRegex(RuntimeError, 'REFERENCE_PIN_JSON_LIMIT'):
+            _json(('[' * 33 + '0' + ']' * 33).encode())
+
+    def selected_pins(self, fallback=None):
+        root = Path(__file__).resolve().parents[3]
+        return production_pins(root, os.environ.get('TSGK_REFERENCE_PIN_CONTEXT'),
+                               os.environ.get('TSGK_REFERENCE_PIN_CONTEXT_SHA256'), fallback)[0]
+
+    def test_frozen_production_context_ignores_later_selection_and_rejects_changed_bytes(self):
+        root = Path(__file__).resolve().parents[3]
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Path(directory) / 'repo'
+            source_dir = fixture / 'src/dev/query-reference'
+            source_dir.mkdir(parents=True)
+            for name in ('Cargo.toml', 'main.rs', 'instrumentation.patch', 'build.py', 'check.py', 'checks.py', 'acquire.py'):
+                shutil.copyfile(root / 'src/dev/query-reference' / name, source_dir / name)
+            contracts = fixture / 'src/contracts/evidence-pins'
+            (contracts / 'sets').mkdir(parents=True)
+            (contracts / 'objects').mkdir()
+            selection_path = root / 'src/contracts/evidence-pins/selection.json'
+            selection_raw = selection_path.read_bytes()
+            selection_doc = json.loads(selection_raw)
+            selected_set = selection_doc['pin_set_sha256']
+            set_path = root / 'src/contracts/evidence-pins/sets' / (selected_set + '.json')
+            set_raw = set_path.read_bytes()
+            set_doc = json.loads(set_raw)
+            shutil.copyfile(set_path, contracts / 'sets' / (selected_set + '.json'))
+            for item in set_doc['materials']:
+                shutil.copyfile(root / 'src/contracts/evidence-pins/objects' / item['sha256'],
+                                contracts / 'objects' / item['sha256'])
+            frozen_selection = contracts / 'selection.json'
+            frozen_selection.write_bytes(selection_raw)
+            context = Path(directory) / 'pin-context.json'
+            _, raw = resolve_pin_context(frozen_selection, fixture, context)
+            pins = load_pin_context(context, hashlib.sha256(raw).hexdigest(), fixture)
+            context_sha = hashlib.sha256(raw).hexdigest()
+            for candidate in ('a', 'b', 'c'):
+                selection_value = selected_set if candidate == 'a' else candidate * 64
+                frozen_selection.write_text(json.dumps({'schema': 'tsgk-evidence-pin-selection/r1',
+                                                        'pin_set_sha256': selection_value}), encoding='utf-8')
+                self.assertEqual(load_pin_context(context, context_sha, fixture), pins)
+            context.write_bytes(raw + b' ')
+            with self.assertRaisesRegex(RuntimeError, 'REFERENCE_PIN_CONTEXT_MISMATCH'):
+                load_pin_context(context, context_sha, fixture)
+
     def test_raw_stream_schema_base64_counts_and_utf8(self):
         receipt = {'schema': 'tsgk-reference-process/r1', 'stdout_base64': 'w6kA', 'stderr_base64': '',
                    'execution': {'stdout_bytes': 3, 'stderr_bytes': 0,
@@ -138,9 +188,14 @@ int main(int argc, char **argv) {
   if (f) { if (!fgets(mode, sizeof mode, f)) return 22; fclose(f); }
   if (!strcmp(argv[1], "-vV")) {
     int rust = strstr(argv[0], "rustc") != NULL;
-    const char *release = !strcmp(mode, rust ? "rust-suffix" : "cargo-suffix") ? "1.97.1-custom" :
-                          !strcmp(mode, rust ? "rust-ten" : "cargo-ten") ? "1.97.10" : "1.97.1";
-    printf("%s 1.97.1 (fixture)\nrelease: %s\n", rust ? "rustc" : "cargo", release);
+    snprintf(path, sizeof path, "%s/%s-release.txt", root, rust ? "rustc" : "cargo");
+    f = fopen(path, "r"); if (!f) return 28;
+    char release[128];
+    if (!fgets(release, sizeof release, f)) return 29;
+    fclose(f);
+    release[strcspn(release, "\r\n")] = 0;
+    if (!strcmp(mode, rust ? "rust-mismatch" : "cargo-mismatch")) strcat(release, "-changed");
+    printf("%s fixture\nrelease: %s\n", rust ? "rustc" : "cargo", release);
     return 0;
   }
   if (!strcmp(argv[1], "metadata")) {
@@ -183,20 +238,27 @@ int main(int argc, char **argv) {
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             tool, env = self.fault_tool(directory)
-            for mode in ('control', 'rust-ten', 'rust-suffix', 'cargo-ten', 'cargo-suffix', 'source', 'vendor', 'archive-swap'):
+            archive_source = Path(os.environ['TSGK_REFERENCE_ARCHIVE'])
+            pins = self.selected_pins(archive_source.parent / 'pin-context.json')
+            tuple_pins = pins['tuple']
+            context_path = os.environ.get('TSGK_REFERENCE_PIN_CONTEXT')
+            context_sha = os.environ.get('TSGK_REFERENCE_PIN_CONTEXT_SHA256')
+            for mode in ('control', 'rust-mismatch', 'cargo-mismatch', 'source', 'vendor', 'archive-swap'):
                 with self.subTest(mode=mode):
                     case = root / mode
                     case.mkdir()
                     (case/'vendor').mkdir()
                     (case/'vendor/probe.txt').write_bytes(b'original')
                     (case/'mode.txt').write_text(mode, encoding='ascii')
+                    (case/'rustc-release.txt').write_text(tuple_pins['rustc_release'], encoding='ascii')
+                    (case/'cargo-release.txt').write_text(tuple_pins['cargo_release'], encoding='ascii')
                     suffix = '.exe' if os.name == 'nt' else ''
                     for name in ('cargo','rustc'):
                         shutil.copyfile(tool, case/(name+suffix))
                         (case/(name+suffix)).chmod(0o700)
                     work = case/'build'
                     entry = Path(__file__).with_name('build.py')
-                    archive = Path(os.environ['TSGK_REFERENCE_ARCHIVE'])
+                    archive = archive_source
                     prefix = [sys.executable, '-B', str(entry)]
                     if mode == 'archive-swap':
                         archive = case/'archive.tar'
@@ -218,6 +280,8 @@ runpy.run_path(entry, run_name='__main__')
                             '--vendor', str(case/'vendor'), '--cargo', str(case/('cargo'+suffix)), '--rustc', str(case/('rustc'+suffix)),
                             '--cc', os.environ['TSGK_REFERENCE_CC'], '--ar', os.environ['TSGK_REFERENCE_AR'], '--git', os.environ['TSGK_REFERENCE_GIT'],
                             '--supervisor', os.environ['TSGK_REFERENCE_SUPERVISOR'], '--work', str(work), '--target', {'win32':'x86_64-pc-windows-gnu','darwin':'aarch64-apple-darwin'}.get(sys.platform,'x86_64-unknown-linux-gnu')]
+                    if context_path and context_sha:
+                        argv += ['--pin-context', context_path, '--pin-context-sha256', context_sha]
                     if os.environ.get('TSGK_REFERENCE_CGROUP_PARENT'):
                         argv += ['--cgroup-parent', os.environ['TSGK_REFERENCE_CGROUP_PARENT']]
                     result = subprocess.run(argv, env=env, capture_output=True, timeout=60)
@@ -242,14 +306,22 @@ runpy.run_path(entry, run_name='__main__')
             selected.write_bytes(b'{}')
             here = Path(__file__).resolve().parent
             sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+            pins = self.selected_pins()
+            catalogue, tuple_pins = pins['catalogue'], pins['tuple']
             identity = {'schema':'tsgk-instrumented-reference-build/r1','complete':True,'binary_sha256':sha(tool),
-                        'upstream_commit':'10eb5ac119eec9cb4267a8e035066473983f5f3a', 'selected_tree_sha256':sha(selected),
+                        'upstream_commit':catalogue['upstream_commit'], 'archive_sha256':catalogue['archive_sha256'],
+                        'binding_sha256':catalogue['binding_sha256'], 'vendor_snapshot_sha256':pins['production']['vendor_snapshot_sha256'],
+                        'versions':{'rustc':'release: '+tuple_pins['rustc_release'], 'cargo':'release: '+tuple_pins['cargo_release']},
+                        'selected_tree_sha256':sha(selected),
                         'inputs':{name:sha(here/name) for name in ('Cargo.toml','main.rs','instrumentation.patch','build.py','checks.py')}}
             identity_path = root/'identity.json'
             identity_path.write_text(json.dumps(identity), encoding='utf-8')
             work = root/'controls'
             argv = [sys.executable, '-B', str(here/'check.py'), '--reference', str(tool), '--identity', str(identity_path),
                     '--supervisor', os.environ['TSGK_REFERENCE_SUPERVISOR'], '--cc', str(tool), '--work', str(work)]
+            if os.environ.get('TSGK_REFERENCE_PIN_CONTEXT') and os.environ.get('TSGK_REFERENCE_PIN_CONTEXT_SHA256'):
+                argv += ['--pin-context', os.environ['TSGK_REFERENCE_PIN_CONTEXT'],
+                         '--pin-context-sha256', os.environ['TSGK_REFERENCE_PIN_CONTEXT_SHA256']]
             if os.environ.get('TSGK_REFERENCE_CGROUP_PARENT'):
                 argv += ['--cgroup-parent', os.environ['TSGK_REFERENCE_CGROUP_PARENT']]
             result = subprocess.run(argv, env=env, capture_output=True, timeout=60)

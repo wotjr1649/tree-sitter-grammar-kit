@@ -2,6 +2,18 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- V2-E에서 legacy Rust release·runtime ABI/closure·logger allowlist의 코드 고정값을 `src/contracts/evidence-pins/`의 검토된 기본 승인 집합으로 옮겼다. 기본 승인은 `repository-default`로 구분하며 `RepositoryEvidenceDefaults()`가 정확한 provenance를 별도로 반환한다. 기존 판정·counter·schema·fixture와 logger 전용 과거 scope를 보존하고 생산 선택과 독립적으로 소비한다. `reuseobs.RuntimeManifestSHA256`는 deprecated snapshot 변수로 바뀌므로 compile-time constant 사용자는 `DefaultRuntimeManifest()`로 이행해야 한다. Refs #370.
+
+- V2-D에서 Roslyn 기대값 생성의 현재 release 비교를 승인 observation/cases/tuple 결속으로 바꿨다. 보존 5.9/r2와 기존 inventory는 유지하고, 새 r3 producer는 build SDK identity와 실제 oracle/Roslyn DLL SHA를 기록한다. 미보존 legacy SDK/DLL provenance는 BLOCKED다. Standalone replay·qualification의 외부 pin admission은 기존 bounded inline 규칙을 공유한다. 기존 nil API·schema·한도와 원본 증거를 보존한다. Refs #370.
+
+- V2-C3에서 accepted-event와 preprocess-CST의 공개 API·replay·qualification에 historical runtime opt-in을 연결했다. 승인 tuple에 별도 reader 자료를 결속하고 source·primary/fresh·producer·ABI 검사를 유지한다. 새 replay r6/qualification r13과 직접 API r2는 소비한 승인 범위를 기록하며 기존 nil 호출·저장 원본·생산 선택·한도를 보존한다. Roslyn 및 standalone CLI admission(V2-D), 미보존 실제 과거 실행 자료는 남아 있다. Refs #370.
+
+- V2-C2에서 일반 logger replay/native-result r9·r10과 ordinary qualification에 외부 `RuntimePins` opt-in을 연결했다. Exact profile/host run identity 승인과 V2-C tuple·reader 의무를 공유하고 projection/raw/marker·ABI·runtime commit·mandatory claim을 검증한다. Replay r5·qualification r12에 소비 identity를 보존하며 nil 호출의 schema/current 검증을 유지한다. Accepted·preprocess-CST·logger CLI admission과 Roslyn/V2-D는 남아 있다. Refs #370.
+
+- V2-C의 historical Pins에 runtime tuple을 추가해 eligibility manifest·전체 runtime hash inventory·당시 driver/CP949/shim·ABI와 logger/nativewire를 같은 승인 조합으로 검증한다. Semantic set/raw/cache와 기존 Pins replay/qualification도 같은 context를 소비하며 legacy nil 호출의 결과·schema·한도는 유지한다. Reader 소유83-file/3-patch 의무·위조 거부·생산 A/B/C 불변성을 검사하고 과거 driver 원문을 보존했다. 일반 logger replay·accepted·preprocess-CST와 Roslyn/V2-D, 실제 과거 실행 증거 재평가는 남아 있다. Refs #370.
+
+- V2-B2에서 Rust reference 생산의 selection/set/tuple을 한 context로 고정해 Python acquire/build/test/check와 workflow에 전달하고, semantic API·replay·qualification·CLI에 외부 `Pins` opt-in을 연결했다. 새 semantic r2·`oracle-set-r7`/replay r4·qualification r11은 historical catalogue·tuple의 소비 identity를 보존하며 기존 호출의 schema와 reader 의무·한도를 유지한다. Classification donor/assembly도 독립 승인 context를 사용한다. Historical runtime 전체와 Roslyn(V2-C/D), 실제 새 toolchain 자격 관측은 남아 있다. Refs #370.
+
 - P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
 
 - 직접 eligibility에 승인 historical catalogue·Rust tuple을 쓰는 `Pins` opt-in과 r2 결과를 추가했다. 생산 후보가 바뀌어도 같은 과거 증거·승인의 판정을 보존하고 고정 의무9/4/53/36·known-rule와 기존 tool/receipt/source/vendor 검사를 유지한다. V2-B1 Go verifier 분할이며 Python/workflow·classification 및 semantic/replay/CLI/runtime 전달은 남아 있다. Refs #370.

@@ -52,6 +52,7 @@ type SourceID struct {
 type Binding struct {
 	Manifest, RunID, ProducerSHA256 string
 	HistoryStart                    uint64
+	Runtime                         *reuseobs.RuntimePin `json:"-"`
 }
 
 func (e Expect) revision() string {
@@ -370,7 +371,8 @@ func CheckEnvelope(r Response, n int, e Expect) (stop bool, err error) {
 			RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
 		}
 		if err := jsonv2.Unmarshal(p.ReuseObservation, &capability, jsonv2.RejectUnknownMembers(true)); err != nil || e.Observation == nil ||
-			capability.Policy != reuseobs.Policy || capability.RuntimeManifestSHA256 != e.Observation.Manifest {
+			capability.Policy != reuseobs.Policy || capability.RuntimeManifestSHA256 != e.Observation.Manifest ||
+			e.Observation.Runtime != nil && !e.Observation.Runtime.Matches(capability.RuntimeManifestSHA256) {
 			return false, invalid("RESPONSE_INVALID", errors.New("r3 observation capability"))
 		}
 	} else if len(p.ReuseObservation) != 0 {
@@ -449,7 +451,8 @@ func CheckStep(k int, s Step, e Expect) (CheckedStep, error) {
 			b := e.Observation
 			binding := reuseobs.Binding{RuntimeManifestSHA256: b.Manifest, RequestID: e.ID,
 				RunID: b.RunID, ProducerSHA256: b.ProducerSHA256, HistoryStart: b.HistoryStart,
-				Step: uint64(k), Role: role, SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes}
+				Step: uint64(k), Role: role, SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes,
+				Runtime: b.Runtime}
 			if k > 0 {
 				binding.PreviousSourceSHA256 = e.Sources[k-1].SHA256
 			}

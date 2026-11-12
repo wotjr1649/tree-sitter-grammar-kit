@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
 )
 
@@ -66,10 +67,12 @@ func (b *eligibilityBudget) reserveLegacyReplayResult(data []byte) *Error {
 
 // One ledger covers repeated work, including conservative reservations for shared leaves.
 type eligibilityBudget struct {
-	r             *run
-	work, logical uint64
-	logicalLimit  uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
-	err           *Error
+	r              *run
+	runtime        *eligibilityRuntimePins
+	defaultRuntime *evidencepins.Runtime
+	work, logical  uint64
+	logicalLimit   uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
+	err            *Error
 }
 
 func (b *eligibilityBudget) logicalCap() uint64 {

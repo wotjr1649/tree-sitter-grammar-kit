@@ -56,11 +56,15 @@ func (x *replayEnv) readObservationTop(path string, top *nativeResult) *Error {
 // observationProducer returns the runtime manifest a recorded producer declared and whether
 // this policy reads observations bound to it.
 func observationProducer(raw jsontext.Value) (string, bool) {
+	return observationProducerWithRuntime(raw, nil)
+}
+
+func observationProducerWithRuntime(raw jsontext.Value, runtime *reuseobs.RuntimePin) (string, bool) {
 	var cap struct {
 		Policy                string `json:"policy"`
 		RuntimeManifestSHA256 string `json:"runtime_manifest_sha256"`
 	}
-	ok := jsonv2.Unmarshal(raw, &cap, jsonv2.RejectUnknownMembers(true)) == nil && cap.Policy == reuseobs.Policy && reuseobs.VerifiedRuntimeManifest(cap.RuntimeManifestSHA256)
+	ok := jsonv2.Unmarshal(raw, &cap, jsonv2.RejectUnknownMembers(true)) == nil && cap.Policy == reuseobs.Policy && (runtime == nil && reuseobs.VerifiedRuntimeManifest(cap.RuntimeManifestSHA256) || runtime != nil && runtime.Matches(cap.RuntimeManifestSHA256))
 	return cap.RuntimeManifestSHA256, ok
 }
 
@@ -73,7 +77,7 @@ func recordManifest(c *rcCase) (manifest string, declared bool) {
 		if m, ok := observationProducer(c.Producer.ReuseObservation); ok {
 			return m, true
 		}
-		return reuseobs.RuntimeManifestSHA256, false
+		return reuseobs.DefaultRuntimeManifest(), false
 	}
 	for _, s := range c.Steps {
 		var markers []struct {
@@ -86,12 +90,14 @@ func recordManifest(c *rcCase) (manifest string, declared bool) {
 			break
 		}
 	}
-	return reuseobs.RuntimeManifestSHA256, false
+	return reuseobs.DefaultRuntimeManifest(), false
 }
 
 // responseManifest is the readable manifest a raw response declared, or "" if none.
-func responseManifest(raw jsontext.Value) string {
-	if m, ok := observationProducer(raw); ok {
+func responseManifest(raw jsontext.Value) string { return responseManifestWithRuntime(raw, nil) }
+
+func responseManifestWithRuntime(raw jsontext.Value, runtime *reuseobs.RuntimePin) string {
+	if m, ok := observationProducerWithRuntime(raw, runtime); ok {
 		return m
 	}
 	return ""
@@ -131,8 +137,12 @@ type observationStep struct {
 
 // Complete collection is stricter than a mandatory parse-start observation (#277).
 func completeSelectionObservation(raw jsontext.Value) bool {
+	return completeSelectionObservationWithRuntime(raw, nil)
+}
+
+func completeSelectionObservationWithRuntime(raw jsontext.Value, runtime *reuseobs.RuntimePin) bool {
 	var observations []reuseobs.Observation
-	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.Judge(observations) == claimPass
+	return jsonv2.Unmarshal(raw, &observations) == nil && reuseobs.JudgeWithRuntime(observations, runtime) == claimPass
 }
 
 // wireRoute is an edit step's route as live DecodeResponse reads it and the record keeps it.
@@ -155,6 +165,19 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		build = top.Build.Identity
 	}
 	manifest, declared := recordManifest(c)
+	if x.observationRuntime != nil {
+		manifest = x.observationManifest
+		declared = false
+		if c.Producer != nil {
+			_, declared = observationProducerWithRuntime(c.Producer.ReuseObservation, x.observationRuntime)
+		}
+	}
+	if p := x.loggerRuntime; p != nil {
+		g.check(top.Build != nil && top.Build.RuntimeCommit == p.manifest.Commit, c.ID, "OBSERVATION_RUNTIME_MISMATCH", "저장 runtime commit이 승인 manifest와 다르다")
+		if c.Producer != nil {
+			g.check(p.matchesABI(c.Producer.LanguageVersion, c.Producer.RuntimeLanguageVersion, c.Producer.RuntimeMinCompatible), c.ID, "OBSERVATION_ABI_MISMATCH", "producer ABI가 승인 tuple과 다르다")
+		}
+	}
 	var all []reuseobs.Observation
 	groups := map[int][]observationStep{}
 	previous := ""
@@ -226,7 +249,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 				continue
 			}
 		}
-		b := reuseobs.Binding{RuntimeManifestSHA256: manifest, RequestID: c.ID,
+		b := reuseobs.Binding{Runtime: x.observationRuntime, RuntimeManifestSHA256: manifest, RequestID: c.ID,
 			HistoryStart: uint64(start),
 			RunID:        top.ObservationRunID, ProducerSHA256: build, Step: uint64(local),
 			SourceSHA256: s.SourceSHA256, SourceBytes: s.SourceBytes, PreviousSourceSHA256: previous}
@@ -249,17 +272,16 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 		}
 	}
 	var claim string
-	want := reuseobs.Judge(all)
+	want := reuseobs.JudgeWithRuntime(all, x.observationRuntime)
 	if x.mandatoryObservation {
-		want, _ = mandatoryObservations(c)
+		want, _ = mandatoryObservationsWithRuntime(c, x.observationRuntime)
 	}
 	g.check(len(c.ReuseObservationClaim) > 0 && c.ReuseObservationClaim[0] == '"' && jsonv2.Unmarshal(c.ReuseObservationClaim, &claim) == nil && claim == want, c.ID, "OBSERVATION_CLAIM_MISMATCH", "관측 판정이 별도 축의 재계산과 다르다")
 	if len(groups) > 0 {
 		g.check(declared, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "producer 관측 정책이 다르다")
 	}
-	// qualification evidence is a new run, which live Check binds to the current runtime
-	// manifest; earlier verified manifests stay readable only for recorded replays (review on #250)
-	g.check(x.observationWire != "tsgk-native/r4" || manifest == reuseobs.RuntimeManifestSHA256, c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "qualification 관측은 현재 runtime manifest여야 한다")
+	// Legacy qualification binds to current; explicit approval binds to the subject runtime.
+	g.check(x.observationWire != "tsgk-native/r4" || x.observationRuntime != nil && x.observationRuntime.Matches(manifest) || x.observationRuntime == nil && repositoryRuntimeClosure(manifest), c.ID, "OBSERVATION_CAPABILITY_MISMATCH", "qualification 관측이 선택한 runtime manifest와 다르다")
 	starts := slices.Sorted(maps.Keys(groups))
 	dir := cmp.Or(x.responseDir, "responses/")
 	// the source length and API point bytes of the request of the response starting at a
@@ -303,7 +325,7 @@ func (x *replayEnv) replayObservations(c *rcCase, index int, top nativeResult, r
 			return nil
 		}
 		e := &nativewire.Expect{Revision: "tsgk-native/r4", ID: c.ID, Nodes: x.observationNodes, Queries: x.observationSources, API: x.observationAPI,
-			Points: apiPoints, SourceBytes: *source, Observation: &nativewire.Binding{Manifest: manifest, RunID: top.ObservationRunID, ProducerSHA256: build, HistoryStart: uint64(start)}}
+			Points: apiPoints, SourceBytes: *source, Observation: &nativewire.Binding{Runtime: x.observationRuntime, Manifest: manifest, RunID: top.ObservationRunID, ProducerSHA256: build, HistoryStart: uint64(start)}}
 		for _, ed := range registered.Edits[start : end-1] {
 			e.Edits = append(e.Edits, nativewire.EditSpan{StartByte: ed.StartByte, OldEndByte: ed.OldEndByte, NewEndByte: ed.NewEndByte})
 		}
@@ -467,12 +489,15 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		StepsCompleted *uint64  `json:"steps_completed"`
 		SourceBytes    *uint64  `json:"source_bytes"`
 		Producer       struct { // typed as the replay always read them, also for r3 (Codex A251C)
-			Query            string         `json:"query"`
-			API              *string        `json:"api"`
-			Predicates       *string        `json:"predicates"`
-			SymbolCount      *uint32        `json:"symbol_count"`
-			FieldCount       *uint32        `json:"field_count"`
-			ReuseObservation jsontext.Value `json:"reuse_observation"`
+			LanguageVersion        jsontext.Value `json:"language_version"`
+			RuntimeLanguageVersion jsontext.Value `json:"runtime_language_version"`
+			RuntimeMinCompatible   jsontext.Value `json:"runtime_min_compatible"`
+			Query                  string         `json:"query"`
+			API                    *string        `json:"api"`
+			Predicates             *string        `json:"predicates"`
+			SymbolCount            *uint32        `json:"symbol_count"`
+			FieldCount             *uint32        `json:"field_count"`
+			ReuseObservation       jsontext.Value `json:"reuse_observation"`
 		} `json:"producer"`
 	}
 	r4 := x.observationWire == "tsgk-native/r4"
@@ -561,7 +586,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 			g.fail(id, "OBSERVATION_PROJECTION_MISMATCH", "원 응답에 추가 관측 step이 있다")
 			return nil
 		}
-		b := reuseobs.Binding{RuntimeManifestSHA256: manifest, RequestID: id, RunID: top.ObservationRunID,
+		b := reuseobs.Binding{Runtime: x.observationRuntime, RuntimeManifestSHA256: manifest, RequestID: id, RunID: top.ObservationRunID,
 			HistoryStart:   want[i].observations[0].HistoryStart,
 			ProducerSHA256: top.Build.Identity, Step: uint64(i), SourceSHA256: step.SourceSHA256, SourceBytes: step.SourceBytes}
 		if i > 0 {
@@ -581,6 +606,9 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		wireEnd[1] = *wire.Code
 	} else {
 		wireEnds = false // live Check requires the response code member
+	}
+	if p := x.loggerRuntime; p != nil {
+		g.check(p.matchesABI(wire.Producer.LanguageVersion, wire.Producer.RuntimeLanguageVersion, wire.Producer.RuntimeMinCompatible), id, "OBSERVATION_ABI_MISMATCH", "raw producer ABI가 승인 tuple과 다르다")
 	}
 	detail := ""
 	if r4 {
@@ -629,7 +657,7 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 		counted = counted && wireEnds && wire.SourceBytes != nil &&
 			(!x.observationQueries || p.Query == "tsgk-query/r1") && (!x.observationAPI || p.API != nil && *p.API == "tsgk-api/r1")
 	}
-	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifest(wire.Producer.ReuseObservation) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다"+detail)
+	g.check(count == len(want) && wire.Complete != nil && *wire.Complete && counted && wire.Protocol == cmp.Or(x.observationWire, "tsgk-native/r3") && wire.ID == id && responseManifestWithRuntime(wire.Producer.ReuseObservation, x.observationRuntime) == manifest, id, "OBSERVATION_RESPONSE_UNBOUND", "원 응답의 완결성·revision·case·정책·관측 수가 다르다"+detail)
 	x.observationResponses[path], x.consumed[path] = true, true
 	return nil
 }
@@ -639,6 +667,10 @@ func (x *replayEnv) compareObservationResponse(path string, c *rcCase, want []ob
 // with the raw responses are the reuse-observation gate's (replayObservations). An unreadable
 // step list reads as missing.
 func mandatoryObservations(c *rcCase) (string, []string) {
+	return mandatoryObservationsWithRuntime(c, nil)
+}
+
+func mandatoryObservationsWithRuntime(c *rcCase, runtime *reuseobs.RuntimePin) (string, []string) {
 	steps := make([]reuseobs.Step, len(c.Steps))
 	claims := make([]string, len(c.Steps))
 	for i, s := range c.Steps {
@@ -647,9 +679,9 @@ func mandatoryObservations(c *rcCase) (string, []string) {
 			observations = nil
 		}
 		steps[i] = reuseobs.Step{Native: s.Incremental != nil || s.Composite != nil && s.Composite.Inline != nil, Edit: s.Step > 0 && !s.Restarted, Observations: observations}
-		claims[i] = reuseobs.CaseClaim(steps[i:i+1], true)
+		claims[i] = reuseobs.CaseClaimWithRuntime(steps[i:i+1], true, runtime)
 	}
-	return reuseobs.CaseClaim(steps, c.ExecutionStatus == StatusCompleted), claims
+	return reuseobs.CaseClaimWithRuntime(steps, c.ExecutionStatus == StatusCompleted, runtime), claims
 }
 
 // stepsCounted reports whether a raw response's steps_completed fits its count steps: all of

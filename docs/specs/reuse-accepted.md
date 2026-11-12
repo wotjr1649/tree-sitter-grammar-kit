@@ -1,5 +1,7 @@
 # Accepted reuse 증거 계약 (#264)
 
+[#370 V2-C](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)의 eligibility/semantic runtime 지원은 이 accepted API와 replay의 current-only 제약을 변경하지 않는다. Historical accepted-event reader와 공개·중첩 context 전달은 남은 구현 범위다.
+
 이 문서의 현재 runtime manifest 제약은 기존 accepted reader의 경계다. [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 자료 결속만 추가하며 이를 완화하지 않는다. 후속 accepted opt-in은 독립 승인된 기록 manifest·accepted-event reader·전체 closure를 같은 문맥으로 전달해야 한다. event≥1·full fresh CST·source/edit 재계산 의무는 유지한다.
 
 이 기능은 실험적이며 caller가 `--reuse-accepted FILE`로 고정 원장을 명시한 실행에만 적용한다. `FILE`은 [original 원장](../../src/testdata/native/reuse-holdouts.json)이며 입력 root 밖에 있어야 한다. 기존 `reuseobs.Mandatory`, `CaseClaim`, `Judge`, public `TSNode.id` 교집합으로 계산한 `route.proven`과 과거 revision의 판정은 유지한다.
@@ -17,6 +19,12 @@ FAIL은 BLOCKED보다 우선한다. accepted=0인 COMPLETE target, 확인된 old
 raw가 미제출이어도 제공된 projection의 full CST는 source version·producer/source/policy identities·node 구조·digest·point·count·HasError를 독립 검증한다. incremental/fresh CST 차이는 저장된 comparison이 정직하게 불일치를 기록해도 FAIL이며, step/edit·producer의 기존 r3/r4 capability·response status/code/자연 exit·완료 process·제공된 route의 확인 가능한 모순도 FAIL로 남긴다. 부분 tree도 제공된 status/form/count/digest header가 기존 wire 계약과 모순되면 FAIL이다. `form=full`의 null tree 또는 summary 동시 제출은 잘못된 제출이고, projection 자체 미제출이나 유효한 부분 기록은 BLOCKED다. 이 검증만으로 target이나 history를 PASS로 올리지 않으며, raw가 있으면 raw와 projection 모두 envelope를 먼저 검사하고 각 step의 shape 검사와 엄격한 decode는 해당 step 판정 시점에 수행한다. 뒤 step의 null·누락·잘못된 type·unknown field는 해당 target FAIL로 남기며 앞서 확보한 target PASS를 지우지 않는다. 중단 process의 projection 선행 검사로 확인한 FAIL은 즉시 보존하고, raw의 해당 step에서 같은 모순을 다시 대조한다. projection의 producer·단계·edit·route·comparison·tree header·full tree·input·node/point·identity는 알려진 필드 집합으로 검증한다. 기존 parse_ms·max_depth·capabilities·captures·summary·declarations·queries·api·query_comparison metadata는 보존하며 query 의미 claim으로 승격하지 않는다. 중단 process의 projection에서 결속된 COMPLETE target accepted=0을 읽으면 raw 제출 여부와 무관하게 FAIL을 즉시 보존한다. raw와 projection의 관측은 같은 엄격한 decoder로 검증해 알 수 없는 필드가 typed 결속 비교에서 사라지지 않게 한다. 선행 검사에서 발견한 뒤 step의 실패는 정상인 앞 target PASS를 막지 않지만, source·header 등 공통 결속 실패나 이미 재확인한 앞 step 실패는 후속 승격을 막는다. 단계가 있는 raw의 공통 `steps_completed`는 target 판정 전에 완료 응답의 단계 수 또는 비완료 응답의 단계 수 − 1과 대조한다. 단계 없는 제한 응답의 기존 count 규칙은 유지한다. 비완료 응답의 마지막 step을 엄격한 decode·wire·open 검사로 확인한 뒤 header status/code와 모순되면 기존 target PASS도 초기 BLOCKED로 돌리며, 이미 확인한 target FAIL과 최초 code는 보존한다. 마지막 step 자체가 손상되어 이 대조를 할 수 없으면 그 step 실패만으로 앞 PASS를 지우지 않는다. raw의 관측 모순(등록 target의 COMPLETE accepted=0 포함)을 확인한 뒤 node/point 검사에서 중단돼도 해당 target FAIL을 먼저 반영하고 원래 typed 오류를 함께 반환한다.
 
 등록된 omit-old-tree 대조군은 private proof를 public proof보다 먼저 같은 예산에서 계산한다. 중도 오류도 확인한 독립 FAIL과 원래 typed 오류를 함께 보존한다. private 검사가 오류 없이 끝나면 public proof와 저장 claim을 기존대로 비교하며 public omit FAIL을 승격하지 않는다. private 검사는 실제 CST equality·route·mandatory 관측 순서로 legacy 첫 실패를 재계산하고 등록된 첫 omit step 및 저장 code와 대조한다. 뒤 step의 route 누락도 거부한다. 완료된 control FAIL은 set mechanism에도 FAIL로 반영하며, 증거 미제출만으로 FAIL을 만들지 않는다.
+
+## #370 V2-C3 historical accepted reader
+
+위 current manifest 검사는 opt-in 없는 기존 호출의 계약이다. `ReuseAcceptedRequest.RuntimePins`는 [독립 승인 reader 계약](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)에 따라 exact raw 응답과 tuple·accepted reader를 결속한다. 승인 logger만으로 accepted-event 지원을 추론하지 않는다. 새 공개 r2 결과의 `runtime_pins`는 승인 digest·실제 runtime·reader·공유 소비량을 기록한다. 내부 replay는 검증된 token으로 원본 r1 projection의 의미를 그대로 재계산한다. Runtime manifest뿐 아니라 projection/raw producer ABI·관측 binding도 같은 승인 조합과 비교한다. 기존 event≥1·old-tree/counter·full CST·fresh equality·source/edit·process·고정 ledger·control 규칙과 한도를 유지한다.
+
+새 `native-result-r11`/`oracle-set-r8`과 qualification r13은 해당 승인 범위를 전달한다. 원본 결과·ledger·관측 bytes와 당시 verdict를 바꾸지 않는다. 자료 부재는 BLOCKED이며 위조·명시적 모순을 PASS로 승격하지 않는다.
 
 ## 실행·저장·호환성
 

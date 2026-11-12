@@ -1,6 +1,6 @@
 # CLI/report r1과 profile r0 — S01 구현과 후속 계약
 
-[#370 V2-A 역사 자료 pin](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)은 Go byte-input API만 제공한다. CLI flag·profile·reducer revision은 추가하지 않는다. 후속 CLI opt-in은 graph 밖 caller 승인 문서와 정확한 집합 digest를 받고 기존 trust-document file identity·hardlink/reparse/alias·문서 수·공유 예산 admission을 함께 유지해야 한다.
+[#370 역사 자료 pin](query-reference-eligibility.md#370-v2-b2-공개-reference-pin-전달)의 Go byte-input API와 아래 V2-B2 CLI opt-in은 graph 밖 caller의 독립 승인값을 요구한다. 기존 trust-document file identity·hardlink/reparse/alias·문서 수·공유 예산 admission을 유지한다.
 
 S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현` 절), S02는 `verify`와 strict profile `tsgk-profile/r1`, expected `tsgk-expected/r1`을 구현했다(아래 `S02 구현` 절). S04는 `reproduce`와 `tsgk-reproduce/r1`을, S05는 `incremental`과 `tsgk-incremental/r1`을, S06은 `oracle record`와 `tsgk-oracle/r1`을(C2는 둘을 기대값 anchor가 있는 r2로 바꿨다), S07은 `replay`·`evidence verify`와 `tsgk-replay/r1`·`tsgk-evidence-policy/r1`을, S08은 `qualify`와 `tsgk-qualification-inventory/r1`을 구현했고 C2는 이를 r2를 거쳐 r3으로 바꿨다(아래 `S04 구현`~`S08 구현` 절). S00 계약의 `parity`는 S08이 `qualify`로 대체했다. 아래 profile r0 서술은 구현되지 않은 초안으로 보존하며 `S02 구현` 절과 충돌하면 그 절이 우선한다.
 
@@ -23,10 +23,10 @@ S01부터 [공개 offline API](public-go-api.md)와 같은 operation/guard/E0를
 | `reproduce --root PATH --profile FILE --out DIR --work DIR --tool NAME=PATH --allow EXEC_GENERATOR` | 두 독립 생성과 기준 생성물 비교 | EXEC_GENERATOR + WRITE_RESULT, 04 |
 | `incremental --root PATH --profile FILE --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | 매 edit의 incremental/fresh 결과(edit는 profile 안) | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 05 |
 | `oracle record --root PATH --profile FILE [--fact-pack FILE] [--source-witness] [--query-semantics FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE` | native ordered tree/query/API record set | BUILD_NATIVE + EXEC_NATIVE + WRITE_RESULT, 06 |
-| `replay --input PATH --profile FILE` | 등록된 data-only reducer로 raw의 현재 판정 | READ_DATA, 07; 외부 verifier 진단은 별도 EXEC_ADAPTER |
+| `replay --input PATH --profile FILE [--pins FILE] [--runtime-pins FILE]` | 등록된 data-only reducer로 raw의 현재 판정; 선택적 외부 historical pin envelope | READ_DATA, 07 |
 | `evidence verify --input PATH --profile FILE` | envelope/참조/승계 검증 | READ_DATA, 07 |
 | `evidence query-reference --input DIR --profile FILE --registration FILE --witness-registration FILE` | 별도 승인된 저장 reference 연결 | READ_DATA, experimental |
-| `qualify --inventory FILE --candidate SHA --host PLATFORM=DIR ...` | 한 후보의 host 실행 기록을 등록 칸(26 route × 3 OS)과 추가 역할 행으로 집계, 세 host 의미 비교 | READ_DATA, 08 |
+| `qualify --inventory FILE --candidate SHA --host PLATFORM=DIR ... [--runtime-pins PLATFORM=FILE ...]` | 한 후보의 host 실행 기록을 등록 칸(26 route × 3 OS)과 추가 역할 행으로 집계, 세 host 의미 비교 | READ_DATA, 08 |
 
 명령은 network·tool 설치를 묵시적으로 하지 않는다. `--allow CAPABILITY`를 반복 지정해 실행 권한을 전달하되 profile 요청과 실제 backend가 모두 충족되어야 한다. fetch 준비는 별도 명시 절차이고 위 offline 명령에 자동 fetch 옵션을 숨기지 않는다. `--git-provenance` 같은 외부 Git 호출은 S01에서 별도 opt-in 계약·권한을 먼저 확정하기 전 구현하지 않는다.
 
@@ -224,11 +224,13 @@ API의 `tsgk-query-reference-connection-result/r1`을 그대로 출력해 requir
 ## S07 구현 — replay, evidence verify
 
 ```text
-tsgk replay          --input DIR --profile FILE [--out PATH]
+tsgk replay          --input DIR --profile FILE [--pins FILE] [--runtime-pins FILE] [--out PATH]
 tsgk evidence verify --input DIR --profile FILE [--out PATH]
 ```
 
 두 명령은 READ_DATA만 쓴다. process·network·tool을 시작하지 않고 evidence 안의 코드를 import·실행하지 않으며 archive를 풀지 않는다(archive member도 hash만 확인하는 불투명 member다). `--input`은 evidence set root이고 S01 guard(no-follow, link·special 거부, 깊이 64)로 전체를 한 번 나열한다. `--profile`은 caller가 신뢰하는 등록 문서이며 `--input` 안에 있으면 `PROFILE_INSIDE_INPUT`(exit 2)이다. 결과는 한 줄 JSON이고 `--out`은 S01 publication 규칙(no-clobber, 입력 밖)을 따른다. exit: `PASS` 0, `FAIL` 1(완료된 검사가 불일치를 찾았거나 다시 계산한 subject 판정이 FAIL), `UNRESOLVED`·`BLOCKED`·`NOT_ASSESSED` 3, 실행 전 거부 2, I/O·publication 4, 취소 130. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S07 구현`이 소유한다.
+
+선택 `--pins FILE`과 `--runtime-pins FILE`은 `tsgk-cli-evidence-pins-input/r1` strict JSON envelope를 받는다. 필드는 `schema`, `subject_base64`, `approved_approval_sha256`, `approval_base64`, `approved_pin_set_sha256`, `pin_set_base64`, `materials_base64`이며 material의 key는 논리 이름이다. 모든 base64는 표준 padded canonical 형식이어야 한다. 각각의 envelope 원문은 16 MiB 이하, 모든 CLI trust 문서 합계는 256 MiB 이하, materials map은 10000개 이하이며 각 decoded material·subject는 16 MiB 이하다. 추가 키, 중복 JSON 키, trailing 값, 누락·빈 입력, 비정규 base64 및 한도 초과는 실행 전에 거부한다. Pin 문서와 profile은 `--input` 밖의 regular file이어야 하고 서로 다른 file identity여야 하며, input 하위 파일 hardlink/reparse alias도 거부한다. `--pins`는 `oracle-set-r7` historical reference replay만 허용하고 subject는 graph 안의 eligibility approval 원문과 일치해야 한다. `--runtime-pins`는 해당 API가 승인하는 replay reducer만 허용하고 subject는 외부 profile 원문과 일치해야 한다. 두 flag를 생략하면 기존 호출의 결과와 schema가 유지된다. Evidence verify에는 pin flag를 사용할 수 없다.
 
 registration `tsgk-replay/r1`(S02 strict decoder, 모든 필드 필수): `schema`, `id`, `reducer`(등록된 reducer id, 그 밖은 `REDUCER_UNSUPPORTED`/BLOCKED), `operation`(아래 표, reducer의 연산과 같아야 함), `subject`(`run`, `attempt`, `platform`, `commit`, `evidence_mode`, `execution_status`, `assessment`: 기록된 subject run과 그 원 판정), `identities`(역할 → 값, reducer가 관측하는 역할을 빠짐없이 정확히 결속), `records`(`null`이면 reducer가 workload에서 expected record를 정하고, 목록이면 그 순서의 독립 expected 목록), `members`(`path`·`role`·`bytes`·`sha256`: 독립 inventory. 경로는 portable이고 대소문자만 다른 중복은 `MEMBER_DUPLICATE`, 역할은 reducer의 `member_roles` 또는 evidence가 아닌 동반 파일의 `retained`)다. 예시는 `src/contracts/examples/replay-r1.json`, 거부 예시는 `invalid/replay-*.json`이다.
 
@@ -254,10 +256,12 @@ offline replay는 `native-result-r7`과 `primary-response` role을 사용한다.
 현재 inventory/r8은 accepted-reuse opt-in과 `native-result-r8`/`oracle-set-r3`를 포함해 qualification 결과/r9를 낸다. 역사적 inventory/r7은 result/r8, inventory/r6은 result/r7, inventory/r5는 result/r6을 유지한다. symbol primary CST 축과 accepted reuse 의미는 [identity/evidence](identity-and-evidence.md)를 따른다. 제출된 결과 revision이나 policy header에 따라 legacy로 재시도하지 않는다.
 
 ```text
-tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--query-semantics FILE] [--out PATH]
+tsgk qualify --inventory FILE --candidate SHA --host PLATFORM=DIR [--host PLATFORM=DIR ...] [--query-semantics FILE | --runtime-pins PLATFORM=FILE ...] [--out PATH]
 ```
 
 READ_DATA만 쓴다. process·network·tool을 시작하지 않는다. `--inventory`는 caller가 신뢰하는 `tsgk-qualification-inventory/r8`(역사적 r7/r6/r5도 수용)이고 어느 host 디렉터리 안에 있어도 `INVENTORY_INSIDE_INPUT`(exit 2)이다. `--candidate`는 모든 host가 실행해야 하는 commit(40자리 16진)이며 그 밖은 `CANDIDATE_INVALID`(exit 2)다. `--host`는 inventory의 platform id와 그 host의 실행 디렉터리다. `--out`은 S01 publication 규칙을 따르고 모든 host 및 선택한 semantic root와 겹칠 수 없다. Nil `--query-semantics`는 r9 qualify 의미를 유지한다. Exit: `PASS` 0(모든 필수 칸·실행된 추가 역할 행 PASS와 `mechanism_gate` PASS, 지원 claim `SUPPORTED`), `FAIL` 1(완결성·cohort·자격·kit 축·비교 실패, 필수 요구·등록 검사 FAIL, 추가 역할 행 FAIL), `BLOCKED` 3(실패는 없고 미충족 의무, 등록 검사 BLOCKED, kit 축 BLOCKED, INCOMPLETE 추가 역할 행이 남음), 실행 전 거부 2, I/O·publication 4, 취소 130. Semantic opt-in에서는 scope가 부분이므로 PASS exit/지원 claim을 낼 수 없다. 의미와 축은 [identity/evidence](identity-and-evidence.md) `S08 구현` 및 `#216 small semantic qualification opt-in — r10`이 소유한다.
+
+`--query-semantics`는 기존 외부 manifest의 inline `pins` 형식으로 semantic `Pins`를 전달한다. 선택 `--runtime-pins PLATFORM=FILE`은 host마다 최대 한 개의 `tsgk-cli-evidence-pins-input/r1` envelope를 받아 해당 `QualifyHost.RuntimePins`에 전달한다. Envelope의 schema·field·strict canonical base64·10,000 materials·16 MiB per decoded item/envelope·256 MiB aggregate 한도는 replay와 같다. `subject_base64`는 그 host의 `run-identity.json` 원문 전체여야 하며 API가 실제 host identity와 다시 대조한다. Sidecar는 inventory와 모든 host root 밖의 서로 다른 regular file이어야 하고, host 내부 hardlink/reparse alias를 거부한다. `--query-semantics`와 `--runtime-pins`는 현재 API scope 제한 때문에 함께 지정할 수 없다. Pin flag가 없으면 기존 결과/schema를 유지한다.
 
 host 디렉터리는 `src/dev/s05-native/run-routes.ps1 -Oracle`의 출력에서 CI가 올리는 부분이다: `run-identity.json`(`tsgk-run-identity/r1`, `src/dev/s08-qualify/run-identity.ps1`이 씀), `profiles/<workload>.json`(실행에 쓴 `tsgk-oracle/r2` profile), `records/<set>/`(S06 기록 set), symbol 모드 역할 workload의 `incremental/<set>/`(`run-routes.ps1 -Symbols`가 씀: `profile.json`, `result.json`, `responses/`, `sources/<nnnnn>-<case>.bin`, #218), helper의 `summary.json`(보존만 하며 근거가 아님). 그 밖의 파일은 `HOST_FILE_UNREGISTERED`로 완결성을 실패시킨다.
 
@@ -319,6 +323,16 @@ CLI admission은 처음 경로 검사 전에 시작하며 host 최대3개·seman
 명시적 opt-in은 항상 r10을 출력한다. 두 probe와 baseline이 모두 PASS여도 이 부분 scope의 결과는 `BLOCKED` exit 3이며 `support_claim`은 BLOCKED다. 알려진 baseline/semantic FAIL은 FAIL exit 1이다. Nil opt-in의 r9 결과와 exit 의미는 유지한다. API와 CLI admission의 별도 예산, 결과 분모와 fold는 [identity/evidence](identity-and-evidence.md) 및 [trust](trust-and-execution.md)를 따른다.
 
 `--query-semantics=`처럼 빈 경로를 명시하면 usage/input 오류이며 legacy로 돌아가지 않는다. CLI 전체360초 기한은 첫 경로 검사 전에 시작해 API 및 출력 경로 검사에 전달한다. Admission은 그 안의120초다. 열린 trust file identity를 root별 bounded metadata walk의 실제 file identity와 비교하므로 file-only bind alias도 거부하며, 각 walk의 한도는 루트 포함10,000 entries·깊이64·최대10초이고 전체 admission 기한도 적용한다. Root identity는 API 첫 read에 다시 확인하고 출력에는 CLI가 끝까지 보유한 root handle을 사용한다. 알려진 r10 FAIL 뒤에 취소·wall·resource·I/O 중단이 오면 원래 typed 상태와 stderr 원인을 보존하면서 exit1을 우선한다. 알려진 FAIL이 없는 typed 오류는 기존 exit를 따르며 report 쓰기·publication 실패는 exit4다.
+
+### #370 V2-B2 historical reference pin admission
+
+`qualify --query-semantics FILE`의 `tsgk-qualification-query-semantics-input/r2`는 r1의 필드와 경로 규칙을 유지하며 target에 선택적 `pins`를 추가한다. r2에는 pin opt-in target이 하나 이상 있어야 하며, 해당 target의 외부 eligibility `approval` 문서도 필요하다. r1은 pin 입력을 받지 않는다. 새 CLI flag는 없다.
+
+`pins`의 필수 필드는 `approved_approval_sha256`, `approval_base64`, `approved_pin_set_sha256`, `pin_set_base64`, `materials_base64`다. 두 digest는 caller가 독립 승인한 sidecar·집합 raw SHA-256이고, 두 Base64는 해당 원문이다. `materials_base64`는 정확한 논리 자료 이름→canonical Base64 원문 map이다. Subject를 manifest에서 별도로 지정하지 않고 admission을 통과한 target eligibility approval 원문으로 고정한다. 바깥 manifest도 caller trust document이며 producer graph 안의 사본을 승인 근거로 삼지 않는다.
+
+Pin 원문은 이미 admission한 manifest 안에 있으므로 새 파일 경로·추가 trust document를 만들지 않는다. 기존 최대9개 문서·파일16MiB·총읽기256MiB·wall120초, 실제 file identity·hardlink/reparse/alias·root 겹침 검사를 유지한다. Base64·digest·map은 같은 deadline 아래 검사하고 semantic core의 shared read/work/logical 예산에서 원문을 다시 검증한다. Manifest r2의 pin opt-in은 qualification r11, replay r4와 semantic/eligibility r2 결과를 사용한다. Pins 없는 r1 입력의 r10 결과와 nil opt-in의 r9는 유지한다.
+
+V2-B2 시점의 CLI opt-in은 qualification manifest admission 경로였고 standalone replay flag는 없었다. V2-D는 위 S07 계약의 bounded `--pins`·`--runtime-pins` envelope를 추가했다. 이 flag는 API가 허용한 reducer에만 전달되며 생략하면 기존 reducer 동작과 결과 schema가 유지된다.
 
 ## discovery와 strict profile
 

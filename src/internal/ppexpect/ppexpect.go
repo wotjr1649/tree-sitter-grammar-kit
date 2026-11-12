@@ -9,10 +9,10 @@ import (
 	"strings"
 )
 
-// ObservedSchema and Roslyn are the observation revision and the Roslyn build it pins.
+// ObservedSchema is the preserved observation revision, independent of production tools.
 const (
-	ObservedSchema = "tsgk-csharp-pp-roslyn/r2"
-	Roslyn         = "5.9.0.0"
+	ObservedSchema   = "tsgk-csharp-pp-roslyn/r2"
+	ProvenanceSchema = "tsgk-csharp-pp-roslyn/r3"
 )
 
 // Observation is one case of a tsgk-csharp-pp-roslyn/r2 document (src/dev/csharp-pp-oracle).
@@ -22,6 +22,7 @@ type Observation struct {
 	Directives  []Directive  `json:"directives"`
 	Disabled    []Range      `json:"disabled"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
+	Errors      []string     `json:"errors"`
 	OracleError string       `json:"oracle_error"` // Roslyn failed: no observation
 }
 
@@ -47,6 +48,7 @@ type Range struct {
 type Diagnostic struct {
 	ID      string `json:"id"`
 	Start   int    `json:"start"`
+	End     int    `json:"end"`
 	Context string `json:"context"`
 }
 

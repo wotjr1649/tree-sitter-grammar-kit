@@ -8,6 +8,7 @@ import (
 	"slices"
 	"unicode/utf8"
 
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querypolicy"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
@@ -17,8 +18,19 @@ const (
 	QueryReferenceResultSchema       = "tsgk-query-reference-connection-result/r1"
 	instrumentedReferenceSchema      = "tsgk-instrumented-query-reference/r1"
 	instrumentedReferenceBuildSchema = "tsgk-instrumented-reference-build/r1"
-	instrumentedReferenceCommit      = "10eb5ac119eec9cb4267a8e035066473983f5f3a"
 )
+
+var instrumentedReferenceCommit = func() string {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return ""
+	}
+	ref, err := store.Reference()
+	if err != nil {
+		return ""
+	}
+	return ref.UpstreamCommit
+}()
 
 // QueryReferenceNode fixes all eleven identity roles independently of the graph.
 type QueryReferenceNode struct {
@@ -140,6 +152,9 @@ func verifyQueryReferenceConnection(r *run, req QueryReferenceConnectionRequest,
 			}
 		}
 	}()
+	if _, err := evidencepins.Repository(); err != nil {
+		return res, fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "reference", err)
+	}
 	var reg QueryReferenceRegistration
 	if e := decodeWitnessDocument("reference-registration", req.Registration, &reg, true, r); e != nil {
 		return res, e
@@ -281,6 +296,7 @@ func verifyQueryReferenceConnection(r *run, req QueryReferenceConnectionRequest,
 	source, raw, projection := member(reg.Native.ID, reg.Source), member(reg.Native.ID, reg.Raw), member(reg.Native.ID, reg.Projection)
 	buildBytes := member(reg.Reference.ID, reg.Build)
 	buildReady := false
+	upstream := instrumentedReferenceCommit
 	if buildBytes != nil {
 		var build struct {
 			Schema       string `json:"schema"`
@@ -296,12 +312,13 @@ func verifyQueryReferenceConnection(r *run, req QueryReferenceConnectionRequest,
 			add("REFERENCE_BUILD_INVALID", reg.Build.Path, true)
 		} else {
 			target := map[string]string{"windows/amd64": "x86_64-pc-windows-gnu", "linux/amd64": "x86_64-unknown-linux-gnu", "darwin/arm64": "aarch64-apple-darwin"}[reg.Reference.Identities["platform"]]
-			if build.Schema != instrumentedReferenceBuildSchema || build.Upstream != instrumentedReferenceCommit || target == "" || build.Target != target || build.BinarySHA256 != reg.BinarySHA256 {
+			if build.Schema != instrumentedReferenceBuildSchema || !repositoryReferenceUpstream(build.Upstream) || target == "" || build.Target != target || build.BinarySHA256 != reg.BinarySHA256 {
 				add("REFERENCE_BUILD_MISMATCH", reg.Build.Path, true)
 			} else if !build.Complete {
 				add("REFERENCE_BUILD_INCOMPLETE", reg.Build.Path, false)
 			} else {
 				buildReady = true
+				upstream = build.Upstream
 			}
 		}
 	}
@@ -450,7 +467,7 @@ func verifyQueryReferenceConnection(r *run, req QueryReferenceConnectionRequest,
 		if data == nil {
 			continue
 		}
-		ref, code, complete, e := decodeReferenceResponse(data, obs, reg, q, queryKnown, versions, r)
+		ref, code, complete, e := decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, upstream, q, queryKnown, versions, r)
 		if e != nil {
 			return res, e
 		}
@@ -610,6 +627,11 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 
 func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg QueryReferenceRegistration, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
 	return decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, instrumentedReferenceCommit, q, queryKnown, versions, r)
+}
+
+func repositoryReferenceUpstream(commit string) bool {
+	store, err := evidencepins.Repository()
+	return err == nil && store.ReferenceUpstreamAllowed(commit)
 }
 
 func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol, upstream string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
