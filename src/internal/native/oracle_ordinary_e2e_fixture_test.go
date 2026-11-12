@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -40,13 +39,8 @@ func TestOracleOrdinaryE2EFixture(t *testing.T) {
 	if dir == "" {
 		t.Fatal("TSGK_ORDINARY_OWNED_FIXTURE required")
 	}
-	workspace, err := filepath.Abs(filepath.Join("..", "..", "..", ".work"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	relative, err := filepath.Rel(workspace, dir)
-	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		t.Fatal("ordinary fixture output must be a fresh directory beneath this worktree's .work")
+	if !filepath.IsAbs(dir) {
+		t.Fatal("ordinary fixture output must be an absolute path to a directory that does not exist yet")
 	}
 	if err := os.MkdirAll(filepath.Dir(dir), 0700); err != nil {
 		t.Fatal(err)

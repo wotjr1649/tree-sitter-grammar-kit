@@ -347,7 +347,7 @@ func ordinarySQLOwnedInputs(t *testing.T, route string, mutation *ordinaryTSQLMu
 		}}
 	}
 	planReq, registration, plan, _, selectedSource, _, _ := ordinarySelectedInput(t, route, selected, assets, closure, true, profileBytes, plannedReferenceLibrary)
-	grammarRoot := "D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/routes/" + route
+	grammarRoot := ordinaryPreparedRoute(t, route)
 	return planReq, profileBytes, selectedSource, registration, ordinaryJSON(t, plan), planReq.PlanningProfile, planReq.AssetRegistration, grammarRoot, packBytes, factMapping, assetBodies, expectedSet, independentMetadata
 }
 
@@ -480,7 +480,7 @@ func ordinaryVerifyPostgreSQLPreparedGrammar(t *testing.T) {
 	if len(pins) == 0 {
 		t.Fatal("pinned PostgreSQL generated grammar outputs are absent")
 	}
-	base := "D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/repro/postgresql-sql"
+	base := ordinaryPreparedRepro(t, "postgresql-sql")
 	outputs := map[string][]byte{}
 	for _, workspace := range []string{"workspace-a", "workspace-b"} {
 		for _, name := range []string{"grammar.json", "node-types.json"} {
@@ -614,28 +614,15 @@ func ordinarySQLEnv(t *testing.T) string {
 	if os.Getenv("TSGK_ORDINARY_SQL_E2E") != "1" {
 		t.Skip("set TSGK_ORDINARY_SQL_E2E=1 to run the serialized SQL native capacity measurement")
 	}
-	if os.Getenv("TSGK_NATIVE_REQUIRED") != "1" || os.Getenv("TSGK_NATIVE_RUNTIME") != `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime` || os.Getenv("TSGK_NATIVE_CC") != `C:\msys64\ucrt64\bin\gcc.exe` {
-		t.Fatal("SQL native capacity run requires the brief's runtime/compiler and TSGK_NATIVE_REQUIRED=1")
-	}
+	ordinaryNativeTools(t)
+	ordinaryPreparedRoutes(t)
 	artifacts := os.Getenv("TSGK_ORDINARY_E2E_ARTIFACTS")
 	if artifacts == "" {
-		t.Fatal("TSGK_ORDINARY_E2E_ARTIFACTS must point to a fresh .work/e2e-checks directory")
-	}
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
+		t.Fatal("TSGK_ORDINARY_E2E_ARTIFACTS must point to a directory for this run's evidence")
 	}
 	artifactRoot, err := filepath.Abs(artifacts)
 	if err != nil {
 		t.Fatal(err)
-	}
-	workRoot, err := filepath.Abs(filepath.Join(root, ".work"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	relative, err := filepath.Rel(workRoot, artifactRoot)
-	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		t.Fatal("SQL capacity artifacts must remain under this worktree's .work directory")
 	}
 	if err := os.MkdirAll(artifactRoot, 0700); err != nil {
 		t.Fatal(err)
@@ -703,8 +690,8 @@ func ordinarySQLProduce(t *testing.T, routeDir, route string, mutation *ordinary
 	cmd := exec.CommandContext(cmdCtx, "go", "test", "./src/internal/native", "-run", "^TestOracleOrdinaryE2EFixture$", "-count=1", "-timeout=240s")
 	cmd.Dir = root
 	cmd.Env = ordinaryE2EEnv(map[string]string{"TSGK_ORDINARY_OWNED_INPUTS": inputPath, "TSGK_ORDINARY_OWNED_FIXTURE": producerDir,
-		"TSGK_NATIVE_RUNTIME": `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`, "TSGK_NATIVE_CC": `C:\msys64\ucrt64\bin\gcc.exe`, "TSGK_NATIVE_REQUIRED": "1",
-		"TMP": tmpDir, "TEMP": tmpDir, "TMPDIR": tmpDir})
+		"TSGK_NATIVE_REQUIRED": "1", // the runtime and compiler are inherited as given
+		"TMP":                  tmpDir, "TEMP": tmpDir, "TMPDIR": tmpDir})
 	output, produceErr := cmd.CombinedOutput()
 	logPath := filepath.Join(routeDir, "native-producer.log")
 	if err := os.WriteFile(logPath, output, 0600); err != nil {

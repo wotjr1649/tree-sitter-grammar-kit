@@ -139,9 +139,7 @@ func TestOrdinaryRecordCLIOwnedPostgreSQLPublicParity(t *testing.T) {
 	if os.Getenv("TSGK_ORDINARY_CLI_E2E") != "1" {
 		t.Skip("set TSGK_ORDINARY_CLI_E2E=1 (Job-limited Windows native) to run the record CLI end to end")
 	}
-	if os.Getenv("TSGK_NATIVE_REQUIRED") != "1" || os.Getenv("TSGK_NATIVE_RUNTIME") != `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime` || os.Getenv("TSGK_NATIVE_CC") != `C:\msys64\ucrt64\bin\gcc.exe` {
-		t.Fatal("the record CLI end to end requires the brief's runtime/compiler and TSGK_NATIVE_REQUIRED=1")
-	}
+	runtimeRoot, compiler := ordinaryNativeTools(t)
 	bundle := os.Getenv("TSGK_ORDINARY_CLI_BUNDLE")
 	witnessPath := os.Getenv("TSGK_ORDINARY_P1_WITNESS")
 	if bundle == "" || witnessPath == "" {
@@ -158,9 +156,6 @@ func TestOrdinaryRecordCLIOwnedPostgreSQLPublicParity(t *testing.T) {
 	bundle, err = filepath.Abs(bundle)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if rel, err := filepath.Rel(filepath.Join(repo, ".work"), bundle); err != nil || strings.HasPrefix(rel, "..") {
-		t.Fatal("the bundle must be a fresh directory under this worktree's .work")
 	}
 	if err := os.Mkdir(bundle, 0o700); err != nil {
 		t.Fatalf("the bundle directory must be new: %v", err)
@@ -205,7 +200,7 @@ func TestOrdinaryRecordCLIOwnedPostgreSQLPublicParity(t *testing.T) {
 		"--fact-pack", filepath.Join(bundle, "fact-pack.json"), "--ordinary-root", filepath.Join(bundle, "ordinary"), "--ordinary-witness", filepath.Join(bundle, "witness.json"),
 		"--ordinary-plan", filepath.Join(bundle, "plan.json"), "--ordinary-profile", in.Plan.Profile.Path, "--ordinary-assets", in.Plan.Assets.Path,
 		"--ordinary-registry-sha256", ordinaryRegistrySHA, "--ordinary-registration", in.Plan.Registrations[0].Path, "--ordinary-shard", in.ShardID,
-		"--runtime", os.Getenv("TSGK_NATIVE_RUNTIME"), "--tool", "cc=" + os.Getenv("TSGK_NATIVE_CC"), "--work", work,
+		"--runtime", runtimeRoot, "--tool", "cc=" + compiler, "--work", work,
 		"--out", filepath.Join(producerDir, "r8"), "--allow", "BUILD_NATIVE", "--allow", "EXEC_NATIVE"}
 
 	// Negative: a plan one byte over the 16 MiB file limit stops the loader before any native work.

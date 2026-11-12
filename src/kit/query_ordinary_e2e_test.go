@@ -488,7 +488,7 @@ func ordinaryE2EJSONInput(t *testing.T) ordinaryE2EJSONFixture {
 	req.Selection = OrdinaryQuerySemanticsBinding(selection.Binding)
 	producer := ordinaryE2EProducerInput{Profile: executableProfile, PlanningProfile: planningBytes, AssetRegistration: req.AssetRegistration,
 		RegistrationBytes: registrationBytes, Registration: registration, ShardPlan: ordinaryJSON(t, fullPlan), ShardIDs: []string{shardID},
-		Sources: [][]byte{selectedSource}, GrammarRoot: `D:\AIDEV\tree-sitter-grammar-kit\.work\213-prep\verify-v0271\routes\json`}
+		Sources: [][]byte{selectedSource}, GrammarRoot: ordinaryFullPosGrammarRoot(t)}
 	ref := ordinaryE2ESyntheticResponseWithExpected(t, "q.structure", querySource, profile.Native.Symbol, digestHex(refLibrary), selectedSource, anchors.Nodes, metadata, []Capture{})
 	return ordinaryE2EJSONFixture{Producer: producer, Request: req, References: []ordinaryE2EReference{{Case: caseID, Query: "q.structure", Response: ref}},
 		AssetBodies: bodies, Profile: profile, SelectedCase: caseID}
@@ -594,21 +594,13 @@ func ordinaryE2EIdentityChangedContext(ctx context.Context, root *os.Root, path 
 
 func ordinaryE2EWriteProducerInput(t *testing.T, input ordinaryE2EProducerInput) (string, string) {
 	t.Helper()
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	workRoot := filepath.Join(root, ".work", "e2e-checks")
-	inputDir := filepath.Join(workRoot, "inputs")
-	if err := os.MkdirAll(inputDir, 0700); err != nil {
-		t.Fatal(err)
-	}
-	inputPath := filepath.Join(inputDir, fmt.Sprintf("ordinary-%d.json", time.Now().UnixNano()))
+	// Both locations are fresh test temp directories; the producer test creates the producer directory itself.
+	inputPath := filepath.Join(t.TempDir(), fmt.Sprintf("ordinary-%d.json", time.Now().UnixNano()))
 	data := ordinaryJSON(t, input)
 	if err := os.WriteFile(inputPath, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	producerDir := filepath.Join(workRoot, fmt.Sprintf("producer-%d", time.Now().UnixNano()))
+	producerDir := filepath.Join(t.TempDir(), fmt.Sprintf("producer-%d", time.Now().UnixNano()))
 	return inputPath, producerDir
 }
 
@@ -618,13 +610,7 @@ func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "" || os.Getenv("TSGK_NATIVE_CC") == "" {
-		t.Skip("ordinary public positive requires the pinned runtime and compiler")
-	}
-	if os.Getenv("TSGK_NATIVE_RUNTIME") != `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime` ||
-		os.Getenv("TSGK_NATIVE_CC") != `C:\msys64\ucrt64\bin\gcc.exe` || os.Getenv("TSGK_NATIVE_REQUIRED") != "1" {
-		t.Fatalf("ordinary native public probe requires the brief's exact pinned runtime/compiler and TSGK_NATIVE_REQUIRED=1")
-	}
+	ordinaryNativeTools(t)
 	env := ordinaryOwnedNativeEnv(producerDir)
 	env = slices.DeleteFunc(env, func(entry string) bool {
 		return strings.HasPrefix(strings.ToUpper(entry), "TSGK_ORDINARY_OWNED_INPUTS=")
@@ -640,13 +626,7 @@ func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 }
 
 func TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases(t *testing.T) {
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "" || os.Getenv("TSGK_NATIVE_CC") == "" {
-		t.Skip("ordinary public positive requires the pinned runtime and compiler")
-	}
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/runtime" {
-		// The general kit suite and this owned producer use separately pinned runtime roots.
-		t.Setenv("TSGK_NATIVE_RUNTIME", `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`)
-	}
+	ordinaryNativeTools(t)
 	fixture := ordinaryE2EJSONInput(t)
 	inputPath, producerDir := ordinaryE2EWriteProducerInput(t, fixture.Producer)
 	ordinaryE2ERunOwnedProducer(t, inputPath, producerDir)
