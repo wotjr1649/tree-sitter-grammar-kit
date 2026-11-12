@@ -1,6 +1,25 @@
 # 변경 기록
 
-## Unreleased — 다음 0.x source-only release 준비 (#199)
+## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
+
+release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim-초안)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행할 예정이며 binary와 package는 없다. 발행은 사용자 승인 뒤에만 한다.
+
+### VERIFIED·experimental
+
+- VERIFIED와 experimental의 구분은 v0.2.0과 같다. offline core와 공개 API가 VERIFIED이고 `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API는 experimental이다. 현재 CI의 검증 host는 Windows·Linux다(#332).
+- query 의미는 experimental이며, 통합 PR #416이 main에 병합된 뒤 Windows에서 실제로 검증한 하위 범위만 주장한다: predicate 독립 평가 20/20·거부 정책 47/47, SVC 오프라인 의무 263, SVC inline C# tree 30·query 60, large 31/39(`cs-large-22m` 전체 CST 포함), 선택 SQL shard 공개 pass(TSQL 72/72, PostgreSQL 9/9), JSON 다중 case·편집 이력 양성.
+- 주장하지 않는다(BLOCKED): 오류 복구 입력, 전처리 scanner 상태가 필요한 SVC inline, Linux 몫, ordinary 전량, synthetic reference row·approval. #362 completion gate는 닫힌 채로 출하하며 2026-11-12 사용자 결정으로 #220 출하 조건이 아니다. #362는 출하 뒤에도 열어 둔다.
+- C#은 검증된 범위(C1–C4 잔여 교정 #369, 기존 qualification PASS)만 주장한다. 전체 선언 범위의 대조는 미주장이며 #233은 출하 뒤에도 열어 둔다. CI 운영 여유 표본(#280·#303·#352)은 미판정이고 제품 동작이 아니다. #329는 hosted Windows runner의 Go runtime 치명 오류 1회에 대한 상류 의심 사건이며 제품 동작이 아니다. 이 Issue들과 #233은 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
+- **소비자 요구 사항: Go 1.27.4 이상**(`go.mod`의 `go` 지시어 1.27.1 → 1.27.4, #358). stable 표면의 깨짐은 없다. experimental 표면의 호환성 깨짐(`qualify`의 inventory r3 거부, `QualificationInventorySchema`·`QualificationResultSchema`·`SvcCompositeSchema`·`SvcFormat`의 revision 상승, omitempty 없는 새 JSON key 3개, 옛 evidence `replay` 결과의 gate counter·gate 목록 변화, native runtime pin 변경)은 [release 문서](docs/reports/issue-220-v030-release.md)의 "공개 API·CLI·schema 변화(v0.2.0 대비)"에 있다.
+
+### 변경
+
+- C# opt-in symbol 모드(`csharp-symbols/r1`, #218)와 qualification 추가 역할 `csharp-symbols`를 추가했다. 범위는 등록 symbols·입력·edit step의 분기 선택(고정 Roslyn 관측 기대값)과 활성 CST 구문이며 Windows·Linux에서 판정한다. 기본 parser의 비리터럴 조건 분기 선택은 `NOT_CLAIMED`이고 macOS 행은 `DEFERRED`다.
+- experimental `reuse-accepted` 역할(#264)을 추가했다. Windows·Linux의 original-history 증거와 omit 대조군을 쓰며 original의 구문 적합성·node identity·성능은 주장하지 않는다. qualification inventory가 r8, result가 r9로 올랐다.
+- 출력·trust document·실행 workspace가 입력 root나 그 하위 디렉터리의 별칭인지 handle-derived directory identity로 대조한다(#215). bind mount 별칭은 Linux CI의 private mount namespace에서, Windows `subst`는 actual main run 40203916886에서 확인했다. namespace 전체의 원자적 snapshot이나 모든 동시 경로 교체는 보장하지 않으며 macOS 생성 순간의 소유권 공백은 남는다.
+- **native runtime pin 변경(#213): 사용자 안내.** Tree-sitter runtime source가 commit `659cda7c`(v0.2.0)에서 release tag `v0.27.1`(`10eb5ac`)로 올랐다. `--runtime`은 사용하는 `tsgk`의 pin과 같아야 하며 다르면 어느 방향이든 `RUNTIME_MISMATCH`(exit 2)로 거부된다. v0.2.0용 runtime 디렉터리는 그대로 쓸 수 없고 build·producer identity도 달라진다. 근거는 `docs/provenance/upstream-sources.md`다.
+- experimental `replay`의 결과 형태가 옛 evidence에서 달라진다(호환성 변화, #220). v0.2.0이 만든 `incremental` result·`oracle record` set의 판정·exit·code·`result_schema`(`tsgk-replay-result/r1`)·findings는 같지만 `case-binding`·`tree` gate의 recomputed 개수(1→6, 3→12)와 `oracle-set` reducer의 gate 목록(10→13개, `query-expectations`·`fact-reproduction`·`dynamic-sql` 추가)이 바뀌어, 결과를 counter나 gate 목록 단위로 비교하는 소비자는 영향을 받는다. 후보 `aca5385`에서 실측했고 최종 후보에서 다시 확인한다.
+- `oracle record`가 `queries`가 빈 profile에서 manifest에 `"queries": null`을 써서 자신이 발행한 set을 `REFERENCE_SET_INVALID`(exit 4)로 거부하던 v0.2.0의 결함을 고쳤다. 이제 `[]`를 쓰고 같은 입력에서 PASS한다(#220).
 
 - Windows CI `src/kit` 시험 wall 단축(Refs #419): owned-native producer 시험이 native 시험 binary·tsgk CLI·JSON driver build cache를 package 수준에서 한 번만 만들어 공유하고(cache hit인 producer만 reader가 받으므로 첫 producer 앞에 버리는 warm-up 1회), 독립적인 무거운 kit 시험 50개를 `t.Parallel()`로 돌린다. 시험 삭제·SKIP·사례 축소·단정 제거와 timeout 상향은 없고 제품 코드와 한도는 그대로다.
 
@@ -90,7 +109,7 @@
 
 - ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
 
-잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
+잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. release 본문과 query 의미 claim은 [한국어 release 문서](docs/reports/issue-220-v030-release.md)와 [English release document](docs/reports/issue-220-v030-release.en.md)에 있고, 이전 준비 기록(역사 후보 기준)은 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
 
@@ -120,8 +139,8 @@
 - Go/C#/C/C++/T-SQL의 고정 holdout 82개·SDK 문맥 관측168건·native CST102개를 비교했다(#198). 이 세 수를 하나의 정확도 분모로 합치지 않는다.
 - Go identifier의 category·Unicode17 수정과 회귀는 PR #207에서 로컬 검증됐다(#205). PR run `38616955169`/attempt 1의 세 OS CI·내부 증거 검증은 PASS다. 실제 main과 최종 release 검증은 별도 gate다.
 - 대형 native digest의 반복 숫자 포맷팅 비용을 줄였다(#208). 같은32 MiB C# 입력의 로컬 native wall은81,801→61,089 ms였고 digest·보존 의미가 같았다. parse 시간 차이·host 변동이 포함되므로 전체 parser 향상률이 아니며90초 wall·60초 parse·8 GiB와 새 CI 검증을 유지한다.
-- 공개 API 정적 대조는 추가21·변경9·제거0이다. experimental struct 필드 추가와 SVC r1→r2는 소비자의 명시적 검토가 필요하다. 이 수치는 behavior/wire 호환성 보증이 아니다.
-- Go1.27.2·CGO_ENABLED=0에서 과거 PR 후보 `77e3414`와 #208 포함 로컬 문서 후보 `1e127a8`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 각각 확인했다. 이 근거는 해당 후보에만 결속한다. module/CI 기준은 Go1.27.1이며 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
+- (이전 후보 기준 역사 기록. 현재 수치는 release 문서의 변경·추가·삭제 개수 표를 본다.) 공개 API 정적 대조는 추가21·변경9·제거0이다. experimental struct 필드 추가와 SVC r1→r2는 소비자의 명시적 검토가 필요하다. 이 수치는 behavior/wire 호환성 보증이 아니다.
+- Go1.27.2·CGO_ENABLED=0에서 과거 PR 후보 `77e3414`와 #208 포함 로컬 문서 후보 `1e127a8`의 source-only 설치·공개 외부 consumer·파일 module proxy 소비를 각각 확인했다. 이 근거는 해당 후보에만 결속한다. 당시 module/CI 기준은 Go1.27.1이었다(현재 기준은 1.27.4). 실제 공개 tag 소비와 최종 release 검증은 아직 수행하지 않았다.
 - C# 조건부 fragment 문맥, T-SQL recovery 사례의 route BLOCKED, query host subset, macOS SAMPLED/NOT_CONTAINED 제약을 유지한다. 실사용 소비자 성능과 전체26언어 정확도는 미측정이다.
 - macOS(darwin/arm64) CI를 일시 제외했다(#332, 2026-11-07 사용자 결정). Foundation workflow에서 macOS foundation·native routes·race·재생성 job을 삭제하고, integration gate는 Windows·Linux 두 host의 파생 inventory(커밋된 inventory에서 `darwin-arm64`만 뺀 52칸)로 qualification을 다시 계산한다. 커밋된 `qualification-c1.json`과 그 고정 계약은 바꾸지 않았고, margin 이력은 이전 9-job 보고서를 다른 구성의 이력으로 받는다. macOS는 이후 CI 근거가 없는 NOT_RUN이며 제품의 darwin backend는 유지하되 CI가 검증하지 않는다. darwin cross-build는 넣지 않았다. ruleset의 `foundation (macos-15)` 필수 check 제거는 저장소 설정 변경으로 사용자 승인 아래 별도로 한다. 재활성화 절차는 [검증 계약](docs/validation/validation.md)에 있다.
 - 같은 PR에 새 head를 push하면 이전 head의 낡은 PR Foundation run(진행 중·대기 중)을 별도 workflow `supersede.yml`이 자동으로 취소한다(#334). `actions: write`는 이 workflow 한 곳에만 있고, 취소 대상은 같은 repository·PR·branch의 `pull_request` run 중 현재 head가 아닌 것뿐이다. main push·schedule·dispatch·다른 열린 PR·fork의 run과 이 event head의 run은 취소하지 않는다. fork PR이나 자동 취소 실패에는 기존 수동 절차를 쓴다. 검증 계약은 [검증 계약](docs/validation/validation.md)에 있다.
