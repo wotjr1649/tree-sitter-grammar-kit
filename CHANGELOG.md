@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- P1 개발용 원문 exporter로 기존 fixture의 source3,201·edit1,852를 전수 복원하고 version3,963·query/source31,337 공유를 검사한다. 130 query 규칙/예외 대장 골격과 JSON 수작업 capture13개에 대한 독립 기대 생성 대조를 추가했다. 파생 원문은 commit하지 않고 전체 의미 완료·승인·P0 미완료 상태는 유지한다(Refs #362).
+
 - 직접 eligibility에 승인 historical catalogue·Rust tuple을 쓰는 `Pins` opt-in과 r2 결과를 추가했다. 생산 후보가 바뀌어도 같은 과거 증거·승인의 판정을 보존하고 고정 의무9/4/53/36·known-rule와 기존 tool/receipt/source/vendor 검사를 유지한다. V2-B1 Go verifier 분할이며 Python/workflow·classification 및 semantic/replay/CLI/runtime 전달은 남아 있다. Refs #370.
 
 - inventory 선택 경로에서 전역 의미 검증의 실제 중복 실행을 없애고, 선택 의미 검증 work를 구조 방문·검사 문자열·기존 중첩 검색 상한으로 계상한다(Refs #362). SVC의 byte 상한과 기존 logical·공유 한도는 유지하며26 route의 원장·실제 순회 계측·오류 parity와 mutant로 검증한다. 전체 ordinary 수용이나 새 runtime 관측을 뜻하지 않는다.
