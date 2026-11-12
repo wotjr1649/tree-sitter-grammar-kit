@@ -57,6 +57,7 @@ The current implementation consists of repository foundation checks, the Session
 | #264 accepted event·전체 CST·고정 원장·replay·qualification | [증거 계약](specs/reuse-accepted.md) |
 | #216 Windows JSON24 실제 native/reference closure·외부 승인·API/replay | [검증 보고서](reports/issue-216-json24-reference.md) |
 | #216 driver·reference library binary paging, manifest/r7·replay r6와 예산·변이 검사 | [binary paging 계약](specs/instrumented-query-reference.md#216-binary-paging), [검증 계약](validation/validation.md#216-binary-paging-계약-검증) |
+| #362 전체 의미 의무의 원문 pin·exact membership·typed incomplete 계약 (P0) | [semantic registry](specs/instrumented-query-reference.md#362-전체-query-의미-의무-등록부-p0), [identity/evidence binding](specs/identity-and-evidence.md#362-full-scope-registry-p0-membership-contract), [registry 정적 검증](validation/validation.md#362-query-semantic-registry-p0-정적-검증), [registry r1](../src/contracts/query-semantic-registry-r1.json) |
 | #216 Go3·ordinary 정의의 정적 연결과 당시 Windows metadata 관측 범위 | [분류 보고서](reports/issue-216-go3-classification.md) |
 | #216 C·Java·Rust13 정의 연결과 당시 Windows 구조 분류 관측 범위 | [분류 보고서](reports/issue-216-cjr13-classification.md) |
 | #216 CPP4 parser paging·독립 수집과 당시 Windows 조건부 구조 분류 | [분류 보고서](reports/issue-216-cpp4-classification.md) |

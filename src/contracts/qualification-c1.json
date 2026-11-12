@@ -45,14 +45,14 @@
      {
       "path": "src/parser.c",
       "role": "parser",
-      "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-      "bytes": 51472926
+      "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+      "bytes": 53114064
      },
      {
       "path": "src/scanner.c",
       "role": "scanner",
-      "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-      "bytes": 46552
+      "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+      "bytes": 61493
      },
      {
       "path": "src/tree_sitter/alloc.h",
@@ -350798,14 +350798,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -353765,14 +353765,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -354047,14 +354047,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -354261,14 +354261,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -355489,14 +355489,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356402,14 +356402,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356554,14 +356554,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356727,14 +356727,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",
@@ -356940,14 +356940,14 @@
       {
        "path": "src/parser.c",
        "role": "parser",
-       "sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-       "bytes": 51472926
+       "sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+       "bytes": 53114064
       },
       {
        "path": "src/scanner.c",
        "role": "scanner",
-       "sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0",
-       "bytes": 46552
+       "sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed",
+       "bytes": 61493
       },
       {
        "path": "src/tree_sitter/alloc.h",

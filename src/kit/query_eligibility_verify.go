@@ -218,6 +218,12 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		}
 	}
 	s.snapshot = &evidenceSnapshot{wanted: wanted, wantedNodes: wantedNodes, approved: approved}
+	if scope != nil && heldRoot != nil && s.bound && eligibilityPagedContext(s.reg.Context) {
+		if e := b.charge(1, 2048, "verified-paging-session"); e != nil {
+			return res, e
+		}
+		s.snapshot.paging = &verifiedPaging{owner: s, r: r, b: b, snapshot: s.snapshot, root: heldRoot, binding: s.pagingBinding(), records: map[string]verifiedLogical{}}
+	}
 	if scope != nil {
 		s.snapshot.walked, s.snapshot.walkedDirectories = scope.walked, scope.walkedDirectories
 	}
@@ -247,7 +253,7 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		}
 	}
 	for _, pin := range s.reg.OwnedMembers {
-		if _, _, e := s.member(&pin); e != nil {
+		if _, e := s.memberPin(&pin); e != nil {
 			return res, e
 		}
 	}
@@ -282,6 +288,9 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	}
 	if e := sealOutput(res, ReplayOperations()["evidence-replay"].OutputBytes); e != nil {
 		return res, e
+	}
+	if s.snapshot.paging != nil && res.Complete && res.Assessment == AssessPass {
+		s.snapshot.paging.finished = true
 	}
 	return res, nil
 }
@@ -578,21 +587,15 @@ func (s *eligibilitySession) validateInput(x eligibilityInput) *Error {
 }
 
 func (s *eligibilitySession) member(pin *eligibilityMember) ([]byte, bool, *Error) {
-	if pin == nil {
-		return nil, false, nil
-	}
-	if e := s.b.charge(1, uint64(len(pin.Member.Path)+len(pin.Member.Role)+len(pin.Member.SHA256)), pin.Member.Path); e != nil {
+	ok, e := s.memberPin(pin)
+	if e != nil || !ok {
 		return nil, false, e
 	}
-	expected, ok := s.owned[pin.Member.Path]
-	if !ok || expected != *pin || s.owners[pin.Member.Path] != pin.NodeID {
-		s.finding("ELIGIBILITY_MEMBER_OWNER", pin.Member.Path, true)
-		return nil, false, nil
-	}
-	actual, ok := s.snapshot.verifiedMembers[pin.Member.Path]
-	if !ok || actual != pin.Member {
-		s.finding("ELIGIBILITY_MEMBER_UNVERIFIED", pin.Member.Path, true)
-		return nil, false, nil
+	if part := s.snapshot.parts[pin.Member.Path]; part != nil {
+		if e := s.b.charge(1, part.size+1, "verified-part-copy"); e != nil {
+			return nil, false, e
+		}
+		return slices.Clone(part.content), true, nil
 	}
 	data, ok := s.snapshot.files[pin.Member.Path]
 	if !ok {
