@@ -53,6 +53,18 @@ func predicateHost() (id, subject string) {
 	return runtime.GOOS + "-" + runtime.GOARCH, subject
 }
 
+// otherQueryHost is the other registered host of the two-host query denominators; ok is false on a
+// host the registry does not judge (no claim is made there).
+func otherQueryHost(platform string) (other string, ok bool) {
+	hosts := queryregistrycore.Platforms()
+	for i, h := range hosts {
+		if h.ID == platform && len(hosts) == 2 {
+			return hosts[1-i].ID, true
+		}
+	}
+	return "", false
+}
+
 // The 20 EVALUATED tuples run against the owned native with the shared witness verifier. The
 // expected file was sealed before the first native run and holds no native output.
 func TestNativePredicateScopeEvaluatedTuples(t *testing.T) {
@@ -113,10 +125,7 @@ func TestNativePredicateScopeEvaluatedTuples(t *testing.T) {
 		}
 		judgments = append(judgments, j)
 	}
-	other := "linux-amd64"
-	if platform == other {
-		other = "windows-amd64"
-	}
+	other, _ := otherQueryHost(platform)
 	coverage, err := kit.FoldPredicateScope(registry, queryregistrycore.Digest(registry), judgments, map[string]bool{other: true})
 	if err != nil || coverage.FullScopeComplete {
 		t.Fatalf("fold: %+v %v", coverage, err)

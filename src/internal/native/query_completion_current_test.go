@@ -35,8 +35,9 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 		t.Fatal(err)
 	}
 	platform, subject := predicateHost()
-	if platform != "windows-amd64" {
-		t.Skip("the registered current state is judged on windows-amd64")
+	otherHost, registered := otherQueryHost(platform)
+	if !registered {
+		t.Skip("the registry judges windows-amd64 and linux-amd64 only; " + platform + " is not registered")
 	}
 
 	// predicate scope: 20 EVALUATED tuples on the owned native plus the 47 rejection rows
@@ -72,7 +73,7 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 		}
 		judgments = append(judgments, j)
 	}
-	other := map[string]bool{"linux-amd64": true}
+	other := map[string]bool{otherHost: true}
 	predicate, err := kit.PredicateScopeResult(registry, predAsset, judgments, other)
 	if err != nil {
 		t.Fatal(err)
@@ -87,6 +88,9 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// opt-in: keep this host's two judgments for the merge of both hosts (TSGK_QUERY_SCOPE_OUT)
+	storeQueryScopeHost(t, platform, predicate)
+	storeQueryScopeHost(t, platform, svcScope)
 
 	// large scope: the judgments #412 recorded per case (TSGK_LARGE_FOLD, ';' separated record
 	// files) and the HARD-cap receipt of the case that could not run in 4 GiB. No native large run

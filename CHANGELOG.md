@@ -1,5 +1,9 @@
 # 변경 기록
 
+## Unreleased
+
+- query scope 판정의 host별 저장 형식과 host 일반화(Refs #362, 출하 뒤 L1): experimental `tsgk-query-scope-host/r1`(`QueryScopeHostResult`)이 기존 `tsgk-query-scope-result/r1`을 그대로 감싸 host에 결속해 저장하고, `MergeQueryScopeHostResults`가 두 host의 파일을 `FoldQueryCompletion`이 받는 scope 결과 하나로 합친다. 다른 host의 행에 판정이 있는 파일, 변조된 파일, 한 host가 빠졌거나 겹친 집합은 거부된다. `TestNativeQueryCompletionCurrentState`와 `TestNativeSvcInlineRealGrammar`의 `windows-amd64` 고정과 Linux SKIP을 지워 실행 host를 쓰고, `TSGK_QUERY_SCOPE_OUT`이 있으면 이 host의 predicate·SVC 판정을 파일로 쓴다. Windows의 fan-in 결과(VERIFIED 360 = predicate 67 + SVC 263 + large 30)는 같은 입력에서 바이트 단위로 같다. CI 수집·병합·`ci-gate` 편입은 하지 않았고 지원 범위·claim·한도는 바뀌지 않았다. r1 결과가 저장되기 시작했으므로 이후 `tsgk-query-scope-result/r1`의 입력 모양·분모 변경은 r2가 필요하다.
+
 ## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
 
 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim-초안)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행할 예정이며 binary와 package는 없다. 발행은 사용자 승인 뒤에만 한다.

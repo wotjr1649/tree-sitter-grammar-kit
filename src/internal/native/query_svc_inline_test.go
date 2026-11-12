@@ -187,7 +187,12 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			t.Errorf("FAILED %s: %s", j.ID, j.Code)
 		}
 	}
-	coverage, err := kit.FoldSvcScope(e, "windows-amd64", merged, map[string]bool{"linux-amd64": true})
+	platform, _ := predicateHost()
+	otherHost, registered := otherQueryHost(platform)
+	if !registered {
+		t.Fatalf("host %s is not a registered query host", platform)
+	}
+	coverage, err := kit.FoldSvcScope(e, platform, merged, map[string]bool{otherHost: true})
 	if err != nil {
 		t.Fatal(err)
 	}
