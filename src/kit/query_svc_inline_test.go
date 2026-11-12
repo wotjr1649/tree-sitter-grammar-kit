@@ -62,6 +62,7 @@ func TestSvcInlineSealedAndBound(t *testing.T) {
 
 // Every change of the asset is rejected: it must equal the derivation of the pinned sources.
 func TestSvcInlineAssetForgeries(t *testing.T) {
+	t.Parallel()
 	asset, svc, registry, inventory, fixture, pack := svcInlineAssets(t)
 	text := string(asset)
 	forge := map[string]string{

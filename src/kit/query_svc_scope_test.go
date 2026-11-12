@@ -125,6 +125,7 @@ func TestSvcExpectedSimpleAnchors(t *testing.T) {
 }
 
 func TestSvcExpectedRejectsForgeries(t *testing.T) {
+	t.Parallel()
 	asset, registry, inventory, fixture := svcAssets(t)
 	mutate := func(f func(e *SvcExpected)) []byte {
 		var e SvcExpected
@@ -193,6 +194,7 @@ func TestSvcExpectedRejectsForgeries(t *testing.T) {
 // A forged value that still parses (same shape, wrong content) is caught when the obligation is
 // recomputed from the pinned inventory: history, edit point, segment, range, point and CodeBehind.
 func TestSvcExpectedForgedContentFailsRecompute(t *testing.T) {
+	t.Parallel()
 	asset, registry, inventory, fixture := svcAssets(t)
 	base, err := ParseSvcExpected(asset, registry, inventory, fixture)
 	if err != nil {

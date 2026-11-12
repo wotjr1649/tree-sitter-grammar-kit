@@ -186,6 +186,7 @@ func TestValidOrdinaryReplayResultRejectsCrossRevisionAndMembership(t *testing.T
 }
 
 func TestOrdinaryReplayStoredPayloadCannotCrossLegacyRevisions(t *testing.T) {
+	t.Parallel()
 	_, root, profile := ordinaryPartialReplayFixture(t)
 	data := ordinaryJSON(t, profile)
 	replayed, err := Replay(ordinaryReplayContext(t), ReplayRequest{Root: root, Profile: data})

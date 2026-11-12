@@ -130,6 +130,7 @@ func qualificationPinnedFixtureWithRuntime(t *testing.T, reducedCatalogue bool, 
 }
 
 func TestQualificationPinsForwardingAndProductionIndependence(t *testing.T) {
+	t.Parallel()
 	req := qualificationPinnedFixture(t, false)
 	ctx := pinTestContext(t)
 	want, err := Qualify(ctx, req)
@@ -157,6 +158,7 @@ func TestQualificationPinsForwardingAndProductionIndependence(t *testing.T) {
 }
 
 func TestQualificationPinsRejectUnapprovedAndReducedCatalogue(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"unapproved", "reduced-catalogue"} {
 		t.Run(mode, func(t *testing.T) {
 			req := qualificationPinnedFixture(t, mode == "reduced-catalogue")

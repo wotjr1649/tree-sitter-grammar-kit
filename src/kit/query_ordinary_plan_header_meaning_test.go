@@ -7,6 +7,7 @@ import (
 )
 
 func TestOrdinaryPlanHeaderGlobalMeaningAndPrecedence(t *testing.T) {
+	t.Parallel()
 	v, inventory := ordinaryP0ForPlanTest(t)
 	original := ordinaryPlanForTest(v, inventory)
 	for _, tc := range []struct {
