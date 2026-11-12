@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- ordinary·semantic reader가 build cache miss(`reuse.hit=false`, `source_steps=[]`, 실행한 `steps`)로 정상 compile한 evidence를 `ORDINARY_BUILD_STEPS`로 거부하던 결함을 고쳤다. miss는 `steps`를, hit는 `source_steps`를 canonical build order로 검사하고, null `source_steps`·miss의 비어 있지 않은 `source_steps`·hit의 `steps`·miss의 빈 `steps`는 거부한다(Refs #422).
+
 - PR #416 리뷰 4차 교정(Refs #362): (1) ordinary scope fan-in이 FAIL shard의 최초 실패 code를 shard가 저장한 `Code`로 보존한다. 이전에는 FAILED tuple이 하나라도 있으면 tuple의 code가 최초 code가 되어 producer·base 실패의 code가 사라졌다. (2) SVC inline CST 관측의 parent를 `int32`로 바꾸기 전에 구조(root는 -1, 나머지는 앞선 index와 preorder 조상)를 검사한다. root `Parent`가 4294967295인 관측이 faithful CST로 환원돼 VERIFIED되던 결함이며 새 code `SVC_INLINE_CST_STRUCTURE`로 FAILED가 된다. (3) 응답 없이 끝난 SENT frame(watchdog·memory·batch 한도, 취소, crash)의 base 재계산이 빈 raw와 projection의 `execution_status`를 비교해 `ORDINARY_BASE_PROJECTION_BINDING`으로 FAIL하던 것을 BLOCKED로 유지한다. 한도와 TSQL 72/72·PostgreSQL 9/9 결과는 바뀌지 않았다.
 
 - #362 원장 보강 4차(Refs #362): 비 compact typed decode(`decodeTyped` 등)의 map 과소 계상을 고쳤다. 2차의 map 항목 항(`15·len(key) + 389` B)이 compact decode에만 있어, 항목 1,000–3,500개·키 2–4 B의 map에서 비 compact의 logical이 실제 할당의 0.79–0.9배였다(180개 입력 중 38개). 같은 항을 모든 typed decode의 map 항목에 더한다(한도 불변, 계상은 늘기만 한다). 값 14종 × 키 1–64 B × 항목 50–100,000개 672개 입력에서 compact·비 compact 모두 계상 ≥ 실제 할당이다(최소 1.29배·1.64배). 구형 결과 `eligibility`의 `logical_bytes`만 108,980,106 → 108,985,109로 늘고 다른 field와 나머지 구형 결과는 그대로라 `TestV2ELegacyResultParity`의 `eligibility` 고정 SHA를 갱신했다. 공개 pass는 TSQL 72/72·PostgreSQL 9/9 VERIFIED이고 logical이 각각 +8,305 B·+8,427 B(TSQL 여유 work 7.31%, logical 3.47% 유지)다. `TestCompactMapEntryAccounting`은 `TestTypedMapEntryAccounting`으로 바뀌어 기본 실행에서 비 compact도 확인하고(약 1.7초) 항을 뺀 mutant 세 개가 검출된다.
