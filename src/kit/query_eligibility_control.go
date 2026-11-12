@@ -359,7 +359,7 @@ func (s *eligibilitySession) manualResponse(data []byte, want eligibilityExpecte
 	}
 	q := QueryWitnessQuery{ID: want.ID, Source: string(queryBytes), Metadata: &QueryWitnessMetadata{Patterns: want.Patterns, CaptureNames: want.CaptureNames, Predicates: want.Predicates}}
 	obs := QueryReferenceObservation{Query: want.ID, Step: 0, SourceBytes: source.Bytes, SourceSHA256: source.SHA256}
-	ref, code, complete, e := decodeReferenceResponseBound(data, obs, library, "tree_sitter_tsgk_plain", q, true, [][]byte{sourceBytes}, s.r)
+	ref, code, complete, e := decodeReferenceResponseBound(data, obs, library, "tree_sitter_tsgk_plain", s.catalogue.UpstreamCommit, q, true, [][]byte{sourceBytes}, s.r)
 	if e != nil {
 		return nil, false, e
 	}
