@@ -20,9 +20,11 @@ type typedJSONShape struct {
 	exact      bool
 	base64     bool
 	shapeTakes uint64
-	length     int
-	elem       *typedJSONShape
-	fields     map[string]typedJSONField
+	// compact prices each visited value by its Go size instead of the per-field row allowance.
+	compact bool
+	length  int
+	elem    *typedJSONShape
+	fields  map[string]typedJSONField
 }
 
 type typedJSONField struct {
@@ -134,6 +136,18 @@ func (b *eligibilityBudget) decodeWitnessTyped(doc string, data []byte, target a
 	return b.decodeTypedDocument(doc, data, target, 3, b.unmetered, exact, true)
 }
 
+// decodeWitnessTypedPathBound is decodeWitnessTyped with the name-path error reservation, for ordinary
+// process receipts whose bulk is one long base64 string value.
+func (b *eligibilityBudget) decodeWitnessTypedPathBound(doc string, data []byte, target any, exact bool) *Error {
+	if e := b.charge(1, uint64(len(data)), doc); e != nil {
+		return e
+	}
+	if _, e := b.reserveJSONContainersCount(doc, data, 3, 80, true); e != nil {
+		return e
+	}
+	return b.decodeTypedScanned(doc, data, target, b.unmetered, exact, true, false)
+}
+
 func (b *eligibilityBudget) decodeTypedDocument(doc string, data []byte, target any, passes uint64, witness, exact, legacyShapeLimit bool) *Error {
 	if e := b.charge(1, uint64(len(data)), doc); e != nil {
 		return e
@@ -141,9 +155,24 @@ func (b *eligibilityBudget) decodeTypedDocument(doc string, data []byte, target 
 	if e := b.reserveJSONContainers(doc, data, passes, 80); e != nil {
 		return e
 	}
+	return b.decodeTypedScanned(doc, data, target, witness, exact, legacyShapeLimit, false)
+}
+
+// decodeTypedScanned decodes a document whose syntax preflight was already reserved.
+// With compact set, the caller also reserved the whole-document error/buffer terms once and the
+// decoded values are priced here by Go size: 8 times each visited value's type size (slice growth
+// allocates at most about 5 times the final backing array) plus 16 B per struct member for
+// string/pointer allocations, and the input length once for all string payloads.
+func (b *eligibilityBudget) decodeTypedScanned(doc string, data []byte, target any, witness, exact, legacyShapeLimit, compact bool) *Error {
 	shape, e := b.typedJSONShapeFor(doc, reflect.TypeOf(target).Elem(), witness, exact)
 	if e != nil {
 		return e
+	}
+	if compact {
+		compactTypedShape(shape)
+		if e := b.charge(0, uint64(len(data)), doc); e != nil {
+			return e
+		}
 	}
 	dec := jsontext.NewDecoder(bytes.NewBuffer(data))
 	var values uint64
@@ -161,6 +190,16 @@ func (b *eligibilityBudget) decodeTypedDocument(doc string, data []byte, target 
 		return fail(KindInvalidInput, "JSON_SHAPE", doc, err)
 	}
 	return nil
+}
+
+func compactTypedShape(s *typedJSONShape) {
+	s.compact = true
+	if s.elem != nil {
+		compactTypedShape(s.elem)
+	}
+	for _, f := range s.fields {
+		compactTypedShape(f.shape)
+	}
 }
 
 func typedJSONError(doc, code string, dec *jsontext.Decoder) *Error {
@@ -223,6 +262,15 @@ func (b *eligibilityBudget) readTypedJSONChecked(doc string, dec *jsontext.Decod
 	if e := b.charge(1, 0, doc); e != nil {
 		return e
 	}
+	if s.compact {
+		allowance := 8 * uint64(s.typ.Size())
+		if s.kind == reflect.Struct {
+			allowance += 16 * uint64(len(s.fields))
+		}
+		if e := b.charge(0, allowance, doc); e != nil {
+			return e
+		}
+	}
 	*values++
 	tok, err := dec.ReadToken()
 	if err != nil {
@@ -255,7 +303,7 @@ func (b *eligibilityBudget) readTypedJSONChecked(doc string, dec *jsontext.Decod
 	}
 	switch s.kind {
 	case reflect.Struct, reflect.Map:
-		if s.kind == reflect.Struct {
+		if s.kind == reflect.Struct && !s.compact {
 			// Keep the existing per-row container/validation allowance (1280 B for snapshots).
 			if e := b.charge(0, 256+512*uint64(len(s.fields)), doc); e != nil {
 				return e

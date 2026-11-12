@@ -454,10 +454,13 @@ func (b *eligibilityBudget) ordinaryCompareBaseAPI(profile OracleProfile, cache 
 			if e != nil {
 				return e
 			}
+			// The comparison's own bound (field and name bytes, one search per point) plus the tree and shape walks.
+			work = max(work, nativewire.CompareAPIWork(tree.Nodes, tree.API)+16*(uint64(len(tree.Nodes))+rows))
 			logical, e := eligibilityProduct("ordinary-base-api", 512, uint64(len(tree.Nodes))+rows+1)
 			if e != nil {
 				return e
 			}
+			logical = max(logical, nativewire.CompareAPILogical(tree.Nodes, tree.API))
 			if e := b.charge(work, logical, "ordinary-base-api"); e != nil {
 				return e
 			}

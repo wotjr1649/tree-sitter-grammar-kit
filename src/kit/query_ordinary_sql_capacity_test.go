@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -173,19 +174,28 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 			continue
 		}
 		treeAsset, captureAsset := "t", "c"
+		tupleSuffix := fmt.Sprintf("s%d-%s", coord.Step, coord.TreeRole)
 		if exactSource && coord.Case == caseID {
-			if ordinaryRegisteredAsset(assets, "tree-selected", "expected-tree") {
-				treeAsset = "tree-selected"
+			for _, candidate := range []string{"tree-selected", "tsql-tree-" + tupleSuffix} {
+				if ordinaryRegisteredAsset(assets, candidate, "expected-tree") {
+					treeAsset = candidate
+				}
 			}
-			if ordinaryRegisteredAsset(assets, "captures-"+coord.Query, "expected-captures") {
-				captureAsset = "captures-" + coord.Query
+			for _, candidate := range []string{"captures-" + coord.Query, "tsql-captures-" + coord.Query + "-" + tupleSuffix} {
+				if ordinaryRegisteredAsset(assets, candidate, "expected-captures") {
+					captureAsset = candidate
+				}
 			}
 		}
 		required := OrdinaryRequired{ID: coord.ID(registration.Namespace), Coordinate: coord, TreeAsset: treeAsset, CaptureAsset: captureAsset}
 		if strings.HasPrefix(coord.Query, "facts.") {
 			required.FactAsset = "f"
-			if exactSource && coord.Case == caseID && ordinaryRegisteredAsset(assets, "fact-declarations", "expected-facts") {
-				required.FactAsset = "fact-declarations"
+			if exactSource && coord.Case == caseID {
+				for _, candidate := range []string{"fact-declarations", "tsql-facts-" + coord.Query + "-" + tupleSuffix} {
+					if ordinaryRegisteredAsset(assets, candidate, "expected-facts") {
+						required.FactAsset = candidate
+					}
+				}
 			}
 		}
 		registration.Required = append(registration.Required, required)
@@ -230,7 +240,13 @@ func ordinaryRegisteredAsset(registration OrdinaryAssetRegistration, id, role st
 	return false
 }
 
-func ordinarySQLOwnedInputs(t *testing.T, route string) (OrdinaryQuerySemanticsRequest, []byte, []byte, OrdinaryRegistration, []byte, []byte, []byte, string, []byte, []byte, map[string][]byte, []TreeNode, map[string]QueryWitnessMetadata) {
+// ordinarySQLExpectedSet is the independent tree/capture expectation of the selected shard per source step.
+type ordinarySQLExpectedSet struct {
+	Tree     func(step uint32) []TreeNode
+	Captures func(query string, step uint32) ([]Capture, uint64)
+}
+
+func ordinarySQLOwnedInputs(t *testing.T, route string, mutation *ordinaryTSQLMutation) (OrdinaryQuerySemanticsRequest, []byte, []byte, OrdinaryRegistration, []byte, []byte, []byte, string, []byte, []byte, map[string][]byte, ordinarySQLExpectedSet, map[string]QueryWitnessMetadata) {
 	t.Helper()
 	selected := map[string]string{"tsql": "alt-tsql-B01-r001", "postgresql-sql": "alt-postgresql-sql-B04-22"}[route]
 	if selected == "" {
@@ -315,14 +331,24 @@ func ordinarySQLOwnedInputs(t *testing.T, route string) (OrdinaryQuerySemanticsR
 	plannedReferenceLibrary := OrdinaryMember{Owner: "D_build", Path: refLibraryPin.Path, Role: "reference-library", CaseOrBatch: "build", Pin: refLibraryPin}
 	assets := OrdinaryAssetRegistration{}
 	assetBodies := map[string][]byte{}
-	var expectedTree []TreeNode
+	var expectedSet ordinarySQLExpectedSet
 	var independentMetadata map[string]QueryWitnessMetadata
-	if route == "postgresql-sql" {
+	switch route {
+	case "postgresql-sql":
+		var expectedTree []TreeNode
 		assets, assetBodies, expectedTree, independentMetadata = ordinaryPostgreSQLDoAssets(t, selected, []byte(source), profileBytes)
+		expectedSet = ordinarySQLExpectedSet{Tree: func(uint32) []TreeNode { return expectedTree }, Captures: func(string, uint32) ([]Capture, uint64) { return []Capture{}, 0 }}
+	case "tsql":
+		var expected ordinaryTSQLExpected
+		assets, assetBodies, expected, independentMetadata = ordinaryTSQLAssets(t, selected, []byte(source), profileBytes, mutation)
+		expectedSet = ordinarySQLExpectedSet{Tree: func(step uint32) []TreeNode { return expected.Trees[step] }, Captures: func(query string, step uint32) ([]Capture, uint64) {
+			c := expected.Captures[tsqlKey(query, step)]
+			return c.Ordered, c.Matches
+		}}
 	}
 	planReq, registration, plan, _, selectedSource, _, _ := ordinarySelectedInput(t, route, selected, assets, closure, true, profileBytes, plannedReferenceLibrary)
 	grammarRoot := "D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/routes/" + route
-	return planReq, profileBytes, selectedSource, registration, ordinaryJSON(t, plan), planReq.PlanningProfile, planReq.AssetRegistration, grammarRoot, packBytes, factMapping, assetBodies, expectedTree, independentMetadata
+	return planReq, profileBytes, selectedSource, registration, ordinaryJSON(t, plan), planReq.PlanningProfile, planReq.AssetRegistration, grammarRoot, packBytes, factMapping, assetBodies, expectedSet, independentMetadata
 }
 
 func ordinaryPostgreSQLDoAssets(t *testing.T, caseID string, source, profileBytes []byte) (OrdinaryAssetRegistration, map[string][]byte, []TreeNode, map[string]QueryWitnessMetadata) {
@@ -537,7 +563,7 @@ func ordinaryPostgreSQLDoTree(source []byte) []TreeNode {
 	}
 }
 
-func ordinarySQLSyntheticReferences(t *testing.T, profileBytes, source []byte, registration OrdinaryRegistration, expectedTree []TreeNode, metadata map[string]QueryWitnessMetadata) []ordinaryE2EReference {
+func ordinarySQLSyntheticReferences(t *testing.T, profileBytes, source []byte, registration OrdinaryRegistration, expected ordinarySQLExpectedSet, metadata map[string]QueryWitnessMetadata) []ordinaryE2EReference {
 	t.Helper()
 	profile, err := ParseOracleProfile(profileBytes)
 	if err != nil || len(profile.Native.Cases) != 1 {
@@ -568,19 +594,23 @@ func ordinarySQLSyntheticReferences(t *testing.T, profileBytes, source []byte, r
 			t.Fatalf("unregistered query in reference key %q", key)
 		}
 		response := ordinaryE2ESyntheticResponse(t, parts[2], query, profile.Native.Symbol, librarySHA, versions[step64])
-		if len(expectedTree) != 0 {
+		if expected.Tree != nil {
 			queryMetadata, ok := metadata[parts[2]]
 			if !ok {
 				t.Fatalf("independent metadata missing for synthetic reference %q", key)
 			}
-			response = ordinaryE2ESyntheticResponseWithExpected(t, parts[2], query, profile.Native.Symbol, librarySHA, versions[step64], expectedTree, queryMetadata, []Capture{})
+			captures, _ := expected.Captures(parts[2], uint32(step64))
+			response = ordinaryE2ESyntheticResponseWithExpected(t, parts[2], query, profile.Native.Symbol, librarySHA, versions[step64], expected.Tree(uint32(step64)), queryMetadata, captures)
 		}
 		rows = append(rows, ordinaryE2EReference{Case: parts[0], Step: uint32(step64), Query: parts[2], Response: response})
 	}
 	return rows
 }
 
-func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
+// ordinarySQLEnv enforces the measurement environment shared by the opt-in SQL runs and
+// returns a fresh artifact root under this worktree.
+func ordinarySQLEnv(t *testing.T) string {
+	t.Helper()
 	if os.Getenv("TSGK_ORDINARY_SQL_E2E") != "1" {
 		t.Skip("set TSGK_ORDINARY_SQL_E2E=1 to run the serialized SQL native capacity measurement")
 	}
@@ -610,109 +640,194 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 	if err := os.MkdirAll(artifactRoot, 0700); err != nil {
 		t.Fatal(err)
 	}
+	return artifactRoot
+}
+
+type ordinarySQLRouteRun struct {
+	Result       OrdinaryQuerySemanticsResult
+	Err          error
+	Capacity     string
+	LastStage    string
+	LastRejected any
+	AssetBodies  int
+	TreeAssets   int // distinct expected-tree bodies of the registration
+	References   int
+	LedgerPath   string
+	LogPath      string
+}
+
+// ordinarySQLProduced is the caller-side input and the owned native r8 of one route run.
+type ordinarySQLProduced struct {
+	Req          OrdinaryQuerySemanticsRequest
+	Profile      []byte
+	Source       []byte
+	Registration OrdinaryRegistration
+	AssetBodies  map[string][]byte
+	Expected     ordinarySQLExpectedSet
+	Metadata     map[string]QueryWitnessMetadata
+	ProducerDir  string
+	LogPath      string
+	RouteDir     string
+}
+
+// ordinarySQLProduce authors the route's inputs and independent expectations and runs the
+// owned native producer once in a fresh directory.
+func ordinarySQLProduce(t *testing.T, routeDir, route string, mutation *ordinaryTSQLMutation) ordinarySQLProduced {
+	t.Helper()
+	if _, err := os.Stat(routeDir); err == nil {
+		t.Fatalf("preserving existing capacity evidence at %s; choose a fresh artifact root", routeDir)
+	}
+	if err := os.MkdirAll(routeDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpDir := filepath.Join(routeDir, "tmp")
+	if err := os.Mkdir(tmpDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	req, profile, source, registration, plan, planning, assets, grammarRoot, pack, mapping, assetBodies, expected, metadata := ordinarySQLOwnedInputs(t, route, mutation)
+	producerDir := filepath.Join(routeDir, "owned-producer")
+	producerInput := ordinaryE2EProducerInput{Profile: profile, PlanningProfile: planning, AssetRegistration: assets,
+		ShardPlan: plan, RegistrationBytes: req.Registration, Registration: registration, ShardIDs: req.Selection.ShardIDs,
+		Sources: [][]byte{source}, GrammarRoot: grammarRoot, FactPack: pack, FactMapping: mapping}
+	inputBytes := ordinaryJSON(t, producerInput)
+	inputPath := filepath.Join(routeDir, "producer-input.json")
+	if err := os.WriteFile(inputPath, inputBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	cmdCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(cmdCtx, "go", "test", "./src/internal/native", "-run", "^TestOracleOrdinaryE2EFixture$", "-count=1", "-timeout=240s")
+	cmd.Dir = root
+	cmd.Env = ordinaryE2EEnv(map[string]string{"TSGK_ORDINARY_OWNED_INPUTS": inputPath, "TSGK_ORDINARY_OWNED_FIXTURE": producerDir,
+		"TSGK_NATIVE_RUNTIME": `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`, "TSGK_NATIVE_CC": `C:\msys64\ucrt64\bin\gcc.exe`, "TSGK_NATIVE_REQUIRED": "1",
+		"TMP": tmpDir, "TEMP": tmpDir, "TMPDIR": tmpDir})
+	output, produceErr := cmd.CombinedOutput()
+	logPath := filepath.Join(routeDir, "native-producer.log")
+	if err := os.WriteFile(logPath, output, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if produceErr != nil {
+		t.Fatalf("owned SQL producer failed: %v; log=%s\n%s", produceErr, logPath, output)
+	}
+	return ordinarySQLProduced{Req: req, Profile: profile, Source: source, Registration: registration, AssetBodies: assetBodies, Expected: expected, Metadata: metadata, ProducerDir: producerDir, LogPath: logPath, RouteDir: routeDir}
+}
+
+// ordinarySQLRunRoute runs the owned native producer and one public verification for a route
+// in a fresh directory. The mutation, if any, changes an independent TSQL expectation before
+// it is pinned; the native r8 is always produced for that run's own registration.
+func ordinarySQLRunRoute(t *testing.T, routeDir, route string, mutation *ordinaryTSQLMutation) ordinarySQLRouteRun {
+	t.Helper()
+	produced := ordinarySQLProduce(t, routeDir, route, mutation)
+	req, profile, source, registration, assetBodies, expected, metadata, producerDir, logPath := produced.Req, produced.Profile, produced.Source, produced.Registration, produced.AssetBodies, produced.Expected, produced.Metadata, produced.ProducerDir, produced.LogPath
+	ledgerPath := filepath.Join(routeDir, "public-ledger.jsonl")
+	if err := os.WriteFile(ledgerPath, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	ordinaryInstallLedgerHooks(t, ledgerPath)
+	references := ordinarySQLSyntheticReferences(t, profile, source, registration, expected, metadata)
+	req = ordinaryE2EAssemble(t, req, producerDir, references, assetBodies)
+	ctx, stop := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer stop()
+	result, verifyErr := VerifyOrdinaryQuerySemantics(ctx, req)
+	if err := os.WriteFile(filepath.Join(routeDir, "public-result.json"), ordinaryJSON(t, result), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var errorRecord any
+	if verifyErr != nil {
+		e := asError(verifyErr)
+		errorRecord = struct {
+			Kind string `json:"kind"`
+			Code string `json:"code"`
+			Path string `json:"path"`
+		}{e.Kind, e.Code, e.Path}
+		if e.Kind != KindResourceLimit && e.Kind != KindCancelled {
+			t.Fatalf("ordinary SQL public call stopped before a capacity result: %v; result=%+v", verifyErr, result)
+		}
+	}
+	stages, lastStage, lastRejected := ordinarySQLLedgerStages(t, ledgerPath)
+	capacity := "CAPACITY_UNPROVEN"
+	if len(assetBodies) != 0 && verifyErr == nil && result.Semantic == AssessPass && result.Complete {
+		capacity = "FULL_BODY_MEASURED_VERIFIED"
+	}
+	stopBytes, err := json.Marshal(struct {
+		Capacity, Boundary string
+		Error              any
+		LastRejected       any
+		Stages             []string
+	}{Capacity: capacity, Boundary: lastStage, Error: errorRecord, LastRejected: lastRejected, Stages: stages})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(routeDir, "capacity-stop.json"), stopBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	trees := map[string]bool{}
+	for _, body := range assetBodies {
+		if bytes.Contains(body, []byte(ordinaryExpectedTreeSchema)) {
+			trees[digestHex(body)] = true
+		}
+	}
+	return ordinarySQLRouteRun{Result: result, Err: verifyErr, Capacity: capacity, LastStage: lastStage, LastRejected: lastRejected,
+		AssetBodies: len(assetBodies), TreeAssets: len(trees), References: len(references), LedgerPath: ledgerPath, LogPath: logPath}
+}
+
+func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
+	artifactRoot := ordinarySQLEnv(t)
 	for _, route := range []string{"postgresql-sql", "tsql"} {
 		t.Run(route, func(t *testing.T) {
-			routeDir := filepath.Join(artifactRoot, "sql-"+route)
-			if _, err := os.Stat(routeDir); err == nil {
-				t.Fatalf("preserving existing capacity evidence at %s; choose a fresh artifact root", routeDir)
-			}
-			if err := os.Mkdir(routeDir, 0700); err != nil {
-				t.Fatal(err)
-			}
-			tmpDir := filepath.Join(routeDir, "tmp")
-			if err := os.Mkdir(tmpDir, 0700); err != nil {
-				t.Fatal(err)
-			}
-			req, profile, source, registration, plan, planning, assets, grammarRoot, pack, mapping, assetBodies, expectedTree, metadata := ordinarySQLOwnedInputs(t, route)
-			producerDir := filepath.Join(routeDir, "owned-producer")
-			producerInput := ordinaryE2EProducerInput{Profile: profile, PlanningProfile: planning, AssetRegistration: assets,
-				ShardPlan: plan, RegistrationBytes: req.Registration, Registration: registration, ShardIDs: req.Selection.ShardIDs,
-				Sources: [][]byte{source}, GrammarRoot: grammarRoot, FactPack: pack, FactMapping: mapping}
-			inputBytes := ordinaryJSON(t, producerInput)
-			inputPath := filepath.Join(routeDir, "producer-input.json")
-			if err := os.WriteFile(inputPath, inputBytes, 0600); err != nil {
-				t.Fatal(err)
-			}
-			cmdCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-			cmd := exec.CommandContext(cmdCtx, "go", "test", "./src/internal/native", "-run", "^TestOracleOrdinaryE2EFixture$", "-count=1", "-timeout=240s")
-			cmd.Dir = root
-			cmd.Env = ordinaryE2EEnv(map[string]string{"TSGK_ORDINARY_OWNED_INPUTS": inputPath, "TSGK_ORDINARY_OWNED_FIXTURE": producerDir,
-				"TSGK_NATIVE_RUNTIME": `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`, "TSGK_NATIVE_CC": `C:\msys64\ucrt64\bin\gcc.exe`, "TSGK_NATIVE_REQUIRED": "1",
-				"TMP": tmpDir, "TEMP": tmpDir, "TMPDIR": tmpDir})
-			output, produceErr := cmd.CombinedOutput()
-			logPath := filepath.Join(routeDir, "native-producer.log")
-			if err := os.WriteFile(logPath, output, 0600); err != nil {
-				t.Fatal(err)
-			}
-			if produceErr != nil {
-				t.Fatalf("owned SQL producer failed: %v; log=%s\n%s", produceErr, logPath, output)
-			}
-			if err := os.WriteFile(filepath.Join(routeDir, "public-ledger.jsonl"), nil, 0600); err != nil {
-				t.Fatal(err)
-			}
-			t.Setenv("TSGK_ORDINARY_LEDGER_TRACE", filepath.Join(routeDir, "public-ledger.jsonl"))
-			references := ordinarySQLSyntheticReferences(t, profile, source, registration, expectedTree, metadata)
-			req = ordinaryE2EAssemble(t, req, producerDir, references, assetBodies)
-			ctx, stop := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
-			defer stop()
-			result, verifyErr := VerifyOrdinaryQuerySemantics(ctx, req)
-			resultBytes := ordinaryJSON(t, result)
-			if err := os.WriteFile(filepath.Join(routeDir, "public-result.json"), resultBytes, 0600); err != nil {
-				t.Fatal(err)
-			}
-			var errorRecord any
-			if verifyErr != nil {
-				e := asError(verifyErr)
-				errorRecord = struct {
-					Kind string `json:"kind"`
-					Code string `json:"code"`
-					Path string `json:"path"`
-				}{e.Kind, e.Code, e.Path}
-				if e.Kind != KindResourceLimit && e.Kind != KindCancelled {
-					t.Fatalf("ordinary SQL public call stopped before a capacity result: %v; result=%+v", verifyErr, result)
-				}
-			}
-			stages, lastStage, lastRejected := ordinarySQLLedgerStages(t, filepath.Join(routeDir, "public-ledger.jsonl"))
-			capacity := "CAPACITY_UNPROVEN"
-			if len(assetBodies) != 0 && verifyErr == nil && result.Semantic == AssessPass && result.Complete {
-				capacity = "FULL_BODY_MEASURED_VERIFIED"
-			}
-			stopRecord := struct {
-				Capacity, Boundary string
-				Error              any
-				LastRejected       any
-				Stages             []string
-			}{Capacity: capacity, Boundary: lastStage, Error: errorRecord, LastRejected: lastRejected, Stages: stages}
-			stopBytes, err := json.Marshal(stopRecord)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(routeDir, "capacity-stop.json"), stopBytes, 0600); err != nil {
-				t.Fatal(err)
-			}
+			run := ordinarySQLRunRoute(t, filepath.Join(artifactRoot, "sql-"+route), route, nil)
+			result, verifyErr := run.Result, run.Err
 			limits := OrdinaryPlanLimits()
-			if len(assetBodies) == 0 && (result.Tuple.Verified != 0 || result.Semantic == AssessPass) {
+			if run.AssetBodies == 0 && (result.Tuple.Verified != 0 || result.Semantic == AssessPass) {
 				t.Fatalf("synthetic SQL references without independent expected assets were incorrectly treated as verified: %+v", result)
 			}
-			if len(assetBodies) != 0 && verifyErr == nil {
+			if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
+				t.Fatalf("%s: an independently authored tuple FAILED against the native r8: %+v", route, result)
+			}
+			if run.AssetBodies != 0 && verifyErr == nil {
 				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessPass || result.Semantic != AssessPass || result.Assessment != AssessPass || result.Tuple.Required == 0 ||
 					result.Tuple.Failed != 0 || result.Tuple.Verified != result.Tuple.Required || result.Tuple.Blocked != 0 {
-					t.Fatalf("PostgreSQL body adjudication did not finish with a recomputed base PASS: %+v", result)
+					t.Fatalf("%s body adjudication did not finish with a recomputed base PASS: %+v", route, result)
 				}
 				for _, obligation := range result.Obligations {
 					if obligation.State != ordinaryTupleVerified || obligation.Code != "" {
-						t.Fatalf("PostgreSQL independent tuple was not VERIFIED: %+v", obligation)
+						t.Fatalf("%s independent tuple was not VERIFIED: %+v", route, obligation)
 					}
 				}
 			}
-			expectedState := "UNAVAILABLE"
-			if len(assetBodies) != 0 {
-				expectedState = "independently-authored DO CST/query/fact fixtures"
+			// Each distinct expected tree is decoded at most once per pass, for the judgment and the reference alike.
+			decodes := ordinaryLedgerDecodes(t, run.LedgerPath)
+			treeNew, treeShared := 0, 0
+			for _, doc := range []string{"ordinary-expected-tree", "ordinary-reference-expected-tree"} {
+				treeNew, treeShared = treeNew+decodes[doc][0], treeShared+decodes[doc][1]
 			}
-			t.Logf("route=%s selected=%v required=%d state=%s complete=%t capacity=%s logical=%d/%d work=%d/%d read=%d/%d stop_boundary=%s rejected=%v producer=owned-native reference=synthetic rows=%d expected=%s ledger=%s producer-log=%s",
-				route, result.SelectedShardIDs, result.Tuple.Required, result.Semantic, result.Complete, capacity, result.LogicalBytes, limits.Logical,
-				result.Work, limits.Work, result.BytesRead, limits.ReadBytes, lastStage, lastRejected, len(references), expectedState, filepath.Join(routeDir, "public-ledger.jsonl"), logPath)
+			if treeNew > run.TreeAssets {
+				t.Fatalf("%s: %d expected-tree decodes for %d distinct trees (%v)", route, treeNew, run.TreeAssets, decodes)
+			}
+			t.Logf("route=%s expected-asset decodes {new, shared}: %v; distinct trees %d, tree decodes %d, tree shared uses %d", route, decodes, run.TreeAssets, treeNew, treeShared)
+			// What the query-independent checks and the final-identity sort really did never exceeds what the
+			// ledger charged for them.
+			_, labels, visits := ordinaryLedgerExit(t, run.LedgerPath)
+			for kind, label := range map[string]string{"sort": "ordinary-final-identity-order", "tree-check": "ordinary-actual-tree-check", "api-compare": "ordinary-api-compare", "tree-compare": "ordinary-tree-compare", "physical": "ordinary-final-physical-identity", "dir-sort": "semantic-directory-sort"} {
+				if visits[kind][0] > labels[label][0] {
+					t.Fatalf("%s: %s did %d visits for the %d work charged under %s", route, kind, visits[kind][0], labels[label][0], label)
+				}
+				t.Logf("route=%s %s: runs=%d visits=%d charged work=%d (%d charges)", route, kind, visits[kind][1], visits[kind][0], labels[label][0], labels[label][2])
+			}
+			if run.AssetBodies != 0 && visits["tree-check"][1] >= uint64(result.Tuple.Required) && result.Tuple.Required > 1 {
+				t.Fatalf("%s: %d actual-tree checks for %d tuples, want one per distinct actual tree", route, visits["tree-check"][1], result.Tuple.Required)
+			}
+			expectedState := "UNAVAILABLE"
+			if run.AssetBodies != 0 {
+				expectedState = "independently-authored CST/query/fact fixtures"
+			}
+			t.Logf("route=%s selected=%v required=%d verified=%d failed=%d blocked=%d state=%s complete=%t capacity=%s logical=%d/%d work=%d/%d read=%d/%d stop_boundary=%s rejected=%v producer=owned-native reference=synthetic rows=%d expected=%s ledger=%s producer-log=%s",
+				route, result.SelectedShardIDs, result.Tuple.Required, result.Tuple.Verified, result.Tuple.Failed, result.Tuple.Blocked, result.Semantic, result.Complete, run.Capacity, result.LogicalBytes, limits.Logical,
+				result.Work, limits.Work, result.BytesRead, limits.ReadBytes, run.LastStage, run.LastRejected, run.References, expectedState, run.LedgerPath, run.LogPath)
 		})
 	}
 }

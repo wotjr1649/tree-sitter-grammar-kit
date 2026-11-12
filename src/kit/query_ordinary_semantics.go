@@ -103,6 +103,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 		b = &eligibilityBudget{r: r}
 		r.eligibility = b
 	}
+	defer ordinaryStage("exit", b)
 	defer func() {
 		ordinaryResultError(&res, resultErr, r.totalRead, b.work, b.logical)
 	}()
@@ -133,6 +134,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 			return res, e
 		}
 	}
+	ordinaryStage("caller-documents", b)
 	binding := req.Selection
 	if len(binding.ShardIDs) > NativeOperations()["native-query-batch"].MaxCases {
 		return res, fail(KindResourceLimit, "ORDINARY_PLAN_SELECTION_LIMIT", "selection", nil)
@@ -164,6 +166,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 	if e != nil {
 		return res, e
 	}
+	ordinaryStage("ordinary-inputs", b)
 	if e := b.charge(uint64(len(in.registration.Required))+1, 512*uint64(len(in.registration.Required)+len(binding.ShardIDs)), "ordinary-coordinator-selection"); e != nil {
 		return res, e
 	}
@@ -233,6 +236,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 	}
 	eligibility, err := verifyQueryReferenceEligibilityInRun(ctx, QueryReferenceEligibilityRequest{
 		Evidence: req.Evidence, Approval: req.EligibilityApproval, Registration: req.EligibilityRegistration}, scope)
+	ordinaryStage("eligibility-evidence", b)
 	res.Eligibility = &eligibility
 	if replay != nil && scope.session != nil {
 		replay.snapshot = scope.session.snapshot
@@ -259,6 +263,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 		return res, nil
 	}
 	set, e := b.ordinaryGuardedSet(root, s, in.registration, profile, manifestBytes, req.RunBinding)
+	ordinaryStage("r8-reader", b)
 	if set != nil {
 		res.ProducerRecorded = Verdict{set.Manifest.ExecutionStatus, set.Manifest.Assessment}
 		for _, f := range set.Findings {
@@ -272,6 +277,7 @@ func verifyOrdinaryQuerySemanticsInRun(ctx context.Context, req OrdinaryQuerySem
 	if e != nil {
 		return res, e
 	}
+	ordinaryStage("native-closure", b)
 	res.BindingValid = closure && s.bound && set.Complete
 	if e := b.ordinaryAdjudicateSet(s, in, profile, set, req.ReferenceSelection, &res); e != nil {
 		return res, e
@@ -343,6 +349,7 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 	}
 	// Base contradictions must survive an interruption in later reference/asset reads.
 	facts, factErr := b.ordinaryFactContext(s, set.Manifest, profile, producerFacts)
+	ordinaryStage("fact-inputs", b)
 	bases := map[string]Verdict{}
 	res.BaseVerified = Verdict{StatusCompleted, AssessPass}
 	for i, c := range profile.Native.Cases {
@@ -351,6 +358,7 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 		if cache := set.Cases[c.ID]; cache != nil {
 			base, e = b.recomputeOrdinaryBase(profile, i, cache, facts)
 		}
+		ordinaryStage("base-recomputation", b)
 		bases[c.ID] = base.Verdict
 		res.Gates = append(res.Gates, base.Gates...)
 		res.BaseVerified.Assessment = foldClaims([]string{res.BaseVerified.Assessment, base.Verdict.Assessment})
@@ -368,10 +376,19 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 		return factErr
 	}
 	references, e := s.ordinaryReferences(in.registration, referenceSelection, sources)
+	ordinaryStage("reference-rows", b)
 	ordinaryCopyEligibilityFindings(res, s)
 	if e != nil {
 		return e
 	}
+	ordinaryStage("facts", b)
+	// Expected assets are decoded once per pass and shared by the judgment, the reference
+	// comparison and every tuple of the same asset; the share lives only for this call.
+	if e := b.charge(1, ordinaryDecodedEntryLogical, "ordinary-expected-cache"); e != nil {
+		return e
+	}
+	b.decoded = newOrdinaryDecodedAssets()
+	defer func() { b.decoded = nil }()
 	assets := ordinaryAssetResolver{session: s, assets: map[string]OrdinaryAsset{}, resolved: map[string][]byte{}}
 	for _, asset := range in.assets.Assets {
 		assets.assets[asset.ID] = asset
@@ -447,10 +464,12 @@ func (b *eligibilityBudget) ordinaryAdjudicateSet(s *eligibilitySession, in ordi
 			return tupleErr
 		}
 	}
+	ordinaryStage("independent-tuples", b)
 	coverage, e := b.foldOrdinaryRuntime(in.registration, selected, judgments)
 	if e != nil {
 		return e
 	}
+	ordinaryStage("runtime-fold", b)
 	res.Tuple, res.ProcessingComplete = coverage.Tuple, coverage.ProcessingComplete
 	return nil
 }

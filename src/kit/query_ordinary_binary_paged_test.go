@@ -332,7 +332,7 @@ func ordinaryBinaryPagedTSQLInput(t *testing.T, caseID string) (OrdinaryQuerySem
 	producer := ordinaryE2EProducerInput{Profile: profileBytes, PlanningProfile: req.PlanningProfile, AssetRegistration: req.AssetRegistration, ShardPlan: ordinaryJSON(t, plan),
 		RegistrationBytes: req.Registration, Registration: registration, ShardIDs: req.Selection.ShardIDs, Sources: [][]byte{selectedSource}, FactPack: packBytes, FactMapping: factMapping,
 		GrammarRoot: filepath.FromSlash("D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/routes/" + route)}
-	references := ordinarySQLSyntheticReferences(t, profileBytes, selectedSource, registration, nil, nil)
+	references := ordinarySQLSyntheticReferences(t, profileBytes, selectedSource, registration, ordinarySQLExpectedSet{}, nil)
 	if !strings.HasPrefix(source, "dbo.") {
 		t.Fatalf("unexpected P0 TSQL source %q", source)
 	}

@@ -26,7 +26,7 @@ type ordinaryCLIInputs struct {
 	Source            []byte
 	GrammarRoot       string
 	AssetBodies       map[string][]byte
-	ExpectedTree      []TreeNode
+	ExpectedTree      ordinarySQLExpectedSet
 	Metadata          map[string]QueryWitnessMetadata
 	ShardID           string
 	CaseID            string
@@ -34,7 +34,7 @@ type ordinaryCLIInputs struct {
 
 func ordinaryCLIRealInputs(t *testing.T, witness []byte) ordinaryCLIInputs {
 	t.Helper()
-	req, profileBytes, source, registration, _, planningProfile, assetData, grammarRoot, packBytes, mapping, assetBodies, expectedTree, metadata := ordinarySQLOwnedInputs(t, "postgresql-sql")
+	req, profileBytes, source, registration, _, planningProfile, assetData, grammarRoot, packBytes, mapping, assetBodies, expectedTree, metadata := ordinarySQLOwnedInputs(t, "postgresql-sql", nil)
 	_, inventory := ordinaryP0ForPlanTest(t)
 	var export ordinarySourceExport
 	if err := ordinaryDecode(witness, &export); err != nil {

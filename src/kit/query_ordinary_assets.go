@@ -1,10 +1,10 @@
 package kit
 
 import (
+	"io/fs"
 	"math/bits"
 	"os"
 	"reflect"
-	"slices"
 	"strings"
 )
 
@@ -13,6 +13,7 @@ type ordinaryAssetResolver struct {
 	session  *eligibilitySession
 	assets   map[string]OrdinaryAsset
 	resolved map[string][]byte
+	pins     map[string]OrdinaryPin // the pin each resolved body was verified against
 }
 
 func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
@@ -34,6 +35,10 @@ func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
 		return nil, fail(KindInvalidInput, "ORDINARY_ASSET_STATE", id, nil)
 	}
 	if data, ok := a.resolved[id]; ok {
+		// A shared body is only reused for the pin it was verified against, on every use.
+		if a.pins[id] != *asset.Pin || uint64(len(data)) != asset.Pin.Bytes {
+			return nil, fail(KindInvalidInput, "ORDINARY_ASSET_PIN", id, nil)
+		}
 		return data, nil
 	}
 	var body []byte
@@ -63,6 +68,10 @@ func (a *ordinaryAssetResolver) resolve(id, role string) ([]byte, *Error) {
 		}
 	}
 	a.resolved[id] = body
+	if a.pins == nil {
+		a.pins = map[string]OrdinaryPin{}
+	}
+	a.pins[id] = *asset.Pin
 	return body, nil
 }
 
@@ -97,13 +106,14 @@ func (b *eligibilityBudget) ordinarySnapshotIdentity(root *os.Root, s *eligibili
 	for _, path := range paths {
 		pathBytes += uint64(len(path) + 1)
 	}
-	if e := b.charge(8*uint64(bits.Len(uint(len(paths))))*pathBytes+1, 0, "ordinary-final-identity-order"); e != nil {
+	if e := b.charge(ordinarySortWork(len(paths), pathBytes), ordinarySortLogical(len(paths)), "ordinary-final-identity-order"); e != nil {
 		return e
 	}
-	slices.Sort(paths)
+	sorted := ordinarySortPaths(paths)
+	ordinaryVisitObserved("sort", sorted.compares+sorted.bytes+sorted.moved)
 	g := newGuard(root)
 	for _, path := range paths {
-		if e := b.charge(20*uint64(len(path))+1, 0, "ordinary-final-physical-identity"); e != nil {
+		if e := b.charge(ordinaryPhysicalIdentityWork(path, snapshot.directories), 0, "ordinary-final-physical-identity"); e != nil {
 			return e
 		}
 		before, directory := snapshot.directories[path]
@@ -121,6 +131,77 @@ func (b *eligibilityBudget) ordinarySnapshotIdentity(root *os.Root, s *eligibili
 	return b.r.check()
 }
 
+// ordinaryPhysicalIdentityWork is the work bound of observing one snapshot path with a guard, in the order
+// ordinarySnapshotIdentity walks (a path after its prefixes). With the parent in the snapshot the guard has
+// cached it, so the observation is one probe of the parent, two scans, one Lstat and one insert: under 6
+// units per byte, reserved at 20 as before. Otherwise every ancestor may be uncached: per ancestor a failed
+// probe, an Lstat and an insert, each at most one unit per byte of the path.
+func ordinaryPhysicalIdentityWork(path string, directories map[string]fs.FileInfo) uint64 {
+	work := 20*uint64(len(path)) + 1
+	if i := strings.LastIndexByte(path, '/'); i >= 0 && directories[path[:i]] == nil {
+		work += 4 * uint64(strings.Count(path, "/")) * uint64(len(path)+1)
+	}
+	return work
+}
+
+// ordinarySortWork is the proven work bound of ordinarySortPaths: ceil(log2 n) merge levels, each
+// costing at most one unit per path byte plus one per path (pathBytes counts len+1 per path), and one
+// last copy of the buffer into paths.
+func ordinarySortWork(n int, pathBytes uint64) uint64 {
+	if n < 2 {
+		return 1
+	}
+	return uint64(bits.Len(uint(n-1))+1)*pathBytes + 1
+}
+
+// ordinarySortLogical is the buffer of n strings, plus a page for the allocator's rounding.
+func ordinarySortLogical(n int) uint64 { return 16*uint64(n) + 8192 }
+
+// ordinarySortCost is what ordinarySortPaths did: comparisons, bytes the comparisons may inspect
+// (the shorter operand each) and elements moved without a comparison.
+type ordinarySortCost struct{ compares, bytes, moved uint64 }
+
+// ordinarySortPaths sorts paths ascending with a bottom-up merge sort. A merge step emits the
+// element it compared and inspects at most the shorter operand, so a level costs at most
+// sum(len+1) over the paths and the whole sort at most ordinarySortWork. It needs one buffer of n strings.
+func ordinarySortPaths(paths []string) ordinarySortCost {
+	return ordinaryMergeSort(paths, func(p string) string { return p })
+}
+
+// ordinaryMergeSort is the bottom-up merge sort behind ordinarySortPaths for any element with a string key;
+// the proven bound ordinarySortWork holds for the key bytes.
+func ordinaryMergeSort[T any](items []T, key func(T) string) (cost ordinarySortCost) {
+	n := len(items)
+	if n < 2 {
+		return cost
+	}
+	src, dst := items, make([]T, n)
+	for width := 1; width < n; width *= 2 {
+		for lo := 0; lo < n; lo += 2 * width {
+			mid, hi := min(lo+width, n), min(lo+2*width, n)
+			i, j, k := lo, mid, lo
+			for i < mid && j < hi {
+				a, b := key(src[i]), key(src[j])
+				cost.compares++
+				cost.bytes += uint64(min(len(a), len(b)))
+				if b < a {
+					dst[k], j = src[j], j+1
+				} else {
+					dst[k], i = src[i], i+1
+				}
+				k++
+			}
+			cost.moved += uint64(copy(dst[k:], src[i:mid]))
+			cost.moved += uint64(copy(dst[k+mid-i:], src[j:hi]))
+		}
+		src, dst = dst, src
+	}
+	if &src[0] != &items[0] {
+		cost.moved += uint64(copy(items, src))
+	}
+	return cost
+}
+
 func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession, res *OrdinaryQuerySemanticsResult, replay bool) *Error {
 	if e := b.ordinarySnapshotIdentity(root, s); e != nil {
 		res.Complete, res.ProcessingComplete, res.Semantic = false, false, AssessBlocked
@@ -135,6 +216,7 @@ func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession,
 		res.BindingValid = false
 		return e
 	}
+	ordinaryStage("final-identity", b)
 	if res.Tuple.Failed > 0 {
 		res.Semantic = AssessFail
 	} else if res.BindingValid && res.ProcessingComplete && res.Tuple.Required > 0 && res.Tuple.Verified == res.Tuple.Required &&
@@ -159,6 +241,7 @@ func (b *eligibilityBudget) ordinaryFinish(root *os.Root, s *eligibilitySession,
 		return e
 	}
 	res.BytesRead, res.Work, res.LogicalBytes = b.r.totalRead, b.work, b.logical
+	ordinaryStage("seal", b)
 	return sealOutput(res, ReplayOperations()["evidence-replay"].OutputBytes)
 }
 

@@ -69,6 +69,30 @@ Record 종료 우선순위는 `TestOrdinaryRecordKeepsAnEstablishedFailAheadOfLa
 
 `TestOrdinaryBinaryPagedOwnedTSQLPublicReplayAndPageCounterexamples`(`TSGK_ORDINARY_SQL_E2E=1`)는 준비된 68 MB TSQL grammar(tracked 불가)로 실제 owned binary-paged closure를 실행한다. P0 `alt-tsql-B04-r144`의 8개 tuple은 독립 expected body가 없어 모두 BLOCKED(`ORDINARY_INCOMPLETE`)이며 이는 경로가 끝까지 실행됨을 보이는 것이지 semantic 판정이 아니다. 공개 API, r9 replay와 `tsgk replay`는 같은 결과·원장을 내야 하고, r8은 driver page 3개와 grammar page 5개의 paged descriptor를 가져야 한다. driver/grammar page 누락, descriptor의 page 순서 교환(index·offset은 유지하고 두 page의 path·hash만 교환), page 내용 교환은 모든 pin을 일관되게 다시 계산한 r8에서도 비교 대상 결과와 달라져야 한다(`ORDINARY_BUILD_DRIVER_PART`, `ORDINARY_BINDING_MISMATCH`).
 
+## #362 ordinary physical identity·`CompareAPI` 상한 검증
+
+`TestCompareAPIMatchesReference`·`TestCompareAPIDivergenceRuns`·`TestCompareAPIAdversarialMatchesReference`는 시험 파일에 둔 이전 `CompareAPI`와 결과·difference·divergence가 `DeepEqual`인지 무작위·zero-width run·큰 입력에서 확인한다. `TestCompareAPIStaysWithinCompareAPIWork`는 형제가 매우 많은 node, 사슬, field가 많은 node, 긴 field 이름, tree보다 크거나 작은 표, 많은 point에서 test-only hook(`compareAPICostHook`)이 센 방문+문자열 bytes가 `CompareAPIWork` 이하이고 `TotalAlloc`이 `CompareAPILogical` 이하인지 assert한다. `TestGuardLstatMatchesReference`는 새 `guard.lstat`이 이전 구현과 같은 관측·오류·cache를 내는지, `TestOrdinaryPhysicalIdentityChargeCoversTheWalk`는 깊이 수백의 경로, 긴 component, ancestor가 snapshot에 없는 경로에서 test-only hook(`guardLstatHook`)이 센 경로 byte가 경로별 `ordinaryPhysicalIdentityWork` 이하인지 assert한다.
+
+Mutant는 test-only overlay로 한 번에 하나만 실행한다. `CompareAPIWork`에서 문자열 항을 뺀 mutant, work 계수를 4로 줄인 mutant, positional walk를 형제 순회로 되돌린 mutant, `guard.lstat`이 cache된 ancestor를 건너뛰지 않게 한 mutant, physical identity 식에서 ancestor 항을 뺀 mutant가 모두 위 시험으로 실패해야 한다.
+
+## #362 ordinary final identity 정렬·actual tree 공유 검증
+
+`TestOrdinarySortPathsStaysWithinChargedWork`는 native 없이 `ordinarySortPaths`가 `slices.Sort`와 같은 결과를 내고 비교 횟수·비교 bytes·이동 수의 합이 `ordinarySortWork` 미만이며 입력 복사를 뺀 할당이 `ordinarySortLogical` 이하인지 15개 입력군(공통 prefix가 긴 경로 3,000개의 무작위·정렬·역순, 1 MiB 경로, 짧은 경로 100,000개, 빈 문자열, 중복 포함)에서 assert한다. `TestOrdinaryFinalIdentityOrderChargeCoversSortAndBuffer`는 `ordinarySnapshotIdentity`의 실제 charge가 정렬이 쓴 값과 buffer를 덮고 변경된 파일을 `SOURCE_CHANGED`로 거절하는지 확인한다. `TestOrdinaryActualShareKeepsJudgmentsAndRunsOncePerTree`·`TestOrdinaryActualShareRebindsToTheTupleSource`·`TestOrdinaryActualShareLargeTreeManyQueries`·`TestOrdinaryActualShareValuesStayUnchanged`는 공유가 판정을 바꾸지 않고 검사가 tree·source pin·expected tree마다 한 번만 실행되며 charge가 실제 방문 수 이상이고 다른 source·expected tree에는 재사용되지 않고 공유 값이 변하지 않음을 확인한다. Opt-in `TestOrdinarySQLPublicPassCapacity`는 실제 pass의 방문 수가 label별 charge 이하인지와 TSQL 72/72·PostgreSQL 9/9 VERIFIED를 확인한다.
+
+Mutant는 test-only overlay로 한 번에 하나만 실행한다. 정렬 work의 마지막 복사 항을 뺀 mutant, buffer logical charge를 0으로 한 mutant, tree 검사 key에서 source pin을 뺀 mutant, 비교 key에서 expected tree를 뺀 mutant, tree 검사 조회 charge를 0으로 한 mutant가 모두 위 시험으로 실패해야 한다.
+
+## #362 ordinary expected asset 공유 decode 검증
+
+`TestOrdinaryExpectedDecodeAccounting`은 native 없이 expected asset decode(`decodeOrdinaryExpected`)의 logical이 실제 할당(`TotalAlloc`)과 같거나 큰지, work가 독립 token 순회로 센 값 수의 3배 이상인지 asset 종류별(tree·captures·metadata·facts)로 assert한다. 정상 입력은 20,000 node tree, 12,000 capture, 긴 node type·capture 이름, 100,000개의 빈 capture 이름, 5,000 declaration fact이고 오류 입력은 31단계 중첩의 긴 이름, 긴 문자열의 잘못된 escape, 긴 중복 이름, 100,000개 `{}` 배열, 넓은 미지 이름이다. `TestOrdinaryExpectedCacheRetentionPriced`는 공유로 보관한 값이 차지하는 heap(GC 두 번 뒤 `HeapAlloc`, 첫 실행은 per-type shape cache 예열)이 `ordinary-expected-cache` 항의 charge 이하인지 확인한다. `TestOrdinaryExpectedShareKeepsJudgments`는 같은 tree를 읽는 tuple 여럿, 다른 case에 묶인 tuple, 변조된 tree를 가진 tuple, 변조된 captures를 가진 tuple, tree strict decode가 실패하는 tuple을 섞은 열에서 공유 유무에 따른 판정(state, first FAIL code, finding과 순서)이 같고, 변조된 tuple만 FAIL이며, decode가 `(타입, body)`마다 한 번(tree 3회, metadata 1회)이고, 사용마다 조회가 계상되며, tree 구조 검사가 `(tree, source pin)`마다 한 번인지 assert한다. `TestOrdinaryExpectedShareValuesStayUnchanged`는 열을 마친 뒤 모든 공유 값이 새 decode와 `DeepEqual`임을, `TestOrdinaryExpectedShareAccountingCoversAllocation`은 공유 열 전체의 logical이 실제 할당 이상임을, `TestOrdinaryExpectedShareKeysByVerifiedBody`는 같은 타입·같은 길이의 다른 body가 값을 공유하지 않음을, `TestOrdinaryAssetResolverRejectsOtherPinForSharedAsset`은 검증된 body를 다른 pin(또는 다른 길이)을 주장하는 사용에 돌려주지 않음(`ORDINARY_ASSET_PIN`)을 확인한다. Opt-in `TestOrdinaryExpectedDecodeAccountingSQL`은 선택 TSQL의 실제 expected 107개에서 같은 부등식을 검사한다. `TestOrdinaryTSQLExpectedAgainstNative`는 이제 공유 cache를 켠 채 72/72 VERIFIED와 tree·capture·fact 변조의 해당 tuple만 FAIL(tree 8개 tuple, capture 1개, fact 1개)을 확인한다. `TestOrdinarySQLPublicPassCapacity`는 원장에 asset별 새 decode·공유 사용 횟수를 기록하고 새 tree decode가 서로 다른 tree body 수를 넘지 않는지 assert한다.
+
+Mutant는 test-only overlay로 한 번에 하나만 실행한다. 보관 charge를 0으로 한 mutant, 조회 charge를 뺀 mutant, resolver의 pin 재확인을 뺀 mutant, cache key에서 body를 뺀 mutant, tree 구조 검사 조회 charge를 뺀 mutant가 모두 위 시험으로 실패해야 한다.
+
+## #362 ordinary reference row 예약 검증
+
+`TestOrdinaryReferenceRowAccounting`와 `TestOrdinaryReceiptDecodeAccounting`은 native 없이 실행되며, ordinary reference row와 process receipt의 decode 원장이 실제 할당(`TotalAlloc`)과 방문 수 이상인지 assert한다. 정상 형태 행은 20,000 node CST, capture 12,000개, 긴 node type·capture 이름·query id, 100,000개의 빈 capture 이름, 60,000개 match mapping이고, 오류 입력은 31단계 중첩의 긴 이름, 긴 문자열의 잘못된 escape, 긴 중복 이름, 100,000개 `{}` 배열, 넓은 이름 집합, 큰 문자열 schema다. Work는 독립 token 순회로 센 값 수의 5배(preflight 1 + head 2 + full 2 순회)와 query source hash byte 이상이어야 한다. `TestReferenceRowSharedDecodeUnchanged`는 공용 `decodeReferenceResponseBound`가 기존 head/full 두 decode와 `reserveReference`, `reference-points`의 합과 같은 원장을 유지하고 ordinary 경로가 더 작은지 확인한다. Opt-in `TestOrdinaryReferenceRowsAccountingSQL`은 선택 TSQL 40행과 PostgreSQL 9행에서 같은 부등식을 실제 입력으로 검사한다. 오류·buffer 예약에서 `32·(maxPath+maxName)` 항을 뺀 mutant는 `error-duplicate-long-name`과 중첩 이름 입력에서 `accounted logical … below … bytes allocated`로 실패해야 한다. 이 mutant는 test-only overlay로 한 번에 하나만 실행하며 제품 원문을 바꾸지 않는다.
+
+`TestOrdinarySQLPublicPassCapacity`의 단계별 원장(`public-ledger.jsonl`의 `kind: stage`)은 추적되는 test-only hook(`ordinaryStageHook`, `ordinaryChargeHook`, `src/kit/query_ordinary_hook.go`)과 `ordinaryInstallLedgerHooks`(`query_ordinary_ledger_test.go`)로 기록한다. 이전의 미추적 overlay 없이 opt-in 환경 변수만으로 끝까지 실행되며 hook은 제품 동작·원장·오류를 바꾸지 않는다.
+
 ## #362 ordinary base fact 예약 검증
 
 `TestOrdinaryBaseFactReservationIgnoresUnusedSource`는 declaration/XML 도출 예약이 소비하지 않는 source 길이에 따라 커지지 않는지 확인한다. `TestOrdinaryBaseDeclarationBudgetStopsBeforeHugeDepth`는 빈 level을 포함한 숫자 depth 반복 전에 자원 한도로 중단하고, `TestOrdinaryBaseDeclarationBudgetStopsFrontierExpansion`은 여러 parent 경로의 중복 frontier가 다음 clone·sort·출력 전에 차단되는지 검사한다. 기존 fact 재계산의 모든 step·role·pin·suffix·payload 음성과 독립 expected 경계를 유지한다.
@@ -141,6 +165,26 @@ P2-C 회귀는 `VerifyOrdinaryQuerySemantics`의 필수 caller `Selection`으로
 | TSQL `alt-tsql-B01-r001`, base 재계산에서 RESOURCE_LIMIT | 1,073,275,806 | 31,403,098 | 126,923,139 | 466,018 | 596,902 | 141,512,317 |
 
 TSQL은 `ordinary-base-tree-projection`의 다음 logical 예약 1,731,872 B에 1,265,854 B가 부족했다. Error code `ELIGIBILITY_WORK_LIMIT`는 work와 logical을 공유하므로 이 실패의 실제 원인은 logical이다. Reference row 40개는 합성 placeholder이고 독립 SQL expected는 UNAVAILABLE이며, 중단 뒤의 semantic reference/expected/fold/seal 비용을 측정했다고 표시하지 않는다. TSQL은 `CAPACITY_UNPROVEN`/BLOCKED다. 이 부족분은 다음 예약 하나의 부족량일 뿐 전체 완료에 필요한 추가량의 상한이 아니다. 한도를 올리거나 원장만 낮추지 않는다. 이 표는 해당 선택 shard와 명시한 body의 관측이며 full P0·전체 SQL route·실제 reference 실행·P2-D·다른 OS·CI/main 통합을 완료하지 않는다.
+
+2026-11-12 TSQL 독립 expected 후속 검증은 선택 shard `alt-tsql-B01-r001`(원문 267 B, 4 edits, 5 versions, 8 query, 72 tuple = 8 query × [step0 incremental + step1–4 incremental/fresh] 9개)의 expected asset 107개(metadata 8, full CST 9, ordered captures 72, facts 18)를 손으로 작성해 pin한다. CST는 prepared `grammar.json`의 production(`program`/`batch`/`statement`/`select`/`term`/`field`/`invocation`/`window_function`/`set_statement` 등)과 external scanner 원문(GO 줄 끝, `marginalia`, `QUOTED_IDENTIFIER` 상태)에서 도출하고 byte 범위만 원문에서 토큰을 찾아 계산한다. 쿼리 metadata는 query 원문의 pattern 수와 capture 이름 최초 출현 순서이며, ordered capture는 손으로 쓴 tree와 pinned runtime `query.c`의 capture cursor 규칙(finished-state heap의 start byte·pattern index·완료 순서, match id는 첫 yield 시 부여, 복사 state는 원본의 id·consumed 수를 물려받음)에서 도출한다. 작성 시 parser·native·reference 출력은 사용하지 않았고 native 첫 실행 전에 asset 본문의 SHA-256을 먼저 기록했다.
+
+같은 actual owned r8에서 실제 raw 응답을 `nativewire.Check`로 검증한 뒤 제품 tuple adjudicator(`adjudicateOrdinaryTuple`)에 직접 넣는 `TestOrdinaryTSQLExpectedAgainstNative`(opt-in)는 72/72 tuple을 VERIFIED로 판정한다. 첫 대조에서 dynamic SQL capture 8개 asset(step1–4 × incremental/fresh)의 match 구성이 달랐다. 원인은 작성 모델이 `ts_query_cursor__copy_state`(`query.c`)의 복사 방향을 반대로 가정한 것이었고, 복사본이 원본의 id·consumed 수를 물려받는다는 소스 근거로 교정했다. 이 교정은 봉인 대비 8개 asset만 바꾸며 나머지 99개는 같다. Root capture를 가진 wildcard child pattern의 definite 여부(`tsqlDefinite[12]`)는 생성된 parse table의 정적 분석 결과라 grammar.json만으로 손으로 증명하지 못한 모델 매개변수다. 이 값은 native 관측과 일치하도록 정했으므로 해당 pattern에 한해 독립 증거로 세지 않는다. 같은 test는 expected의 node 하나·capture 하나·fact 하나를 변조하면 변조를 소비하는 tuple만 FAILED(`ORDINARY_EXPECTED_TREE_MISMATCH` 8개 query tuple, `ORDINARY_CAPTURE_MISMATCH` 1개, `ORDINARY_FACT_MISMATCH` 1개)가 되고 나머지는 VERIFIED로 남음을 확인한다.
+
+공개 `TestOrdinarySQLPublicPassCapacity`의 TSQL 경로는 expected 107개를 소비하지만 `reference-rows` 단계에서 `reference-response` 결정 예약이 logical 한도를 넘어 `ELIGIBILITY_WORK_LIMIT`(실제 원인 logical)으로 멈춘다. 중단 시 logical 1,073,740,361 B, work 25,817,475, read 129,947,595 B였고 72 tuple은 모두 unprocessed, `CAPACITY_UNPROVEN`/BLOCKED다. Reference row 40개는 여전히 합성이지만 독립 expected와 비교하려면 expected와 같은 full CST·ordered captures를 담아야 하며, 같은 제품 계상으로 측정한 40행의 decode+reserve 비용은 logical 222,514,364 B, work 2,923,400이다(단계 진입 시 남은 logical 135,172,615 B). 따라서 지금 한도에서는 TSQL 공개 pass가 `independent-tuples`에 도달하지 못한다. 한도는 바꾸지 않았다. PostgreSQL은 같은 공개 pass에서 9/9 VERIFIED를 유지한다. Reference executable/library는 실행·load하지 않았고 approval·reference row는 합성이므로 외부 reference와의 실행 독립성은 입증하지 않는다.
+
+다음은 최종 expected로 실행한 TSQL 공개 호출 하나의 같은 누적 원장이다. 마지막 거절 요청은 `reference-response` 6,400 B이고 부족분은 4,937 B지만 이는 다음 예약 하나의 값일 뿐이며 40행 전체는 위 222,514,364 B가 필요하다.
+
+| TSQL 공개 pass 단계 | logical B | work | read B | 남은 logical B | 남은 work | 남은 read B |
+|---|---:|---:|---:|---:|---:|---:|
+| caller-documents | 0 | 0 | 19,605,002 | 1,073,741,824 | 32,000,000 | 248,830,454 |
+| ordinary-inputs | 230,095,790 | 7,188,567 | 19,605,942 | 843,646,034 | 24,811,433 | 248,829,514 |
+| eligibility-evidence | 722,372,272 | 9,218,022 | 129,947,595 | 351,369,552 | 22,781,978 | 138,487,861 |
+| r8-reader | 787,870,981 | 13,734,305 | 129,947,595 | 285,870,843 | 18,265,695 | 138,487,861 |
+| native-closure | 793,970,324 | 15,191,541 | 129,947,595 | 279,771,500 | 16,808,459 | 138,487,861 |
+| fact-inputs | 795,398,760 | 15,233,997 | 129,947,595 | 278,343,064 | 16,766,003 | 138,487,861 |
+| base-recomputation | 938,569,209 | 24,624,793 | 129,947,595 | 135,172,615 | 7,375,207 | 138,487,861 |
+| reference-rows (거절) | 1,073,740,361 | 25,817,475 | 129,947,595 | 1,463 | 6,182,525 | 138,487,861 |
+
 
 ## #362 P2-B actual capture 기반 검증
 
