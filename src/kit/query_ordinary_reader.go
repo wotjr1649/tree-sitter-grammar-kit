@@ -404,7 +404,10 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 			return stop(e)
 		}
 		batchCache.Process = process
-		if process.StdoutBytes < 0 || process.StderrBytes < 0 || uint64(process.StdoutBytes) != capture.Stdout.Bytes || uint64(process.StderrBytes) != capture.Stderr.Bytes {
+		// The runner counts every stderr byte but keeps only the spec cap; the stdout count is the transcript's own.
+		stderrKept := !process.StderrTruncated && uint64(process.StderrBytes) == capture.Stderr.Bytes ||
+			process.StderrTruncated && capture.Spec.StderrBytes > 0 && capture.Stderr.Bytes == uint64(capture.Spec.StderrBytes) && uint64(process.StderrBytes) > capture.Stderr.Bytes
+		if process.StdoutBytes < 0 || process.StderrBytes < 0 || uint64(process.StdoutBytes) != capture.Stdout.Bytes || !stderrKept {
 			batchCache.Accepted = false
 			add("ORDINARY_BATCH_PROCESS_STREAM", capture.Process.Path, "process stream count가 transcript와 다르다")
 		}
@@ -420,7 +423,9 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 			batchCache.Accepted = false
 		}
 		for j, frame := range capture.Frames {
-			if j >= len(batch.Cases) || frame.Index != j || frame.Case != batch.Cases[j] || caseBatch[frame.Case].owner != "" || !containsString(manifest.Cases, frame.Case) {
+			// A NOT_SENT tail moves to a later process; only one SENT/ANSWERED frame owns a case.
+			prev := caseBatch[frame.Case]
+			if j >= len(batch.Cases) || frame.Index != j || frame.Case != batch.Cases[j] || prev.owner != "" && (prev.capture.Frames[prev.frame].State != "NOT_SENT" || prev.batch == i) || !containsString(manifest.Cases, frame.Case) {
 				add("ORDINARY_BATCH_FRAME", capMember.Path, "frame 순서 또는 case 소유권이 중복·변조됐다")
 				continue
 			}
@@ -898,7 +903,8 @@ func (b *eligibilityBudget) ordinaryCase(s *eligibilitySession, registration Ord
 			return e
 		}
 		return nil
-	}, Revision: request.Protocol, ID: request.ID, Nodes: request.Limits.Nodes, Queries: request.queries, API: request.API, SourceBytes: uint64(len(source)), EditPoints: points, Exit: &proc.ExitCode,
+	}, Revision: request.Protocol, ID: request.ID, Nodes: request.Limits.Nodes, Queries: request.queries, API: request.API, SourceBytes: uint64(len(source)), EditPoints: points,
+		// No per-frame exit: the batch process exit belongs to its last frame and is judged by the batch process check.
 		Observation: &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: request.ObservationRunID, ProducerSHA256: request.ObservationProducerSHA256, HistoryStart: request.ObservationHistoryStart}}
 	expect.Points = editPoints
 	for _, edit := range request.edits {
