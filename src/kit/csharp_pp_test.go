@@ -17,7 +17,7 @@ import (
 )
 
 // #218: on every recorded case the evaluator agrees with the approved Roslyn preprocessor by
-// ppRoslynDiff. The observations come from src/dev/csharp-pp-oracle over cases.json.
+// ppRoslynDiff. The observations come from src/dev/csharp-g1-roslyn (mode pp-r2) over cases.json.
 func TestCSharpPreprocessRoslyn(t *testing.T) {
 	dir := filepath.Join("..", "testdata", "csharp-pp")
 	if ok, unobserved := ppCompareBatch(t, filepath.Join(dir, "cases.json"), filepath.Join(dir, "roslyn-observed.json")); ok < 30 || unobserved != nil {
@@ -401,5 +401,37 @@ func TestCSharpPreprocessResults(t *testing.T) {
 		if r := csharpPreprocess([]byte(src), EncodingUTF8, nil, ppDefaultLimits); r.NonLF != want {
 			t.Errorf("%q: NonLF %v", src, r.NonLF)
 		}
+	}
+}
+
+// #233 Q5: roslyn-observed.json is the observation that the one Roslyn tool (src/dev/csharp-g1-roslyn, mode
+// pp-r2) reproduces byte for byte; `csharp-g1-roslyn-asset -pp-check` compares a fresh local run with it. This
+// test seals the tracked bytes and the approved legacy-observation tuple that names their SHA-256.
+func TestCSharpPPObservationSealed(t *testing.T) {
+	const observationSHA = "261213a109904e7572f7b7e229fe399e417025b7306e171959c51f40a4fd3ab6"
+	const tupleObject = "c5dd837d4d6ee33223b297524d76d94fbf7bf394bc3761aa7064a9a58a31adf4"
+	dir := filepath.Join("..", "testdata", "csharp-pp")
+	observed, err := os.ReadFile(filepath.Join(dir, "roslyn-observed.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(observed) != 124328 || digestHex(observed) != observationSHA {
+		t.Fatalf("roslyn-observed.json changed: %d bytes, sha256 %s", len(observed), digestHex(observed))
+	}
+	data, err := os.ReadFile(filepath.Join("..", "contracts", "evidence-pins", "objects", tupleObject))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var tuple struct {
+		ObservationSHA256 string `json:"observation_sha256"`
+		ObservationSchema string `json:"observation_schema"`
+		Scope             string `json:"scope"`
+	}
+	if err := json.Unmarshal(data, &tuple); err != nil {
+		t.Fatal(err)
+	}
+	// a content-addressed object: its name is its SHA-256
+	if digestHex(data) != tupleObject || tuple.ObservationSHA256 != observationSHA || tuple.ObservationSchema != ppexpect.ObservedSchema || tuple.Scope != "legacy-observation" {
+		t.Fatalf("approved tuple does not name the observation: %+v", tuple)
 	}
 }

@@ -3,13 +3,13 @@
 //
 //	go run ./src/dev/csharp-g1-roslyn-asset -root . -input <out.json>      write the tool's input document
 //	go run ./src/dev/csharp-g1-roslyn-asset -root . -verify <observed>     verify an observation against the tracked ledger
-//	go run ./src/dev/csharp-g1-roslyn-asset -root . -regress <observed>    compare a run over src/testdata/csharp-pp/cases.json
-//	                                                                       with the 157 observations of roslyn-observed.json
+//	go run ./src/dev/csharp-g1-roslyn-asset -root . -pp-check <generated>  compare the pp-r2 mode's run over src/testdata/csharp-pp/cases.json
+//	                                                                       byte for byte with roslyn-observed.json and its approved pin
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
@@ -83,76 +82,55 @@ func verify(root, observed string) error {
 	return nil
 }
 
-// regress compares the directive observation of a run over cases.json with roslyn-observed.json.
-func regress(root, observed string) error {
-	dir := filepath.Join(root, "src", "testdata", "csharp-pp")
-	type casesDoc struct {
-		Cases []struct {
-			ID     string `json:"id"`
-			Source string `json:"source"`
-		} `json:"cases"`
+// ppCheck requires the pp-r2 run over cases.json to be the preserved observation: the same bytes as
+// roslyn-observed.json, and a SHA-256 that an approved legacy-observation tuple (a content-addressed evidence-pin
+// object) names. The Roslyn tool is the only producer; nothing here runs dotnet.
+func ppCheck(root, generated string) error {
+	got, err := os.ReadFile(generated)
+	if err != nil {
+		return err
 	}
-	var cases casesDoc
-	var old struct {
-		Cases []map[string]any `json:"cases"`
+	want, err := os.ReadFile(filepath.Join(root, "src", "testdata", "csharp-pp", "roslyn-observed.json"))
+	if err != nil {
+		return err
 	}
-	var got struct {
-		Sources []map[string]any `json:"sources"`
+	sum := sha256.Sum256(got)
+	hexSum := hex.EncodeToString(sum[:])
+	if !bytes.Equal(got, want) {
+		at := 0
+		for at < len(got) && at < len(want) && got[at] == want[at] {
+			at++
+		}
+		return fmt.Errorf("pp-r2 output differs from roslyn-observed.json: %d bytes against %d, first difference at byte %d (line %d)", len(got), len(want), at, 1+bytes.Count(want[:min(at, len(want))], []byte("\n")))
 	}
-	for _, f := range []struct {
-		name string
-		into any
-	}{{filepath.Join(dir, "cases.json"), &cases}, {filepath.Join(dir, "roslyn-observed.json"), &old}, {observed, &got}} {
-		data, err := os.ReadFile(f.name)
-		if err != nil {
-			return err
-		}
-		if err := json.Unmarshal(data, f.into); err != nil {
-			return fmt.Errorf("%s: %w", f.name, err)
-		}
+	objects := filepath.Join(root, "src", "contracts", "evidence-pins", "objects")
+	entries, err := os.ReadDir(objects)
+	if err != nil {
+		return err
 	}
-	if len(cases.Cases) != len(old.Cases) || len(got.Sources) != len(old.Cases) {
-		return fmt.Errorf("case counts differ: cases %d, observed %d, new %d", len(cases.Cases), len(old.Cases), len(got.Sources))
-	}
-	var diffs []string
-	same := 0
-	for i, o := range old.Cases {
-		n := got.Sources[i]
-		raw, err := base64.StdEncoding.DecodeString(cases.Cases[i].Source)
-		if err != nil {
-			return err
+	for _, e := range entries {
+		data, err := os.ReadFile(filepath.Join(objects, e.Name()))
+		if err != nil || len(data) > 4096 {
+			continue // a tuple is a few hundred bytes
 		}
-		sum := sha256.Sum256(raw)
-		if n["id"] != o["id"] || cases.Cases[i].ID != o["id"] || n["sha256"] != hex.EncodeToString(sum[:]) || int(n["bytes"].(float64)) != len(raw) {
-			diffs = append(diffs, fmt.Sprintf("%v: id, source sha256 or size differs", o["id"]))
-			continue
+		var tuple struct {
+			Schema            string `json:"schema"`
+			ObservationSHA256 string `json:"observation_sha256"`
+			Scope             string `json:"scope"`
 		}
-		ok := true
-		for _, k := range []string{"features", "directives", "disabled", "errors", "diagnostics", "oracle_error"} {
-			if !reflect.DeepEqual(o[k], n[k]) {
-				ok = false
-				diffs = append(diffs, fmt.Sprintf("%v: %s differs", o["id"], k))
-			}
-		}
-		if ok {
-			same++
+		if json.Unmarshal(data, &tuple) == nil && tuple.Schema == "tsgk-roslyn-pin-tuple/r1" && tuple.Scope == "legacy-observation" && tuple.ObservationSHA256 == hexSum {
+			fmt.Printf("pp-r2: %d bytes, sha256 %s: identical to roslyn-observed.json and to observation_sha256 of approved tuple %s\n", len(got), hexSum, e.Name())
+			return nil
 		}
 	}
-	fmt.Printf("regression: %d of %d observations identical in features, directives, disabled, errors and diagnostics\n", same, len(old.Cases))
-	if len(diffs) > 0 {
-		for _, d := range diffs {
-			fmt.Println(d)
-		}
-		return errors.New("regression differs")
-	}
-	return nil
+	return fmt.Errorf("no approved legacy-observation tuple names sha256 %s", hexSum)
 }
 
 func main() {
 	root := flag.String("root", ".", "repository root")
 	input := flag.String("input", "", "write the tool input document to this path")
 	verifyPath := flag.String("verify", "", "verify this observation asset")
-	regressPath := flag.String("regress", "", "compare this run over cases.json with roslyn-observed.json")
+	ppPath := flag.String("pp-check", "", "compare this pp-r2 run over cases.json with roslyn-observed.json and its approved pin")
 	flag.Parse()
 	var err error
 	switch {
@@ -160,10 +138,10 @@ func main() {
 		err = writeInput(*root, *input)
 	case *verifyPath != "":
 		err = verify(*root, *verifyPath)
-	case *regressPath != "":
-		err = regress(*root, *regressPath)
+	case *ppPath != "":
+		err = ppCheck(*root, *ppPath)
 	default:
-		err = errors.New("one of -input, -verify, -regress is required")
+		err = errors.New("one of -input, -verify, -pp-check is required")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"cmp"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,18 +16,18 @@ import (
 // Roslyn observation of the G1 ledger's case sources (#233, G1-2).
 //
 // src/dev/csharp-g1-roslyn records, for every source version of the ledger's cases, what the Roslyn
-// of the pinned .NET SDK observes: acceptance, diagnostics, declarations, syntax nodes, directives and
-// the acceptance under each LanguageVersion. This verifier reads that asset offline. It binds the
+// of the pinned .NET SDK observes: acceptance, diagnostics, declarations, syntax nodes, tokens (kind,
+// span, IsMissing; no trivia), directives and the acceptance under each LanguageVersion. This verifier reads that asset offline. It binds the
 // asset to the ledger and the case sources, checks the provenance format and the size bound, and
 // checks every observation's structure against the source. It cannot re-run Roslyn: the claim of
 // the asset is "the behavior of the Roslyn DLLs of SDK 10.0.401 on these sources", nothing more.
 // It reads no native output and derives no expected value.
 
 const (
-	CSharpG1RoslynSchema      = "tsgk-csharp-g1-roslyn-observed/r1"
+	CSharpG1RoslynSchema      = "tsgk-csharp-g1-roslyn-observed/r2"
 	CSharpG1RoslynInputSchema = "tsgk-csharp-g1-roslyn-input/r1"
-	CSharpG1RoslynPath        = "src/contracts/csharp-g1-roslyn-observed-r1.json"
-	// shortcut: the asset is about 1.5 MB today; raise only with a new revision.
+	CSharpG1RoslynPath        = "src/contracts/csharp-g1-roslyn-observed-r2.json"
+	// shortcut: the asset is about 2.1 MB today; raise only with a new revision.
 	csharpG1RoslynMaxBytes = 4 << 20
 	g1RoslynInputMaxBytes  = 32 << 20
 	g1RoslynMinVersion     = 703 // LanguageVersion.CSharp7_3
@@ -158,10 +159,12 @@ type G1RoslynSource struct {
 	Diagnostics []G1RoslynDiagnostic         `json:"diagnostics,omitzero"`
 	Declaration []G1RoslynDeclaration        `json:"declarations,omitzero"`
 	Nodes       [][3]int                     `json:"nodes,omitzero"`
+	Tokens      [][3]int                     `json:"tokens,omitzero"`  // [kind, start, end] in source order
+	Missing     []int                        `json:"missing,omitzero"` // indexes into Tokens of the tokens Roslyn marks missing
 	Versions    []G1RoslynVersionObservation `json:"versions,omitzero"`
 }
 
-// CSharpG1RoslynObserved is the decoded tsgk-csharp-g1-roslyn-observed/r1 asset.
+// CSharpG1RoslynObserved is the decoded tsgk-csharp-g1-roslyn-observed/r2 asset.
 type CSharpG1RoslynObserved struct {
 	Schema     string                `json:"schema"`
 	Ledger     queryregistrycore.Pin `json:"ledger"`
@@ -335,18 +338,64 @@ func g1rCheckProvenance(p G1RoslynProvenance) error {
 	return nil
 }
 
+// g1rNode is one syntax node of an observation: its kind index and byte span.
+type g1rNode struct{ kind, start, end int }
+
 func g1rSpan(start, end, size int) bool { return 0 <= start && start <= end && end <= size }
+
+// g1rCheckTokens checks the token list of one source against the source size and its syntax nodes: tokens
+// lie inside the source in source order without overlap, the last is the end-of-file token, a missing
+// token has no width and exists only in a source with an error (Roslyn attaches an error to every missing
+// token), and every node starts and ends where some token does.
+func g1rCheckTokens(x CSharpG1RoslynObserved, o G1RoslynSource, nodes []g1rNode) error {
+	bad := func() error { return g1rFault("G1_ROSLYN_TOKENS") }
+	size := o.Bytes
+	if len(o.Tokens) == 0 {
+		return bad()
+	}
+	prev := 0
+	for _, t := range o.Tokens {
+		if t[0] < 0 || t[0] >= len(x.Kinds) || !g1rSpan(t[1], t[2], size) || t[1] < prev {
+			return bad()
+		}
+		prev = t[2]
+	}
+	if x.Kinds[o.Tokens[len(o.Tokens)-1][0]] != "EndOfFileToken" {
+		return bad()
+	}
+	if *o.Accepted && len(o.Missing) > 0 {
+		return bad()
+	}
+	last := -1
+	for _, i := range o.Missing {
+		if i <= last || i >= len(o.Tokens) || o.Tokens[i][1] != o.Tokens[i][2] {
+			return bad()
+		}
+		last = i
+	}
+	// starts and ends never decrease along the list, so each boundary is found by binary search
+	at := func(col, pos int) bool {
+		_, found := slices.BinarySearchFunc(o.Tokens, pos, func(t [3]int, pos int) int { return cmp.Compare(t[col], pos) })
+		return found
+	}
+	for _, n := range nodes {
+		if !at(1, n.start) || !at(2, n.end) {
+			return bad()
+		}
+	}
+	return nil
+}
 
 func g1rCheckSource(x CSharpG1RoslynObserved, o G1RoslynSource, src []byte) error {
 	bad := func(code string) error { return g1rFault("G1_ROSLYN_" + code) }
 	size := len(src)
 	if o.OracleError != "" {
-		if o.Accepted != nil || o.Features != nil || o.Directives != nil || o.Disabled != nil || o.Errors != nil || o.Diagnostics != nil || o.Declaration != nil || o.Nodes != nil || o.Versions != nil {
+		if o.Accepted != nil || o.Features != nil || o.Directives != nil || o.Disabled != nil || o.Errors != nil || o.Diagnostics != nil || o.Declaration != nil || o.Nodes != nil || o.Tokens != nil || o.Missing != nil || o.Versions != nil {
 			return bad("ORACLE_ERROR")
 		}
 		return nil
 	}
-	if o.Accepted == nil || o.Features == nil || o.Directives == nil || o.Disabled == nil || o.Errors == nil || o.Diagnostics == nil || o.Declaration == nil || o.Nodes == nil || o.Versions == nil {
+	if o.Accepted == nil || o.Features == nil || o.Directives == nil || o.Disabled == nil || o.Errors == nil || o.Diagnostics == nil || o.Declaration == nil || o.Nodes == nil || o.Tokens == nil || o.Missing == nil || o.Versions == nil {
 		return bad("OBSERVATION")
 	}
 	// diagnostics: errors only, so acceptance is the absence of any
@@ -379,8 +428,7 @@ func g1rCheckSource(x CSharpG1RoslynObserved, o G1RoslynSource, src []byte) erro
 	// nodes: the first is the compilation unit and spans nest in preorder (no partial overlap, so starts never decrease)
 	type open struct{ start, end int }
 	var stack []open
-	type nodeKey struct{ kind, start, end int }
-	var keys []nodeKey
+	var keys []g1rNode
 	if len(o.Nodes) == 0 {
 		return bad("NODES")
 	}
@@ -396,7 +444,10 @@ func g1rCheckSource(x CSharpG1RoslynObserved, o G1RoslynSource, src []byte) erro
 			return bad("NODES")
 		}
 		stack = append(stack, open{n[1], n[2]})
-		keys = append(keys, nodeKey{n[0], n[1], n[2]})
+		keys = append(keys, g1rNode{n[0], n[1], n[2]})
+	}
+	if err := g1rCheckTokens(x, o, keys); err != nil {
+		return err
 	}
 	// declarations: each is one of the nodes, in preorder, and its names are source text inside it
 	at := 0

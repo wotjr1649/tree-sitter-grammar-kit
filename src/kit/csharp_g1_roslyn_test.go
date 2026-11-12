@@ -33,7 +33,7 @@ func g1rLoad(t *testing.T) g1rAssets {
 		l := g1Load(t)
 		a := &g1rLoaded
 		var err error
-		if a.data, err = os.ReadFile("../contracts/csharp-g1-roslyn-observed-r1.json"); err != nil {
+		if a.data, err = os.ReadFile("../contracts/csharp-g1-roslyn-observed-r2.json"); err != nil {
 			t.Fatal(err)
 		}
 		a.ledger, a.src = l.asset, l.src
@@ -87,7 +87,7 @@ func g1rFirst(t *testing.T, x CSharpG1RoslynObserved, what string, ok func(s G1R
 
 func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
 	a := g1rLoad(t)
-	if len(a.data) != 1500932 || digestHex(a.data) != "d5e3be3f2cbd864ecc8032d9b849fd60d728c5b5f4f539d05c3ca0a205ef8c95" {
+	if len(a.data) != 2142812 || digestHex(a.data) != "257304af279cd2634c23287b8d1da0ef45a0ddc6835c5bb0f0864602c4b97f8d" {
 		t.Fatalf("sealed observation changed: %d/%s", len(a.data), digestHex(a.data))
 	}
 	x, err := checkCSharpG1Roslyn(a.data, a.pin, a.input, a.sources)
@@ -101,7 +101,7 @@ func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
 	if len(x.Sources) != 514 || len(a.sources) != 514 {
 		t.Fatalf("%d observed, %d derived sources", len(x.Sources), len(a.sources))
 	}
-	accepted := 0
+	accepted, tokens, missing := 0, 0, 0
 	for _, s := range x.Sources {
 		if s.OracleError != "" {
 			t.Errorf("%s: no observation", s.ID)
@@ -109,9 +109,15 @@ func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
 		if *s.Accepted {
 			accepted++
 		}
+		tokens += len(s.Tokens)
+		missing += len(s.Missing)
 	}
 	if accepted != 361 {
 		t.Errorf("accepted %d, want 361", accepted)
+	}
+	// the sealed asset records tokens and Roslyn's missing marker (the SHA-256 above fixes the exact values)
+	if tokens != 44144 || missing != 80 {
+		t.Errorf("%d tokens, %d missing, want 44144 and 80", tokens, missing)
 	}
 	p := x.Provenance
 	if len(p.Assemblies) != 2 || strings.Join(p.LanguageVersions.Observed, " ") != "CSharp7_3 CSharp8 CSharp9 CSharp10 CSharp11 CSharp12 CSharp13 CSharp14" || p.LanguageVersions.Latest.Effective != "CSharp14" {
@@ -178,11 +184,28 @@ func TestCSharpG1RoslynRejectsTampering(t *testing.T) {
 	withDecl := g1rFirst(t, base, "a named declaration", func(s G1RoslynSource) bool {
 		return len(s.Declaration) > 0 && len(s.Declaration[0].Names) > 0
 	})
-	otherKind := -1
+	otherKind, notEOF := -1, -1
 	for i, k := range base.Kinds {
 		if k == "CompilationUnit" {
 			otherKind = (i + 1) % len(base.Kinds)
 		}
+		if k != "EndOfFileToken" && notEOF < 0 {
+			notEOF = i
+		}
+	}
+	twoMissing := g1rFirst(t, base, "two missing tokens", func(s G1RoslynSource) bool { return len(s.Missing) > 1 })
+	acceptedSource := g1rFirst(t, base, "acceptance", func(s G1RoslynSource) bool { return *s.Accepted })
+	// a source whose first token has width and that has no missing token: dropping that token leaves the compilation unit without a token at its start
+	plain := g1rFirst(t, base, "a first token with width", func(s G1RoslynSource) bool { return len(s.Missing) == 0 && s.Tokens[0][2] > s.Tokens[0][1] })
+	// a token with width in the rejected source, and one followed by another token
+	wide := func(x *CSharpG1RoslynObserved, src int) int {
+		for i, tk := range x.Sources[src].Tokens {
+			if tk[2] > tk[1] && i+1 < len(x.Sources[src].Tokens) {
+				return i
+			}
+		}
+		t.Fatal("no token with width")
+		return -1
 	}
 	for _, tc := range []struct {
 		name   string
@@ -283,10 +306,53 @@ func TestCSharpG1RoslynRejectsTampering(t *testing.T) {
 			v := &x.Sources[twoDiagnostics].Versions[len(x.Sources[twoDiagnostics].Versions)-1]
 			v.Diagnostics = v.Diagnostics[:1]
 		}},
+		{"no tokens", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[0].Tokens = [][3]int{} }},
+		{"token kind index", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[0].Tokens[0][0] = len(x.Kinds) }},
+		{"token span", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[0].Tokens[0][2] = x.Sources[0].Bytes + 1 }},
+		{"tokens overlap", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			i := wide(x, 0)
+			x.Sources[0].Tokens[i+1][1] = x.Sources[0].Tokens[i][2] - 1
+		}},
+		{"token beyond the source", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			// a second end-of-file token past the end: ordered, last of its kind, and no node boundary changes
+			tk := x.Sources[0].Tokens
+			x.Sources[0].Tokens = append(tk, [3]int{tk[len(tk)-1][0], x.Sources[0].Bytes + 1, x.Sources[0].Bytes + 1})
+		}},
+		{"token repeated", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			// every boundary stays a token boundary; only the overlap is wrong
+			i := wide(x, 0)
+			tk := x.Sources[0].Tokens
+			x.Sources[0].Tokens = append(tk[:i+1], tk[i:]...)
+		}},
+		{"tokens out of order", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			i := wide(x, 0)
+			tk := x.Sources[0].Tokens
+			tk[i], tk[i+1] = tk[i+1], tk[i]
+		}},
+		{"last token is not the end of file", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			tk := x.Sources[0].Tokens
+			tk[len(tk)-1][0] = notEOF
+		}},
+		{"end-of-file token dropped", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			tk := x.Sources[0].Tokens
+			x.Sources[0].Tokens = tk[:len(tk)-1]
+		}},
+		{"missing token with width", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[rejected].Missing = []int{wide(x, rejected)} }},
+		{"missing index beyond the tokens", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[rejected].Missing = []int{len(x.Sources[rejected].Tokens)} }},
+		{"missing indexes out of order", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			m := x.Sources[twoMissing].Missing
+			m[0], m[1] = m[1], m[0]
+		}},
+		{"missing token in an accepted source", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) {
+			x.Sources[acceptedSource].Missing = []int{len(x.Sources[acceptedSource].Tokens) - 1} // the end-of-file token has no width
+		}},
+		{"node does not start at a token", "G1_ROSLYN_TOKENS", func(x *CSharpG1RoslynObserved) { x.Sources[plain].Tokens = x.Sources[plain].Tokens[1:] }},
 		{"oracle error with data", "G1_ROSLYN_ORACLE_ERROR", func(x *CSharpG1RoslynObserved) {
 			x.Sources[0].OracleError = "GetDiagnostics ArgumentOutOfRangeException"
 		}},
 		{"observation member missing", "G1_ROSLYN_OBSERVATION", func(x *CSharpG1RoslynObserved) { x.Sources[0].Nodes = nil }},
+		{"tokens member missing", "G1_ROSLYN_OBSERVATION", func(x *CSharpG1RoslynObserved) { x.Sources[0].Tokens = nil }},
+		{"missing member missing", "G1_ROSLYN_OBSERVATION", func(x *CSharpG1RoslynObserved) { x.Sources[0].Missing = nil }},
 		{"accepted missing", "G1_ROSLYN_OBSERVATION", func(x *CSharpG1RoslynObserved) { x.Sources[0].Accepted = nil }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -306,6 +372,24 @@ func TestCSharpG1RoslynRejectsTampering(t *testing.T) {
 	}
 	if !crossed {
 		t.Error("no node extension was rejected as crossing")
+	}
+	// a leaf node whose start or end moves off every token boundary: the node/token check, not the nesting check, rejects it
+	for _, side := range []struct {
+		name string
+		col  int
+		move int
+	}{{"start", 1, 1}, {"end", 2, -1}} {
+		rejectedByTokens := false
+		nodes := base.Sources[0].Nodes
+		for k := 1; k < len(nodes) && !rejectedByTokens; k++ {
+			if k+1 < len(nodes) && nodes[k+1][1] < nodes[k][2] || nodes[k][2]-nodes[k][1] < 2 {
+				continue // not a leaf, or too narrow to move inside
+			}
+			rejectedByTokens = a.mutated(t, func(x *CSharpG1RoslynObserved) { x.Sources[0].Nodes[k][side.col] += side.move }) == "G1_ROSLYN_TOKENS"
+		}
+		if !rejectedByTokens {
+			t.Errorf("no node %s moved off a token boundary was rejected", side.name)
+		}
 	}
 }
 

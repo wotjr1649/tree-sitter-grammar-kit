@@ -1,15 +1,21 @@
-// Development tool for #233 G1-2: records what the Roslyn of the local .NET SDK observes of registered
-// C# sources: acceptance, diagnostics, declarations, syntax nodes, directives and the acceptance under
-// each LanguageVersion. It is never a runtime dependency; its output is an asset the Go offline
-// verifier reads. It reads no native output.
+// Development tool for #233 G1-2 and #218: records what the Roslyn of the local .NET SDK observes of
+// registered C# sources. It is never a runtime dependency; its output is an asset the Go offline
+// verifiers read. It reads no native output.
 //
-// usage: dotnet Observe.dll <input.json> <out.json> [<ledger.json>]
-// With a ledger file the asset pins it (path, bytes, SHA-256); the Go verifier requires that pin.
+// usage: dotnet Observe.dll g1 <input.json> <out.json> [<ledger.json>]
+//        dotnet Observe.dll pp-r2 <cases.json> <out.json>
+//        dotnet Observe.dll pp-r3 <cases.json> <out.json>
 // The input is {"cases":[{"id","source"(base64),"symbols"[],"features"[]}]}, the shape of
 // src/testdata/csharp-pp/cases.json. Every offset is a UTF-8 byte offset into the source.
-// The directive fields (features, directives, disabled, errors, diagnostics) are the
-// tsgk-csharp-pp-roslyn/r2 observation of src/dev/csharp-pp-oracle, so that tool's 157 observations
-// can be reproduced from this one.
+//
+// g1 (tsgk-csharp-g1-roslyn-observed/r2): acceptance, diagnostics, declarations, syntax nodes, tokens
+// (kind, span, IsMissing; no trivia), directives and the acceptance under each LanguageVersion. With a
+// ledger file the asset pins it (path, bytes, SHA-256); the Go verifier requires that pin.
+//
+// pp-r2 / pp-r3: the conditional-compilation observation of the #218 evaluator tests
+// (tsgk-csharp-pp-roslyn/r2, or r3 with the SDK and DLL provenance). All modes share one per-source
+// pass for features, directives, disabled, errors and diagnostics, so pp-r2 reproduces the preserved
+// src/testdata/csharp-pp/roslyn-observed.json byte for byte and the g1 fields cannot drift from it.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +37,7 @@ public static class Observe
     const int InputLimit = 32 << 20;  // bytes of the input document
     const int OutputLimit = 64 << 20; // bytes of the output document
     const int NodeLimit = 1 << 20;    // syntax nodes of one source
+    const int TokenLimit = 1 << 20;   // syntax tokens of one source
     const int MinVersion = 703;       // LanguageVersion.CSharp7_3
     const string LedgerPath = "src/contracts/csharp-g1-ledger-r1.json";
 
@@ -58,6 +65,8 @@ public static class Observe
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public object[]? diagnostics { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<Decl>? declarations { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int[]>? nodes { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int[]>? tokens { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? missing { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<VersionObs>? versions { get; set; }
     }
 
@@ -107,8 +116,11 @@ public static class Observe
 
     public static int Main(string[] args)
     {
-        if (args.Length != 2 && args.Length != 3) throw new Exception("usage: Observe <input.json> <out.json> [<ledger.json>]");
-        byte[] input = File.ReadAllBytes(args[0]);
+        string mode = args.Length > 0 ? args[0] : "";
+        bool g1 = mode == "g1";
+        if (mode is not ("g1" or "pp-r2" or "pp-r3") || args.Length < 3 || args.Length > (g1 ? 4 : 3))
+            throw new Exception("usage: Observe g1 <input.json> <out.json> [<ledger.json>] | Observe pp-r2|pp-r3 <cases.json> <out.json>");
+        byte[] input = File.ReadAllBytes(args[1]);
         if (input.Length > InputLimit) throw new Exception("input bound");
         var utf8 = new UTF8Encoding(false, true);
         var producer = typeof(Observe).Assembly;
@@ -128,7 +140,8 @@ public static class Observe
         var sources = new List<SourceObs>();
         var ids = new HashSet<string>();
         var kinds = new SortedSet<string>(StringComparer.Ordinal);
-        var raw = new List<(SourceObs obs, List<(string kind, int start, int end)> nodes)>();
+        var raw = new List<(SourceObs obs, List<(string kind, int start, int end)> nodes, List<(string kind, int start, int end, bool missing)> tokens)>();
+        var ppCases = new List<object>();
         foreach (var item in doc.RootElement.GetProperty("cases").EnumerateArray())
         {
             string id = item.GetProperty("id").GetString()!;
@@ -176,12 +189,24 @@ public static class Observe
             // the end-of-file token also carries the errors of directives in its leading trivia
             foreach (var x in root.EndOfFileToken.GetDiagnostics()) context.TryAdd((x.Id, x.Location.SourceSpan), "EndOfFile");
             var errors = Errors(tree, out var failure);
-            if (errors is null) { obs.oracle_error = failure; continue; }
-            obs.features = Options(LanguageVersion.Latest).Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
+            if (errors is null)
+            {
+                if (g1) obs.oracle_error = failure; else ppCases.Add(new { id, oracle_error = failure });
+                continue;
+            }
+            var featureNames = Options(LanguageVersion.Latest).Features.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
+            var errorIds = errors.Select(x => x.Id).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            var located = errors.Select(x => (object)new { id = x.Id, start = DiagByte(x.Location.SourceSpan.Start), end = DiagByte(x.Location.SourceSpan.End), context = context.GetValueOrDefault((x.Id, x.Location.SourceSpan), "Other") }).ToArray();
+            if (!g1)
+            {
+                ppCases.Add(new { id, features = featureNames, directives, disabled, errors = errorIds, diagnostics = located });
+                continue;
+            }
+            obs.features = featureNames;
             obs.directives = directives;
             obs.disabled = disabled;
-            obs.errors = errors.Select(x => x.Id).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToArray();
-            obs.diagnostics = errors.Select(x => (object)new { id = x.Id, start = DiagByte(x.Location.SourceSpan.Start), end = DiagByte(x.Location.SourceSpan.End), context = context.GetValueOrDefault((x.Id, x.Location.SourceSpan), "Other") }).ToArray();
+            obs.errors = errorIds;
+            obs.diagnostics = located;
             obs.accepted = errors.Length == 0;
 
             // declarations and syntax nodes (not tokens or trivia), in preorder
@@ -199,7 +224,17 @@ public static class Observe
                 foreach (var s in Names(n)) decl.names.Add(new Name { text = text.Substring(s.Start, s.Length), start = Byte(s.Start), end = Byte(s.End) });
                 obs.declarations.Add(decl);
             }
-            raw.Add((obs, nodes));
+
+            // tokens (not trivia) in source order, with Roslyn's missing marker: a missing token has no width
+            var tokens = new List<(string, int, int, bool)>();
+            foreach (var t in root.DescendantTokens())
+            {
+                if (tokens.Count >= TokenLimit) throw new Exception("token bound " + id);
+                string kind = t.Kind().ToString();
+                tokens.Add((kind, Byte(t.Span.Start), Byte(t.Span.End), t.IsMissing));
+                kinds.Add(kind);
+            }
+            raw.Add((obs, nodes, tokens));
 
             // acceptance under each observed LanguageVersion
             obs.versions = new List<VersionObs>();
@@ -213,9 +248,31 @@ public static class Observe
             }
         }
 
+        if (!g1)
+        {
+            // the preserved observation of the #218 tests: r2 has no provenance, r3 names the SDK and the three DLLs
+            string hashOf(Assembly a) => Hex(File.ReadAllBytes(a.Location));
+            string roslyn = typeof(CSharpSyntaxTree).Assembly.GetName().Version!.ToString();
+            object ppDoc = mode == "pp-r2"
+                ? new { schema = "tsgk-csharp-pp-roslyn/r2", cases_sha256 = Hex(input), roslyn, language_version = "Latest", cases = ppCases }
+                : new
+                {
+                    schema = "tsgk-csharp-pp-roslyn/r3", cases_sha256 = Hex(input), roslyn, language_version = "Latest",
+                    provenance = new { sdk, oracle_sha256 = hashOf(producer), code_analysis_sha256 = hashOf(typeof(SyntaxTree).Assembly), csharp_sha256 = hashOf(typeof(CSharpSyntaxTree).Assembly) },
+                    cases = ppCases,
+                };
+            File.WriteAllText(args[2], JsonSerializer.Serialize(ppDoc, new JsonSerializerOptions { WriteIndented = true, NewLine = "\n" }) + "\n", utf8);
+            return 0;
+        }
+
         var kindTable = kinds.ToList();
         var kindIndex = kindTable.Select((k, i) => (k, i)).ToDictionary(x => x.k, x => x.i, StringComparer.Ordinal);
-        foreach (var (obs, nodes) in raw) obs.nodes = nodes.Select(x => new[] { kindIndex[x.kind], x.start, x.end }).ToList();
+        foreach (var (obs, nodes, tokens) in raw)
+        {
+            obs.nodes = nodes.Select(x => new[] { kindIndex[x.kind], x.start, x.end }).ToList();
+            obs.tokens = tokens.Select(x => new[] { kindIndex[x.kind], x.start, x.end }).ToList();
+            obs.missing = tokens.Select((x, i) => (x.missing, i)).Where(x => x.missing).Select(x => x.i).ToList();
+        }
 
         // the loaded Roslyn assemblies: the file of the SDK and the copy this tool loaded must be the same bytes
         var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name!.StartsWith("Microsoft.CodeAnalysis", StringComparison.Ordinal)).OrderBy(a => a.GetName().Name, StringComparer.Ordinal).Select(a =>
@@ -246,10 +303,10 @@ public static class Observe
         var write = new JsonSerializerOptions();
         var sb = new StringBuilder();
         sb.Append("{\n");
-        sb.Append(" \"schema\": \"tsgk-csharp-g1-roslyn-observed/r1\",\n");
-        if (args.Length == 3)
+        sb.Append(" \"schema\": \"tsgk-csharp-g1-roslyn-observed/r2\",\n");
+        if (args.Length == 4)
         {
-            byte[] ledger = File.ReadAllBytes(args[2]);
+            byte[] ledger = File.ReadAllBytes(args[3]);
             sb.Append(" \"ledger\": ").Append(JsonSerializer.Serialize(new { path = LedgerPath, bytes = ledger.Length, sha256 = Hex(ledger) }, write)).Append(",\n");
         }
         sb.Append(" \"input\": ").Append(JsonSerializer.Serialize(new { bytes = input.Length, sha256 = Hex(input) }, write)).Append(",\n");
@@ -261,7 +318,7 @@ public static class Observe
         sb.Append(" ]\n}\n");
         byte[] output = utf8.GetBytes(sb.ToString());
         if (output.Length > OutputLimit) throw new Exception("output bound");
-        File.WriteAllBytes(args[1], output);
+        File.WriteAllBytes(args[2], output);
         return 0;
     }
 }

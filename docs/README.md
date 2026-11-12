@@ -87,7 +87,7 @@ The current implementation consists of repository foundation checks, the Session
 | #233 C# lexical producer의 네 directive 오판·실제 ERROR 보존 | [교정 보고서](reports/issue-233-csharp-lexical-recovery.md) |
 | #233 kit 내부 identity 채택 경로·replay subject platform 결속 | [검증 경로와 반례](reports/issue-233-identity-paths.md) |
 | #233 G1-1 C# 선언 지원 범위의 의무 원장(15행×kind → 대안 1,531 → 사례·step)과 offline verifier. 기대값 없음 | [원장 계약](specs/csharp-g1-ledger.md), [원장](../src/contracts/csharp-g1-ledger-r1.json) |
-| #233 G1-2 C# 사례 source의 Roslyn 관측(SDK 10.0.401 DLL의 행동: 수락·진단·선언·구문 node·LanguageVersion)과 offline verifier. 기대값 아님 | [관측 계약](specs/csharp-g1-ledger.md#roslyn-관측-계약-g1-2), [관측 asset](../src/contracts/csharp-g1-roslyn-observed-r1.json) |
+| #233 G1-2 C# 사례 source의 Roslyn 관측(SDK 10.0.401 DLL의 행동: 수락·진단·선언·구문 node·token·누락 표지·LanguageVersion)과 offline verifier, 그리고 #218 관측까지 낸 하나뿐인 Roslyn 관측기. 기대값 아님 | [관측 계약](specs/csharp-g1-ledger.md#roslyn-관측-계약-g1-2), [관측 asset](../src/contracts/csharp-g1-roslyn-observed-r2.json) |
 | Explicitly assigned Campaign 01 acceptance, Session rules, and preparation history | [campaign contract and preparation report](reports/campaign-01-2026-09-29-preparation.md#campaign-specific-acceptance-and-execution) |
 
 Read only the documents relevant to the current task. [AGENTS.md](../AGENTS.md) is the entry point for persistent project rules.
