@@ -1,6 +1,6 @@
 # 다음 source-only release 준비 (#199)
 
-이 문서는 #199 당시 source-only release 준비 기록이다. 당시 잠정 version은 `v0.3.0`이었고, 제품 비교 기준은 v0.2.0과 actual main `33f84fc32e0b6c92a2e41a5bdf11597f88c43ad8`이었다. 아래 변경·수치·pin 링크·소비 검증은 각 당시 후보에 귀속한다. [#199](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/199)는 준비 완료로 종료됐으며, 현재 최종 후보 선정과 소비 검증은 [#220](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/220)에서 추적한다. `33f84fc`와 이후 철회된 `52c1e2b`를 최종 후보로 재사용하지 않는다. 현재 CI는 Windows·Linux 파생 52칸이며 macOS는 #332 이전 근거만 있다([현재 platform 계약](../specs/platform-support.md)). 새 최종 tag 대상 commit과 발행일은 미확정이며, 발행은 정확한 version·commit·한영 본문·source-only 범위의 검토와 별도 사용자 승인이 필요하다.
+이 문서는 #199 당시 source-only release 준비 기록이다. 당시 잠정 version은 `v0.3.0`이었고, 제품 비교 기준은 v0.2.0과 actual main `33f84fc32e0b6c92a2e41a5bdf11597f88c43ad8`이었다. 아래 변경·수치·pin 링크·소비 검증은 각 당시 후보에 귀속한다. [#199](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/199)는 준비 완료로 종료됐으며, 현재 최종 후보 선정과 소비 검증은 [#220](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/220)에서 추적한다. `33f84fc`와 이후 철회된 `52c1e2b`를 최종 후보로 재사용하지 않는다. 현재 CI는 Windows·Linux 파생 52칸이며 macOS는 #332 이전 근거만 있다([현재 platform 계약](../specs/platform-support.md)). 이 문서는 v0.3.0 release 본문이 아니며, release 본문 초안은 [#220 release 문서](issue-220-v030-release.md)다. 새 최종 tag 대상 commit과 발행일은 미확정이며, 발행은 정확한 version·commit·한영 본문·source-only 범위의 검토와 별도 사용자 승인이 필요하다.
 
 ## 제품 범위
 

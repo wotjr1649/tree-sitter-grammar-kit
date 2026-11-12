@@ -1,6 +1,16 @@
 # 변경 기록
 
-## Unreleased — 다음 0.x source-only release 준비 (#199)
+## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
+
+release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim-초안)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행할 예정이며 binary와 package는 없다. 발행은 사용자 승인 뒤에만 한다.
+
+### VERIFIED·experimental
+
+- VERIFIED와 experimental의 구분은 v0.2.0과 같다. offline core와 공개 API가 VERIFIED이고 `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API는 experimental이다. 현재 CI의 검증 host는 Windows·Linux다(#332).
+- query 의미는 experimental이며, 통합 PR #416이 main에 병합된 뒤 Windows에서 실제로 검증한 하위 범위만 주장한다: predicate 독립 평가 20/20·거부 정책 47/47, SVC 오프라인 의무 263, SVC inline C# tree 30·query 60, large 31/39(`cs-large-22m` 전체 CST 포함), 선택 SQL shard 공개 pass(TSQL 72/72, PostgreSQL 9/9), JSON 다중 case·편집 이력 양성.
+- 주장하지 않는다(BLOCKED): 오류 복구 입력, 전처리 scanner 상태가 필요한 SVC inline, Linux 몫, ordinary 전량, synthetic reference row·approval. #362 completion gate는 닫힌 채로 출하하며 2026-11-12 사용자 결정으로 #220 출하 조건이 아니다. #362는 출하 뒤에도 열어 둔다.
+
+### 변경
 
 - #362 범위 7: ordinary·predicate·SVC·large의 scope별 결과를 모으는 fan-in과 completion gate를 새 revision `tsgk-query-scope-result/r1`·`tsgk-query-completion/r1`로 추가한다(Refs #362). `kit.FoldQueryCompletion`은 분모를 registry와 SVC asset에서 다시 유도하고, 없는 scope를 0이 아니라 BLOCKED로 두며, registry pin·분모 pin·결과 digest·증거 pin을 검사하고, 하나라도 FAILED면 FAIL로 최초 code를 보존한다. large scope는 P0의 상위 의무 4개 대신 large 계약(`query-large-expected-r1.json`)의 하위 의무 39개를 `LargeScopeResult`로 받아 같은 증거를 두 번 세지 않고, 계약이 BLOCKED로 등록한 의무는 호출자가 pin을 골라도 VERIFIED가 될 수 없으며, Linux·macOS N/A와 사유는 결과의 `not_applicable`에 남는다. 현재 상태는 전체 107,399 의무 중 VERIFIED 360(predicate 67, SVC 263, large 30)이고 gate는 닫혀 있다. 오류 복구 fixture 둘의 large 분모가 미등록이라 이 revision은 COMPLETE가 될 수 없다(이 두 revision은 병합 전 draft라 r1에 둔다). r9·r10·P0 `Fold`의 의미, 한도, release gate는 바꾸지 않는다.
 
@@ -80,7 +90,7 @@
 
 - ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
 
-잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
+잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. release 본문과 query 의미 claim은 [한국어 release 문서](docs/reports/issue-220-v030-release.md)와 [English release document](docs/reports/issue-220-v030-release.en.md)에 있고, 이전 준비 기록(역사 후보 기준)은 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
 
