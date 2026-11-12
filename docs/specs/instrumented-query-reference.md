@@ -361,6 +361,20 @@ producer_fold_valid는 record와 projection의 claim·상태·판정·code 관�
 
 정적 문서 상한은256KiB다. 중복·미지 JSON member, 필수 null/0 필드의 누락, 원문 pin·분류·계수·추가 역할 사유의 변경을 거부한다. 재생성은 기존 `TSGK_WRITE_INVENTORY=1`을 명시한 `TestQuerySlotInventory`가 수행하고, 쓰기 모드를 끈 별도 검사로 원장과 음성 대조를 검증한다. 기본 foundation 검사는 원장 존재·정확한 값과 shape를 요구한다. 이는 기존 small/large runtime budget, producer/reducer 또는 qualification verdict를 변경하지 않으며, #216 r10의 제한된 probe scope 밖인 전체 semantic completion/fan-in gate는 후속 단위다.
 
+## #362 원문 witness 복원과 기대값 규칙 대장 P1
+
+개발용 `go run ./src/dev/query-witness -root .`는 P0 registry의 ordinary selector를 검사하고 고정 qualification r8·slot r1·registry/basis pin에서 26 route의 원문을 복원한다. Case ID로 `routes`, `gaps`, `n461` fixture를 선택하며 내장 query source는 query fixture의 `source_case`와 원래 `routes` case를 함께 대조한다. Dynamic SQL 두 입력은 기존 `dynamic-sql/expected.json`과 실제 파일의 pin에 연결한다. Hash가 같은 다른 case로 출처를 대신하지 않는다. 원래 fixture가 정본이며 export는 `DERIVED_UNREVIEWED` 파생물이다. 이 도구는 native/reference를 실행하지 않는다.
+
+초기 source 3,201개(내장154·복원3,047)의 bytes·SHA-256·길이와 1,852개 편집의 원래 find/replace recipe·순서를 검사하고 기존 `ApplyEdits`로 5,053개 step과 LF 행·byte 열 point를 복원한다. Source마다 65,536 bytes, 읽는 파일과 파생 JSON마다 16 MiB를 넘으면 거부한다. 이는 개발 도구의 상한이며 제품 runtime 예산을 바꾸지 않는다. Export는 stdout으로만 내보내며 보존할 때는 `.work/` 아래에 둔다. 원문·step 복제본은 commit하지 않는다.
+
+`tsgk-query-source-export/r1`은 registry/qualification/slot pin, route·set·UTF-8·full-input context·고정 grammar closure, query ID/hash, case selector·원래 파일 pin/selector/case ID·순서 있는 step hash·edit points를 포함한다. 각 route 안에서 SHA-256·길이·실제 bytes가 같은 source version을 Base64로 한 번 저장하고 case/step은 그 hash를 참조한다. 공유는 route·grammar·encoding·context 경계 안에서만 허용한다. Query/source 묶음은 각 route의 query 목록과 version 목록의 Cartesian product다. 초기 고유 source3,008개, 모든 고유 version3,963개와 query/source31,337개를 검사한다. 두 OS·case·step·tree role의 actual 의무106,208개는 그대로다. 이 파생 export는 승인된 witness나 full-scope evidence reader 입력의 대체물이 아니다.
+
+추적하는 [기대값 규칙 대장](../../src/contracts/query-expectation-rules-r1.json)은 `tsgk-query-expectation-rules/r1`, 최대256 KiB의 `SKELETON_UNREVIEWED` 자료다. 130 query의 ID·원문/hash·원본 파일 pin/selector와 route별 grammar pin·language source provenance를 연결하고 기대 생성 규칙·자동화 상태·적용 범위·수작업 예외 목록·검토 pin을 둔다. `go run ./src/dev/query-witness -root . -rules`는 현재 골격을 stdout으로 재현한다. Pending129개는 선언만 연결했고 CST/API·metadata·ordered captures·fact 규칙 작성은 후속 자료 PR에 남긴다. `manual_count:null`, 예외 분류 미완료와 `independent_review:null`은 수작업0 또는 검토 완료를 뜻하지 않는다.
+
+JSON `q.structure`의 작은 독립 규칙은 표준 라이브러리 `encoding/json`의 `Token`·`InputOffset`으로 유효한 UTF-8 RFC JSON의 object member를 읽는다. 값이 array/object/string인 member의 key string 전체를 각각 `array_key`/`object_key`/`key`로, string 값은 이어서 `value`로 선택한다. 중첩 member·중복 key·escape·Unicode의 원문 byte span을 유지하며 start byte 순서로 돌려준다. 세 query pattern의 match 순서와 capture 위치도 별도로 계산한다. 최대 source65,536 bytes·깊이64이며 comment·multiple root·malformed/recovery는 이 규칙으로 처리하지 않고 오류를 반환한다. Kit reducer·querypolicy나 reference 출력은 기대 생성 입력으로 읽지 않는다. 기존 `json-query-r1` step0의 수작업 anchor13개와 name/type/text 순서를 대조한다. 이 부분 대조는 full CST/API·compiled metadata·12-field capture 또는 JSON 전량 기대값 완료가 아니다. 실제 native/reference 양쪽 대조와 독립 규칙 검토·예외 전수 처분은 후속 의무다.
+
+P1의 파생 원문과 규칙 골격은 P0 root asset 선언을 바꾸지 않는다. Registry의 `content_state=INCOMPLETE`, `full_scope_complete=false`, positive BLOCKED와 슬롯 원장의 `NOT_ASSESSED`를 유지한다. 승인된 source/expected asset을 사전 pin하는 후속 변경 없이 P1 산출물로 completion을 열지 않는다.
+
 ## #362 전체 query 의미 의무 등록부 P0
 
 [`query-semantic-registry-r1.json`](../../src/contracts/query-semantic-registry-r1.json)은 기존 `qualification-c1.json` r8과 `query-slot-inventory-r1.json` r1의 원문 bytes·SHA-256 pin을 보존하며, 두 입력에서 선택한 의무를 별도 등록한다. 기존 슬롯 원장의 `semantic_required:null`, `STATIC_CLASSIFICATION`, `NOT_ASSESSED`는 바꾸지 않는다. Root registry는 고정 입력 pin과 qualification의 route/case/query/source/edit selector를 사용하며, 원문·case catalogue·106,208개 행을 복제하지 않는다. 미등록 independent expected asset은 명시적으로 `UNAVAILABLE`이다.
