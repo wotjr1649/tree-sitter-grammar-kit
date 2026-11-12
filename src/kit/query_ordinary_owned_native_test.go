@@ -15,9 +15,7 @@ import (
 // This test asks the native package to make the r8, then consumes those exact files with the
 // ordinary reader and handwritten expectations in this package.
 func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "" || os.Getenv("TSGK_NATIVE_CC") == "" {
-		t.Skip("ordinary owned native integration requires the pinned runtime and compiler")
-	}
+	ordinaryNativeTools(t)
 	fixtureDir := filepath.Join(t.TempDir(), "fixture")
 	rootDir, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
@@ -156,9 +154,7 @@ func stringField(value string) *string { return &value }
 func ordinaryOwnedNativeEnv(dir string) []string {
 	values := map[string]string{
 		"TSGK_ORDINARY_OWNED_FIXTURE": dir,
-		"TSGK_NATIVE_RUNTIME":         `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`,
-		"TSGK_NATIVE_CC":              `C:\msys64\ucrt64\bin\gcc.exe`,
-		"TSGK_NATIVE_REQUIRED":        "1",
+		"TSGK_NATIVE_REQUIRED":        "1", // the tools are inherited as given
 	}
 	env := make([]string, 0, len(os.Environ())+len(values))
 	for _, entry := range os.Environ() {

@@ -130,14 +130,19 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			for _, s := range steps {
 				sr := r.Steps[s.Step]
 				o := kit.SvcInlineObserved{Case: c.ID, Step: s.Step, Source: versions[s.Step]}
-				for _, tree := range []*TreeOut{sr.Incremental, sr.Fresh} {
+				// a role the producer did not report is left out here; JudgeSvcInline blocks a step that needs it
+				for _, r := range []struct {
+					role string
+					tree *TreeOut
+				}{{kit.SvcInlineRoleIncremental, sr.Incremental}, {kit.SvcInlineRoleFresh, sr.Fresh}} {
+					tree := r.tree
 					if tree == nil {
 						continue
 					}
 					if tree.Status != kit.StatusCompleted || tree.Tree == nil {
 						t.Fatalf("%s step %d: no complete tree: %s %s", c.ID, s.Step, tree.Status, tree.Code)
 					}
-					v := kit.SvcInlineView{Nodes: tree.Tree.Nodes, Queries: map[string]kit.SvcInlineQueryResult{}}
+					v := kit.SvcInlineView{Role: r.role, Nodes: tree.Tree.Nodes, Queries: map[string]kit.SvcInlineQueryResult{}}
 					for _, qo := range tree.Queries {
 						v.Queries[qo.ID] = kit.SvcInlineQueryResult{Status: qo.Status, Captures: qo.Captures}
 					}
@@ -157,6 +162,11 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	inline, err := kit.JudgeSvcInline(x, observed)
 	if err != nil {
 		t.Fatal(err)
+	}
+	for _, j := range inline {
+		if j.State == "BLOCKED" && j.Code == kit.SvcInlineNativeNotRunCode {
+			t.Errorf("%s: the native run did not report every tree role the step needs", j.ID)
+		}
 	}
 	offline, err := kit.VerifySvcExpected(e, inventory)
 	if err != nil {
@@ -186,14 +196,14 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		"dropped node": func(o kit.SvcInlineObserved) kit.SvcInlineObserved {
 			v := o.Views[0]
 			v.Nodes = slices.Delete(slices.Clone(v.Nodes), len(v.Nodes)-1, len(v.Nodes))
-			o.Views = []kit.SvcInlineView{v}
+			o.Views = append([]kit.SvcInlineView{v}, o.Views[1:]...)
 			return o
 		},
 		"moved node": func(o kit.SvcInlineObserved) kit.SvcInlineObserved {
 			v := o.Views[0]
 			v.Nodes = slices.Clone(v.Nodes)
 			v.Nodes[1].EndByte++
-			o.Views = []kit.SvcInlineView{v}
+			o.Views = append([]kit.SvcInlineView{v}, o.Views[1:]...)
 			return o
 		},
 		"dropped capture": func(o kit.SvcInlineObserved) kit.SvcInlineObserved {
@@ -203,7 +213,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 				r.Captures = slices.Clone(r.Captures[:max(len(r.Captures)-1, 0)])
 				v.Queries[id] = r
 			}
-			o.Views = []kit.SvcInlineView{v}
+			o.Views = append([]kit.SvcInlineView{v}, o.Views[1:]...)
 			return o
 		},
 	}

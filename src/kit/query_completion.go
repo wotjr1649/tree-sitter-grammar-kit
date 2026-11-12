@@ -2,6 +2,7 @@ package kit
 
 import (
 	jsonv2 "encoding/json/v2"
+	"math/bits"
 	"reflect"
 	"regexp"
 	"slices"
@@ -188,12 +189,32 @@ type QueryCompletionCounts struct {
 	Unprocessed uint64 `json:"unprocessed"`
 }
 
-func (c *QueryCompletionCounts) add(o QueryCompletionCounts) {
-	c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed = c.Required+o.Required, c.Verified+o.Verified, c.Failed+o.Failed, c.Blocked+o.Blocked, c.Unprocessed+o.Unprocessed
+// add accumulates o and reports false when any counter would wrap around uint64.
+func (c *QueryCompletionCounts) add(o QueryCompletionCounts) bool {
+	ok := true
+	sum := func(a, b uint64) uint64 {
+		s, carry := bits.Add64(a, b, 0)
+		ok = ok && carry == 0
+		return s
+	}
+	c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed = sum(c.Required, o.Required), sum(c.Verified, o.Verified), sum(c.Failed, o.Failed), sum(c.Blocked, o.Blocked), sum(c.Unprocessed, o.Unprocessed)
+	return ok
+}
+
+// countsSumTo reports required = parts[0] + parts[1] + ... by subtracting from required, so a
+// distribution that only adds up modulo 2^64 is not one.
+func countsSumTo(required uint64, parts ...uint64) bool {
+	for _, n := range parts {
+		if n > required {
+			return false
+		}
+		required -= n
+	}
+	return required == 0
 }
 
 func (c QueryCompletionCounts) sums() bool {
-	return c.Verified+c.Failed+c.Blocked+c.Unprocessed == c.Required
+	return countsSumTo(c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed)
 }
 
 // QueryCompletionNotApplicable is a host that a scope does not count, with its registered reason.
@@ -367,7 +388,7 @@ func (p faninPlan) checkScope(r QueryScopeResult, pins []queryregistrycore.Pin, 
 		}
 		// An obligation the contract registers BLOCKED has no independent expected value; it can
 		// never be VERIFIED, whoever selected the pins.
-		if c.Verified+p.blockedFloor[r.Scope][i] > c.Required {
+		if floor := p.blockedFloor[r.Scope][i]; floor > c.Required || c.Verified > c.Required-floor {
 			return queryCompletionFault("QUERY_SCOPE_BLOCKED_VERIFIED")
 		}
 		failed, verified = failed+c.Failed, verified+c.Verified
@@ -439,8 +460,9 @@ func (p faninPlan) fold(scopes []QueryScopeResult, pins map[string][]queryregist
 			if hosts[c.Platform] == nil {
 				hosts[c.Platform] = &QueryCompletionHost{Platform: c.Platform}
 			}
-			hosts[c.Platform].add(counts)
-			out.Total.add(counts)
+			if !hosts[c.Platform].add(counts) || !out.Total.add(counts) {
+				fault = cmpFirst(fault, queryCompletionFault("QUERY_COMPLETION_SUM"))
+			}
 		}
 	}
 	for _, platform := range queryPlatformOrder {
@@ -585,7 +607,7 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 	}
 	hosts := map[string]*QueryCompletionCounts{}
 	var total QueryCompletionCounts
-	scopeFailed := map[string]uint64{}
+	scopeFailed := map[string]bool{}
 	for _, c := range r.Counters {
 		if !slices.Contains(queryKindOrder[c.Scope], c.Kind) || !slices.Contains(queryPlatformOrder, c.Platform) {
 			return bad("QUERY_COMPLETION_COUNTER")
@@ -599,10 +621,11 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 		if hosts[c.Platform] == nil {
 			hosts[c.Platform] = &QueryCompletionCounts{}
 		}
-		hosts[c.Platform].add(c.QueryCompletionCounts)
-		total.add(c.QueryCompletionCounts)
-		scopeFailed[c.Scope] += c.Failed
-		if s := r.Scopes[slices.Index(queryScopeOrder, c.Scope)]; !s.Present && c.Verified+c.Failed+c.Unprocessed != 0 {
+		if !hosts[c.Platform].add(c.QueryCompletionCounts) || !total.add(c.QueryCompletionCounts) {
+			return bad("QUERY_COMPLETION_SUM")
+		}
+		scopeFailed[c.Scope] = scopeFailed[c.Scope] || c.Failed > 0
+		if s := r.Scopes[slices.Index(queryScopeOrder, c.Scope)]; !s.Present && (c.Verified != 0 || c.Failed != 0 || c.Unprocessed != 0) {
 			return bad("QUERY_COMPLETION_ABSENT_SCOPE")
 		}
 	}
@@ -616,7 +639,7 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 		return bad("QUERY_COMPLETION_SUM")
 	}
 	for _, s := range r.Scopes {
-		if (scopeFailed[s.Scope] > 0) != (s.FirstFailure != "") {
+		if scopeFailed[s.Scope] != (s.FirstFailure != "") {
 			return bad("QUERY_COMPLETION_FAILURE_CODE")
 		}
 	}

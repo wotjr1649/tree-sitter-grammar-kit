@@ -430,13 +430,7 @@ func ordinaryFullPosReference(t *testing.T, querySource, symbol, librarySHA stri
 // ordinaryFullPosNativeSetup skips without the pinned native tools exactly like the other owned-native regressions.
 func ordinaryFullPosNativeSetup(t *testing.T) {
 	t.Helper()
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "" || os.Getenv("TSGK_NATIVE_CC") == "" {
-		t.Skip("ordinary full positive requires the pinned runtime and compiler")
-	}
-	if os.Getenv("TSGK_NATIVE_RUNTIME") == "D:/AIDEV/tree-sitter-grammar-kit/.work/213-prep/verify-v0271/runtime" {
-		// The general kit suite and this owned producer use separately pinned runtime roots.
-		t.Setenv("TSGK_NATIVE_RUNTIME", `D:\AIDEV\tree-sitter-grammar-kit\.work\352-data\s05\runtime`)
-	}
+	ordinaryNativeTools(t)
 }
 
 func ordinaryFullPosProduce(t *testing.T, in ordinaryFullPosInput) (OrdinaryQuerySemanticsRequest, string) {
