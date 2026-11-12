@@ -23,6 +23,7 @@ func TestOrdinaryReplayVerifiedIdentityReuse(t *testing.T) {
 }
 
 func TestOrdinaryReplayObservedIdentityStillCompared(t *testing.T) {
+	t.Parallel()
 	_, root, profile := ordinaryPartialReplayFixture(t)
 	for _, role := range []string{"workload", "ordinary-selection", "ordinary-registration", "ordinary-assets", "ordinary-plan-commitment", "registry", "semantics-run-binding", "evidence-policy"} {
 		t.Run(role, func(t *testing.T) {

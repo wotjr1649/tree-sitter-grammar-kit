@@ -131,6 +131,7 @@ func eligibilityPinGeneration(t *testing.T, rustc, cargo string) QueryReferenceE
 }
 
 func TestEligibilityPinsProductionIndependence(t *testing.T) {
+	t.Parallel()
 	ctx := pinTestContext(t)
 	f := newEligibilityFixture(t)
 	old := eligibilityPinRequest(t, f.request(), eligibilityPinMaterials(t))
@@ -160,6 +161,7 @@ func TestEligibilityPinsProductionIndependence(t *testing.T) {
 }
 
 func TestEligibilityPinsCatalogueObligations(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"build-denominator", "unit-denominator", "control-denominator", "assertion-denominator", "empty-assertion", "known-rule", "same-count-id", "request-limit", "response", "input"} {
 		t.Run(mode, func(t *testing.T) {
 			f := newEligibilityFixture(t)
@@ -203,6 +205,7 @@ func TestEligibilityPinsCatalogueObligations(t *testing.T) {
 }
 
 func TestEligibilityPinsForgery(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"unapproved-set", "self-rehash", "sidecar-reuse", "wrong-subject", "catalogue-substitution", "mixed-rustc", "mixed-cargo", "duplicate-release", "release-suffix", "tuple-catalogue", "input-binding", "receipt-binding", "tool-binding", "source-binding", "vendor-binding", "response-upstream", "unsupported-reader", "unknown-tuple", "missing-material", "missing-role", "missing-approval"} {
 		t.Run(mode, func(t *testing.T) {
 			f := newEligibilityFixture(t)

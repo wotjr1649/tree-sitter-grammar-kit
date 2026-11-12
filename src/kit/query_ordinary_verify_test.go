@@ -29,6 +29,7 @@ func ordinaryTestBudget(t *testing.T) *eligibilityBudget {
 }
 
 func TestOrdinaryReaderSelectedInventoryBudget(t *testing.T) {
+	t.Parallel()
 	v, inv := ordinaryP0ForPlanTest(t)
 	for _, routeName := range []string{"json", "postgresql-sql", "tsql", "largest-shard"} {
 		t.Run(routeName, func(t *testing.T) {
@@ -155,6 +156,7 @@ func ordinarySelectionForTest(t *testing.T, plan OrdinaryShardPlan, indices []in
 }
 
 func TestOrdinarySelectedPlanProofAndCoordinate(t *testing.T) {
+	t.Parallel()
 	v, inv := ordinaryP0ForPlanTest(t)
 	plan := ordinaryPlanForTest(v, inv)
 	data, selection := ordinarySelectionForTest(t, plan, []int{0, 1})

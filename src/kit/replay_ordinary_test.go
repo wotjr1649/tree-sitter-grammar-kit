@@ -57,6 +57,7 @@ func ordinaryPartialReplayFixture(t *testing.T) (OrdinaryQuerySemanticsRequest, 
 }
 
 func TestOrdinaryReplayPartialAndStoredParity(t *testing.T) {
+	t.Parallel()
 	req, root, profile := ordinaryPartialReplayFixture(t)
 	api, err := VerifyOrdinaryQuerySemantics(ordinaryReplayContext(t), req)
 	if err != nil {
@@ -85,6 +86,7 @@ func TestOrdinaryReplayPartialAndStoredParity(t *testing.T) {
 }
 
 func TestOrdinaryReplayRejectsRecordAndMemberDamage(t *testing.T) {
+	t.Parallel()
 	_, root, profile := ordinaryPartialReplayFixture(t)
 	for _, name := range []string{"deleted-id", "duplicate-id", "missing-document", "file-underflow", "file-overflow"} {
 		t.Run(name, func(t *testing.T) {
@@ -153,6 +155,7 @@ func TestOrdinaryReplayCapsStayAtRegisteredSmallLimits(t *testing.T) {
 }
 
 func TestOrdinaryReplayDoesNotActivateLegacyQualification(t *testing.T) {
+	t.Parallel()
 	_, root, profile := ordinaryPartialReplayFixture(t)
 	b := ordinaryTestBudget(t)
 	b.r.eligibility = b

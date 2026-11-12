@@ -166,6 +166,7 @@ func TestOrdinaryReferenceRowAccounting(t *testing.T) {
 // count below the real number of walks must fail here, even though the other per-value terms keep the ledger above
 // the allocation.
 func TestReferenceRowWorkCoversWalkVisits(t *testing.T) {
+	t.Parallel()
 	const walks = 3
 	cases := refRowCases(t)
 	stored, err := filepath.Glob("../testdata/query-reference/*.json")

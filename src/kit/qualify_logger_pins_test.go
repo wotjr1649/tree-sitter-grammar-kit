@@ -143,6 +143,7 @@ func TestQualificationLoggerPinsHistoricalRuntime(t *testing.T) {
 }
 
 func TestQualificationLoggerPinsRejectsUnboundRuntime(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"unapproved", "subject", "tuple", "producer", "raw", "projection-abi", "raw-abi", "runtime-commit"} {
 		t.Run(mode, func(t *testing.T) {
 			req, _ := qualificationLoggerRequest(t, "A", mode)

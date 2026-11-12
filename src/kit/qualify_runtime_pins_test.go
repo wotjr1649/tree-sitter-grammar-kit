@@ -23,6 +23,7 @@ func qualificationRuntimePins(t *testing.T, materials map[string][]byte) Qualify
 }
 
 func TestQualificationRuntimePinsProductionIndependence(t *testing.T) {
+	t.Parallel()
 	req := qualificationRuntimePins(t, runtimePinMaterials(t))
 	want, err := Qualify(pinTestContext(t), req)
 	if err == nil || want.QuerySemantics == nil {
@@ -45,6 +46,7 @@ func TestQualificationRuntimePinsProductionIndependence(t *testing.T) {
 }
 
 func TestQualificationRuntimePinsRejectForgery(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"unapproved", "tuple-driver", "missing-driver"} {
 		t.Run(mode, func(t *testing.T) {
 			materials := runtimePinMaterials(t)
