@@ -253,7 +253,7 @@ func siSyntheticStep(t *testing.T, src string) (SvcInlineExpected, SvcInlineObse
 	}
 	cst := siRowsDigest(tree.rows)
 	step := SvcInlineStep{Case: "synthetic", Step: 0, State: SvcInlineDerived, Fragment: f, CST: &cst}
-	view := SvcInlineView{Queries: map[string]SvcInlineQueryResult{}}
+	view := SvcInlineView{Role: SvcInlineRoleIncremental, Queries: map[string]SvcInlineQueryResult{}}
 	for _, r := range tree.rows {
 		n := TreeNode{Parent: int64(r.Parent), Type: r.Type, Named: r.Flags&LargeRowNamed != 0, Extra: r.Flags&LargeRowExtra != 0, StartByte: r.StartByte, EndByte: r.EndByte,
 			StartPoint: Point{Row: r.StartRow, Column: r.StartCol}, EndPoint: Point{Row: r.EndRow, Column: r.EndCol}}
@@ -394,12 +394,18 @@ func TestSvcInlineJudgeCounterexamples(t *testing.T) {
 			t.Errorf("%s: %s %s, want FAILED %s", name, j.State, j.Code, m.code)
 		}
 	}
-	// a second view (the fresh tree of an edit step) must match as well
+	// the fresh view of an edited step (step 1 follows inline step 0) must match as well
+	next := x.Steps[0]
+	next.Step = 1
+	edited := x
+	edited.Steps = append(slices.Clone(x.Steps), next)
 	o := clone(obs)
+	o.Step = 1
 	bad := clone(obs).Views[0]
+	bad.Role = SvcInlineRoleFresh
 	bad.Nodes[2].EndByte++
 	o.Views = append(o.Views, bad)
-	if j := siVerdicts(t, x, o)[treeID]; j.State != "FAILED" {
+	if j := siVerdicts(t, edited, obs, o)[svcID(SvcKindInlineTree, "synthetic", 1, "")]; j.State != "FAILED" {
 		t.Errorf("a diverging fresh view verified: %+v", j)
 	}
 	// no evidence is BLOCKED, never VERIFIED
@@ -475,5 +481,90 @@ func TestSvcInlineFoldWithoutEvidence(t *testing.T) {
 	}
 	if _, err := MergeSvcJudgments(offline, []SvcJudgment{{ID: "svc1/nope", State: "BLOCKED", Code: "X"}}); err == nil {
 		t.Error("a judgment for an undeclared obligation merged")
+	}
+}
+
+// A step the native run reached by editing the previous inline step has an incremental and a fresh
+// tree; a missing role must not verify its tree or its queries. A step with no inline step before it
+// (step 0, or the start of a segment) has the incremental view only.
+func TestSvcInlineEditedStepNeedsIncrementalAndFreshViews(t *testing.T) {
+	x, obs, _ := siSyntheticStep(t, "class C {}")
+	next := x.Steps[0]
+	next.Step = 1
+	x.Steps = append(x.Steps, next)
+	view := func(role string) SvcInlineView {
+		v := obs.Views[0]
+		v.Role = role
+		return v
+	}
+	step := func(n int, views ...SvcInlineView) SvcInlineObserved {
+		o := obs
+		o.Step, o.Views = n, views
+		return o
+	}
+	verdicts := func(x SvcInlineExpected, id string, o ...SvcInlineObserved) []SvcJudgment {
+		var out []SvcJudgment
+		for _, j := range siVerdicts(t, x, o...) {
+			if strings.Contains(j.ID, id) {
+				out = append(out, j)
+			}
+		}
+		return out
+	}
+	both := []SvcInlineView{view(SvcInlineRoleIncremental), view(SvcInlineRoleFresh)}
+	// both roles: every obligation of the edited step is VERIFIED
+	for _, j := range verdicts(x, "/synthetic/1/", step(0, view(SvcInlineRoleIncremental)), step(1, both...)) {
+		if j.State != "VERIFIED" {
+			t.Errorf("%s with both roles: %s %s", j.ID, j.State, j.Code)
+		}
+	}
+	// a missing role is incomplete evidence: BLOCKED, never VERIFIED
+	for name, views := range map[string][]SvcInlineView{
+		"incremental only": {view(SvcInlineRoleIncremental)},
+		"fresh only":       {view(SvcInlineRoleFresh)},
+	} {
+		got := verdicts(x, "/synthetic/1/", step(0, view(SvcInlineRoleIncremental)), step(1, views...))
+		if len(got) != 3 {
+			t.Fatalf("%s: %d judgments", name, len(got))
+		}
+		for _, j := range got {
+			if j.State != "BLOCKED" || j.Code != SvcInlineNativeNotRunCode {
+				t.Errorf("%s: %s %s %s", name, j.ID, j.State, j.Code)
+			}
+		}
+	}
+	// a view that mismatches stays FAILED even when the other role is missing
+	bad := view(SvcInlineRoleIncremental)
+	bad.Nodes = slices.Clone(bad.Nodes)
+	bad.Nodes[2].EndByte++
+	for _, j := range verdicts(x, svcID(SvcKindInlineTree, "synthetic", 1, ""), step(0, view(SvcInlineRoleIncremental)), step(1, bad)) {
+		if j.State != "FAILED" {
+			t.Errorf("a mismatching incremental view without its fresh view: %+v", j)
+		}
+	}
+	// unknown, repeated and misplaced roles are errors
+	for name, views := range map[string][]SvcInlineView{
+		"no role":        {view("")},
+		"repeated role":  {view(SvcInlineRoleIncremental), view(SvcInlineRoleIncremental)},
+		"repeated fresh": {view(SvcInlineRoleIncremental), view(SvcInlineRoleFresh), view(SvcInlineRoleFresh)},
+		"unknown role":   {view(SvcInlineRoleIncremental), view("other")},
+	} {
+		if _, err := JudgeSvcInline(x, []SvcInlineObserved{step(0, view(SvcInlineRoleIncremental)), step(1, views...)}); err == nil || svcCode(t, err) != "SVC_INLINE_VIEW_ROLE" {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	if _, err := JudgeSvcInline(x, []SvcInlineObserved{step(0, both...), step(1, both...)}); err == nil || svcCode(t, err) != "SVC_INLINE_VIEW_ROLE" {
+		t.Errorf("a fresh view for step 0: %v", err)
+	}
+	// a restarted segment: step 1 has no inline step 0 before it, so the incremental view is complete
+	restart := x
+	restart.Steps = x.Steps[1:]
+	for _, j := range siVerdicts(t, restart, step(1, view(SvcInlineRoleIncremental))) {
+		if j.State != "VERIFIED" {
+			t.Errorf("%s: a restarted segment's incremental view must verify: %s %s", j.ID, j.State, j.Code)
+		}
+	}
+	if _, err := JudgeSvcInline(restart, []SvcInlineObserved{step(1, both...)}); err == nil || svcCode(t, err) != "SVC_INLINE_VIEW_ROLE" {
+		t.Errorf("a fresh view for a restarted segment: %v", err)
 	}
 }

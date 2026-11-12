@@ -36,6 +36,10 @@ const (
 	// A derived expectation has no native evidence yet.
 	SvcInlineNativeNotRunCode = "SVC_INLINE_NATIVE_NOT_RUN"
 
+	// The tree role a view was parsed in: the incremental tree, or the fresh re-parse of an edited step.
+	SvcInlineRoleIncremental = "incremental"
+	SvcInlineRoleFresh       = "fresh"
+
 	svcInlineDynamicID      = "facts.dynamic_sql"
 	svcInlineGrammarVersion = "tree-sitter-c-sharp 0.23.5"
 	// SHA-256 of the grammar.json the rules were read from (not part of the registered closure).
@@ -275,9 +279,12 @@ type SvcInlineQueryResult struct {
 	Captures []Capture
 }
 
-// SvcInlineView is one parse of a step as the native producer reported it: the public CST and the
-// result of every query by ID. A step with edits has an incremental and a fresh view; both must match.
+// SvcInlineView is one parse of a step as the native producer reported it: its role, the public CST
+// and the result of every query by ID. A step the native run reached by editing the previous inline
+// step has an incremental and a fresh view and both must be given and match; a step with no inline
+// step before it (step 0, or the start of a segment) has the incremental view only.
 type SvcInlineView struct {
+	Role    string
 	Nodes   []TreeNode
 	Queries map[string]SvcInlineQueryResult
 }
@@ -297,7 +304,9 @@ func svcInlineID(kind string, s SvcInlineStep, query string) string {
 // JudgeSvcInline judges the inline tree and query obligations: a DERIVED step against the native
 // evidence (VERIFIED or FAILED with the first mismatch code, BLOCKED SVC_INLINE_NATIVE_NOT_RUN without
 // evidence), a BLOCKED step with its registered code. Evidence for a BLOCKED, unknown or repeated
-// step is an error: a blocked step never becomes VERIFIED through native output.
+// step is an error: a blocked step never becomes VERIFIED through native output. Evidence that lacks
+// a view role its step needs is never VERIFIED: it is BLOCKED unless a view it does have already
+// mismatches, which stays FAILED.
 func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJudgment, error) {
 	byStep := map[string]SvcInlineObserved{}
 	for _, o := range observed {
@@ -306,6 +315,10 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			return nil, svcInlineFault("SVC_INLINE_OBSERVED_REPEATED")
 		}
 		byStep[key] = o
+	}
+	inline := map[string]bool{}
+	for _, s := range x.Steps {
+		inline[svcID("", s.Case, s.Step, "")] = true
 	}
 	var out []SvcJudgment
 	used := 0
@@ -330,15 +343,46 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			continue
 		}
 		used++
-		out = append(out, svcInlineJudge(treeID, svcInlineTreeCode(s, o)))
+		complete, err := svcInlineViewsComplete(o, s.Step > 0 && inline[svcID("", s.Case, s.Step-1, "")])
+		if err != nil {
+			return nil, err
+		}
+		judge := func(id, code string) SvcJudgment {
+			if code == "" && !complete {
+				return SvcJudgment{ID: id, State: "BLOCKED", Code: SvcInlineNativeNotRunCode}
+			}
+			return svcInlineJudge(id, code)
+		}
+		out = append(out, judge(treeID, svcInlineTreeCode(s, o)))
 		for _, q := range s.Queries {
-			out = append(out, svcInlineJudge(svcInlineID(SvcKindQuery, s, q.ID), svcInlineQueryCode(q, o)))
+			out = append(out, judge(svcInlineID(SvcKindQuery, s, q.ID), svcInlineQueryCode(q, o)))
 		}
 	}
 	if used != len(byStep) {
 		return nil, svcInlineFault("SVC_INLINE_OBSERVED_UNKNOWN")
 	}
 	return out, nil
+}
+
+// svcInlineViewsComplete reports whether the views are exactly the roles the step needs: incremental,
+// and fresh too when edited. An unknown or repeated role, or a fresh view for a step that has none,
+// is an error; a missing role is incomplete evidence.
+func svcInlineViewsComplete(o SvcInlineObserved, edited bool) (bool, error) {
+	var incremental, fresh int
+	for _, v := range o.Views {
+		switch v.Role {
+		case SvcInlineRoleIncremental:
+			incremental++
+		case SvcInlineRoleFresh:
+			fresh++
+		default:
+			return false, svcInlineFault("SVC_INLINE_VIEW_ROLE")
+		}
+	}
+	if incremental > 1 || fresh > 1 || fresh == 1 && !edited {
+		return false, svcInlineFault("SVC_INLINE_VIEW_ROLE")
+	}
+	return incremental == 1 && (fresh == 1) == edited, nil
 }
 
 func (x SvcInlineExpected) queryIDs() []string {
