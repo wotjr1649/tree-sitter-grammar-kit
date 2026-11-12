@@ -2,6 +2,50 @@
 
 이 experimental API는 caller가 evidence 밖에서 신뢰한 승인 문서에 조건부인 저장 근거의 일관성을 검사한다. 실제 실행 진위·서명·게시자 인증이나 전체 route의 qualification 완료를 증명하지 않는다. 검증 중 process·network·임시 파일·원래 호스트 경로 조회를 수행하지 않는다. 기존 [reference connection](instrumented-query-reference.md)의 r1 및 native/r2 의미는 유지한다.
 
+## #370 V2-A 역사 자료 pin 입력
+
+`ResolveEvidencePins(context.Context, EvidencePinsRequest)`와 `SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) (string, error)`는 별도 opt-in의 offline API다. V2-A는 **원문 자료의 승인 결속**만 구현한다. opt-in 없는 eligibility 호출의 catalogue·Rust release·runtime 검사와 기존 reducer 의미를 유지한다. 직접 eligibility의 Rust/catalogue 소비는 아래 V2-B1 opt-in으로 구현한다. Python/workflow·classification 생산 이행과 runtime 전체 전달·semantic/replay/CLI 통합은 남아 있다. 이 절의 PASS를 build9/unit4/control53/assertion36 또는 semantic·accepted·preprocess-CST PASS로 사용하지 않는다.
+
+`EvidencePinsRequest`의 `Approval`, `PinSet`, `Subject`는 원문 bytes이고 `Materials`는 정확한 논리 이름→원문 bytes map이다. Caller는 graph 밖에서 **독립 승인한** `ApprovedApprovalSHA256`와 `ApprovedPinSetSHA256`를 제공한다. 증거나 sidecar의 자기 hash를 그대로 이 두 field에 복사하는 것은 독립 승인이 아니다. API는 승인 작성자의 진위를 인증하지 않는다. Caller는 호출 중 slice/map을 변경하지 않는다. 함수는 입력을 수정하거나 file/process/network에 접근하지 않고 결과는 원문 slice/map을 소유하지 않는다.
+
+모든 문서는 bounded strict JSON이며 모든 field는 필수다. Duplicate/unknown/null/type 오류, trailing JSON·invalid UTF-8와 기존 depth32 제한을 적용한다.
+
+| 문서 | field와 의미 |
+|---|---|
+| `tsgk-evidence-pin-selection/r1` | `schema`, `pin_set_sha256` 하나. 생산 전에 한 번 선택해 고정할 후보이며 승인이 아니다. 선택 함수는 caller가 함께 제공한 집합 원문의 digest·strict shape 및 resolver와 공유한 descriptor 검증(schema/reader·행 수·이름·역할·bytes/hash·중복)을 수행한다. 자료 본문 결속과 독립 승인은 resolver가 별도로 검사한다. 역사 resolver는 pointer를 받거나 조회하지 않는다. |
+| `tsgk-evidence-pin-set/r1` | `schema`, `reader`, 비어 있지 않은 `materials` 배열. 행은 `name`, `role`, `bytes`, `sha256`이다. |
+| `tsgk-evidence-pin-approval/r1` | `schema`, `pin_set_sha256`, `subject_sha256`, `reader`, `scope`. 기존 approval/registration/profile 등 caller가 선택한 **하나의 원본 subject 전체 bytes**에 결속한다. 다른 graph/profile/candidate를 대표하는 원문으로 sidecar를 재사용하면 FAIL이다. 복수 문서 closure의 의미 검증은 해당 소비 API가 담당한다. |
+
+지원 reader는 `tsgk-evidence-materials/r1`, scope는 `historical-materials`뿐이다. 이 reader는 자료를 opaque bytes로 결속하며 catalogue 규칙·Rust version stdout·ABI·Roslyn diagnostic을 해석하지 않는다. 역할은 `reference-catalogue`, `reference-input`, `reference-tuple`, `runtime-manifest`, `runtime-patch`, `driver`, `cp949`, `shim-template`, `roslyn-observation`, `roslyn-cases`다. 알 수 없는 schema/reader/scope/role은 UNSUPPORTED이며 PASS가 아니다. 더 강한 scope는 승인 문서가 요구해도 지원하지 않는다. 후속 semantic reader는 고정 의무·분모·known-rule를 자체 소유해야 하며 이 배열로 줄일 수 없다.
+
+이름은 host 경로로 열지 않는다. 기존 portable 상대 경로 검사, 1,024 bytes 상한과 대소문자 접기 중복 거부를 적용하고 입력 map은 정확한 이름으로 결속한다. 미사용·다른 대소문자 이름은 잘못된 입력이다. 동일 내용의 여러 역할은 각 정확한 이름을 제공한다. 역할·bytes·hash·순서는 승인된 집합 원문 digest에 함께 결속된다.
+
+승인 원문·집합 digest를 외부 두 승인값과 먼저 대조한 뒤 sidecar의 집합/subject digest를 실제 원문과 대조한다. 자료와 sidecar를 모두 재해시해도 외부 승인값이 다르면 `PIN_APPROVAL_MISMATCH` FAIL이다. 다른 subject는 `PIN_SUBJECT_MISMATCH`, 제공된 자료 길이/hash 모순은 `PIN_MATERIAL_MISMATCH` FAIL이다. 외부 승인이나 승인 문서/집합이 없으면 `PIN_APPROVAL_MISSING` BLOCKED이며 완료하지 않는다. 선택한 자료가 없으면 `PIN_MATERIAL_MISSING` BLOCKED로 남기고 다른 행을 계속 검사한다. 확정 FAIL은 이후 누락·취소·자원 오류로 지우지 않는다. 구조 오류는 typed error다. 선택 함수의 원문 누락/불일치는 `PIN_SELECTION_MISSING`/`PIN_SELECTION_MISMATCH` invalid input이다.
+
+`tsgk-evidence-pin-result/r1`은 실제 소비한 approval/set/subject raw SHA-256, reader/scope, 검증한 자료 descriptor 순서, `required`/`verified`, read/work/logical counter와 `complete`를 기록한다. `complete=true`는 배열 평가 종료이며 누락으로 BLOCKED일 수 있다. 조기 승인 거부나 오류는 false다. Subject의 기록 verdict나 NEW_RUN을 재작성하지 않는다. 생산 선택을 B/C로 바꿔도 같은 A 원문·외부 승인·reader의 판정과 소비 identity는 동일하다. 새 계획의 pin 요구는 별도 소비 계약에서 검사한다.
+
+Caller deadline은 필수다. 기존 evidence-replay wall120초·문서/자료별16MiB·총읽기256MiB·자료10,000개, JSON decode/shape 각2,000,000 values, work32,000,000·logical1GiB를 재사용한다. 자료·문서·hash·index·shape·출력 descriptor 비용을 같은 원장에서 처리한다. 입력은 이미 caller memory에 있으므로 이 API의 원장은 caller의 사전 파일 읽기를 대신 제한하지 않는다. V2-A는 CLI file admission이나 nested run에 연결되지 않는다. 후속 통합은 상속 원장과 기존 file identity/hardlink/reparse/alias 검사를 유지해야 한다.
+
+`src/contracts/evidence-pins/selection.json`은 단일 후보 선택이다. `sets/<raw-sha256>.json`과 `objects/<raw-sha256>`는 내용 주소의 보존 자료이며 승인 기관이 아니다. 기존 객체를 갱신하지 않고 새 객체/집합을 추가해 선택만 옮긴다. `.gitattributes`의 `-text`는 원본 개행을 보존한다. 최초 집합은 catalogue와 reference controller 입력, 현재 manifest/patch/driver/CP949·실제 shim 생성식 template, 기존 Roslyn/r2 원문·cases 및 기존 logger가 허용한 과거 manifest를 보관한다. 과거 manifest는 repository commit `10c65c8`의 원문이며 기존 digest `affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080`과 대조했다. Shim template와 reference tuple은 이행 metadata이며 과거 실행 관측으로 소급하지 않는다. Runtime 원본 checkout 전체·과거 driver closure·Roslyn DLL/SDK provenance는 복원하지 않았다. 자료 보관만으로 full historical eligibility를 주장하지 않는다.
+
+현재 생산 Python/workflow는 아직 이 pointer를 소비하지 않는다. 기존 verifier의 opt-in 없는 호출도 이 pointer를 소비하지 않는다. 기존의 현재 catalogue 전용, 현재 runtime 완결 검증 및 과거 runtime BLOCKED 규칙은 해당 legacy API에 계속 적용된다. 후속 opt-in은 caller가 정확한 digest와 reader를 승인한 historical catalogue/closure를 사용하고 과거 결과를 새 reference의 관측으로 승격하지 않아야 한다.
+
+## #370 V2-B1 승인 historical reference 검증
+
+`QueryReferenceEligibilityRequest.Pins *EvidencePinsRequest`는 직접 `VerifyQueryReferenceEligibility` 호출의 명시적 opt-in이다. `nil`이면 기존 r1 결과와 내장 catalogue·Rust release 검사를 유지한다. `Pins`가 있으면 결과 schema는 `QueryReferenceEligibilityPinsResultSchema`(`tsgk-query-reference-eligibility-result/r2`)이며, 승인 누락·취소·오류에도 이 선택을 유지한다. 원래 approval/registration/witness/graph bytes와 schema는 바꾸지 않는다.
+
+V2-A resolver와 같은 구현·상속 원장에서 sidecar·집합·자료를 검증한다. `Pins.Subject`는 **이 요청의 `Approval` 원문 전체와 같은 bytes**여야 한다. 이 approval이 registration·witness·policy·candidate를, registration이 graph와 각 owned member를 기존 방식으로 결속한다. Materials scope의 PASS만으로 eligibility를 승인하지 않고, 기존 caller-trusted eligibility 승인과 아래 reader 검사를 모두 요구한다. 증거가 자기 자료를 승인하는 경로는 없다.
+
+집합에는 정확한 이름과 역할의 `reference/catalogue.json`(`reference-catalogue`), `reference/tuple.json`(`reference-tuple`)이 필요하다. Tuple의 모든 field는 필수다: `schema=tsgk-reference-pin-tuple/r1`, `rustc_release`, `cargo_release`, `path_reader`, `catalogue_sha256`. 두 release는 각각 `숫자.숫자.숫자` 형식이며 build identity의 유일한 `release:` field와 정확히 같아야 한다. 중복 release·접미사·한 도구만 다른 혼합 tuple은 FAIL이다. tuple은 독립 승인 집합에 결속되며 release 문자열만으로 도구를 승인하지 않는다. 지원 path reader는 `rust-path-1.97.1/r1`이다. 이 ID는 역사 경로 의미를 고정하며 새 tuple의 의미 호환은 caller 검토 대상이다. 미지원 reader/schema는 typed UNSUPPORTED다. Target은 기존 platform별 target 및 build paths/identity의 정확한 대조로 고정한다.
+
+Catalogue 원문 digest는 tuple, 기존 approval, registration과 모두 같아야 한다. `src/kit/query_eligibility_obligations_r1.json`은 생산 catalogue와 별개로 보존하는 이 reader의 고정 의무다. Build9/unit4/control53/assertion36의 수뿐 아니라 ID·순서·known-rule·argv·한도·필수 invocation 연결·grammar/control 입력·tree/capture/response 전체를 대조한다. Caller가 축소한 catalogue를 독립 승인해도 `PIN_CATALOGUE_OBLIGATIONS` FAIL이다. 이 파일의 의미를 새 생산 pin에 맞춰 갱신하지 않는다. 다른 의무를 지원하려면 별도 reader 검토가 필요하다.
+
+변경 가능한 catalogue provenance는 upstream/archive/binding identity와 정확한 controller/reference input digest map이다. `reference/` 아래 `Cargo.toml`, `main.rs`, `instrumentation.patch`, `build.py`, `checks.py`, `check.py`의 `reference-input` 원문을 해당 digest에 결속한다. Build identity와 control/current reference 응답의 upstream은 같은 승인 catalogue commit에 결속한다. 기존 reference connection wrapper는 자체 legacy commit을 유지한다. Build identity의 input/tool hash·path·cohort, version stdout과 receipt, source/vendor/lock/metadata/binary 검사와 기존 검증 한도는 모두 유지한다. 원문 자료 누락은 `PIN_REFERENCE_MISSING` BLOCKED, catalogue/입력 결속 모순은 `PIN_REFERENCE_CATALOGUE`/`PIN_REFERENCE_INPUT` FAIL, 다른 subject 사용은 `PIN_ELIGIBILITY_SUBJECT` FAIL이다. V2-A의 strict 형식·alias·미사용·재해시 거부와 확정 FAIL 보존 규칙도 상속한다. 구조적으로 필수 역할이 잘못됐으면 `PIN_REFERENCE_ROLE` invalid input이다.
+
+r2 결과의 `pins`는 실제 resolver 결과이며 추가 `reference_tuple_sha256`, `reference_path_reader`와 기존 `catalogue_sha256`은 소비한 역사 identity다. Outer `bytes_read/work/logical_bytes`에는 pin resolve와 의미 검증 비용이 모두 포함되고, nested `pins` counter는 resolver 구간의 차분이다. 바깥 한도를 새로 시작하거나 늘리지 않는다. 이 API는 현재 생산 selection이나 설치 도구를 조회하지 않는다. 같은 역사 입력·승인·reader를 고정하면 생산 선택 A/B/C 변경 뒤 결과·counter·소비 identity가 같다.
+
+이 단위는 **직접 eligibility reference 검증**만 구현한다. `QuerySemanticsRequest`, replay/qualification/CLI의 context 전달, classification donor·assembly, Python build/test/check/acquire와 workflow의 단일 생산 입력은 남아 있다. Runtime 완결 검증은 기존 current-only 경계를 유지하며, 역사 reference PASS를 새 reference 또는 historical runtime의 실제 qualification으로 승격하지 않는다.
+
 ## 호출과 판정
 
 ```go
@@ -9,6 +53,7 @@ func VerifyQueryReferenceEligibility(context.Context, QueryReferenceEligibilityR
 type QueryReferenceEligibilityRequest struct {
     Evidence EvidenceRequest
     Approval, Registration, WitnessRegistration []byte
+    Pins *EvidencePinsRequest // optional historical reference opt-in
 }
 ```
 
@@ -81,7 +126,7 @@ Process receipt는 `tsgk-reference-process/r1`의 schema/execution/stdout_base64
 
 [고정 catalogue](../../src/contracts/query-reference-eligibility-catalogue-r1.json)는 reviewed controller의 build9/Rust unit4/control53/assertion36, 정확한 입력 bytes/hash, 수작업 full CST·metadata·structural/evaluated capture 순서와 batch footer/prefix 기대값을 소유한다. Runtime match ID는 고정 숫자로 정규화하지 않으며 opaque 관계 검증과 single/batch 전체 parsed-response parity를 모두 요구한다. Rust unit은 네 이름 각각 한 번과 정확한 전체 summary를 요구한다.
 
-현재 verifier는 현재 내장 catalogue와 정확히 결속된 승인·build 입력만 검증한다. Reference 소스 수정으로 catalogue pin이 바뀌면 이전 catalogue의 승인과 build는 새 verifier의 현재 자격을 충족하지 않는다. 새 reference에는 새 identity의 build·controls·graph·외부 승인이 필요하다. 과거 원본과 그 catalogue에 맞는 source/reader revision은 그대로 보존하고, 과거 조건부 결과를 새 reader나 새 reference의 관측으로 바꾸어 기록하지 않는다. 이 경계는 과거 catalogue를 자동 허용하는 호환성 경로를 추가하지 않는다.
+`Pins=nil`인 기존 verifier 호출은 현재 내장 catalogue와 정확히 결속된 승인·build 입력만 검증한다. Reference 소스 수정으로 catalogue pin이 바뀌면 이전 catalogue의 승인과 build는 새 verifier의 현재 자격을 충족하지 않는다. 새 reference에는 새 identity의 build·controls·graph·외부 승인이 필요하다. 과거 원본과 그 catalogue에 맞는 source/reader revision은 그대로 보존하고, 과거 조건부 결과를 새 reader나 새 reference의 관측으로 바꾸어 기록하지 않는다. 이 legacy 경계는 과거 catalogue를 자동 허용하지 않는다. 위 V2-B1 opt-in은 graph 밖에서 독립 승인한 정확한 historical catalogue·tuple과 reader 의무를 사용하며, 생산 pin 갱신만으로 같은 과거 증거를 거부하지 않는다.
 
 Witness r2는 기존 QueryWitnessRegistration의 field와 `native`를 가진다. Native는 `protocol`, `request_id`, `node_limit`, `api`, `points`, `runtime_manifest_sha256`, `producer_sha256`, `executable_sha256`, `producer_abi`, `observation_run_id`, `history_start`, `process`다. Producer ABI는 `language_version`, `runtime_language_version`, `runtime_min_compatible`, `symbol_count`, `field_count`다. Process field는 저장 request와 같은 Path/Args/Dir/Env/StdoutBytes/StderrBytes/Wall/Grace/Memory(Bytes,Hard)/CgroupParent다. 시간 단위는 Go duration의 nanoseconds다.
 
@@ -94,6 +139,39 @@ Observation 필수 field는 `query`, `step`, `tree_role`, `source_bytes`, `sourc
 공유 한도는 physical member/JSON 각각16 MiB, 총 읽기256 MiB, file10,000개, wall120초, output16 MiB, identity1 MiB다. JSON depth32/decode·shape 각각2,000,000 values, 공유 work32,000,000, 논리 처리량1 GiB를 적용한다. 단, eligibility 검증이 원장을 직접 시작하고 approval에 결속된 registration의 context가 `full-input-utf8-paged-parser/r1` 또는 `full-input-utf8-paged-binaries/r1`일 때만 논리 처리량은 1.5 GiB(1,610,612,736)다. 이 값은 registration 검증 직후·evidence 읽기 전에 한 번 정하며 evidence·descriptor·build manifest·파일 크기 같은 producer 출력은 선택에 쓰지 않는다. 결속이 맞지 않는 요청과 semantic·replay·qualification run에서 물려받은 원장은 1 GiB를 유지한다. Snapshot은 각30,000/합계60,000행, 행64 MiB/선언 합계1 GiB다. JSON 반복 pass·graph pair/cycle·filter/predicate/comparator·unit stdout scan·해시·복사·output sealing의 보수적 비용을 무거운 처리 전에 차감한다. Compact node가 공유하는 type/field 문자열은 node별로, capture가 재참조하는 type 문자열은 capture별로 계상하며 tree digest와 capture 연결에 취소 checkpoint를 적용한다. Partial conversion마다 반복하는 공유 field table의 길이 곱도 사전 계상하고 table·node·partial 순회에 같은 중단 검사를 적용한다. Batch 분할은 예상 응답 수와 footer에 필요한 행 수로 제한한다. Member/tool/input 및 replay-result 예약의 중단 오류는 모순 finding으로 바꾸지 않고 반환하며 이미 확인한 FAIL만 유지한다. 사전 invocation 결속의 실패도 해당 Build/Control 및 연결된 tuple counter에 즉시 보존하며 후속 미완료 상태로 덮지 않는다. Caller가 한도 값을 지정하는 옵션은 없고 값은 승인된 context가 정한다. 서로 맞는 approval·registration 쌍을 만든 caller는 paged context를 선언해 1.5 GiB를 쓸 수 있으므로, public API의 논리 처리량 최악 상한은 paged context에서 1.5 GiB다.
 
 정상/변조 synthetic 검사는 외부 승인 경계의 동작 검사이며 runtime 자격 근거가 아니다. 보관한 Linux raw192는 요청/receipt/stderr·identity·snapshot·summary를 부분 수용하는 근거다. 실제 binary/library/입력/current-r4/승인 graph가 없으므로 전체 PASS로 승격하지 않는다. Producer 보관 확대·claim/reducer/inventory/fan-in·전체 Windows/Linux route 및 C# 실제 재사용 증명은 후속 단위이며 이 API 구현으로 Issue #216을 닫지 않는다.
+
+### #362 ordinary inventory 선택 decode
+
+내부 `parseQualificationInventoryRoute`는 아직 ordinary pass가 없는 P2-C의 입력 처리 기반이다. P2-C는 같은 guarded session에서 읽고 독립 승인된 전체 SHA-256과 대조한 `qualification-c1.json` bytes를 이 함수로 전달해야 한다. 함수도 전체 bytes의 SHA-256을 재대조한다. 공개 `ParseQualificationInventory`와 기존 qualification·semantic·replay 호출자는 전체 decode와 기존 오류 분류를 유지한다. 새 공개 API나 한도 선택 옵션은 없다.
+
+전체 문서는 AST를 만들지 않는 strict token 검사로 UTF-8·surrogate·escape-equivalent 중복 key·문법·trailing value·depth32·2,000,000 values를 확인한다. Token 순회는 header와 전역 검사용 작은 투영 및 원문 route 구간만 수집한다. Header의 cell 수는 전체 route×platform 곱과 같아야 하며 platform ID, route ID, 전체 ordinary/extra workload set, extra-role ID와 route ID 충돌, workload의 route 연결을 검사한다. Extra-role의 platform 참조·실행/미적용/유예 분할 및 `reuse-accepted`의 OS/arch별 실행·유예 조건도 유지한다. Query/case ID·coverage·source/edit·requirement 및 extra workload 내용의 의미 검사는 workload 안의 계약이다. 선택한 route의 내용만 기존 의미 검증기를 적용하고, 다른 route의 내용 검증은 그 route를 처리하는 pass의 의무로 남긴다. 선택 결과는 전체 inventory로 오인되지 않는 별도 내부 type이며 header에서 routes/extra_roles를 제거하고 원래 route index와 선택 route를 돌려준다.
+
+엄격 token 검사의 예약은 `S(n,z,v)=3n+2z+32768+16v`, AST 없는 typed decode의 예약은 `T32(n,z,v)=5n+32z+32768+80v`다. `n`은 bytes, `z`는 문자열 내부 공백을 포함한 유효 JSON bytes, `v`는 member name과 닫는 괄호를 제외한 값 수다. T32는 작은 전역 투영과 선택 route에만 적용한다. Registry는 전체를 typed decode하며 P0의 presence/null·exact membership·pin 검사를 생략하는 근거로 사용하지 않는다. 현재 base에는 P0 reader가 없으므로 실제 P0 자료의 전체 typed decode는 test-only 측정 경로에서 대조한다. P2-C는 통합된 P0 reader의 계약과 registry의 inventory pin을 함께 검사해야 한다.
+
+Guarded read의 기존 비용 외에 전체 hash 재대조 `n`, route index당64 B, 투영 buffer의 실제 복사·성장 예약, 전역/선택 의미 검증과 전역 특수-arm shape 검사를 추가 계상한다. 전역 의미 검증은 투영 bytes당 work8/logical4 및 기존 platform 곱을 먼저 예약하고 정확히 한 번 실행한다. 그 성공 후 선택 route는 전역 header·platform·route/set·extra-role 검사를 반복하지 않고 같은 validator의 route-local 부분만 실행한다. 공개 전체 parser의 검사와 순서는 유지한다. 선택 의미 검증의 logical 예약 `8·len(raw)+4·len(projection)`도 유지한다.
+
+선택 work는 `N + L + P + F`다. `N`은 `inventoryRouteValidationWork`가 실제 수행하는 각 counting loop 반복을 그 자리에서1씩 charge한 값이며, `L`과 기존 곱 `P`는 route-local validator를 실행하기 전에 예약한다. `F`는 `SvcContext != nil`일 때만 유지하는 기존 `8·len(raw)` 상한이다. SVC의 marshal/strict decode/재귀 context 검사는 구조 상한을 따로 입증하지 않았으므로 byte 예약을 없애지 않는다. ordinary route의 preprocess/accepted 설정은 `role=false`에서 helper 실행 전에 기존처럼 거부한다.
+
+`L`은 아래 항의 합이다. `|s|`는 decoded 문자열의 byte 길이이고 배열 기호의 길이는 원소 수다. map/hash·문자열 검사의 항은 해당 key/입력 전체 길이를 상한으로 사용하며 CPU instruction 수나 regexp 엔진의 내부 상태 전이 수를 뜻하지 않는다.
+
+| 실제 검증 대상 | `L` 예약 항과 대응하는 순회 |
+|---|---|
+| route/workload | 고정2: 각각의 validator 진입 |
+| error node `s` | `1+|s|`: 행 방문과 node regexp; 중복 검색은 `P` |
+| requirement `r` | `1+4·|r.Row|+|route.Route|+7·len(r.Kinds)`: 행, row regexp·prefix·map 조회/삽입, kind마다 행 방문+최대6개 kind 비교 |
+| requirement alternative `a` | `1+4·|a|+|r.Row|`: 행, prefix·suffix regexp·대안 map 조회/삽입 |
+| grammar `g` / query `q` | 각각 `1+|g.SHA256|`, `1+3·|q.ID|+|q.SHA256|`: 행, hash regexp 및 ID 검사·map 조회/삽입 |
+| case `c` | `1+3·|c.ID|+|c.Input.SHA256|+len(c.Edits)`: 행, ID·hash 검사/조회/삽입과 `stepSizes` edit 반복 |
+| case source | `2·checks·|source|`: UTF-8와 SHA-256 순회. `checks`는 `Format==SvcFormat`과 `len(QueryExpect)>0`의 참인 조건 수이며 두 조건이 함께 참이면 두 검사를 모두 계상 |
+| expectation / anchor | expectation당1, anchor당 `1+|Type|`: callback 방문과 `validAnchorType` byte 순회 |
+| query expectation `q` | `2+|q.Query|`: step와 query membership 두 반복 및 key 검사 |
+| sample `s` | `8·(1+|Repository|+|Commit|+|Path|+|License|+|SHA256|+|c.Input.SHA256|)`: repository/commit 검사, path 검사·split·segment 방문, 고정 license 집합·pin 비교의 byte 상한 유지 |
+| coverage `(row, claims)` | `1+|row|+len(claims)`: 행·row map 조회·claim 반복. 정렬 및 반복 검색은 `P` |
+| case alternative `a` | `1+3·|a|+maxRowBytes`: 행, alternative map 조회/중복 검사/삽입 및 coverage row 조회. claim membership는 `P` |
+
+문서 전체의 `reuse_accepted`/`preprocess_cst_expect` arm은 schema gate와 기존 별도 shape 검사를 typed decode 전에 preorder로 적용한다. 이 구간에 한정된 subtree AST·shape 비용과 구간 index를 추가 예약하며, 다른 비선택 subtree의 AST는 만들지 않는다. 실제로 읽거나 보관하지 않은 다른 route의 typed container 비용은 예약하지 않는다. 한 pass의 원장을 새로 만들거나 reset하지 않으며 file/read/work/logical/wall 한도를 바꾸지 않는다. 이 부분 구현과 측정은 ordinary 전체 의미 검증·새 runtime 관측·#362 완료를 뜻하지 않는다.
+
+플랫폼 분할·error-node 중복·coverage의 kinds/expectations/contains 조합·alternatives×coverage 검색과 coverage key 정렬은 byte 선형 예약만으로 상한을 잡지 않는다. 각 입력 길이의 보수적 곱을 overflow-safe하게 추가 work 예약한 뒤 기존 의미 검증기를 호출한다. 반복 coverage와 긴 expectation 목록을 조합해 work를 소진하는 입력은 실제 중첩 순회 전에 `RESOURCE_LIMIT`으로 중단한다.
 
 ### 같은 session의 paging identity 재사용 (Refs #362)
 
