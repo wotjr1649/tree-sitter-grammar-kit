@@ -2,7 +2,9 @@ package kit
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"slices"
@@ -625,6 +627,138 @@ func validateReferenceRegistration(reg QueryReferenceRegistration) *Error {
 	return nil
 }
 
+// Capture the head during syntax preflight; defer its errors until all syntax is checked.
+type referenceHead struct {
+	ref         *instrumentedReference
+	seen, field uint8
+	err, extra  *Error
+}
+
+func (h *referenceHead) visit(dec *jsontext.Decoder, tok jsontext.Token, depth int, name bool) {
+	const doc = "reference-response"
+	if h.err != nil {
+		return
+	}
+	if depth == 0 {
+		if tok.Kind() != '{' {
+			code := "JSON_TYPE"
+			if tok.Kind() == 'n' {
+				code = "JSON_NULL"
+			}
+			h.err = typedJSONError(doc, code, dec)
+		} else {
+			h.seen |= 16
+		}
+		return
+	}
+	if tok.Kind() == '}' {
+		return
+	}
+	if name {
+		switch tok.String() {
+		case "schema":
+			h.field = 1
+		case "status":
+			h.field = 2
+		case "code":
+			h.field = 4
+		case "complete":
+			h.field = 8
+		default:
+			h.field = 0
+			if h.extra == nil {
+				h.extra = typedJSONError(doc, "JSON_UNKNOWN_FIELD", dec)
+			}
+		}
+		return
+	}
+	field := h.field
+	h.field = 0
+	if field == 0 {
+		return
+	}
+	h.seen |= field
+	want := tok.Kind() == '"'
+	if field == 8 {
+		want = tok.Kind() == 't' || tok.Kind() == 'f'
+	}
+	if !want {
+		code := "JSON_TYPE"
+		if tok.Kind() == 'n' {
+			code = "JSON_NULL"
+		}
+		h.err = typedJSONError(doc, code, dec)
+		return
+	}
+	switch field {
+	case 1:
+		h.ref.Schema = tok.String()
+	case 2:
+		h.ref.Status = tok.String()
+	case 4:
+		h.ref.Code = tok.String()
+	case 8:
+		h.ref.Complete = tok.Kind() == 't'
+	}
+}
+
+func (h *referenceHead) check() *Error {
+	if h.err != nil {
+		return h.err
+	}
+	if h.seen == 0 {
+		return jsonError("reference-response", "", io.EOF)
+	}
+	for i, name := range []string{"schema", "status", "code", "complete"} {
+		if h.seen&(1<<i) == 0 {
+			return fail(KindInvalidInput, "JSON_MISSING_FIELD", "reference-response#/"+name, nil)
+		}
+	}
+	return nil
+}
+
+func decodeReferenceRow(data []byte, r *run) (*instrumentedReference, *Error) {
+	return decodeReferenceRowMode(data, r, false)
+}
+
+// decodeReferenceRowMode reads the head while the syntax preflight walks the row and decodes the full row
+// once. With ordinary set (and a shared ledger) the preflight prices the error/buffer terms on one name
+// path and the typed decode prices the values by Go size, as for the other ordinary documents.
+func decodeReferenceRowMode(data []byte, r *run, ordinary bool) (*instrumentedReference, *Error) {
+	const doc = "reference-response"
+	b := r.eligibility
+	if b == nil {
+		b = &eligibilityBudget{r: r, unmetered: true}
+	}
+	compact := ordinary && r.eligibility != nil
+	// The input pass and fixed head/result state are additional to the shared JSON reservation.
+	if e := b.charge(1, uint64(len(data))+1024, doc); e != nil {
+		return nil, e
+	}
+	ref := new(instrumentedReference)
+	head := referenceHead{ref: ref}
+	if _, e := b.reserveJSONContainersVisit(doc, data, 3, 80, compact, head.visit); e != nil {
+		return nil, e
+	}
+	if e := b.charge(4, 0, doc); e != nil {
+		return nil, e
+	}
+	if e := head.check(); e != nil {
+		return nil, e
+	}
+	if ref.Schema != instrumentedReferenceSchema {
+		return ref, nil
+	}
+	if ref.Status == StatusFailed && !ref.Complete && ref.Code != "" {
+		return ref, head.extra
+	}
+	// The same result receives the full typed decode only after the head selects that arm.
+	if e := b.decodeTypedScanned(doc, data, ref, b.unmetered, true, true, compact); e != nil {
+		return nil, e
+	}
+	return ref, nil
+}
+
 func decodeReferenceResponse(data []byte, obs QueryReferenceObservation, reg QueryReferenceRegistration, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
 	return decodeReferenceResponseBound(data, obs, reg.LibrarySHA256, reg.Symbol, instrumentedReferenceCommit, q, queryKnown, versions, r)
 }
@@ -638,52 +772,24 @@ func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, li
 	return decodeReferenceResponseRow(data, obs, librarySHA256, symbol, upstream, q, queryKnown, versions, r, false)
 }
 
-// decodeReferenceResponseRow keeps the shared contract. An ordinary row is preflighted once and
-// the head and full decodes share that preflight; their errors and their order do not change.
+// decodeReferenceResponseRow keeps the shared contract. An ordinary row is priced with the compact
+// accounting (one name-path error reservation, decoded values priced by Go size); every row reads its head
+// during the single syntax preflight and is decoded once, so their errors and their order do not change.
 func decodeReferenceResponseRow(data []byte, obs QueryReferenceObservation, librarySHA256, symbol, upstream string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run, ordinary bool) (*instrumentedReference, string, bool, *Error) {
-	scanned, scanValues := false, uint64(0)
-	decode := func(target any, exact bool) *Error {
-		if !ordinary || r.eligibility == nil {
-			return decodeWitnessDocument("reference-response", data, target, exact, r)
-		}
-		b := r.eligibility
-		if !scanned {
-			// Three passes: preflight, shape walk and unmarshal of this first decode.
-			if e := b.charge(1, uint64(len(data)), "reference-response"); e != nil {
-				return e
-			}
-			values, e := b.reserveJSONContainersCount("reference-response", data, 3, 80, true)
-			if e != nil {
-				return e
-			}
-			scanned, scanValues = true, values
-		} else if e := b.charge(2*scanValues, 2*uint64(len(data)), "reference-response"); e != nil {
-			return e
-		}
-		return b.decodeTypedScanned("reference-response", data, target, b.unmetered, exact, true, true)
-	}
-	var head struct {
-		Schema   string `json:"schema"`
-		Status   string `json:"status"`
-		Code     string `json:"code"`
-		Complete bool   `json:"complete"`
-	}
 	invalid := func(e *Error) (*instrumentedReference, string, bool, *Error) {
 		if e.Kind != KindInvalidInput || r.eligibility != nil {
 			return nil, "", false, e
 		}
 		return nil, "REFERENCE_RESPONSE_INVALID", false, nil
 	}
-	if e := decode(&head, false); e != nil {
+	ref, e := decodeReferenceRowMode(data, r, ordinary)
+	if e != nil {
 		return invalid(e)
 	}
-	if head.Schema != instrumentedReferenceSchema {
+	if ref.Schema != instrumentedReferenceSchema {
 		return nil, "REFERENCE_RESPONSE_SCHEMA", false, nil
 	}
-	if head.Status == StatusFailed && !head.Complete && head.Code != "" {
-		if e := decode(&head, true); e != nil {
-			return invalid(e)
-		}
+	if ref.Status == StatusFailed && !ref.Complete && ref.Code != "" {
 		if !slices.Contains([]string{
 			"ABSOLUTE_REGULAR_INPUT_REQUIRED", "CAPTURE_DUPLICATED", "CAPTURE_ID", "CAPTURE_INDEX", "CAPTURE_LIMIT", "CAPTURE_NODE_FIELDS_DIFFER", "CAPTURE_NODE_UNMAPPED",
 			"CST_LIMIT", "CST_NODE_ID_DUPLICATE", "IDENTIFIER_INVALID", "INPUT_LIMIT", "INPUT_OPEN", "INPUT_READ", "INPUT_STAT", "LANGUAGE_ABI", "LANGUAGE_NULL", "LANGUAGE_SYMBOL",
@@ -691,17 +797,13 @@ func decodeReferenceResponseRow(data []byte, obs QueryReferenceObservation, libr
 			"PARSE_INCOMPLETE", "PARSE_TIME_LIMIT", "PREDICATE_CAPTURE", "PREDICATE_EMPTY", "PREDICATE_OPERANDS", "PREDICATE_OPERATOR", "PREDICATE_OUTSIDE_REFERENCE_SUBSET",
 			"PREDICATE_POINTER", "PREDICATE_QUANTIFIER_OUTSIDE_REFERENCE_SUBSET", "PREDICATE_STEP_KIND", "PREDICATE_STEP_LIMIT", "PREDICATE_STRING", "PREDICATE_UNTERMINATED", "PREDICATE_UTF8",
 			"QUERY_COMPILE", "QUERY_ID_UTF8", "QUERY_INCOMPLETE", "QUERY_UTF8", "SOURCE_UTF8", "SYMBOL_UTF8", "USAGE_LIBRARY_SYMBOL_SOURCE_QUERY_QUERY_ID_LIBRARY_SHA256",
-		}, head.Code) {
+		}, ref.Code) {
 			return nil, "REFERENCE_FAILURE_CODE_INVALID", false, nil
 		}
 		return nil, "", false, nil
 	}
-	var ref instrumentedReference
-	if e := decode(&ref, true); e != nil {
-		return invalid(e)
-	}
 	if r.eligibility != nil {
-		if e := r.eligibility.reserveReference(&ref, versions); e != nil {
+		if e := r.eligibility.reserveReference(ref, versions); e != nil {
 			return nil, "", false, e
 		}
 	}
@@ -817,5 +919,5 @@ func decodeReferenceResponseRow(data []byte, obs QueryReferenceObservation, libr
 			return nil, "REFERENCE_EVALUATION_MISMATCH", false, nil
 		}
 	}
-	return &ref, "", cstEligible, nil
+	return ref, "", cstEligible, nil
 }

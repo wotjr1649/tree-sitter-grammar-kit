@@ -169,7 +169,10 @@ func TestOrdinaryReceiptDecodeAccounting(t *testing.T) {
 	}
 }
 
-// Shared callers keep the original reservation; only the ordinary row path is cheaper.
+// Shared callers use the single-pass row (#385: the head is read during the syntax preflight and the row is
+// decoded once, priced for the whole document); only the ordinary row path additionally gets the compact
+// accounting. The shared ledger therefore must equal the single-pass reference plus reserveReference and the
+// point scan, and must stay below the two-pass reservation it replaced.
 func TestReferenceRowSharedDecodeUnchanged(t *testing.T) {
 	nodes, source := refRowTree(200, "t")
 	data := ordinaryE2ESyntheticResponseWithExpected(t, "q", "(program) @c", "tree_sitter_x", strings.Repeat("0", 64), source, nodes,
@@ -182,7 +185,22 @@ func TestReferenceRowSharedDecodeUnchanged(t *testing.T) {
 	if e != nil || wantErr != nil || code != "" || wantCode != "" || got == nil || want == nil || len(got.Tree.Nodes) != len(want.Tree.Nodes) {
 		t.Fatalf("shared %v %q, ordinary %v %q", e, code, wantErr, wantCode)
 	}
-	// Reference value of the unchanged shared reservation: two full decodes plus reserveReference.
+	// The single-pass reference value: one decodeReferenceRow, then reserveReference and the point scan.
+	single := ordinaryTestBudget(t)
+	decoded, err := decodeReferenceRow(data, single.r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := single.reserveReference(decoded, [][]byte{source}); err != nil {
+		t.Fatal(err)
+	}
+	if err := single.charge(uint64(len(source)), 0, "reference-points"); err != nil {
+		t.Fatal(err)
+	}
+	if shared.logical != single.logical || shared.work != single.work {
+		t.Fatalf("shared reference decode drifted from the single-pass row: logical %d/%d work %d/%d", shared.logical, single.logical, shared.work, single.work)
+	}
+	// The two-pass reservation (head decode, full decode) the single pass replaced.
 	var head struct {
 		Schema   string `json:"schema"`
 		Status   string `json:"status"`
@@ -190,25 +208,26 @@ func TestReferenceRowSharedDecodeUnchanged(t *testing.T) {
 		Complete bool   `json:"complete"`
 	}
 	legacy := ordinaryTestBudget(t)
-	var decoded instrumentedReference
+	var twoPass instrumentedReference
 	if err := legacy.decodeWitnessTyped("reference-response", data, &head, false); err != nil {
 		t.Fatal(err)
 	}
-	if err := legacy.decodeWitnessTyped("reference-response", data, &decoded, true); err != nil {
+	if err := legacy.decodeWitnessTyped("reference-response", data, &twoPass, true); err != nil {
 		t.Fatal(err)
 	}
-	if err := legacy.reserveReference(&decoded, [][]byte{source}); err != nil {
+	if err := legacy.reserveReference(&twoPass, [][]byte{source}); err != nil {
 		t.Fatal(err)
 	}
 	if err := legacy.charge(uint64(len(source)), 0, "reference-points"); err != nil {
 		t.Fatal(err)
 	}
-	if shared.logical != legacy.logical || shared.work != legacy.work {
-		t.Fatalf("shared reference decode changed its ledger: logical %d/%d work %d/%d", shared.logical, legacy.logical, shared.work, legacy.work)
+	if shared.logical >= legacy.logical || shared.work >= legacy.work {
+		t.Fatalf("single pass did not get cheaper than the two-pass reservation: logical %d/%d work %d/%d", shared.logical, legacy.logical, shared.work, legacy.work)
 	}
 	if ordinary.logical >= shared.logical {
-		t.Fatalf("ordinary row did not get cheaper: %d >= %d", ordinary.logical, shared.logical)
+		t.Fatalf("ordinary row did not get cheaper than the shared row: %d >= %d", ordinary.logical, shared.logical)
 	}
+	t.Logf("two-pass logical %d work %d; single-pass (shared) logical %d work %d; ordinary compact logical %d work %d", legacy.logical, legacy.work, shared.logical, shared.work, ordinary.logical, ordinary.work)
 }
 
 // The real TSQL and PostgreSQL rows of the selected SQL shards, with the product accounting.

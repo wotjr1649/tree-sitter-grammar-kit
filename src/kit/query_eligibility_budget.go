@@ -378,13 +378,20 @@ func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) 
 }
 
 func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passes, perValue uint64) *Error {
-	_, e := b.reserveJSONContainersCount(doc, data, passes, perValue, false)
+	_, e := b.reserveJSONContainersVisit(doc, data, passes, perValue, false, nil)
 	return e
 }
 
 // reserveJSONContainersCount also returns the number of values the preflight walked. With pathBound
 // set, the error/buffer reservation prices the names on one path instead of every byte as a name.
 func (b *eligibilityBudget) reserveJSONContainersCount(doc string, data []byte, passes, perValue uint64, pathBound bool) (uint64, *Error) {
+	return b.reserveJSONContainersVisit(doc, data, passes, perValue, pathBound, nil)
+}
+
+// reserveJSONContainersVisit is the one syntax preflight. visit, when set, sees every token at depth 0 and 1
+// (a caller that needs only a document's head reads it here instead of decoding it again) and each such
+// token is charged one unit of work.
+func (b *eligibilityBudget) reserveJSONContainersVisit(doc string, data []byte, passes, perValue uint64, pathBound bool, visit func(*jsontext.Decoder, jsontext.Token, int, bool)) (uint64, *Error) {
 	if b == nil {
 		return 0, nil
 	}
@@ -422,7 +429,8 @@ func (b *eligibilityBudget) reserveJSONContainersCount(doc string, data []byte, 
 		if e := b.r.check(); e != nil {
 			return 0, e
 		}
-		kind, count := dec.StackIndex(dec.StackDepth())
+		depth := dec.StackDepth()
+		kind, count := dec.StackIndex(depth)
 		if dec.StackDepth() == 0 && count > 0 {
 			if _, err := dec.ReadToken(); err == io.EOF {
 				break
@@ -446,10 +454,17 @@ func (b *eligibilityBudget) reserveJSONContainersCount(doc string, data []byte, 
 				return 0, fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
 			}
 		}
-		if _, err := dec.ReadToken(); err == io.EOF {
+		token, err := dec.ReadToken()
+		if err == io.EOF {
 			break
 		} else if err != nil {
 			return 0, jsonError(doc, "", err)
+		}
+		if visit != nil && depth <= 1 {
+			if e := b.charge(1, 0, doc); e != nil {
+				return 0, e
+			}
+			visit(dec, token, depth, name)
 		}
 	}
 	work, e := eligibilityProduct(doc, values, passes)

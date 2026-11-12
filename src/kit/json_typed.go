@@ -158,6 +158,12 @@ func (b *eligibilityBudget) decodeTypedDocument(doc string, data []byte, target 
 	return b.decodeTypedScanned(doc, data, target, witness, exact, legacyShapeLimit, false)
 }
 
+// decodeTypedShape decodes a document whose syntax preflight was already reserved by the caller, with the
+// full per-value accounting.
+func (b *eligibilityBudget) decodeTypedShape(doc string, data []byte, target any, witness, exact, legacyShapeLimit bool) *Error {
+	return b.decodeTypedScanned(doc, data, target, witness, exact, legacyShapeLimit, false)
+}
+
 // decodeTypedScanned decodes a document whose syntax preflight was already reserved.
 // With compact set, the caller also reserved the whole-document error/buffer terms once and the
 // decoded values are priced here by Go size: 8 times each visited value's type size (slice growth
