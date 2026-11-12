@@ -292,6 +292,10 @@ CLI는 최대9개 trust 문서의 열린 file identity도 `QualificationQuerySem
 
 Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 복사하지 않는다. 알려진 host rejection과 semantic FAIL·최초 code는 typed 취소·resource·I/O 중단 뒤에도 보존한다. CLI는 이 r10 FAIL report를 출력하면 중단의 원래 error kind와 execution status를 유지하면서 exit1을 우선한다. 알려진 FAIL이 없으면 기존 typed exit를 따르고, report 쓰기 또는 publication 실패는 exit4다. Nil opt-in의 r9 exit는 바뀌지 않는다.
 
+## #370 V2-B1 역사 reference 결과 identity
+
+직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.
+
 ## #362 full-scope registry P0 membership contract
 
 P0 구현은 `src/internal/queryregistry`에 한정되며 public `kit` API를 추가하지 않는다. 고정 manifest는 `go run ./src/dev/query-registry -root . -write`로 명시 생성하고 일반 validation은 writer를 호출하지 않는다. Root selector는 pinned qualification 원본의 route/case/query/source/edit를 참조해 별도 case catalogue를 복제하지 않는다. Registry selection은 결과 취득 전에 caller가 고정한 registry hash에 결속한다. Registry 안의 ID namespace는 membership 원문에서 계산하고 registry 자기 hash를 포함하지 않는다. 검증은 고정 qualification/slot 원본을 독립적으로 전개한 ID 집합과 registry의 exact set을 비교한다. Shard를 소비하는 후속 결과는 caller가 pin한 같은 registry와 실제 consumed ID·coordinate·shard 집합에 결속해야 하며, 중복·누락·미등록 tuple을 count 또는 digest 일치로 통과시키지 않는다.
