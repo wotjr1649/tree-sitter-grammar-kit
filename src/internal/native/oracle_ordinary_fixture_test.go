@@ -45,6 +45,8 @@ func TestOracleOrdinaryOwnedFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := oracleRequest(t, profile, root, filepath.Join(dir, "r8"))
+	// An empty cache makes this run a build cache miss; the kit reader test must accept that evidence.
+	req.BuildCache = os.Getenv("TSGK_ORDINARY_OWNED_BUILD_CACHE")
 	req.Ordinary = &OrdinaryRecordingRequest{
 		Inputs:       kit.OrdinaryPlanRequest{Profile: []byte(`{"fixture":"planning-profile"}`), Assets: []byte(`{"fixture":"asset-registration"}`)},
 		Registration: []byte(`{"fixture":"registration"}`),

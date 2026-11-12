@@ -1,7 +1,10 @@
 package kit
 
 import (
+	"encoding/json"
 	"io/fs"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 
@@ -59,6 +62,7 @@ func testOrdinaryNativeClosureOwnedFixture(t *testing.T, fixture ordinaryOwnedRe
 	if e != nil || !passed || len(findings) != 0 {
 		t.Fatalf("owned r8 native closure: pass=%v err=%v findings=%+v", passed, e, findings)
 	}
+	testOrdinaryNativeClosureBuildReuse(t, fixture, set, check)
 	approvedCohort := fixture.s.cohorts[ordinary.SemanticCohort]
 	mutated := approvedCohort
 	mutated.SourceRevision = strings.Repeat("b", 40)
@@ -102,4 +106,54 @@ func containsOrdinaryFinding(findings []Finding, code string) bool {
 		}
 	}
 	return false
+}
+
+// testOrdinaryNativeClosureBuildReuse replaces the producer's build cache record in the owned r8 with each
+// reuse shape and requires the reader to accept exactly the miss, hit and no-reuse shapes.
+func testOrdinaryNativeClosureBuildReuse(t *testing.T, fixture ordinaryOwnedReaderFixture, set *ordinaryGuardedSet, check func(*ordinaryGuardedSet) (bool, *Error, []Finding)) {
+	t.Helper()
+	const full = "oracle/capture/build.json"
+	original := fixture.s.snapshot.files[full]
+	ownedBuild, originalVerified := fixture.s.owned[full], fixture.s.snapshot.verifiedMembers[full]
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(original, &doc); err != nil {
+		t.Fatal(err)
+	}
+	steps := string(doc["steps"])
+	cases := []struct {
+		name, steps, reuse string
+		reject             bool
+	}{
+		{"miss", steps, `{"key":"k","hit":false,"source_steps":[]}`, false},
+		{"hit", `[]`, `{"key":"k","hit":true,"source_steps":` + steps + `}`, false},
+		{"miss with source steps", steps, `{"key":"k","hit":false,"source_steps":` + steps + `}`, true},
+		{"miss with null source steps", steps, `{"key":"k","hit":false,"source_steps":null}`, true},
+		{"miss without steps", `[]`, `{"key":"k","hit":false,"source_steps":[]}`, true},
+		{"hit with steps", steps, `{"key":"k","hit":true,"source_steps":` + steps + `}`, true},
+		{"hit with null source steps", `[]`, `{"key":"k","hit":true,"source_steps":null}`, true},
+	}
+	for _, c := range cases {
+		mutated := maps.Clone(doc)
+		mutated["steps"], mutated["reuse"] = json.RawMessage(c.steps), json.RawMessage(c.reuse)
+		data, err := json.Marshal(mutated)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pin := ReplayMember{Path: full, Role: "build", Bytes: uint64(len(data)), SHA256: digestHex(data)}
+		fixture.s.owned[full] = eligibilityMember{NodeID: ownedBuild.NodeID, Member: pin}
+		fixture.s.snapshot.verifiedMembers[full], fixture.s.snapshot.files[full] = pin, data
+		candidate := *set
+		candidate.Manifest.Members = slices.Clone(set.Manifest.Members)
+		for i := range candidate.Manifest.Members {
+			if candidate.Manifest.Members[i].Path == "capture/build.json" {
+				candidate.Manifest.Members[i].Pin = OrdinaryPin{Path: "capture/build.json", Bytes: pin.Bytes, SHA256: pin.SHA256}
+			}
+		}
+		passed, e, findings := check(&candidate)
+		if e != nil || c.reject != containsOrdinaryFinding(findings, "ORDINARY_BUILD_STEPS") || c.reject == passed || (!c.reject && len(findings) != 0) {
+			t.Errorf("%s: reject=%v pass=%v err=%v findings=%+v", c.name, c.reject, passed, e, findings)
+		}
+	}
+	fixture.s.owned[full] = ownedBuild
+	fixture.s.snapshot.verifiedMembers[full], fixture.s.snapshot.files[full] = originalVerified, original
 }
