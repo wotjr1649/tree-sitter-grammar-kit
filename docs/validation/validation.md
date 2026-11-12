@@ -7,6 +7,13 @@
 - 의도적 mutant(segment 재계산 비교·history hash 비교·edit 끝점 비교·negative verdict 비교·관측 `null` 규칙·fold의 FAIL 집계·fold의 미등록 ID 검사 제거)는 각각 위 시험이 실패한다.
 - 아직 검증하지 않는 것: 실제 C# grammar의 inline tree와 두 query(BLOCKED), Linux 실행, reference 대조, replay·r9 경유, 외부 승인·current cohort.
 
+## #362 Windows large 독립 등록 검증 (범위 6)
+
+- `kit` 시험(native 없음, `TestLarge*`): asset의 bytes·SHA-256과 의무 종류별 개수(39), 손으로 센 tiny template의 CST 행(57 node)과 byte 위치, 행 encoding, template 재도출이 봉인 asset과 같음(22m의 node·page digest·footer·occurrence), 오류 복구 fixture의 `NOT_DERIVABLE` 거부, 도출값 변조 6종 불일치를 확인한다. 반례는 CST page 누락·순서 변경·중복·digest 위조·범위 위조·footer 개수·digest·page chain 위조·잘린 session의 완결 위장·추가 page·다른 session·두 번째 parse, occurrence 누락·중복·순서 변경·type·범위·point 위조·모르는 이름·절단, over-limit control의 PASS/완료/다른 code 전환, fold의 미등록·중복·code 규칙 위반과 삭제 시 UNPROCESSED이며 모두 거부한다.
+- `src/dev/large-api` 시험(실제 C# grammar, Windows, `TSGK_LARGE_CSHARP_GRAMMAR`·`TSGK_NATIVE_RUNTIME`·`TSGK_NATIVE_CC`): `TestLargeScopeNative`는 case마다 한 process씩 `-run 'TestLargeScopeNative/^<case>$'`로 실행하며 등록 closure와 byte 단위로 같은 grammar만 받는다. `TestLargeScopeFold`는 기록한 judgments를 전체 분모에 fold한다.
+- mutant(page 순서·footer digest·control PASS 거부·occurrence digest·fold의 BLOCKED VERIFIED 거부·추가 page·occurrence 순서·절단 완결 위장의 8개)는 컴파일된 뒤 각각 위 반례 시험이 실패한다.
+- 아직 검증하지 않는 것: 오류 복구 fixture 두 개의 CST·occurrence(BLOCKED), `cs-large-32mib-errors`의 4 GiB 이하 실행(BLOCKED), Linux 실행, reference 대조, replay·r9 경유, 외부 승인·current cohort.
+
 ## #362 predicate 의미 의무·거부 정책 검증 (범위 3)
 
 - `kit` 시험(native 없음): `TestPredicateExpectedAssetBindsRegistryAndRoster`는 asset의 bytes·SHA-256과 registry 결속, 20 ID 순서를 고정한다. `TestPredicateExpectedRejectsForgeries`는 의무 삭제·순서 교환·중복·source/query 치환·`null`(evaluated·structural·metadata)·빈 predicate로의 재분류(`STRUCTURAL_ONLY`)·match 분할·모르는 capture 이름·잘못된 CST·registry 변경·unknown member를 거부한다. `TestPredicateControlRowsRejectForgedOutcomes`는 47행 각각에 대해 status PASS 전환·code 변경·`EVALUATED` 전환·partial 반전·`null`→`[]`·stream 채택·structural 손실이 모두 거부됨을 확인한다. `TestPredicateScopeFold…`는 Windows 20+47 VERIFIED, Linux 20+47 BLOCKED, 삭제 시 UNPROCESSED, 미등록·중복·좌표 교체·subject 재분류·code 없는 FAILED/VERIFIED 거부를 확인한다.

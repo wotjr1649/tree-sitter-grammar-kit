@@ -435,6 +435,26 @@ P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, rou
 
 **검증.** `kit.ParseSvcExpected`는 asset을 세 pin과 inventory의 69 case·41 edit·110 step·두 query·CodeBehind 선언에 결속한다. `kit.VerifySvcExpected`는 기존 `ApplyEdits`와 `ObserveServiceHostWithContext`, `svcVerdict`로 의무를 재계산해 독립 expected와 대조한다. `kit.FoldSvcScope`는 host별 `required = verified + failed + blocked + unprocessed`를 유지한다.
 
+## #362 Windows large 사례의 독립 등록과 paging (범위 6)
+
+P0 registry의 `n461-large` extra role은 Windows 전용 workload 두 개다. `s06-large`(`native-query-large`, query `facts.declarations`, 정상 case 3개 `cs-large-22m`·`cs-large-8m-errors`·`cs-large-32mib-errors`)와 `s06-large-over`(query `all.nodes` = `_ @node`, case `cs-large-8m-over-captures`, 기대 `RESOURCE_LIMIT`)다. 상위 의무 4개(`LARGE_WORKLOAD_POSITIVE` 3, `LARGE_WORKLOAD_CONTROL` 1)는 P0에 등록돼 있고 node·occurrence·page·footer 하위 분모는 `missing_scopes`의 `large-node-occurrence-page-footer`로 남아 있었다. 이 숫자는 `qualification-c1.json`·`native-large-fixtures.json`·registry에서 서로 같다(차이 없음). 원문 fixture는 `header + block({N}을 0..repeat-1로 치환) + footer`로 생성되며 크기와 SHA-256이 identity다. P0 registry와 ID, large 연산 한도(`native-query-large`: 입력 33,554,432 bytes, node 25,000,000, 출력 16,777,216 bytes, match·capture 1,000,000, query 20초, parse wall 90초, memory 8 GiB HARD)와 small 한도는 바꾸지 않는다.
+
+별도 추적 계약 [`query-large-expected-r1.json`](../../src/contracts/query-large-expected-r1.json)(4,966 B, SHA-256 `2bf95de58bb9812f76f14b54f757c6c24efb43d52f652213b7f0431e1801b583`)이 하위 분모와 독립 expected를 담는다. registry·qualification inventory·`native-large-fixtures.json`의 정확한 bytes/SHA-256에 결속되며 큰 expected 본문은 저장하지 않는다. 원문 template은 기존 fixture 파일에 있고, 도출 규칙은 `src/kit/query_large_template.go`이며, 계약에는 page digest·footer 값·occurrence digest만 둔다.
+
+**독립 도출.** C# grammar(tree-sitter-c-sharp 0.23.5의 `grammar.json`, 등록된 qualification closure의 `parser.c` SHA-256 `b1a77b75…1dbb`)의 규칙에서, 유효한 template이 쓰는 정확한 부분집합(namespace·class·field·method·지역 선언·덧셈 대입·return)만 직접 해석하는 손으로 쓴 parser가 native 출력 없이 전체 CST를 도출한다. 해석하지 못하는 입력은 추측하지 않고 `LARGE_TEMPLATE_NOT_DERIVABLE`로 거부한다. 따라서 `x = x + ;`를 포함한 `cs-large-8m-errors`·`cs-large-32mib-errors`는 오류 복구 tree가 생성된 parse table에 의존하므로 도출할 수 없고, 두 fixture의 CST·occurrence 의무는 등록하되 BLOCKED다(page 수를 모르므로 종류마다 자리표시 의무 1개). 도출 가능한 `cs-large-22m`은 node 11,463,151개·page 12개·occurrence 93,045개(page 10개)다.
+
+**canonical CST row.** preorder 한 node가 한 행이며 big endian으로 `u32 index, i32 parent(-1=root), u32 start_byte, end_byte, start_row, start_col, end_row, end_col, u8 flags(named 1, extra 2, missing 4, error 8, has_error 16), u16 길이+type, u16 길이+field`를 이어 붙인다. 한 page는 연속 1,000,000행이고 page digest는 그 bytes의 SHA-256이다. 완결 footer(`tsgk-large-cst-footer/r1`)는 마지막 page에만 있으며 `nodes`, `pages`, `row_bytes`, `max_depth`, 전체 행의 `all_rows_sha256`, page digest들(각각 `\n`을 붙여)의 `pages_sha256`, `has_error`를 담는다. native 쪽은 개발용 `src/dev/large-api/session-cst.c`(한 process·한 parse·연속 page command, 기존 session wrapper와 같은 framing)가 같은 행을 만든다.
+
+**occurrence.** `facts.declarations`의 capture는 같은 도출 tree에서 namespace·class·method·field 선언마다 패턴별로 도출한다(블록당 15개). 런타임 capture 순서는 도출하지 않고, page 10,000 capture 단위의 연속성·개수·시작 byte 비감소·등록된 capture 이름을 page마다, 전체 개수·이름별 개수·정렬한 canonical record의 multiset digest를 footer로 확인한다. 순서 자체의 독립 기대값은 없다.
+
+**over-limit control.** 기대는 정확한 case 상태 `RESOURCE_LIMIT`와 code `OUTPUT_LIMIT`다. `_ @node`는 모든 node를 capture하므로 query는 capture 1,000,000개에서 `MATCH_LIMIT`로 멈추지만, 보존한 capture 한 행이 최소 25 bytes라 1,000,000행이 출력 한도 16,777,216 bytes를 넘어 driver가 응답 전체를 `RESOURCE_LIMIT/OUTPUT_LIMIT`로 대체한다. 이 거부는 `semantic_pass:false`이며 의미 PASS로 바뀌지 않는다(fold가 별도 종류 `LARGE_CONTROL`로 센다).
+
+**의무(Windows).** `LARGE_SOURCE` 3, `LARGE_STATUS` 3, `LARGE_CST_PAGE` 14(22m 12 + 자리표시 2), `LARGE_CST_FOOTER` 3, `LARGE_OCC_PAGE` 12(22m 10 + 자리표시 2), `LARGE_OCC_FOOTER` 3, `LARGE_CONTROL` 1, 합계 39다. Linux·macOS는 원래 사유 "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"의 N/A로 보존되며 분모에 넣지 않는다.
+
+**검증.** `kit.ParseLargeExpected`는 asset을 세 pin·3+1 case·크기·SHA-256·syntax 기대·query·N/A 사유에 결속한다. `kit.VerifyLargeCST`는 page 순서·중복·누락·범위·digest와 footer 개수·digest·완결 위장을, `kit.VerifyLargeOccurrences`는 capture page와 footer를, `kit.VerifyLargeControl`은 정확한 거부 code를 확인한다. `kit.FoldLargeScope`는 `required = verified + failed + blocked + unprocessed`를 유지하며 FAIL을 우선한다. 이 fold는 scope-local이며 P0 root(`INCOMPLETE`, `full_scope_complete=false`)를 바꾸지 않는다.
+
+**현재 실행 범위.** 등록된 C# grammar로 Windows에서 실행한 결과, `cs-large-22m`의 CST page 12개와 footer, occurrence page 10개와 footer, source, status가 독립 expected와 일치했고 control은 정확한 code로 거부됐다. `cs-large-8m-errors`는 source·status(COMPLETED, syntax ERROR)만 검증되고 CST·occurrence는 BLOCKED다. `cs-large-32mib-errors`는 4 GiB HARD 한도에서 `MEMORY_LIMIT`로 끝나 status가 BLOCKED이고 source만 검증된다(등록된 large budget은 8 GiB). 완료는 BLOCKED이며 `full_scope_complete=false`다. Linux 실행, reference 독립 대조, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
+
 ## #362 ordinary 사전 등록과 capacity plan P2-A
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
