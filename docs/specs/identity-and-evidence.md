@@ -316,7 +316,7 @@ Typed coverage는 structural, predicate-positive와 expected-rejection을 분리
 
 이 P0 계약은 r9 baseline과 small-only r10의 schema·판정·scope 의미를 변경하지 않으며 full-scope result schema, public stored replay, CLI 또는 CI completion gate를 추가하지 않는다. 이후 결과 revision과 reducer는 별도 변경에서 정하고, caller의 사전 registry 선택과 사후 승인 문서를 분리해야 한다. Caller 문서 자체의 hash 일치만으로 독립 검토나 실행을 증명하지 않는다.
 
-#362 범위 7의 fan-in은 새 revision `tsgk-query-scope-result/r1`(scope별 입력)과 `tsgk-query-completion/r1`(completion 결과)을 둔다. 두 이름은 기존 r9 ordinary replay, `tsgk-query-semantics-result/r2`, `tsgk-qualification-result/r10`, P0 `Fold`와 겹치지 않고 그 의미·판정·scope를 바꾸지 않으며, 구형 결과는 새 schema 문자열로 위장해도 거부된다. 새 revision부터 scope 결과의 presence(없는 scope는 BLOCKED)·integrity(registry pin, 분모 pin, 결과 digest, 증거 pin)·합산식을 검사하고 FAIL은 BLOCKED보다 앞선다. 모든 의무가 VERIFIED여도 large 분모가 미등록이므로 이 revision은 `COMPLETE`가 될 수 없다. 규칙과 한계는 [fan-in 계약](instrumented-query-reference.md#362-scope별-결과의-fan-in과-completion-gate-범위-7)에 있다.
+#362 범위 7의 fan-in은 새 revision `tsgk-query-scope-result/r1`(scope별 입력)과 `tsgk-query-completion/r1`(completion 결과)을 둔다. 두 이름은 기존 r9 ordinary replay, `tsgk-query-semantics-result/r2`, `tsgk-qualification-result/r10`, P0 `Fold`와 겹치지 않고 그 의미·판정·scope를 바꾸지 않으며, 구형 결과는 새 schema 문자열로 위장해도 거부된다. 새 revision부터 scope 결과의 presence(없는 scope는 BLOCKED)·integrity(registry pin, 분모 pin, 결과 digest, 증거 pin)·합산식을 검사하고 FAIL은 BLOCKED보다 앞선다. large scope는 P0의 상위 의무 4개 대신 large 계약의 하위 의무 39개(windows)를 센다(같은 증거를 두 번 세지 않는다). Linux·macOS의 N/A와 사유는 결과에 남는다. 오류 복구 fixture 둘의 분모가 아직 미등록이므로 이 revision은 `COMPLETE`가 될 수 없다. 규칙과 한계는 [fan-in 계약](instrumented-query-reference.md#362-scope별-결과의-fan-in과-completion-gate-범위-7)에 있다.
 
 ## #362 ordinary reader identity·approval·partial fold P2-C boundary
 

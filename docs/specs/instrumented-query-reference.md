@@ -448,7 +448,7 @@ P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, rou
 | 분모 pin preimage | `tsgk-query-scope-denominator/r1` |
 | scope 결과 digest preimage | `tsgk-query-scope-result/r1` |
 
-**scope 결과의 모양.** `scope`(`ordinary`·`predicate`·`svc`·`large`), `registry_sha256`, `denominator_sha256`(종류·host·required 행의 digest), `assets`(VERIFIED가 기대는 증거 pin), kind×host `counters`(`required = verified + failed + blocked + unprocessed`), `first_failure`(scope 소비 순서의 첫 FAILED code), `result_sha256`(위 전부의 digest)이다. Large scope 결과는 아직 없으며, predicate·SVC fold와 같은 모양(kind×host counter, 첫 FAIL code, 증거 pin)으로 들어온다고 **가정**한다. 모양이 다르면 이 revision의 입력으로 받지 않고 새 revision에서 분모와 함께 등록한다.
+**scope 결과의 모양.** `scope`(`ordinary`·`predicate`·`svc`·`large`), `registry_sha256`, `denominator_sha256`(종류·host·required 행의 digest), `assets`(VERIFIED가 기대는 증거 pin), kind×host `counters`(`required = verified + failed + blocked + unprocessed`), `first_failure`(scope 소비 순서의 첫 FAILED code), `result_sha256`(위 전부의 digest)이다. large scope 결과는 `LargeScopeResult`가 `FoldLargeScope`의 하위 의무 집계(종류 7개, windows)에서 만들며 predicate·SVC와 같은 모양(kind×host counter, 첫 FAIL code, 증거 pin = `query-large-expected-r1.json`)이다. 모양이 다르면 이 revision의 입력으로 받지 않는다.
 
 **분모는 scope 결과가 아니라 pin된 원본에서 다시 유도한다.**
 
@@ -457,30 +457,36 @@ P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, rou
 | ordinary | 검증한 P0 registry의 `STRUCTURAL_ONLY` 좌표 | `STRUCTURAL_ONLY` × 두 host | 53,104 | 106,208 |
 | predicate | P0 registry의 `PREDICATE_REQUIRED`·`EXPECTED_REJECTION` | 20 + 47 × 두 host | 67 | 134 |
 | SVC | `query-svc-expected-r1.json`의 `Obligations()` | 일곱 종류 × 두 host | 509 | 1,018 |
-| large | P0 registry의 large 알려진 상위 의무 | positive 3 + control 1, windows만 | — | 4 |
+| large | `query-large-expected-r1.json`의 `Obligations()`(P0 registry의 large 좌표 4개에 결속) | 하위 일곱 종류(source 3, status 3, CST page 14, CST footer 3, occurrence page 12, occurrence footer 3, control 1), windows만 | — | 39 |
 
-전체는 107,364(windows 53,684, linux 53,680)다. P0의 알려진 합계 106,346에 SVC 확장 1,018을 더한 값이며 large node/occurrence/page/footer 하위 분모는 포함하지 않는다.
+전체는 107,399(windows 53,719, linux 53,680)다. P0의 알려진 합계 106,346에서 large 상위 의무 4를 빼고 SVC 확장 1,018과 large 하위 의무 39를 더한 값이다. Linux·macOS의 large는 N/A이므로 분모에 없다.
 
 **fan-in 규칙.**
 
 1. 먼저 registry를 호출자가 사전에 고른 SHA-256으로 검증한다. 분모는 이 registry와 SVC asset에서만 유도한다.
 2. 입력에 없는 scope는 **absent**다. 0으로 세지 않고 그 scope의 모든 의무를 BLOCKED로 둔다(`QUERY_SCOPE_RESULT_ABSENT`). 중복 scope(`QUERY_SCOPE_DUPLICATE`)와 모르는 scope(`QUERY_SCOPE_UNKNOWN`)는 거부한다.
-3. 있는 scope 결과는 이 순서로 검사한다: schema(`QUERY_SCOPE_SCHEMA`), registry pin(`…_REGISTRY_PIN`), 분모 pin(`…_DENOMINATOR_PIN`), 행 수·kind·host·required의 정확한 일치(`…_DENOMINATOR`, 행 누락·`required` 0·축소 모두), 행마다 합산식(`…_SUM`), FAILED가 있으면 `first_failure`가 있고 없으면 비어 있음(`…_FAILURE_CODE`), 자기 digest(`…_RESULT_DIGEST`), 호출자가 고른 결과 digest pin(`…_RESULT_PIN`, pin이 없으면 `…_RESULT_UNPINNED`), VERIFIED가 있으면 호출자가 고른 증거 pin(`…_ASSET_PIN`).
+3. 있는 scope 결과는 이 순서로 검사한다: schema(`QUERY_SCOPE_SCHEMA`), registry pin(`…_REGISTRY_PIN`), 분모 pin(`…_DENOMINATOR_PIN`), 행 수·kind·host·required의 정확한 일치(`…_DENOMINATOR`, 행 누락·`required` 0·축소 모두), 행마다 합산식(`…_SUM`), 계약이 BLOCKED로 등록한 의무는 VERIFIED가 될 수 없음(`…_BLOCKED_VERIFIED`, 호출자가 pin을 고르더라도 거부), FAILED가 있으면 `first_failure`가 있고 없으면 비어 있음(`…_FAILURE_CODE`), 자기 digest(`…_RESULT_DIGEST`), 호출자가 고른 결과 digest pin(`…_RESULT_PIN`, pin이 없으면 `…_RESULT_UNPINNED`), VERIFIED가 있으면 호출자가 고른 증거 pin(`…_ASSET_PIN`).
 4. 판정은 counter에서만 유도한다. 하나라도 FAILED면 FAIL이고 code는 scope 소비 순서(ordinary → predicate → svc → large)의 첫 `first_failure`다. 이미 확인된 FAIL은 다른 scope의 결함, absent scope, BLOCKED·UNPROCESSED보다 앞선다. 결함이 있으면 결과는 FAIL이며 그 전에 확인된 첫 FAIL code를 보존하고 오류를 함께 돌려준다.
 5. host별·scope별·전체 모두 `required = verified + failed + blocked + unprocessed`를 계산해 대조한다.
 
-**completion gate.** `COMPLETE`는 모든 scope가 present이고 모든 의무가 VERIFIED이며 미등록 scope가 없을 때만이다. 하나라도 BLOCKED·UNPROCESSED면 `BLOCKED`(absent scope는 `QUERY_SCOPE_RESULT_ABSENT`, 그 밖의 미완료는 `QUERY_COMPLETION_INCOMPLETE`), FAILED면 `FAIL`이다. 이 revision의 plan에는 large node/occurrence/page/footer 분모가 **미등록 scope**(`large-node-occurrence-page-footer`)로 남아 있으므로 모든 의무가 VERIFIED여도 `QUERY_COMPLETION_UNREGISTERED_SCOPE`로 BLOCKED다. 곧 이 revision의 실제 결과는 `COMPLETE`가 될 수 없다. 그 분모를 등록하는 변경은 새 revision을 만든다.
+**completion gate.** `COMPLETE`는 모든 scope가 present이고 모든 의무가 VERIFIED이며 미등록 scope가 없을 때만이다. 하나라도 BLOCKED·UNPROCESSED면 `BLOCKED`(absent scope는 `QUERY_SCOPE_RESULT_ABSENT`, 그 밖의 미완료는 `QUERY_COMPLETION_INCOMPLETE`), FAILED면 `FAIL`이다. 이 revision의 plan에는 large 오류 복구 fixture 둘의 node/occurrence/page/footer 분모가 **미등록 scope**(`large-error-recovery-node-occurrence-page-footer`)로 남아 있으므로 모든 의무가 VERIFIED여도 `QUERY_COMPLETION_UNREGISTERED_SCOPE`로 BLOCKED다. 곧 이 revision의 실제 결과는 `COMPLETE`가 될 수 없다(그 둘의 의무는 계약이 BLOCKED로 등록해 VERIFIED가 될 수도 없다). 그 분모를 등록해 gate를 여는 변경은 새 revision을 만든다.
 
 P0 `missing_scopes` 네 항목의 처리는 다음과 같다.
 
 | P0 missing scope | 이 revision에서 |
 |---|---|
 | `svc-segment-range-history-codebehind` | SVC 확장 분모(`query-svc-expected-r1.json`)가 등록하므로 SVC scope의 의무로 센다 |
-| `large-node-occurrence-page-footer` | 미등록으로 남고 gate를 닫는다 |
+| `large-node-occurrence-page-footer` | 부분만 덮는다. `query-large-expected-r1.json`(registry·inventory·fixture inventory의 pin에 결속)이 source·status·control 전체와 도출 가능한 `cs-large-22m`의 CST·occurrence page·footer를 등록하므로 그 의무를 large scope의 분모로 센다. 오류 복구 fixture 둘의 실제 node·page 수는 모르므로 종류마다 BLOCKED 자리표시 1개만 등록돼 있고, 그 분모는 `large-error-recovery-node-occurrence-page-footer`로 미등록에 남아 gate를 닫는다 |
 | `independent-assets` | VERIFIED 개수는 호출자가 사전에 고른 증거 pin과 결속된 scope 결과에서만 받는다 |
 | `current-cohort-approval-replay` | ordinary는 shard 결과의 외부 binding(`binding_valid`)이 참일 때만 VERIFIED를 받고, 그 밖의 scope는 위 증거 pin에 의존한다 |
 
 **ordinary의 입력.** `OrdinaryScopeResult`는 저장된 `OrdinaryQuerySemanticsResult`(r2) shard들을 받는다. 저장 결과는 registry pin을 싣지 않으므로 선택된 모든 ID가 이 registry namespace의 `STRUCTURAL_ONLY` ID이고 정확히 한 shard에만 있을 때만 받는다(`…_UNDECLARED`, `…_OVERLAP`). 어느 shard도 고르지 않은 ID는 absent라 BLOCKED, 고르고 판정이 없는 ID는 UNPROCESSED다. 외부 binding 없는 shard의 VERIFIED는 거부하고(`…_ORDINARY_UNBOUND`), tuple이 FAILED를 싣지 않은 shard 수준 FAIL은 그 shard의 VERIFIED가 아닌 ID를 같은 code의 FAILED로 유지한다(BLOCKED로 낮추지 않는다).
+
+**large의 상위·하위 의무.** P0 registry의 large 좌표 4개(`LARGE_WORKLOAD_POSITIVE` 3, `LARGE_WORKLOAD_CONTROL` 1)와 large 계약의 하위 의무 39개는 **같은 증거의 두 수준**이다. 상위 positive 좌표의 기대는 `expected_status: COMPLETED`뿐이며 하위 `LARGE_STATUS`가 그것(과 syntax 판정)을 판정하고, 상위 control 좌표는 하위 `LARGE_CONTROL`이 판정한다. 하위 의무(source·CST page·footer·occurrence page·footer)는 같은 case의 상위 좌표를 더 잘게 나눈 것이다. 그래서 fan-in은 **상위 4개를 하위 39개로 대체**하고 둘 다 세지 않는다(둘 다 세면 같은 case를 두 번 세어 분모가 43이 된다). 대체가 손실 없도록 plan은 large 계약의 case 3개와 control이 registry의 large 좌표(set·case·query·host)와 하나씩 정확히 일치할 때만 만들어진다(`QUERY_COMPLETION_LARGE_BINDING`). 상위 종류의 행을 싣거나 상위+하위를 함께 싣거나 예전 4개 분모를 싣는 large 결과는 분모 검사로 거부된다. 하위 의무 중 계약이 BLOCKED로 등록한 것(오류 복구 fixture의 CST·occurrence 8개)은 종류별로 VERIFIED의 상한을 정해 fan-in이 거부한다. 나머지 BLOCKED(`cs-large-32mib-errors`의 status)는 판정 결과이고 이미 pin된 결과 digest에 담긴다.
+
+**large의 N/A.** large 계약의 Linux·macOS(`linux-amd64`, `darwin-arm64`)는 등록된 사유("NET461 workload is Windows-hosted ...")와 함께 N/A이며 분모에 없다. fan-in은 이 사유를 scope 결과가 아니라 pin된 large 계약에서 읽어 `QueryCompletionScope.not_applicable`에 항상 싣는다(large scope가 absent여도 같다). N/A host의 행을 싣는 scope 결과는 분모 검사로 거부되고, 저장된 completion 결과의 decoder는 large의 N/A 목록이 정확히 두 host이고 사유가 비어 있지 않으며 large counter가 windows 행뿐임을 요구한다(사유 문구 자체는 저장 결과만으로 재검증할 수 없다).
+
+**revision 판단(r1 유지).** large 연결은 `tsgk-query-scope-result/r1`·`tsgk-query-completion/r1`의 입력 모양(large 종류 7개, N/A 목록)과 large 분모(4 → 39)를 바꾼다. 이 두 revision은 draft PR #413에만 있고 어떤 branch에도 병합되지 않았으며 저장된 결과·고정 digest·문서화된 소비자가 없다. 따라서 새 의미를 r1에 두고 r2를 만들지 않는다. 구형 revision(r9·r10·P0 `Fold`·ordinary r2)은 바꾸지 않았다. **#413이 병합되거나 r1 결과가 어디에 저장되기 시작하면 같은 변경은 r2가 필요하다.** r1은 어느 쪽이든 `COMPLETE`가 될 수 없다는 성질을 유지한다(미등록 scope가 남는다). gate를 여는 변경은 새 revision이다.
 
 **한계.** scope 결과는 그것을 만든 verifier의 저장된 주장이며 이 fan-in은 존재·무결성·산술을 검사한다. 실행 진본이나 증거 재계산을 인증하지 않는다. 호출자가 결과 digest와 증거 pin을 둘 다 바꿔 넣으면 구별할 수 없다. 저장된 `QueryCompletionResult`의 `DecodeQueryCompletionResult`는 counter에서 모든 합산과 판정을 다시 유도해 모순된 저장 결과(예: BLOCKED를 COMPLETE로 바꾼 것)를 거부하지만, scope 증거를 다시 계산하지는 않는다. fan-in은 파일을 읽지 않고 원장 경로가 없다. 비용은 registry 검증과 ordinary ID 전개(106,346 ID 해시)이며 새 한도를 만들지 않고 기존 한도를 바꾸지 않는다.
 

@@ -4,9 +4,8 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-// Adapters from the existing scope-local folds to QueryScopeResult. The large scope has no fold
-// yet; it is assumed to deliver the same shape (counters per kind and host, a first failure
-// code, evidence pins) and is BLOCKED as absent until it does.
+// Adapters from the existing scope-local folds to QueryScopeResult. A scope without a stored
+// result is BLOCKED as absent.
 
 func scopeCounters[T any](rows []T, to func(T) QueryScopeCounter) []QueryScopeCounter {
 	out := make([]QueryScopeCounter, 0, len(rows))
@@ -126,4 +125,28 @@ func SvcScopeResult(e SvcExpected, expectedBytes, registry []byte, platform stri
 		return QueryScopeCounter{c.Kind, c.Platform, c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed}
 	})
 	return NewQueryScopeResult(QueryScopeSvc, queryregistrycore.Digest(registry), []queryregistrycore.Pin{queryregistrycore.FilePin(SvcExpectedPath, expectedBytes)}, rows, first), nil
+}
+
+// LargeScopeResult folds the Windows large judgments with FoldLargeScope over the lower
+// obligations of the large contract and pins the expected asset. The contract must be the one the
+// registry pins; expectedBytes must be the bytes e was parsed from. The Linux/macOS N/A hosts are
+// not counted; the fan-in carries their registered reasons from the contract.
+func LargeScopeResult(e LargeExpected, expectedBytes, registry []byte, judgments []LargeJudgment) (QueryScopeResult, error) {
+	if e.Registry != queryregistrycore.FilePin(queryregistrycore.Path, registry) {
+		return QueryScopeResult{}, queryCompletionFault("QUERY_SCOPE_REGISTRY_PIN")
+	}
+	cov, err := FoldLargeScope(e, judgments)
+	if err != nil {
+		return QueryScopeResult{}, err
+	}
+	first := ""
+	for _, j := range judgments {
+		if j.State == "FAILED" && first == "" {
+			first = j.Code
+		}
+	}
+	rows := scopeCounters(cov.Counters, func(c LargeScopeCounter) QueryScopeCounter {
+		return QueryScopeCounter{c.Kind, c.Platform, c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed}
+	})
+	return NewQueryScopeResult(QueryScopeLarge, queryregistrycore.Digest(registry), []queryregistrycore.Pin{queryregistrycore.FilePin(LargeExpectedPath, expectedBytes)}, rows, first), nil
 }

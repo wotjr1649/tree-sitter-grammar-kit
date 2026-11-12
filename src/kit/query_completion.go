@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
@@ -34,11 +35,22 @@ const (
 	queryLargeControl  = "LARGE_WORKLOAD_CONTROL"
 )
 
-// queryCompletionUnregistered lists the P0 missing scope that revision r1 cannot close: the large
-// node/occurrence/page/footer denominator has no registered contract. The SVC denominator is
-// closed by query-svc-expected-r1; independent-assets and current-cohort-approval-replay are not
-// listed because r1 accepts a VERIFIED count only with a caller-pinned evidence asset.
-var queryCompletionUnregistered = []string{"large-node-occurrence-page-footer"}
+// queryCompletionUnregistered lists the part of the P0 missing scope that revision r1 cannot close.
+// The P0 `large-node-occurrence-page-footer` is covered by query-large-expected-r1 for every
+// fixture whose tree the template derives (cs-large-22m) and for the source, status and control
+// obligations, but the two parser-error-recovery fixtures have no derivable tree: their real
+// node/occurrence/page/footer denominators are unknown and registered only as one BLOCKED
+// placeholder per kind. That remainder stays unregistered, so no r1 result is COMPLETE; opening the
+// gate needs a new revision. The SVC denominator is closed by query-svc-expected-r1;
+// independent-assets and current-cohort-approval-replay are not listed because r1 accepts a
+// VERIFIED count only with a caller-pinned evidence asset.
+var queryCompletionUnregistered = []string{"large-error-recovery-node-occurrence-page-footer"}
+
+// queryLargeHost is the only host the large denominator counts; the other hosts of the large
+// contract are N/A with a registered reason and are never part of a denominator.
+const queryLargeHost = "windows-amd64"
+
+var queryLargeNotApplicable = []string{"darwin-arm64", "linux-amd64"}
 
 var (
 	queryScopeOrder    = []string{QueryScopeOrdinary, QueryScopePredicate, QueryScopeSvc, QueryScopeLarge}
@@ -47,7 +59,9 @@ var (
 		QueryScopeOrdinary:  {queryregistrycore.Structural},
 		QueryScopePredicate: {queryregistrycore.Predicate, queryregistrycore.Control},
 		QueryScopeSvc:       {SvcKindHistory, SvcKindEditPoint, SvcKindSegment, SvcKindCodeBehind, SvcKindNegative, SvcKindInlineTree, SvcKindQuery},
-		QueryScopeLarge:     {queryLargePositive, queryLargeControl},
+		// The large obligations refine the four P0 coordinates (queryLargePositive/Control) and replace
+		// them in this scope: counting both would count the same evidence twice.
+		QueryScopeLarge: {LargeKindSource, LargeKindStatus, LargeKindCSTPage, LargeKindCSTFooter, LargeKindOccPage, LargeKindOccFooter, LargeKindControl},
 	}
 	queryHex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
@@ -158,6 +172,8 @@ type QueryCompletionRequest struct {
 	Basis          map[string][]byte
 	SvcExpected    []byte
 	SvcFixture     []byte
+	LargeExpected  []byte // query-large-expected-r1.json
+	LargeFixtures  []byte // native-large-fixtures.json
 	AssetPins      map[string][]queryregistrycore.Pin
 	ResultPins     map[string]string // scope -> expected result_sha256; a present scope without a pin is rejected
 	Scopes         []QueryScopeResult
@@ -180,12 +196,20 @@ func (c QueryCompletionCounts) sums() bool {
 	return c.Verified+c.Failed+c.Blocked+c.Unprocessed == c.Required
 }
 
+// QueryCompletionNotApplicable is a host that a scope does not count, with its registered reason.
+// It is never part of a denominator and is derived from the pinned contract, not from a scope result.
+type QueryCompletionNotApplicable struct {
+	Platform string `json:"platform"`
+	Reason   string `json:"reason"`
+}
+
 type QueryCompletionScope struct {
-	Scope             string `json:"scope"`
-	Present           bool   `json:"present"`
-	DenominatorSHA256 string `json:"denominator_sha256"`
-	ResultSHA256      string `json:"result_sha256"`
-	FirstFailure      string `json:"first_failure"`
+	Scope             string                         `json:"scope"`
+	Present           bool                           `json:"present"`
+	DenominatorSHA256 string                         `json:"denominator_sha256"`
+	ResultSHA256      string                         `json:"result_sha256"`
+	FirstFailure      string                         `json:"first_failure"`
+	NotApplicable     []QueryCompletionNotApplicable `json:"not_applicable"`
 }
 
 type QueryCompletionCounter struct {
@@ -217,9 +241,11 @@ type QueryCompletionResult struct {
 }
 
 type faninPlan struct {
-	registrySHA  string
-	rows         map[string][]QueryScopeCounter // required counts only, canonical order
-	unregistered []string
+	registrySHA   string
+	rows          map[string][]QueryScopeCounter // required counts only, canonical order
+	blockedFloor  map[string][]uint64            // per row: obligations registered BLOCKED, which can never be VERIFIED
+	notApplicable map[string][]QueryCompletionNotApplicable
+	unregistered  []string
 }
 
 func faninRows(scope string, required func(kind, platform string) uint64) []QueryScopeCounter {
@@ -234,9 +260,36 @@ func faninRows(scope string, required func(kind, platform string) uint64) []Quer
 	return rows
 }
 
-// buildFaninPlan derives every denominator from the validated registry and the SVC asset, never
-// from a scope result.
-func buildFaninPlan(v *queryregistrycore.Validated, svc SvcExpected) faninPlan {
+// checkLargeBinding binds the large contract to the P0 registry: its cases must be exactly the
+// registered LARGE_WORKLOAD_POSITIVE coordinates and its control the one LARGE_WORKLOAD_CONTROL
+// coordinate. This is what makes replacing the four P0 coordinates by the lower obligations
+// lossless: every upper coordinate has its lower obligations, and no upper coordinate is left over.
+func checkLargeBinding(v *queryregistrycore.Validated, large LargeExpected) error {
+	var positive, control []queryregistrycore.Coordinate
+	for _, c := range v.Coordinates() {
+		switch c.Kind {
+		case queryLargePositive:
+			positive = append(positive, c)
+		case queryLargeControl:
+			control = append(control, c)
+		}
+	}
+	ok := len(positive) == len(large.Cases) && len(control) == 1 && control[0].Set == large.Control.Set && control[0].Case == large.Control.ID && control[0].Query == large.Control.Query
+	for i := 0; ok && i < len(positive); i++ {
+		ok = positive[i].Platform == queryLargeHost && positive[i].Set == large.Cases[i].Set && positive[i].Case == large.Cases[i].ID
+	}
+	if !ok || control[0].Platform != queryLargeHost {
+		return queryCompletionFault("QUERY_COMPLETION_LARGE_BINDING")
+	}
+	return nil
+}
+
+// buildFaninPlan derives every denominator from the validated registry and the SVC and large
+// assets, never from a scope result. The large scope is counted by its lower obligations only.
+func buildFaninPlan(v *queryregistrycore.Validated, svc SvcExpected, large LargeExpected) (faninPlan, error) {
+	if err := checkLargeBinding(v, large); err != nil {
+		return faninPlan{}, err
+	}
 	type key struct{ kind, platform string }
 	registry := map[key]uint64{}
 	for _, c := range v.Coordinates() {
@@ -246,16 +299,45 @@ func buildFaninPlan(v *queryregistrycore.Validated, svc SvcExpected) faninPlan {
 	for _, o := range svc.Obligations() {
 		svcRequired[o.Kind]++
 	}
-	plan := faninPlan{registrySHA: v.SHA256(), rows: map[string][]QueryScopeCounter{}, unregistered: slices.Clone(queryCompletionUnregistered)}
+	largeRequired, largeBlocked := map[string]uint64{}, map[string]uint64{}
+	for _, o := range large.Obligations() {
+		largeRequired[o.Kind]++
+		if o.Blocked != "" {
+			largeBlocked[o.Kind]++
+		}
+	}
+	var na []QueryCompletionNotApplicable
+	for platform, reason := range large.NotApplicable {
+		na = append(na, QueryCompletionNotApplicable{Platform: platform, Reason: reason})
+	}
+	slices.SortFunc(na, func(a, b QueryCompletionNotApplicable) int { return strings.Compare(a.Platform, b.Platform) })
+	if !validNotApplicable(QueryScopeLarge, na) {
+		return faninPlan{}, queryCompletionFault("QUERY_COMPLETION_LARGE_BINDING")
+	}
+	plan := faninPlan{registrySHA: v.SHA256(), rows: map[string][]QueryScopeCounter{}, blockedFloor: map[string][]uint64{},
+		notApplicable: map[string][]QueryCompletionNotApplicable{QueryScopeLarge: na}, unregistered: slices.Clone(queryCompletionUnregistered)}
 	for _, scope := range queryScopeOrder {
 		plan.rows[scope] = faninRows(scope, func(kind, platform string) uint64 {
-			if scope == QueryScopeSvc {
+			switch scope {
+			case QueryScopeSvc:
 				return svcRequired[kind]
+			case QueryScopeLarge:
+				if platform != queryLargeHost {
+					return 0
+				}
+				return largeRequired[kind]
 			}
 			return registry[key{kind, platform}]
 		})
+		for _, row := range plan.rows[scope] {
+			floor := uint64(0)
+			if scope == QueryScopeLarge {
+				floor = largeBlocked[row.Kind]
+			}
+			plan.blockedFloor[scope] = append(plan.blockedFloor[scope], floor)
+		}
 	}
-	return plan
+	return plan, nil
 }
 
 func (p faninPlan) denominator(scope string) string {
@@ -282,6 +364,11 @@ func (p faninPlan) checkScope(r QueryScopeResult, pins []queryregistrycore.Pin, 
 		}
 		if !(QueryCompletionCounts{c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed}).sums() {
 			return queryCompletionFault("QUERY_SCOPE_SUM")
+		}
+		// An obligation the contract registers BLOCKED has no independent expected value; it can
+		// never be VERIFIED, whoever selected the pins.
+		if c.Verified+p.blockedFloor[r.Scope][i] > c.Required {
+			return queryCompletionFault("QUERY_SCOPE_BLOCKED_VERIFIED")
 		}
 		failed, verified = failed+c.Failed, verified+c.Verified
 	}
@@ -332,7 +419,10 @@ func (p faninPlan) fold(scopes []QueryScopeResult, pins map[string][]queryregist
 				present = false
 			}
 		}
-		entry := QueryCompletionScope{Scope: scope, Present: present, DenominatorSHA256: p.denominator(scope)}
+		entry := QueryCompletionScope{Scope: scope, Present: present, DenominatorSHA256: p.denominator(scope), NotApplicable: slices.Clone(p.notApplicable[scope])}
+		if entry.NotApplicable == nil {
+			entry.NotApplicable = []QueryCompletionNotApplicable{}
+		}
 		counters := p.rows[scope]
 		if present {
 			entry.ResultSHA256, entry.FirstFailure, counters = r.ResultSHA256, r.FirstFailure, r.Counters
@@ -422,7 +512,15 @@ func FoldQueryCompletion(req QueryCompletionRequest) (QueryCompletionResult, err
 	if err != nil {
 		return QueryCompletionResult{Schema: QueryCompletionSchema, RegistrySHA256: v.SHA256(), Completion: QueryCompletionFail, Code: errorCode(err)}, err
 	}
-	return buildFaninPlan(v, svc).fold(req.Scopes, req.AssetPins, req.ResultPins)
+	large, err := ParseLargeExpected(req.LargeExpected, req.Registry, req.Qualification, req.LargeFixtures)
+	if err != nil {
+		return QueryCompletionResult{Schema: QueryCompletionSchema, RegistrySHA256: v.SHA256(), Completion: QueryCompletionFail, Code: errorCode(err)}, err
+	}
+	plan, err := buildFaninPlan(v, svc, large)
+	if err != nil {
+		return QueryCompletionResult{Schema: QueryCompletionSchema, RegistrySHA256: v.SHA256(), Completion: QueryCompletionFail, Code: errorCode(err)}, err
+	}
+	return plan.fold(req.Scopes, req.AssetPins, req.ResultPins)
 }
 
 func errorCode(err error) string {
@@ -433,6 +531,26 @@ func errorCode(err error) string {
 		return f.Code
 	}
 	return "QUERY_COMPLETION_SOURCE"
+}
+
+// validNotApplicable accepts exactly the registered N/A hosts of the large scope (the platforms the
+// NET461 workload is not hosted on), each with a non-empty reason, in canonical order.
+func validNotApplicable(scope string, na []QueryCompletionNotApplicable) bool {
+	if na == nil {
+		return false
+	}
+	if scope != QueryScopeLarge {
+		return len(na) == 0
+	}
+	if len(na) != len(queryLargeNotApplicable) {
+		return false
+	}
+	for i, n := range na {
+		if n.Platform != queryLargeNotApplicable[i] || n.Reason == "" {
+			return false
+		}
+	}
+	return true
 }
 
 // DecodeQueryCompletionResult strictly decodes a stored completion result and re-derives every
@@ -459,12 +577,20 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 		if s.Scope != queryScopeOrder[i] || !queryHex64.MatchString(s.DenominatorSHA256) || s.Present && !queryHex64.MatchString(s.ResultSHA256) || !s.Present && (s.ResultSHA256 != "" || s.FirstFailure != "") {
 			return bad("QUERY_COMPLETION_SCOPES")
 		}
+		// N/A hosts carry their registered reason and never appear as counted rows; only the large
+		// contract has them. The reason text is the contract's, which a stored result cannot re-verify.
+		if !validNotApplicable(s.Scope, s.NotApplicable) {
+			return bad("QUERY_COMPLETION_NOT_APPLICABLE")
+		}
 	}
 	hosts := map[string]*QueryCompletionCounts{}
 	var total QueryCompletionCounts
 	scopeFailed := map[string]uint64{}
 	for _, c := range r.Counters {
 		if !slices.Contains(queryKindOrder[c.Scope], c.Kind) || !slices.Contains(queryPlatformOrder, c.Platform) {
+			return bad("QUERY_COMPLETION_COUNTER")
+		}
+		if c.Scope == QueryScopeLarge && c.Platform != queryLargeHost {
 			return bad("QUERY_COMPLETION_COUNTER")
 		}
 		if !c.sums() {

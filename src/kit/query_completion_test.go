@@ -19,6 +19,9 @@ type faninFixture struct {
 	predAsset []byte
 	svcAsset  []byte
 	inventory []byte
+
+	largeAsset, largeFixtures []byte
+	large                     LargeExpected
 }
 
 var (
@@ -36,9 +39,19 @@ func faninFixtureFor(t *testing.T) *faninFixture {
 		if err != nil {
 			t.Fatal(err)
 		}
+		largeAsset, _, _, largeFixtures := largeAssets(t)
+		large, err := ParseLargeExpected(largeAsset, registry, inventory, largeFixtures)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plan, err := buildFaninPlan(v, svc, large)
+		if err != nil {
+			t.Fatal(err)
+		}
 		faninFix = faninFixture{
-			req: QueryCompletionRequest{Registry: r.Registry, RegistrySHA256: r.RegistrySHA256, Qualification: r.Qualification, Slots: r.Slots, Basis: r.Basis, SvcExpected: svcAsset, SvcFixture: svcFixture},
-			v:   v, svc: svc, plan: buildFaninPlan(v, svc), predAsset: predAsset, svcAsset: svcAsset, inventory: inventory,
+			req: QueryCompletionRequest{Registry: r.Registry, RegistrySHA256: r.RegistrySHA256, Qualification: r.Qualification, Slots: r.Slots, Basis: r.Basis, SvcExpected: svcAsset, SvcFixture: svcFixture, LargeExpected: largeAsset, LargeFixtures: largeFixtures},
+			v:   v, svc: svc, plan: plan, predAsset: predAsset, svcAsset: svcAsset, inventory: inventory,
+			largeAsset: largeAsset, largeFixtures: largeFixtures, large: large,
 		}
 	})
 	if faninFix.v == nil {
@@ -128,6 +141,38 @@ func (f *faninFixture) svcScope(t *testing.T) QueryScopeResult {
 	return r
 }
 
+// largeJudgments mirrors the recorded #412 state (30 VERIFIED, 9 BLOCKED) without a native run: every
+// derivable obligation is VERIFIED, the registered-BLOCKED ones are BLOCKED and the 32 MiB status
+// is BLOCKED by the HARD memory cap. The native-derived judgments enter through the current-state
+// test in src/internal/native.
+func (f *faninFixture) largeJudgments() []LargeJudgment {
+	var out []LargeJudgment
+	for _, o := range f.large.Obligations() {
+		switch {
+		case o.Blocked != "":
+			out = append(out, LargeJudgment{ID: o.ID, State: "BLOCKED", Code: o.Blocked})
+		case o.Kind == LargeKindStatus && o.Case == "cs-large-32mib-errors":
+			out = append(out, LargeJudgment{ID: o.ID, State: "BLOCKED", Code: "LARGE_MEMORY_CAP_4GIB_EXCEEDED"})
+		default:
+			out = append(out, LargeJudgment{ID: o.ID, State: "VERIFIED"})
+		}
+	}
+	return out
+}
+
+func (f *faninFixture) largeScope(t *testing.T, mutate func([]LargeJudgment) []LargeJudgment) QueryScopeResult {
+	t.Helper()
+	j := f.largeJudgments()
+	if mutate != nil {
+		j = mutate(j)
+	}
+	r, err := LargeScopeResult(f.large, f.largeAsset, f.req.Registry, j)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
 var faninOrdinaryAsset = queryregistrycore.Pin{Path: "ordinary-asset-registration", Bytes: 1, SHA256: strings.Repeat("a", 64)}
 
 func (f *faninFixture) ordinaryScope(t *testing.T, states ...string) QueryScopeResult {
@@ -152,6 +197,7 @@ func (f *faninFixture) request(scopes ...QueryScopeResult) QueryCompletionReques
 		QueryScopeOrdinary:  {faninOrdinaryAsset},
 		QueryScopePredicate: {queryregistrycore.FilePin(PredicateExpectedPath, f.predAsset)},
 		QueryScopeSvc:       {queryregistrycore.FilePin(SvcExpectedPath, f.svcAsset)},
+		QueryScopeLarge:     {queryregistrycore.FilePin(LargeExpectedPath, f.largeAsset)},
 	}
 	return req
 }
@@ -191,7 +237,11 @@ func TestQueryCompletionDenominatorsAreDerivedFromTheRegistry(t *testing.T) {
 	want := map[string][]QueryScopeCounter{
 		QueryScopeOrdinary:  {{Kind: "STRUCTURAL_ONLY", Platform: "windows-amd64", Required: 53104}, {Kind: "STRUCTURAL_ONLY", Platform: "linux-amd64", Required: 53104}},
 		QueryScopePredicate: {{Kind: "PREDICATE_REQUIRED", Platform: "windows-amd64", Required: 20}, {Kind: "PREDICATE_REQUIRED", Platform: "linux-amd64", Required: 20}, {Kind: "EXPECTED_REJECTION", Platform: "windows-amd64", Required: 47}, {Kind: "EXPECTED_REJECTION", Platform: "linux-amd64", Required: 47}},
-		QueryScopeLarge:     {{Kind: "LARGE_WORKLOAD_POSITIVE", Platform: "windows-amd64", Required: 3}, {Kind: "LARGE_WORKLOAD_CONTROL", Platform: "windows-amd64", Required: 1}},
+		// the 39 lower obligations replace the 4 P0 coordinates; Linux/macOS are N/A and have no row
+		QueryScopeLarge: {{Kind: LargeKindSource, Platform: "windows-amd64", Required: 3}, {Kind: LargeKindStatus, Platform: "windows-amd64", Required: 3},
+			{Kind: LargeKindCSTPage, Platform: "windows-amd64", Required: 14}, {Kind: LargeKindCSTFooter, Platform: "windows-amd64", Required: 3},
+			{Kind: LargeKindOccPage, Platform: "windows-amd64", Required: 12}, {Kind: LargeKindOccFooter, Platform: "windows-amd64", Required: 3},
+			{Kind: LargeKindControl, Platform: "windows-amd64", Required: 1}},
 	}
 	for scope, rows := range want {
 		if got := f.plan.rows[scope]; !slices.Equal(got, rows) {
@@ -209,8 +259,70 @@ func TestQueryCompletionDenominatorsAreDerivedFromTheRegistry(t *testing.T) {
 	if svcTotal != 2*509 || len(f.plan.rows[QueryScopeSvc]) != 14 {
 		t.Fatalf("svc denominator %d", svcTotal)
 	}
-	if !slices.Equal(f.plan.unregistered, []string{"large-node-occurrence-page-footer"}) {
+	// Upper and lower are not both counted: 39 lower obligations stand for the 4 P0 coordinates.
+	var largeTotal uint64
+	for _, row := range f.plan.rows[QueryScopeLarge] {
+		largeTotal += row.Required
+	}
+	if n := uint64(len(f.large.Obligations())); largeTotal != 39 || largeTotal != n {
+		t.Fatalf("large denominator %d, obligations %d", largeTotal, n)
+	}
+	// the P0 `large-node-occurrence-page-footer` is covered for the derivable part only
+	if !slices.Equal(f.plan.unregistered, []string{"large-error-recovery-node-occurrence-page-footer"}) {
 		t.Fatalf("unregistered %v", f.plan.unregistered)
+	}
+	if na := f.plan.notApplicable[QueryScopeLarge]; len(na) != 2 || na[0].Platform != "darwin-arm64" || na[1].Platform != "linux-amd64" || na[0].Reason == "" || na[0].Reason != na[1].Reason {
+		t.Fatalf("N/A %+v", na)
+	}
+}
+
+// Every P0 upper coordinate has lower obligations and none is left over: this is what lets the
+// lower obligations replace the upper ones.
+func TestQueryCompletionLargeLowerObligationsRefineTheUpperCoordinates(t *testing.T) {
+	f := faninFixtureFor(t)
+	if err := checkLargeBinding(f.v, f.large); err != nil {
+		t.Fatal(err)
+	}
+	lower := map[string]map[string]int{}
+	for _, o := range f.large.Obligations() {
+		if lower[o.Case] == nil {
+			lower[o.Case] = map[string]int{}
+		}
+		lower[o.Case][o.Kind]++
+	}
+	var upper int
+	for _, c := range f.v.Coordinates() {
+		if c.Kind != queryLargePositive && c.Kind != queryLargeControl {
+			continue
+		}
+		upper++
+		if c.Kind == queryLargePositive && (lower[c.Case][LargeKindSource] != 1 || lower[c.Case][LargeKindStatus] != 1 || lower[c.Case][LargeKindCSTPage] == 0 || lower[c.Case][LargeKindOccFooter] != 1) {
+			t.Errorf("%s has no complete lower obligations: %v", c.Case, lower[c.Case])
+		}
+		if c.Kind == queryLargeControl && lower[c.Case][LargeKindControl] != 1 {
+			t.Errorf("control %s has no lower obligation", c.Case)
+		}
+	}
+	if upper != 4 || len(lower) != 4 {
+		t.Fatalf("upper %d, cases with lower obligations %d", upper, len(lower))
+	}
+	// a contract that drops a case, renames the control or changes the N/A hosts is not this registry's contract
+	for name, mutate := range map[string]func(*LargeExpected){
+		"case dropped":    func(e *LargeExpected) { e.Cases = e.Cases[:2] },
+		"case renamed":    func(e *LargeExpected) { e.Cases = slices.Clone(e.Cases); e.Cases[1].ID = "cs-large-other" },
+		"control renamed": func(e *LargeExpected) { e.Control.ID = "cs-large-other" },
+		"N/A host added": func(e *LargeExpected) {
+			e.NotApplicable = map[string]string{"darwin-arm64": "r", "linux-amd64": "r", "windows-amd64": "r"}
+		},
+		"N/A host swapped": func(e *LargeExpected) {
+			e.NotApplicable = map[string]string{"darwin-arm64": "r", "freebsd-amd64": "r"}
+		},
+	} {
+		e := f.large
+		mutate(&e)
+		if _, err := buildFaninPlan(f.v, f.svc, e); err == nil || faninCode(t, err) != "QUERY_COMPLETION_LARGE_BINDING" {
+			t.Errorf("%s: %v", name, err)
+		}
 	}
 }
 
@@ -225,11 +337,11 @@ func TestQueryCompletionAbsentScopesAreBlockedNotZero(t *testing.T) {
 	if res.Completion != QueryCompletionBlocked || res.Code != "QUERY_SCOPE_RESULT_ABSENT" || res.Complete {
 		t.Fatalf("verdict %s %s complete=%v", res.Completion, res.Code, res.Complete)
 	}
-	want := QueryCompletionCounts{Required: 106208 + 134 + 4 + 1018, Blocked: 106208 + 134 + 4 + 1018}
+	want := QueryCompletionCounts{Required: 106208 + 134 + 39 + 1018, Blocked: 106208 + 134 + 39 + 1018}
 	if res.Total != want {
 		t.Fatalf("total %+v, want %+v", res.Total, want)
 	}
-	if len(res.Hosts) != 2 || res.Hosts[0].Required != 53104+67+509+4 || res.Hosts[1].Required != 53104+67+509 || res.Hosts[0].Blocked != res.Hosts[0].Required {
+	if len(res.Hosts) != 2 || res.Hosts[0].Required != 53104+67+509+39 || res.Hosts[1].Required != 53104+67+509 || res.Hosts[0].Blocked != res.Hosts[0].Required {
 		t.Fatalf("hosts %+v", res.Hosts)
 	}
 	for _, s := range res.Scopes {
@@ -256,7 +368,7 @@ func TestQueryCompletionFoldsRealScopeResults(t *testing.T) {
 		QueryScopeOrdinary:  {Required: 106208, Verified: 1, Blocked: 106205, Unprocessed: 2},
 		QueryScopePredicate: {Required: 134, Verified: 67, Blocked: 67},
 		QueryScopeSvc:       {Required: 1018, Verified: 263, Blocked: 755},
-		QueryScopeLarge:     {Required: 4, Blocked: 4},
+		QueryScopeLarge:     {Required: 39, Blocked: 39},
 	} {
 		if got := totalsOf(res, scope); got != want {
 			t.Errorf("%s %+v, want %+v", scope, got, want)
@@ -324,6 +436,15 @@ func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
 		}
 	}
 	rest := []QueryScopeResult{svc}
+	largeScope := f.largeScope(t, nil)
+	largeFailing := f.largeScope(t, func(js []LargeJudgment) []LargeJudgment {
+		for i, j := range js {
+			if strings.HasPrefix(j.ID, LargeKindControl+"/") {
+				js[i] = VerifyLargeControl(f.large.Control, StatusCompleted, "", AssessPass, false)
+			}
+		}
+		return js
+	})
 	forges := []forge{
 		{"row omitted (a missing row is not zero)", "QUERY_SCOPE_DENOMINATOR", edit(predicate, true, rest, func(r *QueryScopeResult) { r.Counters = r.Counters[:len(r.Counters)-1] })},
 		{"row required zero", "QUERY_SCOPE_DENOMINATOR", edit(svc, true, nil, func(r *QueryScopeResult) {
@@ -352,12 +473,47 @@ func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
 		})},
 		{"VERIFIED without any evidence pin", "QUERY_SCOPE_ASSET_PIN", edit(svc, true, nil, func(r *QueryScopeResult) { r.Assets = []queryregistrycore.Pin{} })},
 		{"VERIFIED on an evidence pin the caller did not select", "QUERY_SCOPE_ASSET_PIN", edit(svc, true, nil, func(r *QueryScopeResult) { r.Assets[0].SHA256 = strings.Repeat("3", 64) })},
-		{"large VERIFIED with no registered evidence", "QUERY_SCOPE_ASSET_PIN", edit(QueryScopeResult{Schema: QueryScopeResultSchema, Scope: QueryScopeLarge, RegistrySHA256: f.v.SHA256(), Assets: []queryregistrycore.Pin{}, Counters: []QueryScopeCounter{}}, true, nil, func(r *QueryScopeResult) {
-			r.Counters = slices.Clone(f.plan.rows[QueryScopeLarge])
-			for i := range r.Counters {
-				r.Counters[i].Verified = r.Counters[i].Required
-			}
-			r.DenominatorSHA256 = f.plan.denominator(QueryScopeLarge)
+		// large: the lower obligations are the denominator; every shape below must be refused
+		{"large VERIFIED with no registered evidence", "QUERY_SCOPE_ASSET_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.Assets = []queryregistrycore.Pin{} })},
+		{"large VERIFIED on an evidence pin of another contract", "QUERY_SCOPE_ASSET_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.Assets[0] = queryregistrycore.FilePin(SvcExpectedPath, f.svcAsset) })},
+		{"large denominator shrunk (a row dropped), old pin kept", "QUERY_SCOPE_DENOMINATOR", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.Counters = r.Counters[:len(r.Counters)-1] })},
+		{"large denominator shrunk (CST pages 14 to 12), old pin kept", "QUERY_SCOPE_DENOMINATOR", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters[2].Required, r.Counters[2].Blocked = 12, 0
+		})},
+		{"large denominator shrunk and its pin recomputed", "QUERY_SCOPE_DENOMINATOR_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters[2].Required, r.Counters[2].Blocked = 12, 0
+			r.DenominatorSHA256 = scopeDenominatorDigest(r.Scope, r.Counters)
+		})},
+		{"large counted twice: the 4 upper rows added to the lower rows", "QUERY_SCOPE_DENOMINATOR", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters = append(r.Counters, QueryScopeCounter{Kind: queryLargePositive, Platform: "windows-amd64", Required: 3, Verified: 3}, QueryScopeCounter{Kind: queryLargeControl, Platform: "windows-amd64", Required: 1, Verified: 1})
+		})},
+		{"large counted twice, pin recomputed", "QUERY_SCOPE_DENOMINATOR_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters = append(r.Counters, QueryScopeCounter{Kind: queryLargePositive, Platform: "windows-amd64", Required: 3, Verified: 3}, QueryScopeCounter{Kind: queryLargeControl, Platform: "windows-amd64", Required: 1, Verified: 1})
+			r.DenominatorSHA256 = scopeDenominatorDigest(r.Scope, r.Counters)
+		})},
+		{"large with the old 4-obligation denominator (upper only), pin recomputed", "QUERY_SCOPE_DENOMINATOR_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters = []QueryScopeCounter{{Kind: queryLargePositive, Platform: "windows-amd64", Required: 3, Verified: 3}, {Kind: queryLargeControl, Platform: "windows-amd64", Required: 1, Verified: 1}}
+			r.DenominatorSHA256 = scopeDenominatorDigest(r.Scope, r.Counters)
+		})},
+		{"large denominator pin of another scope", "QUERY_SCOPE_DENOMINATOR_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.DenominatorSHA256 = f.plan.denominator(QueryScopeSvc) })},
+		{"large result mixed from another registry", "QUERY_SCOPE_REGISTRY_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.RegistrySHA256 = strings.Repeat("2", 64) })},
+		{"large BLOCKED raised to VERIFIED, pins chosen by the forger", "QUERY_SCOPE_BLOCKED_VERIFIED", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters[2].Verified, r.Counters[2].Blocked = r.Counters[2].Required, 0
+		})},
+		{"large BLOCKED raised to VERIFIED, caller pin is the honest one", "QUERY_SCOPE_RESULT_PIN", edit(largeScope, false, nil, func(r *QueryScopeResult) {
+			r.Counters[1].Verified, r.Counters[1].Blocked = r.Counters[1].Required, 0
+		})},
+		{"large N/A host counted as VERIFIED (a Linux row), old pin kept", "QUERY_SCOPE_DENOMINATOR", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters = append(r.Counters, QueryScopeCounter{Kind: LargeKindSource, Platform: "linux-amd64", Required: 3, Verified: 3})
+		})},
+		{"large N/A host counted as VERIFIED (a Linux row), pin recomputed", "QUERY_SCOPE_DENOMINATOR_PIN", edit(largeScope, true, nil, func(r *QueryScopeResult) {
+			r.Counters = append(r.Counters, QueryScopeCounter{Kind: LargeKindSource, Platform: "linux-amd64", Required: 3, Verified: 3})
+			r.DenominatorSHA256 = scopeDenominatorDigest(r.Scope, r.Counters)
+		})},
+		{"large N/A host moved onto the Windows rows", "QUERY_SCOPE_DENOMINATOR", edit(largeScope, true, nil, func(r *QueryScopeResult) { r.Counters[0].Platform = "linux-amd64" })},
+		{"large FAIL lowered to BLOCKED, code kept", "QUERY_SCOPE_FAILURE_CODE", edit(largeFailing, true, nil, func(r *QueryScopeResult) {
+			i := len(r.Counters) - 1
+			r.Counters[i].Failed, r.Counters[i].Blocked = 0, 1
 		})},
 		{"result digest edited without resealing", "QUERY_SCOPE_RESULT_DIGEST", func() QueryCompletionRequest {
 			r := cloneScope(predicate)
@@ -457,8 +613,14 @@ func TestQueryCompletionGateOpensOnlyForAnAllVerifiedRegisteredState(t *testing.
 		}
 		return out, resultPins
 	}
+	// A future revision whose error-recovery fixtures were derivable would have no registered-BLOCKED
+	// obligation; this synthetic plan stands for it. The real r1 plan keeps them registered BLOCKED.
 	registered := f.plan
 	registered.unregistered = nil
+	registered.blockedFloor = map[string][]uint64{}
+	for scope, floor := range f.plan.blockedFloor {
+		registered.blockedFloor[scope] = make([]uint64, len(floor))
+	}
 	scopes, resultPins := build(nil)
 	res, err := registered.fold(scopes, pins, resultPins)
 	if err != nil || res.Completion != QueryCompletionComplete || !res.Complete || res.Code != "" || res.Total.Verified != res.Total.Required {
@@ -467,10 +629,18 @@ func TestQueryCompletionGateOpensOnlyForAnAllVerifiedRegisteredState(t *testing.
 	if _, err := DecodeQueryCompletionResult(mustJSON(t, res)); err == nil {
 		t.Fatal("r1 decoder accepted a COMPLETE result although its plan has an unregistered scope")
 	}
-	// the real plan cannot complete: the large node/occurrence/page/footer denominator is unregistered
+	// the real plan cannot complete. (1) The registered-BLOCKED obligations of the large contract can
+	// never be VERIFIED: an all-VERIFIED large result is refused outright.
 	res, err = f.plan.fold(scopes, pins, resultPins)
+	if err == nil || faninCode(t, err) != "QUERY_SCOPE_BLOCKED_VERIFIED" || res.Complete || res.Completion != QueryCompletionFail {
+		t.Fatalf("real plan, all VERIFIED: %s %s %v", res.Completion, res.Code, err)
+	}
+	// (2) Even without them, the error-recovery denominator stays unregistered in r1.
+	floorless := f.plan
+	floorless.blockedFloor = registered.blockedFloor
+	res, err = floorless.fold(scopes, pins, resultPins)
 	if err != nil || res.Complete || res.Completion != QueryCompletionBlocked || res.Code != "QUERY_COMPLETION_UNREGISTERED_SCOPE" {
-		t.Fatalf("real plan: %s %s %v", res.Completion, res.Code, err)
+		t.Fatalf("real plan, unregistered scope: %s %s %v", res.Completion, res.Code, err)
 	}
 	for _, c := range []struct {
 		name, completion, code string
@@ -585,6 +755,19 @@ func TestDecodeQueryCompletionResultRederivesTheVerdict(t *testing.T) {
 			r.Completion, r.Code, r.Complete = QueryCompletionComplete, "", true
 		}, "QUERY_COMPLETION_ABSENT_SCOPE"},
 		{"unregistered scope dropped", blocked, func(r *QueryCompletionResult) { r.UnregisteredScopes = []string{} }, "QUERY_COMPLETION_SCOPES"},
+		{"N/A reason erased", blocked, func(r *QueryCompletionResult) {
+			r.Scopes[3].NotApplicable = []QueryCompletionNotApplicable{{"darwin-arm64", ""}, {"linux-amd64", "x"}}
+		}, "QUERY_COMPLETION_NOT_APPLICABLE"},
+		{"N/A hosts dropped", blocked, func(r *QueryCompletionResult) { r.Scopes[3].NotApplicable = []QueryCompletionNotApplicable{} }, "QUERY_COMPLETION_NOT_APPLICABLE"},
+		{"one N/A host dropped", blocked, func(r *QueryCompletionResult) {
+			r.Scopes[3].NotApplicable = []QueryCompletionNotApplicable{{"linux-amd64", "x"}}
+		}, "QUERY_COMPLETION_NOT_APPLICABLE"},
+		{"N/A host claimed by another scope", blocked, func(r *QueryCompletionResult) {
+			r.Scopes[0].NotApplicable = []QueryCompletionNotApplicable{{"linux-amd64", "x"}}
+		}, "QUERY_COMPLETION_NOT_APPLICABLE"},
+		{"N/A host counted as a row", blocked, func(r *QueryCompletionResult) {
+			r.Counters = append(r.Counters, QueryCompletionCounter{Scope: QueryScopeLarge, Kind: LargeKindSource, Platform: "linux-amd64", QueryCompletionCounts: QueryCompletionCounts{Required: 3, Verified: 3}})
+		}, "QUERY_COMPLETION_COUNTER"},
 		{"FAIL lowered to BLOCKED", failed, func(r *QueryCompletionResult) {
 			r.Completion, r.Code = QueryCompletionBlocked, "QUERY_SCOPE_RESULT_ABSENT"
 		}, "QUERY_COMPLETION_VERDICT"},
@@ -633,5 +816,110 @@ func TestQueryCompletionLeavesLegacyRevisionsUntouched(t *testing.T) {
 	}
 	if QueryScopeResultSchema == OrdinaryQuerySemanticsResultSchema || QueryCompletionSchema == QualificationSemanticsResultSchema {
 		t.Fatal("new revision reuses an old schema string")
+	}
+}
+
+// The large scope at the recorded #412 state: 30 of 39 VERIFIED, 9 BLOCKED, and the gate stays
+// closed (BLOCKED, never COMPLETE). The N/A hosts keep their reasons and add nothing to the counts.
+func TestQueryCompletionFoldsTheLargeScopeAtTheRecordedState(t *testing.T) {
+	f := faninFixtureFor(t)
+	large := f.largeScope(t, nil)
+	if large.FirstFailure != "" {
+		t.Fatalf("large failure %q", large.FirstFailure)
+	}
+	res, err := FoldQueryCompletion(f.request(f.ordinaryScope(t, ordinaryTupleVerified), f.predicateScope(t), f.svcScope(t), large))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := totalsOf(res, QueryScopeLarge), (QueryCompletionCounts{Required: 39, Verified: 30, Blocked: 9}); got != want {
+		t.Fatalf("large %+v, want %+v", got, want)
+	}
+	for _, c := range res.Counters {
+		if c.Scope == QueryScopeLarge && c.Platform != "windows-amd64" {
+			t.Errorf("N/A host counted: %+v", c)
+		}
+	}
+	if res.Completion != QueryCompletionBlocked || res.Code != "QUERY_COMPLETION_INCOMPLETE" || res.Complete {
+		t.Fatalf("verdict %s %s", res.Completion, res.Code)
+	}
+	var na []QueryCompletionNotApplicable
+	for _, s := range res.Scopes {
+		if s.Scope == QueryScopeLarge {
+			na = s.NotApplicable
+			if !s.Present || s.ResultSHA256 != large.ResultSHA256 {
+				t.Errorf("large scope %+v", s)
+			}
+		} else if len(s.NotApplicable) != 0 {
+			t.Errorf("%s has N/A %+v", s.Scope, s.NotApplicable)
+		}
+	}
+	if len(na) != 2 || na[0].Platform != "darwin-arm64" || na[1].Platform != "linux-amd64" || na[0].Reason != f.large.NotApplicable["darwin-arm64"] || na[1].Reason != f.large.NotApplicable["linux-amd64"] {
+		t.Fatalf("N/A %+v", na)
+	}
+	// the N/A reasons survive an absent large scope, too: they come from the pinned contract
+	res, err = FoldQueryCompletion(f.request(f.predicateScope(t)))
+	if err != nil || len(res.Scopes[3].NotApplicable) != 2 || res.Scopes[3].Present {
+		t.Fatalf("absent large scope: %+v %v", res.Scopes[3], err)
+	}
+	if _, err := DecodeQueryCompletionResult(mustJSON(t, res)); err != nil {
+		t.Fatalf("stored result: %v", err)
+	}
+}
+
+// A control that stays over the limit is never a semantic PASS: a completed or PASS outcome is a
+// FAILED control and the fan-in turns it into a FAIL that keeps the control's code.
+func TestQueryCompletionLargeControlNeverBecomesPass(t *testing.T) {
+	f := faninFixtureFor(t)
+	passed := f.largeScope(t, func(js []LargeJudgment) []LargeJudgment {
+		for i, j := range js {
+			if strings.HasPrefix(j.ID, LargeKindControl+"/") {
+				js[i] = VerifyLargeControl(f.large.Control, StatusCompleted, "", AssessPass, false)
+			}
+		}
+		return js
+	})
+	res, err := FoldQueryCompletion(f.request(passed))
+	if err != nil || res.Completion != QueryCompletionFail || res.Code != "LARGE_CONTROL_PASSED" || res.Complete {
+		t.Fatalf("control PASS: %s %s %v", res.Completion, res.Code, err)
+	}
+	// the honest control is the registered exact status and code
+	if j := VerifyLargeControl(f.large.Control, f.large.Control.Status, f.large.Control.Code, AssessFail, false); j.State != "VERIFIED" {
+		t.Fatalf("honest control %+v", j)
+	}
+	// raising the FAILED control to VERIFIED in the stored result changes its digest; the caller's pin refuses it
+	raised := cloneScope(passed)
+	for i := range raised.Counters {
+		if raised.Counters[i].Kind == LargeKindControl {
+			raised.Counters[i].Failed, raised.Counters[i].Verified = 0, 1
+		}
+	}
+	raised.FirstFailure = ""
+	req := f.request(passed)
+	req.Scopes = []QueryScopeResult{seal(raised)}
+	if _, err := FoldQueryCompletion(req); err == nil || faninCode(t, err) != "QUERY_SCOPE_RESULT_PIN" {
+		t.Fatalf("control FAIL raised to VERIFIED: %v", err)
+	}
+}
+
+// The contract bytes the plan reads are bound to the registry: another large contract is refused
+// before any scope result is looked at.
+func TestQueryCompletionRefusesAnotherLargeContract(t *testing.T) {
+	f := faninFixtureFor(t)
+	for name, edit := range map[string]func(*QueryCompletionRequest){
+		"control semantic_pass flipped": func(r *QueryCompletionRequest) {
+			r.LargeExpected = []byte(strings.Replace(string(f.largeAsset), `"semantic_pass": false`, `"semantic_pass": true`, 1))
+		},
+		"fixture inventory of another content": func(r *QueryCompletionRequest) {
+			r.LargeFixtures = append(slices.Clone(f.largeFixtures), ' ')
+		},
+		"contract of another scope": func(r *QueryCompletionRequest) { r.LargeExpected = f.svcAsset },
+		"no contract":               func(r *QueryCompletionRequest) { r.LargeExpected = nil },
+	} {
+		req := f.request(f.predicateScope(t))
+		edit(&req)
+		res, err := FoldQueryCompletion(req)
+		if err == nil || res.Completion != QueryCompletionFail || res.Complete {
+			t.Errorf("%s: %s %v", name, res.Completion, err)
+		}
 	}
 }
