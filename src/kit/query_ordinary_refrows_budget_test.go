@@ -6,6 +6,7 @@ import (
 	"encoding/json/jsontext"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -43,6 +44,19 @@ func refRowTokens(data []byte) uint64 {
 			}
 			return values
 		}
+	}
+}
+
+// refRowAllTokens counts every token (names, values, openers, closers) of a document: one walk of the row reads
+// each of them once.
+func refRowAllTokens(data []byte) uint64 {
+	dec := jsontext.NewDecoder(bytes.NewReader(data))
+	var tokens uint64
+	for {
+		if _, err := dec.ReadToken(); err != nil {
+			return tokens
+		}
+		tokens++
 	}
 }
 
@@ -142,6 +156,43 @@ func TestOrdinaryReferenceRowAccounting(t *testing.T) {
 			}
 			t.Logf("%s: row=%d alloc=%d logical=%d (%.1fx) work=%d", c.name, len(c.data), alloc, logical, float64(logical)/float64(max(alloc, 1)), work)
 		})
+	}
+}
+
+// A row is walked three times: the syntax preflight, the typed shape walk and the unmarshal. The decode must
+// account at least one unit of work per token for each walk. The preflight and the shape walk each read every
+// token once (confirmed once with a counter injected into both loops: 222/222 tokens for the tiny row,
+// 720,078/720,078 for large-cst); the unmarshal is modeled as one more token walk. Lowering the preflight's pass
+// count below the real number of walks must fail here, even though the other per-value terms keep the ledger above
+// the allocation.
+func TestReferenceRowWorkCoversWalkVisits(t *testing.T) {
+	const walks = 3
+	cases := refRowCases(t)
+	stored, err := filepath.Glob("../testdata/query-reference/*.json")
+	if err != nil || len(stored) == 0 {
+		t.Fatalf("stored references: %v %v", stored, err)
+	}
+	for _, path := range stored {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		cases = append(cases, refRowCase{name: filepath.Base(path), data: data, pass: true})
+	}
+	for _, c := range cases {
+		if !c.pass {
+			continue
+		}
+		visits := walks * refRowAllTokens(c.data)
+		for _, ordinary := range []bool{true, false} {
+			b := ordinaryTestBudget(t)
+			if _, e := decodeReferenceRowMode(c.data, b.r, ordinary); e != nil {
+				t.Fatalf("%s ordinary=%t: %v", c.name, ordinary, e)
+			}
+			if b.work < visits {
+				t.Fatalf("%s ordinary=%t: accounted work %d below the %d token visits of %d walks", c.name, ordinary, b.work, visits, walks)
+			}
+		}
 	}
 }
 
