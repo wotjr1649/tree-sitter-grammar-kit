@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -54,5 +55,40 @@ func TestCoordinateIDFastPathMatchesCanonical(t *testing.T) {
 	}
 	if _, ok := appendCoordinate(nil, plain); !ok {
 		t.Fatal("plain ASCII coordinate must take the fast path")
+	}
+	// Every single byte, so a loosened or tightened range bound shows up; the printable edges must stay fast.
+	for b := 0; b < 256; b++ {
+		c := plain
+		c.Kind = "a" + string([]byte{byte(b)}) + "b"
+		if got, want := c.ID(""), c.slowID(""); got != want {
+			t.Fatalf("ID with byte %#02x: %s != %s", b, got, want)
+		}
+		if _, ok := appendCoordinate(nil, c); ok != (b >= 0x20 && b <= 0x7e && b != '"' && b != '\\') {
+			t.Fatalf("byte %#02x: fast path taken=%v", b, ok)
+		}
+	}
+	for _, step := range []uint32{0, 1, 9, 10, 99, 100} {
+		c := plain
+		c.Step = step
+		if got, want := c.ID(""), c.slowID(""); got != want {
+			t.Fatalf("ID with step %d: %s != %s", step, got, want)
+		}
+	}
+}
+
+// The fast path and slowCanonical list the fields by hand; a new, removed or reordered field must fail here first.
+func TestCoordinateFieldsMatchTheHandWrittenEncoding(t *testing.T) {
+	want := []string{"Kind", "Route", "Platform", "Subject", "Role", "Set", "Case", "Query", "Step", "TreeRole", "Context"}
+	typ := reflect.TypeOf(Coordinate{})
+	if typ.NumField() != len(want) {
+		t.Fatalf("Coordinate has %d fields, the hand-written encoding has %d", typ.NumField(), len(want))
+	}
+	for i, name := range want {
+		if typ.Field(i).Name != name {
+			t.Fatalf("field %d is %s, the hand-written encoding expects %s", i, typ.Field(i).Name, name)
+		}
+	}
+	if typ.Field(8).Type.Kind() != reflect.Uint32 {
+		t.Fatalf("Step is %s, the hand-written encoding formats an unsigned integer", typ.Field(8).Type)
 	}
 }
