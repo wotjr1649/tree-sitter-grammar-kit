@@ -435,6 +435,55 @@ P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, rou
 
 **검증.** `kit.ParseSvcExpected`는 asset을 세 pin과 inventory의 69 case·41 edit·110 step·두 query·CodeBehind 선언에 결속한다. `kit.VerifySvcExpected`는 기존 `ApplyEdits`와 `ObserveServiceHostWithContext`, `svcVerdict`로 의무를 재계산해 독립 expected와 대조한다. `kit.FoldSvcScope`는 host별 `required = verified + failed + blocked + unprocessed`를 유지한다.
 
+## #362 scope별 결과의 fan-in과 completion gate (범위 7)
+
+범위 7은 ordinary·predicate·SVC·large가 따로 집계한 scope-local 결과를 하나의 completion 판정으로 모으는 fan-in이다. 이 단계는 **집계만** 한다. 어떤 PASS도 새로 만들지 않고 release gate를 열지 않으며, 구형 revision의 의미·판정을 바꾸지 않는다. 구현은 `src/kit/query_completion.go`, `query_completion_scopes.go`다.
+
+**새 revision.** 이름은 새로 정하고 구형 문자열과 겹치지 않는다. 구형 `oracle-set-r9`·`tsgk-query-semantics-result/r2`·`tsgk-qualification-result/r10`·P0 `Fold`는 그대로이며, 새 revision에서만 presence·integrity를 검사한다.
+
+| 표면 | 값 |
+|---|---|
+| scope 결과 입력 | `tsgk-query-scope-result/r1` (`QueryScopeResult`) |
+| completion 결과 | `tsgk-query-completion/r1` (`QueryCompletionResult`) |
+| 분모 pin preimage | `tsgk-query-scope-denominator/r1` |
+| scope 결과 digest preimage | `tsgk-query-scope-result/r1` |
+
+**scope 결과의 모양.** `scope`(`ordinary`·`predicate`·`svc`·`large`), `registry_sha256`, `denominator_sha256`(종류·host·required 행의 digest), `assets`(VERIFIED가 기대는 증거 pin), kind×host `counters`(`required = verified + failed + blocked + unprocessed`), `first_failure`(scope 소비 순서의 첫 FAILED code), `result_sha256`(위 전부의 digest)이다. Large scope 결과는 아직 없으며, predicate·SVC fold와 같은 모양(kind×host counter, 첫 FAIL code, 증거 pin)으로 들어온다고 **가정**한다. 모양이 다르면 이 revision의 입력으로 받지 않고 새 revision에서 분모와 함께 등록한다.
+
+**분모는 scope 결과가 아니라 pin된 원본에서 다시 유도한다.**
+
+| scope | 유도 원천 | kind × host | host당 | 합계 |
+|---|---|---|---:|---:|
+| ordinary | 검증한 P0 registry의 `STRUCTURAL_ONLY` 좌표 | `STRUCTURAL_ONLY` × 두 host | 53,104 | 106,208 |
+| predicate | P0 registry의 `PREDICATE_REQUIRED`·`EXPECTED_REJECTION` | 20 + 47 × 두 host | 67 | 134 |
+| SVC | `query-svc-expected-r1.json`의 `Obligations()` | 일곱 종류 × 두 host | 509 | 1,018 |
+| large | P0 registry의 large 알려진 상위 의무 | positive 3 + control 1, windows만 | — | 4 |
+
+전체는 107,364(windows 53,684, linux 53,680)다. P0의 알려진 합계 106,346에 SVC 확장 1,018을 더한 값이며 large node/occurrence/page/footer 하위 분모는 포함하지 않는다.
+
+**fan-in 규칙.**
+
+1. 먼저 registry를 호출자가 사전에 고른 SHA-256으로 검증한다. 분모는 이 registry와 SVC asset에서만 유도한다.
+2. 입력에 없는 scope는 **absent**다. 0으로 세지 않고 그 scope의 모든 의무를 BLOCKED로 둔다(`QUERY_SCOPE_RESULT_ABSENT`). 중복 scope(`QUERY_SCOPE_DUPLICATE`)와 모르는 scope(`QUERY_SCOPE_UNKNOWN`)는 거부한다.
+3. 있는 scope 결과는 이 순서로 검사한다: schema(`QUERY_SCOPE_SCHEMA`), registry pin(`…_REGISTRY_PIN`), 분모 pin(`…_DENOMINATOR_PIN`), 행 수·kind·host·required의 정확한 일치(`…_DENOMINATOR`, 행 누락·`required` 0·축소 모두), 행마다 합산식(`…_SUM`), FAILED가 있으면 `first_failure`가 있고 없으면 비어 있음(`…_FAILURE_CODE`), 자기 digest(`…_RESULT_DIGEST`), 호출자가 고른 결과 digest pin(`…_RESULT_PIN`, pin이 없으면 `…_RESULT_UNPINNED`), VERIFIED가 있으면 호출자가 고른 증거 pin(`…_ASSET_PIN`).
+4. 판정은 counter에서만 유도한다. 하나라도 FAILED면 FAIL이고 code는 scope 소비 순서(ordinary → predicate → svc → large)의 첫 `first_failure`다. 이미 확인된 FAIL은 다른 scope의 결함, absent scope, BLOCKED·UNPROCESSED보다 앞선다. 결함이 있으면 결과는 FAIL이며 그 전에 확인된 첫 FAIL code를 보존하고 오류를 함께 돌려준다.
+5. host별·scope별·전체 모두 `required = verified + failed + blocked + unprocessed`를 계산해 대조한다.
+
+**completion gate.** `COMPLETE`는 모든 scope가 present이고 모든 의무가 VERIFIED이며 미등록 scope가 없을 때만이다. 하나라도 BLOCKED·UNPROCESSED면 `BLOCKED`(absent scope는 `QUERY_SCOPE_RESULT_ABSENT`, 그 밖의 미완료는 `QUERY_COMPLETION_INCOMPLETE`), FAILED면 `FAIL`이다. 이 revision의 plan에는 large node/occurrence/page/footer 분모가 **미등록 scope**(`large-node-occurrence-page-footer`)로 남아 있으므로 모든 의무가 VERIFIED여도 `QUERY_COMPLETION_UNREGISTERED_SCOPE`로 BLOCKED다. 곧 이 revision의 실제 결과는 `COMPLETE`가 될 수 없다. 그 분모를 등록하는 변경은 새 revision을 만든다.
+
+P0 `missing_scopes` 네 항목의 처리는 다음과 같다.
+
+| P0 missing scope | 이 revision에서 |
+|---|---|
+| `svc-segment-range-history-codebehind` | SVC 확장 분모(`query-svc-expected-r1.json`)가 등록하므로 SVC scope의 의무로 센다 |
+| `large-node-occurrence-page-footer` | 미등록으로 남고 gate를 닫는다 |
+| `independent-assets` | VERIFIED 개수는 호출자가 사전에 고른 증거 pin과 결속된 scope 결과에서만 받는다 |
+| `current-cohort-approval-replay` | ordinary는 shard 결과의 외부 binding(`binding_valid`)이 참일 때만 VERIFIED를 받고, 그 밖의 scope는 위 증거 pin에 의존한다 |
+
+**ordinary의 입력.** `OrdinaryScopeResult`는 저장된 `OrdinaryQuerySemanticsResult`(r2) shard들을 받는다. 저장 결과는 registry pin을 싣지 않으므로 선택된 모든 ID가 이 registry namespace의 `STRUCTURAL_ONLY` ID이고 정확히 한 shard에만 있을 때만 받는다(`…_UNDECLARED`, `…_OVERLAP`). 어느 shard도 고르지 않은 ID는 absent라 BLOCKED, 고르고 판정이 없는 ID는 UNPROCESSED다. 외부 binding 없는 shard의 VERIFIED는 거부하고(`…_ORDINARY_UNBOUND`), tuple이 FAILED를 싣지 않은 shard 수준 FAIL은 그 shard의 VERIFIED가 아닌 ID를 같은 code의 FAILED로 유지한다(BLOCKED로 낮추지 않는다).
+
+**한계.** scope 결과는 그것을 만든 verifier의 저장된 주장이며 이 fan-in은 존재·무결성·산술을 검사한다. 실행 진본이나 증거 재계산을 인증하지 않는다. 호출자가 결과 digest와 증거 pin을 둘 다 바꿔 넣으면 구별할 수 없다. 저장된 `QueryCompletionResult`의 `DecodeQueryCompletionResult`는 counter에서 모든 합산과 판정을 다시 유도해 모순된 저장 결과(예: BLOCKED를 COMPLETE로 바꾼 것)를 거부하지만, scope 증거를 다시 계산하지는 않는다. fan-in은 파일을 읽지 않고 원장 경로가 없다. 비용은 registry 검증과 ordinary ID 전개(106,346 ID 해시)이며 새 한도를 만들지 않고 기존 한도를 바꾸지 않는다.
+
 ## #362 ordinary 사전 등록과 capacity plan P2-A
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.

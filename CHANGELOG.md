@@ -2,6 +2,8 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- #362 범위 7: ordinary·predicate·SVC·large의 scope별 결과를 모으는 fan-in과 completion gate를 새 revision `tsgk-query-scope-result/r1`·`tsgk-query-completion/r1`로 추가한다(Refs #362). `kit.FoldQueryCompletion`은 분모를 registry와 SVC asset에서 다시 유도하고, 없는 scope를 0이 아니라 BLOCKED로 두며, registry pin·분모 pin·결과 digest·증거 pin을 검사하고, 하나라도 FAILED면 FAIL로 최초 code를 보존한다. 현재 상태는 전체 107,364 의무 중 VERIFIED 330(predicate 67, SVC 263)이고 gate는 닫혀 있다. large 분모가 미등록이라 이 revision은 COMPLETE가 될 수 없다. r9·r10·P0 `Fold`의 의미, 한도, release gate는 바꾸지 않는다.
+
 - #362 범위 5: SVC69 사례·41 edits·두 query의 독립 등록을 별도 추적 계약 `src/contracts/query-svc-expected-r1.json`으로 추가한다(Refs #362). P0 registry는 바꾸지 않는다. 확장 분모(history 110, edit point 41, segment 109, CodeBehind 2, negative 1, inline tree 82, query 164)를 등록하고 오프라인 의무는 독립 expected로 `kit.VerifySvcExpected`(기존 `ApplyEdits`·`ObserveServiceHostWithContext`·`svcVerdict` 재사용)와 실제 owned native producer로 검증한다. 실제 C# grammar가 필요한 inline tree와 expected가 없는 query, Linux 몫은 BLOCKED로 남고 `full_scope_complete=false`다. VB unsupported negative는 `BLOCKED`/`SVC_INLINE_UNSUPPORTED`로 그대로 보존한다. 한도·원장 식·VB 지원은 바꾸지 않는다.
 
 - #362 범위 3: 기존 네 predicate의 독립 평가 20 tuple/OS와 거부·미완료 정책 47행/OS를 별도 typed 경로로 등록·검증한다(Refs #362). 독립 expected asset `src/contracts/query-predicate-expected-r1.json`은 P0 registry(변경 없음)와 고정 roster에 결속되고, `kit.VerifyPredicateTuple`(기존 `VerifyQueryWitness` 재사용, `Evaluated=1`·독립 full CST 요구)·`kit.CheckPredicateControl`(47행 정확한 거부)·`kit.FoldPredicateScope`(host별 typed 집계)를 추가한다. Windows 20 tuple과 47행은 실제 owned native·host evaluator로 검증하고 Linux 몫은 등록만 되어 BLOCKED다. 새 predicate·regex·directive·quantifier 지원, 한도, r9 reducer는 바꾸지 않는다.
