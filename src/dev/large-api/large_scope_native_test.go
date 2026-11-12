@@ -106,12 +106,18 @@ func TestLargeScopeNative(t *testing.T) {
 	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 		t.Skip("the large workloads run on windows/amd64 only")
 	}
-	rt, cc, grammarRoot := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC"), os.Getenv("TSGK_LARGE_CSHARP_GRAMMAR")
-	if rt == "" || cc == "" || grammarRoot == "" {
+	// The prepared C# grammar is not tracked, so this run is opt-in even under TSGK_NATIVE_REQUIRED=1;
+	// a set but mismatching grammar still fails against the registered closure below.
+	grammarRoot := os.Getenv("TSGK_LARGE_CSHARP_GRAMMAR")
+	if grammarRoot == "" {
+		t.Skip("set TSGK_LARGE_CSHARP_GRAMMAR to the prepared registered C# grammar directory to run the large-scope native regression (the grammar is not tracked)")
+	}
+	rt, cc := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC")
+	if rt == "" || cc == "" {
 		if os.Getenv("TSGK_NATIVE_REQUIRED") == "1" {
-			t.Fatal("required native runtime, compiler or registered C# grammar absent")
+			t.Fatal("TSGK_LARGE_CSHARP_GRAMMAR is set but the required native runtime or compiler is absent")
 		}
-		t.Skip("native runtime, compiler or registered C# grammar not configured")
+		t.Skip("native runtime or compiler not configured")
 	}
 	root, err := filepath.Abs("../../..")
 	if err != nil {

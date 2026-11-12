@@ -15,6 +15,7 @@ import (
 // This test asks the native package to make the r8, then consumes those exact files with the
 // ordinary reader and handwritten expectations in this package.
 func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
+	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryNativeTools(t)
 	fixtureDir := filepath.Join(t.TempDir(), "fixture")
 	rootDir, err := filepath.Abs(filepath.Join("..", ".."))

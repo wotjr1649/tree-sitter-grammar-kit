@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -397,13 +398,17 @@ func adversarialAPICases() []apiCase {
 	return cases
 }
 
+// sharedAdversarialAPICases generates the seeded cases once; both tests below only read them
+// (a mismatched variant works on a clone).
+var sharedAdversarialAPICases = sync.OnceValue(adversarialAPICases)
+
 // TestCompareAPIStaysWithinCompareAPIWork holds the visits and string bytes CompareAPI really
 // performs, and the memory it allocates, within what CompareAPIWork and CompareAPILogical reserve.
 func TestCompareAPIStaysWithinCompareAPIWork(t *testing.T) {
 	var visits, text uint64
 	compareAPICostHook = func(v, b uint64) { visits, text = v, b }
 	defer func() { compareAPICostHook = nil }()
-	for _, tc := range adversarialAPICases() {
+	for _, tc := range sharedAdversarialAPICases() {
 		nodes, api := tc.tree.nodes, tc.tree.api
 		for _, variant := range []string{"valid", "mismatched"} {
 			a := api
@@ -439,14 +444,18 @@ func TestCompareAPIStaysWithinCompareAPIWork(t *testing.T) {
 // TestCompareAPIAdversarialMatchesReference checks the large adversarial cases whose reference
 // run is still affordable.
 func TestCompareAPIAdversarialMatchesReference(t *testing.T) {
-	for _, tc := range adversarialAPICases() {
+	for _, tc := range sharedAdversarialAPICases() {
 		if len(tc.tree.nodes) > 31000 || tc.name == "wide-root-all-zero-width-all-divergent" {
 			continue
 		}
-		wantDiff, wantDiv := compareAPIReference(tc.tree.nodes, &tc.tree.api)
-		gotDiff, gotDiv := CompareAPI(tc.tree.nodes, &tc.tree.api)
-		if !reflect.DeepEqual(wantDiff, gotDiff) || !reflect.DeepEqual(wantDiv, gotDiv) {
-			t.Fatalf("%s: reference %+v %+v, got %+v %+v", tc.name, wantDiff, wantDiv, gotDiff, gotDiv)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			// the cases are read-only and the cost hook is only set by a sequential test
+			t.Parallel()
+			wantDiff, wantDiv := compareAPIReference(tc.tree.nodes, &tc.tree.api)
+			gotDiff, gotDiv := CompareAPI(tc.tree.nodes, &tc.tree.api)
+			if !reflect.DeepEqual(wantDiff, gotDiff) || !reflect.DeepEqual(wantDiv, gotDiv) {
+				t.Fatalf("%s: reference %+v %+v, got %+v %+v", tc.name, wantDiff, wantDiv, gotDiff, gotDiv)
+			}
+		})
 	}
 }
