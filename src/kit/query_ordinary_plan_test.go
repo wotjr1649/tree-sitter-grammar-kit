@@ -2,6 +2,7 @@ package kit
 
 import (
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -32,8 +33,10 @@ var ordinaryP0Registry = sync.OnceValues(func() (*queryregistrycore.Validated, e
 	return v, err
 })
 
-// ordinaryP0Inventory parses the pinned inventory once per test binary. Its callers only read it
-// (TestMain re-parses the file after the run and fails the package if the shared value changed).
+// ordinaryP0Inventory parses the pinned inventory once per test binary. Its callers only read it;
+// a caller that needs a changed copy clones first. TestMain re-parses the file after the run and
+// fails the package if the shared value differs then; it cannot see a change that was undone
+// before the end, so the rule is read-only, not "restore what you change".
 var ordinaryP0InventoryUsed atomic.Bool
 
 var ordinaryP0Inventory = sync.OnceValues(func() (QualificationInventory, error) {
@@ -41,8 +44,40 @@ var ordinaryP0Inventory = sync.OnceValues(func() (QualificationInventory, error)
 	if err != nil {
 		return QualificationInventory{}, err
 	}
-	return ParseQualificationInventory(qualification)
+	inv, err := ParseQualificationInventory(qualification)
+	if err == nil {
+		clipSlices(reflect.ValueOf(&inv).Elem())
+	}
+	return inv, err
 })
+
+// clipSlices sets every slice's capacity to its length, so an append on the shared value allocates
+// a new array instead of writing past len into memory other tests share and the guard cannot see.
+func clipSlices(v reflect.Value) {
+	switch v.Kind() {
+	case reflect.Pointer, reflect.Interface:
+		if !v.IsNil() {
+			clipSlices(v.Elem())
+		}
+	case reflect.Struct:
+		for i := range v.NumField() {
+			if v.Field(i).CanSet() {
+				clipSlices(v.Field(i))
+			}
+		}
+	case reflect.Slice:
+		if v.CanSet() {
+			v.Set(v.Slice3(0, v.Len(), v.Len()))
+		}
+		for i := range v.Len() {
+			clipSlices(v.Index(i))
+		}
+	case reflect.Array:
+		for i := range v.Len() {
+			clipSlices(v.Index(i))
+		}
+	} // shortcut: slices inside map values are not addressable and keep their capacity; clone a map value before appending to it.
+}
 
 func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
 	t.Helper()
@@ -216,4 +251,35 @@ func TestOrdinaryPlanExactP0UnionAndFixedCaps(t *testing.T) {
 	if err := validateOrdinaryShardPlan(empty, v); err == nil {
 		t.Fatal("empty ordinary plan accepted")
 	}
+}
+
+// An append on any slice of the shared inventory must allocate, not write into shared spare capacity.
+func TestSharedInventorySlicesHaveNoSpareCapacity(t *testing.T) {
+	inv, err := ordinaryP0Inventory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var walk func(v reflect.Value, path string)
+	walk = func(v reflect.Value, path string) {
+		switch v.Kind() {
+		case reflect.Pointer, reflect.Interface:
+			if !v.IsNil() {
+				walk(v.Elem(), path)
+			}
+		case reflect.Struct:
+			for i := range v.NumField() {
+				if v.Type().Field(i).IsExported() {
+					walk(v.Field(i), path+"."+v.Type().Field(i).Name)
+				}
+			}
+		case reflect.Slice:
+			if v.Cap() != v.Len() {
+				t.Fatalf("%s has len %d cap %d", path, v.Len(), v.Cap())
+			}
+			for i := range v.Len() {
+				walk(v.Index(i), path+"[]")
+			}
+		}
+	}
+	walk(reflect.ValueOf(inv), "inventory")
 }
