@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -452,14 +451,11 @@ func ordinaryFullPosBuildCLI(t *testing.T) ordinaryFullPosReplayEnv {
 	if err != nil {
 		t.Fatal(err)
 	}
-	scratch := t.TempDir()
-	exe := filepath.Join(scratch, "tsgk.exe")
-	build := exec.Command("go", "build", "-o", exe, "./src/cmd/tsgk")
-	build.Dir = repo
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("building the CLI: %v\n%s", err, output)
+	exe, err := ordinaryFullPosCLIBuild() // built once per package run; each caller keeps its own scratch directory
+	if err != nil {
+		t.Fatal(err)
 	}
-	return ordinaryFullPosReplayEnv{exe: exe, repo: repo, scratch: scratch}
+	return ordinaryFullPosReplayEnv{exe: exe, repo: repo, scratch: t.TempDir()}
 }
 
 // ordinaryFullPosParity runs the r9 replay in process and through `tsgk replay`, and requires that both

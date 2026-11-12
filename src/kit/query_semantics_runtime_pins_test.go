@@ -88,6 +88,7 @@ func semanticHistoricalRuntime(t *testing.T, req *QuerySemanticsRequest, f *elig
 }
 
 func TestSemanticRuntimePinsProductionIndependence(t *testing.T) {
+	t.Parallel()
 	req, f, binding := semanticBoundFixture(t, 0)
 	materials := runtimePinMaterials(t)
 	semanticHistoricalRuntime(t, &req, f, &binding, materials)

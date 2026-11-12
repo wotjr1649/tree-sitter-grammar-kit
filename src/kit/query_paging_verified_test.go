@@ -108,6 +108,7 @@ func TestVerifiedPagingCharge(t *testing.T) {
 }
 
 func TestVerifiedPagingUnboundFallback(t *testing.T) {
+	t.Parallel()
 	for _, mutation := range []string{"graph", "node"} {
 		t.Run(mutation, func(t *testing.T) {
 			f := binaryDriverFixture(t, MaxDocumentBytes+1)

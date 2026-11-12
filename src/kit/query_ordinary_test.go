@@ -128,6 +128,7 @@ func TestOrdinaryStrictDocuments(t *testing.T) {
 }
 
 func TestOrdinaryRegistrationBinding(t *testing.T) {
+	t.Parallel()
 	_, v, inv := ordinaryRegistryFixture(t)
 	var route QualRoute
 	for _, r := range inv.Routes {

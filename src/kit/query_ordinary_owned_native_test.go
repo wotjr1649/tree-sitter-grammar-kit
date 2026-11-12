@@ -1,15 +1,12 @@
 package kit
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 // This test asks the native package to make the r8, then consumes those exact files with the
@@ -18,16 +15,7 @@ func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
 	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryNativeTools(t)
 	fixtureDir := filepath.Join(t.TempDir(), "fixture")
-	rootDir, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "go", "test", "./src/internal/native", "-run", "^TestOracleOrdinaryOwnedFixture$", "-count=1", "-timeout=180s")
-	cmd.Dir = rootDir
-	cmd.Env = ordinaryOwnedNativeEnv(fixtureDir)
-	if output, err := cmd.CombinedOutput(); err != nil {
+	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryOwnedFixture", "", ordinaryOwnedNativeEnv(fixtureDir)); err != nil {
 		t.Fatalf("native owned r8 producer failed: %v\n%s", err, output)
 	}
 	var producer struct {
