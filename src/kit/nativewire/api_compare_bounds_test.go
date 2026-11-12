@@ -52,7 +52,9 @@ func genAPITree(rng *rand.Rand, n, span, fields, shape int, nameLen int) apiTree
 	return apiTree{nodes, trueAPI(nodes)}
 }
 
-// trueAPI computes the API rows by direct definition, quadratic where the product is not.
+// trueAPI computes the API rows by direct definition: every sibling cell is the nearest sibling in the direction
+// (and named, for the named cells), found from per-parent position tables built in one pass, so the oracle stays
+// linear on a 60,000-sibling root while it is still defined by the children lists, not by the product's walks.
 func trueAPI(nodes []TreeNode) WireAPI {
 	n := len(nodes)
 	kids := make([][]int64, n)
@@ -70,6 +72,25 @@ func trueAPI(nodes []TreeNode) WireAPI {
 			depth[i] = depth[p] + 1
 		}
 	}
+	pos := make([]int, n)
+	prevNamed, nextNamed := make([]int64, n), make([]int64, n)
+	for p := range kids {
+		last := int64(-1)
+		for k, c := range kids[p] {
+			pos[c], prevNamed[c] = k, last
+			if nodes[c].Named {
+				last = c
+			}
+		}
+		last = -1
+		for k := len(kids[p]) - 1; k >= 0; k-- {
+			c := kids[p][k]
+			nextNamed[c] = last
+			if nodes[c].Named {
+				last = c
+			}
+		}
+	}
 	api := WireAPI{Revision: "tsgk-api/r1", ChildFields: [][]int64{}, FieldLookups: [][]int64{}, Points: [][]int64{}, Names: []string{}}
 	nameOf := map[string]int64{}
 	for i := range nodes {
@@ -78,10 +99,14 @@ func trueAPI(nodes []TreeNode) WireAPI {
 			if p < 0 {
 				return -1
 			}
-			for k := indexOf(kids[p], int64(i)) + step; k >= 0 && k < len(kids[p]); k += step {
-				if !named || nodes[kids[p][k]].Named {
-					return kids[p][k]
+			if named {
+				if step < 0 {
+					return prevNamed[i]
 				}
+				return nextNamed[i]
+			}
+			if k := pos[i] + step; k >= 0 && k < len(kids[p]) {
+				return kids[p][k]
 			}
 			return -1
 		}
@@ -119,15 +144,6 @@ func trueAPI(nodes []TreeNode) WireAPI {
 		}
 	}
 	return api
-}
-
-func indexOf(list []int64, x int64) int {
-	for i, v := range list {
-		if v == x {
-			return i
-		}
-	}
-	return -1
 }
 
 func cloneAPI(a WireAPI) WireAPI {
