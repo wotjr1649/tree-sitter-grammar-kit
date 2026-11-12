@@ -5,7 +5,7 @@
 ## 조건
 
 - 아래 "query 의미 claim"의 모든 항목은 통합 PR [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416)(`integ/362`, `Refs #362`)이 main에 병합된 뒤에만 유효하다. 병합 전에는 어떤 항목도 주장하지 않는다.
-- 이미 주장하던 범위(아래 "제품 범위")는 그대로이고 줄이지 않는다. 새로 주장하는 것은 query 의미의 검증된 하위 범위뿐이다.
+- 이미 주장하던 범위(아래 "제품 범위")는 새로 줄이거나 넓히지 않는다. 다만 macOS는 v0.2.0 시점 근거만 있고 v0.3.0에서 재검증하지 않았다(NOT_RUN, 제외를 PASS로 세지 않는다). 새로 주장하는 것은 query 의미의 검증된 하위 범위뿐이다.
 - 최종 후보 commit에서 [발행 전 남은 검증](#발행-전-남은-검증)을 다시 실행하기 전에는 이 문서의 수치를 최종 release 근거로 쓰지 않는다. fan-in 수치는 최종 후보에서 다시 계산해 갱신한다.
 
 ## 제품 범위
@@ -24,25 +24,27 @@ v0.3.0은 query 의미를 experimental로 유지하고, 실제로 검증한 하�
 
 ### 주장하는 범위
 
-모두 Windows에서, 실제 owned native producer와 등록 한도(logical 1 GiB, work 32,000,000, read 256 MiB; large는 등록된 large 예산)를 바꾸지 않고 얻은 결과다. 독립 expected는 grammar·query 원문에서 도출해 native 실행 전에 봉인했다.
+모두 Windows에서, 실제 owned native producer와 등록 한도(logical 1 GiB, work 32,000,000, read 256 MiB; large는 등록된 large 예산)를 바꾸지 않고 얻은 결과다. 독립 expected는 grammar·query 원문에서 도출해 native 첫 실행 전에 봉인했다. 예외가 있다. TSQL의 dynamic SQL capture asset 8개(107개 중)는 첫 대조 뒤 소스 근거로 교정했고, TSQL wildcard child pattern의 definite 여부(`tsqlDefinite[12]`)는 native 관측과 맞춘 모델 매개변수라 해당 pattern에 한해 독립 증거가 아니다. large는 봉인 뒤 capture 위치 한 줄을 정정했다.
 
 | 범위 | 검증된 사실 | 근거 |
 |---|---|---|
 | predicate(`eq?`, `not-eq?`, `any-of?`, `not-any-of?`) | 독립 평가 tuple 20/20 VERIFIED, 거부·미완료 정책 47/47 정확한 거부. 새 predicate 지원은 없다 | [#408](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/408), [expected](../../src/contracts/query-predicate-expected-r1.json), [계약](../specs/instrumented-query-reference.md#362-predicate-의미-의무와-거부-정책-범위-3) |
 | SVC 오프라인 의무 | 263개 VERIFIED(history 110, edit point 41, segment 109, CodeBehind 2, negative 1) | [#410](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/410), [expected](../../src/contracts/query-svc-expected-r1.json) |
 | SVC inline C# | tree 82개 중 30, 두 query 164개 중 60이 실제 C# grammar native와 일치(`facts.dynamic_sql` fact 0개 포함) | [#415](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/415), [expected](../../src/contracts/query-svc-inline-expected-r1.json) |
-| Windows large | 39개 의무 중 31 VERIFIED. `cs-large-22m`은 source·status·전체 CST(node 11,463,151, page 12)·occurrence가 native와 일치하고, `cs-large-32mib-errors` status는 등록 8 GiB HARD 한도에서 `COMPLETED`다. over-limit control은 `RESOURCE_LIMIT`/`OUTPUT_LIMIT`로 정확히 거부된다 | [#412](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/412), [#415](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/415), [expected](../../src/contracts/query-large-expected-r1.json) |
-| ordinary 선택 SQL shard 공개 pass | TSQL `alt-tsql-B01-r001` 72/72, PostgreSQL `alt-postgresql-sql-B04-22` 9/9 VERIFIED. 한도 불변, TSQL 남은 여유는 work 7.3%·logical 3.47%로 얇다 | [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416), [#403](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/403) |
+| Windows large | 39개 중 31 VERIFIED: `cs-large-22m` 26(source 1, status 1, CST page 12, footer 1, occurrence page 10, footer 1), 오류 복구 fixture 둘의 source·status 4, over-limit control 1. `cs-large-22m`은 전체 CST(node 11,463,151, page 12)·occurrence가 native와 일치한다. `cs-large-32mib-errors` status는 등록 8 GiB HARD 한도에서 `COMPLETED`(syntax ERROR)다. control은 `RESOURCE_LIMIT`/`OUTPUT_LIMIT`로 정확히 거부됐다는 확인이며 의미 PASS가 아니다. 31번째(32 MiB status)는 이 한 사례를 따로 재실행한 기록이며 아래 fan-in 시험에는 들어 있지 않다(시험은 30으로 고정) | [#412](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/412), [#415](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/415), [expected](../../src/contracts/query-large-expected-r1.json) |
+| ordinary 선택 SQL shard 공개 pass | TSQL `alt-tsql-B01-r001` 72/72, PostgreSQL `alt-postgresql-sql-B04-22` 9/9(독립 10-node CST, 빈 capture·fact) VERIFIED. 한도 불변, TSQL 남은 여유는 work 7.3%·logical 3.47%로 얇다 | [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416), [#403](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/403) |
 | ordinary JSON 양성 | 여러 case(2/2)와 편집 이력(3 edit·4 version, 14/14)의 공개 API·r9 replay·`tsgk replay` 결과 일치(저장소에 추적되는 JSON grammar fixture) | [#404](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/404), [#402](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/402) |
-| scope별 fan-in | 현재 상태를 기계 검증으로 모으며 FAILED 0. 집계는 전체 107,399 의무 중 VERIFIED 360(PR #416 본문 기준, large 32 MiB 재실행 반영 전), 나머지 BLOCKED. 이 수치는 최종 후보 commit에서 다시 계산해 갱신한다 | [#413](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/413), [#414](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/414) |
+| scope별 fan-in | 현재 상태를 기계 검증으로 모으며 FAILED 0. 집계는 전체 107,399 의무 중 VERIFIED 360, 나머지 BLOCKED다. 시험이 반영하는 것은 predicate 67·SVC 오프라인 263·large 30(#412 기록)이다. SVC inline 90, large 32 MiB status 1, ordinary 선택 shard(TSQL·PostgreSQL·JSON)는 fan-in 밖에서 따로 검증했다. 분모 107,399는 #362 Issue 본문의 107,364에서 large 상위 의무 4개를 하위 39개로 바꾼 값이다(차이 35). 이 수치는 최종 후보 commit에서 시험이 고정한 값(360)과 같은지 확인한다 | [#413](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/413), [#414](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/414) |
+
+위 「근거」 열의 개별 PR(#402·#403·#404·#408·#410·#412·#413·#414·#415)은 #416에 통합돼 병합 없이 닫혔다(통합 전 개별 검토 기록).
 
 ### 주장하지 않는 범위(BLOCKED 사유)
 
 | 미주장 | 사유 |
 |---|---|
-| 오류 복구(ERROR·MISSING)가 생기는 입력의 CST·capture | grammar 규칙만으로 결과가 정해지지 않아, 결과 복사 golden 없이는 독립 expected를 만들 수 없다. SVC inline 8 step, large `cs-large-8m-errors`·`cs-large-32mib-errors`의 CST·occurrence 8개가 해당한다 |
-| 전처리 scanner 상태가 필요한 SVC inline | 44 step(`#if`·`#else`·`#define`·`#endif`). external scanner의 상태 기계를 규칙에서 독립 도출하지 못했다. 이 step의 query 104개도 미주장이다 |
-| Linux 몫 | predicate 20+47, SVC, large의 Linux 몫은 등록만 되어 있고 CI 수집 경로가 없다 |
+| 오류 복구(ERROR·MISSING)가 생기는 입력의 CST·capture | grammar 규칙만으로 결과가 정해지지 않아, 결과 복사 golden 없이는 독립 expected를 만들 수 없다. SVC inline 8 step, large `cs-large-8m-errors`·`cs-large-32mib-errors`의 CST·occurrence 8개가 해당한다. 이 8 step의 query 16개도 미주장이다 |
+| 전처리 scanner 상태가 필요한 SVC inline | 44 step(`#if`·`#else`·`#define`·`#endif`). external scanner의 상태 기계를 규칙에서 독립 도출하지 못했다. 이 step의 query 88개도 미주장이다(오류 복구 8 step의 16개와 합쳐 104개) |
+| Linux 몫 | predicate 20+47과 SVC의 Linux 몫은 등록만 되어 있고 CI 수집 경로가 없다. large는 Windows 전용 workload라 Linux·macOS가 NOT_APPLICABLE이며 Linux 몫이 없다 |
 | ordinary 전량 | 전체 ordinary 106,208 tuple 중 위 선택 shard 외에는 검증하지 않았다. binary-paged TSQL `alt-tsql-B04-r144`는 독립 expected가 없어 8/8 BLOCKED다 |
 | reference row·approval | 공개 pass 시험의 reference row와 approval은 synthetic이다. 실제 외부 reference 실행이나 caller 승인 workload의 증거가 아니다 |
 | native producer의 predicate 평가 | native producer의 predicate capability는 `NOT_EVALUATED`로 유지한다. 위 predicate 20/20은 별도 typed 검증 경로(`VerifyQueryWitness` 재사용)의 결과다 |
@@ -132,6 +134,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 
 - 실제 과거 CI 산출물 등 git에 저장된 v0.2.0 evidence set의 재생(저장본이 없다). `private-corpus-r1`·`prepare-native-r1` reducer의 replay(비공개 local run 자료 필요).
 - 손상·변조된 옛 evidence가 후보의 확장된 검사로 새로 거부되는지(위 7번).
+- typed decode의 map 항목 계상 증가(`5e64ec5`, 한도 불변)가 v0.2.0에 있던 표면(`replay`·`evidence verify`·`qualify`)에 주는 영향. 계상이 늘기만 하므로 한도 근처 입력은 v0.2.0보다 먼저 `RESOURCE_LIMIT`가 될 수 있다. 측정하지 않았다.
 - 후보의 새 flag 경로(`--pins`, `--runtime-pins`, `--build-cache`, `--reuse-*`, `--ordinary-*`, `--source-witness`, `evidence query-reference`)의 v0.2.0 대비 비교. 다른 route(C#·T-SQL·XML·SVC)와 큰 workload의 native 비교. 실제 tree-sitter generator를 쓴 `reproduce`.
 
 위 실측은 후보 `aca5385` 기준이며 최종 후보에서 [발행 전 남은 검증](#발행-전-남은-검증) 14·15로 다시 확인하고, 결과에 따라 이 절의 호환성 목록을 고친다.
@@ -144,11 +147,14 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 - 관측 한계의 BLOCKED: macOS 강한 격리, 위 query 의미 미주장 범위, large 정상 실행의 Windows 한정.
 - 실사용 소비자 성능과 26 언어 전체 정확도는 측정하지 않았다. 등록 사례의 판정이 임의 입력 지원을 인증하지 않는다.
 - **미주장: C# 전체 선언 범위 대조.** C# 전체 선언 범위의 의무 → 독립 기대값 → 실행 근거 대조(G1)는 하지 않았고 주장하지 않는다. 주장하는 것은 위 "제품 범위"의 C1–C4 잔여 교정(#369)과 기존 qualification PASS뿐이다. [#233](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233)은 출하 뒤에도 열어 두고 이어서 진행한다(2026-11-12 사용자 결정).
-- CI 운영 여유 표본 미판정, 제품 동작 아님: [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303), [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352), [#329](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/329). 이 Issue들은 출하 선행 조건이 아니다(2026-11-12 사용자 결정). 표본은 계속 자연스럽게 모아 판정한다.
+- CI 운영 여유 표본 미판정, 제품 동작 아님: [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303), [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352). 표본은 계속 자연스럽게 모아 판정한다.
+- [#329](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/329): hosted Windows runner에서 Go runtime 치명 오류가 한 번 관측된 상류 의심 사건이며 재현 계측(E0)을 남겨 두었다. 제품 동작이 아니다.
+- #280·#303·#352·#329는 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
+- 최근 nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)에서 비필수 `race diagnostic (ubuntu-24.04)` lane이 failure였다. data race 보고가 아니라 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)이다. 같은 run의 필수 job은 모두 success다.
 
 ## 발행 전 남은 검증
 
-발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 최종 후보에서는 아직 실행하지 않았다(B~E의 명령은 후보 `5e64ec5`(`integ/362`)에서 한 번 예행 실행해 점검했으나 그 결과는 이 문서의 근거가 아니다. 14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다. `pwsh`에서 `-test.count=1`처럼 점이 든 인자를 native 실행 파일(예: `go test -c`로 만든 시험 binary)에 줄 때는 `'-test.count=1'`처럼 따옴표로 묶는다. 묶지 않으면 `-test`와 `.count=1`로 쪼개져 exit 2가 난다. 각 항목 끝의 시간은 예행 실행의 Windows 개발 host 실측이며 다른 시험이 겹치면 늘어난다.
+발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 최종 후보에서는 아직 실행하지 않았다(B~E의 명령은 후보 `5e64ec5`(`integ/362`)에서 한 번 예행 실행해 점검했다(예행 뒤 #416에 `c4527d0`까지 더해졌다). 그 결과는 이 문서의 근거가 아니다. 14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다. `pwsh`에서 `-test.count=1`처럼 점이 든 인자를 native 실행 파일(예: `go test -c`로 만든 시험 binary)에 줄 때는 `'-test.count=1'`처럼 따옴표로 묶는다. 묶지 않으면 `-test`와 `.count=1`로 쪼개져 exit 2가 난다. 각 항목 끝의 시간은 예행 실행의 Windows 개발 host 실측이며 다른 시험이 겹치면 늘어난다.
 
 **A. 전제와 후보 결정**
 
@@ -200,7 +206,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 20. release 문서 PR의 최종 head에서 `gh pr checks`로 `foundation (windows-2025)`, `foundation (ubuntu-24.04)`, `integration gate`, `CI mode` 모두 성공을 확인한다. skipped·cancelled·missing은 PASS가 아니다. 병합 직전에 ruleset·checks·conversation·review를 새로 읽는다.
 21. 병합 뒤 actual main: 병합 SHA의 `foundation.yml` run과 전체 job 성공을 `gh run list`·`gh run view`로 확인한다. 재사용된 run이면 `CI mode` 로그의 PR run·attempt·synthetic SHA·tree를 확인한다.
 22. fan-in·qualification: `integration gate` 성공, 공식 artifact의 digest·크기·member·cohort·병합 parent/tree를 확인하고, Windows·Linux 파생 52칸 qualification PASS와 C# symbol 26 PASS·0 MISMATCH·4 NOT_APPLICABLE를 대조한다.
-23. **query 의미 fan-in 재계산.** `go test ./src/kit -run '^TestQueryCompletion' -count=1 -v`와, native·runtime이 준비된 환경에서 `TSGK_NATIVE_REQUIRED=1 go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v`로 현재 VERIFIED·BLOCKED 합계, gate `BLOCKED`·`complete=false`, FAILED 0을 확인한다. 위 "scope별 fan-in" 행의 수치(VERIFIED 360)를 실제 값으로 갱신한다. 환경은 검증 계약의 "#362 scope별 fan-in" 절을 따른다.
+23. **query 의미 fan-in 재계산.** `go test ./src/kit -run '^TestQueryCompletion' -count=1 -v`와, native·runtime이 준비된 환경에서 `TSGK_NATIVE_REQUIRED=1 go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v`로 현재 VERIFIED·BLOCKED 합계, gate `BLOCKED`·`complete=false`, FAILED 0을 확인한다. 위 "scope별 fan-in" 행의 수치(VERIFIED 360)가 시험이 고정한 값(predicate 67 + SVC 263 + large 30)과 같은지 확인한다. 환경은 검증 계약의 "#362 scope별 fan-in" 절을 따른다.
 24. (선택) 같은 후보에서 predicate·SVC·large·SQL 공개 pass의 opt-in 시험을 한 번 재현한다. 한도 불변·HARD Job 조건을 지킨다(검증 계약의 #362 절).
 25. CI 운영 표본(#280·#303·#352·#329)의 현재 상태를 읽고 "잔존 제약"의 문구와 같은지 확인한다. 선행 조건이 아니다.
 
