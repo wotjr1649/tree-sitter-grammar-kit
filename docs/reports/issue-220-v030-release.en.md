@@ -68,12 +68,14 @@ The baseline is tag `v0.2.0` and the integration candidate `integ/362` (PR #416)
 
 > **Consumer requirement: Go 1.27.4 or newer.** The `go` directive in `go.mod` rose from `1.27.1` to `1.27.4` (#358). A consumer that builds this module needs Go 1.27.4 or newer. If automatic toolchain switching is disabled, the build fails on an older Go. This applies to consumers of the stable surface too.
 
+> **User notice: the native runtime pin changed (#213).** The Tree-sitter runtime source used by the native paths (`incremental`, `oracle record` and others) moved from commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7` (v0.2.0) to release tag `v0.27.1` (commit `10eb5ac119eec9cb4267a8e035066473983f5f3a`). The directory given to `--runtime` must be the runtime that the `tsgk` in use pins; otherwise both directions are rejected with `RUNTIME_MISMATCH` (`lib/include/tree_sitter/api.h: identity mismatch`, exit 2, `NOT_RUN`). A runtime directory prepared for v0.2.0 cannot be used as is with the candidate `tsgk`, and the reverse is also true. For the same grammar and input, the build identity, driver executable, runtime commit and producer identity differ. The pin is owned by `src/drivers/native-c/runtime-manifest.json`; the basis is in the [upstream sources](../provenance/upstream-sources.md).
+
 ### Stable surface: no breaking change
 
 - Public Go API: no exported identifier was deleted, no signature of an existing function or method changed, and no method was added to an existing interface.
 - CLI: the flag lists, defaults and descriptions of `inspect`, `identity`, `verify`, `schema check`/`schema diff` (and of the experimental `corpus` and `reproduce`) are the same as in v0.2.0. Every new flag defaults to empty or false.
 - Schema: the values of the schema constants used by the stable API (`ReportSchema`, `ProfileSchema`, `ExpectedSchema`, `ManifestSchema`, `FileSetSchema`, the `PolicySchema` family, `SchemaFormat`, `SchemaComparator`, `TreeSummarySchema`, and others) are unchanged.
-- Behavior: running `inspect`, `identity`, `schema check` and `schema diff` on the v0.2.0 plain fixture with both versions gives byte-identical stdout (exit 0).
+- Behavior: running `inspect`, `identity`, `schema check` and `schema diff` on the v0.2.0 plain fixture with both versions gives byte-identical stdout (exit 0). On candidate `aca5385`, `corpus`, `verify` (pass, tampered and no-expected cases), an invalid `schema check`, root-command errors, and `inspect` and `corpus` on the repository's `ordinary-json` fixture also gave byte-identical stdout and the same exit codes. The experimental `reproduce` gave the same verdict and output (`parser.c`) on the same JSON-mode fixture, with only timestamps and memory figures differing (no real tree-sitter generator was available, so a test generator with the same behavior was used).
 - The Go minimum-version increase above applies to stable consumers as well.
 
 ### Counts of changes, additions and deletions
@@ -100,6 +102,8 @@ These are changes to the experimental surface of the v0.2.0 claim (`qualify`, `i
 | 4 | `kit.SvcCompositeSchema` | `tsgk-svc-composite/r1` → `/r2`, r1 literal removed | The r2 composite adds `SvcDirective.DiagnosticSpans` (item 6), `AdditionalDirectives`, `SvcLanguage.Origin`/`Source` and `SvcCodeBehind.Case`. Replay checks the composite schema as r2 for the r2 format |
 | 5 | `kit.SvcFormat` | `SVC-SERVICEHOST-r1` → `-r2` (r1 is the new `SvcLegacyFormat`) | The candidate code accepts `SvcLegacyFormat` as well on most paths, but external code that compared against `SvcFormat` no longer matches r1 input |
 | 6 | Three new JSON keys without omitempty | `QualRole.Deferred` (`deferred`), `QualSet.BranchSelectionNotClaimed` (`branch_selection_not_claimed`), `SvcDirective.DiagnosticSpans` (`diagnostic_spans`) | The JSON output gains new keys even for the same input. The other 37 new fields on existing structs are omitempty, `json:"-"` or untagged, so output does not change. Only consumers using unkeyed struct literals break at source level |
+| 7 | **`replay` results for old evidence: gate counters and gate list change** | For the same input, in the reducers `native-result-r1`/`-r2` and `oracle-set-r1`/`-r2`: `case-binding` recomputed 1 → 6, `tree` 3 → 12, oracle `api` recomputed 0 → 1, and the `oracle-set` result has 13 gates instead of 10 (`query-expectations`, `fact-reproduction`, `dynamic-sql` added), with matching entries in `coverage.observed` and `explanation` and a changed reducer description `inputs` text | **The verdict, exit code, codes, `result_schema` (`tsgk-replay-result/r1`) and findings are the same.** A tool that compares or consumes experimental `replay` results per counter or per gate list (for example a golden comparison against an old result) sees different values. The cause is that the candidate's `src/kit/replay_native.go` counts each case's step-index check and each tree's form, envelope and input-identity check in the gate. This change was not in the earlier document or the CHANGELOG, and the result schema number was not raised. It was measured that the new checks do not reject normal v0.2.0 evidence; whether damaged or tampered old evidence that v0.2.0 accepted can now be rejected was not run |
+| 8 | Native runtime pin | Tree-sitter `659cda7c` → `v0.27.1` (`10eb5ac`), #213 | See the "User notice" above. Each side rejects the other's runtime with `RUNTIME_MISMATCH`, and build and producer identities differ. A documented, intentional change |
 
 Items 2–5 are the four schema-constant revision bumps (three constants, one format string). Notes:
 
@@ -107,12 +111,30 @@ Items 2–5 are the four schema-constant revision bumps (three constants, one fo
 - The root USAGE string does not mention `evidence query-reference`. The `evidence` sub-usage error now reads `tsgk evidence <verify|query-reference> ...`.
 - `kit.OrdinaryQuerySemanticsBinding` is an alias of an unexported type, so `go doc` does not show its structure (field access works).
 
+### Fixed (a v0.2.0 defect fixed by the candidate)
+
+- With an empty `queries` array in the profile, `oracle record` at v0.2.0 wrote `"queries": null` into the manifest, so the record set it had just published failed its own verification with `JSON_NULL manifest#/queries` (`REFERENCE_SET_INVALID`, exit 4). The candidate writes `[]` and passes (exit 0) on the same input. This is not a direction in which the candidate rejects what v0.2.0 produced; the v0.2.0 behavior of rejecting its own set is gone.
+
+### Measured results: candidate `aca5385`
+
+The execution compatibility of the experimental surface was checked on candidate `aca5385` (`integ/362`) by running it side by side with the v0.2.0 binary. The v0.2.0 tree stores no evidence set, so the inputs are outputs produced by the v0.2.0 binary itself and the tests' fixtures rebuilt in the same shape. Native compile and execution ran within Windows Job Object limits. The same check is repeated on the final candidate commit ([Pre-publication checks still open](#pre-publication-checks-still-open), items 14 and 15).
+
+| Check | Result |
+|---|---|
+| Replay with the candidate `tsgk replay` (reducers r1 and r2) of an `incremental` result and an `oracle record` set made by v0.2.0 (manifest r1, record r1, result r1, protocol `tsgk-native/r2`) | They replay. **The verdict (UNRESOLVED, `evidence_valid` true, exit 3), `result_schema` and findings are the same as at v0.2.0.** No input was rejected. The counters and gate list differ, as in item 7 above. UNRESOLVED arises in both versions because the `expectations` and `api` gates stay as recorded values instead of being recomputed from raw |
+| A `bs-gate-compare` set, `evidence verify` (passing and tampered graph), and the documented example and `invalid/` fixtures, run with both versions | Verdict, exit code, codes and output bytes are the same |
+| Replay of a candidate-made set with the v0.2.0 `replay` (reverse direction) | It replays (UNRESOLVED, valid). The counter difference is the same as in the forward direction |
+| `incremental` (owned plain, and stateful with a scanner) and `oracle record` (a profile with a query), run without any new flag with both versions | The verdict (PASS) and raw response bytes are the same. The only differences are the build identity, closure, executable, `runtime_commit` and producer identity that follow the runtime pin, and one added driver compile argument (`-DTSGK_RUNTIME_MANIFEST_SHA256=…`) |
+| Default path with the new flags omitted | All runs above worked normally without any new flag |
+| Mutual rejection of each version's runtime | Confirmed (see "User notice" above) |
+
 ### Not checked
 
-- The result of replaying records (an evidence set) made at v0.2.0 with the candidate's `tsgk replay`. The tables above rest on declaration and `-h` comparison and one inventory rejection; this replay has not been done.
-- Running the native paths of `incremental` and `oracle record` with both versions and comparing. That omitting a new flag takes the old path is based on declarations and help; the only execution check is the stable four-command smoke above.
+- Replay of real stored v0.2.0 evidence sets such as past CI artifacts (none are stored), and replay of the `private-corpus-r1` and `prepare-native-r1` reducers (they need private local-run data).
+- Whether damaged or tampered old evidence is newly rejected by the candidate's extended checks (item 7 above).
+- A v0.2.0 comparison of the candidate's new-flag paths (`--pins`, `--runtime-pins`, `--build-cache`, `--reuse-*`, `--ordinary-*`, `--source-witness`, `evidence query-reference`); native comparison of other routes (C#, T-SQL, XML, SVC) and large workloads; and `reproduce` with a real tree-sitter generator.
 
-Both are in [Pre-publication checks still open](#pre-publication-checks-still-open). Depending on the results, the break list in this section is amended.
+The measurements above are for candidate `aca5385`; they are repeated on the final candidate as items 14 and 15 of [Pre-publication checks still open](#pre-publication-checks-still-open), and the compatibility list is amended depending on the result.
 
 ## Remaining constraints
 
@@ -126,7 +148,7 @@ Both are in [Pre-publication checks still open](#pre-publication-checks-still-op
 
 ## Pre-publication checks still open
 
-Before publication, the final candidate commit (`$sha`) is verified in the order below. No new tool is built; only the repository's tests and tools and GitHub read commands are used. Consumption checks and PR success of earlier candidates are not inherited, and if the candidate changes, B–F are redone. This list is an execution plan and has not been run yet. PowerShell is `pwsh` (7) only; the environment is `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, and Go is the toolchain matching the `go` line of `go.mod` (1.27.4). `$work` is a new empty directory outside the repository.
+Before publication, the final candidate commit (`$sha`) is verified in the order below. No new tool is built; only the repository's tests and tools and GitHub read commands are used. Consumption checks and PR success of earlier candidates are not inherited, and if the candidate changes, B–F are redone. This list is an execution plan and has not been run yet (items 14 and 15 were measured once on the earlier candidate `aca5385` and are redone on the final candidate). PowerShell is `pwsh` (7) only; the environment is `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, and Go is the toolchain matching the `go` line of `go.mod` (1.27.4). `$work` is a new empty directory outside the repository.
 
 **A. Preconditions and candidate selection**
 
@@ -152,8 +174,8 @@ Before publication, the final candidate commit (`$sha`) is verified in the order
 11. `go test ./src/cmd/tsgk -run '^TestModuleProxyConsumer$' -count=1 -v` (run in a git checkout; the module cache must be ready from step 6).
 12. `go test ./src/cmd/tsgk -count=1`.
 13. Re-compare the change list against v0.2.0: extract exported declarations (`go doc -all`), each subcommand's `-h` and the schema strings of `src/contracts/*.json` from `v0.2.0` and from `$sha`, compare them, and update the section "Public API, CLI and schema changes (against v0.2.0)" above and the [public API document](../specs/public-go-api.md). No single reproducible command exists, so this is a manual comparison.
-14. **Replay of the v0.2.0 evidence set.** Replay records (an evidence set) made at v0.2.0 with the `tsgk replay` of `$sha` and record the results and error codes. If any is rejected or differs, add an item to the compatibility-break list above.
-15. **Two-version run of the native paths.** With the same input (a registered native fixture), run `incremental` and `oracle record` with the v0.2.0 binary and the `$sha` binary without any new flag, and compare. If they differ, record the cause and impact and add it to the list above. This needs approved native capabilities and a host compiler.
+14. **Replay of the v0.2.0 evidence set.** Replay records (an evidence set) made at v0.2.0 with the `tsgk replay` of `$sha` and record the results and error codes. If any is rejected or differs, add an item to the compatibility-break list above. **Measured on candidate `aca5385` (verdict, exit code, schema and findings the same; counter and gate-list differences are item 7 above); to be re-checked on the final candidate.**
+15. **Two-version run of the native paths.** With the same input (a registered native fixture), run `incremental` and `oracle record` with the v0.2.0 binary and the `$sha` binary without any new flag, and compare. If they differ, record the cause and impact and add it to the list above. This needs approved native capabilities and a host compiler, and the runtime source pinned by each binary prepared separately (see the "User notice" above). **Measured on candidate `aca5385` (verdict and raw responses the same; the differences are the runtime-pin values); to be re-checked on the final candidate.**
 
 **E. Source export, installation, LICENSE/NOTICE**
 

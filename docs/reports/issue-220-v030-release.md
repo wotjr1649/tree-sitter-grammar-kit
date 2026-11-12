@@ -68,12 +68,14 @@ v0.2.0 이후 변경의 목록은 [변경 기록](../../CHANGELOG.md)의 v0.3.0 
 
 > **소비자 요구 사항: Go 1.27.4 이상.** `go.mod`의 `go` 지시어가 `1.27.1`에서 `1.27.4`로 올랐다(#358). 이 module을 build하는 소비자는 Go 1.27.4 이상이 필요하다. toolchain 자동 전환이 꺼져 있으면 낮은 버전에서 build가 실패한다. stable 표면의 소비자에게도 해당한다.
 
+> **사용자 안내: native runtime pin이 바뀌었다(#213).** `incremental`·`oracle record` 등 native 경로가 쓰는 Tree-sitter runtime source가 commit `659cda7c7f86ebe31cc825dc5da59e9add172dc7`(v0.2.0)에서 release tag `v0.27.1`(commit `10eb5ac119eec9cb4267a8e035066473983f5f3a`)로 올랐다. `--runtime`에 줄 디렉터리는 사용하는 `tsgk`의 pin과 같은 runtime이어야 하며, 다르면 두 방향 모두 `RUNTIME_MISMATCH`(`lib/include/tree_sitter/api.h: identity mismatch`, exit 2, `NOT_RUN`)로 거부된다. v0.2.0용으로 준비한 runtime 디렉터리를 후보 `tsgk`에 그대로 쓸 수 없고, 반대도 마찬가지다. 같은 grammar·입력이라도 build identity·driver executable·runtime commit·producer identity가 달라진다. pin의 정본은 `src/drivers/native-c/runtime-manifest.json`이고 근거는 [upstream 출처](../provenance/upstream-sources.md)에 있다.
+
 ### stable 표면: 깨짐 없음
 
 - 공개 Go API: exported 식별자의 삭제와 기존 함수·method의 시그니처 변경이 없고, 기존 interface에 더해진 method도 없다.
 - CLI: `inspect`, `identity`, `verify`, `schema check`/`schema diff`(그리고 experimental인 `corpus`, `reproduce`)의 flag 목록·기본값·설명이 v0.2.0과 같다. 새 flag의 기본값은 모두 빈 값 또는 false다.
 - schema: stable API가 쓰는 schema 상수(`ReportSchema`, `ProfileSchema`, `ExpectedSchema`, `ManifestSchema`, `FileSetSchema`, `PolicySchema` 계열, `SchemaFormat`, `SchemaComparator`, `TreeSummarySchema` 등)의 값이 바뀌지 않았다.
-- 동작: v0.2.0의 plain fixture에서 `inspect`, `identity`, `schema check`, `schema diff`를 두 버전으로 실행한 stdout이 byte 단위로 같다(exit 0).
+- 동작: v0.2.0의 plain fixture에서 `inspect`, `identity`, `schema check`, `schema diff`를 두 버전으로 실행한 stdout이 byte 단위로 같다(exit 0). 후보 `aca5385`에서 `corpus`, `verify`(통과·변조·expected 없음 세 경우), 잘못된 `schema check`, 루트 명령 오류, 저장소의 `ordinary-json` fixture에 대한 `inspect`·`corpus`도 stdout과 exit가 byte 단위로 같았다. experimental인 `reproduce`는 같은 JSON-mode fixture에서 판정·산출물(`parser.c`)이 같고 시각·memory 수치만 달랐다(실제 tree-sitter generator는 쓰지 못해 같은 동작의 시험용 generator를 썼다).
 - 단, 위 Go 최소 버전 상승은 stable 소비자에게도 적용된다.
 
 ### 변경·추가·삭제 개수
@@ -100,6 +102,8 @@ v0.2.0 claim의 experimental 표면(`qualify`, `incremental`, `replay`, SVC 기�
 | 4 | `kit.SvcCompositeSchema` | `tsgk-svc-composite/r1` → `/r2`, r1 literal 제거 | r2 composite에 `SvcDirective.DiagnosticSpans`(6번 항목)·`AdditionalDirectives`·`SvcLanguage.Origin`/`Source`·`SvcCodeBehind.Case`가 더해진다. replay는 r2 format에서 composite schema를 r2로 검사한다 |
 | 5 | `kit.SvcFormat` | `SVC-SERVICEHOST-r1` → `-r2`(r1은 새 `SvcLegacyFormat`) | 후보 코드는 대부분의 경로에서 `SvcLegacyFormat`도 받지만, `SvcFormat`과 비교하던 외부 코드는 r1 입력을 더 이상 맞추지 못한다 |
 | 6 | omitempty 없는 새 JSON key 3개 | `QualRole.Deferred`(`deferred`), `QualSet.BranchSelectionNotClaimed`(`branch_selection_not_claimed`), `SvcDirective.DiagnosticSpans`(`diagnostic_spans`) | 같은 입력에도 JSON 출력에 새 key가 생긴다. 이 밖의 기존 struct 새 field 37개는 omitempty·`json:"-"`·tag 없음이라 출력이 바뀌지 않는다. unkeyed struct literal을 쓰는 소비자만 source 수준에서 깨진다 |
+| 7 | **옛 evidence의 `replay` 결과: gate counter·gate 목록 변화** | 같은 입력에서 `native-result-r1`·`-r2`, `oracle-set-r1`·`-r2` reducer의 `case-binding` recomputed 1 → 6, `tree` 3 → 12, oracle `api` recomputed 0 → 1, `oracle-set` 결과의 gate 10개 → 13개(`query-expectations`, `fact-reproduction`, `dynamic-sql` 추가)와 `coverage.observed`·`explanation`의 대응 항목, reducer 설명 `inputs` 문구 | **판정·exit·code·`result_schema`(`tsgk-replay-result/r1`)·findings는 같다.** 그러나 experimental `replay` 결과를 counter나 gate 목록 단위로 비교하거나(예: 옛 결과와의 golden 비교) 소비하는 도구는 값이 달라진다. 원인은 후보 `src/kit/replay_native.go`가 case의 step index와 tree의 form·envelope·입력 identity 검사를 각각 gate에 세도록 넓힌 것이다. 이 변화는 이전 문서와 CHANGELOG에 없었고 결과 schema 번호도 올리지 않았다. 새 검사가 정상 v0.2.0 evidence는 거부하지 않음을 실측했으나, 손상됐거나 변조된 옛 evidence가 v0.2.0에서는 통과하고 후보에서는 거부될 수 있는지는 실행하지 않았다 |
+| 8 | native runtime pin | Tree-sitter `659cda7c` → `v0.27.1`(`10eb5ac`), #213 | 위 "사용자 안내"를 본다. 서로의 runtime을 `RUNTIME_MISMATCH`로 거부하며 build·producer identity가 달라진다. 문서화된 의도적 변경이다 |
 
 위 2–5가 schema 상수 revision bump 4건(상수 3, format 문자열 1)이다. 참고:
 
@@ -107,12 +111,30 @@ v0.2.0 claim의 experimental 표면(`qualify`, `incremental`, `replay`, SVC 기�
 - 루트 USAGE 문자열은 `evidence query-reference`를 언급하지 않는다. `evidence` 하위 USAGE 오류 문구는 `tsgk evidence <verify|query-reference> ...`로 바뀌었다.
 - `kit.OrdinaryQuerySemanticsBinding`은 unexported type의 alias여서 `go doc`에 구조가 드러나지 않는다(field 접근은 된다).
 
+### 수정 사항 (v0.2.0의 결함을 후보가 고침)
+
+- `oracle record`는 profile의 `queries`가 빈 배열이면 v0.2.0에서 manifest에 `"queries": null`을 써서 자신이 발행한 record set의 검증이 `JSON_NULL manifest#/queries`로 실패했다(`REFERENCE_SET_INVALID`, exit 4). 후보는 `[]`를 써서 같은 입력에서 PASS(exit 0)한다. 같은 입력의 v0.2.0 결과를 후보 `tsgk`가 거부하는 방향의 변화가 아니라 v0.2.0이 스스로 만든 set을 거부하던 동작이 사라진 것이다.
+
+### 실측 결과: 후보 `aca5385`
+
+experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v0.2.0 binary와 나란히 실행해 확인했다. v0.2.0 tree에는 저장된 evidence set이 없어 입력은 v0.2.0 binary가 직접 만든 산출물과 시험의 fixture를 같은 구성으로 재현한 것이다. 네이티브 컴파일·실행은 Windows Job Object 한도 안에서 했다. 최종 후보 commit에서 같은 확인을 다시 한다([발행 전 남은 검증](#발행-전-남은-검증) 14·15).
+
+| 확인 | 결과 |
+|---|---|
+| v0.2.0이 만든 `incremental` result·`oracle record` set(manifest r1·record r1, result r1, protocol `tsgk-native/r2`)을 후보 `tsgk replay`로 재생(reducer r1·r2) | 재생된다. **판정(UNRESOLVED, `evidence_valid` true, exit 3)·`result_schema`·findings가 v0.2.0과 같다.** 거부된 입력은 없다. 단 counter·gate 목록은 위 7번처럼 다르다. UNRESOLVED는 두 버전 모두 `expectations`·`api` gate가 raw에서 재계산되지 않고 기록값으로 남기 때문이다 |
+| `bs-gate-compare` set, `evidence verify`(통과·변조 그래프), 문서의 예시와 `invalid/` fixture를 두 버전으로 실행 | 판정·exit·code·출력 byte가 같다 |
+| 후보가 만든 set을 v0.2.0 `replay`로 재생(역방향) | 재생된다(UNRESOLVED, valid). counter 차이는 정방향과 같다 |
+| `incremental`(owned plain, scanner가 있는 stateful), `oracle record`(query 있는 profile)를 새 flag 없이 두 버전으로 실행 | 판정(PASS)·raw 응답 byte가 같다. 다른 것은 runtime pin에 따른 build identity·closure·executable·`runtime_commit`·producer identity와 driver compile 인자 한 개(`-DTSGK_RUNTIME_MANIFEST_SHA256=…`) 추가뿐이다 |
+| 새 flag를 생략한 기본 경로 | 위 실행이 모두 새 flag 없이 정상 동작했다 |
+| 두 버전의 runtime 상호 거부 | 확인했다(위 "사용자 안내") |
+
 ### 확인하지 않은 것
 
-- v0.2.0 시점의 기록(evidence set)을 후보의 `tsgk replay`로 재생한 결과. 위 표는 선언과 `-h` 비교, inventory 한 건의 거부 확인에 근거하며 이 재생은 아직 하지 않았다.
-- `incremental`·`oracle record`의 native 경로를 두 버전으로 실행해 비교하는 것. 새 flag를 생략하면 기존 경로를 탄다는 것은 선언과 help 기준이고, 실행으로 확인한 것은 위 stable 4종 smoke뿐이다.
+- 실제 과거 CI 산출물 등 git에 저장된 v0.2.0 evidence set의 재생(저장본이 없다). `private-corpus-r1`·`prepare-native-r1` reducer의 replay(비공개 local run 자료 필요).
+- 손상·변조된 옛 evidence가 후보의 확장된 검사로 새로 거부되는지(위 7번).
+- 후보의 새 flag 경로(`--pins`, `--runtime-pins`, `--build-cache`, `--reuse-*`, `--ordinary-*`, `--source-witness`, `evidence query-reference`)의 v0.2.0 대비 비교. 다른 route(C#·T-SQL·XML·SVC)와 큰 workload의 native 비교. 실제 tree-sitter generator를 쓴 `reproduce`.
 
-두 항목은 [발행 전 남은 검증](#발행-전-남은-검증)에 들어 있다. 결과에 따라 이 절의 깨짐 목록을 고친다.
+위 실측은 후보 `aca5385` 기준이며 최종 후보에서 [발행 전 남은 검증](#발행-전-남은-검증) 14·15로 다시 확인하고, 결과에 따라 이 절의 호환성 목록을 고친다.
 
 ## 잔존 제약
 
@@ -126,7 +148,7 @@ v0.2.0 claim의 experimental 표면(`qualify`, `incremental`, `replay`, SVC 기�
 
 ## 발행 전 남은 검증
 
-발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 아직 실행하지 않았다. PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다.
+발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 아직 실행하지 않았다(14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다.
 
 **A. 전제와 후보 결정**
 
@@ -152,8 +174,8 @@ v0.2.0 claim의 experimental 표면(`qualify`, `incremental`, `replay`, SVC 기�
 11. `go test ./src/cmd/tsgk -run '^TestModuleProxyConsumer$' -count=1 -v`(git checkout에서 실행. 6번으로 module cache가 준비돼 있어야 한다).
 12. `go test ./src/cmd/tsgk -count=1`.
 13. v0.2.0 대비 변화 목록 재대조: `v0.2.0`과 `$sha`에서 각각 exported 선언(`go doc -all`), 각 하위 명령의 `-h`, `src/contracts/*.json`의 schema 문자열을 추출해 비교하고 위 "공개 API·CLI·schema 변화(v0.2.0 대비)" 절과 [공개 API 문서](../specs/public-go-api.md)를 갱신한다. 재현 가능한 단일 명령이 없어 수동 대조다.
-14. **v0.2.0 evidence set 재생.** v0.2.0 시점에 만든 기록(evidence set)을 `$sha`의 `tsgk replay`로 재생해 결과와 오류 code를 기록한다. 거부되거나 결과가 다르면 위 호환성 깨짐 목록에 항목을 더한다.
-15. **native 경로의 두 버전 실행 비교.** 같은 입력(등록된 native fixture)으로 v0.2.0 binary와 `$sha` binary의 `incremental`·`oracle record`를 새 flag 없이 실행해 결과를 비교한다. 같지 않으면 원인과 영향을 기록하고 위 목록에 더한다. 승인된 native capability와 host compiler가 필요하다.
+14. **v0.2.0 evidence set 재생.** v0.2.0 시점에 만든 기록(evidence set)을 `$sha`의 `tsgk replay`로 재생해 결과와 오류 code를 기록한다. 거부되거나 결과가 다르면 위 호환성 깨짐 목록에 항목을 더한다. **후보 `aca5385`에서 실측 완료(판정·exit·schema·findings 동일, counter·gate 목록 차이는 위 7번), 최종 후보에서 재확인.**
+15. **native 경로의 두 버전 실행 비교.** 같은 입력(등록된 native fixture)으로 v0.2.0 binary와 `$sha` binary의 `incremental`·`oracle record`를 새 flag 없이 실행해 결과를 비교한다. 같지 않으면 원인과 영향을 기록하고 위 목록에 더한다. 승인된 native capability와 host compiler가 필요하다. 이 확인은 각 binary가 pin한 runtime source를 따로 준비해야 한다(위 "사용자 안내"). **후보 `aca5385`에서 실측 완료(판정·raw 응답 동일, 차이는 runtime pin 관련 값), 최종 후보에서 재확인.**
 
 **E. source export·설치·LICENSE/NOTICE**
 
