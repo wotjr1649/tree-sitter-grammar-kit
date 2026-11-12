@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-// Only readFileContent creates these, transferring its sole retained slice.
-// Neither callbacks nor snapshot.files receive a view of content.
+// Only readFileContent creates these, retaining either a private slice or its streamed chain.
+// Neither callbacks nor snapshot.files receive a mutable view of content.
 type guardedPart struct {
 	root    *os.Root
 	path    string
@@ -15,6 +15,8 @@ type guardedPart struct {
 	size    uint64
 	sha256  string
 	content []byte
+	chain   *streamedChain
+	ordinal int
 }
 
 func pagingPartRole(role string) bool {
@@ -98,7 +100,7 @@ func (s *eligibilitySession) checkMemberPin(pin *eligibilityMember, record bool)
 		}
 		return false, nil
 	}
-	if _, ok := s.snapshot.files[pin.Member.Path]; !ok && s.snapshot.parts[pin.Member.Path] == nil {
+	if _, ok := s.snapshot.files[pin.Member.Path]; !ok && s.snapshot.parts[pin.Member.Path] == nil && s.snapshot.identities[pin.Member.Path].owner == "" {
 		if record {
 			s.finding("ELIGIBILITY_MEMBER_MISSING", pin.Member.Path, true)
 		}
@@ -127,7 +129,12 @@ func (p *verifiedPaging) part(s *eligibilitySession, pin eligibilityMember, reco
 	info := p.snapshot.observed[pin.Member.Path]
 	if !pagingPartRole(pin.Member.Role) || part.root != p.root || part.path != pin.Member.Path || info == nil ||
 		!os.SameFile(info, part.info) || info.Size() != part.info.Size() || !info.ModTime().Equal(part.info.ModTime()) ||
-		part.size != pin.Member.Bytes || part.sha256 != pin.Member.SHA256 || uint64(len(part.content)) != part.size {
+		part.size != pin.Member.Bytes || part.sha256 != pin.Member.SHA256 || part.chain == nil && uint64(len(part.content)) != part.size {
+		return nil, false, false, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Member.Path, nil)
+	}
+	if part.chain != nil && (part.content != nil || part.ordinal < 0 || part.ordinal >= len(part.chain.pins) || part.chain.pins[part.ordinal] != pin.Member || part.ordinal >= part.chain.next || part.chain.next > len(part.chain.pins)) {
+		// A chain cut short by a later part's file failure still serves the parts it verified; that later
+		// part is rejected by its own pin check, and chainSum refuses any incomplete chain.
 		return nil, false, false, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Member.Path, nil)
 	}
 	return part, true, false, nil
@@ -142,6 +149,7 @@ type verifiedPageSource struct {
 	complete   bool
 	set        map[string]OracleMember
 	cohort     eligibilityCohort
+	stream     *streamedChain
 }
 
 func (s *eligibilitySession) pageSource(pin eligibilityMember, prefix string, used map[string]bool) (*verifiedPageSource, *Error) {
@@ -204,6 +212,18 @@ func (b *eligibilityBudget) pageHash(h hash.Hash, pin ReplayMember, part func(Re
 			return false, nil
 		}
 		if ok {
+			if p.chain != nil {
+				if v.stream == nil {
+					v.stream = p.chain
+				}
+				if v.stream != p.chain || p.ordinal != len(v.parts)-1 || p.ordinal >= len(p.chain.pins) || p.chain.pins[p.ordinal] != v.parts[len(v.parts)-1] {
+					return false, nil
+				}
+				return true, b.charge(1, 0, at)
+			}
+			if v.stream != nil {
+				return false, nil
+			}
 			if e := b.charge(1, pin.Bytes+1, at); e != nil {
 				return false, e
 			}

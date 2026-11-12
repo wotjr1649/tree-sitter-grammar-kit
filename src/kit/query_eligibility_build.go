@@ -67,7 +67,7 @@ func (s *eligibilitySession) tool(id, cohort, name string, identity eligibilityM
 		s.finding("ELIGIBILITY_TOOL_MISSING", id, false)
 		return false, nil
 	}
-	_, memberOK, e := s.member(&t.IdentityMember)
+	memberOK, e := s.memberAvailable(&t.IdentityMember)
 	if e != nil {
 		return false, e
 	}
@@ -113,11 +113,10 @@ func (s *eligibilitySession) verifyBuild() *Error {
 		if len(source)+len(vendor) > 60000 {
 			return fail(KindResourceLimit, "ELIGIBILITY_SNAPSHOT_ROWS", "build", nil)
 		}
-		binary, binaryReady, e := s.member(group.ReferenceBinary)
+		_, binaryReady, e := s.memberIdentity(group.ReferenceBinary)
 		if e != nil {
 			return e
 		}
-		_ = binary
 		if group.ReferenceBinary == nil {
 			s.finding("ELIGIBILITY_BUILD_BINARY_MISSING", "build", false)
 		}

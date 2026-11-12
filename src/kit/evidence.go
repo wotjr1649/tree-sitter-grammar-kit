@@ -130,8 +130,11 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 
 // Requested bytes come from the same guarded pass that hashes every graph member.
 type evidenceSnapshot struct {
+	identityOnly      bool
+	retained          map[string]bool
 	paging            *verifiedPaging
 	parts             map[string]*guardedPart
+	identities        map[string]verifiedMemberIdentity
 	observed          map[string]fs.FileInfo
 	directories       map[string]fs.FileInfo
 	wanted            map[string]bool
@@ -154,6 +157,7 @@ func verifyEvidence(ctx context.Context, req EvidenceRequest, snapshot *evidence
 func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evidenceSnapshot, sharedRun *run, heldRoot *os.Root) (EvidenceResult, error) {
 	if snapshot != nil {
 		snapshot.files, snapshot.nodes = map[string][]byte{}, nil
+		snapshot.identities = map[string]verifiedMemberIdentity{}
 		snapshot.observed = nil
 		snapshot.directories = nil
 		snapshot.graphBound, snapshot.invalidNodes = false, map[string]bool{}
@@ -257,7 +261,7 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 	if info == nil {
 		return bad(fail(KindInvalidInput, "EVIDENCE_MISSING", "evidence.json", nil))
 	}
-	st, e := x.g.readFile(r, "evidence.json", info, MaxDocumentBytes, lim.TotalBytes, MaxDocumentBytes)
+	st, e := x.g.readFileContent(r, "evidence.json", info, MaxDocumentBytes, lim.TotalBytes, MaxDocumentBytes, false, false)
 	if e != nil {
 		return bad(e)
 	}
@@ -345,7 +349,8 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 				nodeBad("IDENTITY_ROLE_MISSING", n.ID, "identity 역할이 빠졌다: "+role)
 			}
 		}
-		for _, f := range n.Files {
+		var chain *streamedChain
+		for fileIndex, f := range n.Files {
 			if !portable(f.Path, false) || len(f.SHA256) != 64 {
 				add("FILE_INVALID", n.ID, "파일 경로·hash 형식이 틀렸다")
 				continue
@@ -376,8 +381,23 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 				var b []byte
 				var part *guardedPart
 				seal := snapshot.paging != nil && snapshot.graphBound && pagingPartRole(f.Role)
-				if b, part, e = x.verifyFileContent(f.Path, f.Bytes, f.SHA256, true, seal); e == nil {
-					if part != nil {
+				keep := !snapshot.identityOnly || !identityOnlyRole(f.Role) || snapshot.retained[f.Path]
+				if chain != nil && (chain.next >= len(chain.pins) || chain.pins[chain.next] != f) {
+					chain = nil
+				}
+				if chain == nil && seal {
+					chain, e = snapshot.streamPlan(*n, fileIndex, doc.Nodes, pol)
+					if e != nil {
+						return bad(e)
+					}
+				}
+				if b, part, e = x.verifyFileContent(f.Path, f.Bytes, f.SHA256, keep, seal, chain); e == nil {
+					if !keep {
+						if e = r.eligibility.charge(1, 256+uint64(len(f.Path)+len(f.Role)+len(f.SHA256)), "verified-member-identity"); e != nil {
+							return bad(e)
+						}
+						snapshot.identities[f.Path] = verifiedMemberIdentity{owner: n.ID, member: f}
+					} else if part != nil {
 						snapshot.parts[f.Path] = part
 					} else {
 						if b == nil {

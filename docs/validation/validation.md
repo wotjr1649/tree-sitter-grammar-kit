@@ -346,6 +346,12 @@ Linux 개발 probe의 report/r2는 기존 procfs publication 관측을 유지하
 
 `src/kit/querywire`의 경계 시험은 required/nested member 누락, unknown·duplicate·type·정수 오류, null과 정상 empty, query 수·ID·status, 12열 row·table·flag·source 범위, 최초 match 순서·같은 match의 pattern을 검사한다. interleaved capture와 중복은 정렬·제거하지 않는다. 잘못된 row는 full-node 대조 함수에 도달하지 않아야 하며, full의 nil 대조 함수는 빈 stream에서도 거부한다. `TestQueryNodeLinkFields`는 각 type·다섯 flag·byte·point 변조가 wire-only 검증에는 유효하지만 실제 native full-node 대조에는 실패하는지와 실패 후 이전 query 목록 부재를 확인한다. `TestNullPrimitiveIsNotZeroValue`·`TestNullNestedPrimitiveIsNotZeroValue`는 scalar·12열 row·문자열 table 원소·predicate·compile error의 null을 검사하고 full-node 대조 전 거부를 요구한다. 정상 0·빈 문자열·허용된 null error/list/string quantifier는 보존한다. 기존 실제 native query·API·predicate·edit·limit 시험을 함께 실행한다. 이 추출은 offline의 새 witness·claim·분모·qualification 완료 근거가 아니다.
 
+## #362 core 원장 구조 절감
+
+`TestGuardReadDetectorAndStreamSink`는 여러 chunk의 실제 읽은 bytes·개별 SHA·sink SHA 일치와 retain 부재, detector opt-out의 정확한 `bytes+1` 절감을 확인한다. `TestGuardStreamRejectsSourceChangeDuringRead`는 같은 size/mtime의 파일 교체와 읽는 도중 size·mtime 변경을 각각 `SOURCE_CHANGED`로 거부한다. `TestStreamedPagingStorageAndFallback`는 연속 part의 보관 slice 부재와 chain 검증, 역순 graph의 retained fallback을 대조한다. `TestStreamedPagingLateInvalidNodeFallback`와 기존 `TestVerifiedPagingUnboundFallback`은 graph·node·참조·중복 run이 무효일 때 원래 findings·순서·완료 상태와 tuple을 보존하는지 확인한다.
+
+`TestQueryEligibilityIdentityOnlyMembers`와 같은 prefix의 반례는 binary bytes 보관 부재·typed bytes 요청 거부, 원래 pin 아래 디스크 한 byte 변조의 `FILE_MEMBER_MISMATCH`, owner/role/bytes/SHA 변조 거부를 검사한다. `TestQueryEligibilityIdentityRoleStillRetainsSource`는 bytes가 필요한 source의 role을 다섯 binary role로 일관되게 바꿔도 원문 보관과 판정이 유지되는지 확인한다. `TestQueryEligibilityIdentityOnlyLeavesReferenceBytes`는 eligibility 계획이 없는 standalone reference connection의 bytes 보관을 고정한다. 기존 `TestVerifiedPaging*`의 owner·part pin·다른 session·mutable copy·descriptor/profile·완료 전 재사용과 F1~F3 반례를 유지한다. Streamed chain의 한 byte를 건너뛰는 Go overlay mutant는 정상 streamed fixture에서 실패해야 한다. 보존 SQL의 offline 측정은 같은 caller·evidence root·inherited 1 GiB·native cache로 단계별 logical/read/work를 비교하며 native/reference를 실행하지 않는다. `TSGK_NATIVE_RUNTIME`은 기존 source-bound 회귀가 SKIP되지 않도록 고정 runtime source 경로에 설정한다. 이 부분 최적화는 ordinary 전체 의미 검증의 수용이나 새 runtime qualification을 입증하지 않는다.
+
 ## Local foundation checks
 
 `TestSummaryGate`는 대형 owned tree의 full/summary digest 일치와 full 응답의 독립 Go `TreeDigest` 재계산을 검사한다. #208의 native 숫자 포맷팅 변경은 r1 digest bytes와 기존 wall·parse·memory 제한을 유지한다. kernel 측정은 함수 비용 근거이며 전체 parser 성능이나 세 플랫폼 지원 판정을 대신하지 않는다.

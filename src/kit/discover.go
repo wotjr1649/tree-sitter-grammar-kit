@@ -294,7 +294,7 @@ func (d *discovery) metadata(p string) *Error {
 		return nil
 	}
 	d.parsedMeta[p] = true
-	st, e := d.g.readFile(d.r, p, item.info, d.limits.FileBytes, d.limits.TotalBytes, d.limits.FileBytes)
+	st, e := d.g.readFileContent(d.r, p, item.info, d.limits.FileBytes, d.limits.TotalBytes, d.limits.FileBytes, false, false)
 	if e != nil {
 		return e
 	}
@@ -388,7 +388,7 @@ func (d *discovery) closure() *Error {
 		}
 		scanned[p] = true
 		item := inv.entries[p]
-		st, e := d.g.readFile(d.r, p, item.info, d.limits.FileBytes, d.limits.TotalBytes, d.limits.FileBytes)
+		st, e := d.g.readFileContent(d.r, p, item.info, d.limits.FileBytes, d.limits.TotalBytes, d.limits.FileBytes, false, false)
 		if e != nil {
 			return e
 		}

@@ -78,13 +78,15 @@ func TestVerifiedPagingCharge(t *testing.T) {
 		t.Fatalf("baseline: %v %+v", err, baseline)
 	}
 	source, d, data := verifiedDriverSource(t, s, true)
-	gross := d.Logical.Bytes + uint64(len(d.Parts))
-	// Every new allocation/key reservation is charged in addition to the retained read.
+	gross := 2 * (d.Logical.Bytes + uint64(len(d.Parts)))
+	// Every new allocation/key reservation is charged in addition to the guarded read.
 	overhead := uint64(2048 + 512 + 1024 + 2*(len(data)+1))
+	overhead += 1024
 	desc := source.descriptor.Member
 	overhead += uint64(len(desc.Path) + len(desc.Role) + len(desc.SHA256))
 	for _, p := range d.Parts {
 		overhead += uint64(512+len("oracle/"+p.Path)) + uint64(256+len("oracle/"+p.Path)+len("driver-paged-part")+len(p.SHA256))
+		overhead += uint64(128 + len("oracle/"+p.Path) + len("driver-paged-part") + len(p.SHA256))
 	}
 	if optimized.LogicalBytes != baseline.LogicalBytes-gross+overhead || optimized.BytesRead != baseline.BytesRead || s.b.logicalCap() != eligibilityLogicalLimit {
 		t.Fatalf("core charge: before=%d after=%d gross=%d E=%d reads=%d/%d cap=%d", baseline.LogicalBytes, optimized.LogicalBytes, gross, overhead, baseline.BytesRead, optimized.BytesRead, s.b.logicalCap())
@@ -99,7 +101,7 @@ func TestVerifiedPagingCharge(t *testing.T) {
 	before := s.b.logical
 	logical, ok, e := s.b.semanticPagedBinaryVerified(data, "D", "driver", d.Logical.Path, "capture/driver", noPagingCallback(t), source)
 	after := s.b.logical - before
-	if e != nil || !ok || logical != d.Logical || b.logical <= after || b.logical-after <= gross {
+	if e != nil || !ok || logical != d.Logical || b.logical <= after || b.logical-after <= d.Logical.Bytes+uint64(len(d.Parts)) {
 		t.Fatalf("set reuse: %v good=%v before=%d after=%d", e, ok, b.logical, after)
 	}
 	t.Logf("core logical before=%d after=%d gross=%d E=%d net=%d bytes_read=%d; set hash+decode before=%d after=%d (source creation already charged separately)", baseline.LogicalBytes, optimized.LogicalBytes, gross, overhead, baseline.LogicalBytes-optimized.LogicalBytes, optimized.BytesRead, b.logical, after)
@@ -266,7 +268,10 @@ func TestVerifiedPagingParserBindings(t *testing.T) {
 }
 
 func TestVerifiedPagingSessionAndMutation(t *testing.T) {
-	f, s, _ := verifiedDriverSession(t, MaxDocumentBytes+1)
+	f := binaryDriverFixture(t, MaxDocumentBytes+1)
+	// A reordered graph retains callback bytes, including the mutable-copy guarantee.
+	reorderDriverParts(f)
+	s, _ := verifiedEligibilitySession(t, f.request())
 	source, d, data := verifiedDriverSource(t, s, true)
 	pin := eligibilityMember{NodeID: source.descriptor.NodeID, Member: ReplayMember{Path: "oracle/" + d.Parts[0].Path, Role: "driver-paged-part", Bytes: d.Parts[0].Bytes, SHA256: d.Parts[0].SHA256}}
 	borrowed, ok, e := s.member(&pin)
@@ -407,8 +412,8 @@ func TestVerifiedPagingSetInvalidNodeIsUnavailable(t *testing.T) {
 
 // A part pin that is structurally valid but carries another real part's hash is rejected by the
 // verified layer itself, without falling back to the mutable callback (review F3). Content changed
-// on disk after the guarded read is out of scope: verification uses the snapshot's retained bytes,
-// exactly like the callback path.
+// on disk after the guarded read is out of scope: verification uses the snapshot's guarded
+// identity, exactly like the retained callback path.
 func TestVerifiedPagingRejectsAtVerifiedLayer(t *testing.T) {
 	_, s, _ := verifiedDriverSession(t, 2*MaxDocumentBytes+1)
 	source, d, _ := verifiedDriverSource(t, s, false)

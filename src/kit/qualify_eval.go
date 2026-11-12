@@ -143,7 +143,7 @@ func (h *qhost) readWalked(path string) ([]byte, *Error) {
 	if uint64(info.Size()) > h.x.lim.FileBytes {
 		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
-	st, e := h.x.g.readFile(h.x.r, path, info, h.x.lim.FileBytes, h.x.lim.TotalBytes, uint64(info.Size())+1)
+	st, e := h.x.g.readFileContent(h.x.r, path, info, h.x.lim.FileBytes, h.x.lim.TotalBytes, uint64(info.Size())+1, false, false)
 	if e != nil {
 		return nil, e
 	}
