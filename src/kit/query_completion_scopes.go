@@ -25,7 +25,9 @@ func scopeCounters[T any](rows []T, to func(T) QueryScopeCounter) []QueryScopeCo
 // FAILED on every tuple of that shard that is not VERIFIED, never lowered to BLOCKED. When every
 // tuple of the shard is VERIFIED the first tuple carries the FAIL instead (fewer VERIFIED, never
 // more), because the counters are the only place the fan-in reads a FAIL from; a FAIL shard that
-// selects no tuple has nowhere to put it and is rejected, not dropped.
+// selects no tuple has nowhere to put it and is rejected, not dropped. The first failure code of a FAIL
+// shard is its stored Code, never a tuple's code, whether the FAIL was carried by tuples or came with
+// FAILED tuples of its own; across shards the first shard that failed decides.
 func OrdinaryScopeResult(v *queryregistrycore.Validated, assets []queryregistrycore.Pin, results []OrdinaryQuerySemanticsResult) (QueryScopeResult, error) {
 	platformOf := map[string]string{}
 	counters := map[string]*QueryScopeCounter{}
@@ -50,6 +52,7 @@ func OrdinaryScopeResult(v *queryregistrycore.Validated, assets []queryregistryc
 			return QueryScopeResult{}, queryCompletionFault("QUERY_SCOPE_ORDINARY_FAIL_UNCARRIED")
 		}
 		shardFailed := res.Assessment == AssessFail && res.Tuple.Failed == 0
+		shardFirst := ""
 		allVerified := len(res.Obligations) == len(res.SelectedObligationIDs) &&
 			!slices.ContainsFunc(res.Obligations, func(o OrdinaryQuerySemanticsTuple) bool { return o.State != ordinaryTupleVerified })
 		for i, id := range res.SelectedObligationIDs {
@@ -78,13 +81,23 @@ func OrdinaryScopeResult(v *queryregistrycore.Validated, assets []queryregistryc
 				c.Verified++
 			case ordinaryTupleFailed:
 				c.Failed++
-				if first == "" {
-					first = code
+				if shardFirst == "" {
+					shardFirst = code
 				}
 			case ordinaryTupleBlocked:
 				c.Blocked++
 			default:
 				c.Unprocessed++
+			}
+		}
+		// The stored Code is the shard's first failure (a producer or base failure comes before any tuple
+		// judgment), so it outranks the tuple codes whether or not a tuple also failed.
+		if shardFirst != "" {
+			if res.Assessment == AssessFail && res.Code != "" {
+				shardFirst = res.Code
+			}
+			if first == "" {
+				first = shardFirst
 			}
 		}
 	}

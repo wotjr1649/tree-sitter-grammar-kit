@@ -978,6 +978,44 @@ func TestOrdinaryScopeResultKeepsAShardFailThatEveryTupleVerifies(t *testing.T) 
 	}
 }
 
+// A shard whose producer failure came before its FAILED tuples keeps that first code: the stored
+// result's Code is the shard's first failure, and the fan-in reports it, whatever the tuple codes are
+// (the producer-failure counterpart of the shard FAIL that every tuple verifies).
+func TestOrdinaryScopeResultKeepsTheShardFirstFailureCodeOverTupleCodes(t *testing.T) {
+	f := faninFixtureFor(t)
+	ids := f.structuralIDs("windows-amd64", 4)
+	producerFirst := func(ids []string, states []string) OrdinaryQuerySemanticsResult {
+		shard := faninShard(ids, states, true)
+		shard.Code, shard.Findings = "", nil
+		shard.ProducerRecorded = Verdict{StatusCompleted, AssessFail}
+		shard.finding("ORDINARY_PRODUCER_FAILED", "", "")
+		shard.finding("CODE_FAILED", "", "")
+		if !validOrdinaryStoredResult(shard) || shard.Code != "ORDINARY_PRODUCER_FAILED" || shard.Tuple.Failed == 0 {
+			t.Fatalf("the shard must be a valid stored result with FAILED tuples: code=%q failed=%d", shard.Code, shard.Tuple.Failed)
+		}
+		return shard
+	}
+	shard := producerFirst(ids[:3], []string{ordinaryTupleVerified, ordinaryTupleFailed, ordinaryTupleBlocked})
+	scope, err := OrdinaryScopeResult(f.v, []queryregistrycore.Pin{faninOrdinaryAsset}, []OrdinaryQuerySemanticsResult{shard})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := scope.Counters[0]; scope.FirstFailure != "ORDINARY_PRODUCER_FAILED" || c.Failed != 1 || c.Verified != 1 {
+		t.Fatalf("the shard's first failure code was replaced by a tuple code: first=%q counter=%+v", scope.FirstFailure, c)
+	}
+	res, err := FoldQueryCompletion(f.request(scope))
+	if err != nil || res.Completion != QueryCompletionFail || res.Code != "ORDINARY_PRODUCER_FAILED" {
+		t.Fatalf("fan-in %s %s: %v", res.Completion, res.Code, err)
+	}
+	// the first shard decides across shards: an earlier shard's own code stays first
+	earlier := faninShard(ids[3:4], []string{ordinaryTupleFailed}, true)
+	more := f.structuralIDs("windows-amd64", 8)
+	other := producerFirst(more[4:6], []string{ordinaryTupleFailed, ordinaryTupleVerified})
+	if scope, err = OrdinaryScopeResult(f.v, nil, []OrdinaryQuerySemanticsResult{earlier, other}); err != nil || scope.FirstFailure != "CODE_FAILED" {
+		t.Fatalf("across shards: first=%q %v", scope.FirstFailure, err)
+	}
+}
+
 // A counter sum that wraps around uint64 is not a distribution: required = verified + failed +
 // blocked + unprocessed must hold without overflow at every level and in the stored decoder.
 func TestQueryCompletionRejectsCounterSumsThatWrap(t *testing.T) {
