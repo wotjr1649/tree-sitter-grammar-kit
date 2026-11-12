@@ -38,7 +38,7 @@ type ordinaryProducerShare struct {
 	cache  string // the shared native build cache directory
 	dir    string // the directory of this share
 	warm   sync.Mutex
-	warmed bool
+	warmed map[string]bool // keyed by fixture and grammar: each grammar has its own cache key
 }
 
 var ordinaryProducerShareOnce = sync.OnceValues(func() (*ordinaryProducerShare, error) {
@@ -51,7 +51,7 @@ var ordinaryProducerShareOnce = sync.OnceValues(func() (*ordinaryProducerShare, 
 		return nil, err
 	}
 	ordinaryTempDirs.Store(dir, true)
-	share := &ordinaryProducerShare{dir: dir, cache: filepath.Join(dir, "build-cache"), exe: filepath.Join(dir, "native.test.exe")}
+	share := &ordinaryProducerShare{dir: dir, cache: filepath.Join(dir, "build-cache"), exe: filepath.Join(dir, "native.test.exe"), warmed: map[string]bool{}}
 	if err := os.Mkdir(share.cache, 0o700); err != nil {
 		return nil, err
 	}
@@ -66,10 +66,11 @@ var ordinaryProducerShareOnce = sync.OnceValues(func() (*ordinaryProducerShare, 
 })
 
 // ordinaryRunNativeFixture runs one native fixture test as its own process in the native package directory, like
-// `go test ./src/internal/native -run ^name$ -count=1 -timeout=180s`. With shareBuild the producer uses the shared
-// driver build cache. The reader accepts only a cache HIT (a miss records no reusable build steps), so the first
-// such producer is preceded by one warm-up run of the same fixture into a throwaway output directory.
-func ordinaryRunNativeFixture(t *testing.T, name string, shareBuild bool, env []string) ([]byte, error) {
+// `go test ./src/internal/native -run ^name$ -count=1 -timeout=180s`. A non-empty buildKey (the grammar, which the
+// native build cache key includes) makes the producer use the shared driver build cache. The reader accepts only a
+// cache HIT (#422), so the first producer of each fixture and buildKey is preceded by one warm-up run of the same
+// inputs into a throwaway output directory.
+func ordinaryRunNativeFixture(t *testing.T, name, buildKey string, env []string) ([]byte, error) {
 	t.Helper()
 	share, err := ordinaryProducerShareOnce()
 	if err != nil {
@@ -87,18 +88,20 @@ func ordinaryRunNativeFixture(t *testing.T, name string, shareBuild bool, env []
 		return cmd.CombinedOutput()
 	}
 	// The opt-in HARD receipt check reads the compile steps of this run, which a build-cache hit does not execute.
-	if !shareBuild || slices.Contains(env, "TSGK_E2E_ENFORCE_NATIVE_LIMITS=1") {
+	if buildKey == "" || slices.Contains(env, "TSGK_E2E_ENFORCE_NATIVE_LIMITS=1") {
 		return run(env)
 	}
+	key := name + "\x00" + buildKey
 	env = append(slices.Clone(env), "TSGK_ORDINARY_OWNED_BUILD_CACHE="+share.cache)
 	share.warm.Lock() // concurrent first runs would race to publish one cache entry
-	if !share.warmed {
-		warmEnv := append(slices.Clone(env), "TSGK_ORDINARY_OWNED_FIXTURE="+filepath.Join(share.dir, "warm-up"))
+	if !share.warmed[key] {
+		warmDir := filepath.Join(share.dir, fmt.Sprintf("warm-up-%d", len(share.warmed)))
+		warmEnv := append(slices.Clone(env), "TSGK_ORDINARY_OWNED_FIXTURE="+warmDir)
 		if output, err := run(warmEnv); err != nil {
 			share.warm.Unlock()
 			return output, fmt.Errorf("build cache warm-up: %w", err)
 		}
-		share.warmed = true
+		share.warmed[key] = true
 	}
 	share.warm.Unlock()
 	return run(env)

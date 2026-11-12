@@ -15,7 +15,7 @@ func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
 	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryNativeTools(t)
 	fixtureDir := filepath.Join(t.TempDir(), "fixture")
-	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryOwnedFixture", false, ordinaryOwnedNativeEnv(fixtureDir)); err != nil {
+	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryOwnedFixture", "", ordinaryOwnedNativeEnv(fixtureDir)); err != nil {
 		t.Fatalf("native owned r8 producer failed: %v\n%s", err, output)
 	}
 	var producer struct {

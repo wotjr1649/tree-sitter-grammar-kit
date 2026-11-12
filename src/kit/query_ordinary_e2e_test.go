@@ -611,7 +611,16 @@ func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 		return strings.HasPrefix(strings.ToUpper(entry), "TSGK_ORDINARY_OWNED_INPUTS=")
 	})
 	env = append(env, "TSGK_ORDINARY_OWNED_INPUTS="+inputPath)
-	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryE2EFixture", true, env); err != nil {
+	data, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var grammar struct{ GrammarRoot string }
+	if err := json.Unmarshal(data, &grammar); err != nil {
+		t.Fatal(err)
+	}
+	// The grammar is part of the native build cache key, so each grammar gets its own warm-up.
+	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryE2EFixture", "grammar="+grammar.GrammarRoot, env); err != nil {
 		t.Fatalf("ordinary owned r8 producer failed: %v\n%s", err, output)
 	}
 }
