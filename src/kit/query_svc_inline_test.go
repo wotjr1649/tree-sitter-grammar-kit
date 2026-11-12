@@ -246,7 +246,7 @@ func siSyntheticStep(t *testing.T, src string) (SvcInlineExpected, SvcInlineObse
 			}
 		}
 	}
-	f := SvcInlineFragment{EndByte: uint32(len(src)), EndPoint: [2]uint32{uint32(strings.Count(src, "\n")), 0}}
+	f := SvcInlineFragment{EndByte: uint32(len(src)), EndPoint: [2]uint32{uint32(strings.Count(src, "\n")), 0}, Bytes: uint64(len(src)), SHA256: digestHex([]byte(src))}
 	tree, err := siDerive([]byte(src), f)
 	if err != nil {
 		t.Fatal(err)
@@ -594,5 +594,38 @@ func TestSvcInlineEditedStepNeedsIncrementalAndFreshViews(t *testing.T) {
 	}
 	if _, err := JudgeSvcInline(restart, []SvcInlineObserved{step(1, both...)}); err == nil || svcCode(t, err) != "SVC_INLINE_VIEW_ROLE" {
 		t.Errorf("a fresh view for a restarted segment: %v", err)
+	}
+}
+
+// The observation's source must hold the registered fragment (range, length and SHA-256): the CST and
+// capture digests do not cover the source text, so another version with the same shape must not
+// verify. A missing source is incomplete evidence (BLOCKED); other bytes contradict the pin (FAILED).
+func TestSvcInlineObservedSourceMustMatchTheFragmentPin(t *testing.T) {
+	x, obs, _ := siSyntheticStep(t, "class C {}")
+	withSource := func(src []byte) SvcInlineObserved {
+		o := obs
+		o.Source = src
+		return o
+	}
+	for name, want := range map[string]struct {
+		obs   SvcInlineObserved
+		state string
+		code  string
+	}{
+		"registered source":       {obs, "VERIFIED", ""},
+		"source with a suffix":    {withSource([]byte("class C {}\n// tail")), "VERIFIED", ""},
+		"missing source":          {withSource(nil), "BLOCKED", SvcInlineNativeNotRunCode},
+		"another version":         {withSource([]byte("class D {}")), "FAILED", "SVC_INLINE_SOURCE_MISMATCH"},
+		"fragment outside source": {withSource([]byte("class C")), "FAILED", "SVC_INLINE_SOURCE_MISMATCH"},
+	} {
+		got := siVerdicts(t, x, want.obs)
+		if len(got) != 3 {
+			t.Fatalf("%s: %d judgments", name, len(got))
+		}
+		for id, j := range got {
+			if j.State != want.state || j.Code != want.code {
+				t.Errorf("%s: %s %s %s, want %s %s", name, id, j.State, j.Code, want.state, want.code)
+			}
+		}
 	}
 }

@@ -1059,3 +1059,64 @@ func TestDecodeQueryCompletionResultRejectsHostTotalsThatWrap(t *testing.T) {
 		t.Errorf("a stored result whose host totals wrap was accepted: %v", err)
 	}
 }
+
+// A stored result is bound to its denominator pins: deleting, duplicating, reordering or resizing
+// counter rows is refused even when the host and total sums and the verdict are rewritten to match.
+func TestDecodeQueryCompletionResultBindsCountersToTheDenominatorPin(t *testing.T) {
+	f := faninFixtureFor(t)
+	base, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resum := func(counters []QueryCompletionCounter) QueryCompletionResult {
+		r := base
+		r.Scopes, r.Counters, r.Hosts, r.Total = slices.Clone(base.Scopes), counters, []QueryCompletionHost{}, QueryCompletionCounts{}
+		for _, platform := range queryPlatformOrder {
+			h := QueryCompletionHost{Platform: platform}
+			for _, c := range counters {
+				if c.Platform == platform {
+					h.add(c.QueryCompletionCounts)
+				}
+			}
+			if h.Required > 0 {
+				r.Hosts = append(r.Hosts, h)
+			}
+			r.Total.add(h.QueryCompletionCounts)
+		}
+		r.Completion, r.Code = completionVerdict(r)
+		r.Complete = r.Completion == QueryCompletionComplete
+		return r
+	}
+	if _, err := DecodeQueryCompletionResult(mustJSON(t, resum(slices.Clone(base.Counters)))); err != nil {
+		t.Fatalf("re-summed unchanged result: %v", err)
+	}
+	ordinary := slices.IndexFunc(base.Counters, func(c QueryCompletionCounter) bool { return c.Scope == QueryScopeOrdinary })
+	svc := slices.IndexFunc(base.Counters, func(c QueryCompletionCounter) bool { return c.Scope == QueryScopeSvc })
+	for name, tc := range map[string]struct {
+		counters func() []QueryCompletionCounter
+		code     string
+	}{
+		"ordinary rows deleted": {func() []QueryCompletionCounter {
+			return slices.DeleteFunc(slices.Clone(base.Counters), func(c QueryCompletionCounter) bool { return c.Scope == QueryScopeOrdinary })
+		}, "QUERY_COMPLETION_DENOMINATOR"},
+		"required lowered": {func() []QueryCompletionCounter {
+			c := slices.Clone(base.Counters)
+			c[ordinary].Required, c[ordinary].Blocked = c[ordinary].Required-1, c[ordinary].Blocked-1
+			return c
+		}, "QUERY_COMPLETION_DENOMINATOR"},
+		"row duplicated": {func() []QueryCompletionCounter {
+			return slices.Insert(slices.Clone(base.Counters), svc, base.Counters[svc])
+		}, "QUERY_COMPLETION_COUNTER"},
+		"rows swapped": {func() []QueryCompletionCounter {
+			c := slices.Clone(base.Counters)
+			c[svc], c[svc+1] = c[svc+1], c[svc]
+			return c
+		}, "QUERY_COMPLETION_COUNTER"},
+	} {
+		r := resum(tc.counters())
+		r.Counters = slices.Clone(r.Counters)
+		if _, err := DecodeQueryCompletionResult(mustJSON(t, r)); err == nil || faninCode(t, err) != tc.code {
+			t.Errorf("%s: required %d: %v, want %s", name, r.Total.Required, err, tc.code)
+		}
+	}
+}
