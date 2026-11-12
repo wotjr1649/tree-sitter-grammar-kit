@@ -1128,3 +1128,102 @@ func TestWorkflowConcurrencyPolicy(t *testing.T) {
 		})
 	}
 }
+
+// queryScopeEvidencePolicy pins the gate-external collection and merge of the scope judgments
+// (#362 L2): no new job (the gate's margin counts the run's jobs), no foundation step (its Linux
+// budget has no room), no required check. The producers store files without failing, the
+// qualification job merges them with steps that cannot fail it, and neither the gate's needs nor its
+// artifact set name the evidence.
+func queryScopeEvidencePolicy(text, gateSource string) error {
+	routes := workflowJobBody(text, "native-routes")
+	for _, required := range []string{
+		"TSGK_QUERY_SCOPE_OUT = $scopeOut", "-run '^TestNativeQueryCompletionCurrentState$'",
+		"      - name: scope 판정 근거 보관 (host별, gate 밖)\n        if: always()\n        timeout-minutes: 2\n",
+		"name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n",
+		"$global:LASTEXITCODE = 0\n",
+	} {
+		if !strings.Contains(routes, required) {
+			return fmt.Errorf("native-routes scope collection missing: %s", required)
+		}
+	}
+	// the producer is a required check: its collection may only warn
+	if !strings.Contains(routes, "Write-Output \"::warning::query scope collection failed: $_\"") || strings.Contains(workflowJobBody(text, "foundation"), "query-scope") {
+		return fmt.Errorf("scope collection must warn in native-routes and stay out of the foundation job")
+	}
+	qual := workflowJobBody(text, "qualification")
+	_, tail, ok := strings.Cut(qual, "      # #362 L2: gate-external evidence.")
+	if !ok {
+		return fmt.Errorf("qualification scope merge steps missing")
+	}
+	steps := strings.Split("\n"+tail, "\n      - ")[1:]
+	if len(steps) < 5 {
+		return fmt.Errorf("qualification scope merge steps incomplete")
+	}
+	merged := 0
+	for _, step := range steps[:5] {
+		name, _, _ := strings.Cut(step, "\n")
+		if !strings.Contains(name, "(gate 밖)") || !strings.Contains(step, "\n        if: ${{ !cancelled()") || !regexp.MustCompile(`(?m)^        timeout-minutes: [1-9][0-9]*$`).MatchString(step) {
+			return fmt.Errorf("scope merge step must be bounded and skip only on cancellation: %s", name)
+		}
+		// an action step cannot catch its own failure; a script step ends with LASTEXITCODE 0
+		if strings.Contains(step, "\n        uses: ") != strings.Contains(step, "\n        continue-on-error: true\n") {
+			return fmt.Errorf("scope merge action steps (and only they) must continue on error: %s", name)
+		}
+		if strings.Contains(step, "go run ./src/dev/query-scope-merge @cliArgs") {
+			merged++
+			if !strings.Contains(step, "$global:LASTEXITCODE = 0") || !strings.Contains(step, "} catch {") || !strings.Contains(step, "::warning::query scope merge: $_") {
+				return fmt.Errorf("the merge step must only warn")
+			}
+		}
+	}
+	if merged != 1 {
+		return fmt.Errorf("one merge step expected")
+	}
+	for _, pattern := range []string{"pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "name: scope-merge-${{ github.run_id }}-${{ github.run_attempt }}"} {
+		if !strings.Contains(qual, pattern) {
+			return fmt.Errorf("current run and attempt binding missing: %s", pattern)
+		}
+	}
+	// not a required check: the gate neither waits for nor reads this evidence
+	if strings.Contains(workflowJobBody(text, "integration-gate"), "scope") || strings.Contains(gateSource, "query-scope") || strings.Contains(gateSource, "scope-merge") {
+		return fmt.Errorf("the scope evidence entered the integration gate")
+	}
+	return nil
+}
+
+func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
+	text := string(mustRead(t, filepath.Join(repository(t), ".github/workflows/foundation.yml")))
+	var gateSource strings.Builder
+	for _, name := range []string{"main.go", "fetch.go", "margin.go"} {
+		gateSource.Write(mustRead(t, filepath.Join(repository(t), "src/dev/ci-gate", name)))
+	}
+	gate := gateSource.String()
+	if err := queryScopeEvidencePolicy(text, gate); err != nil {
+		t.Fatal(err)
+	}
+	download := "      - name: scope 판정 host 근거 받기 (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        continue-on-error: true\n"
+	merge := "      - name: 두 host scope 판정 병합과 fold (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 4\n"
+	for name, broken := range map[string]string{
+		"download-fails-job":   strings.Replace(text, download, strings.Replace(download, "        continue-on-error: true\n", "", 1), 1),
+		"download-unbounded":   strings.Replace(text, download, strings.Replace(download, "        timeout-minutes: 2\n", "", 1), 1),
+		"merge-unbounded":      strings.Replace(text, merge, strings.Replace(merge, "        timeout-minutes: 4\n", "", 1), 1),
+		"merge-fails-job":      strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
+		"merge-throws":         strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
+		"merge-skips-failure":  strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
+		"collection-throws":    strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
+		"collection-fails-job": strings.Replace(text, "          $env:TSGK_QUERY_SCOPE_OUT = $null\n          $global:LASTEXITCODE = 0\n", "          $env:TSGK_QUERY_SCOPE_OUT = $null\n", 1),
+		"upload-requires":      strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
+		"previous-attempt":     strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
+		"gate-waits":           strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
+		"foundation-step":      strings.Replace(text, "      - name: Verify clean validation output\n        timeout-minutes: 1\n        run: |\n          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching\n          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }\n          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }\n\n  race:", "      - name: scope 판정 query-scope\n        timeout-minutes: 1\n        run: Write-Output 'x'\n\n  race:", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if broken == text || queryScopeEvidencePolicy(broken, gate) == nil {
+				t.Fatal("scope evidence control not rejected")
+			}
+		})
+	}
+	if queryScopeEvidencePolicy(text, gate+"\nartifactSpec{\"query-scope-\"") == nil {
+		t.Fatal("gate artifact set naming the evidence was not rejected")
+	}
+}

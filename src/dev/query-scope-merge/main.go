@@ -1,0 +1,343 @@
+// Command query-scope-merge folds the stored scope judgments of both hosts of one CI run (#362 L2).
+//
+// Each host hands over a closed directory: its run-identity.json and the two files
+// query-scope-{predicate,svc}-<host>.json that the native fan-in test stores. The tool binds those
+// directories to the run it executes in (artifact layer: run id, attempt, commit and head SHA, the
+// stored format stays tsgk-query-scope-host/r1), decodes and merges the host files, folds the merged
+// scopes with FoldQueryCompletion and writes one report. It is evidence only: it opens no gate.
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
+)
+
+const (
+	reportSchema = "tsgk-query-scope-merge/r1"
+	identityFile = "run-identity.json"
+	producerJob  = "native-routes"
+
+	statusMerged  = "MERGED"  // both hosts bound, merged and folded, no FAILED row
+	statusFail    = "FAIL"    // merged and folded, a host judged an obligation FAILED
+	statusBlocked = "BLOCKED" // a registered host's evidence is absent
+	statusRefused = "REFUSED" // evidence present but not bound to this run or not intact
+
+	maxIdentityBytes = 64 << 10
+	maxHostBytes     = 512 << 10
+)
+
+// hostPairs are the registered hosts: the fan-in host name and the Go GOOS/GOARCH of its producer.
+var hostPairs = map[string][2]string{"windows-amd64": {"windows", "amd64"}, "linux-amd64": {"linux", "amd64"}}
+
+var scopes = []string{kit.QueryScopePredicate, kit.QueryScopeSvc}
+
+type fileDigest struct {
+	Name   string `json:"name"`
+	SHA256 string `json:"sha256"`
+}
+
+type hostInput struct {
+	Host  string       `json:"host"`
+	Files []fileDigest `json:"files"`
+}
+
+type report struct {
+	Schema     string                     `json:"schema"`
+	Status     string                     `json:"status"`
+	Code       string                     `json:"code"`
+	Run        kit.RunIdentity            `json:"run"`
+	Inputs     []hostInput                `json:"inputs"`
+	Scopes     map[string]string          `json:"scope_result_sha256,omitempty"`
+	Completion *kit.QueryCompletionResult `json:"completion,omitempty"`
+}
+
+// refusal is a verdict that stops before the fold.
+type refusal struct{ status, code string }
+
+func (r refusal) Error() string { return r.status + " " + r.code }
+
+func refuse(code string) error { return refusal{statusRefused, code} }
+
+func readBounded(path string, limit int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, limit+1))
+	if err != nil || int64(len(data)) > limit {
+		return nil, errors.New("unreadable or over the size limit")
+	}
+	return data, nil
+}
+
+// readIdentity strictly decodes a run identity.
+func readIdentity(data []byte) (kit.RunIdentity, error) {
+	var id kit.RunIdentity
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if dec.Decode(&id) != nil || dec.More() || id.Schema != kit.RunIdentitySchema {
+		return kit.RunIdentity{}, errors.New("run identity form")
+	}
+	return id, nil
+}
+
+// bound reports whether a host's identity belongs to the run this tool executes in: the same
+// repository, workflow, run, attempt, event, commit and head SHA, a NEW_RUN of the producer job on
+// the host the directory is named for.
+func bound(got, want kit.RunIdentity, host string) bool {
+	pair := hostPairs[host]
+	return got.Repository == want.Repository && got.Workflow == want.Workflow && got.RunID == want.RunID && got.RunAttempt == want.RunAttempt &&
+		got.Event == want.Event && got.SHA == want.SHA && got.HeadSHA == want.HeadSHA && got.Checkout == want.Checkout &&
+		got.EvidenceMode == "NEW_RUN" && got.Job == producerJob && got.GOOS == pair[0] && got.GOARCH == pair[1]
+}
+
+func wantedFiles(host string) []string {
+	names := []string{identityFile}
+	for _, scope := range scopes {
+		names = append(names, kit.QueryScopeHostFile(scope, host))
+	}
+	slices.Sort(names)
+	return names
+}
+
+// loadHost reads one host directory: exactly its identity and its two scope files, no other
+// entry. The decoded results are returned per scope, and a file under another host's name is refused.
+func loadHost(dir, host string, expected kit.RunIdentity) (hostInput, map[string]kit.QueryScopeHostResult, error) {
+	in := hostInput{Host: host}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return in, nil, refusal{statusBlocked, "QUERY_SCOPE_HOST_ABSENT"}
+	}
+	var names []string
+	for _, e := range entries {
+		if !e.Type().IsRegular() {
+			return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
+		}
+		names = append(names, e.Name())
+	}
+	if !slices.Equal(names, wantedFiles(host)) { // ReadDir is sorted by name
+		return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
+	}
+	read := map[string][]byte{}
+	for _, name := range names {
+		limit := int64(maxHostBytes)
+		if name == identityFile {
+			limit = maxIdentityBytes
+		}
+		data, err := readBounded(filepath.Join(dir, name), limit)
+		if err != nil {
+			return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
+		}
+		read[name] = data
+		in.Files = append(in.Files, fileDigest{name, queryregistrycore.Digest(data)})
+	}
+	id, err := readIdentity(read[identityFile])
+	if err != nil {
+		return in, nil, refuse("QUERY_SCOPE_RUN_IDENTITY")
+	}
+	if !bound(id, expected, host) {
+		return in, nil, refuse("QUERY_SCOPE_RUN_MISMATCH")
+	}
+	results := map[string]kit.QueryScopeHostResult{}
+	for _, scope := range scopes {
+		h, err := kit.DecodeQueryScopeHostResult(read[kit.QueryScopeHostFile(scope, host)])
+		if err != nil {
+			return in, nil, refuse(codeOf(err))
+		}
+		if h.Host != host || h.Result.Scope != scope {
+			return in, nil, refuse("QUERY_SCOPE_HOST_MISMATCH")
+		}
+		results[scope] = h
+	}
+	return in, results, nil
+}
+
+func codeOf(err error) string {
+	var e *kit.Error
+	var f *queryregistrycore.Fault
+	switch {
+	case errors.As(err, &e):
+		return e.Code
+	case errors.As(err, &f):
+		return f.Code
+	}
+	return "QUERY_SCOPE_HOST_INVALID"
+}
+
+// foldRequest reads the committed contracts the fan-in pins, as the checkout of this run holds them.
+func foldRequest(root string) (kit.QueryCompletionRequest, error) {
+	read := func(path string) []byte {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if err != nil {
+			return nil
+		}
+		return data
+	}
+	registry := read(queryregistrycore.Path)
+	predicate, svc, large := read(kit.PredicateExpectedPath), read(kit.SvcExpectedPath), read(kit.LargeExpectedPath)
+	req := kit.QueryCompletionRequest{
+		Registry: registry, RegistrySHA256: queryregistrycore.Digest(registry),
+		Qualification: read(queryregistrycore.QualificationPin.Path), Slots: read(queryregistrycore.SlotPin.Path),
+		Basis:       map[string][]byte{"src/dev/query-reference/check.py": read("src/dev/query-reference/check.py"), "src/internal/native/query_policy_test.go": read("src/internal/native/query_policy_test.go")},
+		SvcExpected: svc, SvcFixture: read("src/testdata/native/n461/svc.json"), LargeExpected: large, LargeFixtures: read("src/contracts/native-large-fixtures.json"),
+		AssetPins: map[string][]queryregistrycore.Pin{
+			kit.QueryScopePredicate: {queryregistrycore.FilePin(kit.PredicateExpectedPath, predicate)},
+			kit.QueryScopeSvc:       {queryregistrycore.FilePin(kit.SvcExpectedPath, svc)},
+			kit.QueryScopeLarge:     {queryregistrycore.FilePin(kit.LargeExpectedPath, large)},
+		},
+		ResultPins: map[string]string{},
+	}
+	for _, b := range [][]byte{registry, predicate, svc, large, req.Qualification, req.Slots, req.SvcFixture, req.LargeFixtures} {
+		if len(b) == 0 {
+			return req, errors.New("committed contract missing")
+		}
+	}
+	for path, b := range req.Basis {
+		if len(b) == 0 {
+			return req, errors.New("fan-in basis missing: " + path)
+		}
+	}
+	return req, nil
+}
+
+// merge binds the host directories to the run, merges both hosts of each scope and folds the result.
+func merge(root string, expected kit.RunIdentity, dirs map[string]string) report {
+	rep := report{Schema: reportSchema, Run: expected, Inputs: []hostInput{}}
+	fail := func(err error) report {
+		var r refusal
+		if errors.As(err, &r) {
+			rep.Status, rep.Code = r.status, r.code
+		} else {
+			rep.Status, rep.Code = statusRefused, "QUERY_SCOPE_MERGE_FAILED"
+		}
+		return rep
+	}
+	if expected.Schema != kit.RunIdentitySchema || expected.EvidenceMode != "NEW_RUN" || expected.RunID == "" || expected.RunAttempt == "" || expected.SHA == "" || expected.HeadSHA == "" {
+		return fail(refuse("QUERY_SCOPE_RUN_EXPECTED"))
+	}
+	byScope := map[string][]kit.QueryScopeHostResult{}
+	var absent error
+	for _, host := range []string{"windows-amd64", "linux-amd64"} {
+		dir, ok := dirs[host]
+		if !ok {
+			absent = refusal{statusBlocked, "QUERY_SCOPE_HOST_ABSENT"}
+			continue
+		}
+		in, results, err := loadHost(dir, host, expected)
+		rep.Inputs = append(rep.Inputs, in)
+		var r refusal
+		if errors.As(err, &r) && r.status == statusBlocked {
+			absent = err
+			continue
+		}
+		if err != nil {
+			return fail(err)
+		}
+		for _, scope := range scopes {
+			byScope[scope] = append(byScope[scope], results[scope])
+		}
+	}
+	if absent != nil { // a present host is not folded alone: the other host stays unjudged
+		return fail(absent)
+	}
+	req, err := foldRequest(root)
+	if err != nil {
+		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
+	}
+	rep.Scopes = map[string]string{}
+	for _, scope := range scopes {
+		merged, err := kit.MergeQueryScopeHostResults(byScope[scope])
+		if err != nil {
+			return fail(refuse(codeOf(err)))
+		}
+		req.Scopes = append(req.Scopes, merged)
+		req.ResultPins[scope] = merged.ResultSHA256
+		rep.Scopes[scope] = merged.ResultSHA256
+	}
+	res, err := kit.FoldQueryCompletion(req)
+	if err != nil {
+		return fail(refuse(codeOf(err)))
+	}
+	rep.Completion = &res
+	rep.Status, rep.Code = statusMerged, res.Code
+	if res.Total.Failed != 0 {
+		rep.Status = statusFail
+	}
+	return rep
+}
+
+type hostFlags map[string]string
+
+func (h hostFlags) String() string { return fmt.Sprint(map[string]string(h)) }
+
+func (h hostFlags) Set(v string) error {
+	host, dir, ok := strings.Cut(v, "=")
+	if _, known := hostPairs[host]; !ok || !known || dir == "" {
+		return errors.New("want <windows-amd64|linux-amd64>=<directory>")
+	}
+	if _, dup := h[host]; dup {
+		return errors.New("duplicate host " + host)
+	}
+	h[host] = dir
+	return nil
+}
+
+func main() {
+	root := flag.String("root", ".", "repository root of the run's checkout")
+	expectedPath := flag.String("expected", "", "this run's run-identity.json")
+	out := flag.String("out", "", "report file to create")
+	hosts := hostFlags{}
+	flag.Var(hosts, "host", "<host>=<artifact directory>; once per host")
+	flag.Parse()
+	if *expectedPath == "" || *out == "" {
+		fmt.Fprintln(os.Stderr, "-expected and -out are required")
+		os.Exit(2)
+	}
+	data, err := readBounded(*expectedPath, maxIdentityBytes)
+	var expected kit.RunIdentity
+	if err == nil {
+		expected, err = readIdentity(data)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "expected run identity unreadable")
+		os.Exit(2)
+	}
+	rep := merge(*root, expected, hosts)
+	encoded, err := json.MarshalIndent(rep, "", "  ")
+	if err == nil {
+		var f *os.File
+		if f, err = os.OpenFile(*out, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644); err == nil {
+			_, err = f.Write(append(encoded, '\n'))
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+		}
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "report not written:", err)
+		os.Exit(2)
+	}
+	fmt.Printf("query-scope-merge %s %s\n", rep.Status, rep.Code)
+	if rep.Completion != nil {
+		t := rep.Completion.Total
+		fmt.Printf("TOTAL required=%d verified=%d failed=%d blocked=%d unprocessed=%d\n", t.Required, t.Verified, t.Failed, t.Blocked, t.Unprocessed)
+		for _, h := range rep.Completion.Hosts {
+			fmt.Printf("HOST %s verified=%d failed=%d blocked=%d\n", h.Platform, h.Verified, h.Failed, h.Blocked)
+		}
+	}
+	if rep.Status != statusMerged {
+		os.Exit(1)
+	}
+}

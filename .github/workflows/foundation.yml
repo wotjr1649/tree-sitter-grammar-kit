@@ -836,6 +836,23 @@ jobs:
             go test ./src/internal/native -run '^Test(JSONHoldoutLabels|NativeJSONHoldout|NativeBenchmarkControls)$' -count=1 -v -timeout=180s > (Join-Path $out 'json-holdout.log') 2>&1
             if ($LASTEXITCODE -ne 0) { throw 'independent JSON holdout failed' }
           }
+          # #362 L2: store this host's predicate and SVC scope judgments with the run identity for the
+          # qualification job's merge. Gate-external evidence: a failed collection leaves no files and
+          # the merge reports this host absent, so it never fails this required producer.
+          $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          try {
+            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
+            go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v -timeout=180s
+            if ($LASTEXITCODE -ne 0) { throw "scope fan-in test failed ($LASTEXITCODE)" }
+            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 2) { throw 'scope judgment files missing' }
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $scopeOut -HeadSHA $env:PR_HEAD_SHA
+            if ($LASTEXITCODE -ne 0) { throw 'scope run identity failed' }
+          } catch {
+            Write-Output "::warning::query scope collection failed: $_"
+            if (Test-Path -LiteralPath $scopeOut) { Remove-Item -LiteralPath $scopeOut -Recurse -Force }
+          }
+          $env:TSGK_QUERY_SCOPE_OUT = $null
+          $global:LASTEXITCODE = 0
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -877,6 +894,19 @@ jobs:
           name: json-holdout-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/json-holdout.log
           if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: scope 판정 근거 보관 (host별, gate 밖)
+        if: always()
+        timeout-minutes: 2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # #362 L2: separate evidence like the JSON holdout: neither the closed qualification host file
+          # set nor the gate's artifact set changes. A host without files uploads nothing, which the
+          # merge reports as that host absent.
+          name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
           retention-days: 7
           compression-level: 6
       - name: Margin 실행 구성 기록
@@ -1084,6 +1114,72 @@ jobs:
           path: ${{ runner.temp }}/qualification-${{ github.run_id }}-${{ github.run_attempt }}/qualification.json
           if-no-files-found: error
           retention-days: 7
+      # #362 L2: gate-external evidence. The two hosts' stored scope judgments of this run and attempt are
+      # merged and folded by src/dev/query-scope-merge. These steps never fail the job (the integration
+      # gate does not read their artifact); a missing or unbound host shows as a warning and in the report.
+      - name: scope 판정 host 근거 받기 (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-hosts
+      - name: scope 판정 host 근거 목록 지연 확인 (gate 밖)
+        id: scope_hosts
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        run: |
+          # The listing can trail the producers; wait once before the merge reads the hosts.
+          $hosts = Join-Path $env:RUNNER_TEMP 'query-scope-hosts'
+          $missing = @('windows', 'linux') | Where-Object { -not (Test-Path -LiteralPath (Join-Path $hosts "query-scope-$_-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT")) }
+          if ($missing) {
+            Write-Output "scope artifact listing missing $($missing -join ','); retrying once after 60 s"
+            Start-Sleep -Seconds 60
+          }
+          "missing=$($missing -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: scope 판정 host 근거 다시 받기 (gate 밖)
+        if: ${{ !cancelled() && steps.scope_hosts.outputs.missing != '' }}
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-hosts
+      - name: 두 host scope 판정 병합과 fold (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 4
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          try {
+            $hosts = Join-Path $env:RUNNER_TEMP 'query-scope-hosts'
+            $out = Join-Path $env:RUNNER_TEMP "scope-merge-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            New-Item -ItemType Directory -Path $out | Out-Null
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
+            if ($LASTEXITCODE -ne 0) { throw 'merge run identity failed' }
+            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'))
+            foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'))) {
+              $dir = Join-Path $hosts "query-scope-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              if (Test-Path -LiteralPath $dir) { $cliArgs += @('-host', "$($p[1])=$dir") } else { Write-Output "scope host evidence missing: $($p[1])" }
+            }
+            go run ./src/dev/query-scope-merge @cliArgs
+            if ($LASTEXITCODE -ne 0) { throw "scope merge did not merge both hosts (exit $LASTEXITCODE)" }
+          } catch {
+            Write-Output "::warning::query scope merge: $_"
+          }
+          $global:LASTEXITCODE = 0
+      - name: scope 병합 결과 보관 (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scope-merge-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/scope-merge-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 6
       - name: Margin 실행 구성 기록
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}

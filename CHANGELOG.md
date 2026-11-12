@@ -3,6 +3,7 @@
 ## Unreleased
 
 - query scope 판정의 host별 저장 형식과 host 일반화(Refs #362, 출하 뒤 L1): experimental `tsgk-query-scope-host/r1`(`QueryScopeHostResult`)이 기존 `tsgk-query-scope-result/r1`을 그대로 감싸 host에 결속해 저장하고, `MergeQueryScopeHostResults`가 두 host의 파일을 `FoldQueryCompletion`이 받는 scope 결과 하나로 합친다. 다른 host의 행에 판정이 있는 파일, 변조된 파일, 한 host가 빠졌거나 겹친 집합은 거부된다. `TestNativeQueryCompletionCurrentState`와 `TestNativeSvcInlineRealGrammar`의 `windows-amd64` 고정과 Linux SKIP을 지워 실행 host를 쓰고, `TSGK_QUERY_SCOPE_OUT`이 있으면 이 host의 predicate·SVC 판정을 파일로 쓴다. Windows의 fan-in 결과(VERIFIED 360 = predicate 67 + SVC 263 + large 30)는 같은 입력에서 바이트 단위로 같다. CI 수집·병합·`ci-gate` 편입은 하지 않았고 지원 범위·claim·한도는 바뀌지 않았다. r1 결과가 저장되기 시작했으므로 이후 `tsgk-query-scope-result/r1`의 입력 모양·분모 변경은 r2가 필요하다.
+- query scope 판정의 CI 수집·병합(Refs #362, 출하 뒤 L2, gate 밖 증거): 두 `native routes` job이 `TSGK_QUERY_SCOPE_OUT`으로 host의 predicate·SVC 판정 파일과 `run-identity.json`을 artifact `query-scope-<goos>-<run>-<attempt>`로 올리고, `qualification` job의 gate 밖 단계가 새 dev 도구 `src/dev/query-scope-merge`로 두 host를 run·attempt·commit·head SHA에 결속해 `DecodeQueryScopeHostResult` → `MergeQueryScopeHostResults` → `FoldQueryCompletion`으로 병합하고 `scope-merge-<run>-<attempt>` artifact에 보고서로 남긴다. 한 host 누락은 BLOCKED, 다른 run의 artifact·변조·host 바꿔치기는 거부한다. 저장 형식 `tsgk-query-scope-host/r1`은 바꾸지 않았다. 필수 check, `integration gate`의 `needs`, `ci-gate`의 artifact 집합, 시간 한도, 지원 범위와 v0.3.0 claim은 바뀌지 않았다. 실제 Linux 수집은 PR CI run이 처음 실행한다.
 
 ## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
 
