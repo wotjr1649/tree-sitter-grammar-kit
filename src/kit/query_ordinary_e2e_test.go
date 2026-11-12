@@ -606,7 +606,7 @@ func ordinaryE2EWriteProducerInput(t *testing.T, input ordinaryE2EProducerInput)
 func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 	t.Helper()
 	ordinaryNativeTools(t)
-	env := ordinaryOwnedNativeEnv(producerDir)
+	env := ordinaryOwnedNativeEnv(producerDir, "")
 	env = slices.DeleteFunc(env, func(entry string) bool {
 		return strings.HasPrefix(strings.ToUpper(entry), "TSGK_ORDINARY_OWNED_INPUTS=")
 	})

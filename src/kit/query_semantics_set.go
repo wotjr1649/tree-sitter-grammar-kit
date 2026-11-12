@@ -69,6 +69,23 @@ type semanticBuildReuse struct {
 	SourceSteps []semanticBuildStep `json:"source_steps"`
 }
 
+// effectiveSteps returns the compilation record to check and whether the reuse shape is valid.
+// No reuse and a cache miss are checked by this invocation's steps; a hit is checked by source_steps.
+// The steps are returned even when invalid so callers keep their finding flow.
+func (b *semanticBuildDescription) effectiveSteps() ([]semanticBuildStep, bool) {
+	r := b.Reuse
+	switch {
+	case r == nil:
+		return b.Steps, true
+	case r.SourceSteps == nil:
+		return b.Steps, false
+	case r.Hit:
+		return r.SourceSteps, len(b.Steps) == 0
+	default:
+		return b.Steps, len(r.SourceSteps) == 0 && len(b.Steps) != 0
+	}
+}
+
 func (b *eligibilityBudget) semanticAST(doc string, data []byte) (*jv, *Error) {
 	if uint64(len(data)) > MaxDocumentBytes {
 		return nil, fail(KindResourceLimit, "DOCUMENT_BYTES_LIMIT", doc, nil)
@@ -697,12 +714,9 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 		bad("SEMANTICS_BUILD_STEPS", manifestPin.Path)
 		return nil
 	}
-	observedSteps := build.Steps
-	if build.Reuse != nil && build.Reuse.Hit {
-		if len(build.Steps) != 0 {
-			bad("SEMANTICS_BUILD_STEPS", buildPin.Path)
-		}
-		observedSteps = build.Reuse.SourceSteps
+	observedSteps, validReuse := build.effectiveSteps()
+	if !validReuse {
+		bad("SEMANTICS_BUILD_STEPS", buildPin.Path)
 	}
 	if len(observedSteps) != len(steps) {
 		bad("SEMANTICS_BUILD_STEPS", buildPin.Path)
