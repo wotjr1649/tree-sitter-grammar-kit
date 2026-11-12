@@ -90,7 +90,7 @@ func TestOracleOrdinaryE2EFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := OracleRequest{Root: root, GrammarRoot: in.GrammarRoot, Profile: in.Profile, Runtime: rt, Compiler: cc,
-		Work: t.TempDir(), Out: filepath.Join(dir, "r8"), Allow: []string{AllowBuild, AllowExec},
+		Work: t.TempDir(), Out: filepath.Join(dir, "r8"), Allow: []string{AllowBuild, AllowExec}, BuildCache: os.Getenv("TSGK_ORDINARY_OWNED_BUILD_CACHE"),
 		FactPack: in.FactPack, FactMapping: in.FactMapping, CgroupParent: os.Getenv("TSGK_CGROUP_PARENT"),
 		Ordinary: &OrdinaryRecordingRequest{Inputs: kit.OrdinaryPlanRequest{Profile: in.PlanningProfile, Assets: in.AssetRegistration},
 			Registration: registration, ShardPlan: in.ShardPlan, ShardIDs: in.ShardIDs}}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -606,21 +605,22 @@ func ordinaryE2EWriteProducerInput(t *testing.T, input ordinaryE2EProducerInput)
 
 func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 	t.Helper()
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
 	ordinaryNativeTools(t)
 	env := ordinaryOwnedNativeEnv(producerDir, "")
 	env = slices.DeleteFunc(env, func(entry string) bool {
 		return strings.HasPrefix(strings.ToUpper(entry), "TSGK_ORDINARY_OWNED_INPUTS=")
 	})
 	env = append(env, "TSGK_ORDINARY_OWNED_INPUTS="+inputPath)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "go", "test", "./src/internal/native", "-run", "^TestOracleOrdinaryE2EFixture$", "-count=1", "-timeout=180s")
-	cmd.Dir, cmd.Env = root, env
-	if output, err := cmd.CombinedOutput(); err != nil {
+	data, err := os.ReadFile(inputPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var grammar struct{ GrammarRoot string }
+	if err := json.Unmarshal(data, &grammar); err != nil {
+		t.Fatal(err)
+	}
+	// The grammar is part of the native build cache key, so each grammar gets its own warm-up.
+	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryE2EFixture", "grammar="+grammar.GrammarRoot, env); err != nil {
 		t.Fatalf("ordinary owned r8 producer failed: %v\n%s", err, output)
 	}
 }

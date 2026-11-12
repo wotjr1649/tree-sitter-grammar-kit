@@ -81,6 +81,7 @@ func TestLargeExpectedSealedAndBound(t *testing.T) {
 // The expected values are the derivation of the fixture templates: recomputing them (no native
 // output is involved) reproduces the sealed asset, and the error-recovery fixtures are refused.
 func TestLargeTemplateReproducesAsset(t *testing.T) {
+	t.Parallel()
 	e, templates := loadLarge(t)
 	c := e.Cases[0]
 	cst, err := templates[0].CSTDigests(LargePageRows)
@@ -454,6 +455,7 @@ func TestLargeFold(t *testing.T) {
 }
 
 func TestLargeExpectedForgeries(t *testing.T) {
+	t.Parallel()
 	asset, registry, inventory, fixtures := largeAssets(t)
 	replace := func(old, new string) []byte {
 		if !bytes.Contains(asset, []byte(old)) {

@@ -55,6 +55,7 @@ func TestStreamedPagingStorageAndFallback(t *testing.T) {
 }
 
 func TestStreamedPagingLateInvalidNodeFallback(t *testing.T) {
+	t.Parallel()
 	for _, mutation := range []string{"ref", "duplicate-run", "policy"} {
 		t.Run(mutation, func(t *testing.T) {
 			f := binaryDriverFixture(t, MaxDocumentBytes+1)

@@ -125,6 +125,7 @@ func ordinaryPlanForTest(v *queryregistrycore.Validated, inv QualificationInvent
 }
 
 func TestOrdinaryPlanExactP0UnionAndFixedCaps(t *testing.T) {
+	t.Parallel()
 	v, inv := ordinaryP0ForPlanTest(t)
 	plan := ordinaryPlanForTest(v, inv)
 	if err := validateOrdinaryShardPlan(plan, v); err != nil {

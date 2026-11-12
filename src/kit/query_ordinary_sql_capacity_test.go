@@ -941,6 +941,7 @@ func ordinaryRouteQueries(t *testing.T, route string) map[string]string {
 }
 
 func TestOrdinarySQLPassCapacityBeforeExternalApproval(t *testing.T) {
+	t.Parallel()
 	for _, route := range []string{"postgresql-sql", "tsql"} {
 		t.Run(route, func(t *testing.T) {
 			req, caseID, shardID := ordinarySQLCapacityRequest(t, route)

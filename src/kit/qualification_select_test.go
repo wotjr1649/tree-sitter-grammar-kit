@@ -26,6 +26,7 @@ func inventorySelectionBudget(t *testing.T) *eligibilityBudget {
 }
 
 func TestQualificationInventoryRouteDifferential(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../contracts/qualification-c1.json")
 	if err != nil {
 		t.Fatal(err)

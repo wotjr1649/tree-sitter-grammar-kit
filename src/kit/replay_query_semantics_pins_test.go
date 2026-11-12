@@ -99,6 +99,7 @@ func runPinnedSemanticReplay(t *testing.T, req ReplayRequest) (ReplayResult, err
 }
 
 func TestReplaySemanticPinsForwardingAndProductionIndependence(t *testing.T) {
+	t.Parallel()
 	req, _ := pinnedSemanticReplayFixture(t)
 	want, err := runPinnedSemanticReplay(t, req)
 	if err == nil || want.ResultSchema != ReplaySemanticsPinsResultSchema || want.Reducer.ID != "oracle-set-r7" || want.QuerySemantics == nil ||

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
@@ -27,7 +28,7 @@ type faninFixture struct {
 
 var (
 	faninOnce sync.Once
-	faninFix  faninFixture
+	faninFix  atomic.Pointer[faninFixture] // published once under faninOnce; read-only afterwards
 )
 
 func faninFixtureFor(t *testing.T) *faninFixture {
@@ -49,16 +50,17 @@ func faninFixtureFor(t *testing.T) *faninFixture {
 		if err != nil {
 			t.Fatal(err)
 		}
-		faninFix = faninFixture{
+		faninFix.Store(&faninFixture{
 			req: QueryCompletionRequest{Registry: r.Registry, RegistrySHA256: r.RegistrySHA256, Qualification: r.Qualification, Slots: r.Slots, Basis: r.Basis, SvcExpected: svcAsset, SvcFixture: svcFixture, LargeExpected: largeAsset, LargeFixtures: largeFixtures},
 			v:   v, svc: svc, plan: plan, predAsset: predAsset, svcAsset: svcAsset, inventory: inventory,
 			largeAsset: largeAsset, largeFixtures: largeFixtures, large: large,
-		}
+		})
 	})
-	if faninFix.v == nil {
+	f := faninFix.Load()
+	if f == nil {
 		t.Fatal("fan-in fixture unavailable")
 	}
-	return &faninFix
+	return f
 }
 
 func (f *faninFixture) structuralIDs(platform string, n int) []string {
@@ -234,6 +236,7 @@ func totalsOf(r QueryCompletionResult, scope string) QueryCompletionCounts {
 }
 
 func TestQueryCompletionDenominatorsAreDerivedFromTheRegistry(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	want := map[string][]QueryScopeCounter{
 		QueryScopeOrdinary:  {{Kind: "STRUCTURAL_ONLY", Platform: "windows-amd64", Required: 53104}, {Kind: "STRUCTURAL_ONLY", Platform: "linux-amd64", Required: 53104}},
@@ -330,6 +333,7 @@ func TestQueryCompletionLargeLowerObligationsRefineTheUpperCoordinates(t *testin
 // The real registered state: no scope result exists in the repository, so every obligation is
 // BLOCKED by presence and the gate stays closed. An absent scope is never counted as zero.
 func TestQueryCompletionAbsentScopesAreBlockedNotZero(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	res, err := FoldQueryCompletion(f.request())
 	if err != nil {
@@ -353,6 +357,7 @@ func TestQueryCompletionAbsentScopesAreBlockedNotZero(t *testing.T) {
 }
 
 func TestQueryCompletionFoldsRealScopeResults(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	ordinary := f.ordinaryScope(t, ordinaryTupleVerified, ordinaryTupleBlocked)
 	predicate, svc := f.predicateScope(t), f.svcScope(t)
@@ -395,6 +400,7 @@ func TestQueryCompletionFoldsRealScopeResults(t *testing.T) {
 }
 
 func TestQueryCompletionFailPreemptsAndKeepsTheFirstCode(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	failing := f.ordinaryScope(t, ordinaryTupleFailed, ordinaryTupleVerified)
 	res, err := FoldQueryCompletion(f.request(failing, f.predicateScope(t)))
@@ -411,6 +417,7 @@ func TestQueryCompletionFailPreemptsAndKeepsTheFirstCode(t *testing.T) {
 }
 
 func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	failing := f.ordinaryScope(t, ordinaryTupleFailed, ordinaryTupleVerified)
 	predicate, svc := f.predicateScope(t), f.svcScope(t)
@@ -542,7 +549,7 @@ func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
 		err error
 	}
 	results := make([]folded, len(forges))
-	slots := make(chan struct{}, runtime.NumCPU())
+	slots := make(chan struct{}, min(runtime.NumCPU(), 4)) // 4 is the CI runner width; each fold holds the whole registry, so more only costs memory
 	var wg sync.WaitGroup
 	for i, c := range forges {
 		wg.Go(func() {
@@ -567,6 +574,7 @@ func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
 }
 
 func TestOrdinaryScopeResultRejectsUnboundOverlappingAndForeignResults(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	ids := f.structuralIDs("windows-amd64", 4)
 	fold := func(results ...OrdinaryQuerySemanticsResult) (QueryScopeResult, error) {
@@ -742,6 +750,7 @@ func TestDecodeQueryScopeResultIsStrictAndRejectsOldRevisions(t *testing.T) {
 }
 
 func TestDecodeQueryCompletionResultRederivesTheVerdict(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	blocked, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
 	if err != nil {
@@ -841,6 +850,7 @@ func TestQueryCompletionLeavesLegacyRevisionsUntouched(t *testing.T) {
 // The large scope at the recorded #412 state: 30 of 39 VERIFIED, 9 BLOCKED, and the gate stays
 // closed (BLOCKED, never COMPLETE). The N/A hosts keep their reasons and add nothing to the counts.
 func TestQueryCompletionFoldsTheLargeScopeAtTheRecordedState(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	large := f.largeScope(t, nil)
 	if large.FirstFailure != "" {
@@ -888,6 +898,7 @@ func TestQueryCompletionFoldsTheLargeScopeAtTheRecordedState(t *testing.T) {
 // A control that stays over the limit is never a semantic PASS: a completed or PASS outcome is a
 // FAILED control and the fan-in turns it into a FAIL that keeps the control's code.
 func TestQueryCompletionLargeControlNeverBecomesPass(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	passed := f.largeScope(t, func(js []LargeJudgment) []LargeJudgment {
 		for i, j := range js {
@@ -923,6 +934,7 @@ func TestQueryCompletionLargeControlNeverBecomesPass(t *testing.T) {
 // The contract bytes the plan reads are bound to the registry: another large contract is refused
 // before any scope result is looked at.
 func TestQueryCompletionRefusesAnotherLargeContract(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	for name, edit := range map[string]func(*QueryCompletionRequest){
 		"control semantic_pass flipped": func(r *QueryCompletionRequest) {
@@ -946,6 +958,7 @@ func TestQueryCompletionRefusesAnotherLargeContract(t *testing.T) {
 // A shard whose FAIL no tuple carries (every selected tuple VERIFIED, the producer's FAIL kept
 // beside them) must still reach the fan-in as a FAIL with its first code.
 func TestOrdinaryScopeResultKeepsAShardFailThatEveryTupleVerifies(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	ids := f.structuralIDs("windows-amd64", 3)
 	shard := faninShard(ids, []string{ordinaryTupleVerified, ordinaryTupleVerified, ordinaryTupleVerified}, true)
@@ -982,6 +995,7 @@ func TestOrdinaryScopeResultKeepsAShardFailThatEveryTupleVerifies(t *testing.T) 
 // result's Code is the shard's first failure, and the fan-in reports it, whatever the tuple codes are
 // (the producer-failure counterpart of the shard FAIL that every tuple verifies).
 func TestOrdinaryScopeResultKeepsTheShardFirstFailureCodeOverTupleCodes(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	ids := f.structuralIDs("windows-amd64", 4)
 	producerFirst := func(ids []string, states []string) OrdinaryQuerySemanticsResult {
@@ -1019,6 +1033,7 @@ func TestOrdinaryScopeResultKeepsTheShardFirstFailureCodeOverTupleCodes(t *testi
 // A counter sum that wraps around uint64 is not a distribution: required = verified + failed +
 // blocked + unprocessed must hold without overflow at every level and in the stored decoder.
 func TestQueryCompletionRejectsCounterSumsThatWrap(t *testing.T) {
+	t.Parallel()
 	huge := ^uint64(0)
 	if (QueryCompletionCounts{Required: 53104, Verified: 53104, Blocked: huge, Unprocessed: 1}).sums() {
 		t.Error("a wrapping distribution was accepted by sums")
@@ -1067,6 +1082,7 @@ func TestQueryCompletionRejectsCounterSumsThatWrap(t *testing.T) {
 // Rows that each sum correctly can still add up past uint64 into a host or total: the stored
 // decoder must reject the wrapped host and total rows a forger computes with plain addition.
 func TestDecodeQueryCompletionResultRejectsHostTotalsThatWrap(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	r, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
 	if err != nil {
@@ -1101,6 +1117,7 @@ func TestDecodeQueryCompletionResultRejectsHostTotalsThatWrap(t *testing.T) {
 // A stored result is bound to its denominator pins: deleting, duplicating, reordering or resizing
 // counter rows is refused even when the host and total sums and the verdict are rewritten to match.
 func TestDecodeQueryCompletionResultBindsCountersToTheDenominatorPin(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	base, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
 	if err != nil {

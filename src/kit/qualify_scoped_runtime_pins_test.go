@@ -306,6 +306,7 @@ func acceptedFixtureID(t *testing.T) string {
 }
 
 func TestQualificationAcceptedAndCSTRuntimePinsProductionIndependence(t *testing.T) {
+	t.Parallel()
 	for _, reader := range []string{runtimeAcceptedReader, runtimePreprocessCSTReader} {
 		t.Run(reader, func(t *testing.T) {
 			build := func() QualSet {
