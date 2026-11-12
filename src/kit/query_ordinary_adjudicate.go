@@ -206,23 +206,21 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 	if !actualTreeReady {
 		j.block("ORDINARY_ACTUAL_TREE_INCOMPLETE", "native full tree가 완료되지 않았다")
 	}
+	// The actual tree's own checks do not depend on the query: with a share they run once per tree.
+	var actualEntry *ordinaryActualEntry
 	if actualTreeReady {
-		nodes := uint64(len(actual.Nodes))
-		logical, e := eligibilityProduct("ordinary-actual-tree-check", nodes, 512)
+		var e *Error
+		if actualEntry, e = b.ordinaryActualEntry(actual); e != nil {
+			return j.value(), e
+		}
+		check, e := b.ordinaryActualTreeCheck(actualEntry, actual.Nodes, id.Source, source)
 		if e != nil {
 			return j.value(), e
 		}
-		work, e := eligibilityProduct("ordinary-actual-tree-check", nodes, 16)
-		if e != nil {
-			return j.value(), e
+		if check.invalid != "" {
+			j.fail("ORDINARY_ACTUAL_TREE_INVALID", check.invalid)
 		}
-		if e := b.charge(work+uint64(len(source))+1, logical, "ordinary-actual-tree-check"); e != nil {
-			return j.value(), e
-		}
-		if err := nativewire.ValidateTree(actual.Nodes, uint64(len(source))); err != nil {
-			j.fail("ORDINARY_ACTUAL_TREE_INVALID", err.Code)
-		}
-		if !ordinaryTreePointsValid(actual.Nodes, source) {
+		if check.points {
 			j.fail("ORDINARY_ACTUAL_TREE_POINTS", "native tree point가 선택된 source와 다르다")
 		}
 	}
@@ -358,15 +356,15 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 	}
 
 	if expectedTree != nil && actualTreeReady {
-		if e := b.charge(16*uint64(len(expectedTree.Tree))+1, 0, "ordinary-tree-compare"); e != nil {
+		compared, e := b.ordinaryActualTreeCompare(actualEntry, actual.Nodes, expectedTree)
+		if e != nil {
 			return j.value(), e
 		}
-		if fieldOnly, changed := ordinaryTreeFieldOnlyDifference(actual.Nodes, expectedTree.Tree); changed {
-			if fieldOnly {
+		if compared.changed {
+			if compared.fieldOnly {
 				j.block("ORDINARY_EXPECTED_TREE_FIELD_DIFFERENCE", "full CST field 차이로 ordinary tuple을 판정할 수 없다")
 			} else {
-				d := CompareTrees(actual.Nodes, expectedTree.Tree)
-				j.fail("ORDINARY_EXPECTED_TREE_MISMATCH", fmt.Sprintf("tree node %d %s %s != %s", d.Node, d.Field, d.Left, d.Right))
+				j.fail("ORDINARY_EXPECTED_TREE_MISMATCH", compared.detail)
 			}
 		}
 	}
@@ -375,23 +373,13 @@ func adjudicateOrdinaryTuple(b *eligibilityBudget, id ordinaryTupleIdentity, act
 		// API interpretation depends on the complete node table.
 	} else if actual.API == nil {
 		j.fail("ORDINARY_API_UNAVAILABLE", "API=true 요청의 full tree에 raw API table이 없다")
-	} else if !ordinaryAPIShapeValid(actual.API, len(actual.Nodes)) {
-		j.fail("ORDINARY_API_INVALID", "API table의 checked shape가 유효하지 않다")
 	} else {
-		apiRows := uint64(len(actual.API.Nodes) + len(actual.API.ChildFields) + len(actual.API.FieldLookups) + len(actual.API.Points) + len(actual.API.Names))
-		work, e := eligibilityProduct("ordinary-api-compare", uint64(len(actual.Nodes))+apiRows, 16)
+		check, e := b.ordinaryActualAPICheck(actualEntry, actual)
 		if e != nil {
 			return j.value(), e
 		}
-		logical, e := eligibilityProduct("ordinary-api-compare", uint64(len(actual.Nodes)), 512)
-		if e != nil {
-			return j.value(), e
-		}
-		if e := b.charge(work+1, logical, "ordinary-api-compare"); e != nil {
-			return j.value(), e
-		}
-		if difference, _ := nativewire.CompareAPI(actual.Nodes, actual.API); difference != nil {
-			j.fail("ORDINARY_API_MISMATCH", fmt.Sprintf("API %s node %d %s != %s", difference.Check, difference.Node, difference.Got, difference.Want))
+		if check.code != "" {
+			j.fail(check.code, check.detail)
 		}
 	}
 

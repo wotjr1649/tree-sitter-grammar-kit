@@ -28,6 +28,8 @@ type ordinaryDecoded struct {
 // plus 32 B per JSON value (the Go struct, slice header or string header it became).
 type ordinaryDecodedAssets struct {
 	entries map[ordinaryDecodedKey]*ordinaryDecoded
+	// actual holds the query-independent outcomes per actual tree (see query_ordinary_actual_cache.go).
+	actual map[ordinaryActualKey]*ordinaryActualEntry
 }
 
 const (
@@ -40,7 +42,7 @@ func ordinaryDecodedRetainedLogical(bodyBytes int, values uint64) uint64 {
 }
 
 func newOrdinaryDecodedAssets() *ordinaryDecodedAssets {
-	return &ordinaryDecodedAssets{entries: map[ordinaryDecodedKey]*ordinaryDecoded{}}
+	return &ordinaryDecodedAssets{entries: map[ordinaryDecodedKey]*ordinaryDecoded{}, actual: map[ordinaryActualKey]*ordinaryActualEntry{}}
 }
 
 // decodeOrdinaryExpected is the ordinary expected-asset decode: one preflight with the error/buffer

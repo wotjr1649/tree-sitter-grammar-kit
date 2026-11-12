@@ -14,7 +14,8 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 	t.Helper()
 	var mu sync.Mutex
 	labels := map[*eligibilityBudget]map[string][4]uint64{}
-	decodes := map[string][2]int{} // expected-asset decode uses per doc: {new decodes, shared uses}
+	decodes := map[string][2]int{}   // expected-asset decode uses per doc: {new decodes, shared uses}
+	visits := map[string][2]uint64{} // query-independent checks that really ran per kind: {visits, runs}
 	appendRecord := func(v any) {
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -31,7 +32,13 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 			panic(err)
 		}
 	}
-	prevStage, prevCharge, prevDecode := ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook
+	prevStage, prevCharge, prevDecode, prevVisit := ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook, ordinaryVisitHook
+	ordinaryVisitHook = func(kind string, n uint64) {
+		mu.Lock()
+		defer mu.Unlock()
+		v := visits[kind]
+		visits[kind] = [2]uint64{v[0] + n, v[1] + 1}
+	}
 	ordinaryDecodeHook = func(doc string, shared bool) {
 		mu.Lock()
 		defer mu.Unlock()
@@ -73,15 +80,26 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 		if stage == "exit" {
 			record["labels"] = labels[b]
 			record["decodes"] = decodes
+			record["visits"] = visits
 			delete(labels, b)
 		}
 		appendRecord(record)
 	}
-	t.Cleanup(func() { ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook = prevStage, prevCharge, prevDecode })
+	t.Cleanup(func() {
+		ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook, ordinaryVisitHook = prevStage, prevCharge, prevDecode, prevVisit
+	})
 }
 
 // ordinaryLedgerDecodes reads the expected-asset decode counts of the pass from its exit record.
 func ordinaryLedgerDecodes(t *testing.T, path string) map[string][2]int {
+	t.Helper()
+	decodes, _, _ := ordinaryLedgerExit(t, path)
+	return decodes
+}
+
+// ordinaryLedgerExit reads the decode counts, the per-label {work, logical, charges, rejections}
+// and the real visits {visits, runs} per check kind from the exit record of the pass.
+func ordinaryLedgerExit(t *testing.T, path string) (map[string][2]int, map[string][4]uint64, map[string][2]uint64) {
 	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -89,14 +107,16 @@ func ordinaryLedgerDecodes(t *testing.T, path string) map[string][2]int {
 	}
 	for _, line := range bytes.Split(data, []byte{'\n'}) {
 		var record struct {
-			Kind    string            `json:"kind"`
-			Stage   string            `json:"stage"`
-			Decodes map[string][2]int `json:"decodes"`
+			Kind    string               `json:"kind"`
+			Stage   string               `json:"stage"`
+			Decodes map[string][2]int    `json:"decodes"`
+			Labels  map[string][4]uint64 `json:"labels"`
+			Visits  map[string][2]uint64 `json:"visits"`
 		}
 		if json.Unmarshal(line, &record) == nil && record.Kind == "stage" && record.Stage == "exit" {
-			return record.Decodes
+			return record.Decodes, record.Labels, record.Visits
 		}
 	}
 	t.Fatalf("%s has no exit record", path)
-	return nil
+	return nil, nil, nil
 }

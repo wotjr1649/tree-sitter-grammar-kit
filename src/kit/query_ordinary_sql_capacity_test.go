@@ -809,6 +809,18 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 				t.Fatalf("%s: %d expected-tree decodes for %d distinct trees (%v)", route, treeNew, run.TreeAssets, decodes)
 			}
 			t.Logf("route=%s expected-asset decodes {new, shared}: %v; distinct trees %d, tree decodes %d, tree shared uses %d", route, decodes, run.TreeAssets, treeNew, treeShared)
+			// What the query-independent checks and the final-identity sort really did never exceeds what the
+			// ledger charged for them.
+			_, labels, visits := ordinaryLedgerExit(t, run.LedgerPath)
+			for kind, label := range map[string]string{"sort": "ordinary-final-identity-order", "tree-check": "ordinary-actual-tree-check", "api-compare": "ordinary-api-compare", "tree-compare": "ordinary-tree-compare"} {
+				if visits[kind][0] > labels[label][0] {
+					t.Fatalf("%s: %s did %d visits for the %d work charged under %s", route, kind, visits[kind][0], labels[label][0], label)
+				}
+				t.Logf("route=%s %s: runs=%d visits=%d charged work=%d (%d charges)", route, kind, visits[kind][1], visits[kind][0], labels[label][0], labels[label][2])
+			}
+			if run.AssetBodies != 0 && visits["tree-check"][1] >= uint64(result.Tuple.Required) && result.Tuple.Required > 1 {
+				t.Fatalf("%s: %d actual-tree checks for %d tuples, want one per distinct actual tree", route, visits["tree-check"][1], result.Tuple.Required)
+			}
 			expectedState := "UNAVAILABLE"
 			if run.AssetBodies != 0 {
 				expectedState = "independently-authored CST/query/fact fixtures"

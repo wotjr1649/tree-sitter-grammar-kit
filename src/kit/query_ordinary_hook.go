@@ -15,6 +15,17 @@ func ordinaryStage(stage string, b *eligibilityBudget) {
 	}
 }
 
+// ordinaryVisitHook receives each query-independent check that really runs (an actual-tree check or
+// comparison on a miss of the share, or without one; the final-identity sort) with the visits it made:
+// nodes, source bytes and API rows, or the sort's comparisons, compared bytes and moves.
+var ordinaryVisitHook func(kind string, visits uint64)
+
+func ordinaryVisitObserved(kind string, visits uint64) {
+	if ordinaryVisitHook != nil {
+		ordinaryVisitHook(kind, visits)
+	}
+}
+
 // ordinaryDecodeHook receives each use of an expected asset decode: shared is true when the
 // decoded value came from the per-pass share instead of a new decode.
 var ordinaryDecodeHook func(doc string, shared bool)
