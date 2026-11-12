@@ -8,7 +8,7 @@
 - gate 시험: `TestQueryCompletionGateOpensOnlyForAnAllVerifiedRegisteredState`는 합성 plan(미등록 없음)에서만 전부 VERIFIED가 COMPLETE임과 하나의 BLOCKED·UNPROCESSED·absent·FAILED가 gate를 닫음, FAIL이 absent scope보다 앞서고 첫 scope의 code를 가짐을 확인한다. 실제 plan에서는 같은 입력이 계약이 BLOCKED로 등록한 의무의 VERIFIED로 거부되고, 그 등록을 뺀 plan에서도 `QUERY_COMPLETION_UNREGISTERED_SCOPE`로 BLOCKED이며 r1 decoder는 COMPLETE 결과를 받지 않는다. 이 합성 COMPLETE는 시험 안에서만 만들어지고 어떤 산출물도 아니다.
 - `src/internal/native` 시험(`TSGK_NATIVE_REQUIRED=1`): `TestNativeQueryCompletionCurrentState`는 이 host에서 predicate 20 tuple·47행을 실제 owned native로 실행하고 SVC를 오프라인 독립 expected로 판정해 fan-in에 넣어 현재 상태를 만든다. ordinary는 저장 결과가 없어 absent다. large는 `TSGK_LARGE_FOLD`(#412의 기록 파일 목록)와 `TSGK_LARGE_CAP_RECEIPT`가 있으면 그 기록의 판정으로 large scope를 만들고(native를 다시 실행하지 않는다) 없으면 absent다. 시험은 gate가 닫혀 있고 FAIL이 없으며 VERIFIED가 predicate 67 + SVC 263(+ 기록이 있으면 large 30)이고 large가 39 = 30 + 9임을 확인한다. 기록 없이도 통과한다.
 - 의도적 mutant(분모 행 `required` 비교·미등록 scope 검사·FAIL 우선·registry pin 검사·결과 pin 검사·저장 판정 재유도·ordinary shard 겹침 검사, large의 BLOCKED 등록 상한·large 계약과 registry의 결속·N/A 목록 검증·large 이중 계산 방지·N/A 사유 전달·large counter의 host 제한을 각각 하나씩 제거)는 컴파일 성공 뒤 위 시험이 실패한다.
-- 아직 검증하지 않는 것: 오류 복구 fixture 둘의 large 분모(미등록)와 그 CST·occurrence, `cs-large-32mib-errors`의 8 GiB 실행, 실제 ordinary 저장 결과 전량, Linux, scope 증거의 재계산, replay reducer·CLI·qualification 새 revision 연결
+- 아직 검증하지 않는 것: 오류 복구 fixture 둘의 large 분모(미등록)와 그 CST·occurrence, `cs-large-32mib-errors`의 8 GiB 실행 결과의 fan-in 반영(이 사례의 status는 아래 `src/dev/large-api` 항목의 단독 실행으로 VERIFIED가 됐으나 이 시험이 쓰는 #412 기록은 30/9로 그 전 상태다), 실제 ordinary 저장 결과 전량, Linux, scope 증거의 재계산, replay reducer·CLI·qualification 새 revision 연결
 
 ## #362 SVC 독립 등록 검증 (범위 5)
 

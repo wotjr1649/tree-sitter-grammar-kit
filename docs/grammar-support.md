@@ -26,7 +26,7 @@ source·도구·입력·정책·comparator·실행 identity를 연결하고 `exe
 
 ## 지원 상태와 버전의 의미
 
-이 안내의 분석 기준은 main `679d7dd`(2026-10-12)다. 채택 언어 범위의 기준일은 `2026-09-29`이며 아래 상한을 현재 외부 세계의 최신 release라고 표현하지 않는다. [플랫폼 계약](specs/platform-support.md)과 [#188 보고서](reports/issue-188-corpus-cst-api.md)에 기록된 qualification은 Windows amd64·Linux amd64·macOS arm64의 26 route × 3 = 78칸과 2,478개 의무(플랫폼당 826개)가 PASS다. 이 문서 작성 자체는 native 재실행이 아니다.
+이 안내의 분석 기준은 main `679d7dd`(2026-10-12)다. 채택 언어 범위의 기준일은 `2026-09-29`이며 아래 상한을 현재 외부 세계의 최신 release라고 표현하지 않는다. [플랫폼 계약](specs/platform-support.md)과 [#188 보고서](reports/issue-188-corpus-cst-api.md)에 기록된 qualification은 Windows amd64·Linux amd64·macOS arm64의 26 route × 3 = 78칸과 2,478개 의무(플랫폼당 826개)가 PASS다. 이는 위 기준 시점의 기록이다. #332 이후 CI의 검증 host는 Windows·Linux(파생 52칸)이고 macOS는 그 이후의 CI 근거가 없다([v0.3.0 release 문서](reports/issue-220-v030-release.md)). 이 문서 작성 자체는 native 재실행이 아니다.
 
 Offline `inspect`, `identity`, `verify`, `schema`와 해당 공개 API는 VERIFIED다. `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`는 experimental이며 호환성을 약속하지 않는다. 26 route의 SUPPORTED는 등록 후보·사례에 대한 판정이지 임의 입력의 완전 적합성 인증이 아니다.
 
