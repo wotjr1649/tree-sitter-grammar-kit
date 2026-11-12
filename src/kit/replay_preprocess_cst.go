@@ -29,7 +29,7 @@ func (x *replayEnv) replayCSTPrimary(c *rcCase, index int, registered *Increment
 	if top.Build != nil {
 		build = top.Build.Identity
 	}
-	result := CheckPreprocessCST(PreprocessCSTRequest{Case: *registered, Source: source, Preprocess: pp, Raw: raw, Primary: primary, Operation: op, Platform: x.prof.Subject.Platform, RunID: top.ObservationRunID, ProducerSHA256: build})
+	result := CheckPreprocessCST(PreprocessCSTRequest{Case: *registered, Source: source, Preprocess: pp, Raw: raw, Primary: primary, Operation: op, Platform: x.prof.Subject.Platform, RunID: top.ObservationRunID, ProducerSHA256: build, runtime: x.cstRuntime})
 	x.currentCST = &result
 	switch result.Result {
 	case "FAIL":

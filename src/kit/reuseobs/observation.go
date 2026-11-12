@@ -7,23 +7,68 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"strings"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 const (
-	Schema                = "tsgk-reuse-observation/r1"
-	Policy                = "tsgk-reuse-log/r1"
-	RuntimeManifestSHA256 = "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541"
-	MaxEvents             = 16384
-	MaxBytes              = 1048576
-	MaxMessageBytes       = 1024
-	MaxRecordBytes        = 4096
+	Schema          = "tsgk-reuse-observation/r1"
+	Policy          = "tsgk-reuse-log/r1"
+	MaxEvents       = 16384
+	MaxBytes        = 1048576
+	MaxMessageBytes = 1024
+	MaxRecordBytes  = 4096
 )
 
-// VerifiedRuntimeManifest reports whether recorded observations bound to this runtime
-// manifest are read under this policy: the current RuntimeManifestSHA256 (v0.27.1), which
-// live runs must declare, and 659cda7's, whose parser log formats were checked identical (#213).
+// RuntimeManifestSHA256 is retained as a compatibility snapshot; internal decisions use DefaultRuntimeManifest.
+// Deprecated: this variable is mutable and is not an approval source.
+var RuntimeManifestSHA256 = DefaultRuntimeManifest()
+
+const RuntimeLoggerReader = "tsgk-runtime-logger/r1"
+
+// RuntimePin selects the fixed logger reader for one caller-approved manifest.
+// Construct it only after independently approving the manifest and its evidence scope.
+type RuntimePin struct {
+	manifest string
+	reader   string
+}
+
+// NewRuntimePin records a caller-approved manifest for the fixed logger reader.
+// It validates the identity's form, not its provenance or runtime closure.
+func NewRuntimePin(manifestSHA256, reader string) (RuntimePin, error) {
+	if !hash(manifestSHA256) || reader != RuntimeLoggerReader {
+		return RuntimePin{}, errors.New("runtime pin")
+	}
+	return RuntimePin{manifest: manifestSHA256, reader: reader}, nil
+}
+
+// Matches reports whether this pin selects manifest under the supported logger reader.
+func (p RuntimePin) Matches(manifestSHA256 string) bool {
+	return p.reader == RuntimeLoggerReader && hash(p.manifest) && p.manifest == manifestSHA256
+}
+
+// Valid reports whether this value was constructed for the supported logger reader.
+func (p RuntimePin) Valid() bool {
+	return p.Matches(p.manifest)
+}
+
+// DefaultRuntimeManifest returns the repository-approved runtime used by legacy producers.
+func DefaultRuntimeManifest() string {
+	store, err := evidencepins.Repository()
+	if err != nil {
+		return ""
+	}
+	runtime, err := store.Runtime()
+	if err != nil {
+		return ""
+	}
+	return runtime.ManifestSHA256
+}
+
+// VerifiedRuntimeManifest reports whether the repository-approved logger reader accepts the manifest.
 func VerifiedRuntimeManifest(sha string) bool {
-	return sha == RuntimeManifestSHA256 || sha == "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+	store, err := evidencepins.Repository()
+	return err == nil && store.LoggerAllowed(sha)
 }
 
 // Counts contains only recognized parse events, never logger text or node addresses.
@@ -71,6 +116,7 @@ type Binding struct {
 	HistoryStart                                                                                      uint64
 	RuntimeManifestSHA256, RequestID, RunID, ProducerSHA256, Role, SourceSHA256, PreviousSourceSHA256 string
 	Step, SourceBytes                                                                                 uint64
+	Runtime                                                                                           *RuntimePin `json:"-"`
 }
 
 func hash(s string) bool { return len(s) == 64 && strings.Trim(s, "0123456789abcdef") == "" }
@@ -158,8 +204,12 @@ func Parse(raw []byte) (Observation, error) {
 }
 
 func validate(o Observation, b Binding) (Observation, error) {
+	approvedManifest := VerifiedRuntimeManifest(b.RuntimeManifestSHA256)
+	if b.Runtime != nil {
+		approvedManifest = b.Runtime.Matches(b.RuntimeManifestSHA256)
+	}
 	if o.Schema != Schema || o.Policy != Policy ||
-		!VerifiedRuntimeManifest(b.RuntimeManifestSHA256) || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
+		!approvedManifest || o.RuntimeManifestSHA256 != b.RuntimeManifestSHA256 ||
 		!hash(b.SourceSHA256) || o.SourceSHA256 != b.SourceSHA256 ||
 		o.SourceBytes != b.SourceBytes || len(b.RequestID) == 0 || len(b.RequestID) > 128 ||
 		len(b.RunID) == 0 || len(b.RunID) > 128 || o.RunID != b.RunID ||

@@ -7,7 +7,10 @@ import (
 	"os"
 )
 
-const QuerySemanticsResultSchema = "tsgk-query-semantics-result/r1"
+const (
+	QuerySemanticsResultSchema     = "tsgk-query-semantics-result/r1"
+	QuerySemanticsPinsResultSchema = "tsgk-query-semantics-result/r2"
+)
 
 var testHookSemanticProducerFold func(*eligibilityBudget)
 
@@ -20,6 +23,7 @@ type QuerySemanticsRequest struct {
 	EligibilityApproval     []byte
 	EligibilityRegistration []byte
 	WitnessRegistration     []byte
+	Pins                    *EvidencePinsRequest
 }
 
 // ProducerRecorded is immutable; BaseVerified and Semantic describe this offline evaluation.
@@ -68,6 +72,9 @@ type semanticReplayScope struct {
 func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r *run, replay *semanticReplayScope) (res QuerySemanticsResult, resultErr error) {
 	res = QuerySemanticsResult{Report: newReport("query semantics"), ResultSchema: QuerySemanticsResultSchema,
 		Semantic: AssessBlocked, BaseVerified: Verdict{StatusNotRun, AssessBlocked}, Gates: []ReplayGate{}}
+	if req.Pins != nil {
+		res.ResultSchema = QuerySemanticsPinsResultSchema
+	}
 	res.ExecutionStatus, res.EvidenceMode, res.Assessment = StatusCompleted, ModeReplayedRaw, AssessBlocked
 	var e *Error
 	if r == nil {
@@ -83,6 +90,11 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 		b = &eligibilityBudget{r: r}
 		r.eligibility = b
 	}
+	previousRuntime := b.runtime
+	previousDefaultRuntime := b.defaultRuntime
+	b.runtime = nil
+	b.defaultRuntime = nil
+	defer func() { b.runtime, b.defaultRuntime = previousRuntime, previousDefaultRuntime }()
 	defer func() {
 		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead, b.work, b.logical
 		if resultErr != nil {
@@ -199,7 +211,7 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 		scope.documentsRead = replay.documentsRead
 	}
 	eligibility, eligibilityErr := verifyQueryReferenceEligibilityInRun(ctx, QueryReferenceEligibilityRequest{
-		Evidence: req.Evidence, Approval: req.EligibilityApproval, Registration: req.EligibilityRegistration, WitnessRegistration: req.WitnessRegistration}, scope)
+		Evidence: req.Evidence, Approval: req.EligibilityApproval, Registration: req.EligibilityRegistration, WitnessRegistration: req.WitnessRegistration, Pins: req.Pins}, scope)
 	res.Eligibility = &eligibility
 	if replay != nil && scope.session != nil {
 		replay.snapshot = scope.session.snapshot
@@ -221,6 +233,8 @@ func verifyQuerySemanticsInRun(ctx context.Context, req QuerySemanticsRequest, r
 	if eligibilityErr != nil {
 		return res, eligibilityErr
 	}
+	b.runtime = scope.session.runtime
+	b.defaultRuntime = scope.session.defaultRuntime
 	snapshot := scope.session.snapshot
 	if len(req.EligibilityApproval) == 0 {
 		snapshot = &evidenceSnapshot{wanted: wanted}

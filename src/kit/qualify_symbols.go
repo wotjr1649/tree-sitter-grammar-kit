@@ -227,10 +227,33 @@ func (q *qualifier) evalSymbolSet(w QualWorkload, p QualPlatform) (*qset, *Error
 	// the replay shares the qualification's caller, wall and the host's byte budget: the
 	// qualification wall ends the replay, and a stopped replay reports the qualification's
 	// own cause (the caller, or its wall as WALL_LIMIT), not the replay's view of it
-	ctx, cancel := context.WithCancel(q.r.caller)
-	stopWall := context.AfterFunc(q.r.wall, cancel)
 	acceptedCases := map[string]QualReuseAcceptedCase{}
 	budget := &replayBudget{r: h.x.r, total: q.lim.TotalBytes}
+	if h.runtimePins != nil {
+		reader := runtimePreprocessCSTReader
+		if accepted {
+			reader = runtimeAcceptedReader
+		}
+		pinResult, runtime, pinErr := verifyScopedRuntime(h.runtimePins, h.runtimeSubject, h.x.r.eligibility, reader)
+		s.RuntimePins = &pinResult
+		if pinErr != nil {
+			add(pinErr.Code, profPath, "등록된 workload의 runtime 판독 승인을 검증하지 못했다")
+			_, _ = done()
+			return nil, pinErr
+		}
+		if runtime == nil {
+			if pinResult.Assessment == AssessFail {
+				add("RUNTIME_READER_REJECTED", profPath, "승인 runtime 판독 범위가 모순된다")
+			} else {
+				over = true
+			}
+			s.Findings = append(s.Findings, pinResult.Findings...)
+			return done()
+		}
+		budget.scopedRuntime, budget.runtimeReader = runtime, reader
+	}
+	ctx, cancel := context.WithCancel(q.r.caller)
+	stopWall := context.AfterFunc(q.r.wall, cancel)
 	if accepted {
 		budget.acceptedControl = w.ReuseAccepted.Control == "omit-old-tree"
 		budget.acceptedConsumer = func(req ReuseAcceptedRequest, proof ReuseAcceptedResult, _ error) error {

@@ -8,3 +8,5 @@ src/testdata/qualify-symbols-r4/** -text
 src/testdata/qualify-symbols-r5/** -text
 src/contracts/evidence-pins/objects/** -text
 src/contracts/evidence-pins/sets/** -text
+src/contracts/evidence-pins/default-sets/** -text
+src/contracts/evidence-pins/repository-defaults.json -text

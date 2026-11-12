@@ -69,7 +69,7 @@ func (b *eligibilityBudget) semanticNative(req QuerySemanticsRequest, profile Or
 		for i, point := range request.Points {
 			points[i] = point.Byte
 		}
-		if request.Protocol != a.Protocol || request.ID != a.RequestID || request.Limits.Nodes != a.NodeLimit || request.API != a.API || !slices.Equal(points, a.Points) || request.ObservationRunID != a.ObservationRunID || request.ObservationProducerSHA256 != a.ProducerSHA256 || request.ObservationHistoryStart != a.HistoryStart || a.RuntimeManifestSHA256 != reuseobs.RuntimeManifestSHA256 {
+		if request.Protocol != a.Protocol || request.ID != a.RequestID || request.Limits.Nodes != a.NodeLimit || request.API != a.API || !slices.Equal(points, a.Points) || request.ObservationRunID != a.ObservationRunID || request.ObservationProducerSHA256 != a.ProducerSHA256 || request.ObservationHistoryStart != a.HistoryStart || a.RuntimeManifestSHA256 != b.runtimeManifest() {
 			bad("SEMANTICS_ACTUAL_APPROVED_REQUEST", "oracle/capture")
 		}
 	} else {
@@ -94,7 +94,7 @@ func (b *eligibilityBudget) semanticNative(req QuerySemanticsRequest, profile Or
 				}
 				return nil
 			}, Revision: request.Protocol, ID: request.ID, Nodes: request.Limits.Nodes, Queries: request.queries, API: request.API, SourceBytes: uint64(len(source)), EditPoints: points, Exit: &state.execution.ExitCode,
-				Observation: &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: request.ObservationRunID, ProducerSHA256: request.ObservationProducerSHA256, HistoryStart: request.ObservationHistoryStart}}
+				Observation: &nativewire.Binding{Manifest: b.runtimeManifest(), Runtime: b.runtimeLogger(), RunID: request.ObservationRunID, ProducerSHA256: request.ObservationProducerSHA256, HistoryStart: request.ObservationHistoryStart}}
 			for _, point := range request.Points {
 				expect.Points = append(expect.Points, point.Byte)
 			}

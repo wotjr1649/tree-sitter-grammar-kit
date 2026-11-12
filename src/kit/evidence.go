@@ -537,12 +537,25 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 			continue
 		}
 		valid := false
-		if selection == ReplaySemanticsResultSchema {
+		if selection == ReplaySemanticsResultSchema || selection == ReplaySemanticsPinsResultSchema {
 			full, e := decodeSemanticReplayResult(data, x.r)
 			if e != nil && (e.Kind == KindCancelled || e.Kind == KindResourceLimit || e.Kind == KindIO) {
 				return e
 			}
 			valid = e == nil && validSemanticReplayResult(full)
+			if valid && full.ExecutionStatus == StatusCompleted && full.EvidenceValid && (full.Subject.ExecutionStatus != subject.ExecutionStatus || full.Subject.Assessment != subject.Assessment || full.Subject.EvidenceMode != subject.EvidenceMode) {
+				valid = false
+			}
+			rr.ResultSchema, rr.EvidenceMode, rr.Assessment = full.ResultSchema, full.EvidenceMode, full.Assessment
+			rr.Subject.Run, rr.Subject.Attempt, rr.Subject.Platform = full.Subject.Run, full.Subject.Attempt, full.Subject.Platform
+		} else if selection == ReplayLoggerPinsResultSchema || selection == ReplayScopedRuntimeResultSchema {
+			if x.r != nil {
+				if e := x.r.eligibility.reserveLegacyReplayResult(data); e != nil {
+					return e
+				}
+			}
+			var full ReplayResult
+			valid = decodeTyped("replay-result", data, &full) == nil && (selection == ReplayLoggerPinsResultSchema && validLoggerReplayResult(full) || selection == ReplayScopedRuntimeResultSchema && validScopedRuntimeReplayResult(full))
 			if valid && full.ExecutionStatus == StatusCompleted && full.EvidenceValid && (full.Subject.ExecutionStatus != subject.ExecutionStatus || full.Subject.Assessment != subject.Assessment || full.Subject.EvidenceMode != subject.EvidenceMode) {
 				valid = false
 			}
@@ -586,7 +599,7 @@ func (x *replayEnv) checkReplayFile(n, subject *EvidenceNode, kept map[string][]
 
 // This selector scans delimiters and bounded schema strings only; the selected decoder validates JSON.
 func replayResultRevision(data []byte, r *run) (string, *Error) {
-	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema})
+	return selectJSONRevision(data, r, "replay-result", "result_schema", ReplaySemanticsResultSchema, []string{ReplayResultSchema, ReplayReferenceResultSchema, ReplaySemanticsResultSchema, ReplaySemanticsPinsResultSchema, ReplayLoggerPinsResultSchema, ReplayScopedRuntimeResultSchema})
 }
 
 func selectJSONRevision(data []byte, r *run, doc, name, early string, allowed []string, alternatives ...string) (selected string, resultErr *Error) {

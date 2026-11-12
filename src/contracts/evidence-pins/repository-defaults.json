@@ -1,0 +1,11 @@
+{
+  "schema": "tsgk-repository-default-selection/r1",
+  "approval_source": "repository-default",
+  "set_sha256": "428d79482789ceebd73f0f1adcc03aaf3adc4fec613a17a6e29c8939a7bb2da3",
+  "reference_fallback_catalogue_sha256": "36aebcfae0117b158edec0c1bce6d8f05548c304f2dd2c2eb855d0f7b70d1933",
+  "reference_fallback_tuple_sha256": "a7b06e467cf642bfd6e80ca21ababbff9443e9504b341727c53a3a2593f9bf9d",
+  "runtime_fallback_manifest_sha256": "1b962a519e6aece2140eb1c56589cb5ca88b501612921a0ce8dd4acd1a63d541",
+  "reference_obligations_sha256": "282d67dac6df7e8cd862cb596f2d5e7bc28bd1a94b6f176791dd8b8e9058d018",
+  "runtime_obligations_sha256": "43e1e2f828832935f595280bcca86c5a9a384717be7b1995be6560dd8a7d20fd",
+  "legacy_logger_set_sha256": "646badeaebca5bfe441101178e58f2ae8f03fbd0a90d5ae2d9fb6d436d1f2ae4"
+}

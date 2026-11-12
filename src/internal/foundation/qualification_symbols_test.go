@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -103,24 +104,51 @@ func symbolRole(t *testing.T, root, symbol string, grammar []kit.NativeInput) ki
 		}
 		return b
 	}
-	casesData, observedData := read("src/testdata/csharp-pp/cases.json"), read("src/testdata/csharp-pp/roslyn-observed.json")
+	oracleDir := os.Getenv("TSGK_PP_INVENTORY_DIR")
+	if oracleDir == "" {
+		oracleDir = filepath.Join(root, "src/testdata/csharp-pp")
+	}
+	readOracle := func(name string) []byte {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(oracleDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	casesData, observedData := readOracle("cases.json"), readOracle("roslyn-observed.json")
+	pins, err := ppexpect.ReadEnvelope(filepath.Join(oracleDir, "roslyn-pins.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), kit.ReplayOperations()["evidence-replay"].Wall)
+	defer cancel()
+	resolved, err := kit.ResolveEvidencePins(ctx, kit.EvidencePinsRequest{
+		Approval: pins.Approval, ApprovedApprovalSHA256: pins.ApprovedApprovalSHA256,
+		PinSet: pins.PinSet, ApprovedPinSetSHA256: pins.ApprovedPinSetSHA256, Subject: observedData,
+		Materials: map[string][]byte{"roslyn/cases.json": casesData, "roslyn/observed.json": observedData, "roslyn/tuple.json": pins.Tuple},
+	})
+	if err != nil || resolved.Assessment != kit.AssessPass || !resolved.Complete || resolved.Required != 3 || resolved.Verified != 3 {
+		t.Fatalf("Roslyn pin approval: %v %+v", err, resolved)
+	}
+	roles := map[string]string{"roslyn/cases.json": "roslyn-cases", "roslyn/observed.json": "roslyn-observation", "roslyn/tuple.json": "roslyn-tuple"}
+	for _, material := range resolved.Materials {
+		if roles[material.Name] != material.Role {
+			t.Fatal("Roslyn material role mismatch")
+		}
+	}
+	observed, err := ppexpect.Read(casesData, observedData, pins.Tuple)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var corpus struct {
 		Cases []struct {
 			ID, Source string
 			Symbols    []string
 		}
 	}
-	var observed struct {
-		Schema, Roslyn string
-		CasesSHA256    string                 `json:"cases_sha256"`
-		Cases          []ppexpect.Observation `json:"cases"`
-	}
-	if json.Unmarshal(casesData, &corpus) != nil || json.Unmarshal(observedData, &observed) != nil {
+	if json.Unmarshal(casesData, &corpus) != nil {
 		t.Fatal("csharp-pp corpus or observation unreadable")
-	}
-	// the observation is of exactly this corpus, by the pinned Roslyn
-	if observed.Schema != ppexpect.ObservedSchema || observed.Roslyn != ppexpect.Roslyn || observed.CasesSHA256 != shaHex(casesData) || len(observed.Cases) != len(corpus.Cases) {
-		t.Fatalf("roslyn-observed.json does not observe cases.json: %s %s %s", observed.Schema, observed.Roslyn, observed.CasesSHA256)
 	}
 	type entry struct {
 		src     []byte
@@ -245,7 +273,7 @@ func symbolRole(t *testing.T, root, symbol string, grammar []kit.NativeInput) ki
 	}
 	return kit.QualRole{ID: "csharp-symbols", Role: "owned", Status: kit.RoleExecuted,
 		Reason: fmt.Sprintf("C# symbol mode (%s, #218): selections derived from %s observation sha256 %s by Roslyn %s of src/testdata/csharp-pp/cases.json sha256 %s, with hand-registered syntax; syntax only",
-			kit.PreprocessMode, ppexpect.ObservedSchema, shaHex(observedData), ppexpect.Roslyn, observed.CasesSHA256),
+			kit.PreprocessMode, observed.Schema, shaHex(observedData), observed.Roslyn, observed.CasesSHA256),
 		Platforms: []string{"windows-amd64", "linux-amd64"}, NotApplicable: map[string]string{},
 		Deferred:  map[string]string{"darwin-arm64": "#243: the macOS symbol-mode host result is deferred (Windows amd64 and Linux amd64 are the completion criteria)"},
 		Workloads: workloads}

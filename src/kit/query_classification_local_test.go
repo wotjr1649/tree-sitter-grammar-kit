@@ -56,6 +56,9 @@ type classificationAnchors struct {
 type classificationPlan struct {
 	NativeContext           string                    `json:"native_context,omitempty"`
 	APIAnchorsSHA256        string                    `json:"api_anchors_sha256,omitempty"`
+	CatalogueSHA256         string                    `json:"catalogue_sha256,omitempty"`
+	PinSetSHA256            string                    `json:"pin_set_sha256,omitempty"`
+	DonorPinsSHA256         string                    `json:"donor_pins_sha256,omitempty"`
 	Schema                  string                    `json:"schema"`
 	SourceRevision          string                    `json:"source_revision"`
 	RunID                   string                    `json:"run_id"`
@@ -463,6 +466,24 @@ func classificationGoPlan(t *testing.T, root string) {
 	}
 	anchors, data := classificationGoAnchors(t)
 	plan := classificationPlan{Schema: "tsgk-query-classification-plan/r1", SourceRevision: os.Getenv("TSGK_QUERY_CLASSIFICATION_SOURCE"), RunID: os.Getenv("TSGK_QUERY_CLASSIFICATION_RUN"), AnchorsSHA256: digestHex(data), APIAnchorsSHA256: anchors.apiSHA, DonorRegistrationSHA256: classificationDonorRegistrationSHA}
+	if donorPins, inputSHA := classificationReadPins(t, "TSGK_QUERY_CLASSIFICATION_DONOR_PINS"); donorPins != nil {
+		donor := os.Getenv("TSGK_QUERY_CLASSIFICATION_DONOR")
+		if !filepath.IsAbs(donor) {
+			t.Fatal("absolute pinned static donor required for historical catalogue")
+		}
+		oldData := actualJSONRead(t, filepath.Join(donor, "caller", "eligibility-registration.json"))
+		var old eligibilityRegistration
+		approvedDonor := os.Getenv("TSGK_QUERY_CLASSIFICATION_DONOR_REGISTRATION_SHA256")
+		if err := jsonv2.Unmarshal(oldData, &old, jsonv2.RejectUnknownMembers(true)); err != nil || !hex64.MatchString(approvedDonor) || digestHex(oldData) != approvedDonor {
+			t.Fatal("reviewed static donor changed", err)
+		}
+		plan.DonorRegistrationSHA256 = approvedDonor
+		resolved, err := classificationResolveDonorCatalogue(*donorPins, oldData, old.CatalogueSHA256)
+		if err != nil || resolved.Assessment != AssessPass || !resolved.Complete {
+			t.Fatal("historical donor pin approval", err, resolved.Findings)
+		}
+		plan.CatalogueSHA256, plan.PinSetSHA256, plan.DonorPinsSHA256 = old.CatalogueSHA256, resolved.PinSetSHA256, inputSHA
+	}
 	if anchors.Route != "go" {
 		plan.NativeContext = anchors.nativeContext()
 	}
@@ -561,13 +582,119 @@ func classificationGoPlan(t *testing.T, root string) {
 	t.Logf("%s preregistration only; no compiler, native, reference or approval", anchors.Case)
 }
 
+func classificationReadPins(t *testing.T, env string) (*EvidencePinsRequest, string) {
+	t.Helper()
+	path, approved := os.Getenv(env), os.Getenv(env+"_SHA256")
+	if path == "" {
+		if approved != "" {
+			t.Fatal("pin context digest without its caller file", env)
+		}
+		return nil, ""
+	}
+	if !filepath.IsAbs(path) || !hex64.MatchString(approved) {
+		t.Fatal("absolute caller pin context and independently frozen SHA-256 required", env)
+	}
+	data := actualJSONRead(t, path)
+	if digestHex(data) != approved {
+		t.Fatal("caller pin context digest changed", env)
+	}
+	var pins EvidencePinsRequest
+	if err := jsonv2.Unmarshal(data, &pins, jsonv2.RejectUnknownMembers(true)); err != nil {
+		t.Fatal("strict caller pin context", env, err)
+	}
+	return &pins, digestHex(data)
+}
+
+func classificationPinMaterial(materials []EvidencePinMaterial, name, role string) (EvidencePinMaterial, bool) {
+	for _, material := range materials {
+		if material.Name == name && material.Role == role {
+			return material, true
+		}
+	}
+	return EvidencePinMaterial{}, false
+}
+
+func classificationResolveDonorCatalogue(req EvidencePinsRequest, registrationBytes []byte, expectedCatalogueSHA256 string) (EvidencePinsResult, error) {
+	if !bytes.Equal(req.Subject, registrationBytes) {
+		return EvidencePinsResult{}, fmt.Errorf("donor pin approval subject mismatch")
+	}
+	var registration eligibilityRegistration
+	if err := jsonv2.Unmarshal(registrationBytes, &registration, jsonv2.RejectUnknownMembers(true)); err != nil {
+		return EvidencePinsResult{}, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer cancel()
+	r, runErr := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
+	if runErr != nil {
+		return EvidencePinsResult{}, runErr
+	}
+	defer r.cancel()
+	b := &eligibilityBudget{r: r}
+	resolved, resolveErr := resolveEvidencePins(req, b)
+	if resolveErr != nil || resolved.Assessment != AssessPass || !resolved.Complete {
+		if resolveErr == nil {
+			resolveErr = fmt.Errorf("donor pin approval did not pass: %v", resolved.Findings)
+		}
+		return resolved, resolveErr
+	}
+	catalogue, ok := classificationPinMaterial(resolved.Materials, "reference/catalogue.json", "reference-catalogue")
+	if !ok || registration.CatalogueSHA256 != expectedCatalogueSHA256 || catalogue.SHA256 != expectedCatalogueSHA256 {
+		return resolved, fmt.Errorf("donor catalogue is not bound to the original registration")
+	}
+	var parsed eligibilityCatalogue
+	if err := b.decode("historical-catalogue", req.Materials[catalogue.Name], &parsed, true); err != nil {
+		return resolved, err
+	}
+	valid, obligationErr := b.referenceCatalogueObligations(parsed, catalogue.Bytes)
+	if obligationErr != nil {
+		return resolved, obligationErr
+	}
+	if !valid {
+		return resolved, fmt.Errorf("donor catalogue reduced or changed reader-owned obligations")
+	}
+	return resolved, nil
+}
+
+func classificationPlanCatalogue(plan classificationPlan) string {
+	if plan.CatalogueSHA256 != "" {
+		return plan.CatalogueSHA256
+	}
+	return digestHex([]byte(eligibilityCatalogueJSON))
+}
+
+func classificationEligibilityResultMatches(plan classificationPlan, result QueryReferenceEligibilityResult) bool {
+	if plan.PinSetSHA256 == "" {
+		return result.ResultSchema == QueryReferenceEligibilityResultSchema && result.Pins == nil
+	}
+	pins := result.Pins
+	return result.ResultSchema == QueryReferenceEligibilityPinsResultSchema && result.CatalogueSHA256 == plan.CatalogueSHA256 &&
+		hex64.MatchString(result.ReferenceTupleSHA256) && result.ReferencePathReader != "" && pins != nil && pins.ResultSchema == EvidencePinResultSchema &&
+		pins.Assessment == AssessPass && pins.Complete && pins.Reader == EvidencePinReader && pins.Scope == EvidencePinScope &&
+		hex64.MatchString(pins.ApprovalSHA256) && pins.SubjectSHA256 == result.ApprovalSHA256 && pins.PinSetSHA256 == plan.PinSetSHA256
+}
+
+func classificationEligibilityPinsForPlan(plan classificationPlan, approval []byte, pins *EvidencePinsRequest) (*EvidencePinsRequest, error) {
+	if plan.PinSetSHA256 == "" {
+		if pins != nil {
+			return nil, fmt.Errorf("eligibility pin opt-in requires a plan frozen with historical donor context")
+		}
+		return nil, nil
+	}
+	if pins == nil || len(pins.Subject) != 0 || pins.ApprovedPinSetSHA256 != plan.PinSetSHA256 || digestHex(pins.PinSet) != plan.PinSetSHA256 {
+		return nil, fmt.Errorf("eligibility pin context does not match the preregistered historical donor set")
+	}
+	copy := *pins
+	copy.Subject = slices.Clone(approval)
+	return &copy, nil
+}
+
 func classificationGoAssemble(t *testing.T, root, donor string) {
 	if !filepath.IsAbs(donor) {
 		t.Fatal("absolute caller-selected static donor required")
 	}
 	anchors, _ := classificationGoAnchors(t)
 	plan := classificationGoReadPlan(t, root)
-	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA || !classificationPlanContextMatches(anchors, plan) {
+	if plan.Schema != "tsgk-query-classification-plan/r1" || plan.AnchorsSHA256 != anchors.sha256 || plan.APIAnchorsSHA256 != anchors.apiSHA || !hex64.MatchString(plan.DonorRegistrationSHA256) || plan.PinSetSHA256 == "" && plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA || plan.PinSetSHA256 != "" && plan.DonorRegistrationSHA256 != os.Getenv("TSGK_QUERY_CLASSIFICATION_DONOR_REGISTRATION_SHA256") || !classificationPlanContextMatches(anchors, plan) {
 		t.Fatal("preregistration changed")
 	}
 	var captured struct {
@@ -580,10 +707,24 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 	if !captured.Passed || captured.SourceRevision != plan.SourceRevision || captured.RunID != plan.RunID || captured.PlanSHA256 != os.Getenv("TSGK_QUERY_CLASSIFICATION_PLAN_SHA256") {
 		t.Fatal("current capture controller did not complete preregistered cohort")
 	}
+	oldData := actualJSONRead(t, filepath.Join(donor, "caller", "eligibility-registration.json"))
 	var old eligibilityRegistration
-	oldData := actualJSONDecode(t, filepath.Join(donor, "caller", "eligibility-registration.json"), &old)
-	if digestHex(oldData) != classificationDonorRegistrationSHA || old.CatalogueSHA256 != digestHex([]byte(eligibilityCatalogueJSON)) {
+	if err := jsonv2.Unmarshal(oldData, &old, jsonv2.RejectUnknownMembers(true)); err != nil || digestHex(oldData) != plan.DonorRegistrationSHA256 {
 		t.Fatal("reviewed static donor changed")
+	}
+	if plan.PinSetSHA256 == "" {
+		if old.CatalogueSHA256 != digestHex([]byte(eligibilityCatalogueJSON)) {
+			t.Fatal("legacy static donor catalogue changed")
+		}
+	} else {
+		donorPins, inputSHA := classificationReadPins(t, "TSGK_QUERY_CLASSIFICATION_DONOR_PINS")
+		if donorPins == nil || inputSHA != plan.DonorPinsSHA256 || digestHex(donorPins.PinSet) != plan.PinSetSHA256 {
+			t.Fatal("donor pin context changed after preregistration")
+		}
+		resolved, err := classificationResolveDonorCatalogue(*donorPins, oldData, old.CatalogueSHA256)
+		if err != nil || resolved.Assessment != AssessPass || !resolved.Complete || old.CatalogueSHA256 != plan.CatalogueSHA256 {
+			t.Fatal("historical donor catalogue changed", err, resolved.Findings)
+		}
 	}
 	var graph struct {
 		Nodes []EvidenceNode `json:"nodes"`
@@ -663,7 +804,11 @@ func classificationGoAssemble(t *testing.T, root, donor string) {
 	policy := eligibilityJSON(t, map[string]any{"schema": EvidencePolicySchema, "id": policyID, "evidence_sha256": digestHex(data), "required": required, "carry_forward": []any{}})
 	actualJSONWrite(t, filepath.Join(assembly, "caller", "policy.json"), policy)
 	actualJSONWrite(t, filepath.Join(assembly, "caller", "eligibility-registration.json"), eligibilityJSON(t, a.reg))
-	actualJSONWrite(t, filepath.Join(assembly, "caller", "static-donor.json"), eligibilityJSON(t, map[string]any{"registration_sha256": digestHex(oldData), "graph_sha256": old.Graph.SHA256, "cohorts": "original build/control identities retained; new graph requires new outside approval"}))
+	donorContext := map[string]any{"registration_sha256": digestHex(oldData), "graph_sha256": old.Graph.SHA256, "cohorts": "original build/control identities retained; new graph requires new outside approval"}
+	if plan.PinSetSHA256 != "" {
+		donorContext["catalogue_sha256"], donorContext["pin_set_sha256"] = plan.CatalogueSHA256, plan.PinSetSHA256
+	}
+	actualJSONWrite(t, filepath.Join(assembly, "caller", "static-donor.json"), eligibilityJSON(t, donorContext))
 	t.Logf("assembly_root=%q; no caller approval issued", assembly)
 }
 
@@ -796,7 +941,8 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 	if err := classificationGoLibrarySize(semanticTestBudget(t), plan, requestData, receiptData, compilerData, librarySize); err != nil {
 		t.Fatal("library compiler capture", err)
 	}
-	a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
+	libraryNode := a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
+	libraryNode.Identities["policy"] = classificationPlanCatalogue(plan)
 	var library eligibilityMember
 	if anchors.Route == "tsql" {
 		library = a.add("go-library-build", "current/go.dll.pages.json", "library-paged-descriptor", libraryDescriptor)
@@ -828,6 +974,7 @@ func classificationGoCurrent(t *testing.T, a *actualJSONAssembly, root string, a
 		dir := filepath.Join(root, "references", id)
 		k := a.reference(id, "current", id, filepath.Join(dir, "request.json"), filepath.Join(dir, "receipt.json"), 0, refBinary.Member.SHA256)
 		ri := &a.reg.Invocations[k]
+		a.nodes[id].Identities["policy"] = classificationPlanCatalogue(plan)
 		ri.Executable = &refBinary
 		var spec eligibilityProcessRequest
 		if err := jsonv2.Unmarshal(ri.ApprovedRequest, &spec); err != nil {
@@ -898,7 +1045,14 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 		}
 	}
 	caller := filepath.Join(assembly, "caller")
-	req := QueryReferenceEligibilityRequest{Evidence: EvidenceRequest{Root: filepath.Join(assembly, "evidence"), Policy: actualJSONRead(t, filepath.Join(caller, "policy.json"))}, Approval: actualJSONRead(t, approvalPath), Registration: actualJSONRead(t, filepath.Join(caller, "eligibility-registration.json")), WitnessRegistration: actualJSONRead(t, filepath.Join(caller, "witness.json"))}
+	approval := actualJSONRead(t, approvalPath)
+	req := QueryReferenceEligibilityRequest{Evidence: EvidenceRequest{Root: filepath.Join(assembly, "evidence"), Policy: actualJSONRead(t, filepath.Join(caller, "policy.json"))}, Approval: approval, Registration: actualJSONRead(t, filepath.Join(caller, "eligibility-registration.json")), WitnessRegistration: actualJSONRead(t, filepath.Join(caller, "witness.json"))}
+	eligibilityPins, _ := classificationReadPins(t, "TSGK_QUERY_CLASSIFICATION_ELIGIBILITY_PINS")
+	forwardedPins, err := classificationEligibilityPinsForPlan(plan, approval, eligibilityPins)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Pins = forwardedPins
 	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
 	defer cancel()
 	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
@@ -915,7 +1069,7 @@ func classificationGoVerifyWith(t *testing.T, root, assembly, approvalPath strin
 	cache := &semanticNativeCache{}
 	scope := &eligibilityScope{r: r, native: cache}
 	core, err := verifyQueryReferenceEligibilityInRun(r.caller, req, scope)
-	if err != nil || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: uint64(len(anchors.Queries)), Verified: uint64(len(anchors.Queries))}) {
+	if err != nil || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: uint64(len(anchors.Queries)), Verified: uint64(len(anchors.Queries))}) || !classificationEligibilityResultMatches(plan, core) {
 		t.Fatal("eligibility not complete", err, core.Findings)
 	}
 	if !cache.ready || len(cache.checked) != 1 || CompareTrees(cache.checked[0].Incremental.Nodes, anchors.Nodes) != nil {
@@ -1184,6 +1338,13 @@ func classificationGoReadPlan(t *testing.T, root string) classificationPlan {
 	if err := jsonv2.Unmarshal(data, &plan, jsonv2.RejectUnknownMembers(true)); err != nil {
 		t.Fatal(err)
 	}
+	if plan.PinSetSHA256 != "" {
+		if !hex64.MatchString(plan.PinSetSHA256) || !hex64.MatchString(plan.CatalogueSHA256) || !hex64.MatchString(plan.DonorPinsSHA256) || !hex64.MatchString(plan.DonorRegistrationSHA256) {
+			t.Fatal("incomplete historical donor pin context")
+		}
+	} else if plan.CatalogueSHA256 != "" || plan.DonorPinsSHA256 != "" || plan.DonorRegistrationSHA256 != classificationDonorRegistrationSHA {
+		t.Fatal("unbound historical donor context")
+	}
 	return plan
 }
 
@@ -1192,7 +1353,7 @@ func classificationGoLibraryNodeMatches(node EvidenceNode, plan classificationPl
 	if err != nil {
 		return false
 	}
-	identities := map[string]string{"source": plan.SourceRevision, "tool": plan.CompilerSHA256, "input": digestHex(grammar), "query": "NOT_APPLICABLE", "policy": digestHex([]byte(eligibilityCatalogueJSON)), "comparator": CaptureCompareScheme, "protocol": "compiler-capture/r1", "workload": workload, "platform": "windows/amd64", "run": "go-library", "attempt": "1"}
+	identities := map[string]string{"source": plan.SourceRevision, "tool": plan.CompilerSHA256, "input": digestHex(grammar), "query": "NOT_APPLICABLE", "policy": classificationPlanCatalogue(plan), "comparator": CaptureCompareScheme, "protocol": "compiler-capture/r1", "workload": workload, "platform": "windows/amd64", "run": "go-library", "attempt": "1"}
 	return node.ID == "go-library-build" && node.Kind == "run" && node.ExecutionStatus == StatusCompleted && node.Assessment == AssessPass && node.EvidenceMode == ModeNewRun && reflect.DeepEqual(node.Identities, identities)
 }
 
@@ -1212,6 +1373,7 @@ func TestQueryClassificationFrozenBindings(t *testing.T) {
 	}
 	a := &actualJSONAssembly{workload: "go3-definition-classification", cohortSource: map[string]string{"current": plan.SourceRevision}, nodes: map[string]EvidenceNode{}}
 	node := a.node("go-library-build", "current", plan.CompilerSHA256, digestHex(eligibilityJSON(t, plan.Grammar)), "NOT_APPLICABLE", "compiler-capture/r1", "go-library", StatusCompleted, AssessPass)
+	node.Identities["policy"] = classificationPlanCatalogue(plan)
 	if !classificationGoLibraryNodeMatches(node, plan, a.workload) {
 		t.Fatal("completed preregistered library node rejected")
 	}
@@ -1238,6 +1400,141 @@ func TestQueryClassificationFrozenBindings(t *testing.T) {
 		if classificationGoLibraryNodeMatches(other, plan, a.workload) {
 			t.Fatal("rehashed graph/policy accepted a contradictory library node")
 		}
+	}
+}
+
+func TestQueryClassificationHistoricalDonorCataloguePins(t *testing.T) {
+	catalogue := []byte(eligibilityCatalogueJSON)
+	reg := eligibilityRegistration{Schema: QueryReferenceEligibilityRegistrationSchema, CatalogueSHA256: digestHex(catalogue)}
+	registration := eligibilityJSON(t, reg)
+	makeRequest := func(registration []byte, material []byte) EvidencePinsRequest {
+		t.Helper()
+		set := evidencePinSet{Schema: EvidencePinSetSchema, Reader: EvidencePinReader, Materials: []EvidencePinMaterial{{Name: "reference/catalogue.json", Role: "reference-catalogue", Bytes: uint64(len(material)), SHA256: digestHex(material)}}}
+		setData := eligibilityJSON(t, set)
+		approval := evidencePinApproval{Schema: EvidencePinApprovalSchema, PinSetSHA256: digestHex(setData), SubjectSHA256: digestHex(registration), Reader: EvidencePinReader, Scope: EvidencePinScope}
+		approvalData := eligibilityJSON(t, approval)
+		return EvidencePinsRequest{Approval: approvalData, ApprovedApprovalSHA256: digestHex(approvalData), PinSet: setData, ApprovedPinSetSHA256: digestHex(setData), Subject: slices.Clone(registration), Materials: map[string][]byte{"reference/catalogue.json": slices.Clone(material)}}
+	}
+	req := makeRequest(registration, catalogue)
+	baseline, err := classificationResolveDonorCatalogue(req, registration, reg.CatalogueSHA256)
+	if err != nil || baseline.Assessment != AssessPass || !baseline.Complete {
+		t.Fatal("historical donor catalogue did not resolve", err, baseline.Findings)
+	}
+	for i, extra := range [][]EvidencePinMaterial{
+		{},
+		{{Name: "native/runtime-manifest.json", Role: "runtime-manifest", Bytes: 1, SHA256: strings.Repeat("a", 64)}},
+		{{Name: "reference/tuple.json", Role: "reference-tuple", Bytes: 1, SHA256: strings.Repeat("b", 64)}, {Name: "native/runtime-manifest.json", Role: "runtime-manifest", Bytes: 1, SHA256: strings.Repeat("c", 64)}},
+	} {
+		set := evidencePinSet{Schema: EvidencePinSetSchema, Reader: EvidencePinReader, Materials: append([]EvidencePinMaterial{{Name: "reference/catalogue.json", Role: "reference-catalogue", Bytes: uint64(len(catalogue)), SHA256: digestHex(catalogue)}}, extra...)}
+		setData := eligibilityJSON(t, set)
+		selection := eligibilityJSON(t, map[string]any{"schema": EvidencePinSelectionSchema, "pin_set_sha256": digestHex(setData)})
+		selected, err := SelectEvidenceProductionPin(ctxT(t), selection, setData)
+		if err != nil || selected != digestHex(setData) {
+			t.Fatalf("production selection %d: %s %v", i, selected, err)
+		}
+		got, err := classificationResolveDonorCatalogue(req, registration, reg.CatalogueSHA256)
+		if err != nil || !reflect.DeepEqual(got, baseline) {
+			t.Fatalf("historical donor changed when production selection %d moved: %v", i, err)
+		}
+	}
+	t.Run("forged-material", func(t *testing.T) {
+		forged := makeRequest(registration, catalogue)
+		forged.Materials["reference/catalogue.json"] = []byte(`{"schema":"forged"}`)
+		if _, err := classificationResolveDonorCatalogue(forged, registration, reg.CatalogueSHA256); err == nil {
+			t.Fatal("forged catalogue accepted")
+		}
+	})
+	t.Run("unapproved-sidecar", func(t *testing.T) {
+		forged := makeRequest(registration, catalogue)
+		forged.Approval = append(forged.Approval, ' ')
+		if _, err := classificationResolveDonorCatalogue(forged, registration, reg.CatalogueSHA256); err == nil {
+			t.Fatal("unapproved donor sidecar accepted")
+		}
+	})
+	t.Run("caller-approved-reduction", func(t *testing.T) {
+		var reduced eligibilityCatalogue
+		if err := jsonv2.Unmarshal(catalogue, &reduced); err != nil {
+			t.Fatal(err)
+		}
+		reduced.Assertions = slices.Clone(reduced.Assertions[:len(reduced.Assertions)-1])
+		shrunk := eligibilityJSON(t, reduced)
+		reducedRegistration := reg
+		reducedRegistration.CatalogueSHA256 = digestHex(shrunk)
+		reducedRegistrationBytes := eligibilityJSON(t, reducedRegistration)
+		if _, err := classificationResolveDonorCatalogue(makeRequest(reducedRegistrationBytes, shrunk), reducedRegistrationBytes, reducedRegistration.CatalogueSHA256); err == nil {
+			t.Fatal("caller-approved reduced catalogue bypassed reader-owned obligations")
+		}
+	})
+	t.Run("unknown-rule", func(t *testing.T) {
+		var changed eligibilityCatalogue
+		if err := jsonv2.Unmarshal(catalogue, &changed); err != nil {
+			t.Fatal(err)
+		}
+		changed.Assertions[0].ID = "unreviewed-rule"
+		altered := eligibilityJSON(t, changed)
+		alteredRegistration := reg
+		alteredRegistration.CatalogueSHA256 = digestHex(altered)
+		alteredRegistrationBytes := eligibilityJSON(t, alteredRegistration)
+		if _, err := classificationResolveDonorCatalogue(makeRequest(alteredRegistrationBytes, altered), alteredRegistrationBytes, alteredRegistration.CatalogueSHA256); err == nil {
+			t.Fatal("caller-approved unknown rule bypassed reader-owned obligations")
+		}
+	})
+}
+
+func TestClassificationEligibilityResultSchemaTracksPinOptIn(t *testing.T) {
+	legacyPlan := classificationPlan{}
+	legacy := QueryReferenceEligibilityResult{ResultSchema: QueryReferenceEligibilityResultSchema}
+	if !classificationEligibilityResultMatches(legacyPlan, legacy) {
+		t.Fatal("legacy eligibility result schema changed")
+	}
+	legacy.ResultSchema = QueryReferenceEligibilityPinsResultSchema
+	legacy.Pins = &EvidencePinsResult{}
+	if classificationEligibilityResultMatches(legacyPlan, legacy) {
+		t.Fatal("historical result accepted without opt-in")
+	}
+	plan := classificationPlan{PinSetSHA256: strings.Repeat("a", 64), CatalogueSHA256: strings.Repeat("b", 64)}
+	pinned := QueryReferenceEligibilityResult{ResultSchema: QueryReferenceEligibilityPinsResultSchema, CatalogueSHA256: plan.CatalogueSHA256, ReferenceTupleSHA256: strings.Repeat("c", 64), ReferencePathReader: "rust-path-reader", ApprovalSHA256: strings.Repeat("d", 64), Pins: &EvidencePinsResult{Report: Report{Assessment: AssessPass}, ResultSchema: EvidencePinResultSchema, Reader: EvidencePinReader, Scope: EvidencePinScope, ApprovalSHA256: strings.Repeat("e", 64), PinSetSHA256: plan.PinSetSHA256, SubjectSHA256: strings.Repeat("d", 64), Complete: true}}
+	if !classificationEligibilityResultMatches(plan, pinned) {
+		t.Fatal("bound historical eligibility result rejected")
+	}
+	for _, mutate := range []func(*QueryReferenceEligibilityResult){
+		func(r *QueryReferenceEligibilityResult) { r.ResultSchema = QueryReferenceEligibilityResultSchema },
+		func(r *QueryReferenceEligibilityResult) { r.Pins = nil },
+		func(r *QueryReferenceEligibilityResult) { r.CatalogueSHA256 = strings.Repeat("e", 64) },
+		func(r *QueryReferenceEligibilityResult) { r.Pins.PinSetSHA256 = strings.Repeat("f", 64) },
+		func(r *QueryReferenceEligibilityResult) { r.Pins.SubjectSHA256 = strings.Repeat("e", 64) },
+		func(r *QueryReferenceEligibilityResult) { r.Pins.Assessment = AssessBlocked },
+		func(r *QueryReferenceEligibilityResult) { r.Pins.Complete = false },
+	} {
+		other := pinned
+		pins := *pinned.Pins
+		other.Pins = &pins
+		mutate(&other)
+		if classificationEligibilityResultMatches(plan, other) {
+			t.Fatal("unbound or incomplete historical result accepted")
+		}
+	}
+
+	approvalBytes, catalogue := []byte(`{"schema":"eligibility-approval"}`), []byte(`{"schema":"catalogue"}`)
+	set := eligibilityJSON(t, evidencePinSet{Schema: EvidencePinSetSchema, Reader: EvidencePinReader, Materials: []EvidencePinMaterial{{Name: "reference/catalogue.json", Role: "reference-catalogue", Bytes: uint64(len(catalogue)), SHA256: digestHex(catalogue)}}})
+	pinApproval := eligibilityJSON(t, evidencePinApproval{Schema: EvidencePinApprovalSchema, PinSetSHA256: digestHex(set), SubjectSHA256: digestHex(approvalBytes), Reader: EvidencePinReader, Scope: EvidencePinScope})
+	input := &EvidencePinsRequest{Approval: pinApproval, ApprovedApprovalSHA256: digestHex(pinApproval), PinSet: set, ApprovedPinSetSHA256: digestHex(set), Materials: map[string][]byte{"reference/catalogue.json": catalogue}}
+	plan.PinSetSHA256 = digestHex(set)
+	forwarded, err := classificationEligibilityPinsForPlan(plan, approvalBytes, input)
+	if err != nil || forwarded == nil || !bytes.Equal(forwarded.Subject, approvalBytes) || len(input.Subject) != 0 {
+		t.Fatal("eligibility pin subject was not bound to the external approval", err)
+	}
+	resolved, err := ResolveEvidencePins(ctxT(t), *forwarded)
+	if err != nil || resolved.Assessment != AssessPass || resolved.SubjectSHA256 != digestHex(approvalBytes) {
+		t.Fatal("forwarded eligibility pin context did not resolve", err, resolved.Findings)
+	}
+	forged := *input
+	forged.PinSet = append(slices.Clone(set), ' ')
+	if _, err := classificationEligibilityPinsForPlan(plan, approvalBytes, &forged); err == nil {
+		t.Fatal("changed set passed classification context gate")
+	}
+	if _, err := classificationEligibilityPinsForPlan(plan, approvalBytes, nil); err == nil {
+		t.Fatal("missing eligibility pin context accepted")
 	}
 }
 

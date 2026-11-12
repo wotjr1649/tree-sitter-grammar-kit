@@ -1,0 +1,108 @@
+{
+  "schema": "tsgk-evidence-pin-set/r1",
+  "reader": "tsgk-evidence-materials/r1",
+  "materials": [
+    {
+      "name": "native/cp949_table.h",
+      "role": "cp949",
+      "bytes": 169573,
+      "sha256": "940e42b71e057f4bc31d91f4ae59d46b6790bd554eb522897c160806abc0975e"
+    },
+    {
+      "name": "native/driver.c",
+      "role": "driver",
+      "bytes": 82113,
+      "sha256": "391eac02ad82ef22f05a5935382921ec92371a4bea00eb3e7a6a351106a84d91"
+    },
+    {
+      "name": "native/runtime-field-lookup.patch.json",
+      "role": "runtime-patch",
+      "bytes": 3326,
+      "sha256": "f489c7a7dc8c948274e673f2713fc0dedf54aa39bf10c194a57ee411e7cbaa1d"
+    },
+    {
+      "name": "native/runtime-manifest.json",
+      "role": "runtime-manifest",
+      "bytes": 15143,
+      "sha256": "affb30b637b0ef6204382d7a75c17c92e7a67ee6a182654b5b1c43ddfa369080"
+    },
+    {
+      "name": "native/runtime-navigation.patch.json",
+      "role": "runtime-patch",
+      "bytes": 1083,
+      "sha256": "2c4b03cbd44e5f252ac2cb321b6b3f94b60db66c58cb33db82ddc5b99fb5c790"
+    },
+    {
+      "name": "native/runtime-sibling-identity.patch.json",
+      "role": "runtime-patch",
+      "bytes": 4320,
+      "sha256": "6ad0899223d026c6958a009b5de89b75e235e8b3467da3aabeb731f3471969ad"
+    },
+    {
+      "name": "native/runtime-tuple.json",
+      "role": "runtime-tuple",
+      "bytes": 550,
+      "sha256": "fff45a626a39b92157de93772fd0ef49945047e34a5bd2a07175a64346873476"
+    },
+    {
+      "name": "native/shim-template.c",
+      "role": "shim-template",
+      "bytes": 112,
+      "sha256": "486b43e6336f3f3c5ecaf936a4f072d1a90c5bbc5c2856d47032e92d9e02bbdf"
+    },
+    {
+      "name": "reference/Cargo.toml",
+      "role": "reference-input",
+      "bytes": 303,
+      "sha256": "1f11d9df1ff7cbbe069fc663b7bbff8565d7c1b46dfd4061ca1fbab070299abd"
+    },
+    {
+      "name": "reference/acquire.py",
+      "role": "reference-input",
+      "bytes": 7860,
+      "sha256": "a0d153f8e8cf2fc1a56d9d81e5359d3f536b768335346d5ef130e504613e4d32"
+    },
+    {
+      "name": "reference/build.py",
+      "role": "reference-input",
+      "bytes": 10674,
+      "sha256": "3a3115f2318658870266496e961159737e46d3ddac93b4cbe83be384755315d5"
+    },
+    {
+      "name": "reference/catalogue.json",
+      "role": "reference-catalogue",
+      "bytes": 57528,
+      "sha256": "36aebcfae0117b158edec0c1bce6d8f05548c304f2dd2c2eb855d0f7b70d1933"
+    },
+    {
+      "name": "reference/check.py",
+      "role": "reference-input",
+      "bytes": 17184,
+      "sha256": "32245af707c36b6e1b048e6249ffdf1baff9d78533378a8d867817970a03ef20"
+    },
+    {
+      "name": "reference/checks.py",
+      "role": "reference-input",
+      "bytes": 7266,
+      "sha256": "1f19cfaf2dbb5f66529708b8c218cfe091f41b42d8b055033dcdadbf56c1bd8a"
+    },
+    {
+      "name": "reference/instrumentation.patch",
+      "role": "reference-input",
+      "bytes": 1246,
+      "sha256": "6382b8d394561868057d5ab8fecec12167147424879f9ae75d6f7a1e24c4c29f"
+    },
+    {
+      "name": "reference/main.rs",
+      "role": "reference-input",
+      "bytes": 31129,
+      "sha256": "7a6835aebb45992a4bf03416b7d9712778bc4db097dc534d3ade38f813de15f5"
+    },
+    {
+      "name": "reference/tuple.json",
+      "role": "reference-tuple",
+      "bytes": 240,
+      "sha256": "a7b06e467cf642bfd6e80ca21ababbff9443e9504b341727c53a3a2593f9bf9d"
+    }
+  ]
+}

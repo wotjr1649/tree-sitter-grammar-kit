@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/ppexpect"
 )
 
-// #218: on every recorded case the evaluator agrees with Roslyn 5.9's own preprocessor by
+// #218: on every recorded case the evaluator agrees with the approved Roslyn preprocessor by
 // ppRoslynDiff. The observations come from src/dev/csharp-pp-oracle over cases.json.
 func TestCSharpPreprocessRoslyn(t *testing.T) {
 	dir := filepath.Join("..", "testdata", "csharp-pp")
@@ -72,22 +73,28 @@ func ppCompareBatch(t *testing.T, casesPath, observedPath string) (selected int,
 			Symbols []string `json:"symbols"`
 		} `json:"cases"`
 	}
-	var observed struct {
-		Schema, Roslyn string
-		CasesSHA256    string           `json:"cases_sha256"`
-		Cases          []ppObservedCase `json:"cases"`
+	casesData, err := os.ReadFile(casesPath)
+	if err != nil {
+		t.Fatal(err)
 	}
-	digests := map[string]string{}
-	for name, v := range map[string]any{casesPath: &cases, observedPath: &observed} {
-		data, err := os.ReadFile(name)
-		if err != nil || json.Unmarshal(data, v) != nil {
-			t.Fatalf("%s: %v", name, err)
-		}
-		digests[name] = digestHex(data)
+	observedData, err := os.ReadFile(observedPath)
+	if err != nil {
+		t.Fatal(err)
 	}
-	// the observation is of exactly these cases
-	if observed.Schema != "tsgk-csharp-pp-roslyn/r2" || observed.Roslyn != "5.9.0.0" || observed.CasesSHA256 != digests[casesPath] || len(observed.Cases) != len(cases.Cases) {
-		t.Fatalf("%s: observation %s %s %s %d cases", observedPath, observed.Schema, observed.Roslyn, observed.CasesSHA256, len(observed.Cases))
+	pinsPath := observedPath + ".pins.json"
+	if filepath.Base(observedPath) == "roslyn-observed.json" {
+		pinsPath = filepath.Join(filepath.Dir(observedPath), "roslyn-pins.json")
+	}
+	pins, err := ppexpect.ReadEnvelope(pinsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	observed, err := ppApprovedObservation(casesData, observedData, pins)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(casesData, &cases); err != nil {
+		t.Fatal(err)
 	}
 	for i, c := range cases.Cases {
 		o := observed.Cases[i]
@@ -118,6 +125,29 @@ func ppCompareBatch(t *testing.T, casesPath, observedPath string) (selected int,
 		}
 	}
 	return selected, unobserved
+}
+
+func ppApprovedObservation(cases, observed []byte, pins ppexpect.Envelope) (ppexpect.Document, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), ReplayOperations()["evidence-replay"].Wall)
+	defer cancel()
+	res, err := ResolveEvidencePins(ctx, EvidencePinsRequest{
+		Approval: pins.Approval, ApprovedApprovalSHA256: pins.ApprovedApprovalSHA256,
+		PinSet: pins.PinSet, ApprovedPinSetSHA256: pins.ApprovedPinSetSHA256, Subject: observed,
+		Materials: map[string][]byte{"roslyn/cases.json": cases, "roslyn/observed.json": observed, "roslyn/tuple.json": pins.Tuple},
+	})
+	if err != nil {
+		return ppexpect.Document{}, err
+	}
+	if res.Assessment != AssessPass || !res.Complete || res.Required != 3 || res.Verified != 3 {
+		return ppexpect.Document{}, fmt.Errorf("Roslyn pin approval: %s %v", res.Assessment, res.Findings)
+	}
+	roles := map[string]string{"roslyn/cases.json": "roslyn-cases", "roslyn/observed.json": "roslyn-observation", "roslyn/tuple.json": "roslyn-tuple"}
+	for _, material := range res.Materials {
+		if roles[material.Name] != material.Role {
+			return ppexpect.Document{}, fmt.Errorf("Roslyn material role mismatch")
+		}
+	}
+	return ppexpect.Read(cases, observed, pins.Tuple)
 }
 
 // ppRoslynDiff describes how the evaluator result r for src differs from the expectation

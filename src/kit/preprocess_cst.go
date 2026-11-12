@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"context"
 	"encoding/json/jsontext"
 	jsonv2 "encoding/json/v2"
 	"fmt"
@@ -16,10 +17,11 @@ import (
 )
 
 const (
-	PreprocessCSTSchema     = "tsgk-preprocess-cst/r1"
-	PreprocessPrimarySchema = "tsgk-preprocess-primary/r1"
-	PreprocessCSTPolicy     = "csharp-preprocess-cst/r1"
-	PreprocessCSTPrefix     = "PREPROCESS_CST_MISMATCH_STEP_"
+	PreprocessCSTSchema        = "tsgk-preprocess-cst/r1"
+	PreprocessCSTRuntimeSchema = "tsgk-preprocess-cst/r2"
+	PreprocessPrimarySchema    = "tsgk-preprocess-primary/r1"
+	PreprocessCSTPolicy        = "csharp-preprocess-cst/r1"
+	PreprocessCSTPrefix        = "PREPROCESS_CST_MISMATCH_STEP_"
 )
 
 // PreprocessCSTStep compares directive hash-byte positions, not lexer or kind equivalence.
@@ -66,11 +68,12 @@ type PreprocessPrimary struct {
 
 // PreprocessCSTResult keeps the first mismatch prefix and a nonrecursive primary receipt.
 type PreprocessCSTResult struct {
-	Schema  string              `json:"schema"`
-	Result  string              `json:"result"` // PASS | MISMATCH | UNVERIFIED | FAIL | NOT_APPLICABLE
-	Code    string              `json:"code"`
-	Steps   []PreprocessCSTStep `json:"steps"`
-	Primary *PreprocessPrimary  `json:"primary"`
+	Schema      string                 `json:"schema"`
+	Result      string                 `json:"result"` // PASS | MISMATCH | UNVERIFIED | FAIL | NOT_APPLICABLE
+	Code        string                 `json:"code"`
+	Steps       []PreprocessCSTStep    `json:"steps"`
+	Primary     *PreprocessPrimary     `json:"primary"`
+	RuntimePins *RuntimeEvidenceResult `json:"runtime_pins,omitempty"`
 }
 
 // PreprocessCSTCase is one replayed case's source-bound primary comparison.
@@ -92,11 +95,63 @@ type PreprocessCSTRequest struct {
 	Platform       string
 	RunID          string
 	ProducerSHA256 string
+	// RuntimePins opts into the independently approved historical runtime reader.
+	RuntimePins *EvidencePinsRequest
+	// runtime is installed only by a caller that already verified this request's subject.
+	runtime *eligibilityRuntimePins
 }
 
 // CheckPreprocessCST checks the entire primary response before comparing any positions.
 // Later malformed evidence or equality failure always overrides an earlier mismatch.
 func CheckPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
+	if r.RuntimePins != nil {
+		return checkPreprocessCSTWithRuntimePins(r)
+	}
+	return checkPreprocessCST(r)
+}
+
+func checkPreprocessCSTWithRuntimePins(r PreprocessCSTRequest) PreprocessCSTResult {
+	out := PreprocessCSTResult{Schema: PreprocessCSTRuntimeSchema, Result: "UNVERIFIED", Code: "PREPROCESS_CST_RUNTIME_UNVERIFIED", Steps: []PreprocessCSTStep{}, Primary: r.Primary}
+	wall := ReplayOperations()["evidence-replay"].Wall
+	ctx, cancel := context.WithTimeout(context.Background(), wall)
+	defer cancel()
+	run, err := startRun(ctx, wall)
+	if err != nil {
+		result := RuntimeEvidenceResult{Report: newReport("preprocess-CST runtime pins"), Reader: runtimePreprocessCSTReader}
+		failReport(&result.Report, err)
+		out.RuntimePins = &result
+		out.Code = asError(err).Code
+		return out
+	}
+	defer run.cancel()
+	result, runtime, pinErr := verifyScopedRuntime(r.RuntimePins, r.Raw, &eligibilityBudget{r: run}, runtimePreprocessCSTReader)
+	out.RuntimePins = &result
+	if pinErr != nil {
+		e := asError(pinErr)
+		out.Code = e.Code
+		if result.Assessment == AssessFail {
+			out.Result = "FAIL"
+		}
+		return out
+	}
+	if runtime == nil {
+		if result.Assessment == AssessFail {
+			out.Result = "FAIL"
+		}
+		if len(result.Findings) > 0 {
+			out.Code = result.Findings[0].Code
+		}
+		return out
+	}
+	r.RuntimePins = nil
+	r.runtime = runtime
+	out = checkPreprocessCST(r)
+	out.Schema = PreprocessCSTRuntimeSchema
+	out.RuntimePins = &result
+	return out
+}
+
+func checkPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 	out := PreprocessCSTResult{Schema: PreprocessCSTSchema, Result: "UNVERIFIED", Code: "PREPROCESS_CST_PRIMARY_UNVERIFIED", Steps: []PreprocessCSTStep{}, Primary: r.Primary}
 	stop := func(result, code string) PreprocessCSTResult { out.Result, out.Code = result, code; return out }
 	bad := func() PreprocessCSTResult { return stop("FAIL", "PREPROCESS_CST_PRIMARY_INVALID") }
@@ -196,8 +251,18 @@ func CheckPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 	if err != nil {
 		return bad()
 	}
+	if r.runtime != nil && (response.Producer.RuntimeLanguageVersion != r.runtime.tuple.RuntimeLanguageVersion ||
+		response.Producer.RuntimeMinCompatible != r.runtime.tuple.RuntimeMinCompatible ||
+		response.Producer.LanguageVersion < r.runtime.tuple.RuntimeMinCompatible || response.Producer.LanguageVersion > r.runtime.tuple.RuntimeLanguageVersion) {
+		return bad()
+	}
+	manifest := reuseobs.DefaultRuntimeManifest()
+	var logger *reuseobs.RuntimePin
+	if r.runtime != nil {
+		manifest, logger = r.runtime.tuple.ManifestSHA256, &r.runtime.logger
+	}
 	e := nativewire.Expect{Revision: nativewire.ProtocolR3, ID: r.Case.ID, Nodes: r.Operation.Nodes, SourceBytes: uint64(len(r.Source)), EditPoints: points, Exit: &proc.ExitCode,
-		Observation: &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: r.RunID, ProducerSHA256: r.ProducerSHA256}}
+		Observation: &nativewire.Binding{Manifest: manifest, Runtime: logger, RunID: r.RunID, ProducerSHA256: r.ProducerSHA256}}
 	for _, v := range versions {
 		e.Sources = append(e.Sources, nativewire.SourceID{Bytes: uint64(len(v)), SHA256: digestHex(v)})
 	}
@@ -223,10 +288,10 @@ func CheckPreprocessCST(r PreprocessCSTRequest) PreprocessCSTResult {
 	}
 	unknown := false
 	for i, s := range checked.Steps {
-		if reuseobs.Mandatory(s.Observations, true) == claimFail {
+		if reuseobs.MandatoryWithRuntime(s.Observations, true, logger) == claimFail {
 			return stop("FAIL", "PREPROCESS_CST_OBSERVATION_FAILED")
 		}
-		if reuseobs.Judge(s.Observations) != claimPass {
+		if reuseobs.JudgeWithRuntime(s.Observations, logger) != claimPass {
 			unknown = true
 		}
 		if s.Incremental.Status != StatusCompleted || s.Incremental.Form != "full" || len(s.Incremental.Nodes) == 0 || i > 0 && (s.Fresh == nil || s.Fresh.Status != StatusCompleted || s.Fresh.Form != "full" || len(s.Fresh.Nodes) == 0) {
@@ -316,12 +381,18 @@ func decodePreprocessCST(raw jsontext.Value) (*PreprocessCSTResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	if v.kind != '{' || slices.Contains(v.keys, "runtime_pins") {
+		return nil, fmt.Errorf("preprocess_cst legacy projection revision")
+	}
 	if !preprocessCSTShape(v, reflect.TypeFor[PreprocessCSTResult]()) {
 		return nil, fmt.Errorf("preprocess_cst required member/type")
 	}
 	var out PreprocessCSTResult
 	if err := jsonv2.Unmarshal(raw, &out, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return nil, err
+	}
+	if out.Schema != PreprocessCSTSchema {
+		return nil, fmt.Errorf("preprocess_cst legacy projection schema")
 	}
 	return &out, nil
 }
@@ -332,13 +403,17 @@ func preprocessCSTShape(v *jv, t reflect.Type) bool {
 	}
 	switch t.Kind() {
 	case reflect.Struct:
-		if v.kind != '{' || len(v.keys) != t.NumField() {
+		if v.kind != '{' || len(v.keys) > t.NumField() {
 			return false
 		}
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
 			name := strings.Split(f.Tag.Get("json"), ",")[0]
 			at := slices.Index(v.keys, name)
+			optional := strings.Contains(f.Tag.Get("json"), ",omitempty")
+			if at < 0 && optional {
+				continue
+			}
 			if at < 0 || !preprocessCSTShape(v.vals[at], f.Type) {
 				return false
 			}

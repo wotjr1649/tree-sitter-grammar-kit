@@ -242,13 +242,14 @@ Owned 검사는 batch1/16의 전체 r1 결과가 각 단일 실행과 일치하�
 
 ## 실행 및 검사
 
-Python 3.11 이상과 이미 준비한 절대 경로의 Cargo/Rust 1.97.1(`-vV`의 유일한 `release` 필드와 정확히 일치), C compiler·archiver·Git, 고정 source archive와 checksummed vendor directory가 필요하다. Global 설치나 설정을 바꾸지 않는다. 새 task directory에서만 source를 추출·계측하며 기존 reference checkout을 수정하지 않는다. Source archive는 해당 upstream commit의 `git archive --format=tar` bytes이며 SHA-256은 `6025ffd838c63bb011eeec9b259891ae0e051a3db9aa24c8812679f7462a50a9`다.
+Python 3.11 이상과 이미 준비한 절대 경로의 Cargo/Rust, C compiler·archiver·Git, 선택한 source archive와 checksummed vendor directory가 필요하다. Rust/cargo의 `-vV` 유일 `release` 필드는 아래 단일 생산 context의 tuple과 각각 정확히 일치해야 한다. Global 설치나 설정을 바꾸지 않는다. 새 task directory에서만 source를 추출·계측하며 기존 reference checkout을 수정하지 않는다. Source archive는 선택 catalogue의 upstream commit에서 만든 `git archive --format=tar` bytes이며 같은 catalogue의 `archive_sha256`과 대조한다. 과거 archive의 exact identity는 보존 catalogue가 소유한다.
 
 먼저 `CGO_ENABLED=0 go build -o <supervisor> ./src/dev/query-reference-run`으로 기존 runner를 사용하는 supervisor를 만든다. Shell 대신 정확한 argv·최소 환경으로 실행하고 stdout/stderr·wall·메모리·process tree 종료를 기록한다. Windows Job Object와 delegated Linux cgroup은 hard memory cap을 사용한다. macOS는 기존 runner의 sampled memory·process group 문맥을 그대로 표시하며 hard cap으로 보고하지 않는다. Linux에서는 두 Python 명령 모두 검증한 delegated `--cgroup-parent`가 필요하다.
 
 ```text
-python src/dev/query-reference/build.py --archive <absolute-tar> --vendor <absolute-vendor> --cargo <absolute-cargo> --rustc <absolute-rustc> --cc <absolute-compiler> --ar <absolute-archiver> --git <absolute-git> --supervisor <absolute-supervisor> --work <new-absolute-build-directory> --target <target>
-python src/dev/query-reference/check.py --reference <absolute-built-binary> --identity <build-directory/identity.json> --supervisor <absolute-supervisor> --cc <absolute-compiler> --work <new-absolute-control-directory>
+python src/dev/query-reference/checks.py --resolve-pins --selection src/contracts/evidence-pins/selection.json --out <absolute-pin-context.json>
+python src/dev/query-reference/build.py --pin-context <absolute-pin-context.json> --pin-context-sha256 <context-raw-sha256> --archive <absolute-tar> --vendor <absolute-vendor> --cargo <absolute-cargo> --rustc <absolute-rustc> --cc <absolute-compiler> --ar <absolute-archiver> --git <absolute-git> --supervisor <absolute-supervisor> --work <new-absolute-build-directory> --target <target>
+python src/dev/query-reference/check.py --pin-context <absolute-pin-context.json> --pin-context-sha256 <context-raw-sha256> --reference <absolute-built-binary> --identity <build-directory/identity.json> --supervisor <absolute-supervisor> --cc <absolute-compiler> --work <new-absolute-control-directory>
 ```
 
 대상은 `x86_64-pc-windows-gnu`, `x86_64-unknown-linux-gnu`, `aarch64-apple-darwin`이다. Build는 2 compiler job·4 GiB·15분 안에서, owned reference 실행은 1 GiB·10초 안에서 감독한다. 실패·출력 잘림·정리 미확인은 성공 receipt를 만들지 않는다. 입력이나 도구가 빌드 중 변경됐으면 identity 완료 전에 거부한다. 의도한 patch·manifest·lock 변경 뒤 source와 vendor 전체 파일 snapshot을 selected-tree 실행 전에 고정하고, 실행 직후와 build·unit 이후 다시 비교한다. 원본 binding hash가 정확할 때만 zero-context patch를 적용한다. 세 Python 진입점(`acquire.py`·`build.py`·`check.py`)은 `-O`·`PYTHONOPTIMIZE` 실행을 인자 처리 전에 거부한다.
@@ -259,9 +260,21 @@ Rust unit은 유지·탈락 match 모두에서 capture 누락·중복·범위 �
 
 ## 취득과 Linux hosted 실행 (#216)
 
-`python src/dev/query-reference/acquire.py --upstream <pinned-checkout> --git <git> --out <new-directory>`는 build·실행 없이 입력만 준비한다. 고정 commit과 pristine checkout을 확인하고 `git archive --format=tar` bytes가 위 archive SHA-256과 같은지 먼저 검사한다. upstream `Cargo.lock`의 registry package만 `static.crates.io`에서 받아 lock checksum과 대조하고, 크기·개수·시간·경로를 제한해 `vendor/`와 `.cargo-checksum.json`, `acquisition.json`을 쓴다. 같은 입력에서 이 결과의 vendor snapshot은 Windows build9–build12 입력과 같다(13,738 file, `8fec9dcc2dc84590867a7add1b33ad36be98c0a1b58634f228a5ce3a2632171c`).
+`python src/dev/query-reference/acquire.py --pin-context <absolute-pin-context.json> --pin-context-sha256 <context-raw-sha256> --upstream <pinned-checkout> --git <git> --out <new-directory>`는 build·실행 없이 입력만 준비한다. 선택 commit과 pristine checkout을 확인하고 `git archive --format=tar` bytes를 같은 context의 archive SHA-256과 먼저 대조한다. upstream `Cargo.lock`의 registry package만 `static.crates.io`에서 받아 lock checksum과 대조하고, 크기·개수·시간·경로를 제한해 `vendor/`와 `.cargo-checksum.json`, `acquisition.json`을 쓴다. Vendor snapshot 기대값은 같은 context의 `reference/production.json` 자료가 소유한다. 과거 Windows build9–build12 입력의 13,738 files와 snapshot digest는 당시 증거에 보존한다.
 
-수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, Rust 1.97.1 toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. build identity의 vendor snapshot이 위 값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. 2026-10-25 사용자 결정으로 macOS(`aarch64-apple-darwin`) 신규 검증은 수행하지 않으며 #243은 NOT_PLANNED로 종료했다. 당시에는 기존 macOS CI와 과거 근거를 유지했다. 이후 #332의 2026-11-07 결정으로 macOS CI도 일시 제외했다([platform](platform-support.md)). 제외 전 근거는 역사로 보존하며 이후 macOS는 NOT_RUN이다. 신규 claim을 macOS SUPPORTED로 승격하지 않는다.
+수동 workflow `Reference Linux`(`.github/workflows/reference-linux.yml`, `workflow_dispatch`, 공유 heavy lane)는 hosted `ubuntu-24.04`에서 이 취득, 선택 tuple의 Rust/cargo toolchain, supervisor build, delegated cgroup v2를 준비한 뒤 `build.py --target x86_64-unknown-linux-gnu`의 build·Rust unit, `test_pipeline.py`(SKIP 없음), owned `check.py` controls를 실행한다. Build identity의 vendor snapshot이 선택 기대값과 다르면 실패하며, 요청·결과 receipt만 `reference-linux-<run>-<attempt>` artifact로 30일 보관한다. 이 실행은 필수 PR check가 아니고 전체 reference 자격·3-host qualification·26 route 대조를 대신하지 않는다. 2026-10-25 사용자 결정으로 macOS(`aarch64-apple-darwin`) 신규 검증은 수행하지 않으며 #243은 NOT_PLANNED로 종료했다. 당시에는 기존 macOS CI와 과거 근거를 유지했다. 이후 #332의 2026-11-07 결정으로 macOS CI도 일시 제외했다([platform](platform-support.md)). 제외 전 근거는 역사로 보존하며 이후 macOS는 NOT_RUN이다. 신규 claim을 macOS SUPPORTED로 승격하지 않는다.
+
+## #370 V2-B2 단일 생산 pin
+
+새 생산은 `checks.py --resolve-pins`로 `src/contracts/evidence-pins/selection.json`을 한 번 읽고, 내용 주소 집합과 모든 자료의 원문 bytes/hash를 검증해 `pin-context.json`과 그 raw SHA-256을 고정한다. Context는 tuple·catalogue·생산 metadata 및 실제 선택 집합을 함께 보존한다. 이후 acquire/build/test/check와 workflow setup은 같은 context 경로와 SHA를 사용한다. 실행 중 selection이 바뀌어도 다시 선택하지 않는다. 선택은 독립적인 historical evidence 승인이 아니다.
+
+명시 context 경로와 SHA 인자는 함께 제공한다. 기존 Python CLI 호출에서는 acquire가 최초 선택을 `inputs/pin-context.json`으로 보존하고, build가 archive 옆 context를 소비해 build directory로 전달하며, check가 identity 옆 context를 소비한다. 따라서 후속 단계에서 selection을 다시 읽지 않으며 기존 CLI 인자·output schema를 유지한다. Workflow는 명시적으로 한 번 고정한 동일 context 경로와 SHA를 사용한다. Tuple의 `path_reader`는 Go V2-B1과 같은 immutable reader 의미여야 한다. 새 Rust release를 승인하는 일과 새로운 경로 reader를 구현하는 일은 별개다.
+
+`reference/production.json`은 `reference-input` 자료로 vendor snapshot 기대값을 결속한다. Rust/cargo release·upstream/archive/binding·controller/reference 원문은 같은 승인 집합의 tuple/catalogue 자료에서 얻는다. Workflow에 별도 release·upstream/archive/vendor literal을 두지 않는다. 새 producer 입력은 새 object/set으로 추가하고 selection만 이동한다. 과거 원본 object/set과 legacy canonical/private catalogue는 수정하지 않으며, 생산 변경에 따른 역사 검증은 독립 승인한 V2-B1 입력을 사용한다.
+
+수동 classification collector의 donor opt-in은 caller가 고정한 `TSGK_QUERY_CLASSIFICATION_DONOR_PINS` 절대 경로와 `TSGK_QUERY_CLASSIFICATION_DONOR_PINS_SHA256`, 별도 donor registration raw digest `TSGK_QUERY_CLASSIFICATION_DONOR_REGISTRATION_SHA256`를 받는다. 파일은 `EvidencePinsRequest`의 JSON이며 subject는 원본 donor registration 전체 bytes다. 승인 자료의 catalogue·set/context digest를 plan에 고정하고 assembly에서 재검증하며, reader 소유 의무9/4/53/36·known-rule를 축소할 수 없다. Legacy plan에는 새 optional field를 넣지 않는다.
+
+최종 verification은 별도 `TSGK_QUERY_CLASSIFICATION_ELIGIBILITY_PINS` 및 `TSGK_QUERY_CLASSIFICATION_ELIGIBILITY_PINS_SHA256`의 caller 입력을 사용한다. Subject는 최종 eligibility approval 원문이며 donor registration의 승인으로 대신하지 않는다. 같은 plan의 pin set과 historical catalogue를 전달하고 r2 core 결과의 소비 identity를 확인한다. Assembly가 승인을 생성하거나 실제 reference/native 관측을 새로 만드는 것은 아니다. 기존 actual capture 단계·사전등록·외부 승인 및 지원 범위 경계는 유지한다.
 
 ## 전체 지원 대상 연결의 자격 기준
 
@@ -289,7 +302,7 @@ PASS는 외부 승인 기준에 연결한 저장 데이터의 일관성만 뜻�
 
 입력 identity JSON은 1 MiB, reference binary는 64 MiB 한도를 파일 열기 전 stat과 열린 regular file의 fstat에서 확인한다. JSON은 상한+1까지만 읽고 binary는 스트리밍 hash를 사용한다. 실행 중 파일 크기가 늘어나도 상한을 넘으면 거부한다. `complete`는 JSON boolean `true`만 허용하며 truthy 문자열·숫자로 완료를 대신하지 않는다. Owned control은 identity가 결속한 selected-tree receipt도 직접 확인하고 종료 직전 보존 bytes를 재확인한다. `test_pipeline.py`는 1 GiB sparse 입력의 사전 거부와 완료 값 타입 반례를 포함한다.
 
-Owned control의 compiler 출력 library도 hash 계산 전에 64 MiB 한도와 regular-file 검사를 적용한다. 실제 build/check 진입점 fault 회귀는 `TSGK_REFERENCE_SUPERVISOR`·`TSGK_REFERENCE_CC`·`TSGK_REFERENCE_AR`·`TSGK_REFERENCE_GIT`·`TSGK_REFERENCE_ARCHIVE`가 모두 지정됐을 때 실행하며, 없으면 해당 회귀는 SKIP으로 기록한다. 고정 버전의 접미사·다른 patch 버전, selected-tree 중 source/vendor 변경, compiler의 상한 초과 library를 실제 supervisor로 실행해 후속 단계와 완료 identity 생성 전에 거부하는지 확인한다.
+Owned control의 compiler 출력 library도 hash 계산 전에 64 MiB 한도와 regular-file 검사를 적용한다. 실제 build/check 진입점 fault 회귀는 `TSGK_REFERENCE_SUPERVISOR`·`TSGK_REFERENCE_CC`·`TSGK_REFERENCE_AR`·`TSGK_REFERENCE_GIT`·`TSGK_REFERENCE_ARCHIVE`가 모두 지정됐을 때 실행하며, 없으면 해당 회귀는 SKIP으로 기록한다. 선택된 tuple과 다른 release·접미사, selected-tree 중 source/vendor 변경, compiler의 상한 초과 library를 실제 supervisor로 실행해 후속 단계와 완료 identity 생성 전에 거부하는지 확인한다.
 
 ### Full-input source·CST 경계
 

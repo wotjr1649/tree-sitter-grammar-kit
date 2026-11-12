@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"reflect"
 	"regexp"
+
+	evidencepins "github.com/wotjr1649/tree-sitter-grammar-kit/src/contracts/evidence-pins"
 )
 
 // This reader's obligations stay fixed when the production catalogue changes.
@@ -24,11 +26,26 @@ var referenceRelease = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 
 func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest) *Error {
 	if req.Pins == nil {
-		data := []byte(eligibilityCatalogueJSON)
+		store, err := evidencepins.Repository()
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "repository-defaults", err)
+		}
+		ref, err := store.Reference()
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "reference", err)
+		}
+		if selected, ok := store.ReferenceFor(s.reg.CatalogueSHA256); ok {
+			ref = selected
+		}
+		data, err := store.Object(ref.CatalogueSHA256)
+		if err != nil {
+			return fail(KindInvalidInput, "REPOSITORY_DEFAULTS_INVALID", "catalogue", err)
+		}
 		if e := s.b.charge(1, uint64(len(data)), "catalogue-digest"); e != nil {
 			return e
 		}
 		s.res.CatalogueSHA256 = digestHex(data)
+		s.referenceTuple = &eligibilityReferenceTuple{RustcRelease: ref.RustcRelease, CargoRelease: ref.CargoRelease}
 		return s.b.decode("catalogue", data, &s.catalogue, true)
 	}
 	s.res.ResultSchema = QueryReferenceEligibilityPinsResultSchema
@@ -104,18 +121,11 @@ func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest)
 	if e := s.b.decode("historical-catalogue", data, &s.catalogue, true); e != nil {
 		return e
 	}
-	var obligations eligibilityCatalogue
-	if e := s.b.decode("reader-obligations", eligibilityObligationsR1, &obligations, true); e != nil {
+	valid, e := s.b.referenceCatalogueObligations(s.catalogue, uint64(len(data)))
+	if e != nil {
 		return e
 	}
-	// Only independently bound provenance may vary; rules, inputs and limits belong to the reader.
-	actual := s.catalogue
-	actual.UpstreamCommit, actual.ArchiveSHA256, actual.BindingSHA256 = "", "", ""
-	actual.ControllerSHA256, actual.ReferenceInputs = map[string]string{}, map[string]string{}
-	if e := s.b.charge(uint64(len(data))+uint64(len(eligibilityObligationsR1)), 0, "catalogue-obligations"); e != nil {
-		return e
-	}
-	if !reflect.DeepEqual(actual, obligations) {
+	if !valid {
 		s.bound = false
 		s.finding("PIN_CATALOGUE_OBLIGATIONS", "historical-catalogue", true)
 		return nil
@@ -141,4 +151,18 @@ func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest)
 	}
 	s.referenceTuple = &tuple
 	return nil
+}
+
+func (b *eligibilityBudget) referenceCatalogueObligations(catalogue eligibilityCatalogue, catalogueBytes uint64) (bool, *Error) {
+	var obligations eligibilityCatalogue
+	if e := b.decode("reader-obligations", eligibilityObligationsR1, &obligations, true); e != nil {
+		return false, e
+	}
+	// Only independently bound provenance may vary; rules, inputs and limits belong to the reader.
+	catalogue.UpstreamCommit, catalogue.ArchiveSHA256, catalogue.BindingSHA256 = "", "", ""
+	catalogue.ControllerSHA256, catalogue.ReferenceInputs = map[string]string{}, map[string]string{}
+	if e := b.charge(catalogueBytes+uint64(len(eligibilityObligationsR1)), 0, "catalogue-obligations"); e != nil {
+		return false, e
+	}
+	return reflect.DeepEqual(catalogue, obligations), nil
 }

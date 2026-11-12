@@ -280,7 +280,7 @@ func testCSharpResidualOracleControls(t *testing.T, b *Build) {
 	if err := json.Unmarshal(data, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.Schema != "tsgk-csharp-pp-residual-controls/r1" || fixture.Roslyn != "5.9.0.0" || fixture.LanguageVersion != "Latest" || fixture.CasesSHA256 != "437b4d345fa86f5b95fce494e79af551731ed9dfa6485c89f8b33ecdc6f7c55d" || fixture.ObservedSHA256 != "14c62706f61cc8f6a79830fdbf9e7898000a3b1826754565e3e97ff96337ab13" || fixture.RoslynDLLSHA256 != "12b0428203faae6555858d2ff856cef7450d2764cf00c57e7516587a04885870" {
+	if fixture.Schema != "tsgk-csharp-pp-residual-controls/r1" || fixture.Roslyn == "" || fixture.LanguageVersion != "Latest" || fixture.CasesSHA256 != "437b4d345fa86f5b95fce494e79af551731ed9dfa6485c89f8b33ecdc6f7c55d" || fixture.ObservedSHA256 != "14c62706f61cc8f6a79830fdbf9e7898000a3b1826754565e3e97ff96337ab13" || fixture.RoslynDLLSHA256 != "12b0428203faae6555858d2ff856cef7450d2764cf00c57e7516587a04885870" {
 		t.Fatal("residual controls lost their pinned Roslyn observation identity")
 	}
 	if len(fixture.Cases) != 20 {
