@@ -3,6 +3,7 @@ package kit
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -19,6 +20,11 @@ func TestSemanticSetBuildReuseShapes(t *testing.T) {
 		{"hit", func(b *semanticBuildDescription) {
 			b.Reuse, b.Steps = &semanticBuildReuse{Hit: true, SourceSteps: b.Steps}, []semanticBuildStep{}
 		}, false},
+		{"miss with reordered steps", func(b *semanticBuildDescription) {
+			b.Steps = slices.Clone(b.Steps)
+			b.Steps[0], b.Steps[1] = b.Steps[1], b.Steps[0]
+			b.Reuse = &semanticBuildReuse{SourceSteps: []semanticBuildStep{}}
+		}, true},
 		{"miss with source steps", func(b *semanticBuildDescription) { b.Reuse = &semanticBuildReuse{SourceSteps: b.Steps} }, true},
 		{"miss with null source steps", func(b *semanticBuildDescription) { b.Reuse = &semanticBuildReuse{} }, true},
 		{"miss without steps", func(b *semanticBuildDescription) {
