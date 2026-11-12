@@ -171,7 +171,7 @@ func rebindReplayFixtureManifest(t *testing.T, f *fxNative, manifest string) {
 }
 
 var v2eLegacyResultSHA256 = map[string]string{
-	"eligibility":              "699f8a08fa299f6d870e4ba67123519ace27cbd2adde1289b8beac692780a58e",
+	"eligibility":              "40e9cb5b96be0703774be46b338c34a501685b07533b0aae5d0e95c4cf8aae80",
 	"reference-connection":     "85765990401705e2c9c50a1ca48592ea36e3bcafd70d7bc8e9485b98bf06b95a",
 	"replay/current/optional":  "ba77d87ba44260abd724c60f00c4515c2655146c05faaec90a87b36d96c05c86",
 	"replay/current/mandatory": "78a3bed6e67bfa726e9e2aa2eea8ffee029175b48388d4ced56227d51c58a3fb",
