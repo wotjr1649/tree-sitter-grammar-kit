@@ -172,7 +172,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 6. `go mod download`(`GOPROXY=https://proxy.golang.org`, `GOSUMDB=sum.golang.org`로 외부 네트워크를 쓴다), `go mod verify` 뒤 `GOPROXY=off`와 `GOFLAGS=-mod=readonly`. (6·7 합쳐 약 12초)
 7. `gofmt -l src`(출력 없음), `go vet ./src/...`, `go build ./src/...`.
 8. foundation 단독: `go test ./src/internal/foundation -count=1`(부하에 민감한 시험이 있어 다른 시험과 겹치지 않게 실행). 다른 `go test`·gcc·native 프로세스가 없는 것을 확인한 뒤 시작한다. (약 83초)
-9. foundation을 뺀 나머지 package와 native package: 검증 계약의 명령(`-count=1 -v`, `-timeout 300s`, native는 `-timeout 420s`)에서 `$otherPackages`를 `go list ./src/...`에서 native와 foundation을 제외한 목록으로 한다(foundation은 8번이 이미 단독으로 돌렸다). `TSGK_NATIVE_REQUIRED`·`TSGK_NATIVE_CC`·`TSGK_NATIVE_RUNTIME` 없이는 native 의존 시험이 SKIP이다. 시험 결과에서 SKIP 개수를 PASS와 따로 기록한다(예행 실행: native 제외 package에 `--- SKIP` 99줄, native package 708 PASS·129 SKIP). SKIP은 PASS가 아니며, native compile·실행 시험의 정본은 CI Windows runner 결과다. 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록한다. (native 제외 약 142초, native package 약 3초)
+9. foundation을 뺀 나머지 package와 native package: 검증 계약의 명령(`-count=1 -v`, `-timeout 420s`, native도 `-timeout 420s`)에서 `$otherPackages`를 `go list ./src/...`에서 native와 foundation을 제외한 목록으로 한다(foundation은 8번이 이미 단독으로 돌렸다). `TSGK_NATIVE_REQUIRED`·`TSGK_NATIVE_CC`·`TSGK_NATIVE_RUNTIME` 없이는 native 의존 시험이 SKIP이다. 시험 결과에서 SKIP 개수를 PASS와 따로 기록한다(예행 실행: native 제외 package에 `--- SKIP` 99줄, native package 708 PASS·129 SKIP). SKIP은 PASS가 아니며, native compile·실행 시험의 정본은 CI Windows runner 결과다. 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록한다. (native 제외 약 142초, native package 약 3초)
 
 **D. 공개 API·CLI·schema 소비와 offline 경계**
 

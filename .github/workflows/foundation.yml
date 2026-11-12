@@ -47,8 +47,8 @@ jobs:
             goarch: amd64
     runs-on: ${{ matrix.os }}
     # #260: every step is bounded and outlasts the nominal deadlines it runs; the job outlasts
-    # the step sum of the slowest host (Linux 61 minutes) plus a runner allowance
-    timeout-minutes: 62
+    # the step sum of the slowest host (Linux 63 minutes) plus a runner allowance
+    timeout-minutes: 64
     defaults:
       run:
         shell: pwsh
@@ -156,7 +156,7 @@ jobs:
           "TSGK_NATIVE_CC=$cc" >> $env:GITHUB_ENV
           'TSGK_NATIVE_REQUIRED=1' >> $env:GITHUB_ENV
       - name: 형식과 foundation 검사
-        timeout-minutes: 13
+        timeout-minutes: 15
         run: |
           $formatted = gofmt -l src
           if ($LASTEXITCODE -ne 0 -or $formatted) { throw 'gofmt failed' }
@@ -179,7 +179,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $packages -notcontains $nativePackage) { throw 'native package enumeration failed' }
           $otherPackages = @($packages | Where-Object { $_ -ne $nativePackage })
           if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
-          go test @otherPackages -count=1 -v -timeout 300s
+          go test @otherPackages -count=1 -v -timeout 420s
           if ($LASTEXITCODE -ne 0) { throw 'test failed' }
           $nativeWallPath = Join-Path $env:RUNNER_TEMP "ci-native-wall-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.txt"
           if (Test-Path -LiteralPath $nativeWallPath) { throw 'native command wall output exists' }

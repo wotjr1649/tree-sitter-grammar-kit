@@ -452,7 +452,7 @@ func TestMarginNativeWallConfig(t *testing.T) {
 	for _, id := range []string{"foundation/windows/native-command-wall", "foundation/linux/native-command-wall",
 		"foundation/windows/step/형식과 foundation 검사", "foundation/linux/step/형식과 foundation 검사"} {
 		idx := slices.IndexFunc(r.Metrics, func(m marginMetric) bool { return m.ID == id })
-		limit := int64(780000)
+		limit := int64(900000) // the 15-minute foundation step (#419)
 		if strings.HasSuffix(id, "/native-command-wall") {
 			limit = 420000
 		}

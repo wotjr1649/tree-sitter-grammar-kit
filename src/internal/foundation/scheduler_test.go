@@ -589,9 +589,9 @@ func TestWorkflowFoundationBudget(t *testing.T) {
 		t.Fatal("comment rejected: ", err)
 	}
 	for name, broken := range map[string]string{
-		"job-below-sum": strings.Replace(text, "    timeout-minutes: 62\n", "    timeout-minutes: 15\n", 1),
-		// Linux runs 61 minutes of steps plus the one minute allowance
-		"job-one-below":     strings.Replace(text, "    timeout-minutes: 62\n", "    timeout-minutes: 61\n", 1),
+		"job-below-sum": strings.Replace(text, "    timeout-minutes: 64\n", "    timeout-minutes: 15\n", 1),
+		// Linux runs 63 minutes of steps plus the one minute allowance
+		"job-one-below":     strings.Replace(text, "    timeout-minutes: 64\n", "    timeout-minutes: 63\n", 1),
 		"cache-save-grows":  strings.Replace(text, "      - name: Go build cache 저장\n        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n        timeout-minutes: 2\n", "      - name: Go build cache 저장\n        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n        timeout-minutes: 4\n", 1),
 		"cache-unbounded":   strings.Replace(text, "        timeout-minutes: 2\n        continue-on-error: true\n        env:", "        continue-on-error: true\n        env:", 1),
 		"cache-save-always": strings.Replace(text, "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n", "        if: github.event_name == 'push'\n", 1),
@@ -750,8 +750,8 @@ func foundationNativeMarginPolicy(text, config string) error {
 	step := workflowStep(workflowJobBody(text, "foundation"), "형식과 foundation 검사")
 	code := workflowRunCode(step)
 	for _, need := range []string{
-		"        timeout-minutes: 13\n",
-		"go test @otherPackages -count=1 -v -timeout 300s\nif ($LASTEXITCODE -ne 0) { throw 'test failed' }",
+		"        timeout-minutes: 15\n",
+		"go test @otherPackages -count=1 -v -timeout 420s\nif ($LASTEXITCODE -ne 0) { throw 'test failed' }",
 		`$nativePackage = 'github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/native'`,
 		`$packages = @(go list ./src/...)`,
 		`if ($LASTEXITCODE -ne 0 -or $packages -notcontains $nativePackage) { throw 'native package enumeration failed' }`,
@@ -1034,7 +1034,7 @@ func foundationCachePolicy(text string) error {
 			return fmt.Errorf("a go test line without -count keeps the test result cache: %s", line)
 		}
 	}
-	for _, kept := range []string{"go test @otherPackages -count=1 -v -timeout 300s", "go test $nativePackage -count=1 -v -timeout 420s"} {
+	for _, kept := range []string{"go test @otherPackages -count=1 -v -timeout 420s", "go test $nativePackage -count=1 -v -timeout 420s"} {
 		if !strings.Contains(body, kept) {
 			return fmt.Errorf("the test result cache must stay off: %q", kept)
 		}

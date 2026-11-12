@@ -59,9 +59,9 @@ type marginJob struct {
 // carry it; the current list is it without the darwin hosts. Re-enabling macOS makes the two
 // lists equal again, and the 2-platform reports become the former shape.
 var marginFormerJobs = []marginJob{
-	{"foundation (windows-2025)", "foundation", "windows", "amd64", 62, true},
-	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 62, true},
-	{"foundation (macos-15)", "foundation", "darwin", "arm64", 62, true},
+	{"foundation (windows-2025)", "foundation", "windows", "amd64", 64, true},
+	{"foundation (ubuntu-24.04)", "foundation", "linux", "amd64", 64, true},
+	{"foundation (macos-15)", "foundation", "darwin", "arm64", 64, true},
 	{"native prepare (ubuntu-24.04)", "native-prepare", "linux", "amd64", 30, false},
 	{"native routes (windows-2025)", "native-routes", "windows", "amd64", 60, true},
 	{"native routes (ubuntu-24.04)", "native-routes", "linux", "amd64", 60, true},
@@ -298,7 +298,7 @@ func marginStepLimits(j marginJob) map[string]int64 {
 	limits := map[string]int64{}
 	if j.job == "foundation" {
 		if j.goos == "windows" || j.goos == "linux" {
-			limits["형식과 foundation 검사"] = 13
+			limits["형식과 foundation 검사"] = 15
 		}
 		limits["frame 상태와 native cancellation 반복 시험 (#65)"] = 6
 		if j.goos == "linux" {
