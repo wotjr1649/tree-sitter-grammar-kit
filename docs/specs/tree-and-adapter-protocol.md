@@ -357,6 +357,8 @@ Go decoder는 단일 frame·엄격 JSON(중복/unknown member 거부)·source id
 
 이 audit는 canonical cursor tree metadata를 기준으로 선택된 `tsgk-api/r1` 관계·field·registered-point API를 비교한다. `ts_node_is_named`와 byte-range accessor 자체의 독립 semantic 적합성은 검증하지 않는다. descendant/named-descendant와 first-child-for-byte는 앞의 공개 API byte 조회 계약을 따르며 exact deepest node 선택은 주장하지 않는다.
 
+`src/dev/large-api/session-cst.c`는 #362 범위 6의 개발용 wrapper로, 같은 request·framing·page command로 한 process·한 parse에서 연속 page마다 canonical CST 행(preorder, parent·byte·point·flags·type·field)의 digest를 응답하고 마지막 page에 개수·digest의 완결 footer를 담는다. 기대 node 수는 독립 도출값으로 받으며 실제 count가 다르면 `NODE_COUNT_MISMATCH`를 응답하고 멈춘다. 행 layout과 expected 도출은 [instrumented-query-reference](instrumented-query-reference.md)의 large 범위를 따른다. 제품 `tsgk-native/r2`와 기존 audit receipt는 바꾸지 않는다.
+
 `src/dev/large-api/audit.c`는 `//go:build ignore`로 Go package에서 제외하며 CGO0·CGO1 모두 Go/cgo source가 아니다. 기존 native build가 별도 C process로 직접 compile한다. 필수 CGO0 시험에서도 CGO1 build context로 이 경계를 검사한다.
 
 두 session flag가 없는 legacy full receipt의 `tsgk-large-api-validation/r2`, `mode: REGISTERED_LARGE_ALL_NODES`, `large_complete: true`, `pass: true`는 정확히 등록3개 fixture 전체 연속 구간 완료를 요구한다. `-controls-only`는 별도 `tsgk-large-api-controls/r2`, `mode: SMALL_CONTROLS`, `large_complete: false`다. 등록 fixture inventory 전체의 frozen SHA256과 route registry SHA256을 기록하고 fixture 대체·unknown/duplicate member·중복 ID를 거부한다. compiler를 custom compile 직전에, executable을 각 launch 전후에 재검증한다. 이는 task 소유의 변하지 않는 build directory를 전제로 하며 hostile concurrent file replacement의 sandbox는 아니다.
