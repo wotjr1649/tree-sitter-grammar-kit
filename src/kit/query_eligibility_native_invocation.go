@@ -62,7 +62,7 @@ func (s *eligibilitySession) nativeInvocation(inv *eligibilityInvocation, versio
 	if a.Protocol != nativewire.ProtocolR4 || !validID(a.RequestID) || a.NodeLimit == 0 || a.NodeLimit > 1000000 || !hex64.MatchString(a.ProducerSHA256) || !reuseobs.VerifiedRuntimeManifest(a.RuntimeManifestSHA256) || !validID(a.ObservationRunID) || a.HistoryStart > 4 {
 		s.finding("ELIGIBILITY_R4_EXPECTATION", inv.ID, true)
 	}
-	_, haveExecutable, e := s.member(inv.Executable)
+	haveExecutable, e := s.memberAvailable(inv.Executable)
 	if e != nil {
 		return record, e
 	}

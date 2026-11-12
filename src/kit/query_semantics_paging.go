@@ -2,7 +2,6 @@ package kit
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 )
 
@@ -112,7 +111,7 @@ func (b *eligibilityBudget) semanticPagedParserVerified(data []byte, input seman
 			return false, e
 		}
 	}
-	if hex.EncodeToString(h.Sum(nil)) != input.SHA256 {
+	if source.chainSum(h) != input.SHA256 {
 		return false, nil
 	}
 	return true, source.remember(data, "D", "parser", partPrefix, index, input, semanticBinaryLogical{Kind: "parser", Path: input.Path, Bytes: input.Bytes, SHA256: input.SHA256})
@@ -148,7 +147,7 @@ func (b *eligibilityBudget) semanticPagedBinaryVerified(data []byte, owner, kind
 			return semanticBinaryLogical{}, false, e
 		}
 	}
-	if hex.EncodeToString(h.Sum(nil)) != l.SHA256 {
+	if source.chainSum(h) != l.SHA256 {
 		return semanticBinaryLogical{}, false, nil
 	}
 	return l, true, source.remember(data, owner, kind, partPrefix, -1, semanticBuildInput{}, l)

@@ -122,6 +122,8 @@ func (b *eligibilityBudget) semanticValuesEqual(a, c *jv) (bool, *Error) {
 
 type semanticSetState struct {
 	paging           *verifiedPaging
+	identitySnapshot *evidenceSnapshot
+	identities       map[string]verifiedMemberIdentity
 	producerFailure  func(string, string, string)
 	producerVerified bool
 	producerCode     string
@@ -166,6 +168,15 @@ func (b *eligibilityBudget) checkSemanticSet(m OracleManifest, files map[string]
 			p := ReplayMember{Path: "oracle/" + pin.Path, Role: pin.Role, Bytes: pin.Bytes, SHA256: pin.SHA256}
 			_, ok, _, e := state.paging.part(state.paging.owner, eligibilityMember{NodeID: state.paging.owner.owners[p.Path], Member: p}, false)
 			return ok, e
+		}
+		if state != nil && pin.Role == "driver" {
+			identity, ok := state.identities[pin.Path]
+			member := ReplayMember{Path: "oracle/" + pin.Path, Role: pin.Role, Bytes: pin.Bytes, SHA256: pin.SHA256}
+			if ok && state.identitySnapshot != nil && state.identitySnapshot.graphBound &&
+				state.identitySnapshot.identities[member.Path] == identity && state.identitySnapshot.verifiedMembers[member.Path] == member &&
+				!state.identitySnapshot.invalidNodes[identity.owner] {
+				return identityOnlyRole(identity.member.Role) && identity.owner != "" && identity.member == member, nil
+			}
 		}
 		data, ok := files[pin.Path]
 		return ok && uint64(len(data)) == pin.Bytes && digestHex(data) == pin.SHA256, nil
