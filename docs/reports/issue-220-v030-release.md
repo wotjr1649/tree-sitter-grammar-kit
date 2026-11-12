@@ -148,7 +148,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 
 ## 발행 전 남은 검증
 
-발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 아직 실행하지 않았다(14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다.
+발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 최종 후보에서는 아직 실행하지 않았다(B~E의 명령은 후보 `5e64ec5`(`integ/362`)에서 한 번 예행 실행해 점검했으나 그 결과는 이 문서의 근거가 아니다. 14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다. `pwsh`에서 `-test.count=1`처럼 점이 든 인자를 native 실행 파일(예: `go test -c`로 만든 시험 binary)에 줄 때는 `'-test.count=1'`처럼 따옴표로 묶는다. 묶지 않으면 `-test`와 `.count=1`로 쪼개져 exit 2가 난다. 각 항목 끝의 시간은 예행 실행의 Windows 개발 host 실측이며 다른 시험이 겹치면 늘어난다.
 
 **A. 전제와 후보 결정**
 
@@ -158,31 +158,42 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 
 **B. 후보 정체성(읽기)**
 
-4. `git rev-parse HEAD` == `$sha`, `git status --porcelain`과 `git ls-files -u`가 비어 있음, `git diff --check`.
-5. `go version`과 `go.mod`의 `go` 줄 일치, 이 문서의 Go 기준과 대조.
+4. `git rev-parse HEAD` == `$sha`, `git status --porcelain`과 `git ls-files -u`가 비어 있음, `git diff --check`. (1초 미만)
+5. `go version`과 `go.mod`의 `go` 줄 일치, 이 문서의 Go 기준과 대조. (1초 미만)
 
 **C. 로컬 core 게이트**
 
-6. `go mod download`, `go mod verify` 뒤 `GOPROXY=off`.
+6. `go mod download`(`GOPROXY=https://proxy.golang.org`, `GOSUMDB=sum.golang.org`로 외부 네트워크를 쓴다), `go mod verify` 뒤 `GOPROXY=off`와 `GOFLAGS=-mod=readonly`. (6·7 합쳐 약 12초)
 7. `gofmt -l src`(출력 없음), `go vet ./src/...`, `go build ./src/...`.
-8. foundation 단독: `go test ./src/internal/foundation -count=1`(부하에 민감한 시험이 있어 다른 시험과 겹치지 않게 실행).
-9. 나머지 package와 native package: 검증 계약의 명령(`-timeout 300s`, native는 `-timeout 420s`). 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록하고 CI의 Windows runner 결과를 정본으로 한다.
+8. foundation 단독: `go test ./src/internal/foundation -count=1`(부하에 민감한 시험이 있어 다른 시험과 겹치지 않게 실행). 다른 `go test`·gcc·native 프로세스가 없는 것을 확인한 뒤 시작한다. (약 83초)
+9. foundation을 뺀 나머지 package와 native package: 검증 계약의 명령(`-count=1 -v`, `-timeout 300s`, native는 `-timeout 420s`)에서 `$otherPackages`를 `go list ./src/...`에서 native와 foundation을 제외한 목록으로 한다(foundation은 8번이 이미 단독으로 돌렸다). `TSGK_NATIVE_REQUIRED`·`TSGK_NATIVE_CC`·`TSGK_NATIVE_RUNTIME` 없이는 native 의존 시험이 SKIP이다. 시험 결과에서 SKIP 개수를 PASS와 따로 기록한다(예행 실행: native 제외 package에 `--- SKIP` 99줄, native package 708 PASS·129 SKIP). SKIP은 PASS가 아니며, native compile·실행 시험의 정본은 CI Windows runner 결과다. 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록한다. (native 제외 약 142초, native package 약 3초)
 
 **D. 공개 API·CLI·schema 소비와 offline 경계**
 
-10. `go test ./src/cmd/tsgk -run '^(TestExternalConsumerAndCLI|TestExternalConsumerSchema|TestOfflineClosure)$' -count=1 -v`
-11. `go test ./src/cmd/tsgk -run '^TestModuleProxyConsumer$' -count=1 -v`(git checkout에서 실행. 6번으로 module cache가 준비돼 있어야 한다).
-12. `go test ./src/cmd/tsgk -count=1`.
-13. v0.2.0 대비 변화 목록 재대조: `v0.2.0`과 `$sha`에서 각각 exported 선언(`go doc -all`), 각 하위 명령의 `-h`, `src/contracts/*.json`의 schema 문자열을 추출해 비교하고 위 "공개 API·CLI·schema 변화(v0.2.0 대비)" 절과 [공개 API 문서](../specs/public-go-api.md)를 갱신한다. 재현 가능한 단일 명령이 없어 수동 대조다.
-14. **v0.2.0 evidence set 재생.** v0.2.0 시점에 만든 기록(evidence set)을 `$sha`의 `tsgk replay`로 재생해 결과와 오류 code를 기록한다. 거부되거나 결과가 다르면 위 호환성 깨짐 목록에 항목을 더한다. **후보 `aca5385`에서 실측 완료(판정·exit·schema·findings 동일, counter·gate 목록 차이는 위 7번), 최종 후보에서 재확인.**
-15. **native 경로의 두 버전 실행 비교.** 같은 입력(등록된 native fixture)으로 v0.2.0 binary와 `$sha` binary의 `incremental`·`oracle record`를 새 flag 없이 실행해 결과를 비교한다. 같지 않으면 원인과 영향을 기록하고 위 목록에 더한다. 승인된 native capability와 host compiler가 필요하다. 이 확인은 각 binary가 pin한 runtime source를 따로 준비해야 한다(위 "사용자 안내"). **후보 `aca5385`에서 실측 완료(판정·raw 응답 동일, 차이는 runtime pin 관련 값), 최종 후보에서 재확인.**
+10. `go test ./src/cmd/tsgk -run '^(TestExternalConsumerAndCLI|TestExternalConsumerSchema|TestOfflineClosure)$' -count=1 -v` (약 4초)
+11. `go test ./src/cmd/tsgk -run '^TestModuleProxyConsumer$' -count=1 -v`(git checkout에서 실행. 6번으로 module cache가 준비돼 있어야 한다). (약 4초)
+12. `go test ./src/cmd/tsgk -count=1`. (약 10초)
+13. v0.2.0 대비 변화 목록 재대조: `v0.2.0`과 `$sha`에서 각각 exported 선언(`go doc -all`), 각 하위 명령의 `-h`, `src/contracts/*.json`의 schema 문자열을 추출해 비교하고 위 "공개 API·CLI·schema 변화(v0.2.0 대비)" 절과 [공개 API 문서](../specs/public-go-api.md)를 갱신한다. `go doc -all`은 package별로 따로 저장해 package 단위로 비교한다. 합쳐서 비교하면 `kit.TreeNode`·`kit.Point`·`kit.EditPoints`가 `nativewire`의 같은 struct에 대한 alias가 된 변화가 `nativewire`의 같은 이름 선언에 가려진다. 재현 가능한 단일 명령이 없어 수동 대조다. (도구 실행 약 10초, 판독은 수동으로 10~30분 추정)
+
+**14·15 입력 준비.** 입력은 저장소에 없다. 입력은 v0.2.0 tag의 binary로 생성한다.
+
+- binary: `git archive --format=tar -o "$work/v020.tar" v0.2.0`를 `$work/v020`에 풀고, 거기서 위와 같은 환경으로 `go build -o "$work/tsgk-v020" ./src/cmd/tsgk`를 한다. 후보 binary는 `$sha`의 export(16번)에서 같은 방식으로 `$work/tsgk-cand`를 만든다.
+- fixture: `v0.2.0` tag의 `src/testdata/native/plain/src/parser.c`(50,994 bytes)와 `src/testdata/native/plain/src/tree_sitter/{parser,alloc,array}.h`를 `$work/in/root/src/parser.c`와 `$work/in/root/src/tree_sitter/`로 복사한다. `$work/in/root/cases/one.txt`는 `a = f(1, [2, 3]);`와 `{ b = "s"; }` 두 줄(각 줄 끝 LF, 31 bytes)이다.
+- profile 두 개는 `v0.2.0` tag의 `src/contracts/examples/incremental-r2.json` 형식을 따르며 아래를 공통으로 가진다: `id` `cli-plain`, `route` `owned-plain`, `symbol` `tree_sitter_tsgk_plain`, `encoding` `UTF-8`, `output` `tree`, `compiler`(`name` `cc`, 쓸 gcc의 `sha256`·`bytes`), `grammar`(위 파서와 헤더 세 파일의 `path`·`role`(`parser`·`header`)·`sha256`·`bytes`), case `one`(`input` `cases/one.txt` role `case`, edit 하나: `start_byte` 4, `old_end_byte` 5, `new_end_byte` 5, `old` `Zg==`, `new` `Zw==`, `points` `[]`).
+  - `incremental`: `schema` `tsgk-incremental/r2`, `operation` `native-parse-edit`, `declarations` `{"mapping":"owned-r1","items":[{"fact":"type_declaration","node":"assignment","name":"field:name"}]}`, case `expect` `[{"step":1,"syntax":"NO_ERROR","contains":["call"],"declarations":"PASS"}]`.
+  - `oracle record`: `schema` `tsgk-oracle/r2`, `operation` `native-query`, `declarations` `null`, `queries` `[{"id":"q1","source":"(assignment) @a"}]`, `fact_pack` `null`, `api` `true`, case의 `expect`·`query_expect` `[]`, `dynamic_sql_expect` `null`. `queries`만 `[]`로 바꾼 변형은 v0.2.0이 exit 4(`JSON_NULL manifest#/queries`), `$sha`가 exit 0이 기대 결과이며 위 "수정 사항"의 확인이다.
+- 14번 replay 입력은 v0.2.0 binary가 15번 방식으로 낸 `incremental` 결과(`result.json`, `responses/`)와 `oracle record` set(`manifest.json`, `records/`, `raw/`)에 profile을 그대로 복사한 `workload.json`을 더한 디렉터리다. `--profile`에는 `tsgk-replay/r1` 등록 파일(`v0.2.0` tag의 `src/contracts/examples/replay-r1.json` 형식)을 준다. `members`는 각 파일의 `path`·`bytes`·`sha256`(role은 `workload-profile`과 `result`·`response`, 또는 `manifest`·`record`·`raw`)이고, `identities`는 result나 manifest가 이미 담은 workload·policy·producer·executable·compiler·runtime 값이다. reducer는 `native-result-r1`·`native-result-r2`와 `oracle-set-r1`·`oracle-set-r2`다. 등록 파일은 이 값들에서 일회용 script로 만들며 저장소에 두지 않는다.
+- 같은 목록의 나머지 14번 입력은 작은 합성 JSON이다. `bs-gate-compare-r1`은 `recorded/`와 `recomputed/`의 gate 파일 한 쌍(같은 PASS, 그리고 recomputed만 FAIL), `evidence verify`는 `tsgk-evidence/r1` graph와 `tsgk-evidence-policy/r1` policy(정상, 그리고 raw 한 파일의 내용을 바꾼 변조본)다. `v0.2.0` tag의 `src/contracts/examples/`의 예시와 `invalid/` 파일도 빈 root에 대해 두 binary로 실행한다.
+
+14. **v0.2.0 evidence set 재생.** 위 입력(v0.2.0 binary로 만든 기록)을 v0.2.0 binary와 `$sha`의 `tsgk replay`·`tsgk evidence verify`로 각각 재생해 결과와 오류 code, exit를 두 버전끼리 비교해 기록한다. 거부되거나 결과가 다르면 위 호환성 깨짐 목록에 항목을 더한다. **후보 `aca5385`에서 실측 완료(판정·exit·schema·findings 동일, counter·gate 목록 차이는 위 7번), 최종 후보에서 재확인.** (재생 약 1초, 입력 준비 시간은 포함하지 않는다)
+15. **native 경로의 두 버전 실행 비교.** 위 입력으로 v0.2.0 binary와 `$sha` binary의 `incremental`·`oracle record`를 새 flag 없이 `--root "$work/in/root" --profile <profile> --work <새 디렉터리> --out <새 디렉터리> --runtime <그 binary가 pin한 runtime source> --tool cc=<gcc> --allow BUILD_NATIVE --allow EXEC_NATIVE --run-wall 30`으로 실행해 결과를 비교한다. 같지 않으면 원인과 영향을 기록하고 위 목록에 더한다. 승인된 native capability와 host compiler가 필요하고, 컴파일·native 실행은 승인된 자원 한도 안에서 한 번에 하나만 실행한다. 이 확인은 각 binary가 pin한 runtime source를 따로 준비해야 한다(위 "사용자 안내"; `$sha`의 pin은 `src/drivers/native-c/runtime-manifest.json`이다). **후보 `aca5385`에서 실측 완료(판정·raw 응답 동일, 차이는 runtime pin 관련 값), 최종 후보에서 재확인.** (실행 한 번에 약 7초, 네 번이면 약 30초. runtime 준비 시간은 포함하지 않는다)
 
 **E. source export·설치·LICENSE/NOTICE**
 
-16. 새 빈 디렉터리에 `git archive --format=tar -o "$work/export.tar" $sha`로 export하고 풀어(부모에 `.git`이 없는 위치) 파일 수·bytes를 기록한다. `git ls-tree -r $sha`의 경로·blob SHA와 export 각 파일의 `git hash-object`를 비교하고, 금지 확장자(`.exe .dll .so .dylib .a .o .obj .lib .pdb .wasm .node`)가 없는지 확인한다.
-17. export 안에서 `GOPROXY=off`로 `go test ./src/internal/foundation -run '^(TestRepositoryFiles|TestSourceOnlyDoesNotDiscoverParentGit)$' -count=1`, `go vet ./src/...`, `go build ./src/...`.
-18. 설치: export에서 `GOBIN=$work/bin`으로 `go install ./src/cmd/tsgk` 뒤 `PATH` 없이 설치된 binary의 `--help`와 fixture 하나에 대한 `inspect`를 실행한다.
-19. LICENSE/NOTICE: `LICENSE`, `src/dev/prepare-p05/fixtures/LICENSE.mssql`, `src/kit/data/NOTICE-index-euc-kr.md`, `src/testdata/native/samples/NOTICE.md`의 SHA-256이 `$sha`의 blob 및 직전 release의 고정 bytes와 같은지 대조하고, 새 dependency·upstream license 변화가 없는지 `go.mod`·`go.sum` diff와 [provenance](../provenance/upstream-sources.md)를 본다. 자동 시험: `go test ./src/internal/foundation -run '^TestSampleNotices$' -count=1`.
+16. 새 빈 디렉터리 `$work`에 `git archive --format=tar -o "$work/export.tar" $sha`로 export하고, 별도 디렉터리 `$work/src`에 풀어(부모에 `.git`이 없는 위치) 파일 수·bytes는 `$work/src`만 세어 기록한다(`export.tar`를 같은 디렉터리에 풀면 합계에 섞인다). `git ls-tree -r $sha`의 경로·blob SHA와 `$work/src`의 각 파일을 `git hash-object --no-filters --stdin-paths`(경로 목록은 `git ls-tree -r`에서 뽑아 `$work/src`에서 실행)로 비교한다. 저장소의 `.gitattributes`가 `* text=auto eol=lf`이고 `core.autocrlf`가 켜져 있을 수 있어 필터를 끈다. 금지 확장자(`.exe .dll .so .dylib .a .o .obj .lib .pdb .wasm .node`)가 없는지도 확인한다. (약 2초)
+17. export(`$work/src`) 안에서 `GOPROXY=off`로 `go test ./src/internal/foundation -run '^(TestRepositoryFiles|TestSourceOnlyDoesNotDiscoverParentGit)$' -count=1`, `go vet ./src/...`, `go build ./src/...`. (약 12초)
+18. 설치: export에서 `GOBIN=$work/bin`으로 `go install ./src/cmd/tsgk` 뒤 설치된 binary를 `PATH` 없이 실행한다. bash의 `env -i`는 `SystemRoot`가 없어 쓰지 않는다. `pwsh -NoProfile -File <script>`에서 `$env:PATH = ''`로 비운 뒤 절대 경로로 실행하는 script를 쓴다(전역 환경은 바꾸지 않는다). 기대 결과는 다음과 같다. 루트에는 `--help`·`-h`·`help`가 없다(v0.2.0 binary도 `--help`에 `UNKNOWN_COMMAND`·exit 2다). 인자 없는 실행은 `USAGE`와 exit 2이고, `inspect --root src/testdata/native/plain`(export 안의 경로)은 exit 0, `execution_status` `COMPLETED`, `assessment` `NOT_ASSESSED`, finding `METADATA_ABSENT`다. `src/testdata/ordinary-json`은 `UNKNOWN_LAYOUT` warning만 내므로 이 확인에 쓰지 않는다. (약 3초)
+19. LICENSE/NOTICE: `LICENSE`, `src/dev/prepare-p05/fixtures/LICENSE.mssql`, `src/kit/data/NOTICE-index-euc-kr.md`, `src/testdata/native/samples/NOTICE.md`의 SHA-256이 `$sha`의 blob 및 직전 release의 고정 bytes와 같은지 대조하고, 새 dependency·upstream license 변화가 없는지 `go.mod`·`go.sum` diff와 [provenance](../provenance/upstream-sources.md)를 본다. 자동 시험: `go test ./src/internal/foundation -run '^TestSampleNotices$' -count=1`. (약 2초)
 
 **F. 필수 CI·fan-in·actual main**
 
