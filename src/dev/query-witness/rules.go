@@ -116,7 +116,7 @@ func buildRules(in *inputs) (ruleLedger, error) {
 			row.Exceptions.State = "UNASSESSED"
 			row.Exceptions.Items = []string{}
 			if r.Route == "json" && q.ID == "q.structure" {
-				row.Rule = "JSON_OBJECT_MEMBERS/r1: RFC 8259 §4의 object member를 byte 순서로 방문한다. array 값의 key string 전체(따옴표 포함)는 pattern0/array_key, object 값은 pattern1/object_key, string 값은 pattern2/key 다음 value로 선택한다. 각 pattern의 match_index는 발견 순서, capture_index는 key=0/value=1이다. 중첩 member도 방문하고 결과는 start_byte 순서다. Go encoding/json Token·InputOffset으로 원문의 span을 계산하며 중복 key·escape·Unicode 원문을 보존한다. Tree-sitter pair의 key/value와 string/array/object mapping은 고정 query 선언 및 route grammar pin에 연결한다."
+				row.Rule = "JSON_OBJECT_MEMBERS/r1: RFC 8259 §4의 object member를 byte 순서로 방문한다. array 값의 key string 전체(따옴표 포함)는 pattern0/array_key, object 값은 pattern1/object_key, string 값은 pattern2/key 다음 value로 선택한다. match_index는 pattern을 가리지 않고 start_byte 순서로 처음 관측한 match에 query 전체 순번을 매기고, capture_index는 고정 query의 capture 이름 선언 순서(array_key=0, object_key=1, key=2, value=3)다. 중첩 member도 방문하고 결과는 start_byte 순서다. Go encoding/json Token·InputOffset으로 원문의 span을 계산하며 중복 key·escape·Unicode 원문을 보존한다. Tree-sitter pair의 key/value와 string/array/object mapping은 고정 query 선언 및 route grammar pin에 연결한다."
 				row.Automation = "IMPLEMENTED_VALID_JSON_SUBSET"
 				row.Scope = "ORDERED_CAPTURE_SPANS_ONLY; max 65536 bytes/depth64; comments·multiple roots·malformed/recovery·full CST/API·compiled metadata·fact는 미지원이며 후속 예외 처분 필요"
 				row.Exceptions.State = "PARTIAL_MAPPING"

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"unicode/utf8"
 )
@@ -98,5 +99,19 @@ func jsonExpect(source []byte) ([]jsonCapture, error) {
 		return nil, fmt.Errorf("JSON trailing input: %v", err)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].StartByte < out[j].StartByte })
+	// Like the runtime cursor and the reference, number matches query-wide in first-observed capture order,
+	// and index captures by the fixed query's capture-name declaration order.
+	global := map[[2]int]int{}
+	for i := range out {
+		key := [2]int{out[i].Pattern, out[i].Match}
+		if _, ok := global[key]; !ok {
+			global[key] = len(global)
+		}
+		out[i].Match = global[key]
+		out[i].Capture = slices.Index(jsonQueryCaptureNames, out[i].Name)
+	}
 	return out, nil
 }
+
+// jsonQueryCaptureNames is the capture-name order of the fixed JSON route query.
+var jsonQueryCaptureNames = []string{"array_key", "object_key", "key", "value"}
