@@ -296,7 +296,6 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 			recordCountByCase[mem.CaseOrBatch]++
 		}
 	}
-	caseBatches := map[string]string{}
 	type frameBinding struct {
 		owner string
 		index int
@@ -312,10 +311,9 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 		}
 		batchOwners[batch.Owner] = true
 		for _, c := range batch.Cases {
-			if !caseSet[c] || caseBatches[c] != "" {
+			if !caseSet[c] {
 				add("ORDINARY_BATCH_CASE", batch.Capture.Path)
 			}
-			caseBatches[c] = batch.Owner
 		}
 		capMember, found := memberByPath[batch.Capture.Path]
 		if !found || capMember.Owner != batch.Owner || capMember.CaseOrBatch != batch.Owner || capMember.Role != batch.Capture.Role || !ordinaryReplayPinMatches(capMember, batch.Capture) {
@@ -340,6 +338,10 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 			add("ORDINARY_BATCH_OWNER", batch.Capture.Path)
 		}
 		for j, frame := range capture.Frames {
+			// A NOT_SENT tail moves to a later process; only one SENT/ANSWERED frame owns a case.
+			if prev, seen := frameByCase[frame.Case]; seen && (prev.state != "NOT_SENT" || prev.owner == batch.Owner) {
+				add("ORDINARY_BATCH_CASE", batch.Capture.Path)
+			}
 			frameByCase[frame.Case] = frameBinding{owner: batch.Owner, index: j, state: frame.State}
 			if frame.Index != j || frame.Case != batch.Cases[j] || frame.State != "ANSWERED" && frame.State != "SENT" && frame.State != "NOT_SENT" {
 				add("ORDINARY_BATCH_FRAME", batch.Capture.Path)
@@ -457,10 +459,10 @@ func verifyOrdinaryOracleSet(fsys fs.FS, manifestBytes []byte) OracleSetReport {
 					continue
 				}
 				fb, exists := frameByCase[rec.Case]
-				if !exists || caseBatches[rec.Case] != fb.owner || transport.Batch < 0 || transport.Batch >= len(manifest.Batches) || manifest.Batches[transport.Batch].Owner != fb.owner || transport.Frame != fb.index || transport.State != fb.state || transport.State == "NOT_SENT" {
+				if !exists || transport.Batch < 0 || transport.Batch >= len(manifest.Batches) || manifest.Batches[transport.Batch].Owner != fb.owner || transport.Frame != fb.index || transport.State != fb.state || transport.State == "NOT_SENT" {
 					add("ORDINARY_RECORD_TRANSPORT", mem.Path)
 				}
-				owner := caseBatches[rec.Case]
+				owner := fb.owner
 				captureMember, ok := memberByPath[rec.QuerySemantics.Capture.Path]
 				if !ok || owner == "" || captureMember.Owner != owner || captureMember.Role != "native-batch-capture" || !ordinaryReplayPinMatches(captureMember, *rec.QuerySemantics.Capture) {
 					add("ORDINARY_RECORD_CAPTURE", mem.Path)
