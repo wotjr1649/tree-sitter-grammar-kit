@@ -240,6 +240,12 @@ K4 work 절감 검증은 동일한26 route의 변경 전후 work/logical/read와
 
 `CGO_ENABLED=0`으로 gofmt·영향 시험·kit 전체·foundation 전체(`TestNoHardcodedToolVersions` 포함)·`go vet ./src/...`를 실행한다. 역사 자료 결속 PASS는 새 Rust/runtime/Oracle의 실제 자격 검증이나 full eligibility·semantic PASS가 아니다. V2-B의 stdout/tool/receipt/catalogue와 V2-C/D의 전체 전달 검증은 이 단계에서 미구현이다.
 
+## #370 V2-B1 historical reference 검증
+
+[직접 opt-in 계약](../specs/query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)의 `TestEligibilityPinsProductionIndependence`는 old approval/build/control/stdout/catalogue를 고정하고, 다른 Rust tuple·controller 원문·upstream commit·catalogue를 가진 B/C 생산 후보를 선택한 뒤 old 결과 전체가 같고 새 승인 tuple도 통과하는지 확인한다. 합성 tuple은 실제 새 Rust release의 자격 관측이 아니다. `TestEligibilityPinsCatalogueObligations`는 네 분모 축소·필수 invocation 삭제·known-rule/ID/한도/response/input 변조를 거부한다. 고정 의무 대조를 제거한 overlay mutant는 축소 위조 leaf에서 지정 assertion으로 FAIL이어야 한다.
+
+`TestEligibilityPinsForgery`는 외부 승인 불일치·재해시·sidecar 재사용·다른 subject·catalogue 치환·rustc/cargo 혼합·중복 release·접미사·input/receipt/tool/source/vendor 및 응답 upstream 결속·미지원/형식/누락을 검사한다. `TestEligibilityPinsSharedBudget`는 pin resolver가 상속 원장을 새로 시작하지 않는지 확인한다. `TestEligibilityPinsTruncatedFindingsPreserveFailure`는 경고1,000개 뒤 finding 상한 때문에 nested FAIL의 상세가 잘려도 바깥 FAIL이 유지되는지 확인한다. `TestEligibilityPinsEarlyResults`는 초기 오류 응답의 schema를, `TestEligibilityPinsReaderIdentity`는 고정 reader 의무 원문 digest를 보존한다. 기존 kit 및 foundation 전체와 `CGO_ENABLED=0 go vet ./src/...`를 유지한다. Python/workflow·classification donor·semantic/replay 통합은 이 분할의 완료 범위 밖이다.
+
 ## #216 TSQL8 source 준비 검증
 
 [TSQL8 사전 기대값과 binary paging 연결](../specs/instrumented-query-reference.md#tsql-8개-정의의-binary-paging-분류-준비)을 따른다. Native의 `TestQueryClassificationTSQL8StaticProfile`, `TestQueryClassificationTSQL8AnchorGuards`, `TestQueryClassificationTSQL8GrammarGuards`, `TestQueryClassificationTSQL8EmptyStderrCaptureMember`는 닫힌 이름·일반6+fact2의 원문/순서/SHA/metadata·빈 CST/ABI·grammar5개와 parser5 parts를 고정한다. kit의 `TestQueryClassificationTSQL8DefinitionBindings`, `TestQueryClassificationTSQL8ProfileAndPagedContext`, `TestQueryClassificationTSQL8ClosedNames`, `TestQueryClassificationTSQL8StderrBinding`은 두 원문 envelope·fact route 유일성/순서·2982 tree roles/23856 potential links·compiler argv/limits·다른 family/context·null/alias·live session 없는 projection을 검사한다.

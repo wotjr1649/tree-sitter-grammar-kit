@@ -161,18 +161,25 @@ func SelectEvidenceProductionPin(ctx context.Context, selection, pinSet []byte) 
 // ResolveEvidencePins binds selected historical bytes to caller-approved digests and
 // one original subject. It performs no catalogue, runtime, Roslyn or replay evaluation.
 func ResolveEvidencePins(ctx context.Context, req EvidencePinsRequest) (res EvidencePinsResult, resultErr error) {
-	res = EvidencePinsResult{Report: newReport("evidence pins"), ResultSchema: EvidencePinResultSchema,
-		Reader: EvidencePinReader, Scope: EvidencePinScope, Materials: []EvidencePinMaterial{}}
 	r, e := startRun(ctx, ReplayOperations()["evidence-replay"].Wall)
 	if e != nil {
+		res = EvidencePinsResult{Report: newReport("evidence pins"), ResultSchema: EvidencePinResultSchema,
+			Reader: EvidencePinReader, Scope: EvidencePinScope, Materials: []EvidencePinMaterial{}}
 		failReport(&res.Report, e)
 		return res, e
 	}
 	defer r.cancel()
-	b := &eligibilityBudget{r: r}
+	return resolveEvidencePins(req, &eligibilityBudget{r: r})
+}
+
+func resolveEvidencePins(req EvidencePinsRequest, b *eligibilityBudget) (res EvidencePinsResult, resultErr error) {
+	res = EvidencePinsResult{Report: newReport("evidence pins"), ResultSchema: EvidencePinResultSchema,
+		Reader: EvidencePinReader, Scope: EvidencePinScope, Materials: []EvidencePinMaterial{}}
+	r := b.r
+	read, work, logical := r.totalRead, b.work, b.logical
 	res.EvidenceMode, res.Assessment = ModeReplayedRaw, AssessPass
 	defer func() {
-		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead, b.work, b.logical
+		res.BytesRead, res.Work, res.LogicalBytes = r.totalRead-read, b.work-work, b.logical-logical
 		if resultErr != nil {
 			known := res.Assessment == AssessFail
 			failReport(&res.Report, asError(resultErr))

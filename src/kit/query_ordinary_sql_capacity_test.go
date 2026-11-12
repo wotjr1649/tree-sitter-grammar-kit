@@ -788,7 +788,12 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 			if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
 				t.Fatalf("%s: an independently authored tuple FAILED against the native r8: %+v", route, result)
 			}
-			if run.AssetBodies != 0 && verifyErr == nil {
+			// A route with independently authored expected assets must finish with every required tuple VERIFIED;
+			// a capacity stop is a failure here, not a measurement.
+			if run.AssetBodies != 0 && verifyErr != nil {
+				t.Fatalf("%s did not finish: err=%v capacity=%s stop_boundary=%s rejected=%v verified=%d/%d", route, verifyErr, run.Capacity, run.LastStage, run.LastRejected, result.Tuple.Verified, result.Tuple.Required)
+			}
+			if run.AssetBodies != 0 {
 				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessPass || result.Semantic != AssessPass || result.Assessment != AssessPass || result.Tuple.Required == 0 ||
 					result.Tuple.Failed != 0 || result.Tuple.Verified != result.Tuple.Required || result.Tuple.Blocked != 0 {
 					t.Fatalf("%s body adjudication did not finish with a recomputed base PASS: %+v", route, result)

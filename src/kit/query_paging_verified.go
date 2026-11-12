@@ -171,7 +171,9 @@ func (p *verifiedPaging) part(s *eligibilitySession, pin eligibilityMember, reco
 		part.size != pin.Member.Bytes || part.sha256 != pin.Member.SHA256 || part.chain == nil && uint64(len(part.content)) != part.size {
 		return nil, false, false, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Member.Path, nil)
 	}
-	if part.chain != nil && (part.content != nil || part.ordinal < 0 || part.ordinal >= len(part.chain.pins) || part.chain.pins[part.ordinal] != pin.Member || part.chain.next != len(part.chain.pins)) {
+	if part.chain != nil && (part.content != nil || part.ordinal < 0 || part.ordinal >= len(part.chain.pins) || part.chain.pins[part.ordinal] != pin.Member || part.ordinal >= part.chain.next || part.chain.next > len(part.chain.pins)) {
+		// A chain cut short by a later part's file failure still serves the parts it verified; that later
+		// part is rejected by its own pin check, and chainSum refuses any incomplete chain.
 		return nil, false, false, fail(KindInvalidInput, "ELIGIBILITY_PAGING_IDENTITY", pin.Member.Path, nil)
 	}
 	return part, true, false, nil

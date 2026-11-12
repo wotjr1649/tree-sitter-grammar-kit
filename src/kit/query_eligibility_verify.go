@@ -34,6 +34,7 @@ type eligibilitySession struct {
 	approval                          eligibilityApproval
 	reg                               eligibilityRegistration
 	witness                           eligibilityWitness
+	referenceTuple                    *eligibilityReferenceTuple
 	catalogue                         eligibilityCatalogue
 	snapshot                          *evidenceSnapshot
 	cohorts                           map[string]eligibilityCohort
@@ -104,6 +105,9 @@ func verifyQueryReferenceEligibilityInRun(ctx context.Context, req QueryReferenc
 func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req QueryReferenceEligibilityRequest, scope *eligibilityScope, opts *runOptions) (res QueryReferenceEligibilityResult, resultErr error) {
 	res = QueryReferenceEligibilityResult{Report: newReport("query reference eligibility"), ResultSchema: QueryReferenceEligibilityResultSchema,
 		Build: QueryEligibilityCounts{Required: 9, Unprocessed: 9}, Unit: QueryEligibilityCounts{Required: 4, Unprocessed: 4}, Control: QueryEligibilityCounts{Required: 53, Unprocessed: 53}, Assertion: QueryEligibilityCounts{Required: 36, Unprocessed: 36}}
+	if req.Pins != nil {
+		res.ResultSchema = QueryReferenceEligibilityPinsResultSchema
+	}
 	var r *run
 	if scope != nil {
 		r = scope.r
@@ -201,14 +205,16 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 		res.Tuple.Required = uint64(len(s.witness.Required))
 		res.Tuple.Unprocessed = res.Tuple.Required
 	}
-	if e := b.charge(4, uint64(len(req.Approval)+len(req.Registration)+len(req.WitnessRegistration)+len(eligibilityCatalogueJSON)), "caller-digests"); e != nil {
+	if e := s.referencePins(req); e != nil {
+		return res, e
+	}
+	if req.Pins != nil && (res.Pins == nil || res.Pins.Assessment != AssessPass || !s.bound) {
+		return res, nil
+	}
+	if e := b.charge(3, uint64(len(req.Approval)+len(req.Registration)+len(req.WitnessRegistration)), "caller-digests"); e != nil {
 		return res, e
 	}
 	res.ApprovalSHA256, res.RegistrationSHA256, res.WitnessSHA256 = digestHex(req.Approval), digestHex(req.Registration), digestHex(req.WitnessRegistration)
-	res.CatalogueSHA256 = digestHex([]byte(eligibilityCatalogueJSON))
-	if e := b.decode("catalogue", []byte(eligibilityCatalogueJSON), &s.catalogue, true); e != nil {
-		return res, e
-	}
 	if e := s.validate(req); e != nil {
 		return res, e
 	}

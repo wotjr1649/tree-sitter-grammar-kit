@@ -14,7 +14,7 @@ The current implementation consists of repository foundation checks, the Session
 | OS/arch/capabilities | [platform](specs/platform-support.md) |
 | Structure, dependencies, state transitions | [architecture](design/architecture.md), [decision record](design/decisions/0001-core-and-execution.md) |
 | Pinned external references and license observations | [provenance](provenance/upstream-sources.md) |
-| #370 V2-A 역사 자료 보존·외부 승인 pin resolver와 단일 생산 후보 선택 | [pin 입력 계약](specs/query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력), [공개 API](specs/public-go-api.md) |
+| #370 V2-A 자료 보존·pin resolver·생산 후보 선택과 V2-B1 직접 historical reference 검증 | [pin 입력·소비 계약](specs/query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증), [공개 API](specs/public-go-api.md) |
 | Generator reproduction routes, tool digests | [reproduction registry](../src/contracts/reproduction-routes.json) |
 | Checks, review, merge | [validation](validation/validation.md), [workload](validation/workload-matrix.md) |
 | Required syntax routes, feature scope, source feasibility | [language/feature scope](validation/language-feature-scope.md), [disposition](validation/language-feature-disposition.md), [production alternatives](../src/contracts/feature-alternatives.json), [source risks](validation/source-feature-feasibility.md) |

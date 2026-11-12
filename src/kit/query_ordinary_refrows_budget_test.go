@@ -126,7 +126,7 @@ func TestOrdinaryReferenceRowAccounting(t *testing.T) {
 			var work, logical uint64
 			alloc := refRowAlloc(func() {
 				b = ordinaryTestBudget(t)
-				decodeReferenceResponseRow(c.data, obs, strings.Repeat("0", 64), "tree_sitter_x", query, true, [][]byte{c.source}, b.r, true)
+				decodeReferenceResponseRow(c.data, obs, strings.Repeat("0", 64), "tree_sitter_x", instrumentedReferenceCommit, query, true, [][]byte{c.source}, b.r, true)
 				work, logical = b.work, b.logical
 			})
 			if logical < alloc {
@@ -177,8 +177,8 @@ func TestReferenceRowSharedDecodeUnchanged(t *testing.T) {
 	obs := QueryReferenceObservation{Query: "q", SourceBytes: uint64(len(source)), SourceSHA256: digestHex(source)}
 	query := QueryWitnessQuery{ID: "q", Source: "(program) @c"}
 	shared, ordinary := ordinaryTestBudget(t), ordinaryTestBudget(t)
-	got, code, _, e := decodeReferenceResponseBound(data, obs, strings.Repeat("0", 64), "tree_sitter_x", query, true, [][]byte{source}, shared.r)
-	want, wantCode, _, wantErr := decodeReferenceResponseRow(data, obs, strings.Repeat("0", 64), "tree_sitter_x", query, true, [][]byte{source}, ordinary.r, true)
+	got, code, _, e := decodeReferenceResponseBound(data, obs, strings.Repeat("0", 64), "tree_sitter_x", instrumentedReferenceCommit, query, true, [][]byte{source}, shared.r)
+	want, wantCode, _, wantErr := decodeReferenceResponseRow(data, obs, strings.Repeat("0", 64), "tree_sitter_x", instrumentedReferenceCommit, query, true, [][]byte{source}, ordinary.r, true)
 	if e != nil || wantErr != nil || code != "" || wantCode != "" || got == nil || want == nil || len(got.Tree.Nodes) != len(want.Tree.Nodes) {
 		t.Fatalf("shared %v %q, ordinary %v %q", e, code, wantErr, wantCode)
 	}
@@ -240,7 +240,7 @@ func TestOrdinaryReferenceRowsAccountingSQL(t *testing.T) {
 			alloc := refRowAlloc(func() {
 				b := ordinaryTestBudget(t)
 				var e *Error
-				_, code, _, e = decodeReferenceResponseRow(ref.Response, obs, librarySHA, profile.Native.Symbol, query, true, [][]byte{versions[ref.Step]}, b.r, true)
+				_, code, _, e = decodeReferenceResponseRow(ref.Response, obs, librarySHA, profile.Native.Symbol, instrumentedReferenceCommit, query, true, [][]byte{versions[ref.Step]}, b.r, true)
 				if e != nil {
 					t.Fatal(e)
 				}

@@ -162,7 +162,14 @@ func (s *eligibilitySession) verifyBuild() *Error {
 				}
 			}
 			for _, name := range []string{"rustc", "cargo"} {
-				if pinned, e := s.pinnedRelease(identity.Versions[name]); e != nil {
+				expected := "1.97.1"
+				if s.referenceTuple != nil {
+					expected = s.referenceTuple.RustcRelease
+					if name == "cargo" {
+						expected = s.referenceTuple.CargoRelease
+					}
+				}
+				if pinned, e := s.pinnedRelease(identity.Versions[name], expected); e != nil {
 					return e
 				} else if !pinned {
 					s.finding("ELIGIBILITY_TOOL_VERSION", name, true)
@@ -323,7 +330,7 @@ func (s *eligibilitySession) verifyBuild() *Error {
 	return nil
 }
 
-func (s *eligibilitySession) pinnedRelease(text string) (bool, *Error) {
+func (s *eligibilitySession) pinnedRelease(text, expected string) (bool, *Error) {
 	if e := s.b.charge(uint64(len(text))+1, 8*uint64(len(text)), "pinned-version-scan"); e != nil {
 		return false, e
 	}
@@ -341,7 +348,7 @@ func (s *eligibilitySession) pinnedRelease(text string) (bool, *Error) {
 			releases = append(releases, strings.TrimSpace(v))
 		}
 	}
-	return slices.Equal(releases, []string{"1.97.1"}), nil
+	return slices.Equal(releases, []string{expected}), nil
 }
 
 func (s *eligibilitySession) unitSet(stdout []byte) (bool, *Error) {

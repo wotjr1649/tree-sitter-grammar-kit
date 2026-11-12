@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -279,12 +282,20 @@ func TestJSONIndependentEdges(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []jsonCapture{
-		{"key", "string", "\"λ\"", 2, 6, 2, 0, 0},
-		{"value", "string", "\"가\\n\\\"\"", 7, 16, 2, 0, 1},
-		{"array_key", "string", "\"λ\"", 17, 21, 0, 0, 0},
-		{"object_key", "string", "\"x\"", 25, 28, 1, 0, 0},
-		{"key", "string", "\"x\"", 30, 33, 2, 1, 0},
-		{"value", "string", "\"y\"", 34, 37, 2, 1, 1},
+		{"key", "string", "\"λ\"", 2, 6, 2, 0, 2},
+		{"value", "string", "\"가\\n\\\"\"", 7, 16, 2, 0, 3},
+		{"array_key", "string", "\"λ\"", 17, 21, 0, 1, 0},
+		{"object_key", "string", "\"x\"", 25, 28, 1, 2, 1},
+		{"key", "string", "\"x\"", 30, 33, 2, 3, 2},
+		{"value", "string", "\"y\"", 34, 37, 2, 3, 3},
+	}
+	// Matches are numbered query-wide in first-observed order, as the reference and native driver do.
+	mixed, err := jsonExpect([]byte(`{"a":[],"b":"x"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(mixed) != 3 || mixed[0].Match != 0 || mixed[1].Match != 1 || mixed[2].Match != 1 || mixed[1].Capture != 2 || mixed[2].Capture != 3 {
+		t.Fatalf("query-wide match/capture indices: %+v", mixed)
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("independent Unicode/duplicate/nested spans\ngot  %+v\nwant %+v", got, want)
@@ -299,5 +310,21 @@ func TestJSONIndependentEdges(t *testing.T) {
 		if _, err := jsonExpect([]byte(source)); err == nil {
 			t.Fatal("unsupported/malformed JSON accepted")
 		}
+	}
+}
+
+func TestJSONCaptureIndexFollowsQueryDeclaration(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "native", "queries", "json.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, m := range regexp.MustCompile(`@([a-z_]+)`).FindAllStringSubmatch(string(data), -1) {
+		if !slices.Contains(names, m[1]) {
+			names = append(names, m[1])
+		}
+	}
+	if !slices.Equal(names, jsonQueryCaptureNames) {
+		t.Fatalf("JSON query capture declaration order %v, rule uses %v", names, jsonQueryCaptureNames)
 	}
 }

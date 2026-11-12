@@ -4,7 +4,7 @@
 
 ## #370 역사 자료 pin의 실험적 offline 진입점
 
-별도 실험적 `ResolveEvidencePins`·`SelectEvidenceProductionPin`과 `EvidencePinsRequest`·`EvidencePinsResult`·`EvidencePinMaterial`은 [#370 V2-A pin 계약](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)을 따른다. 독립 승인한 두 raw digest와 원문 bytes를 받아 `historical-materials` 결속만 평가하며 기존 fixed-runtime API의 동작은 유지한다. Caller deadline·입력 불변성·소유권·strict decode·오류·예산은 같은 절이 소유한다. CLI/replay/qualification과 Rust/runtime 의미 검증으로의 전달은 후속 구현 범위다.
+별도 실험적 `ResolveEvidencePins`·`SelectEvidenceProductionPin`과 `EvidencePinsRequest`·`EvidencePinsResult`·`EvidencePinMaterial`은 [#370 V2-A pin 계약](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)을 따른다. 독립 승인한 두 raw digest와 원문 bytes를 받아 `historical-materials` 결속만 평가하며 기존 fixed-runtime API의 동작은 유지한다. Caller deadline·입력 불변성·소유권·strict decode·오류·예산은 같은 절이 소유한다. 직접 `VerifyQueryReferenceEligibility`의 선택적 `Pins *EvidencePinsRequest`와 r2 결과는 [V2-B1 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. Subject는 이 호출의 eligibility Approval 원문이며 고정 reader 의무·exact Rust tuple과 기존 closure를 함께 검사한다. 입력 map/slice는 호출 동안 caller가 변경하지 않으며 반환 결과는 입력 원문을 소유하지 않는다. CLI/replay/qualification·semantic과 runtime 전체 전달은 후속 구현 범위다.
 
 ## #197 logger 관측의 offline validator
 
