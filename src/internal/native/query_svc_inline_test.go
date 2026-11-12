@@ -17,12 +17,18 @@ import (
 // against the sealed independent expectation. The scope fold of the whole SVC69 denominator is
 // logged. BLOCKED fragments are never run for a verdict and never become VERIFIED.
 func TestNativeSvcInlineRealGrammar(t *testing.T) {
-	rt, cc, grammarRoot := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC"), os.Getenv("TSGK_SVC_CSHARP_GRAMMAR")
-	if rt == "" || cc == "" || grammarRoot == "" {
+	// The prepared C# grammar is not tracked, so this run is opt-in even under TSGK_NATIVE_REQUIRED=1;
+	// a set but mismatching grammar still fails against the registered closure below.
+	grammarRoot := os.Getenv("TSGK_SVC_CSHARP_GRAMMAR")
+	if grammarRoot == "" {
+		t.Skip("set TSGK_SVC_CSHARP_GRAMMAR to the prepared registered C# grammar directory to run the SVC inline native regression (the grammar is not tracked)")
+	}
+	rt, cc := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC")
+	if rt == "" || cc == "" {
 		if os.Getenv("TSGK_NATIVE_REQUIRED") == "1" {
-			t.Fatal("required native runtime, compiler or registered C# grammar absent")
+			t.Fatal("TSGK_SVC_CSHARP_GRAMMAR is set but the required native runtime or compiler is absent")
 		}
-		t.Skip("native runtime, compiler or registered C# grammar not configured")
+		t.Skip("native runtime or compiler not configured")
 	}
 	read := func(name string) []byte {
 		data, err := os.ReadFile("../../" + name)

@@ -69,6 +69,7 @@ func ordinaryFullPosSwapReferences(t *testing.T, refs []ordinaryE2EReference, ca
 // TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase records two zero-edit JSON shards in one owned-native run
 // from tracked files only and requires the API, the r9 replay and `tsgk replay` to agree on 2/2 VERIFIED.
 func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
+	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryFullPosNativeSetup(t)
 	grammarRoot := ordinaryFullPosGrammarRoot(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -103,6 +104,7 @@ func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
 // steps 1..3), all expected from the grammar. It checks 14/14 VERIFIED through the API, the r9 replay and
 // `tsgk replay`, then the version-order, step and case counterexamples.
 func TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase(t *testing.T) {
+	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryFullPosNativeSetup(t)
 	grammarRoot := ordinaryFullPosGrammarRoot(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -174,6 +176,7 @@ func ordinaryFullPosSelect(t *testing.T, req OrdinaryQuerySemanticsRequest, chan
 // cases in registration order and the selected shard IDs in plan order, bound by ID, and the public API, the
 // r9 replay and `tsgk replay` must agree on 8/8 VERIFIED.
 func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
+	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryFullPosNativeSetup(t)
 	grammarRoot := ordinaryFullPosGrammarRoot(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)

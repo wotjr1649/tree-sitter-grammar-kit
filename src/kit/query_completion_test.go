@@ -3,6 +3,7 @@ package kit
 import (
 	jsonv2 "encoding/json/v2"
 	"errors"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -534,9 +535,27 @@ func TestQueryCompletionRejectsForgedScopeResults(t *testing.T) {
 			return f.request(seal(r))
 		}},
 	}
-	for _, c := range forges {
-		t.Run(c.name, func(t *testing.T) {
+	// Each forge re-derives the whole registry through the public fold, so the folds run concurrently
+	// on values passed per call (the forges share no mutable state); the checks below stay per forge.
+	type folded struct {
+		res QueryCompletionResult
+		err error
+	}
+	results := make([]folded, len(forges))
+	slots := make(chan struct{}, runtime.NumCPU())
+	var wg sync.WaitGroup
+	for i, c := range forges {
+		wg.Go(func() {
+			slots <- struct{}{}
+			defer func() { <-slots }()
 			res, err := FoldQueryCompletion(c.build())
+			results[i] = folded{res, err}
+		})
+	}
+	wg.Wait()
+	for i, c := range forges {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := results[i].res, results[i].err
 			if err == nil || faninCode(t, err) != c.code {
 				t.Fatalf("code %v, want %s", err, c.code)
 			}
