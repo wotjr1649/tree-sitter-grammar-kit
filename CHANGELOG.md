@@ -1,5 +1,9 @@
 # 변경 기록
 
+## Unreleased
+
+- C# 선언 지원 범위의 의무 원장과 offline verifier(Refs #233, G1-1): 별도 추적 계약 `src/contracts/csharp-g1-ledger-r1.json`(`tsgk-csharp-g1-ledger/r1`)이 `csharp` route의 15행 × 필수 kind 의무 65개 → production·fact 대안 1,531개 → 사례 389개·step → 사례가 이미 등록한 기대 node type을 저장소 선언만으로 펼친다. 대안마다 정적 패턴의 존재 확인(`LITERAL_MATCH` 825·`LITERAL_ABSENT` 0·`UNVERIFIED_PRESENCE` 706)과 매핑 밖 선언 구문 11종(모두 선언한 범위 안), 선언 node 20종, C# 추가 역할을 담고 모든 의무는 `NO_EXPECTED`다. `kit.DeriveCSharpG1Ledger`·`ParseCSharpG1Ledger`는 asset이 유도 결과와 정확히 같음을 요구하며 누락·중복·순서·pin·상태 변조를 거부한다. 기대값·Roslyn 관측·실행 근거 대조는 이후 단계다. 지원 범위, claim, release 문서와 한도는 바꾸지 않았다.
+
 ## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
 
 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim-초안)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행할 예정이며 binary와 package는 없다. 발행은 사용자 승인 뒤에만 한다.

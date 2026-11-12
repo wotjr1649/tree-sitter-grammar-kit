@@ -1,5 +1,14 @@
 # Validation and merge contract
 
+## #233 G1-1 C# 의무 원장 검증
+
+- 계약: [원장 계약](../specs/csharp-g1-ledger.md). 원장은 정적 목록이며 native·Roslyn·`dotnet`을 실행하지 않고 기대값을 만들지 않는다.
+- `kit` 시험(native 없음): `TestCSharpG1LedgerSealedAndBound`는 추적 asset의 크기·SHA-256을 고정하고 15행·65 의무·대안 1,531(production 1,425·fact 106)·사례 389·사례 연결 2,937·사례 없는 대안 0을 확인하며 대안 목록이 inventory 행의 목록과 순서까지 같고 모든 의무·대안이 `NO_EXPECTED`임을 확인한다. `TestCSharpG1LedgerEvidenceOffsets`는 `LITERAL_MATCH` 대안의 evidence offset에 패턴 literal이 fixture 원문에 실제로 있음을 유도 코드와 별개로 확인한다. `TestG1RequiredLiterals`·`TestG1Subsequence`는 패턴 추출(선택 literal·괄호·`\uXXXX`·거부 형태)과 식별자 경계·순서를 고정한다.
+- 반례: `TestCSharpG1LedgerForgeries`는 대안의 누락·중복·추가·교환, 사례 연결·presence·literal 변조, `SEALED`·`EXECUTED` 상태, 행·kind·분모 축소, 사례·선언·구문·역할 변조, pin(경로·bytes·SHA)·schema·집계 변조와 알 수 없는 member·잘린 JSON·공백 변경·크기 초과를 정해진 code로 거부한다. `TestCSharpG1LedgerSourceTampering`은 원본 파일 bytes 변경(`G1_LEDGER_PIN`), fixture 누락, 대안 id 불일치, 같은 길이의 사례 원문 변조를 거부한다.
+- mutant: pin·상태·행·대안 목록·중복·순서·bytes·사례·선언 비교, 알 수 없는 member 허용, 크기 상한, fact 대안 누락, 식별자 경계, 선택 literal 필수화, `\uXXXX` 해석, 사례 SHA·대안 목록 검사를 각각 끈 mutant 17개가 모두 시험으로 검출된다.
+- `go run ./src/dev/csharp-g1-ledger -root .`는 추적 asset이 유도 결과와 같음을 확인한다.
+- 아직 검증하지 않는 것: 대안별 기대값(G1-2 이후), `LITERAL_MATCH`의 구문 정확성, Roslyn 관측.
+
 ## #362 scope별 fan-in·completion gate 검증 (범위 7)
 
 - `kit` 시험(native 없음, 실제 P0 registry·SVC asset 사용): `TestQueryCompletionDenominatorsAreDerivedFromTheRegistry`는 분모를 registry와 SVC asset에서 유도한 값(ordinary 53,104/host, predicate 20+47/host, SVC 509/host 일곱 종류, large 3+1 windows)과 미등록 scope 하나로 고정한다. `TestQueryCompletionAbsentScopesAreBlockedNotZero`는 결과가 전혀 없을 때 전체 107,399가 BLOCKED(`QUERY_SCOPE_RESULT_ABSENT`)이고 host별 53,719/53,680임을 확인한다. `TestQueryCompletionFoldsRealScopeResults`는 ordinary shard·predicate·SVC 결과를 합쳐 scope·host·전체의 합산식과 저장 결과의 재판독을 확인한다. `TestQueryCompletionFailPreemptsAndKeepsTheFirstCode`는 FAIL 우선과 다른 scope의 결함 뒤에도 최초 code 보존을 확인한다.
