@@ -7,6 +7,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"io"
+	"math/bits"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -73,6 +74,7 @@ type eligibilityBudget struct {
 	work, logical  uint64
 	logicalLimit   uint64 // 0 means eligibilityLogicalLimit; set once by the owning eligibility verify
 	err            *Error
+	unmetered      bool // Standalone witness decoding has no shared eligibility ledger.
 }
 
 func (b *eligibilityBudget) logicalCap() uint64 {
@@ -88,6 +90,9 @@ func (b *eligibilityBudget) charge(work, logical uint64, at string) *Error {
 	}
 	if e := b.r.check(); e != nil {
 		return e
+	}
+	if b.unmetered {
+		return nil
 	}
 	if work > eligibilityWorkLimit-b.work || logical > b.logicalCap()-b.logical {
 		b.err = fail(KindResourceLimit, "ELIGIBILITY_WORK_LIMIT", at, nil)
@@ -315,6 +320,14 @@ func (b *eligibilityBudget) significantJSONBytes(data []byte) (uint64, *Error) {
 
 // Token preflight reserves decoder/error buffers first, then AST and typed containers before any AST pass.
 func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) *Error {
+	return b.reserveJSONContainers(doc, data, passes, 448)
+}
+
+func (b *eligibilityBudget) reserveJSONContainers(doc string, data []byte, passes, perValue uint64) *Error {
+	return b.reserveJSONContainersVisit(doc, data, passes, perValue, nil)
+}
+
+func (b *eligibilityBudget) reserveJSONContainersVisit(doc string, data []byte, passes, perValue uint64, visit func(*jsontext.Decoder, jsontext.Token, int, bool)) *Error {
 	if b == nil {
 		return nil
 	}
@@ -344,7 +357,8 @@ func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) 
 		if e := b.r.check(); e != nil {
 			return e
 		}
-		kind, count := dec.StackIndex(dec.StackDepth())
+		depth := dec.StackDepth()
+		kind, count := dec.StackIndex(depth)
 		if dec.StackDepth() == 0 && count > 0 {
 			if _, err := dec.ReadToken(); err == io.EOF {
 				break
@@ -360,18 +374,25 @@ func (b *eligibilityBudget) reserveJSON(doc string, data []byte, passes uint64) 
 			if values > 2000000 {
 				return fail(KindResourceLimit, "JSON_VALUE_LIMIT", doc, nil)
 			}
-			// 448 covers one jv, geometric child/key growth, and subsequent typed containers.
-			if e := b.charge(1, 448, doc); e != nil {
+			// The caller reserves either AST + typed containers or only typed containers.
+			if e := b.charge(1, perValue, doc); e != nil {
 				return e
 			}
 			if (peek == '{' || peek == '[') && dec.StackDepth() >= jsonMaxDepth {
 				return fail(KindResourceLimit, "JSON_DEPTH_LIMIT", doc, nil)
 			}
 		}
-		if _, err := dec.ReadToken(); err == io.EOF {
+		token, err := dec.ReadToken()
+		if err == io.EOF {
 			break
 		} else if err != nil {
 			return jsonError(doc, "", err)
+		}
+		if visit != nil && depth <= 1 {
+			if e := b.charge(1, 0, doc); e != nil {
+				return e
+			}
+			visit(dec, token, depth, name)
 		}
 	}
 	work, e := eligibilityProduct(doc, values, passes)
@@ -389,12 +410,28 @@ func (b *eligibilityBudget) reserveGraph(nodes []EvidenceNode, pol evidencePolic
 	if b == nil {
 		return nil
 	}
-	var edges, fields uint64
+	var edges, fields, sorts, pairs, carries, replayFiles uint64
+	indexBytes, e := eligibilityProduct("graph-bound", 512, 1+uint64(len(nodes))+uint64(len(pol.CarryForward)))
+	if e != nil {
+		return e
+	}
+	if e := b.charge(0, indexBytes, "graph-bound"); e != nil {
+		return e
+	}
+	runCounts := map[[3]string]uint64{}
+	ruleCounts := map[string]uint64{}
+	for _, rule := range pol.CarryForward {
+		if e := b.charge(1, 0, "graph-bound"); e != nil {
+			return e
+		}
+		ruleCounts[rule.Node]++
+	}
 	for _, n := range nodes {
 		if e := b.charge(1, 0, "graph-bound"); e != nil {
 			return e
 		}
 		edges += uint64(len(n.Refs) + len(n.Files) + len(n.Identities))
+		sorts += uint64(len(n.Identities)) * uint64(bits.Len(uint(len(n.Identities))))
 		fields += uint64(len(n.ID) + len(n.Kind) + len(n.ExecutionStatus) + len(n.EvidenceMode) + len(n.Assessment) + len(n.RecordedAssessment))
 		for k, v := range n.Identities {
 			fields += uint64(len(k) + len(v))
@@ -402,21 +439,48 @@ func (b *eligibilityBudget) reserveGraph(nodes []EvidenceNode, pol evidencePolic
 		for _, f := range n.Files {
 			fields += uint64(len(f.Path) + len(f.Role) + len(f.SHA256))
 		}
-		for _, r := range n.Refs {
-			fields += uint64(len(r.Relation) + len(r.Node))
+		for _, ref := range n.Refs {
+			fields += uint64(len(ref.Relation) + len(ref.Node))
+			if ref.Relation == "carries" {
+				carries += ruleCounts[n.ID]
+			}
+			if ref.Relation == "subject" {
+				replayFiles += uint64(len(n.Files))
+			}
+		}
+		if n.Kind != "replay" && n.Kind != "carry" {
+			key := evidenceRunIdentity(&n)
+			if e := b.charge(16*uint64(len(key[0])+len(key[1])+len(key[2])), 0, "graph-bound"); e != nil {
+				return e
+			}
+			pairs += runCounts[key]
+			runCounts[key]++
 		}
 	}
 	n := uint64(len(nodes))
-	// Includes all pair comparisons, per-root cycle walks, carry rules and owner scans.
-	work, e := eligibilityProduct("graph-bound", 64, n+1, n+edges+uint64(len(pol.Required)+len(pol.CarryForward))+1)
+	rules := uint64(len(pol.Required) + len(pol.CarryForward))
+	policyVisits := uint64(0)
+	for _, req := range pol.Required {
+		policyVisits += uint64(len(req.Identities)) * (1 + uint64(bits.Len(uint(len(req.Identities)))))
+	}
+	if el := pol.Eligibility; el != nil {
+		policyVisits += uint64(len(el.Nodes)) * (1 + uint64(len(el.Modes)))
+	}
+	// Indexed walks are linear except sorting and required duplicate/rule findings.
+	work, e := eligibilityProduct("graph-bound", 64, 1+n+edges+rules+sorts+n*uint64(bits.Len(uint(len(nodes))))+policyVisits+pairs+carries+replayFiles)
 	if e != nil {
 		return e
 	}
-	logical, e := eligibilityProduct("graph-bound", fields+1, n+uint64(len(pol.Required)+len(pol.CarryForward))+1)
+	logical, e := eligibilityProduct("graph-bound", fields+1, n+rules+1)
 	if e != nil {
 		return e
 	}
-	return b.charge(work, logical, "graph-bound")
+	// Keep the previous string reservation and cover the new indexes and reverse edges.
+	extra, e := eligibilityProduct("graph-bound", 512, edges+uint64(len(pol.Required)))
+	if e != nil {
+		return e
+	}
+	return b.charge(work, logical+extra, "graph-bound")
 }
 
 func (b *eligibilityBudget) reserveReference(ref *instrumentedReference, versions [][]byte) *Error {

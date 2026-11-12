@@ -2,6 +2,16 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
+- Reference row의 strict preflight에서 head를 같은 typed 결과에 수집하고 full typed decode를 한 번만 수행한다(Refs #362 B5(b)). 기존 non-exact head·schema·FAILED exact/full 오류 순서를 저장 fixture·변이·잘림 차등 시험으로 보존하며, 중복 head decode 예약을 제거하고 실제 head 관찰·상태 비용은 계상한다. Receipt r2와 producer의 별도 stdout pin, capture span 예약 및 ordinary 전체 수용은 남았다.
+
+- Reference·expected·witness와 reference receipt r1·failure/footer를 기존 strict streaming typed decoder로 옮겼다(Refs #362 B4). Pointer-null·nullable/optional·non-exact projection 및 FAILED head/full의 오류 우선순위를 기존 AST와 차등 검사하며, reference 좌표 검증의 source byte 순회 예약 누락을 보완했다. Wire schema·공개 API·한도를 유지하며 receipt r2·row 단일 decode(B5)와 ordinary 전체 수용은 후속 범위다.
+
+- Evidence graph의 run all-pairs 대조를 세 필드 identity index로, owner별 cycle 재순회를 공유 DFS·역방향 도달성 memo로, carry 전체 규칙 scan을 node별 index로 바꿨다(Refs #362). 기존 finding 순서·첫 실패를 차등 시험으로 보존하며 실제 순회와 중복 결과 수에 맞춘 상한을 계상한다. 새 index의 logical 비용도 추가하고 한도·공개 API를 유지한다.
+
+- Native response의 두 offline 소비 경로를 strict streaming typed decoder로 옮겨 중간 AST와 중복 JSON 예약을 제거했다(Refs #362 B1). Nullable/optional/조건부 필드·오류 우선순위와 Check 순회 예약을 차등 시험으로 고정했다. Receipt/row B5와 ordinary 전체 capacity는 후속 범위다.
+
+- Source/vendor snapshot을 AST 없는 strict streaming shape 검사와 typed decode로 읽어 중간 AST·행별 reflection 표 생성을 없앴다(Refs #362). 기존 엄격성·행별 검증·한도와 1,280 B/row 예약을 유지하며 logical/work 절감을 differential·변이·보존 SQL core 측정으로 확인한다.
+
 - V2-E에서 legacy Rust release·runtime ABI/closure·logger allowlist의 코드 고정값을 `src/contracts/evidence-pins/`의 검토된 기본 승인 집합으로 옮겼다. 기본 승인은 `repository-default`로 구분하며 `RepositoryEvidenceDefaults()`가 정확한 provenance를 별도로 반환한다. 기존 판정·counter·schema·fixture와 logger 전용 과거 scope를 보존하고 생산 선택과 독립적으로 소비한다. `reuseobs.RuntimeManifestSHA256`는 deprecated snapshot 변수로 바뀌므로 compile-time constant 사용자는 `DefaultRuntimeManifest()`로 이행해야 한다. Refs #370.
 
 - V2-D에서 Roslyn 기대값 생성의 현재 release 비교를 승인 observation/cases/tuple 결속으로 바꿨다. 보존 5.9/r2와 기존 inventory는 유지하고, 새 r3 producer는 build SDK identity와 실제 oracle/Roslyn DLL SHA를 기록한다. 미보존 legacy SDK/DLL provenance는 BLOCKED다. Standalone replay·qualification의 외부 pin admission은 기존 bounded inline 규칙을 공유한다. 기존 nil API·schema·한도와 원본 증거를 보존한다. Refs #370.

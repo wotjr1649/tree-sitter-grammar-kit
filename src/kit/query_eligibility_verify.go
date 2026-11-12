@@ -188,7 +188,7 @@ func verifyQueryReferenceEligibilityInRunWithOptions(ctx context.Context, req Qu
 	if e := b.decode("registration", req.Registration, &s.reg, true); e != nil {
 		return res, e
 	}
-	if e := b.decode("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
+	if e := b.decodeWitnessTyped("witness-registration", req.WitnessRegistration, &s.witness, true); e != nil {
 		return res, e
 	}
 	if _, e := validateQueryWitnessRegistration(s.witness.QueryWitnessRegistration, queryEligibilityWitnessSchema); e != nil {

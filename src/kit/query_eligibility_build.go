@@ -36,7 +36,7 @@ func (s *eligibilitySession) snapshotRows(pin *eligibilityMember) (map[string]el
 		return nil, false, nil
 	}
 	var rows map[string]eligibilitySnapshotRow
-	if e := s.b.decode(pin.Member.Path, data, &rows, true); e != nil {
+	if e := s.b.decodeTyped(pin.Member.Path, data, &rows); e != nil {
 		return nil, false, e
 	}
 	good := true
