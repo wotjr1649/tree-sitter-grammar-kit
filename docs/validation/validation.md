@@ -636,6 +636,12 @@ SVC 추가 경계 회귀는 실제 native fault로 BLOCKED→FAIL·FAIL→BLOCKE
 
 `TestQuerySlotGoDefinitionLinks`는 기존 원장 생성 검사를 재사용해 Go3 anchor의 세 ID가 ordinary `go/s06-go`에 각각 한 번씩 연결되고 정확한 query 원문·hash와 source file이 일치하는지 확인한다. 다른 route·ID, 누락·중복, 한쪽 원문과 hash를 함께 바꾼 자료, hash만 바꾼 자료를 거부한다. 검사는 추적된 정의의 정적 연결이며 [역사적 Windows 관측](../reports/issue-216-go3-classification.md)의 미추적 raw·caller 승인·runtime metadata를 CI에서 재검증하는 경로가 아니다. 기존 수동 plan·guard 검사와 원장의 UNVERIFIED·미확정 semantic 분모를 유지한다.
 
+## #362 P1 원문 복원·독립 기대 규칙 검증
+
+`CGO_ENABLED=0 go test ./src/dev/query-witness -count=1 -timeout 120s`는 고정 registry selector에서 원문3,201·edit1,852·step5,053·tree role6,905, 내장154/복원3,047, 고유 초기3,008/version3,963/query-source31,337을 전수 검사한다. 기존 `ApplyEdits` 결과를 별도 byte splice·hash·길이·편집 순서·LF point 계산과 비교하고 Base64 export 왕복에서 원문 bytes를 보존한다. Source1-byte 변경, edit 순서 교환과 원래 case 누락을 거부한다. 실제 fixture를 변이해 시험의 실패를 확인할 때에는 원래 bytes를 보존하고 종료 후 그대로 복원한다. 기존 원본 qualification·slot·P0 registry는 재생성하지 않는다.
+
+`TestExpectationRuleLedger`는 130 query의 exact 순서/ID·원문/hash·grammar basis·규칙/예외/검토 상태와 추적 골격의 결정적 재현을 검사한다. JSON 독립 규칙은 기존 수작업 anchor13개의 ordered name/type/text와 일치해야 하며 Unicode·escape·중복 key·중첩 span/pattern/match/capture, 명시적 빈 결과, malformed·comment·multiple-root·크기/깊이 초과 반례도 검사한다. 이 검사는 reference·kit 결과를 golden으로 만들지 않는다. 129 pending 규칙·JSON 미지원 source·전체 CST/API/metadata/fact/12-field captures·독립 승인과 실제 두 OS 의미 검증은 완료로 세지 않는다. `go vet ./src/...`, 영향 dev package 및 P0 foundation registry 검사를 함께 실행한다. 전체 foundation 실행에서 실제 Git 쓰기를 하는 `TestConditionalRemoteDeletion`은 Git 쓰기 금지 작업에서는 제외하고 보고한다.
+
 ## #362 query semantic registry P0 정적 검증
 
 Foundation `TestQuerySemanticRegistry`는 고정 `qualification-c1.json` r8 및 `query-slot-inventory-r1.json` 원문 pin, 전체26 route의 case/query/step/tree_role 전개, Windows/Linux host pair, predicate20개/host, control47개/host, large 정상 workload3개와 자원 제한 control1개를 r8에서 다시 전개해 확인한다. 8개 extra role은 운영 `ExtraRoles()` 결과를 slot 원문과 대조하며, positive 20개의 source/query 원문은 현재 ID로만 고정한다(원문 대조는 후속 기대값 등록에서 한다). Exact coordinate 총계는 ordinary106,208, predicate40, control94, large4로106,346개다. Known large의 `LARGE_WORKLOAD_POSITIVE`·`LARGE_WORKLOAD_CONTROL` 행은 등록되지만 node/occurrence/page/footer 세부 분모는 미등록으로 남는다. Count만 같고 route·case·query·step·tree role·host·large workload가 바뀐 자료, 원본 pin·source selector 치환, 중복·미지 member, 필수 필드 누락, 잘못된 null/shape와 zero required를 거부한다. `semantic_required:null`은 원래 query-slot/r1에서 그대로 유지한다.
