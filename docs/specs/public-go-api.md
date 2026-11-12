@@ -20,6 +20,8 @@ P2-A의 ordinary 계획 helper는 `src/kit`에서 제공한다: `ParseOrdinaryPr
 
 P2-C shard selection은 현재 public surface를 늘리지 않는다. Source-only `src/dev/query-ordinary-plan -commitment-dir`는 full-plan 검증 이후 `tsgk-query-ordinary-plan-commitment/r1`과 ordered per-shard proofs를 caller가 새 경로에 내보내는 개발 도구다. Merkle builder는 `src/internal/ordinarycommit`에 있고 kit는 offline closure를 위해 private matching verifier를 둔다. 이 serialization helper나 developer flag는 semantic admission API가 아니다. Full plan 및 commitment의 caller pins는 향후 private ordinary approval identity에서 함께 묶이며 r8/r2의 `shard_plan_pin` wire 의미는 변하지 않는다.
 
+#362 범위 3의 predicate scope helper는 `src/kit`에서 제공한다: `ParsePredicateExpected`(`PredicateExpected`, `PredicateExpectedTuple`), `PredicateExpectedTuple.Registration`, `VerifyPredicateTuple`, `CheckPredicateControl`(`PredicateControlOutcome`), `FoldPredicateScope`(`PredicateScopeCoverage`, `PredicateScopeCounter`). 입력은 caller bytes와 저장된 native raw·projection뿐이며 process를 시작하지 않는다. `VerifyPredicateTuple`은 기존 `VerifyQueryWitness` 재계산과 독립 full CST 대조를 함께 요구하고 `Evaluated=1`이 아니면 FAIL이다. `FoldPredicateScope`는 predicate scope만의 host별 집계이며 P0 root `Fold`와 합산하지 않는다. 결과의 `FullScopeComplete`는 항상 false다. 실험적 surface이며 ordinary(r9) replay 경로와는 아직 연결되지 않는다.
+
 ### #362 P2-C ordinary public API readiness
 
 P2-C 통합에서 `VerifyOrdinaryQuerySemantics`와 아래 request/result 타입을 추가했다. 이 offline API는 caller bytes만 읽고 process를 시작하지 않는다. 실행 profile, planning profile, ordinary registration, asset registration, plan commitment 및 선택 proofs, fixed P0 registry/inventory/slot bytes, run-binding/reference-selection, evidence root와 eligibility approval을 입력으로 받는다. Input pins는 approval의 strict `ordinary` block 및 r8/r2와 대조된다. Evidence members와 expected assets는 그 승인된 root·graph snapshot에서만 읽는다.

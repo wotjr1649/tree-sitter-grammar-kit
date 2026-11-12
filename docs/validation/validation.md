@@ -1,5 +1,12 @@
 # Validation and merge contract
 
+## #362 predicate 의미 의무·거부 정책 검증 (범위 3)
+
+- `kit` 시험(native 없음): `TestPredicateExpectedAssetBindsRegistryAndRoster`는 asset의 bytes·SHA-256과 registry 결속, 20 ID 순서를 고정한다. `TestPredicateExpectedRejectsForgeries`는 의무 삭제·순서 교환·중복·source/query 치환·`null`(evaluated·structural·metadata)·빈 predicate로의 재분류(`STRUCTURAL_ONLY`)·match 분할·모르는 capture 이름·잘못된 CST·registry 변경·unknown member를 거부한다. `TestPredicateControlRowsRejectForgedOutcomes`는 47행 각각에 대해 status PASS 전환·code 변경·`EVALUATED` 전환·partial 반전·`null`→`[]`·stream 채택·structural 손실이 모두 거부됨을 확인한다. `TestPredicateScopeFold…`는 Windows 20+47 VERIFIED, Linux 20+47 BLOCKED, 삭제 시 UNPROCESSED, 미등록·중복·좌표 교체·subject 재분류·code 없는 FAILED/VERIFIED 거부를 확인한다.
+- `src/internal/native` 시험(실제 owned native, `TSGK_NATIVE_REQUIRED=1`): `TestNativePredicateScopeEvaluatedTuples`는 20 tuple을 plain grammar로 실제 실행해 `VerifyPredicateTuple`이 모두 PASS(`Evaluated=1`)임을, 47행을 host evaluator(`queryOuts`)로 실행해 registry 행과 일치함을, 그리고 `FoldPredicateScope`가 이 host 67 VERIFIED·다른 host 67 BLOCKED임을 확인한다. `TestNativePredicateScopeForgeries`는 실제 raw·projection에 대해 EVALUATED→STRUCTURAL 위조, 빈 predicate 등록, 위조 CST, 반대 evaluated 기대값, evaluated `null`, structural `null`→`[]`, 다른 tuple의 source, 구조 전용 query의 predicate tuple 위장이 모두 VERIFIED가 되지 않음을 확인한다.
+- 의도적 mutant(`Evaluated != 1` 검사·CST 비교·control `null` 검사·fold의 positive subject 검사·evaluated match 부분열 검사 제거)는 각각 위 시험이 실패한다. 이 asset과 registry는 이 시험이 쓰기 전에 고정한다. 시험은 asset을 다시 생성하지 않는다.
+- 아직 검증하지 않는 것: Linux 실행, reference 독립 실행과 reference 대조, r9 replay·`tsgk replay` 경유, 외부 승인·current cohort. Predicate 의무를 ordinary r9 reducer가 받도록 넓히는 일은 새 predicate 지원이 아니라 별도 등록 계약이며 이 범위에 포함하지 않는다.
+
 ## #362 P2-D ordinary stored result·replay parity
 
 R9 wrapper 최적화는 같은 owned-native r8와 synthetic approval/reference fixture에서 API→r9→CLI 의미·원장 parity 및 개선 전후 wrapper 원장을 고정한다. Label별 charge와 file:line을 test-only overlay로 수집하고 member identity의 실제 비교 byte·merge 이동·복사/해시·slice/builder capacity를 별도로 세어 `계상 >= 실제`를 assert한다. Verified pin 재사용 뒤에도 실제 file hash가 남아야 하며, 그 검사까지 없앤 mutant는 member/outer identity를 함께 위조한 반례에서 실패해야 한다. 최종 outer seal의 출력 한도 반례와 builder 사전 확보 제거 mutant도 검사한다. 기존 evidence·한도·reducer 의미를 바꾸지 않으며, SQL 입력 단계에 남은 wrapper 비용을 더한 진단값을 full-pass capacity로 부르지 않는다.

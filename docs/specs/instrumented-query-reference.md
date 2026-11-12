@@ -384,6 +384,31 @@ Coverage fold는 caller가 제출한 adjudicated state만 집계하며 각 typed
 
 P0 registry가 유효해도 독립 기대 자료, 실행 관측, 승인, replay 및 SVC/large 전수 하위 원장이 갖춰지지 않았으므로 `full_scope_complete=false`다. P0 fold는 모든 adjudicated row가 VERIFIED여도 이를 true로 바꾸지 않는다. 이는 #362 전체 완료, r9/r10 승격, release gate, runtime 예산, producer/reducer, CLI 또는 workflow 활성화를 뜻하지 않는다. 전체 완료는 모든 필수 집합의 exact membership, positive·control 검증, 현재 cohort·승인·저장 재계산, SVC/large 전수성 및 미완료 상태 0을 별도 확인한 뒤에만 가능하다.
 
+## #362 predicate 의미 의무와 거부 정책 (범위 3)
+
+P0 registry의 `predicate` 목록은 Windows/Linux 각각 67행이다. 앞 20행이 `PREDICATE_REQUIRED`(host당 20, 합계 40)이고 뒤 47행이 `EXPECTED_REJECTION`(host당 47, 합계 94)이다. 좌표는 `route=owned-plain`, `role=predicate-probe`, `set=predicate/r1`, `case=<행 ID>`, `query=q0`, `step=0`, `tree_role=incremental`이다. 대상은 `eq?`, `not-eq?`, `any-of?`, `not-any-of?` 네 predicate뿐이며 새 predicate·regex·directive·quantifier 지원은 추가하지 않는다. P0 registry 파일(82,475 B, SHA-256 `91e8475f…2a06c`)과 그 ID는 바꾸지 않는다.
+
+세 분류는 서로 섞지 않는다.
+
+- `STRUCTURAL_ONLY`는 compiled metadata의 `predicates`가 명시적 `[]`인 ordinary 의무다. `EVALUATED`는 predicate가 있는 query가 `COMPLETED`로 평가되어 evaluated stream(없으면 `[]`)을 낸 결과다. 둘은 서로의 근거가 될 수 없다. Ordinary 등록은 `Kind != STRUCTURAL_ONLY`(`src/kit/query_ordinary.go:394`)와 nonempty predicate(`query_ordinary_adjudicate.go:250`, `ORDINARY_STRUCTURAL_PREDICATES`)를 거부하므로 r9 ordinary 경로는 이 20 tuple을 받지 않는다. 이 범위는 별도의 typed 경로다.
+- 예상 거부 47행은 positive PASS를 채우지 않는다. 각 행은 등록된 `status`·`code`·`evaluation`·`partial`과 evaluated stream `null`(또는 `PRESERVED_STRUCTURAL`), structural stream 보존 여부를 정확히 만족해야 VERIFIED다. `null`을 `[]`로 바꾸거나 거부를 `COMPLETED`/`EVALUATED`로 바꾸면 거부된다.
+
+**독립 expected.** [`query-predicate-expected-r1.json`](../../src/contracts/query-predicate-expected-r1.json)(80,893 B, SHA-256 `b08e2d23454eed94e4527128d7772e01b294f317b1cb3574acc977edbdebf8f4`)은 20 tuple의 compiled metadata, 전체 CST, structural stream, evaluated stream을 담는다. 이 값은 plain grammar(`grammar.json`, 5,325 B, SHA-256 `4a90e2460dc31312361a0fc0cc6e86fc28dd98afe710715b3ca8d538d9efbf17`)의 규칙과 네 predicate의 정의에서 손으로 도출했으며 native·reference·kit 출력을 읽지 않았다. native 첫 실행 전에 이 SHA를 봉인했다. Predicate는 query.c가 평가하지 않는다. C runtime은 pattern별 predicate step 목록만 만들고(`lib/src/query.c`의 `ts_query__parse_predicate`, pattern 단위 slice) 평가는 binding이 한다. 평가 규칙은 match 단위다: 한 match의 모든 predicate가 참이면 그 match의 capture가 모두 남고, 아니면 모두 빠진다. Match 번호는 다시 매기지 않으며, 다른 pattern의 match는 영향받지 않는다(`pattern-isolation`). Source가 비어 있으면 둘 다 `[]`다(`evaluated-empty`). 이 값은 두 신규 제안(`pattern-isolation`, `evaluated-empty`)을 제외하고 기존 `check.py`의 수작업 anchor와 일치한다.
+
+| ID | source → 구조 stream / evaluated stream |
+|---|---|
+| `eq-0/1`, `not-eq-0/1`, `any-of-0/1`, `not-any-of-0/1` | `x;`/`y;` 두 입력. match 1개. evaluated는 predicate 참일 때만 그 match |
+| `capture-pair-0/1` (`#eq? @x @x`) | 항상 참. 두 입력 모두 evaluated = structural |
+| `multiple-0/1` | `eq? "x"`와 `not-eq? "z"` 모두 참일 때만 유지 |
+| `two-captures-kept/rejected` | 한 node에 `@x @y` 두 capture. 참이면 둘 다, 거짓이면 둘 다 빠진다 |
+| `distinct-captures-{eq,not-eq}-{equal,different}` | 두 statement의 `@x`·`@y` 비교. match 1개(capture 2개) |
+| `pattern-isolation` | pattern 0(`#eq? @x "z"`)은 탈락, pattern 1(`(number) @n`)은 유지. structural 2, evaluated 1(match 번호 1) |
+| `evaluated-empty` | 빈 source. structural `[]`, evaluated `[]`(완료된 빈 stream, `null` 아님) |
+
+**검증.** `kit.ParsePredicateExpected`는 asset을 P0 registry의 정확한 bytes와 고정 roster에 결속한다(registry pin, 20 ID와 순서, source·query·encoding 일치, `null` 거부, 빈 predicate 거부, evaluated가 structural의 완전한 match 부분열인지). `kit.VerifyPredicateTuple`은 저장된 native raw·projection을 기존 `VerifyQueryWitness`로 재계산해 독립 structural·evaluated stream과 대조하고, 독립 full CST를 별도로 비교하며, `Evaluated`가 정확히 1이어야 한다(구조 전용 query는 `PREDICATE_TUPLE_NOT_EVALUATED`). `kit.CheckPredicateControl`은 47행 각각의 정확한 거부를 확인한다. `kit.FoldPredicateScope`는 registry에서 predicate 40·거부 94 좌표를 다시 전개해 host별 `required = verified + failed + blocked + unprocessed`를 유지하며, 삭제·중복·미등록 ID와 positive의 subject 재분류, 거부 행의 PASS 전환을 거부한다. 이 fold는 P0 root의 `INCOMPLETE`·`full_scope_complete=false`를 바꾸지 않는다.
+
+**현재 실행 범위.** Windows host의 20 tuple은 실제 owned native(plain grammar)로 실행해 20/20 VERIFIED이고 47행은 host policy evaluator로 47/47 VERIFIED다. Linux 몫(20+47)은 등록만 되어 있고 실행 결과가 없으므로 BLOCKED다. Reference 독립 실행, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
+
 ## #362 ordinary 사전 등록과 capacity plan P2-A
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
