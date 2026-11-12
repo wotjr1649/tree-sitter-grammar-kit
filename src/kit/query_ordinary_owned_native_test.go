@@ -15,7 +15,8 @@ func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
 	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryNativeTools(t)
 	fixtureDir := filepath.Join(t.TempDir(), "fixture")
-	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryOwnedFixture", "", ordinaryOwnedNativeEnv(fixtureDir)); err != nil {
+	cacheDir := t.TempDir() // empty: the producer run is a build cache miss
+	if output, err := ordinaryRunNativeFixture(t, "TestOracleOrdinaryOwnedFixture", "", ordinaryOwnedNativeEnv(fixtureDir, cacheDir)); err != nil {
 		t.Fatalf("native owned r8 producer failed: %v\n%s", err, output)
 	}
 	var producer struct {
@@ -41,6 +42,14 @@ func TestOrdinaryOwnedNativeR8ReaderExpectedVerified(t *testing.T) {
 	}
 	if manifest.Schema != OracleOrdinaryManifestSchema || manifest.Assessment != AssessBlocked || !manifest.Complete || len(manifest.Cases) != 1 {
 		t.Fatalf("producer r8 is not a complete pending set: assessment=%s complete=%t cases=%v", manifest.Assessment, manifest.Complete, manifest.Cases)
+	}
+	buildJSON, err := os.ReadFile(filepath.Join(setDir, "capture", "build.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var produced semanticBuildDescription
+	if err := json.Unmarshal(buildJSON, &produced); err != nil || produced.Reuse == nil || produced.Reuse.Hit || len(produced.Reuse.SourceSteps) != 0 || len(produced.Steps) == 0 {
+		t.Fatalf("producer did not record a build cache miss: err=%v reuse=%+v steps=%d", err, produced.Reuse, len(produced.Steps))
 	}
 	fixture := newOwnedNativeReaderFixture(t, setDir, manifest, manifestBytes, producer.RunBinding, profile)
 	set, e := fixture.b.ordinaryGuardedSet(fixture.root, fixture.s, fixture.registration, fixture.profile, fixture.manifest, fixture.runBinding)
@@ -140,10 +149,11 @@ func ordinaryOwnedExpected(id ordinaryTupleIdentity, source []byte) (ordinaryExp
 
 func stringField(value string) *string { return &value }
 
-func ordinaryOwnedNativeEnv(dir string) []string {
+func ordinaryOwnedNativeEnv(dir, cache string) []string {
 	values := map[string]string{
-		"TSGK_ORDINARY_OWNED_FIXTURE": dir,
-		"TSGK_NATIVE_REQUIRED":        "1", // the tools are inherited as given
+		"TSGK_ORDINARY_OWNED_FIXTURE":     dir,
+		"TSGK_ORDINARY_OWNED_BUILD_CACHE": cache,
+		"TSGK_NATIVE_REQUIRED":            "1", // the tools are inherited as given
 	}
 	env := make([]string, 0, len(os.Environ())+len(values))
 	for _, entry := range os.Environ() {

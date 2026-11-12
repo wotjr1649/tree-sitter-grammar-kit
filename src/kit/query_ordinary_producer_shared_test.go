@@ -86,9 +86,9 @@ var ordinaryProducerShareOnce = sync.OnceValues(func() (*ordinaryProducerShare, 
 
 // ordinaryRunNativeFixture runs one native fixture test as its own process in the native package directory, like
 // `go test ./src/internal/native -run ^name$ -count=1 -timeout=180s`. A non-empty buildKey (the grammar, which the
-// native build cache key includes) makes the producer use the shared driver build cache. The reader accepts only a
-// cache HIT (#422), so the first producer of each fixture and buildKey is preceded by one warm-up run of the same
-// inputs into a throwaway output directory.
+// native build cache key includes) makes the producer use the shared driver build cache. The first producer of each
+// fixture and buildKey is preceded by one serialized warm-up run of the same inputs into a throwaway output
+// directory, so concurrent first runs do not each compile and race to publish one cache entry.
 func ordinaryRunNativeFixture(t *testing.T, name, buildKey string, env []string) ([]byte, error) {
 	t.Helper()
 	share, err := ordinaryProducerShareOnce()

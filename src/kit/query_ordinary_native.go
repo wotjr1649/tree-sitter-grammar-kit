@@ -185,12 +185,9 @@ func (b *eligibilityBudget) ordinaryNativeClosure(root *os.Root, s *eligibilityS
 	for _, input := range closure {
 		fmt.Fprintf(&identity, "file=%s %s %s %d\n", input.Role, input.Path, input.SHA256, input.Bytes)
 	}
-	steps := build.Steps
-	if build.Reuse != nil {
-		if !build.Reuse.Hit || len(build.Steps) != 0 || build.Reuse.SourceSteps == nil {
-			bad("ORDINARY_BUILD_STEPS", buildMember.Path, "build cache reuse의 source steps가 유효하지 않다")
-		}
-		steps = build.Reuse.SourceSteps
+	steps, validReuse := build.effectiveSteps()
+	if !validReuse {
+		bad("ORDINARY_BUILD_STEPS", buildMember.Path, "build cache reuse의 steps와 source steps 조합이 유효하지 않다")
 	}
 	if steps == nil || len(steps) < 6 {
 		bad("ORDINARY_BUILD_STEPS", buildMember.Path, "build steps가 불완전하다")
