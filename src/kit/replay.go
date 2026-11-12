@@ -11,8 +11,10 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +31,7 @@ const (
 	ReplaySemanticsPinsResultSchema = "tsgk-replay-result/r4"
 	ReplayLoggerPinsResultSchema    = "tsgk-replay-result/r5"
 	ReplayScopedRuntimeResultSchema = "tsgk-replay-result/r6"
+	ReplayOrdinaryResultSchema      = "tsgk-replay-result/r7"
 
 	ModeReplayedRaw           = "REPLAYED_RAW"
 	ModeCarriedForward        = "CARRIED_FORWARD"
@@ -132,26 +135,27 @@ type Consumption struct {
 // gates, the consumption account and Korean explanation lines.
 type ReplayResult struct {
 	Report
-	ResultSchema   string                          `json:"result_schema"`
-	ProfileID      string                          `json:"profile_id"`
-	Reducer        ReducerInfo                     `json:"reducer"`
-	Operation      string                          `json:"operation"`
-	Limits         ReplayLimits                    `json:"limits"`
-	Subject        ReplaySubject                   `json:"subject"`
-	Recorded       Verdict                         `json:"recorded"`
-	Recomputed     Verdict                         `json:"recomputed"`
-	EvidenceValid  bool                            `json:"evidence_valid"`
-	Observed       map[string]string               `json:"observed_identities"`
-	Gates          []ReplayGate                    `json:"gates"`
-	Consumption    Consumption                     `json:"consumption"`
-	Members        int                             `json:"members"`
-	Retained       int                             `json:"retained_members"` // registered and hashed, not evidence of this reducer
-	BytesRead      uint64                          `json:"bytes_read"`
-	Explanation    []string                        `json:"explanation"`
-	QueryReference *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
-	QuerySemantics *QuerySemanticsResult           `json:"query_semantics,omitempty"`
-	RuntimePins    *RuntimeEvidenceResult          `json:"runtime_pins,omitempty"`
-	PreprocessCST  []PreprocessCSTCase             `json:"preprocess_cst,omitempty"`
+	ResultSchema           string                          `json:"result_schema"`
+	ProfileID              string                          `json:"profile_id"`
+	Reducer                ReducerInfo                     `json:"reducer"`
+	Operation              string                          `json:"operation"`
+	Limits                 ReplayLimits                    `json:"limits"`
+	Subject                ReplaySubject                   `json:"subject"`
+	Recorded               Verdict                         `json:"recorded"`
+	Recomputed             Verdict                         `json:"recomputed"`
+	EvidenceValid          bool                            `json:"evidence_valid"`
+	Observed               map[string]string               `json:"observed_identities"`
+	Gates                  []ReplayGate                    `json:"gates"`
+	Consumption            Consumption                     `json:"consumption"`
+	Members                int                             `json:"members"`
+	Retained               int                             `json:"retained_members"` // registered and hashed, not evidence of this reducer
+	BytesRead              uint64                          `json:"bytes_read"`
+	Explanation            []string                        `json:"explanation"`
+	QueryReference         *QueryReferenceConnectionResult `json:"query_reference,omitempty"`
+	QuerySemantics         *QuerySemanticsResult           `json:"query_semantics,omitempty"`
+	OrdinaryQuerySemantics *OrdinaryQuerySemanticsResult   `json:"ordinary_query_semantics,omitempty"`
+	RuntimePins            *RuntimeEvidenceResult          `json:"runtime_pins,omitempty"`
+	PreprocessCST          []PreprocessCSTCase             `json:"preprocess_cst,omitempty"`
 }
 
 // ReplayRequest names the evidence set root and the replay registration bytes.
@@ -317,6 +321,11 @@ type reducer struct {
 
 func reducerTable() map[string]reducer {
 	t := map[string]reducer{
+		"oracle-set-r9": {ReducerInfo{ID: "oracle-set-r9", Revision: "r9", Operation: "evidence-replay",
+			Inputs: []string{"caller-pinned ordinary selection, planning documents and commitment proofs", "eligibility approval/registration/policy", "evidence/ closed graph with ordinary manifest/r8 and record/r5"},
+			Roles:  slices.Clone(ordinaryReplayRoles),
+			Gates:  []string{"ordinary-query-semantics"}, Recorded: []string{"execution authenticity", "full-scope qualification"},
+			Description: "Ordinary shard semantics under one inherited run, guarded snapshot and fixed small ledger"}, replayOrdinaryQuerySemantics},
 
 		"oracle-set-r6": {ReducerInfo{ID: "oracle-set-r6", Revision: "r6", Operation: "evidence-replay",
 			Inputs: []string{"caller-trusted Oracle/r3 profile, semantic preregistration and run-binding", "eligibility approval/registration/witness/policy", "evidence/ closed graph containing oracle/ manifest/r7 and record/r4"},
@@ -567,6 +576,7 @@ type replayEnv struct {
 	observationSources           []querywire.Source // the set profile's query sources, for the raw query streams
 	queryReference               *QueryReferenceConnectionResult
 	querySemantics               *QuerySemanticsResult
+	ordinaryQuerySemantics       *OrdinaryQuerySemanticsResult
 	pins                         *EvidencePinsRequest
 	recomputedOracle             map[string]string
 }
@@ -941,15 +951,16 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	partialFindingsCopied := false
 	bad := func(e *Error) (ReplayResult, error) {
 		failReport(&res.Report, e)
-		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || res.ResultSchema == ReplayLoggerPinsResultSchema || res.ResultSchema == ReplayScopedRuntimeResultSchema || partial.reuseAccepted) {
+		if partial != nil && (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || res.ResultSchema == ReplayLoggerPinsResultSchema || res.ResultSchema == ReplayScopedRuntimeResultSchema || res.ResultSchema == ReplayOrdinaryResultSchema || partial.reuseAccepted) {
 			res.QuerySemantics = partial.querySemantics
+			res.OrdinaryQuerySemantics = partial.ordinaryQuerySemantics
 			res.QueryReference, res.Recomputed, res.Consumption = partial.queryReference, partial.recomp, partial.cons
 			res.EvidenceValid = false // an error result never claims valid evidence, even after the sealed verdict
 			res.Observed, res.BytesRead = partial.actual, partial.r.totalRead
 			if !partialFindingsCopied {
 				res.Findings = append(res.Findings, partial.findings...)
 			}
-			knownFailure := partial.querySemantics != nil && partial.querySemantics.Assessment == AssessFail || len(partial.findings) > 0 || partial.recomp.Assessment == AssessFail || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail ||
+			knownFailure := partial.ordinaryQuerySemantics != nil && partial.ordinaryQuerySemantics.Assessment == AssessFail || partial.querySemantics != nil && partial.querySemantics.Assessment == AssessFail || len(partial.findings) > 0 || partial.recomp.Assessment == AssessFail || res.QueryReference != nil && res.QueryReference.Assessment == AssessFail ||
 				partial.reuseAccepted && partial.currentAccepted != nil && partial.currentAccepted.Result == claimFail
 			for _, g := range partial.gates {
 				knownFailure = knownFailure || g.Failed > 0
@@ -965,6 +976,10 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 			}
 		}
 		res.Explanation = append(res.Explanation, explainFailure(e))
+		if partial != nil && res.OrdinaryQuerySemantics != nil {
+			res.OrdinaryQuerySemantics.BytesRead = partial.r.totalRead
+			res.OrdinaryQuerySemantics.Work, res.OrdinaryQuerySemantics.LogicalBytes = partial.r.eligibility.work, partial.r.eligibility.logical
+		}
 		return res, e
 	}
 	profileStart := time.Now()
@@ -986,11 +1001,14 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		}
 		selected = borrowed.profile.Reducer
 	} else {
-		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6", "oracle-set-r7")
+		selected, selectionErr = selectJSONRevision(req.Profile, nil, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6", "oracle-set-r7", "oracle-set-r9")
 	}
 	// A non-selected revision keeps its existing decoder's error ordering.
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		return bad(selectionErr)
+	}
+	if selected == "oracle-set-r9" && budget != nil {
+		return bad(fail(KindUnsupported, "ORDINARY_QUALIFICATION_UNSUPPORTED", "replay", nil))
 	}
 	if req.RuntimePins != nil || loggerPinsReducer(selected) {
 		res.ResultSchema = ReplayLoggerPinsResultSchema
@@ -1024,7 +1042,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	var semanticLimits ReplayLimits
 	if borrowed != nil {
 		semanticRun, semanticLimits, prof = borrowed.owner.r, borrowed.owner.lim, *borrowed.profile
-	} else if semanticReducer(selected) {
+	} else if semanticReducer(selected) || selected == "oracle-set-r9" {
 		semanticLimits = opts.replayLimitsFor(ReplayOperations()["evidence-replay"])
 		semanticRun, e = startRunWithOptions(ctx, semanticLimits.Wall-time.Since(profileStart), opts)
 		if e != nil {
@@ -1062,6 +1080,9 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	if semanticReducer(red.info.ID) {
 		res.ResultSchema = ReplaySemanticsResultSchema
 	}
+	if red.info.ID == "oracle-set-r9" {
+		res.ResultSchema = ReplayOrdinaryResultSchema
+	}
 	if prof.Reducer == "oracle-set-r7" {
 		res.ResultSchema = ReplaySemanticsPinsResultSchema
 	}
@@ -1082,28 +1103,17 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	}
 	res.Limits = lim
 	var memberIdentity string
-	if borrowed != nil {
+	if borrowed != nil || prof.Reducer == ordinaryReplayReducerID {
 		memberIdentity, e = qualificationMembersText(prof.Members, semanticRun.eligibility)
 		if e != nil {
 			return bad(e)
 		}
 	} else if semanticRun != nil {
-		var fields uint64
-		for _, member := range prof.Members {
-			if e := semanticRun.eligibility.charge(1, 0, "replay-profile-members"); e != nil {
-				return bad(e)
-			}
-			fields += uint64(len(member.Path) + len(member.Role) + len(member.SHA256) + 32)
-		}
-		levels := uint64(1)
-		for n := len(prof.Members); n > 1; n = (n + 1) / 2 {
-			levels++
-		}
-		if e := semanticRun.eligibility.charge(32*levels*(fields+1), 3*fields+128*uint64(len(prof.Members)), "replay-profile-members"); e != nil {
+		if e := chargeReplayMembers(semanticRun.eligibility, prof.Members); e != nil {
 			return bad(e)
 		}
 	}
-	if borrowed == nil {
+	if borrowed == nil && prof.Reducer != ordinaryReplayReducerID {
 		memberIdentity = membersText(prof.Members)
 	}
 	res.Identities = append(res.Identities, IdentityRef{Role: "reducer", Schema: red.info.ID, SHA256: digestHex([]byte(reducerText(red.info)))},
@@ -1200,8 +1210,15 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		x.members[m.Path] = m
 	}
 	var count uint64
-	if semanticReducer(red.info.ID) {
+	if semanticReducer(red.info.ID) || red.info.ID == "oracle-set-r9" {
 		x.directories = map[string]fs.FileInfo{}
+	}
+	if red.info.ID == "oracle-set-r9" && r.semanticEntries == nil {
+		r.semanticEntries = newSemanticEntryBudget(lim.Files)
+		var hostEntries uint64
+		if e := r.semanticEntries.begin(root, &hostEntries, lim.Files); e != nil {
+			return bad(e)
+		}
 	}
 	if e := x.walk(".", &count); e != nil {
 		return bad(e)
@@ -1215,9 +1232,10 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 	}
 	reduceErr := red.run(x)
 	res.QuerySemantics = x.querySemantics
+	res.OrdinaryQuerySemantics = x.ordinaryQuerySemantics
 	res.QueryReference = x.queryReference
 	res.PreprocessCST = x.preprocessCSTResults
-	if (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema) && x.recorded.ExecutionStatus != "" {
+	if (res.ResultSchema == ReplayReferenceResultSchema || res.ResultSchema == ReplaySemanticsResultSchema || res.ResultSchema == ReplaySemanticsPinsResultSchema || res.ResultSchema == ReplayOrdinaryResultSchema) && x.recorded.ExecutionStatus != "" {
 		if x.recorded != res.Recorded {
 			x.finding("RECORDED_VERDICT_MISMATCH", "", "raw에 기록된 판정이 등록한 subject 판정과 다르다")
 		}
@@ -1356,6 +1374,16 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 		res.Assessment = res.Recomputed.Assessment
 	}
 	res.Explanation = append(res.Explanation, explainReplay(res)...)
+	if res.OrdinaryQuerySemantics != nil {
+		upper, e := r.eligibility.ordinaryOutputBound(reflect.ValueOf(res))
+		if e != nil {
+			return bad(e)
+		}
+		if e := r.eligibility.charge(2*upper+1, 4*upper+32768, "ordinary-replay-result-encoding"); e != nil {
+			return bad(e)
+		}
+		res.OrdinaryQuerySemantics.BytesRead, res.OrdinaryQuerySemantics.Work, res.OrdinaryQuerySemantics.LogicalBytes = r.totalRead, r.eligibility.work, r.eligibility.logical
+	}
 	if e := sealOutput(res, lim.OutputBytes); e != nil {
 		return bad(e)
 	}
@@ -1374,13 +1402,47 @@ func replayPolicyText(op string, l ReplayLimits) string {
 		op, l.Files, l.FileBytes, l.TotalBytes, l.Records, l.RecordBytes, l.OutputBytes, l.WallMillis)
 }
 
+// chargeReplayMembers reserves membersText: the merge sort over the member paths (ordinarySortWork), one pass
+// that writes the header and every field of every member (fields includes 32 bytes of separators and the byte
+// count per member) and, as logical bytes, the clone and sort buffer (2 x 56 B per member), the presized builder,
+// the boxed fmt arguments and fmt's line buffer (it grows by doubling, so at most 4 times the longest line).
+func chargeReplayMembers(b *eligibilityBudget, members []ReplayMember) *Error {
+	var fields, pathBytes, longest uint64
+	for _, member := range members {
+		if e := b.charge(1, 0, "replay-profile-members"); e != nil {
+			return e
+		}
+		line := uint64(len(member.Path) + len(member.Role) + len(member.SHA256) + 32)
+		fields += line
+		longest = max(longest, line)
+		pathBytes += uint64(len(member.Path)) + 1
+	}
+	return b.charge(ordinarySortWork(len(members), pathBytes)+fields+32, 3*fields+128*uint64(len(members))+4*longest+256, "replay-profile-members")
+}
+
+// membersText sorts with ordinaryMergeSort; member paths are unique (case-folded) after parsing, so the order is total.
 func membersText(ms []ReplayMember) string {
 	sorted := slices.Clone(ms)
-	slices.SortFunc(sorted, func(a, b ReplayMember) int { return strings.Compare(a.Path, b.Path) })
+	cost := ordinaryMergeSort(sorted, func(m ReplayMember) string { return m.Path })
+	ordinaryVisitObserved("members-sort", cost.compares+cost.bytes+cost.moved)
 	var b strings.Builder
-	b.WriteString("tsgk-replay-members/r1\n")
+	size := 32
 	for _, m := range sorted {
-		fmt.Fprintf(&b, "%s\x00%s\x00%d\x00%s\n", m.Path, m.Role, m.Bytes, m.SHA256)
+		size += len(m.Path) + len(m.Role) + len(m.SHA256) + 32
+	}
+	b.Grow(size)
+	b.WriteString("tsgk-replay-members/r1\n")
+	// Written without fmt: fmt's pooled printer allocates on a pool miss, which the charge cannot bound per CPU count.
+	var digits [20]byte
+	for _, m := range sorted {
+		b.WriteString(m.Path)
+		b.WriteByte(0)
+		b.WriteString(m.Role)
+		b.WriteByte(0)
+		b.Write(strconv.AppendUint(digits[:0], m.Bytes, 10))
+		b.WriteByte(0)
+		b.WriteString(m.SHA256)
+		b.WriteByte('\n')
 	}
 	return b.String()
 }

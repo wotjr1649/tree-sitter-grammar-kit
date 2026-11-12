@@ -97,14 +97,15 @@ type eligibilityProvenance struct {
 }
 
 type eligibilityApproval struct {
-	Schema               string                  `json:"schema"`
-	RegistrationSHA256   string                  `json:"registration_sha256"`
-	WitnessSHA256        string                  `json:"witness_sha256"`
-	EvidencePolicySHA256 string                  `json:"evidence_policy_sha256"`
-	CatalogueSHA256      string                  `json:"catalogue_sha256"`
-	Candidate            eligibilityCandidate    `json:"candidate"`
-	Cohorts              []eligibilityCohort     `json:"cohorts"`
-	Provenance           []eligibilityProvenance `json:"provenance"`
+	Schema               string                      `json:"schema"`
+	RegistrationSHA256   string                      `json:"registration_sha256"`
+	WitnessSHA256        string                      `json:"witness_sha256"`
+	EvidencePolicySHA256 string                      `json:"evidence_policy_sha256"`
+	CatalogueSHA256      string                      `json:"catalogue_sha256"`
+	Candidate            eligibilityCandidate        `json:"candidate"`
+	Cohorts              []eligibilityCohort         `json:"cohorts"`
+	Provenance           []eligibilityProvenance     `json:"provenance"`
+	Ordinary             *ordinaryEligibilityBinding `json:"ordinary,omitempty"`
 }
 
 type eligibilityMember struct {

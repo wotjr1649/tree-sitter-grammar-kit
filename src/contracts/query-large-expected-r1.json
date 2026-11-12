@@ -1,0 +1,117 @@
+{
+ "schema": "tsgk-query-large-expected/r1",
+ "registry": {
+  "path": "src/contracts/query-semantic-registry-r1.json",
+  "bytes": 82475,
+  "sha256": "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
+ },
+ "qualification": {
+  "path": "src/contracts/qualification-c1.json",
+  "bytes": 8297072,
+  "sha256": "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
+ },
+ "fixture_inventory": {
+  "path": "src/contracts/native-large-fixtures.json",
+  "bytes": 16222,
+  "sha256": "b9febb20fc2f6ba1e5b8d6d4b71b30f391b9cb32bf71eb1c4a68a8bd6f2f89f3"
+ },
+ "grammar_basis": "tree-sitter-c-sharp 0.23.5 grammar.json (parser.c sha256 1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6, scanner.c sha256 8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed), the registered qualification closure of the n461-large role",
+ "basis": "Rows are derived from the fixture template by a hand-written parser of the exact C# subset the valid template uses (namespace, class, field, method, local declaration, assignment of a binary sum, return), following the grammar.json rules; the two fixtures with `x = x + ;` depend on parser error recovery and are NOT_DERIVABLE. Occurrences are the facts.declarations captures of the same derived tree as an unordered multiset.",
+ "not_applicable": {
+  "darwin-arm64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)",
+  "linux-amd64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
+ },
+ "cases": [
+  {
+   "id": "cs-large-22m",
+   "set": "s06-large",
+   "bytes": 21997719,
+   "sha256": "509e48456ea6a8b4b6949a299465e638430ae78b2c2495c5274ccd8c731c7ae5",
+   "repeat": 6203,
+   "syntax": "NO_ERROR",
+   "derivation": "TEMPLATE_RULES",
+   "code": "",
+   "cst": {
+    "page_rows": 1000000,
+    "nodes": 11463151,
+    "page_digests": [
+     "127231aab7995341c7c935691ff5463932be0a9125e0c3682394151949de13c6",
+     "c0f5bd444c6a5fff4eb70bbacdd26cc91a3ef80b2fa0ab35084e0cd924eb0e17",
+     "1250eab741404d23212cee43fa8b81a077abe5dfd8ac9eaa701bcd87d0a3721a",
+     "50ed295d869237f118d1bbcc4dced0c82b658f32aa005949e4431355dbb970d6",
+     "30bd736435c2fb52d1489e10d4044cf6d7e4ec21dc51cfdb89bf956562017c16",
+     "5dcf7da187482bce9084cf4c11ad1dce7d27dc9a47dadf96db3b1c574af453d6",
+     "7aff447a2dc2ea72823e97df63e024c649bd782a0ea316153f3ad815f089cf40",
+     "eba036350215aebb70f6015644e43fe330413ff23943f722e2738353a20999cc",
+     "daabde23c5a08ffdaf05c761701ab5fe7d8720bddb709de7d97fa470cc3787df",
+     "447f01ed3f7ea8bf41d934afb0066957e2ea670d4603645f3d4f14ef9d9e2be2",
+     "58b33e0abc29a677bb7552e69b28e6f3149ef64588c7650b3d7c96ab302c8074",
+     "b608503cde68c83cb3eca6676ceea54d415205b1bb78a878f72baa518e584507"
+    ],
+    "pages_sha256": "e5beda84abd7279cb2fad8d5b80b9d8260dcac5f47a9ef55e5e234041140c11f",
+    "all_rows_sha256": "8f204ef2487fd0ff0da7a64ac885d1e49ae068ed52010ecd317a67f11b9c0fb8",
+    "row_bytes": 588727050,
+    "max_depth": 11,
+    "has_error": false
+   },
+   "occurrences": {
+    "page_captures": 10000,
+    "total": 93045,
+    "pages": 10,
+    "by_name": {
+     "c.0.0.0": 6203,
+     "c.0.1.0": 6203,
+     "c.0.1.1": 6203,
+     "c.14.0.0": 6203,
+     "c.14.1.0": 6203,
+     "c.14.1.1": 6203,
+     "c.14.3.1": 6203,
+     "c.14.3.2": 6203,
+     "c.14.3.3": 6203,
+     "c.6.0.0": 6203,
+     "c.6.1.0": 6203,
+     "c.6.1.1": 6203,
+     "c.8.0.0": 6203,
+     "c.8.1.0": 6203,
+     "c.8.1.1": 6203
+    },
+    "multiset_sha256": "6fdad87b566ac1f8d4dcd232a94aed6054285e219649f9120dd217baa6d6942e"
+   }
+  },
+  {
+   "id": "cs-large-8m-errors",
+   "set": "s06-large",
+   "bytes": 7999000,
+   "sha256": "ced76c9f8628da1cb89925a409db74f5af303cbbe0275b836678d56cbd4bc3e1",
+   "repeat": 2257,
+   "syntax": "ERROR",
+   "derivation": "NOT_DERIVABLE",
+   "code": "LARGE_TEMPLATE_NOT_DERIVABLE",
+   "cst": null,
+   "occurrences": null
+  },
+  {
+   "id": "cs-large-32mib-errors",
+   "set": "s06-large",
+   "bytes": 33554432,
+   "sha256": "6409672e6b17cdf655cd975cc908992aabe8ad4ba4537d95323956de4bc7fa3e",
+   "repeat": 9463,
+   "syntax": "ERROR",
+   "derivation": "NOT_DERIVABLE",
+   "code": "LARGE_TEMPLATE_NOT_DERIVABLE",
+   "cst": null,
+   "occurrences": null
+  }
+ ],
+ "control": {
+  "id": "cs-large-8m-over-captures",
+  "set": "s06-large-over",
+  "source_case": "cs-large-8m-errors",
+  "query": "all.nodes",
+  "query_sha256": "da842c4ec943d4fa4de79e9a127b1dfed56a03ac8f3ace869525b569468d37f6",
+  "status": "RESOURCE_LIMIT",
+  "code": "OUTPUT_LIMIT",
+  "semantic_pass": false,
+  "basis": "all.nodes (`_ @node`) on cs-large-8m-errors captures every node. The tree has more than the 1,000,000 captures the native-query-large operation allows, so the query stops RESOURCE_LIMIT/MATCH_LIMIT after 1,000,000 captures; each retained capture row needs at least 25 encoded bytes, so 1,000,000 rows exceed the 16,777,216-byte output limit and the driver replaces the whole response with RESOURCE_LIMIT/OUTPUT_LIMIT. The case-level code is therefore OUTPUT_LIMIT."
+ }
+}

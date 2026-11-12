@@ -247,6 +247,9 @@ func validPassedPinnedEligibility(p *QueryReferenceEligibilityResult) bool {
 }
 
 func validSemanticReplayResult(rr ReplayResult) bool {
+	if rr.OrdinaryQuerySemantics != nil {
+		return false
+	}
 	pinned := rr.Reducer.ID == "oracle-set-r7"
 	wantResult, wantQuery := ReplaySemanticsResultSchema, QuerySemanticsResultSchema
 	if pinned {

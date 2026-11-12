@@ -718,18 +718,26 @@ func (h *referenceHead) check() *Error {
 }
 
 func decodeReferenceRow(data []byte, r *run) (*instrumentedReference, *Error) {
+	return decodeReferenceRowMode(data, r, false)
+}
+
+// decodeReferenceRowMode reads the head while the syntax preflight walks the row and decodes the full row
+// once. With ordinary set (and a shared ledger) the preflight prices the error/buffer terms on one name
+// path and the typed decode prices the values by Go size, as for the other ordinary documents.
+func decodeReferenceRowMode(data []byte, r *run, ordinary bool) (*instrumentedReference, *Error) {
 	const doc = "reference-response"
 	b := r.eligibility
 	if b == nil {
 		b = &eligibilityBudget{r: r, unmetered: true}
 	}
+	compact := ordinary && r.eligibility != nil
 	// The input pass and fixed head/result state are additional to the shared JSON reservation.
 	if e := b.charge(1, uint64(len(data))+1024, doc); e != nil {
 		return nil, e
 	}
 	ref := new(instrumentedReference)
 	head := referenceHead{ref: ref}
-	if e := b.reserveJSONContainersVisit(doc, data, 3, 80, head.visit); e != nil {
+	if _, e := b.reserveJSONContainersVisit(doc, data, 3, 80, compact, head.visit); e != nil {
 		return nil, e
 	}
 	if e := b.charge(4, 0, doc); e != nil {
@@ -745,7 +753,7 @@ func decodeReferenceRow(data []byte, r *run) (*instrumentedReference, *Error) {
 		return ref, head.extra
 	}
 	// The same result receives the full typed decode only after the head selects that arm.
-	if e := b.decodeTypedShape(doc, data, ref, b.unmetered, true, true); e != nil {
+	if e := b.decodeTypedScanned(doc, data, ref, b.unmetered, true, true, compact); e != nil {
 		return nil, e
 	}
 	return ref, nil
@@ -761,13 +769,20 @@ func repositoryReferenceUpstream(commit string) bool {
 }
 
 func decodeReferenceResponseBound(data []byte, obs QueryReferenceObservation, librarySHA256, symbol, upstream string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run) (*instrumentedReference, string, bool, *Error) {
+	return decodeReferenceResponseRow(data, obs, librarySHA256, symbol, upstream, q, queryKnown, versions, r, false)
+}
+
+// decodeReferenceResponseRow keeps the shared contract. An ordinary row is priced with the compact
+// accounting (one name-path error reservation, decoded values priced by Go size); every row reads its head
+// during the single syntax preflight and is decoded once, so their errors and their order do not change.
+func decodeReferenceResponseRow(data []byte, obs QueryReferenceObservation, librarySHA256, symbol, upstream string, q QueryWitnessQuery, queryKnown bool, versions [][]byte, r *run, ordinary bool) (*instrumentedReference, string, bool, *Error) {
 	invalid := func(e *Error) (*instrumentedReference, string, bool, *Error) {
 		if e.Kind != KindInvalidInput || r.eligibility != nil {
 			return nil, "", false, e
 		}
 		return nil, "REFERENCE_RESPONSE_INVALID", false, nil
 	}
-	ref, e := decodeReferenceRow(data, r)
+	ref, e := decodeReferenceRowMode(data, r, ordinary)
 	if e != nil {
 		return invalid(e)
 	}

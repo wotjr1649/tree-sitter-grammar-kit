@@ -497,7 +497,7 @@ func TestReadDirSemanticSortWorkIsReserved(t *testing.T) {
 	}
 	root := semanticBudgetRoot(t, dir)
 	r := semanticBudgetRun(t)
-	r.eligibility = &eligibilityBudget{r: r, work: eligibilityWorkLimit - 259}
+	r.eligibility = &eligibilityBudget{r: r, work: eligibilityWorkLimit - 341}
 	r.semanticEntries = newSemanticEntryBudget(10)
 	var host, local uint64
 	if e := r.semanticEntries.begin(root, &host, 10); e != nil {

@@ -1,5 +1,17 @@
 # 계측 query reference 계약 (#216)
 
+## #362 ordinary batch capture 준비 (P2-B 일부)
+
+P2-B의 첫 구현 단위는 [actual batch wire와 실패 보존](tree-and-adapter-protocol.md#362-batch-actual-capture-기반-p2-b-일부) 및 [process owner](identity-and-evidence.md#362-batch-capture의-process-소유권-p2-b-일부)다. 내부 captured 실행 primitive는 `native-query-batch`, native/r4, full tree, API=true, UTF-8, SVC·preprocess·reuse-accepted 없는 입력에 한정한다. 일반/single producer 출력과 기존 reader/reducer의 schema 허용은 그대로다.
+
+P2-B 2단계는 내부 실행 API `OracleRequest.Ordinary`로 명시적으로 선택한다. `Profile`에는 기존 실행 profile/r1 또는 r2를, `Ordinary.Inputs`에는 P2-A의 원문 registry·qualification·slots·P1 witness·계획 profile/r4·assets·registrations와 해당 본문을, `ShardPlan`과 `Registration`에는 선택한 저장 계획과 등록 원문을 제공한다. `ShardIDs`는 실행 case 각각에 대응하는 계획의 case shard를 순서대로 명시한다. 계획은 `ValidateOrdinaryShardPlan`으로 전체 재구축·대조하고, 선택 shard의 route/platform/case 및 실행 profile의 route·host·grammar·runtime manifest·query 순서와 bytes·case 순서·전체 edits·각 source version/points를 다시 결속한다. manifest/binding의 `selected_shard_ids`와 `full_scope_complete=false`로 부분 수집을 표시한다. 이 명시 경로에만 batch source witness를 열며 legacy `BATCH_SCOPE_UNSUPPORTED`는 유지한다. CLI의 새 입력 flag나 r4 단독 실행 parser는 추가하지 않는다.
+
+수집 결과는 record/r5·manifest/r8과 caller에게 반환하는 run-binding/r2다. 실행은 source와 history를 축약하지 않고 기존 batch coordinator를 사용한다. 계획의 `CAPACITY_UNPROVEN`/BLOCKED는 수집 허가나 구조 검사로 admission PASS가 되지 않는다. case projection에는 기존 base PASS/FAIL을 보존하고 record의 `query_semantics`에는 `PRODUCER_LOCAL`, `BLOCKED`, `EXTERNAL_APPROVAL_PENDING`을 남긴다. `VerifyOracleSet`의 r8 처리는 저장 구조·물리 pin 검사이며 guarded 의미 reader·eligibility·새 replay나 qualification 지원이 아니다.
+
+일반 query 뒤 fact pack의 route query 전체를 원래 순서의 suffix로 요구한다. `FactPack`과 `FactMapping` 원문을 보존하고 `step_facts`의 `tsgk-ordinary-step-facts/r1`에 pack SHA·mapping schema/revision/SHA·동적 SQL/XML revision과 ordered query ID/kind/SHA의 길이 접두 digest를 기록한다. 각 case/step/tree_role/query의 source 길이·SHA와 실제 capture로 선언·dynamic SQL·XML을 도출한다. 편집 뒤 dynamic SQL은 해당 version bytes를, fresh는 fresh captures를 독립적으로 사용한다. 내부 재현 일치는 독립 expected나 외부 승인을 대신하지 않는다.
+
+독립 expected 자산의 compact row 형식(B3)과 reference stdout의 별도 pinned member 및 `tsgk-reference-process/r2`(B5)는 이 단위에서 만들지 않는다. 이번 형식은 native actual transcript이며 expected/reference 형식을 먼저 고정하면 아직 연결되지 않은 reader·receipt 계약을 확장하게 된다. 기존 자산/receipt 비용 추정과 SQL `CAPACITY_UNPROVEN`/BLOCKED를 유지하고 B3/B5 절감액을 선반영하지 않는다. reference 실행·한도 조정·public ordinary API·reader/replay 완료를 뜻하지 않는다.
+
 [#370 V2-A pin 보존·선택](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)이 추가됐다. 기존 생산의 Rust exact pin과 현재 catalogue 비교는 V2-B 소비자 이행 전까지 적용된다. 단일 selection의 후보 원문은 보존되지만 Python/workflow는 아직 이를 읽지 않는다. 후속 V2-B에서는 생산 시작 때 선택한 승인 tuple의 rustc/cargo release를 각각 정확히 검사하고 workflow도 같은 입력을 사용하며, 과거 증거는 당시 승인 tuple로 검증해야 한다. 기존 Rust 경로 의미는 역사 reader의 기준으로 보존한다. 이 자료 보존 단계가 새 reference 실행·자격 검증을 뜻하지 않는다.
 
 ## DartPHP12 단일 frame 정의 분류
@@ -386,6 +398,244 @@ Coordinate와 obligation ID는 원문 pin, policy, route, host ID/subject, role,
 Coverage fold는 caller가 제출한 adjudicated state만 집계하며 각 typed set에서 `required = verified + failed + blocked + unprocessed`를 유지한다. 이 P0 fold는 runtime raw claim이나 actual native/reference evidence를 판정하지 않는다. Source witness, independent metadata/expected, full CST/API, capture, current observation, caller approval과 replay asset은 모두 `UNAVAILABLE`이므로 positive coordinate는 VERIFIED가 될 수 없고 known required 분모에서 BLOCKED다. Control은 원 status/code/capture를 보존해 별도 집계한다. 확인된 registry 모순·변조는 FAIL이며, 그 앞에서 이미 확인된 최초 FAIL code를 보존한다. Coverage counter의 합계는 등록된 집합의 합일 뿐이며 미등록 SVC/large 하위 의무를 포함한 전체 분모가 아니다. Namespace는 predicate basis 두 파일(`src/dev/query-reference/check.py`, `src/internal/native/query_policy_test.go`)의 bytes에도 결속된다. 둘 중 하나를 바꾸면 검증이 `REGISTRY_BASIS_PIN`으로 실패하고, registry를 다시 생성하면 모든 obligation ID가 바뀐다. 중단 뒤 판정하지 못한 항목은 unprocessed로 남되, 이미 확인된 필수 asset/input 부재는 blocked로 유지한다. 완전한 빈 expected `[]`와 미확보 expected `null`은 다르다.
 
 P0 registry가 유효해도 독립 기대 자료, 실행 관측, 승인, replay 및 SVC/large 전수 하위 원장이 갖춰지지 않았으므로 `full_scope_complete=false`다. P0 fold는 모든 adjudicated row가 VERIFIED여도 이를 true로 바꾸지 않는다. 이는 #362 전체 완료, r9/r10 승격, release gate, runtime 예산, producer/reducer, CLI 또는 workflow 활성화를 뜻하지 않는다. 전체 완료는 모든 필수 집합의 exact membership, positive·control 검증, 현재 cohort·승인·저장 재계산, SVC/large 전수성 및 미완료 상태 0을 별도 확인한 뒤에만 가능하다.
+
+## #362 predicate 의미 의무와 거부 정책 (범위 3)
+
+P0 registry의 `predicate` 목록은 Windows/Linux 각각 67행이다. 앞 20행이 `PREDICATE_REQUIRED`(host당 20, 합계 40)이고 뒤 47행이 `EXPECTED_REJECTION`(host당 47, 합계 94)이다. 좌표는 `route=owned-plain`, `role=predicate-probe`, `set=predicate/r1`, `case=<행 ID>`, `query=q0`, `step=0`, `tree_role=incremental`이다. 대상은 `eq?`, `not-eq?`, `any-of?`, `not-any-of?` 네 predicate뿐이며 새 predicate·regex·directive·quantifier 지원은 추가하지 않는다. P0 registry 파일(82,475 B, SHA-256 `ffd3552d…aa3c8`)과 그 ID는 바꾸지 않는다.
+
+세 분류는 서로 섞지 않는다.
+
+- `STRUCTURAL_ONLY`는 compiled metadata의 `predicates`가 명시적 `[]`인 ordinary 의무다. `EVALUATED`는 predicate가 있는 query가 `COMPLETED`로 평가되어 evaluated stream(없으면 `[]`)을 낸 결과다. 둘은 서로의 근거가 될 수 없다. Ordinary 등록은 `Kind != STRUCTURAL_ONLY`(`src/kit/query_ordinary.go:394`)와 nonempty predicate(`query_ordinary_adjudicate.go:250`, `ORDINARY_STRUCTURAL_PREDICATES`)를 거부하므로 r9 ordinary 경로는 이 20 tuple을 받지 않는다. 이 범위는 별도의 typed 경로다.
+- 예상 거부 47행은 positive PASS를 채우지 않는다. 각 행은 등록된 `status`·`code`·`evaluation`·`partial`과 evaluated stream `null`(또는 `PRESERVED_STRUCTURAL`), structural stream 보존 여부를 정확히 만족해야 VERIFIED다. `null`을 `[]`로 바꾸거나 거부를 `COMPLETED`/`EVALUATED`로 바꾸면 거부된다.
+
+**독립 expected.** [`query-predicate-expected-r1.json`](../../src/contracts/query-predicate-expected-r1.json)(80,893 B, SHA-256 `1f057de4a4dd870f1bddef5b1ef780343b0996d9c473d3b937807d464280b61c`)은 20 tuple의 compiled metadata, 전체 CST, structural stream, evaluated stream을 담는다. 이 값은 plain grammar(`grammar.json`, 5,325 B, SHA-256 `4a90e2460dc31312361a0fc0cc6e86fc28dd98afe710715b3ca8d538d9efbf17`)의 규칙과 네 predicate의 정의에서 손으로 도출했으며 native·reference·kit 출력을 읽지 않았다. native 첫 실행 전에 이 SHA를 봉인했다. Predicate는 query.c가 평가하지 않는다. C runtime은 pattern별 predicate step 목록만 만들고(`lib/src/query.c`의 `ts_query__parse_predicate`, pattern 단위 slice) 평가는 binding이 한다. 평가 규칙은 match 단위다: 한 match의 모든 predicate가 참이면 그 match의 capture가 모두 남고, 아니면 모두 빠진다. Match 번호는 다시 매기지 않으며, 다른 pattern의 match는 영향받지 않는다(`pattern-isolation`). Source가 비어 있으면 둘 다 `[]`다(`evaluated-empty`). 이 값은 두 신규 제안(`pattern-isolation`, `evaluated-empty`)을 제외하고 기존 `check.py`의 수작업 anchor와 일치한다.
+
+| ID | source → 구조 stream / evaluated stream |
+|---|---|
+| `eq-0/1`, `not-eq-0/1`, `any-of-0/1`, `not-any-of-0/1` | `x;`/`y;` 두 입력. match 1개. evaluated는 predicate 참일 때만 그 match |
+| `capture-pair-0/1` (`#eq? @x @x`) | 항상 참. 두 입력 모두 evaluated = structural |
+| `multiple-0/1` | `eq? "x"`와 `not-eq? "z"` 모두 참일 때만 유지 |
+| `two-captures-kept/rejected` | 한 node에 `@x @y` 두 capture. 참이면 둘 다, 거짓이면 둘 다 빠진다 |
+| `distinct-captures-{eq,not-eq}-{equal,different}` | 두 statement의 `@x`·`@y` 비교. match 1개(capture 2개) |
+| `pattern-isolation` | pattern 0(`#eq? @x "z"`)은 탈락, pattern 1(`(number) @n`)은 유지. structural 2, evaluated 1(match 번호 1) |
+| `evaluated-empty` | 빈 source. structural `[]`, evaluated `[]`(완료된 빈 stream, `null` 아님) |
+
+**검증.** `kit.ParsePredicateExpected`는 asset을 P0 registry의 정확한 bytes와 고정 roster에 결속한다(registry pin, 20 ID와 순서, source·query·encoding 일치, `null` 거부, 빈 predicate 거부, evaluated가 structural의 완전한 match 부분열인지). `kit.VerifyPredicateTuple`은 저장된 native raw·projection을 기존 `VerifyQueryWitness`로 재계산해 독립 structural·evaluated stream과 대조하고, 독립 full CST를 별도로 비교하며, `Evaluated`가 정확히 1이어야 한다(구조 전용 query는 `PREDICATE_TUPLE_NOT_EVALUATED`). `kit.CheckPredicateControl`은 47행 각각의 정확한 거부를 확인한다. `kit.FoldPredicateScope`는 registry에서 predicate 40·거부 94 좌표를 다시 전개해 host별 `required = verified + failed + blocked + unprocessed`를 유지하며, 삭제·중복·미등록 ID와 positive의 subject 재분류, 거부 행의 PASS 전환을 거부한다. 이 fold는 P0 root의 `INCOMPLETE`·`full_scope_complete=false`를 바꾸지 않는다.
+
+**현재 실행 범위.** Windows host의 20 tuple은 실제 owned native(plain grammar)로 실행해 20/20 VERIFIED이고 47행은 host policy evaluator로 47/47 VERIFIED다. Linux 몫(20+47)은 등록만 되어 있고 실행 결과가 없으므로 BLOCKED다. Reference 독립 실행, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
+
+## #362 SVC 사례의 독립 등록과 확장 분모 (범위 5)
+
+P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, route `csharp`)은 case 69개, edit 41개, query 2개(`facts.declarations`, `facts.dynamic_sql`)이며 하위 분모는 `required:null`, `UNREGISTERED`와 `missing_scopes`의 `svc-segment-range-history-codebehind`로 남아 있다. 이 숫자는 `qualification-c1.json`의 해당 workload와 정확히 일치하고(case 69, edit 41, 전체 step 110) P0 registry의 값도 같다. P0 registry와 그 ID는 바꾸지 않는다. 별도 추적 계약 [`query-svc-expected-r1.json`](../../src/contracts/query-svc-expected-r1.json)(196,457 B, SHA-256 `660c62b36794859a3911e0d65152f58d02a10db779e66f13865296010a74bde9`)이 확장 분모와 독립 expected를 담는다. 이 파일은 registry·qualification inventory·`src/testdata/native/n461/svc.json`의 정확한 bytes/SHA-256에 결속된다.
+
+**확장 분모(host당).** 의무는 asset에서 고정 순서로 다시 전개한다.
+
+| 종류 | 개수 | 내용 | 기대값 |
+|---|---:|---|---|
+| `SVC_HISTORY` | 110 | case·step마다 원문 version의 byte 수와 SHA-256 | 독립 도출 |
+| `SVC_EDIT_POINT` | 41 | edit의 byte와 start/old-end/new-end point | 독립 도출 |
+| `SVC_SEGMENT` | 109 | step의 directive·open/close·이름·attribute 범위와 point, diagnostics, Language 상태, CodeBehind 선언, included range, coverage | 독립 도출 |
+| `SVC_CODEBEHIND` | 2 | 선언된 참조(`OrderService.svc.cs`, `App_Code/OrderService.cs`)가 실제 관측에서 선언 case로 해석됨 | 독립 도출 |
+| `SVC_NEGATIVE` | 1 | VB `Language`의 unsupported-language negative | 원래 계약 보존 |
+| `SVC_INLINE_TREE` | 82 | C# inline 구간의 tree(composite step 81 + CodeBehind 참조 C# case 1) | 독립 도출 30, BLOCKED 52 |
+| `SVC_INLINE_QUERY` | 164 | inline tree 82개 × 두 query | 독립 도출 60, BLOCKED 104 |
+
+109개 `SVC_SEGMENT`는 69 case 중 CodeBehind의 대상인 참조 C# case `n461-svc-reference-p-r2`(composite를 만들지 않는 일반 C# case)를 제외한 68 case의 step이다. 참조 case의 원문 history 1건은 `SVC_HISTORY`에, 그 C# tree는 `SVC_INLINE_TREE`에 포함된다.
+
+**독립 expected.** 원문 version과 edit point는 `svc.json`의 find/replace edit에서 도출하고 inventory의 byte-level edit(start/old-end/new-end, old/new bytes)과 서로 교차 검사했다. Directive 관측은 `docs/validation/net461-workload.md`의 `SVC-SERVICEHOST-r2` 형식에서 별도로 구현한 도출기로 만들었으며 native·reference·kit 출력을 읽지 않았다. native 첫 실행 전에 위 SHA를 봉인했다. 도출기는 같은 저자가 형식 문서를 읽고 썼으므로 diagnostics 코드 이름과 일부 경계 규칙은 producer 소스와 같은 규칙을 따른다. 그 한계를 줄이려고 directive 범위·닫는 구분자·inline 시작은 문자열 검색만으로 따로 도출한 anchor로도 확인한다(인용부 안의 `%>`를 가진 case는 제외).
+
+**inline C# tree·query(범위 5 확장).** inventory의 69 case 모두에서 `query_expect`가 비어 있고 `dynamic_sql_expect`가 `null`이므로 query별 expected는 등록되어 있지 않았다. 별도 추적 계약 [`query-svc-inline-expected-r1.json`](../../src/contracts/query-svc-inline-expected-r1.json)(76,826 B, SHA-256 `f2ad5d41e7852d6f5f80c6727a0d53381ccb2e5f2825b554270d1f17d03dcbb7`)이 inline 의무 82개(composite step 81 + CodeBehind 참조 C# case 1)의 독립 expected를 담는다. 이 파일은 SVC 계약·registry·qualification inventory·`svc.json`·`fact-query-pack.json`의 정확한 bytes/SHA-256에 결속되고, `kit.ParseSvcInlineExpected`는 asset이 같은 원문의 재도출(`kit.DeriveSvcInline`)과 정확히 같음을 요구한다. 기존 계약 `query-svc-expected-r1.json`(SHA `bbe91167…b746`)은 바꾸지 않았다.
+
+**도출 범위.** 입력은 SVC 계약의 included range, 원문 history, C# grammar 규칙(tree-sitter-c-sharp 0.23.5 `grammar.json` SHA-256 `704882b5…9e16`, 등록 closure의 `parser.c` `1fa40d53…5df6`·`scanner.c` `8d00d37d…51ed`)과 두 query 원문뿐이며 native 출력을 읽지 않는다. 손으로 쓴 parser가 grammar 규칙대로 유효한 fragment가 쓰는 부분집합(using, namespace, class, interface, 이름 있는 attribute 인자, method, field, parameter, return, escape가 있는 string literal, member access, 이항 `+`, 줄 주석)만 해석한다. root는 첫 자식(token 또는 주석)에서 시작해 included range 끝까지 덮는다. 주석은 그것을 span에 포함한 가장 안쪽 node의 자식이며 없으면 root의 자식이다. 두 query는 원문(node pattern, 와일드카드, field, 첫 자식 anchor, capture)을 작은 matcher로 해석해 도출 tree에서 pattern index와 함께 순서 없는 multiset(개수·이름별 개수·정렬한 canonical record digest)으로 둔다. 런타임 capture 순서는 도출하지 않고 시작 byte 비감소만 확인한다.
+
+| 상태 | step | 사유 code | 내용 |
+|---|---:|---|---|
+| 도출 | 30 | — | CST와 두 query의 capture·`facts.dynamic_sql` fact 수 도출(예: `class S {}` 7 node) |
+| BLOCKED | 8 | `SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE` | fragment가 언어에 속하지 않는다(`return text));`, `return return`, 선행 `>`, 닫히지 않은 문자열). tree-sitter의 오류 복구가 생성된 parse table에서 결정하므로 도출하지 않는다 |
+| BLOCKED | 44 | `SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED` | `#if`·`#define` 등 전처리 지시문(issue179·182·184). external scanner의 상태와 parse 상태가 token·범위를 정하므로 grammar 규칙만으로 도출하지 않는다 |
+
+도출 불가 fragment는 추측하지 않고 사유 code를 남긴다. 그 step의 두 query는 `SVC_QUERY_INLINE_TREE_BLOCKED`(104개)이며 native 출력으로 VERIFIED가 되지 않는다(`kit.JudgeSvcInline`은 BLOCKED step의 증거를 오류로 거부한다). `facts.dynamic_sql` fact는 fact pack 규칙(`CSHARP_COMMAND` fact는 `oc.arg`·`ini.as`·`ma.as` pattern의 match가 있어야 한다)으로 도출할 수 있고 도출한 30 step에는 그런 match가 없어 fact 0개다. 도출한 step에서 이 규칙의 match가 생기면 도출기는 `SVC_INLINE_DYNAMIC_FACT_NOT_DERIVED`로 거부한다. tree·query digest는 원문을 포함하지 않으므로 `kit.JudgeSvcInline`은 관측의 `Source`가 등록 fragment를 담는지(범위가 `Source` 안이고 그 bytes의 길이·SHA-256이 fragment pin과 같은지) 판정 전에 확인한다. `Source`가 없으면 view가 빠진 것과 같은 불완전 증거라 VERIFIED가 되지 않고 BLOCKED(`SVC_INLINE_NATIVE_NOT_RUN`)이며, 다른 bytes는 pin과 모순되므로 그 step의 모든 의무가 FAILED(`SVC_INLINE_SOURCE_MISMATCH`)다.
+
+**결과(Windows, 실제 C# grammar).** 등록 closure와 byte 단위로 같은 grammar를 읽어 native로 실행했다. 30 step의 incremental·fresh tree와 두 query가 모두 독립 expected와 같았다(SVC_INLINE_TREE VERIFIED 30·BLOCKED 52, SVC_INLINE_QUERY VERIFIED 60·BLOCKED 104, FAILED 0). 봉인한 expected는 native 첫 실행 뒤에도 바뀌지 않았다. Linux 몫은 등록되어 있으나 실행 결과가 없어 BLOCKED다. 따라서 SVC 완료는 BLOCKED이며 `full_scope_complete=false`다.
+
+**VB negative.** `n461-svc-language-vb-n-r1`(`Language="VB"`)은 원래 상태 그대로 `BLOCKED`/`SVC_INLINE_UNSUPPORTED`, process 없음, inline tree 없음으로 거부된다(`internal/native/run.go`의 `svcObservationOnly`와 `kit/replay_native.go`의 `svcVerdict`). 관측은 `UNSUPPORTED_LANGUAGE`와 inline coverage `UNSUPPORTED`다. 이 거부를 PASS로 바꾸거나 VB 지원을 추가하지 않는다.
+
+**검증.** `kit.ParseSvcExpected`는 asset을 세 pin과 inventory의 69 case·41 edit·110 step·두 query·CodeBehind 선언에 결속한다. `kit.VerifySvcExpected`는 기존 `ApplyEdits`와 `ObserveServiceHostWithContext`, `svcVerdict`로 의무를 재계산해 독립 expected와 대조한다. `kit.FoldSvcScope`는 host별 `required = verified + failed + blocked + unprocessed`를 유지한다.
+
+## #362 scope별 결과의 fan-in과 completion gate (범위 7)
+
+범위 7은 ordinary·predicate·SVC·large가 따로 집계한 scope-local 결과를 하나의 completion 판정으로 모으는 fan-in이다. 이 단계는 **집계만** 한다. 어떤 PASS도 새로 만들지 않고 release gate를 열지 않으며, 구형 revision의 의미·판정을 바꾸지 않는다. 구현은 `src/kit/query_completion.go`, `query_completion_scopes.go`다.
+
+**새 revision.** 이름은 새로 정하고 구형 문자열과 겹치지 않는다. 구형 `oracle-set-r9`·`tsgk-query-semantics-result/r2`·`tsgk-qualification-result/r10`·P0 `Fold`는 그대로이며, 새 revision에서만 presence·integrity를 검사한다.
+
+| 표면 | 값 |
+|---|---|
+| scope 결과 입력 | `tsgk-query-scope-result/r1` (`QueryScopeResult`) |
+| completion 결과 | `tsgk-query-completion/r1` (`QueryCompletionResult`) |
+| 분모 pin preimage | `tsgk-query-scope-denominator/r1` |
+| scope 결과 digest preimage | `tsgk-query-scope-result/r1` |
+
+**scope 결과의 모양.** `scope`(`ordinary`·`predicate`·`svc`·`large`), `registry_sha256`, `denominator_sha256`(종류·host·required 행의 digest), `assets`(VERIFIED가 기대는 증거 pin), kind×host `counters`(`required = verified + failed + blocked + unprocessed`), `first_failure`(scope 소비 순서의 첫 FAILED code), `result_sha256`(위 전부의 digest)이다. large scope 결과는 `LargeScopeResult`가 `FoldLargeScope`의 하위 의무 집계(종류 7개, windows)에서 만들며 predicate·SVC와 같은 모양(kind×host counter, 첫 FAIL code, 증거 pin = `query-large-expected-r1.json`)이다. 모양이 다르면 이 revision의 입력으로 받지 않는다.
+
+**분모는 scope 결과가 아니라 pin된 원본에서 다시 유도한다.**
+
+| scope | 유도 원천 | kind × host | host당 | 합계 |
+|---|---|---|---:|---:|
+| ordinary | 검증한 P0 registry의 `STRUCTURAL_ONLY` 좌표 | `STRUCTURAL_ONLY` × 두 host | 53,104 | 106,208 |
+| predicate | P0 registry의 `PREDICATE_REQUIRED`·`EXPECTED_REJECTION` | 20 + 47 × 두 host | 67 | 134 |
+| SVC | `query-svc-expected-r1.json`의 `Obligations()` | 일곱 종류 × 두 host | 509 | 1,018 |
+| large | `query-large-expected-r1.json`의 `Obligations()`(P0 registry의 large 좌표 4개에 결속) | 하위 일곱 종류(source 3, status 3, CST page 14, CST footer 3, occurrence page 12, occurrence footer 3, control 1), windows만 | — | 39 |
+
+전체는 107,399(windows 53,719, linux 53,680)다. P0의 알려진 합계 106,346에서 large 상위 의무 4를 빼고 SVC 확장 1,018과 large 하위 의무 39를 더한 값이다. Linux·macOS의 large는 N/A이므로 분모에 없다.
+
+**fan-in 규칙.**
+
+1. 먼저 registry를 호출자가 사전에 고른 SHA-256으로 검증한다. 분모는 이 registry와 SVC asset에서만 유도한다.
+2. 입력에 없는 scope는 **absent**다. 0으로 세지 않고 그 scope의 모든 의무를 BLOCKED로 둔다(`QUERY_SCOPE_RESULT_ABSENT`). 중복 scope(`QUERY_SCOPE_DUPLICATE`)와 모르는 scope(`QUERY_SCOPE_UNKNOWN`)는 거부한다.
+3. 있는 scope 결과는 이 순서로 검사한다: schema(`QUERY_SCOPE_SCHEMA`), registry pin(`…_REGISTRY_PIN`), 분모 pin(`…_DENOMINATOR_PIN`), 행 수·kind·host·required의 정확한 일치(`…_DENOMINATOR`, 행 누락·`required` 0·축소 모두), 행마다 합산식(`…_SUM`), 계약이 BLOCKED로 등록한 의무는 VERIFIED가 될 수 없음(`…_BLOCKED_VERIFIED`, 호출자가 pin을 고르더라도 거부), FAILED가 있으면 `first_failure`가 있고 없으면 비어 있음(`…_FAILURE_CODE`), 자기 digest(`…_RESULT_DIGEST`), 호출자가 고른 결과 digest pin(`…_RESULT_PIN`, pin이 없으면 `…_RESULT_UNPINNED`), VERIFIED가 있으면 호출자가 고른 증거 pin(`…_ASSET_PIN`).
+4. 판정은 counter에서만 유도한다. 하나라도 FAILED면 FAIL이고 code는 scope 소비 순서(ordinary → predicate → svc → large)의 첫 `first_failure`다. 이미 확인된 FAIL은 다른 scope의 결함, absent scope, BLOCKED·UNPROCESSED보다 앞선다. 결함이 있으면 결과는 FAIL이며 그 전에 확인된 첫 FAIL code를 보존하고 오류를 함께 돌려준다.
+5. host별·scope별·전체 모두 `required = verified + failed + blocked + unprocessed`를 계산해 대조한다.
+
+**completion gate.** `COMPLETE`는 모든 scope가 present이고 모든 의무가 VERIFIED이며 미등록 scope가 없을 때만이다. 하나라도 BLOCKED·UNPROCESSED면 `BLOCKED`(absent scope는 `QUERY_SCOPE_RESULT_ABSENT`, 그 밖의 미완료는 `QUERY_COMPLETION_INCOMPLETE`), FAILED면 `FAIL`이다. 이 revision의 plan에는 large 오류 복구 fixture 둘의 node/occurrence/page/footer 분모가 **미등록 scope**(`large-error-recovery-node-occurrence-page-footer`)로 남아 있으므로 모든 의무가 VERIFIED여도 `QUERY_COMPLETION_UNREGISTERED_SCOPE`로 BLOCKED다. 곧 이 revision의 실제 결과는 `COMPLETE`가 될 수 없다(그 둘의 의무는 계약이 BLOCKED로 등록해 VERIFIED가 될 수도 없다). 그 분모를 등록해 gate를 여는 변경은 새 revision을 만든다.
+
+P0 `missing_scopes` 네 항목의 처리는 다음과 같다.
+
+| P0 missing scope | 이 revision에서 |
+|---|---|
+| `svc-segment-range-history-codebehind` | SVC 확장 분모(`query-svc-expected-r1.json`)가 등록하므로 SVC scope의 의무로 센다 |
+| `large-node-occurrence-page-footer` | 부분만 덮는다. `query-large-expected-r1.json`(registry·inventory·fixture inventory의 pin에 결속)이 source·status·control 전체와 도출 가능한 `cs-large-22m`의 CST·occurrence page·footer를 등록하므로 그 의무를 large scope의 분모로 센다. 오류 복구 fixture 둘의 실제 node·page 수는 모르므로 종류마다 BLOCKED 자리표시 1개만 등록돼 있고, 그 분모는 `large-error-recovery-node-occurrence-page-footer`로 미등록에 남아 gate를 닫는다 |
+| `independent-assets` | VERIFIED 개수는 호출자가 사전에 고른 증거 pin과 결속된 scope 결과에서만 받는다 |
+| `current-cohort-approval-replay` | ordinary는 shard 결과의 외부 binding(`binding_valid`)이 참일 때만 VERIFIED를 받고, 그 밖의 scope는 위 증거 pin에 의존한다 |
+
+**ordinary의 입력.** `OrdinaryScopeResult`는 저장된 `OrdinaryQuerySemanticsResult`(r2) shard들을 받는다. 저장 결과는 registry pin을 싣지 않으므로 선택된 모든 ID가 이 registry namespace의 `STRUCTURAL_ONLY` ID이고 정확히 한 shard에만 있을 때만 받는다(`…_UNDECLARED`, `…_OVERLAP`). 어느 shard도 고르지 않은 ID는 absent라 BLOCKED, 고르고 판정이 없는 ID는 UNPROCESSED다. 외부 binding 없는 shard의 VERIFIED는 거부하고(`…_ORDINARY_UNBOUND`), tuple이 FAILED를 싣지 않은 shard 수준 FAIL은 그 shard의 VERIFIED가 아닌 ID를 같은 code의 FAILED로 유지한다(BLOCKED로 낮추지 않는다). 모든 선택 tuple이 VERIFIED인 shard의 FAIL은 판정을 counter에서만 유도하므로 첫 tuple이 FAILED를 싣는다(VERIFIED는 줄고 늘지 않는다). tuple을 하나도 선택하지 않은 FAIL shard는 FAIL을 실을 곳이 없어 버리지 않고 거부한다(`…_ORDINARY_FAIL_UNCARRIED`).
+
+**large의 상위·하위 의무.** P0 registry의 large 좌표 4개(`LARGE_WORKLOAD_POSITIVE` 3, `LARGE_WORKLOAD_CONTROL` 1)와 large 계약의 하위 의무 39개는 **같은 증거의 두 수준**이다. 상위 positive 좌표의 기대는 `expected_status: COMPLETED`뿐이며 하위 `LARGE_STATUS`가 그것(과 syntax 판정)을 판정하고, 상위 control 좌표는 하위 `LARGE_CONTROL`이 판정한다. 하위 의무(source·CST page·footer·occurrence page·footer)는 같은 case의 상위 좌표를 더 잘게 나눈 것이다. 그래서 fan-in은 **상위 4개를 하위 39개로 대체**하고 둘 다 세지 않는다(둘 다 세면 같은 case를 두 번 세어 분모가 43이 된다). 대체가 손실 없도록 plan은 large 계약의 case 3개와 control이 registry의 large 좌표(set·case·query·host)와 하나씩 정확히 일치할 때만 만들어진다(`QUERY_COMPLETION_LARGE_BINDING`). 상위 종류의 행을 싣거나 상위+하위를 함께 싣거나 예전 4개 분모를 싣는 large 결과는 분모 검사로 거부된다. 하위 의무 중 계약이 BLOCKED로 등록한 것(오류 복구 fixture의 CST·occurrence 8개)은 종류별로 VERIFIED의 상한을 정해 fan-in이 거부한다. 나머지 BLOCKED(`cs-large-32mib-errors`의 status)는 판정 결과이고 이미 pin된 결과 digest에 담긴다.
+
+**large의 N/A.** large 계약의 Linux·macOS(`linux-amd64`, `darwin-arm64`)는 등록된 사유("NET461 workload is Windows-hosted ...")와 함께 N/A이며 분모에 없다. fan-in은 이 사유를 scope 결과가 아니라 pin된 large 계약에서 읽어 `QueryCompletionScope.not_applicable`에 항상 싣는다(large scope가 absent여도 같다). N/A host의 행을 싣는 scope 결과는 분모 검사로 거부되고, 저장된 completion 결과의 decoder는 large의 N/A 목록이 정확히 두 host이고 사유가 비어 있지 않으며 large counter가 windows 행뿐임을 요구한다(사유 문구 자체는 저장 결과만으로 재검증할 수 없다).
+
+**revision 판단(r1 유지).** large 연결은 `tsgk-query-scope-result/r1`·`tsgk-query-completion/r1`의 입력 모양(large 종류 7개, N/A 목록)과 large 분모(4 → 39)를 바꾼다. 이 두 revision은 draft PR #413에만 있고 어떤 branch에도 병합되지 않았으며 저장된 결과·고정 digest·문서화된 소비자가 없다. 따라서 새 의미를 r1에 두고 r2를 만들지 않는다. 구형 revision(r9·r10·P0 `Fold`·ordinary r2)은 바꾸지 않았다. **#413이 병합되거나 r1 결과가 어디에 저장되기 시작하면 같은 변경은 r2가 필요하다.** r1은 어느 쪽이든 `COMPLETE`가 될 수 없다는 성질을 유지한다(미등록 scope가 남는다). gate를 여는 변경은 새 revision이다.
+
+**한계.** scope 결과는 그것을 만든 verifier의 저장된 주장이며 이 fan-in은 존재·무결성·산술을 검사한다. 실행 진본이나 증거 재계산을 인증하지 않는다. 호출자가 결과 digest와 증거 pin을 둘 다 바꿔 넣으면 구별할 수 없다. 저장된 `QueryCompletionResult`의 `DecodeQueryCompletionResult`는 counter에서 모든 합산과 판정을 다시 유도하고, counter 행이 scope·kind·host의 정규 순서이며 중복이 없는지와 scope별 required 행에서 다시 계산한 분모 digest가 저장된 `denominator_sha256`과 같은지 확인해 모순된 저장 결과(예: BLOCKED를 COMPLETE로 바꾼 것, 행을 지우거나 중복한 뒤 합계만 맞춘 것)를 거부하지만, scope 증거를 다시 계산하지는 않는다. fan-in은 파일을 읽지 않고 원장 경로가 없다. 비용은 registry 검증과 ordinary ID 전개(106,346 ID 해시)이며 새 한도를 만들지 않고 기존 한도를 바꾸지 않는다.
+
+## #362 Windows large 사례의 독립 등록과 paging (범위 6)
+
+P0 registry의 `n461-large` extra role은 Windows 전용 workload 두 개다. `s06-large`(`native-query-large`, query `facts.declarations`, 정상 case 3개 `cs-large-22m`·`cs-large-8m-errors`·`cs-large-32mib-errors`)와 `s06-large-over`(query `all.nodes` = `_ @node`, case `cs-large-8m-over-captures`, 기대 `RESOURCE_LIMIT`)다. 상위 의무 4개(`LARGE_WORKLOAD_POSITIVE` 3, `LARGE_WORKLOAD_CONTROL` 1)는 P0에 등록돼 있고 node·occurrence·page·footer 하위 분모는 `missing_scopes`의 `large-node-occurrence-page-footer`로 남아 있었다. 이 숫자는 `qualification-c1.json`·`native-large-fixtures.json`·registry에서 서로 같다(차이 없음). 원문 fixture는 `header + block({N}을 0..repeat-1로 치환) + footer`로 생성되며 크기와 SHA-256이 identity다. P0 registry와 ID, large 연산 한도(`native-query-large`: 입력 33,554,432 bytes, node 25,000,000, 출력 16,777,216 bytes, match·capture 1,000,000, query 20초, parse wall 90초, memory 8 GiB HARD)와 small 한도는 바꾸지 않는다.
+
+별도 추적 계약 [`query-large-expected-r1.json`](../../src/contracts/query-large-expected-r1.json)(4,966 B, SHA-256 `7b2e7374ffbd85d8c35ae58c525e82cfce9994c1cd7aa150d14d9f9a3647b929`)이 하위 분모와 독립 expected를 담는다. registry·qualification inventory·`native-large-fixtures.json`의 정확한 bytes/SHA-256에 결속되며 큰 expected 본문은 저장하지 않는다. 원문 template은 기존 fixture 파일에 있고, 도출 규칙은 `src/kit/query_large_template.go`이며, 계약에는 page digest·footer 값·occurrence digest만 둔다.
+
+**독립 도출.** C# grammar(tree-sitter-c-sharp 0.23.5의 `grammar.json`, 등록된 qualification closure의 `parser.c` SHA-256 `1fa40d53…5df6`)의 규칙에서, 유효한 template이 쓰는 정확한 부분집합(namespace·class·field·method·지역 선언·덧셈 대입·return)만 직접 해석하는 손으로 쓴 parser가 native 출력 없이 전체 CST를 도출한다. 해석하지 못하는 입력은 추측하지 않고 `LARGE_TEMPLATE_NOT_DERIVABLE`로 거부한다. 따라서 `x = x + ;`를 포함한 `cs-large-8m-errors`·`cs-large-32mib-errors`는 오류 복구 tree가 생성된 parse table에 의존하므로 도출할 수 없고, 두 fixture의 CST·occurrence 의무는 등록하되 BLOCKED다(page 수를 모르므로 종류마다 자리표시 의무 1개). 도출 가능한 `cs-large-22m`은 node 11,463,151개·page 12개·occurrence 93,045개(page 10개)다.
+
+**canonical CST row.** preorder 한 node가 한 행이며 big endian으로 `u32 index, i32 parent(-1=root), u32 start_byte, end_byte, start_row, start_col, end_row, end_col, u8 flags(named 1, extra 2, missing 4, error 8, has_error 16), u16 길이+type, u16 길이+field`를 이어 붙인다. 한 page는 연속 1,000,000행이고 page digest는 그 bytes의 SHA-256이다. 완결 footer(`tsgk-large-cst-footer/r1`)는 마지막 page에만 있으며 `nodes`, `pages`, `row_bytes`, `max_depth`, 전체 행의 `all_rows_sha256`, page digest들(각각 `\n`을 붙여)의 `pages_sha256`, `has_error`를 담는다. native 쪽은 개발용 `src/dev/large-api/session-cst.c`(한 process·한 parse·연속 page command, 기존 session wrapper와 같은 framing)가 같은 행을 만든다.
+
+**occurrence.** `facts.declarations`의 capture는 같은 도출 tree에서 namespace·class·method·field 선언마다 패턴별로 도출한다(블록당 15개). parse 단계에서 `cst.nodes`는 `native-query-large`의 node 한도(25,000,000) 이하, `occurrences.total`은 capture 한도(1,000,000) 이하, 이름별 개수는 각각 total 이하여야 하므로 `Obligations()`가 전개하는 page 수에 상한이 있다(한도를 넘는 실행은 RESOURCE_LIMIT이라 검증할 page가 없다). 런타임 capture 순서는 도출하지 않고, page 10,000 capture 단위의 연속성·개수·시작 byte 비감소·등록된 capture 이름을 page마다, 전체 개수·이름별 개수·정렬한 canonical record의 multiset digest를 footer로 확인한다. 순서 자체의 독립 기대값은 없다.
+
+**over-limit control.** 기대는 정확한 case 상태 `RESOURCE_LIMIT`와 code `OUTPUT_LIMIT`다. `_ @node`는 모든 node를 capture하므로 query는 capture 1,000,000개에서 `MATCH_LIMIT`로 멈추지만, 보존한 capture 한 행이 최소 25 bytes라 1,000,000행이 출력 한도 16,777,216 bytes를 넘어 driver가 응답 전체를 `RESOURCE_LIMIT/OUTPUT_LIMIT`로 대체한다. 이 거부는 `semantic_pass:false`이며 의미 PASS로 바뀌지 않는다(fold가 별도 종류 `LARGE_CONTROL`로 센다).
+
+**의무(Windows).** `LARGE_SOURCE` 3, `LARGE_STATUS` 3, `LARGE_CST_PAGE` 14(22m 12 + 자리표시 2), `LARGE_CST_FOOTER` 3, `LARGE_OCC_PAGE` 12(22m 10 + 자리표시 2), `LARGE_OCC_FOOTER` 3, `LARGE_CONTROL` 1, 합계 39다. Linux·macOS는 원래 사유 "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"의 N/A로 보존되며 분모에 넣지 않는다.
+
+**검증.** `kit.ParseLargeExpected`는 asset을 세 pin·3+1 case·크기·SHA-256·syntax 기대·query·N/A 사유에 결속한다. `kit.VerifyLargeCST`는 page 순서·중복·누락·범위·digest와 footer 개수·digest·완결 위장을, `kit.VerifyLargeOccurrences`는 capture page와 footer를, `kit.VerifyLargeControl`은 정확한 거부 code를 확인한다. `kit.FoldLargeScope`는 `required = verified + failed + blocked + unprocessed`를 유지하며 FAIL을 우선한다. 이 fold는 scope-local이며 P0 root(`INCOMPLETE`, `full_scope_complete=false`)를 바꾸지 않는다.
+
+**현재 실행 범위.** 등록된 C# grammar로 Windows에서 실행한 결과, `cs-large-22m`의 CST page 12개와 footer, occurrence page 10개와 footer, source, status가 독립 expected와 일치했고 control은 정확한 code로 거부됐다. `cs-large-8m-errors`는 source·status(COMPLETED, syntax ERROR)만 검증되고 CST·occurrence는 BLOCKED다. `cs-large-32mib-errors`는 4 GiB task 한도에서 `MEMORY_LIMIT`로 끝났으나, 등록된 large budget(8 GiB HARD, `RealWorldR3MemoryBytes`)에서 이 한 사례만 다시 실행해 `COMPLETED`(syntax ERROR, node 17,478,169, native peak 5,193,478,144 B, wall 28.5초)이며 source와 status가 VERIFIED다(CST·occurrence는 오류 복구 때문에 BLOCKED). fold는 VERIFIED 31, BLOCKED 8이다. 완료는 BLOCKED이며 `full_scope_complete=false`다. Linux 실행, reference 독립 대조, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
+
+## #362 ordinary 사전 등록과 capacity plan P2-A
+
+P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
+
+P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
+
+`src/kit`의 ordinary planning helpers는 `OrdinaryProfile` (`tsgk-oracle/r4`, `Context OrdinaryContext`), `ParseOrdinaryProfile`, `ParseOrdinaryAssets` (`tsgk-query-ordinary-assets/r1`), `ParseOrdinaryRegistration` (`tsgk-query-semantics-registration/r2`), `BuildOrdinaryShardPlan`, `ParseOrdinaryShardPlan`, `ValidateOrdinaryShardPlan`을 제공한다. Registration은 `registry_pin`, membership namespace, qualification/slot 원문 pin, route/set/platform 및 subject, execution context/closure, candidate/cohort, profile/asset pin, 원래 case selector와 초기 source pin, 순서 있는 전체 edit/version pin/points, query 원문·metadata asset pin, asset basis/review pin, full P0 coordinate·ID, planned members를 연결한다. Policy/limits는 pinned profile을 통해 결속한다. Plan은 registration pin을 단방향으로 참조한다. P0 ID는 기존 membership namespace와 전체 canonical coordinate로만 계산한다. 새 execution context를 P0 `context`에 덮어쓰거나 registry 전체를 다시 hash해 기존 selector를 대체하지 않는다. ID 분리 기준의 context는 P0 membership context다. 같은 source bytes를 쓰는 다른 case·history·host의 기존 membership coordinate는 각각 보존하고, 새 execution context는 그 P0 ID를 바꾸지 않는다.
+
+Shard plan은 ordinary obligation ID를 각 고정 case shard에 정확히 한 번 포함한다. 각 shard는 ID 문자열과 route/platform/subject/case·history, per-step reference role을 기록하며 full coordinate row를 복제하지 않는다. Header에는 profile binding과 route별 query group을 공통화해 저장한다. Validator는 고정 P0 입력에서 full coordinate와 ID를 다시 전개하여 shard route/case를 대조하고 겹침·누락·중복·미지 ID·빈 범위를 거부한다. Shard들의 disjoint union은 P0에서 전개한 Windows/Linux ordinary 집합 106,208개와 정확히 같아야 한다. 각 shard는 file/read/work/logical/entry/wall 한도와 capacity 상태도 기록한다. 모든 planned limits와 inherited limits는 file 16 MiB, total read 256 MiB, work 32,000,000, logical 1 GiB, entries 10,000, wall 120,000 ms로 고정한다. Frame file 상한은 4-byte header를 포함한다. 본문과 검증된 full-output upper bound가 아직 제공되지 않은 현재 P1 skeleton은 각 obligation을 `CAPACITY_UNPROVEN`/BLOCKED로 남긴다. 이 상태도 ID를 빼지 않는다. `UNAVAILABLE` asset은 임의의 `PINNED`로 바꾸지 않는다. 부분 ordinary 계획은 predicate/control/SVC/large 등 다른 P0 범위를 완료하거나 `full_scope_complete`를 바꾸지 않는다.
+
+### #362 shard commitment와 선택 plan 검증 (P2-C)
+
+기존 P2-A `BuildOrdinaryShardPlan`은 pinned P0 registry, qualification inventory와 source-only inputs를 모두 검증하고 106,208개 ordinary ID의 전체 disjoint union을 확인한다. 이 전체 증명을 매 selected pass에서 반복하지 않도록 별도 source-only 단계가 전체 plan JSON에서 `tsgk-query-ordinary-plan-commitment/r1`을 만든다. Commitment는 P2-A 전체 plan의 `path/bytes/SHA-256` pin, shard 배열만 빈 배열로 바꾼 전체 공통 header, shard 수 6,402와 순서가 고정된 SHA-256 Merkle root를 가진다. 각 leaf는 도메인 구분자, 전체 plan pin, header digest, shard 수, 0부터 시작하는 위치와 shard의 정확한 JSON 원문을 길이 접두 방식으로 hash한다. Pair hash도 별도 도메인을 쓴다. 6,402개 leaf의 proof는 최대 13개 sibling digest이며 홀수 층의 자기 복제 sibling을 verifier가 강제한다. Shard ID는 전체 plan에서 엄격히 정렬되고 고유해야 한다.
+
+Commitment 생성은 exact-union planner 뒤에만 허용한다. `src/dev/query-ordinary-plan -commitment-dir`는 기존 full plan 검증에 성공한 뒤 caller가 새로 지정한 디렉터리에 `commitment.json`과 각 `proof-000000.json` 형식의 shard proof를 `O_EXCL`로 쓴다. 각 proof 파일은 16 MiB 이하이며 6,402개 proof와 commitment의 6,403개 항목은 기존 10,000 entries 한도 안이다. Internal `ordinarycommit.Build` 자체는 P0 의미나 exact union을 증명하지 않는다. 따라서 arbitrary/unreviewed root를 생성하는 것만으로 승인이 되지 않는다. Caller는 plan과 commitment 각각의 path/bytes/SHA-256을 외부 `ordinary` approval에 고정해야 한다. 선택된 shard ID의 승인 순서, proof의 증가하는 index, 선택 집합 중복 금지 및 각 shard의 ID 일치도 함께 확인한다. P2-C private binding의 `plan_commitment_pin`은 commitment 문서를 가리킨다. r8 manifest와 run-binding/r2의 기존 `shard_plan_pin`은 계속 완전한 P2-A plan을 가리키며 commitment의 `complete_plan_pin`과 같아야 한다.
+
+선택 pass는 commitment, 선택한 raw shard/proof와 caller approval만 받는다. Commitment와 공통 header는 strict typed shape로 확인하며, 선택 proof는 정확한 shard 원문·index와 함께 root에 포함되는지 검사한다. 선택 shard에서 route query·history마다 canonical coordinate를 다시 만들어 obligation ID 순서와 shard digest를 재계산한다. 전체 106,208개 coordinate와 plan set digest는 재해시하지 않는다. Registration 원문 전체는 strict token/typed-shape 검사로 UTF-8/JSON, duplicate/unknown/missing/null/type 오류를 확인한다. 전역 case/query/obligation ID 유일성과 case/query/step/tree-role tuple의 정확한 union·교차 참조도 얇은 투영으로 유지한다. 비선택 coordinate ID의 암호학적 재계산 및 source/asset·고정 scope의 local 의미 검사는 planner가 이미 전수 검증한 registration pin과 승인 provenance를 상속하며, 각 선택 pass에서 해당 행을 다시 검사한다. 다만 전체 case/query/required typed object는 만들지 않고 선택 case 및 해당 route의 query/required 항목만 typed decode해 결속한다. 원문 전체 read와 global token 검사 비용은 원장에 남는다. Registration의 strict shape·header·`version_pins` count와 span 추출은 한 token scan을 공유하며 비선택 header를 다시 unmarshal하지 않는다. Cached header의 전역 ID·tuple 대조를 기존 의미 검사 순서로 수행하고 구문 오류의 우선순위를 보존한다. 실제 decoder·header 저장소·선택 typed decode의 예약 식은 [eligibility 원장](query-reference-eligibility.md#362-승인된-shard-plan-commitment)을 따른다.
+
+전역 ID 유일성·정확한 union·총계·overlap/gap 보장은 commitment를 외부 caller가 승인한 plan pin에 고정함으로써 상속한다. 근거는 단순 hash 일치가 아니다. 승인된 plan을 생성한 검증 경로가 pinned P0 source를 대상으로 전체 validator를 성공시킨 뒤 commitment를 만들었다는 provenance를 caller가 검토하고 pin해야 한다. Pass는 승인 이후 같은 plan/header/root의 정확한 선택 leaf임을 proof로 확인하고, 선택한 coordinate를 독립 재구성한다. Approval은 caller가 해당 commitment를 선택했다는 기록이지 서명·검토자 인증 자체는 아니다.
+
+| 변조 | 거부 근거 |
+|---|---|
+| 선택 shard의 bytes/ID 치환 | leaf/root 포함 proof 불일치 또는 승인 selected ID·재구성 ID 불일치 |
+| 다른 plan의 shard 혼입 | proof가 다른 plan pin/header/root에 결속됨 |
+| 선택 proof 또는 ID 순서 교환 | 증가하는 고유 index와 승인된 ordered selected shard IDs 불일치 |
+| 증명 누락·중복 | proof 수가 승인 선택 수와 다르거나 index/ID 중복으로 거부 |
+| 전체 plan의 다른 shard 누락·중복·overlap/gap | commitment만으로 새 root를 caller가 승인할 수 없으며, 승인 root는 full planner의 exact-union 결과에만 발급 |
+| 같은 digest로 충돌을 시도 | SHA-256 충돌 저항성, leaf/node domain 분리, length-prefix·index·count·plan/header binding 가정. 실제 동일 digest 충돌은 digest 검증만으로 탐지할 수 없음 |
+
+`src/kit`은 offline core의 `TestOfflineClosure` 경계 때문에 `src/internal/ordinarycommit`을 production import하지 않는다. Kit의 private verifier는 CLI 내부 builder와 같은 wire/hash format을 사용하며 고정 검증 vector로 호환성을 확인한다. 이는 공개 kit API를 추가하지 않는다.
+
+### 기존 budget model의 누락과 reference 재계산
+
+아래 353,877,949 B와 SQL 잔액은 P2-A의 full-plan revalidation 전 역사적 진단값이다. 현재 pass는 qualification inventory 전체 bytes/hash·전역 token 검사와 선택 route typed decode(K4), registry 전체 typed decode를 유지하며 plan/registration 검증을 선택형으로 바꾼다. 아래 full inventory+registry typed decode 값은 현재 K4 원장에 그대로 적용하는 고정 비용이 아니다. 예산 재검토는 P2 §5의 잔액 계산에 pass마다 반복되는 qualification inventory 및 registry decode가 빠졌음을 확인했다. 당시 full typed decode 모형의 고정 입력 비용은 ordinary pass마다 **353,877,949 B**였다. 이는 query-slot inventory decode를 포함하지 않는다. Slot 및 새 ordinary documents의 추가 charge는 별도 입력으로 더해지며 아직 미확정이다. 과거 verified-part 재사용 후의 historical core anchor와 알려진 set layer를 그대로 사용해 고정 decode를 차감하면, ordinary body를 읽기 전 잔액은 PostgreSQL −297,750,339 B, TSQL −341,653,347 B다.
+
+| 정적 산술, B | PostgreSQL | TSQL |
+|---|---:|---:|
+| 작은 inherited logical 한도 | 1,073,741,824 | 1,073,741,824 |
+| historical core anchor | 1,017,472,466 | 1,061,314,324 |
+| 알려진 set layer | 141,748 | 202,898 |
+| pass당 qualification inventory 및 registry decode | 353,877,949 | 353,877,949 |
+| body 전 잔액 | **−297,750,339** | **−341,653,347** |
+
+이는 #366 이후 historical core anchor를 쓴 진단 계산이다. PR #366 코드는 P2-A base에 없고, P2-A는 이를 가져오거나 K0–K4·structural 절감액을 적용하지 않는다. 이 계산은 current ordinary closure의 실측 합계라고 주장하지 않는다. 당시 full-decode 모형에서 고정 decode를 포함하고 기존 1 GiB 상한·작은 pass 모델을 유지하면, 위 최소 진단치만으로 두 SQL route의 body 전 여유가 음수이므로 density를 바꿔도 capacity BLOCKED라는 점을 보여준다. 실제 current closure와 모든 output 상한이 입증되지 않은 현재 planner 판정은 `CAPACITY_UNPROVEN`/BLOCKED다. 한도는 올리지 않으며 별도 ordinary 예산도 만들지 않는다.
+
+Reference의 기존 P2 row 모형도 receipt의 Base64 stdout, JSONL row의 두 차례 decode(head/full), structural query에도 적용되는 `reserveReference` 비용을 모두 포함하지 않아 약 세 배 낮게 잡았다.
+
+| U1 최대 step 정적 추정, B | PostgreSQL nominal | TSQL nominal | TSQL dense |
+|---|---:|---:|---:|
+| 기존 P2 reference row 모형 | 10,809,604 | 58,141,956 | 232,269,572 |
+| receipt·두 decode·reservation을 반영한 추정 | 30,249,029 | 177,534,284 | 708,656,264 |
+
+이 값들은 실제 크기나 안전 upper bound의 측정치가 아니다. 특히 `nativeReservation`의 상세 비용, API/fact 본문, 남은 set/registration/binding 비용과 실제 expected output 상한은 여전히 미확정이다. `OrdinaryReferenceEstimate`는 `Density`, `SourceBytes`, `VersionsTextBytes`, `RowBytes`, `ReceiptBytes`, `ReceiptLogical`, `DoubleRowDecodeLogical`, `ReserveReferenceLogical`, `TotalLogical`, `PreviousModelLogical`을 분리해 담는다. 이는 낙관적 이전 모델과 코드 기반 추정의 차이를 검토하기 위한 자료다. `OrdinaryShardCapacity`는 `ClosurePasses=1`, `FixedDocumentDecodeLogical=353877949`, `SourceHistoryBytes`, `DeclaredMemberBytes`, `UpperBound=nil`을 노출한다. Top-level budget에는 고정 pass decode, SQL historical anchor/set 차감 진단, route별 nominal/dense reference maxima를 둔다. Profile binding과 route별 ≤15-query reference groups는 plan에서 한 번 고정해 각 case shard에서는 참조하며, 이 문서 factored metadata는 plan 파일 한도를 지키는 표현이다. 이것은 native/reference output, raw decode 비용이나 logical admission을 줄이는 runtime 구조 절감이 아니다. Capacity plan은 per-pass fixed input decode와 source/member/reference/native 비용을 나눠 기록하되, 이 추정치를 measured upper bound나 admission PASS 근거로 쓰지 않는다. 부족한 상한은 `CAPACITY_UNPROVEN`/BLOCKED로 남긴다.
+
+`src/dev/query-ordinary-plan`은 P1 source export, 검증된 P0 registry, 사전 등록 profile/assets/registration, 그리고 선언된 closure/build/control member bodies를 읽는 source-only 도구다. Native/reference output을 기대값으로 소비하거나 해당 프로세스를 시작하지 않는다. Asset metadata와 제공된 body의 bytes/hash/shape는 검사하지만, P1 rule skeleton에는 독립 full-CST/capture/fact의 완전한 output 상한 계약이 없다. 향후 admission에 필요한 정확한 expected counts와 output caps는 현재 입력에 정의되어 있지 않아 각 shard의 `UpperBound`는 nil이고 모든 ID가 `CAPACITY_UNPROVEN`/BLOCKED다. P2-A는 P1 export의 source bytes를 pinned qualification input 및 embedded source와 대조하고 기존 edit 적용 규칙으로 모든 version bytes/hash/points를 재구성한다. Export의 `Origins` fixture path/selector는 출처를 설명하는 `DERIVED_UNREVIEWED` label이며 fixture 원본 row bytes를 포함하지 않으므로 그 자체로 각 fixture origin을 독립 인증하지 않는다. Registration의 `original_selector`는 변경 불가 witness selector와 같아야 하지만 origin fixture attestation을 대신하지 않는다. Density 추정만으로 capacity PASS를 내지 않는다. TSQL이 현재 `CAPACITY_UNPROVEN`/BLOCKED로 남는 것은 계획의 정상 결과이며 예산 상향이나 별도 ordinary 예산을 뜻하지 않는다. P2-A 산출은 실행 승인이 아니며 실제 guarded charge와 semantic 판단은 후속 범위다. Zero-edit case의 edit points는 witness(nil), registration과 plan(빈 목록)에서 길이 0이면 같다고 본다. 이전에는 registration 검증(`validateOrdinaryRegistration`)이 nil만, 공개 API가 빈 목록만 받아 zero-edit case의 registration이 둘을 동시에 통과할 수 없었다. 비교는 `slices.Equal`이며 길이와 각 원소가 다른 points는 계속 거부한다.
+
+## #362 ordinary guarded reader와 independent adjudicator P2-C
+
+통합 P2-C branch에는 ordinary native build closure 검증, raw base verdict 재계산, root-bound asset resolution, reference/independent adjudicator/runtime fold를 같은 coordinator로 연결했다. `VerifyOrdinaryQuerySemantics`는 exported experimental entry다. Valid HARD receipt를 사용한 focused Windows E2E는 actual owned native producer의 JSON r8을 public API 하나로 읽어 `alt-json-B01-05`의 tuple 1/1을 VERIFIED로 fold하고 base·eligibility·semantic PASS 뒤 seal했다. Test-only runner overlay가 native child를 1 GiB/30 s HARD, `JOB_OBJECT` cleanup, 잔류 자식 0으로 강제했다. 여섯 build-step receipt는 각각 4 GiB HARD/120 s를 사용했으며 제품 기본 4 GiB native operation policy는 변경하지 않았다. 원장은 logical 206,346,731 B, work 7,835,933, read 11,216,999 B였고 focused test는 PASS, SKIP 0, 27.24 s였다. 여섯 public negative call도 모두 통과했다. Approval과 reference row는 기존 test fixture에 기반한 synthetic 자료이며 reference process는 실행하지 않았다. Independent expected는 사전에 작성된 JSON anchor에서 왔지만 합성 reference row도 그 authored anchor에서 만들어지므로 reference와의 독립 실행 대조를 뜻하지 않는다. 선택 proof를 담은 complete-plan scaffold도 전체 P0 source-only exact-union planner provenance가 아니다.
+
+Strict-HARD SQL capacity run도 선택 body 구간을 측정했다. PostgreSQL `alt-postgresql-sql-B04-22`는 actual owned parser-paged r8로 9개 metadata, independent grammar-authored 10-node CST, empty captures/declaration facts 및 synthetic reference rows를 사용해 body/reference/adjudication/fold/identity/seal까지 갔다. 원장은 logical 697,519,126 B, work 14,102,601, read 134,443,515 B였지만 9 tuple은 base fact-reproduction gate 미재계산으로 `ORDINARY_PREREQUISITE_INCOMPLETE`/BLOCKED로 남았다. TSQL `alt-tsql-B01-r001`은 actual owned binary-paged r8 처리 중 `ordinary-base-tree-projection` 단계에서 다음 logical 예약 1,731,872 B에 1,265,854 B가 부족해 `ELIGIBILITY_WORK_LIMIT`으로 멈췄다. 중단 시 logical 1,073,275,806 B, work 31,403,098, read 126,923,139 B였다. TSQL reference 40개는 synthetic placeholders이고 expected assets는 UNAVAILABLE이므로 중단 후의 reference/adjudication/fold/seal 비용은 측정하지 않았다. SQL full-pass admission은 여전히 `CAPACITY_UNPROVEN`/BLOCKED이며 한도는 유지한다.
+
+2026-11-12 ordinary base fact 후속 검증은 위 PostgreSQL의 미재계산 gate를 해소한다. Adapter는 같은 guarded session에서 fact pack·mapping을 한 번 확인한 뒤, P2-B2의 ordered suffix/query SHA와 mapping revision을 결속하고 편집 후 각 source version 및 incremental/fresh 각각의 raw captures로 declaration/dynamic SQL/XML facts를 다시 도출한다. 전체 step·role·query의 저장 `step_facts`와 step0 base `facts` projection을 대조하고, 기존 case claim의 step0 의미를 유지한 재계산 값을 공용 `semanticBase`에 전달한다. 저장 fact 자체는 독립 expected가 아니며 tuple의 metadata/CST/capture/fact 독립 비교를 생략하지 않는다. Legacy single small semantic admission은 fact pack을 받지 않으며 r4–r6와 r10 의미·한도를 바꾸지 않는다.
+
+2026-11-12 TSQL 독립 expected 후속 검증은 선택 shard `alt-tsql-B01-r001`(원문 267 B, 4 edits, 5 versions, 8 query, 72 tuple = 8 query × [step0 incremental + step1–4 incremental/fresh] 9개)의 expected asset 107개(metadata 8, full CST 9, ordered captures 72, facts 18)를 손으로 작성해 pin한다. CST는 prepared `grammar.json`의 production(`program`/`batch`/`statement`/`select`/`term`/`field`/`invocation`/`window_function`/`set_statement` 등)과 external scanner 원문(GO 줄 끝, `marginalia`, `QUOTED_IDENTIFIER` 상태)에서 도출하고 byte 범위만 원문에서 토큰을 찾아 계산한다. 쿼리 metadata는 query 원문의 pattern 수와 capture 이름 최초 출현 순서이며, ordered capture는 손으로 쓴 tree와 pinned runtime `query.c`의 capture cursor 규칙(finished-state heap의 start byte·pattern index·완료 순서, match id는 첫 yield 시 부여, 복사 state는 원본의 id·consumed 수를 물려받음)에서 도출한다. 작성 시 parser·native·reference 출력은 사용하지 않았고 native 첫 실행 전에 asset 본문의 SHA-256을 먼저 기록했다.
+
+같은 actual owned r8에서 실제 raw 응답을 `nativewire.Check`로 검증한 뒤 제품 tuple adjudicator(`adjudicateOrdinaryTuple`)에 직접 넣는 `TestOrdinaryTSQLExpectedAgainstNative`(opt-in)는 72/72 tuple을 VERIFIED로 판정한다. 첫 대조에서 dynamic SQL capture 8개 asset(step1–4 × incremental/fresh)의 match 구성이 달랐다. 원인은 작성 모델이 `ts_query_cursor__copy_state`(`query.c`)의 복사 방향을 반대로 가정한 것이었고, 복사본이 원본의 id·consumed 수를 물려받는다는 소스 근거로 교정했다. 이 교정은 봉인 대비 8개 asset만 바꾸며 나머지 99개는 같다. Root capture를 가진 wildcard child pattern의 definite 여부(`tsqlDefinite[12]`)는 생성된 parse table의 정적 분석 결과라 grammar.json만으로 손으로 증명하지 못한 모델 매개변수다. 이 값은 native 관측과 일치하도록 정했으므로 해당 pattern에 한해 독립 증거로 세지 않는다. 같은 test는 expected의 node 하나·capture 하나·fact 하나를 변조하면 변조를 소비하는 tuple만 FAILED(`ORDINARY_EXPECTED_TREE_MISMATCH` 8개 query tuple, `ORDINARY_CAPTURE_MISMATCH` 1개, `ORDINARY_FACT_MISMATCH` 1개)가 되고 나머지는 VERIFIED로 남음을 확인한다.
+
+공개 `TestOrdinarySQLPublicPassCapacity`의 TSQL 경로는 expected 107개를 소비하지만 `reference-rows` 단계에서 `reference-response` 결정 예약이 logical 한도를 넘어 `ELIGIBILITY_WORK_LIMIT`(실제 원인 logical)으로 멈춘다. 중단 시 logical 1,073,740,361 B, work 25,817,475, read 129,947,595 B였고 72 tuple은 모두 unprocessed, `CAPACITY_UNPROVEN`/BLOCKED다. Reference row 40개는 여전히 합성이지만 독립 expected와 비교하려면 expected와 같은 full CST·ordered captures를 담아야 하며, 같은 제품 계상으로 측정한 40행의 decode+reserve 비용은 logical 222,514,364 B, work 2,923,400이다(단계 진입 시 남은 logical 135,172,615 B). 따라서 지금 한도에서는 TSQL 공개 pass가 `independent-tuples`에 도달하지 못한다. 한도는 바꾸지 않았다. PostgreSQL은 같은 공개 pass에서 9/9 VERIFIED를 유지한다. Reference executable/library는 실행·load하지 않았고 approval·reference row는 합성이므로 외부 reference와의 실행 독립성은 입증하지 않는다.
+
+같은 PostgreSQL shard·실제 owned parser-paged r8·독립 DO expected·합성 approval/reference를 사용한 새 공개 호출은 `BaseVerified=PASS`, semantic/assessment `PASS`, required 9/verified 9/failed 0/blocked 0/unprocessed 0, complete/processing true다. 새 원장은 logical 698,039,669 B, work 14,108,124, read 134,443,451 B다. 이 수치는 선택 shard의 `FULL_BODY_MEASURED_VERIFIED`이며 전체 PostgreSQL route/P0 admission이나 reference 실행 증거가 아니다. 앞의 697,519,126 B 측정은 변경 전 역사적 결과다. 같은 후속 실행의 TSQL은 logical 1,073,723,418 B/work 30,896,698/read 126,923,074 B에서 `projection/steps/0/route`의 다음 logical 예약 32,896 B에 14,490 B가 부족해 중단됐다. Fact context를 base 전에 확인해 이전 측정과 중단 위치가 달라졌으며 full capacity는 여전히 미입증이다.
+
+이 관측은 plain JSON 한 shard와 PostgreSQL/TSQL의 각 선택 SQL shard에 한정되며 P2-C 전체, 세 closure encoding family 전체, P0 full scope, 전체 ordinary SQL 수용 또는 P2-D의 완료가 아니다. Reader cache의 `ready`는 의미 자격이나 외부 승인 완료가 아니다. P2-D의 owned-native/r9 replay CLI 양성 fixture는 synthetic approval/reference overlay를 쓰므로 실제 reference 실행·caller approval과 full current SQL capacity는 별도 미확인이다.
+
+Request에서 필수로 받는 `Selection`은 공개 `OrdinaryQuerySemanticsBinding` alias를 통해 caller-owned pin 묶음을 전달한다. Coordinator는 외부 approval을 확인하기 전에 이 선택을 plan commitment, 순서가 있는 shard proofs, registration과 대조해 selected required 분모를 확정한다. Selection이 비어 있으면 invalid input이다. Approval이 없으면 선택 분모의 모든 ID를 BLOCKED로 보존하며 `Complete=false`, `ProcessingComplete=false`를 반환한다. Valid한 caller selection은 approval을 대신하지 않고 `approval.ordinary`의 모든 pin과 일치해야 eligibility authority가 생긴다.
+
+Producer profile은 실행 `native-query-batch`, UTF-8, tree output, API=true여야 한다. Caller가 보유한 실행 profile, 계획 profile, registration, assets, full shard plan, 별도 plan commitment, run-binding 및 reference-selection bytes는 approval의 `ordinary` block에서 각각 path/bytes/SHA-256까지 pin해야 한다. r8/run-binding/r2는 기존 `shard_plan_pin`으로 full plan을 가리키고, block의 `plan_commitment_pin`은 proof root를 가리킨다. `closure_encoding`, candidate, semantic cohort, run ID와 ordered selected shard IDs도 block과 r8/r2 자료 사이에서 일치해야 한다. 일반 eligibility registration은 기존 Build/Control closure를 재사용하되 ordinary context에서 legacy single-native/observation witness는 제공하지 않는다. 해당 eligibility 경로의 `WitnessRegistration`은 빈 bytes여야 한다.
+
+Ordinary 호출은 하나의 `run`, 1 GiB logical·32,000,000 work·256 MiB read·기타 기존 small 한도를 공유한다. K4 `parseQualificationInventoryRoute`로 선택 route를 strict decode하며 fixed registry/inventory pins를 확인한다. Full plan exact union은 승인된 commitment 생성 시 한 번 증명하고, pass는 commitment/header, 선택 shard inclusion proofs와 선택 coordinate 재구성으로 그 결과를 상속한다. Eligibility가 직접 검증한 같은 root/snapshot 안의 #366/#372 verified-part record와 streamed read를 재사용한다. 이 권한은 같은 approval·registration·owner·cohort·physical identity에만 유효하며, 다른 root/session/cohort의 part를 주입하면 실패해야 한다. Unbound path는 기존 full-read/hash 검증으로 돌아가며 ledger나 limit을 새로 만들지 않는다. `parser-paged`와 `binary-paged`는 part authority만 선택하고 logical 한도를 올리지 않는다. Internal shape/helper tests는 통합된 selected ordinary pass의 actual 원장 측정으로 세지 않는다.
+
+통합 reader는 r8 manifest, r5 case record와 batch transcript의 물리 member, actual request/response frame, ordered frame index·case ID·span·owner·source history 및 reference receipt/row를 한 번의 guarded evidence snapshot에서 대조해야 한다. Case cache는 invocation/frame/case/history/build/runtime/policy에 결속하므로 같은 bytes hash인 다른 case나 step을 섞을 수 없다. `ReferenceSelection`은 `(case, step, query)` selector마다 실제 response ordinal·offset·length·SHA와 source/query pin을 지정한다. 같은 step의 reference row를 incremental/fresh 두 role에서 공유해도 required tuple과 independent expected는 각자 남는다.
+
+Expected metadata의 `predicates`는 명시적인 빈 목록이어야 한다. 별도 authored expected full CST와 ordered captures는 actual full native tree·structural capture·source에 독립 비교되어야 한다. `CompareAPI`는 raw API table의 shape 검증 뒤 native tree에 대한 의미 parity를 확인한다. Fact expected는 별도 expected body를 사용하고 pinned fact pack/mapping을 source version과 capture로 재계산해 대조해야 한다. P2-B `step_facts`의 내부 재도출은 독립 expected가 아니다. 실제 reference stdout은 request/receipt/footer/row와 metadata/CST/capture 대조를 위한 관측이며 기대값으로 사용하지 않는다. metadata FAIL과 field-only CST 차이가 함께 있으면 FAIL을 보존하고 CST 판정은 BLOCKED/`INELIGIBLE`로 남겨야 한다.
+
+통합 coordinator는 guarded r8 reader와 native build closure를 확인한 다음 각 raw case를 기존 `semanticBase` reducer에 전달해 query expectation과 base claim을 재계산하고 저장 projection 및 이전 FAIL과 대조한다. 이 순서를 통해 뒤의 reference 또는 expected asset 읽기가 resource/cancel 오류로 끝나도 이미 판정한 base FAIL이 남는다. 그 다음 `ordinaryReferences`로 승인된 `(case, step, query)` row를 확보하고, guarded asset resolver가 metadata/CST/capture/fact body와 authoring/review pins를 같은 verified graph member bytes에서만 해석한다. 독립 tuple을 판정하고 runtime fold를 수행한다. Selected shard의 `verified + failed + blocked + unprocessed`는 고정 required 수와 같아야 한다. `processing_complete`는 선택 shard 처리가 끝났다는 뜻이고 `full_scope_complete=false`와 registry의 `INCOMPLETE`를 바꾸지 않는다. 정상 완료 경로만 마지막 snapshot 확인, 출력 예산 예약과 결과 봉인을 끝낸다. Approval 부재의 BLOCKED 분모나 budget/cancel/read 오류 부분 결과는 seal되지 않고 `Complete=false`다. Identity 재확인은 관측된 `SameFile`·크기·mtime을 비교하며, 같은 inode에서 내용을 바꾸고 크기/mtime을 원래대로 되돌리는 적대적 변경까지 막는 보장은 기존 [호출자 소유권 범위](public-go-api.md#s01-함수와-소유권)에 설명한 대로 제공하지 않는다. Identity mismatch가 확인되면 해당 pass의 positive judgment를 무효화한다.
+
+`plain`, `parser-paged`, `binary-paged` build closure는 grammar, driver, compiler, runtime, logical descriptor를 caller approval 및 current cohort와 대조한다. Paged part는 같은 verified session의 #366/#372 authority와 streamed chain으로 확인한다. 이 계약의 helper 시험은 실제 build-family positive를 입증하지 않는다. 독립 expected는 producer `step_facts`나 reference 출력이 아니다. P2-D의 owned-native/r9 positive fixture는 선택 경로의 연결을 확인하지만 synthetic approval/reference overlay를 쓰므로 실제 caller-approved end-to-end workload로 집계하지 않는다.
+
+P2-D stored result/reducer와 기존 replay CLI 연결은 아래 절에서 다룬다. Ordinary producer를 선택하는 `oracle record` CLI는 [CLI 계약](cli-and-profile.md#362-ordinary-record-cli)을 따른다. Reference receipt r2, body 크기의 안전한 admission 상한 및 current SQL closure가 아직 입증되지 않았으므로 SQL full ordinary 수용은 `CAPACITY_UNPROVEN`/BLOCKED이며 한도는 유지한다. Full public API와 current SQL capacity 측정의 미완료는 helper-level 결과와 구분한다. 선택 SQL shard의 공개 pass는 PostgreSQL parser-paged `alt-postgresql-sql-B04-22`(base fact 재계산 뒤 9/9 VERIFIED)와 TSQL binary-paged `alt-tsql-B01-r001`(seal 도달, 독립 expected 부재로 72/72 BLOCKED)에서 측정됐고 위 절의 한정을 따른다. Selected JSON public call의 PASS도 전체 P0·다른 route·closure family나 SQL admission을 입증하지 않는다.
+
+## #362 ordinary replay·stored decoder P2-D
+
+P2-D는 selected ordinary pass의 저장 결과를 public `DecodeOrdinaryQuerySemanticsResult`로 다시 읽고, `oracle-set-r9`/revision `r9`를 통해 raw P2-B `manifest/r8`, `record/r5`, batch capture와 outer caller documents를 같은 ordinary core로 연결한다. Outer replay result는 `tsgk-replay-result/r4`이며 ordinary payload field는 `ordinary_query_semantics` (`tsgk-query-semantics-result/r2`)다. Outer `tsgk-replay/r1` profile shape와 이전 reducer의 뜻은 바꾸지 않는다. R7/r8은 각각 V2-B2 runtime-pin replay와 V2-C3 accepted-event/CST replay에 이미 배정되어 있어 새 ordinary reducer에는 쓰지 않는다.
+
+Result의 `selected_obligation_ids`는 선택 shard별 obligation ID의 ordered exact union이다. `coverage_sha256`는 `tsgk-ordinary-shard-members/r1`의 NUL-terminated domain과 각 ID 앞의 8-byte big-endian length를 넣어 해시한 ordered digest다. Replay core는 case·step·query·tree_role coordinate를 재구성해 pinned plan/registration, 이 digest, typed counters와 outer `records`를 대조한다. Stored decoder는 schema/revision·typed counters·budget limits와 selected ID uniqueness·coverage digest·required count 및 completed obligation rows의 selected ID prefix를 검사한다. 이 구조 검사는 저장 결과가 설명하는 native/reference 증거를 다시 읽거나 membership의 caller approval을 재증명하지 않는다. `processing_complete`는 선택 ID의 처리가 끝났는지, `complete`는 API 평가 및 결과 seal까지 끝났는지, `full_scope_complete`는 전체 P0 범위가 끝났는지를 각각 나타낸다. Partial/cancelled/resource-limited result는 확인한 최초 FAIL·code와 counters를 보존하고 `complete=false`로 남긴다.
+
+Replay wrapper는 이미 opened root, `run`, cumulative ordinary ledger와 verified snapshot을 P2-C core에 빌려준다. Wrapper scope/member traversal은 기존 cumulative budget에 비용을 더하므로 API raw totals와 replay totals를 숫자로 같다고 주장하지 않는다. Nested replay의 `bytes_read`/`work`/`logical_bytes`는 outer replay의 실제 totals와 같고 API와 replay의 semantic assessment·최초 code·selected IDs·typed counters는 같아야 한다. 검증 로그는 wrapper delta를 따로 공개한다. Caller document/member를 wrapper에서 재독해 과금하지 않고 reset ledger도 만들지 않는다. Serialized output bound와 wrapper traversal은 같은 budget의 남은 값에 실제 비용을 예약한다. R9 member identity는 기존 `qualificationMembersText`의 merge-sort를 공유한다. `n=len(members)`, `F=Σ(len(path)+len(role)+len(sha256)+32)`, `L=1+ceil(log2(max(1,n)))`일 때 work는 `n + 8×(F+32) + n×(L+2) + Σcomparison(len(left.path)+len(right.path)+1)`, logical은 `3×F+128×n+256`이다. Builder는 `Grow(F+32)`로 반복 확장을 없애며, 실제 비교·merge 이동·출력 복사/해시 및 두 slice·builder capacity·hash input을 test-only 계측해 계상 이상인지 확인한다. Caller identity는 bounded member read가 실제 bytes와 SHA-256을 대조한 뒤 그 verified pin을 재사용한다. Replay 내부 ordinary 결과의 중복 bound/JSON marshal은 생략하고, nested 결과까지 포함하는 최종 outer bound와 exact `sealOutput`에서 동일한 출력 한도를 적용한다. 최종 snapshot identity 확인은 생략하지 않는다. Scope에 verified pin map의 logical `14×256 B`도 예약한다. 한도나 결과의 의미를 바꾸지 않는다. `file`, `read`, `work`, `logical`, `entries`는 기존 small caps이며 새로운 replay allowance나 중간 reset을 두지 않는다. Caller가 저장한 ordinary result는 public decoder로 다시 읽을 수 있다. `oracle record` CLI는 [CLI 계약](cli-and-profile.md#362-ordinary-record-cli)에 따라 같은 source-only 입력을 하나의 누적 원장으로 읽고 계상한다. PostgreSQL `alt-postgresql-sql-B04-22` 양성은 CLI record가 만든 r8을 API·r9 replay·`tsgk replay`가 소비하며 approval·reference는 synthetic이다.
+
+이 reducer의 PASS는 선택 ordinary scope 안에서 raw와 독립 expected를 현재 같은 reader가 다시 계산했다는 결과다. Stored result만 해석하는 것과 차이가 있으며, P0 root의 `INCOMPLETE`, missing SVC/large/predicate scopes, `full_scope_complete=false`는 계속 유지한다. Positive fixture는 실제 owned native producer를 사용하지만 approval/reference는 synthetic overlay이고 repository-tracked full E2E regression과 실제 reference 실행은 아직 별도 경계다. Ordinary SQL pass의 전체 capacity가 확인되지 않은 route는 `CAPACITY_UNPROVEN`/BLOCKED다.
 
 ## #216 parser-only paging
 

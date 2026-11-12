@@ -1,5 +1,19 @@
 # Tree와 adapter — draft/r0
 
+## #362 batch actual capture 기반 (P2-B 일부)
+
+`runner.RunBatch`의 선택적 `BatchPolicy.Capture`는 실제 stdin `Write`의 반환 길이와 interactive stdout의 실제 `Read` 구간을 동기식으로 전달한다. callback의 slice는 빌린 자료이며 수정하거나 호출 뒤 보관하지 않는다. header·payload·partial header/body·마지막 응답 뒤 bytes와 출력 상한 확인용 1-byte probe도 실제 관측 구간에 포함한다. probe는 기존처럼 `Process.StdoutBytes`에는 포함되고 `TrailingBytes`에는 포함되지 않을 수 있다. callback 오류는 첫 `CaptureError`로 남기고 기존 전송·종료·frame 상태와 byte 계수는 유지한다. 실패 sink도 이후 관측 bytes를 계속 받으므로 스스로 bounded retention을 적용해야 한다.
+
+내부 native producer의 `tsgk-native-batch-capture/r1`은 batch 번호와 유일한 `D_batch_<index>` owner, effective interactive process spec, build/executable identity, process 결과·stderr pin, stdin/stdout의 관측 길이·SHA와 보존 길이, frame 순서의 case/index/status/detail/wall 및 actual span을 기록한다. span은 header 포함 offset·길이·SHA·complete와 물리 member 목록이다. `NOT_SENT`에는 actual stdin pin이 없고, 응답을 받지 못한 `SENT`는 확보한 prefix만 보관한다. `ANSWERED`는 process 실패에도 그대로 남으며 transcript의 `accepted`를 별도로 낮춘다. 기존 batch 사례 판정은 기존 계약을 유지한다.
+
+일반 frame은 member 하나이고 4-byte header도 16 MiB file 한도에 든다. 이를 넘는 frame의 분할 member는 `BATCH_CAPTURE_MEMBER_LIMIT`의 실패 진단일 뿐 ordinary paging이나 의미 수용이 아니다. 256 MiB physical 상한 안에서 process/transcript metadata 각각의 16 MiB file cap과 stderr 64 KiB를 먼저 유보하고 actual stream prefix를 보존한다. 보존 상한을 넘으면 실제 전체 관측 길이·SHA와 bounded prefix, `CaptureError`를 남기며 `accepted=false`다. raw JSON의 공백·key 순서 등 원래 bytes를 재직렬화하지 않는다. process/stderr를 사례마다 복제하지 않는다.
+
+`SENT`는 exchange가 전송을 시도했다는 뜻이다. 첫 write가 0 bytes로 실패했으면 actual stdin span은 null이며 완전 전송을 뜻하지 않는다. captured 경로는 fatal 응답 뒤라도 시도된 frame을 다시 보내지 않고 명시적인 `not sent` tail만 새 process로 옮긴다. 응답한 사례의 base 관측은 process 실패로 덮지 않으며 transcript의 process 수용과 구분한다. 이는 semantic 승인 전의 native 관측일 뿐 지원 claim이 아니다. 기존 legacy batch의 fatal·실패 사례 처분은 유지한다.
+
+P2-B 2단계의 ordinary 발행은 actual stream의 bounded prefix를 임시 파일에 기록한다. frame member는 해당 파일의 offset/길이를 참조하며 `captureFile.WriteTo`가 길이·SHA를 확인하면서 새 출력 파일로 복사한다. capture 파일은 발행 복사 뒤 닫고 제거하며 실패를 숨기지 않는다. case request/response의 기존 처리 본문은 유지하지만 별도의 전체 capture 복사본을 메모리에 만들지 않는다. 기존 single capture/r1과 legacy batch profile의 wire 출력·허용 범위는 유지한다.
+
+API의 순수 의미 비교기는 `src/kit/nativewire.CompareAPI` 하나를 live producer와 offline raw 소비자가 공유한다. strict wire/tree/API shape 검사를 먼저 통과한 입력을 받으며, field lookup·child field·byte point·zero-width sibling divergence의 기존 의미를 보존한다. raw API는 실제 response 안에 보존한다. ordinary record/r5의 `step_facts`는 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다. guarded reader와 replay는 P2-C/D이며 transcript의 local `accepted`는 외부 승인·의미 PASS가 아니다.
+
 현재/이전 runtime 허용 목록은 기존 logger reader의 역사 규칙이다. [#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)의 보존 집합에는 두 manifest의 원문을 두지만 logger·accepted·ABI·full runtime 의미 검증을 넓히지 않는다. 후속 reader는 caller-approved tuple과 검토된 logger 의미·closure를 함께 사용해야 한다. Roslyn5.9/r2 관측도 원본 bytes와 당시 inventory의 출처로 남기며 신규 기대값 생성은 [V2-D 승인 observation/provenance](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)를 사용한다.
 
 등록된 `.svc`는 [SVC-SERVICEHOST-r2](../validation/net461-workload.md)의 composite result를 사용한다. 원본 identity와 byte/point를 directive·inline C#·등록 참조 입력에 결속한다. S05가 `tsgk-svc-composite/r2`를 생산하며 r1 profile은 context 없이 읽을 수 있다.
@@ -348,6 +362,8 @@ point 검사는 fixture에 등록된 byte와0·EOF의 descendant/named descendan
 Go decoder는 단일 frame·엄격 JSON(중복/unknown member 거부)·source identity·구간·완료·count·digest·첫 차이의 일관성과 process/cleanup/HARD memory를 확인한다. bounded receipt만으로 전체 CST를 오프라인 재구성할 수는 없다. 따라서 작은 정상·오류 입력은 기존 full-tree Go API comparator와 대조하고 parent·sibling·count·cursor·field-name·field-lookup·point mutant를 거부해야 한다. receipt 변조·잘림·구간/count 변경의 음성 검사도 유지한다. Windows CI는 command의 exit와 receipt를 별도 gate/근거로 보관한다. #176 후보의 실제 small/full audit는 mandatory difference와 positional divergence 모두 0이어야 통과한다. 기존 zero-width 분류는 역사적 관측과 ZERO_SKIP mutant의 음성 대조에 남으며 후보의 잔여 차이를 통과시키는 근거가 아니다. 다른 OS의 작은 API 검증을 이 Windows 대용량 범위로 확대 해석하지 않는다.
 
 이 audit는 canonical cursor tree metadata를 기준으로 선택된 `tsgk-api/r1` 관계·field·registered-point API를 비교한다. `ts_node_is_named`와 byte-range accessor 자체의 독립 semantic 적합성은 검증하지 않는다. descendant/named-descendant와 first-child-for-byte는 앞의 공개 API byte 조회 계약을 따르며 exact deepest node 선택은 주장하지 않는다.
+
+`src/dev/large-api/session-cst.c`는 #362 범위 6의 개발용 wrapper로, 같은 request·framing·page command로 한 process·한 parse에서 연속 page마다 canonical CST 행(preorder, parent·byte·point·flags·type·field)의 digest를 응답하고 마지막 page에 개수·digest의 완결 footer를 담는다. 기대 node 수는 독립 도출값으로 받으며 실제 count가 다르면 `NODE_COUNT_MISMATCH`를 응답하고 멈춘다. 행 layout과 expected 도출은 [instrumented-query-reference](instrumented-query-reference.md)의 large 범위를 따른다. 제품 `tsgk-native/r2`와 기존 audit receipt는 바꾸지 않는다.
 
 `src/dev/large-api/audit.c`는 `//go:build ignore`로 Go package에서 제외하며 CGO0·CGO1 모두 Go/cgo source가 아니다. 기존 native build가 별도 C process로 직접 compile한다. 필수 CGO0 시험에서도 CGO1 build context로 이 경계를 검사한다.
 

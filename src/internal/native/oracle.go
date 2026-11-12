@@ -47,10 +47,12 @@ type DeclFacts struct {
 
 // OracleRequest is one `tsgk oracle record` run. Paths are absolute.
 type OracleRequest struct {
+	Ordinary      *OrdinaryRecordingRequest // explicit ordinary producer; legacy profiles keep their scope
 	Root          string
 	GrammarRoot   string
 	Profile       []byte
 	FactPack      []byte // the pack file when the profile binds one
+	FactMapping   []byte // ordinary only: exact mapping document pinned with step facts
 	Runtime       string
 	Compiler      string
 	Work          string
@@ -71,8 +73,9 @@ type OracleRequest struct {
 
 // OracleResult is the stdout result of a record run.
 type OracleResult struct {
-	ReuseAcceptedPolicy       string `json:"reuse_accepted_policy,omitempty"`
-	ReuseAcceptedLedgerSHA256 string `json:"reuse_accepted_ledger_sha256,omitempty"`
+	OrdinaryBinding           *kit.OrdinaryRunBinding `json:"ordinary_run_binding,omitempty"`
+	ReuseAcceptedPolicy       string                  `json:"reuse_accepted_policy,omitempty"`
+	ReuseAcceptedLedgerSHA256 string                  `json:"reuse_accepted_ledger_sha256,omitempty"`
 	kit.Report
 	ResultSchema  string               `json:"result_schema"`
 	ProfileID     string               `json:"profile_id"`
@@ -133,6 +136,9 @@ func platformScope(op kit.NativeOperation) (kit.Finding, *Error) {
 // completeness) is written only after every member was written; the set is then verified
 // offline. A refusal before the build creates nothing.
 func Oracle(ctx context.Context, req OracleRequest) (res OracleResult, resultErr error) {
+	if req.Ordinary != nil {
+		return oracleOrdinary(ctx, req)
+	}
 	start := time.Now()
 	if req.ReuseAccepted != nil || req.QuerySemanticsRegistration != nil {
 		req.ReuseObservation, req.SourceWitness = true, true

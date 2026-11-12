@@ -1,12 +1,10 @@
-package queryregistry
+package queryregistrycore
 
 import (
 	"bytes"
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
 func smallScope() *Validated {
@@ -234,7 +232,7 @@ func TestParseStrictBoundaries(t *testing.T) {
 		if _, err := Parse(data); err == nil {
 			t.Fatalf("invalid shape accepted: %.80s", data)
 		} else {
-			var typed *kit.Error
+			var typed *Fault
 			if !errors.As(err, &typed) || typed.Code == "" || typed.Path != Path {
 				t.Fatal("untyped registry failure", err)
 			}

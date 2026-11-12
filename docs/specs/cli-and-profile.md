@@ -6,6 +6,41 @@ S01은 `inspect`, `identity`, `corpus` 명령을 구현했고(아래 `S01 구현
 
 ## 공통 입출력과 오류
 
+#362 P2-B ordinary producer는 내부 `OracleRequest.Ordinary`로 명시 선택하며 결과는 `tsgk-oracle-result/r4`다. 기존 profile과 `BATCH_SCOPE_UNSUPPORTED` 거부는 보존한다. 실제 문서·source·selected shard 결속과 record/r5·manifest/r8은 [ordinary producer 계약](instrumented-query-reference.md#362-ordinary-batch-capture-준비-p2-b-일부)을 따른다. Ordinary producer는 `oracle record`의 `--ordinary-*` flag로 CLI에서 선택하며 계약은 [ordinary record CLI](#362-ordinary-record-cli) 절이다.
+
+### #362 ordinary record CLI
+
+`tsgk oracle record`는 `--ordinary-*` flag를 모두 받으면 ordinary producer(`OracleRequest.Ordinary`)를 실행한다. 하나라도 빠지거나 `--query-semantics`와 함께 주면 usage 오류(exit 2)이며 flag가 없는 `oracle record`와 `incremental`의 동작, 내부 `OracleRequest.Ordinary`의 의미는 바꾸지 않는다.
+
+| flag | 뜻 |
+|---|---|
+| `--ordinary-root DIR` | 고정 P0 문서(registry·qualification·slot inventory·basis 2개·fact mapping), planning profile, asset, registration과 선언된 body를 담은 읽기 전용 source-only 입력 root. case root·grammar root·`--work`·`--out`과 겹치면 거부한다 |
+| `--ordinary-witness FILE`, `--ordinary-plan FILE` | 입력 root 밖의 P1 witness와 전체 shard plan |
+| `--ordinary-profile PATH`, `--ordinary-assets PATH` | `--ordinary-root` 상대 경로 |
+| `--ordinary-registry-sha256 SHA` | 독립으로 고른 P0 registry SHA-256 |
+| `--ordinary-registration PATH`(반복) | plan이 포함하는 모든 registration, route/platform마다 하나 |
+| `--ordinary-shard ID`(반복) | 선택 shard. 모두 같은 route/platform의 registration 하나에 속해야 하며(`ORDINARY_REGISTRATION_SELECTION`) 이후 native producer가 plan·registration과 다시 대조한다. 순서는 무관하며(producer가 shard ID 오름차순 plan 순서로 정렬해 기록) shard와 profile case는 위치가 아니라 case ID로 일대일 대응해야 한다(`ORDINARY_SHARD_SELECTION`) |
+
+산출물은 기존과 같다. stdout은 `tsgk-oracle-result/r4`, `--out`은 manifest/r8·record/r5 set이다. Record는 수집만 하므로 정상 결과는 `COMPLETED`/`BLOCKED`(`EXTERNAL_APPROVAL_PENDING`)이며 exit 3이다. 판정은 공개 API나 `tsgk replay`가 한다. stderr에는 loader 원장 한 줄 `tsgk: ORDINARY_LOADER read=… work=… logical=… entries=… wall_ms=…`을 성공·실패 모두에 남긴다. 이것이 record의 wrapper 비용이다.
+
+**누적 원장.** loader는 API와 같은 한도(file 16 MiB, read 256 MiB, work 32,000,000, logical 1 GiB, entries 10,000, wall 120초)의 원장 하나로 root·witness·plan·본문 모든 파일의 읽기, JSON decode, 마지막 재열기를 누적한다. 원장은 reset하지 않고 첫 실패를 유지한다. 한도를 넘는 단계는 실행 전에 거부하며(`ORDINARY_FILE_LIMIT`, `ORDINARY_RESOURCE_LIMIT`, `ORDINARY_WALL_LIMIT`, resource limit·exit 3) 이후의 취소가 그 코드를 바꾸지 못한다. 계상식은 API 원장의 단위를 따른다.
+
+- 파일 열기: work 64, entries 1. 읽기 전에 work 1, logical `3(size+1)`(읽기·hash·보관), read `size`를 예약한다.
+- 마지막 재열기: 같은 파일마다 work 64, entries 1, work 1, logical `2(size+1)`, read `size`.
+- 엄격한 JSON decode(profile·assets·registration): 값 수 V, container 수 K에서 work `1+2V`, logical `2·len+64V+240K`.
+
+한도 +1 경계(file·read·entries·work·logical·wall)는 실제 입력의 합계를 한도로 준 로드가 통과하고 하나 줄이면 멈추는 것으로 확인한다. 실제 PostgreSQL B04-22 입력은 파일 81개 30,490,304 B에서 read 60,980,608, work 479,623, logical 177,339,975, entries 162, wall 약 0.2초다.
+
+**원장 밖 비용.** native producer의 `prepareOrdinary`가 전체 shard plan을 파싱하고 `ValidateOrdinaryShardPlan`으로 plan을 재구성한다. 이 비용은 loader 원장이 아니라 native 내부 동작이며 계상하지 않고 공개한다. 실제 P0 plan(13,378,622 B)에서 파싱은 약 0.6초·할당 307 MB, 재구성은 약 2.4초·할당 1.09 GB·객체 2,045만 개였다(누적 할당이며 live heap이 아니다).
+
+**경로 결속.** 입력 root 안의 파일은 열려 있는 `os.Root`로만 열어 root 밖으로 나갈 수 없다. 마지막 구성요소가 symlink·reparse alias이면 거부한다(`ORDINARY_PATH_ALIAS`). 열린 handle의 identity(`SameFile`)·길이·SHA-256을 기록하고 서로 다른 두 경로가 같은 파일이면 거부한다. root 밖 문서(witness·plan)는 부모 디렉터리를 해소해 case·grammar·ordinary root 안이면 거부한다(`ORDINARY_INPUT_INSIDE_CASE_ROOT`). native 시작 직전에 모든 경로를 다시 열어 같은 파일·같은 길이·같은 hash인지 확인하며 바뀌었거나 교체됐으면(내용이 같아도 identity가 다르면) `ORDINARY_INPUT_CHANGED`로 거부하고 native를 시작하지 않는다.
+
+**종료.** loader 오류는 stderr 진단과 오류 종류의 exit(usage 2, IO 4, resource limit 3)이다. 이미 FAIL이 확립된 ordinary record는 이후 취소·resource 정지·stdout 쓰기 실패가 있어도 exit 1과 결과의 첫 finding code를 유지한다. 다른 recording의 종료 우선순위는 바뀌지 않는다.
+
+### #362 P2-D ordinary replay CLI
+
+Ordinary replay는 기존 `tsgk replay --input DIR --profile FILE`을 사용한다. Profile r1의 reducer가 `oracle-set-r9`이면 ordinary 경로를 선택하고 outer records는 선택 obligation ID들을 registry가 고정한 순서로 담는다. Ordinary 출력은 nested `ordinary_query_semantics`에 저장되고 `tsgk-replay-result/r4`를 사용한다. `oracle-set-r4/r5/r6`와 `qualification r10`을 ordinary 용도로 자동 재시도하지 않는다. Exit는 기존 replay 규칙을 따른다. 이미 확인한 FAIL 뒤 취소·resource·출력 오류가 생기면 FAIL exit를 보존하고 report publication 실패는 별도 실행 오류로 보고한다. P2-B native producer부터 `tsgk oracle record`로 시작하는 양성은 [record CLI](#362-ordinary-record-cli) 절에 있으며 approval·reference는 synthetic이다.
+
 root에서 실행할 CLI는 `tsgk <command>`다. 읽기 대상은 명시적 `--root PATH`(기본 현재 디렉터리), JSON 결과는 stdout, 진단은 stderr다. `--out PATH`는 새 파일만 허용한다. 기존 파일·입력 집합 내부·link 경로는 거부한다. caller-owned 같은 filesystem의 임시 파일을 완성한 뒤 충돌 없이 publish하고, 실패 partial은 별도 failure evidence로 보존한다. 결과 쓰기 실패는 성공 결과로 바꾸지 않는다. 입력 directory를 갖는 경로 검사는 [trust 계약](trust-and-execution.md)의 bounded directory identity 검사를 사용한다. outside membership 미확인은 `INPUT_PATH_UNVERIFIED`(trust/workspace, exit 2) 또는 `OUTPUT_PATH_UNVERIFIED`(publication exit 4, qualify 사전 검사 exit 2)로 거부하며, 확인된 내부 경로의 기존 code는 유지한다.
 
 exit `0`은 해당 명령이 요청한 범위의 PASS/관측 완료, `1`은 유효한 입력에서 검증 FAIL, `2`는 인자·profile·형식 오류, `3`은 필수 근거/권한/capability가 없어 BLOCKED, `4`는 I/O·tool·내부 실행 오류, `130`은 취소다. unknown layout을 관측한 inspect의 exit 0은 qualification PASS를 뜻하지 않는다. 결과 envelope는 `schema: tsgk-report/r1`, `command`, `execution_status`, `evidence_mode`, `assessment`, `identities`, `findings`, `coverage`를 가진다. finding은 안정적인 `code`, `severity`, root-relative `path`, 한국어 `message`로 표현한다. OS 절대 경로와 환경값은 기본 결과에서 제외한다.

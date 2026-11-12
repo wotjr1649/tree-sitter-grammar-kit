@@ -6,23 +6,34 @@ import (
 )
 
 func (b *eligibilityBudget) semanticBase(profile OracleProfile, data []byte, cache *semanticNativeCache, res *QuerySemanticsResult, add func(string, string, string)) *Error {
-	significant, sizeErr := b.significantJSONBytes(data)
-	if sizeErr != nil {
-		return sizeErr
-	}
-	if e := b.charge(16*significant+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
-		return e
+	if cache.ordinaryBase {
+		if e := b.charge(uint64(len(data))+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
+			return e
+		}
+	} else {
+		significant, sizeErr := b.significantJSONBytes(data)
+		if sizeErr != nil {
+			return sizeErr
+		}
+		if e := b.charge(16*significant+1, 16*uint64(len(data)), "semantic-base-replay"); e != nil {
+			return e
+		}
 	}
 	var c rcCase
 	if err := jsonv2.Unmarshal(data, &c); err != nil {
 		return fail(KindInvalidInput, "JSON_SHAPE", "projection", err)
+	}
+	if cache.ordinaryBase {
+		if e := b.reserveOrdinaryBaseReplay(&c, &profile.Native.Cases[0], uint64(len(data))); e != nil {
+			return e
+		}
 	}
 	missingOracle := c.Oracle == nil && (c.ExecutionStatus == StatusCompleted || len(profile.Queries) != 0 || profile.API)
 	if missingOracle {
 		add("ORACLE_CLAIMS_MISSING", c.ID, "등록된 query/API에 필요한 기존 Oracle claim이 없다")
 	}
 	x := &replayEnv{r: b.r, lim: ReplayOperations()["evidence-replay"], seen: map[string]map[string]bool{},
-		reuseObservation: true, mandatoryObservation: true, errorTreeRoute: true, observationRuntime: b.runtimeLogger()}
+		reuseObservation: true, mandatoryObservation: true, errorTreeRoute: true, recomputedOracle: cache.ordinaryClaims, observationRuntime: b.runtimeLogger()}
 	claim, computed, e := b.semanticQueryExpectations(profile, cache)
 	if claim == claimFail {
 		res.BaseVerified = Verdict{StatusCompleted, AssessFail}
@@ -38,7 +49,10 @@ func (b *eligibilityBudget) semanticBase(profile OracleProfile, data []byte, cac
 		return e
 	}
 	if computed || claim == claimFail {
-		x.recomputedOracle = map[string]string{"query-expectations": claim}
+		if x.recomputedOracle == nil {
+			x.recomputedOracle = map[string]string{}
+		}
+		x.recomputedOracle["query-expectations"] = claim
 	}
 	out := x.replayCase(&c, 0, &profile.Native.Cases[0], len(profile.Queries) != 0)
 	if cache.record.haveRaw {
@@ -90,7 +104,7 @@ func (b *eligibilityBudget) semanticBase(profile OracleProfile, data []byte, cac
 func (b *eligibilityBudget) semanticQueryExpectations(profile OracleProfile, cache *semanticNativeCache) (string, bool, *Error) {
 	claim := claimNotClaimed
 	computed := true
-	for _, expected := range profile.OracleCases[0].QueryExpect {
+	for i, expected := range profile.OracleCases[0].QueryExpect {
 		if e := b.charge(uint64(len(profile.Queries)+len(cache.tuples))+1, 0, "semantic-query-expectation"); e != nil {
 			return claim, false, e
 		}
@@ -109,6 +123,9 @@ func (b *eligibilityBudget) semanticQueryExpectations(profile OracleProfile, cac
 			if index < 0 || index >= len(cache.evaluated) || !cache.evaluated[index] {
 				claim = worseClaim(claim, claimBlocked)
 				computed = false
+				if i < len(cache.queryClaims) {
+					cache.queryClaims[i] = claimBlocked
+				}
 				continue
 			}
 			evaluated := cache.values[index]
@@ -147,6 +164,9 @@ func (b *eligibilityBudget) semanticQueryExpectations(profile OracleProfile, cac
 			computed = false
 		}
 		claim = worseClaim(claim, value)
+		if i < len(cache.queryClaims) {
+			cache.queryClaims[i] = value
+		}
 	}
 	return claim, computed, nil
 }

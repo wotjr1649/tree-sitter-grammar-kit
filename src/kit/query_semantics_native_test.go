@@ -96,6 +96,21 @@ func TestSemanticProjectionBindsBaseInputsToRaw(t *testing.T) {
 			if e != nil || (findings == 0) != (mutation == "none") {
 				t.Fatalf("mutation %s findings=%d error=%v", mutation, findings, e)
 			}
+			ordinary := semanticTestBudget(t)
+			inputBytes, e := ordinary.ordinaryBaseInputBytes(raw, projection)
+			if e != nil {
+				t.Fatal(e)
+			}
+			ordinaryFindings := 0
+			e = ordinary.semanticProjectionInputs(raw, projection, inputBytes, func(code, _, _ string) {
+				if code != "SEMANTICS_PROJECTION_BASE_INPUT" {
+					t.Fatalf("unexpected ordinary finding: %s", code)
+				}
+				ordinaryFindings++
+			})
+			if e != nil || ordinaryFindings != findings {
+				t.Fatalf("ordinary input bound changed validation: findings=%d want=%d error=%v", ordinaryFindings, findings, e)
+			}
 		})
 	}
 }

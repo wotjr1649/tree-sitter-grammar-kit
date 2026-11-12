@@ -1,0 +1,3769 @@
+{
+ "schema": "tsgk-query-svc-inline-expected/r1",
+ "svc_expected": {
+  "path": "src/contracts/query-svc-expected-r1.json",
+  "bytes": 196457,
+  "sha256": "660c62b36794859a3911e0d65152f58d02a10db779e66f13865296010a74bde9"
+ },
+ "registry": {
+  "path": "src/contracts/query-semantic-registry-r1.json",
+  "bytes": 82475,
+  "sha256": "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
+ },
+ "qualification": {
+  "path": "src/contracts/qualification-c1.json",
+  "bytes": 8297072,
+  "sha256": "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
+ },
+ "fixture": {
+  "path": "src/testdata/native/n461/svc.json",
+  "bytes": 52928,
+  "sha256": "87bb0da82ca952d423d03f94a6e75621b4819c40938548ca2340e4042a53a0d7"
+ },
+ "fact_pack": {
+  "path": "src/contracts/fact-query-pack.json",
+  "bytes": 9702,
+  "sha256": "f86e4c8072d30480bfdd7a7a77a3c6d92fb52090b910deeb38b9137fa4b4e21a"
+ },
+ "grammar": {
+  "version": "tree-sitter-c-sharp 0.23.5",
+  "grammar_json_sha256": "704882b5d27ee79c69a1508d3d649e8d7c64d43c57e07ef0041cb9daf0669e16",
+  "parser_sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+  "scanner_sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed"
+ },
+ "queries": [
+  {
+   "id": "facts.declarations",
+   "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b",
+   "patterns": 40
+  },
+  {
+   "id": "facts.dynamic_sql",
+   "sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812",
+   "patterns": 9
+  }
+ ],
+ "basis": "Inline C# fragments (the included ranges of the SVC composite and the CodeBehind reference case) are derived from the C# grammar rules (grammar.json) by a hand-written parser of the exact C# subset the valid fragments use (using, namespace, class, interface, attribute list with named arguments, method, field, parameter, return, string literal with escapes, member access, binary +, line comments); the root spans from its first child to the end of the included range. The two fact queries are interpreted from their source text by a small matcher (node patterns, wildcards, fields, the first-child anchor, captures) over the derived tree and kept as an unordered multiset with the pattern index. Dynamic SQL facts follow the fact pack rule: a CSHARP_COMMAND fact needs a capture of the oc.arg, ini.as or ma.as pattern, so none means zero facts. Fragments with a preprocessor directive (external scanner) and fragments outside the language (error recovery) are BLOCKED and never guessed.",
+ "derived": 30,
+ "blocked": 52,
+ "steps": [
+  {
+   "case": "n461-svc-inline-pe-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 456,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 375,
+    "sha256": "f1aafde67e186c03c2930fb187affdfa0f97c4382a4a3b52924116ccc13c1b76"
+   },
+   "cst": {
+    "nodes": 88,
+    "max_depth": 10,
+    "rows_sha256": "80addfa0cb97bccebfb6a4df55121770f5c69b2030ba088cd6ff3acbd5a5c44c",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5c07b1acaf8c3d0c9bbf65c556823233991c076e2b397717b6b46b481b75fc01"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "c9ec85d3ea9edbd13152b0349e1b7743a10449da420416d56609c8dba696aba7",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-pe-r1",
+   "step": 1,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 518,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     24,
+     0
+    ],
+    "bytes": 437,
+    "sha256": "5109a00706cd8df451c69f1bf0ef419b57809e693fab7921574a851e3aae83d9"
+   },
+   "cst": {
+    "nodes": 103,
+    "max_depth": 10,
+    "rows_sha256": "ecc4a6eb14a128473baa9c62f80ccf7f1915d8dab55dfd3080da29d11e666bfe",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 18,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 3
+      }
+     ],
+     "sha256": "2181c597b57a8f3bb10f44de4066af64fac955bf2698fcaf32f05e3986ff417c"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "c9ec85d3ea9edbd13152b0349e1b7743a10449da420416d56609c8dba696aba7",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-pe-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 610,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     29,
+     0
+    ],
+    "bytes": 529,
+    "sha256": "08a67dc34e354b642a803b3eecc5ebd3bfdb3de2d5d54bd74360fede2292e19d"
+   },
+   "cst": {
+    "nodes": 124,
+    "max_depth": 10,
+    "rows_sha256": "52889eda941289ecb983eca779f4f7c908ef3af841b375ff62cf4d0748ef4a01",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 21,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 4
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 4
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 4
+      }
+     ],
+     "sha256": "8e9ba4302ba5c19e98e90c2e87bff6cd373d887bc404e4d737ac7ee6ebc5907f"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "c9ec85d3ea9edbd13152b0349e1b7743a10449da420416d56609c8dba696aba7",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-n-r1",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected \";\" before \")\" at byte 436",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 458,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 377,
+    "sha256": "788f09d7ffa6a16ef12ebd0f04f57d1edff3dfddb1521d5d33f151210adb4814"
+   }
+  },
+  {
+   "case": "n461-svc-inline-r-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 456,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 375,
+    "sha256": "f1aafde67e186c03c2930fb187affdfa0f97c4382a4a3b52924116ccc13c1b76"
+   },
+   "cst": {
+    "nodes": 88,
+    "max_depth": 10,
+    "rows_sha256": "80addfa0cb97bccebfb6a4df55121770f5c69b2030ba088cd6ff3acbd5a5c44c",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5c07b1acaf8c3d0c9bbf65c556823233991c076e2b397717b6b46b481b75fc01"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "c9ec85d3ea9edbd13152b0349e1b7743a10449da420416d56609c8dba696aba7",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-r-r1",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected \";\" before \")\" at byte 436",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 458,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 377,
+    "sha256": "788f09d7ffa6a16ef12ebd0f04f57d1edff3dfddb1521d5d33f151210adb4814"
+   }
+  },
+  {
+   "case": "n461-svc-inline-r-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 81,
+    "end_byte": 456,
+    "start_point": [
+     0,
+     81
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 375,
+    "sha256": "f1aafde67e186c03c2930fb187affdfa0f97c4382a4a3b52924116ccc13c1b76"
+   },
+   "cst": {
+    "nodes": 88,
+    "max_depth": 10,
+    "rows_sha256": "80addfa0cb97bccebfb6a4df55121770f5c69b2030ba088cd6ff3acbd5a5c44c",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5c07b1acaf8c3d0c9bbf65c556823233991c076e2b397717b6b46b481b75fc01"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "c9ec85d3ea9edbd13152b0349e1b7743a10449da420416d56609c8dba696aba7",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-pe-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 406,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "3cd8dc7d4997c8706710ff370f86c8f763357d6e41f4fb571d69132c43f21d8e",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5353967ee581bfafe8c868103e8bf7308b6e9968d0d0e5d15990ff2ab1b4a945"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "4338bc7efa5bf3b69e57f3cb003f3fe2b57193f111c6f8035a28a42cc5d6d5ab",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-pe-r1",
+   "step": 1,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 466,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "bc4a977aed57618084b5f7824134009e6512b03feb64f50464a9563953c3a0c4",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "8550d539ec6150839067fc435bbe01ba5ce1c195ad1b98811585a88feff98666"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "91bf487f3a15b8786d654e7e626fa702b0479e83087218521edd9a9d65249ceb",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-pe-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 463,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 334,
+    "sha256": "29f4be2d966cdbd6b6d21ea10b101438e7926914c6a6dd2e44dc91423d7c46d2"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "fad1e67cc774fd62a0ffba85aeeea7c4edbb391b48430d7b1282850004a43ece",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "c739f6e3c7b5e058e53fe591a76f90f39c016da2e352d4fb502f2b692dbf6c9c"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "91bf487f3a15b8786d654e7e626fa702b0479e83087218521edd9a9d65249ceb",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-pe-r1",
+   "step": 3,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 519,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     24,
+     0
+    ],
+    "bytes": 390,
+    "sha256": "5010d994c42c90d81751191b74ce59ac998a6c716c07bcbc58400de88cc6c335"
+   },
+   "cst": {
+    "nodes": 87,
+    "max_depth": 10,
+    "rows_sha256": "a223d7aa86556419cd2696e031fe711ab5a87cd76e6965aef3c515885219ad51",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 18,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 3
+      }
+     ],
+     "sha256": "f48406c10164a3a1055ed9aa2cb6abe7f81351aae5bb2dc103633a76f7013fe6"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "91bf487f3a15b8786d654e7e626fa702b0479e83087218521edd9a9d65249ceb",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-n-r1",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected a type declaration before \"\u003e\" at byte 69",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 407,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 338,
+    "sha256": "69c20893c2a161dddcde24102fd46787c4cf2268cc7be53bea7709fc38cf12ad"
+   }
+  },
+  {
+   "case": "n461-svc-boundary-r-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 406,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "3cd8dc7d4997c8706710ff370f86c8f763357d6e41f4fb571d69132c43f21d8e",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5353967ee581bfafe8c868103e8bf7308b6e9968d0d0e5d15990ff2ab1b4a945"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "4338bc7efa5bf3b69e57f3cb003f3fe2b57193f111c6f8035a28a42cc5d6d5ab",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-r-r1",
+   "step": 1,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 466,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "bc4a977aed57618084b5f7824134009e6512b03feb64f50464a9563953c3a0c4",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "8550d539ec6150839067fc435bbe01ba5ce1c195ad1b98811585a88feff98666"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "91bf487f3a15b8786d654e7e626fa702b0479e83087218521edd9a9d65249ceb",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-r-r1",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected an expression before \"return\" at byte 431",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 473,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 344,
+    "sha256": "bf4d58f0b80d2a86a6c3d29bbe7721c70c03393e7b4e8da7a14c440f9026a83f"
+   }
+  },
+  {
+   "case": "n461-svc-boundary-r-r1",
+   "step": 3,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 129,
+    "end_byte": 466,
+    "start_point": [
+     0,
+     129
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "bc4a977aed57618084b5f7824134009e6512b03feb64f50464a9563953c3a0c4",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "8550d539ec6150839067fc435bbe01ba5ce1c195ad1b98811585a88feff98666"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "91bf487f3a15b8786d654e7e626fa702b0479e83087218521edd9a9d65249ceb",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-boundary-r-r1",
+   "step": 4,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 406,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 337,
+    "sha256": "068db1739e150d2e3bb8abd1830b8e785a09c63230e67877dc6c2ada2f6a1e55"
+   },
+   "cst": {
+    "nodes": 75,
+    "max_depth": 10,
+    "rows_sha256": "3cd8dc7d4997c8706710ff370f86c8f763357d6e41f4fb571d69132c43f21d8e",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "5353967ee581bfafe8c868103e8bf7308b6e9968d0d0e5d15990ff2ab1b4a945"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "4338bc7efa5bf3b69e57f3cb003f3fe2b57193f111c6f8035a28a42cc5d6d5ab",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-encoding-pe-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 547,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 472,
+    "sha256": "e83c7331a5cc209fe8963baa93b83ea14804a5323ca19d57ad9e1c0522692f7c"
+   },
+   "cst": {
+    "nodes": 87,
+    "max_depth": 12,
+    "rows_sha256": "01f0bac6313ec777bbaad72c6823b0f5f43c6cc4d3ef80ebd3df93d17f62f224",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "a878c60d40e63d08713a5475ec01284da3e5c0b50e34697b0a53c89df6ebd491"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 8,
+     "by_name": [
+      {
+       "name": "bin",
+       "count": 2
+      },
+      {
+       "name": "bin.op",
+       "count": 2
+      },
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "292e9c69227d93cec595f79110d13b88f0731fa4e57757e9ebe9aeba01d52831",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-encoding-pe-r1",
+   "step": 1,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 617,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     24,
+     0
+    ],
+    "bytes": 542,
+    "sha256": "1b92c301357e6188a214d93e9ab8ec3ac82bd854a1f04f79932d96e72d2edbc2"
+   },
+   "cst": {
+    "nodes": 102,
+    "max_depth": 12,
+    "rows_sha256": "ffd0e032c52889dae95f0705e53e486fa2abbfb720ab9724469698eb838c6e7b",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 18,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 3
+      }
+     ],
+     "sha256": "6e413ae17045f54b8bb880bf2c8c70a1e851486fa01ddc714299e75c6dd761ff"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 8,
+     "by_name": [
+      {
+       "name": "bin",
+       "count": 2
+      },
+      {
+       "name": "bin.op",
+       "count": 2
+      },
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "d6c69c6bd439ac91c0dcece318918f87d6c5d2c6c9c445aeef5a580e6b3ed55b",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-encoding-pe-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 621,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     24,
+     0
+    ],
+    "bytes": 546,
+    "sha256": "c925d681f9d7963e76f9eba6f2111d1ffbd50323c00742e35f282c1de6d037b2"
+   },
+   "cst": {
+    "nodes": 102,
+    "max_depth": 12,
+    "rows_sha256": "f0b851032e0f021515d63e3b243e15c2d9ec332605b66865defd0f3a1ec21f3d",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 18,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 3
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 3
+      }
+     ],
+     "sha256": "900117ee6e46d0f6e1052f3b3f02bc3767fef15a763defc3819b37ebe3974175"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 8,
+     "by_name": [
+      {
+       "name": "bin",
+       "count": 2
+      },
+      {
+       "name": "bin.op",
+       "count": 2
+      },
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "ab8c15bacb0a11aa3891e8c9f8d862f63d6ec824e69170f485fb2a3b663bd9f2",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-encoding-n-r1",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected \"{\" before \")\" at byte 266",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 548,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 473,
+    "sha256": "16536645bef599451f9354c7a89cda9437025006f7ecc0673ea39b38757a0b9b"
+   }
+  },
+  {
+   "case": "n461-svc-encoding-r-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 547,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 472,
+    "sha256": "e83c7331a5cc209fe8963baa93b83ea14804a5323ca19d57ad9e1c0522692f7c"
+   },
+   "cst": {
+    "nodes": 87,
+    "max_depth": 12,
+    "rows_sha256": "01f0bac6313ec777bbaad72c6823b0f5f43c6cc4d3ef80ebd3df93d17f62f224",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "a878c60d40e63d08713a5475ec01284da3e5c0b50e34697b0a53c89df6ebd491"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 8,
+     "by_name": [
+      {
+       "name": "bin",
+       "count": 2
+      },
+      {
+       "name": "bin.op",
+       "count": 2
+      },
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "292e9c69227d93cec595f79110d13b88f0731fa4e57757e9ebe9aeba01d52831",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-encoding-r-r1",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "syntax: expected an expression before \"return\" at byte 482",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 554,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 479,
+    "sha256": "4fdb6bc25aaf9a25e59f819be07c566a8bbb78c85582ef984a6f928b4de2547b"
+   }
+  },
+  {
+   "case": "n461-svc-encoding-r-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 75,
+    "end_byte": 547,
+    "start_point": [
+     0,
+     75
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 472,
+    "sha256": "e83c7331a5cc209fe8963baa93b83ea14804a5323ca19d57ad9e1c0522692f7c"
+   },
+   "cst": {
+    "nodes": 87,
+    "max_depth": 12,
+    "rows_sha256": "01f0bac6313ec777bbaad72c6823b0f5f43c6cc4d3ef80ebd3df93d17f62f224",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "a878c60d40e63d08713a5475ec01284da3e5c0b50e34697b0a53c89df6ebd491"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 8,
+     "by_name": [
+      {
+       "name": "bin",
+       "count": 2
+      },
+      {
+       "name": "bin.op",
+       "count": 2
+      },
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "292e9c69227d93cec595f79110d13b88f0731fa4e57757e9ebe9aeba01d52831",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-codebehind-n-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 104,
+    "end_byte": 128,
+    "start_point": [
+     0,
+     104
+    ],
+    "end_point": [
+     4,
+     0
+    ],
+    "bytes": 24,
+    "sha256": "08c866c94e894edcbc86b06f71973baac3b010c63b57ef45807dc60f12b6ee5b"
+   },
+   "cst": {
+    "nodes": 9,
+    "max_depth": 4,
+    "rows_sha256": "aebd8e47d376e8a516418d593395c3dba6a0e078b9d9b116b3a81792192c60be",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "020e309ad34ad32276b1615ad740e3df63fe8fbf5722378c5c9a6aac8f44a879"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-terminator-r-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 168,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "8c6319674cd5dada490536e5bd3565d74f7d8e47c2140008f4df940048fa0bcf"
+   },
+   "cst": {
+    "nodes": 28,
+    "max_depth": 7,
+    "rows_sha256": "0973a3a4a05509c1c8c2f81f2652491da0514e29b4ff4247e51b561dd69466b6",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 6,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "e3135fa5716f3d8e960f132b3857a60ad803318f4db881c1b51f2d7bdef26b49"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-terminator-r-r1",
+   "step": 2,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 69,
+    "end_byte": 168,
+    "start_point": [
+     0,
+     69
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "8c6319674cd5dada490536e5bd3565d74f7d8e47c2140008f4df940048fa0bcf"
+   },
+   "cst": {
+    "nodes": 28,
+    "max_depth": 7,
+    "rows_sha256": "0973a3a4a05509c1c8c2f81f2652491da0514e29b4ff4247e51b561dd69466b6",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 6,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "e3135fa5716f3d8e960f132b3857a60ad803318f4db881c1b51f2d7bdef26b49"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-language-unresolved-n-r1",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 67,
+    "end_byte": 442,
+    "start_point": [
+     0,
+     67
+    ],
+    "end_point": [
+     21,
+     0
+    ],
+    "bytes": 375,
+    "sha256": "f1aafde67e186c03c2930fb187affdfa0f97c4382a4a3b52924116ccc13c1b76"
+   },
+   "cst": {
+    "nodes": 88,
+    "max_depth": 10,
+    "rows_sha256": "f51a6cacc195833310865a92e5e277b5b377e52cc1b8fb546731a1b9d2c07aa8",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.2.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.2.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 2
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 2
+      }
+     ],
+     "sha256": "bb0875bcadf17ef6d1c010bf4753954669caf665317bf39d54638a3ee85f0380"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 4,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 2
+      },
+      {
+       "name": "qn.name",
+       "count": 2
+      }
+     ],
+     "sha256": "504c6ddc88276b02874ac0ef6ac910bb2dcd2f7e6934be889c1835400912e0b9",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-reference-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 0,
+    "end_byte": 148,
+    "start_point": [
+     0,
+     0
+    ],
+    "end_point": [
+     0,
+     148
+    ],
+    "bytes": 148,
+    "sha256": "77bde3591a310cffb99d2e557536b22e188d781626f2d0a9436b04f21bccbd51"
+   },
+   "cst": {
+    "nodes": 50,
+    "max_depth": 10,
+    "rows_sha256": "ddd6a83d14e999914102510826ffa20a700a9c605658a87250bcd0e4116c6651",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 15,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.14.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.14.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.14.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.14.3.1",
+       "count": 1
+      },
+      {
+       "name": "c.14.3.2",
+       "count": 1
+      },
+      {
+       "name": "c.14.3.3",
+       "count": 1
+      },
+      {
+       "name": "c.6.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.6.1.1",
+       "count": 1
+      },
+      {
+       "name": "c.8.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.8.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "ad65037b401a29519673789f49c78e4d3ec6bd3fbbba1668ccab4ba0fc8f2727"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 2,
+     "by_name": [
+      {
+       "name": "qn",
+       "count": 1
+      },
+      {
+       "name": "qn.name",
+       "count": 1
+      }
+     ],
+     "sha256": "3391b441950c9dc31f13f2a069dad449388c032f7b69b2c923903d608c996c49",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-space-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 55,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "fb4ba2ac8b2d0a5febe4593caabf8f81c7fdc3ce9a7f2d91b9d59db5adbd7a07",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "7d92311048872dd38158d48319d70840b31d540ae7a6057f11ce91e1c87f450a"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-quoted-close-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 47,
+    "end_byte": 58,
+    "start_point": [
+     0,
+     47
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "a0e76b2c8e5d920e9d2234d87136e98d644da91308b84bbb9382be87e1d94f36",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "b9ff2d11f446fa97f09a8a413592ee2a9b8c0343b9604cc630b2cd42cdc313fc"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-assembly-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 105,
+    "end_byte": 116,
+    "start_point": [
+     2,
+     30
+    ],
+    "end_point": [
+     3,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "66b494df8febb6a261c285d0658096bbbfd0a079ba5ebeefec39697f4744cb2d",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "f89975254f2939f582d532f8c22827224efe64c14a281d9809450e7ab2940e1b"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-unicode-space-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 51,
+    "end_byte": 62,
+    "start_point": [
+     0,
+     51
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "f7b53675f7b62a961e1acc5f36a9aefae1fed31b363bbf34228419b3df962a15",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "f1ec8e41054ead607a6ecda9b01995d93a10ea04d3c600a1306764ec2c9b22ee"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-bad-directive-n-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 54,
+    "end_byte": 65,
+    "start_point": [
+     0,
+     54
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "d9da30e46a3557f9620f5fb57c65fafce96f21811b369428c16ce729e6b6eb80",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "854134ddeb9dd8885cece9921e5c65e5fdeffdc6d192b366587a384310c5c385"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-language-cs-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 55,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "fb4ba2ac8b2d0a5febe4593caabf8f81c7fdc3ce9a7f2d91b9d59db5adbd7a07",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "7d92311048872dd38158d48319d70840b31d540ae7a6057f11ce91e1c87f450a"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-language-csharp-p-r2",
+   "step": 0,
+   "state": "DERIVED",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 59,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     1,
+     10
+    ],
+    "bytes": 11,
+    "sha256": "0ee0055d14e3110c509a12a5d0957aaa684a9a7db8ad005136837982b8736921"
+   },
+   "cst": {
+    "nodes": 7,
+    "max_depth": 4,
+    "rows_sha256": "1ef384b489e90b00f719d21a44142335f49c272db9865ca4b5326c5eb2f829b8",
+    "has_error": false
+   },
+   "queries": [
+    {
+     "id": "facts.declarations",
+     "patterns": 40,
+     "captures": 3,
+     "by_name": [
+      {
+       "name": "c.0.0.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.0",
+       "count": 1
+      },
+      {
+       "name": "c.0.1.1",
+       "count": 1
+      }
+     ],
+     "sha256": "25f07740c1ea6ec7974162448ac1af457385ac91228be16276a438e424bf011b"
+    },
+    {
+     "id": "facts.dynamic_sql",
+     "patterns": 9,
+     "captures": 0,
+     "by_name": [],
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "facts": 0
+    }
+   ]
+  },
+  {
+   "case": "n461-svc-inline-marker-n-r2",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "lexical: unterminated string literal",
+   "fragment": {
+    "start_byte": 96,
+    "end_byte": 98,
+    "start_point": [
+     1,
+     51
+    ],
+    "end_point": [
+     1,
+     53
+    ],
+    "bytes": 2,
+    "sha256": "c7bfc2027151203c62671c4686dd9d732935a4be23a2d673cbd828ef0f4a8ffc"
+   }
+  },
+  {
+   "case": "n461-svc-unquoted-codebehind-n-r2",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE",
+   "reason": "lexical: unterminated string literal",
+   "fragment": {
+    "start_byte": 40,
+    "end_byte": 48,
+    "start_point": [
+     0,
+     40
+    ],
+    "end_point": [
+     0,
+     48
+    ],
+    "bytes": 8,
+    "sha256": "6c8a184c4740de49596a23033ad8ffe2b6021a79d147a3e251034e5419580864"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-define-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 143,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "a73729c39ac70e4f6ca3ba8bc22876826f7e5a40ebb72993356bcc821a4b9a5d"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-define-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 143,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "493fecc5b2082bb5864bf670f015a4b24ad2628e64e9e9d7f291887aca7b45ad"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-define-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 143,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "a73729c39ac70e4f6ca3ba8bc22876826f7e5a40ebb72993356bcc821a4b9a5d"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-unknown-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 144,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 100,
+    "sha256": "3f759aa3b0ef8b026cd2f9bfc92f37f27bae689e1e9619d1130111e2428b4de8"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-unknown-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 143,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "563dd6fab0fc721819d0064aedab4f9ddf23155c0273b945a354849e04476948"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-unknown-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 144,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 100,
+    "sha256": "3f759aa3b0ef8b026cd2f9bfc92f37f27bae689e1e9619d1130111e2428b4de8"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-nested-else-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 159,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 115,
+    "sha256": "11c61ba9f861ed552c64758615bcbc883253c5d06c99a9cf626eebe3e5df9884"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-nested-else-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 165,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 121,
+    "sha256": "5843f4a0527471c37fac5b669bee178b18427217ae75284a395f1c0760d40a4d"
+   }
+  },
+  {
+   "case": "n461-svc-issue179-nested-else-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 44,
+    "end_byte": 159,
+    "start_point": [
+     0,
+     44
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 115,
+    "sha256": "11c61ba9f861ed552c64758615bcbc883253c5d06c99a9cf626eebe3e5df9884"
+   }
+  },
+  {
+   "case": "svc-issue179-recursive-symbol-control",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 121,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 73,
+    "sha256": "0a431061cfb693a38e10472705ebcdf4b1d031d122699e3baf620261493c58b2"
+   }
+  },
+  {
+   "case": "svc-issue179-recursive-define-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 115,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 67,
+    "sha256": "22248b9d5663a358ee1c44146cd84f3811a2ea26ead0f4009e275dc7d9ef0813"
+   }
+  },
+  {
+   "case": "svc-issue179-recursive-define-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 115,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 67,
+    "sha256": "574db8f5f8cc185f5c2ba532dc118fcceff55fc3598a30ba6b8d4b0442398153"
+   }
+  },
+  {
+   "case": "svc-issue179-recursive-define-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 115,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 67,
+    "sha256": "22248b9d5663a358ee1c44146cd84f3811a2ea26ead0f4009e275dc7d9ef0813"
+   }
+  },
+  {
+   "case": "svc-issue182-argument-prefix-symbol",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 126,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 78,
+    "sha256": "475d64e7d1e9beb879790271e517cc2e94b44fb4112ddca9e90c750160fe4b17"
+   }
+  },
+  {
+   "case": "svc-issue182-initializer-terminated-symbol",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 136,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 88,
+    "sha256": "97ca05a4d62d78662dccf22c4bda25d4886c767cd7eb61bb29c81601e5c7ba9b"
+   }
+  },
+  {
+   "case": "svc-issue182-if-header-symbol",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 147,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "f45ee246194121b7fa6955fc631f2de0c643f0e71c17719c83f44cea094568d8"
+   }
+  },
+  {
+   "case": "svc-issue182-if-header-nested",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 149,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 101,
+    "sha256": "7ca8fabdc0357780250f67616d049ad0041c762a29f994085ad205f626706fe5"
+   }
+  },
+  {
+   "case": "svc-issue182-try-split-symbol",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 171,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     11,
+     0
+    ],
+    "bytes": 123,
+    "sha256": "63ddfc1d9e192516b075e55a97071a4618c41bfe388deec0d42ed626a902b654"
+   }
+  },
+  {
+   "case": "svc-issue182-argument-separator-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 131,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 83,
+    "sha256": "5f8d35aa758530d78e4f30945dd68ac61c55a66bcbc2f22feff7d7f0913e7b09"
+   }
+  },
+  {
+   "case": "svc-issue182-argument-separator-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 132,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 84,
+    "sha256": "0485356ddc31159967ed11242d5acefcfecaa8462e3dbdd868cf57d1863f9647"
+   }
+  },
+  {
+   "case": "svc-issue182-argument-separator-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 131,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     9,
+     0
+    ],
+    "bytes": 83,
+    "sha256": "5f8d35aa758530d78e4f30945dd68ac61c55a66bcbc2f22feff7d7f0913e7b09"
+   }
+  },
+  {
+   "case": "svc-issue182-initializer-terminator-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 134,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 86,
+    "sha256": "63889c6b479e0254657373109994074f77f09504fc6b0e8c364129647d0e71c5"
+   }
+  },
+  {
+   "case": "svc-issue182-initializer-terminator-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 135,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 87,
+    "sha256": "7f889242131f09e0efa5ef1260b3688179fb06b5c75ee3f605927c08224e3278"
+   }
+  },
+  {
+   "case": "svc-issue182-initializer-terminator-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 134,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 86,
+    "sha256": "63889c6b479e0254657373109994074f77f09504fc6b0e8c364129647d0e71c5"
+   }
+  },
+  {
+   "case": "svc-issue182-if-header-paren-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 146,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 98,
+    "sha256": "ff251e8ff69104c20180566da229ea7ab18be9887fca16097ee5a2dc7a5627ea"
+   }
+  },
+  {
+   "case": "svc-issue182-if-header-paren-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 147,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 99,
+    "sha256": "f45ee246194121b7fa6955fc631f2de0c643f0e71c17719c83f44cea094568d8"
+   }
+  },
+  {
+   "case": "svc-issue182-if-header-paren-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 146,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     10,
+     0
+    ],
+    "bytes": 98,
+    "sha256": "ff251e8ff69104c20180566da229ea7ab18be9887fca16097ee5a2dc7a5627ea"
+   }
+  },
+  {
+   "case": "svc-issue182-try-handler-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 142,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     11,
+     0
+    ],
+    "bytes": 94,
+    "sha256": "77d2b8c515172ce358df8dd9d48746e576e1e1cc9a03a24823b5602e1bb62cc6"
+   }
+  },
+  {
+   "case": "svc-issue182-try-handler-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 171,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     11,
+     0
+    ],
+    "bytes": 123,
+    "sha256": "63ddfc1d9e192516b075e55a97071a4618c41bfe388deec0d42ed626a902b654"
+   }
+  },
+  {
+   "case": "svc-issue182-try-handler-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 142,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     11,
+     0
+    ],
+    "bytes": 94,
+    "sha256": "77d2b8c515172ce358df8dd9d48746e576e1e1cc9a03a24823b5602e1bb62cc6"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-active-block",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 112,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 64,
+    "sha256": "54b2a34c4198fe7e88e6e68fc4ed42028a1ea8497dd51a42da19676f4ed4bd24"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-inactive-block",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 116,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 68,
+    "sha256": "a887f4a98b5d11cba8b305b60a26aa752efabb36b505efe98d8eae6bb4fc6d0d"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-nested-block",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 129,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 81,
+    "sha256": "04b74137a9e4bb4444308e4db3dc1d18b787452729a73749cabefaab3b3ed786"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-active-multiline",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 121,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     6,
+     0
+    ],
+    "bytes": 73,
+    "sha256": "27621425edc354d319ff75a490e9939cc9e1f98d6d49080a219438f95fb5b138"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-line-comment",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 111,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 63,
+    "sha256": "26975f0ae2f246bd6029b2be6baf8811efe51de174a35be77a775bc478651c4e"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-active-block-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 112,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 64,
+    "sha256": "54b2a34c4198fe7e88e6e68fc4ed42028a1ea8497dd51a42da19676f4ed4bd24"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-active-block-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 111,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 63,
+    "sha256": "26975f0ae2f246bd6029b2be6baf8811efe51de174a35be77a775bc478651c4e"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-active-block-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 112,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 64,
+    "sha256": "54b2a34c4198fe7e88e6e68fc4ed42028a1ea8497dd51a42da19676f4ed4bd24"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-inactive-block-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 116,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 68,
+    "sha256": "a887f4a98b5d11cba8b305b60a26aa752efabb36b505efe98d8eae6bb4fc6d0d"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-inactive-block-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 115,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 67,
+    "sha256": "e3f0874fc99172cf673175457ccf4a1643add6eb754f2b6f3532ee40dbc5d2b9"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-inactive-block-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 116,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     5,
+     0
+    ],
+    "bytes": 68,
+    "sha256": "a887f4a98b5d11cba8b305b60a26aa752efabb36b505efe98d8eae6bb4fc6d0d"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-nested-block-edit",
+   "step": 0,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 129,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 81,
+    "sha256": "04b74137a9e4bb4444308e4db3dc1d18b787452729a73749cabefaab3b3ed786"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-nested-block-edit",
+   "step": 1,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 128,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 80,
+    "sha256": "e0bff5755b680f74ae252fe1efb4d81f0b131d8433a72b151c9b6003e16fcabc"
+   }
+  },
+  {
+   "case": "svc-issue184-endif-nested-block-edit",
+   "step": 2,
+   "state": "BLOCKED",
+   "code": "SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED",
+   "reason": "preproc: a preprocessor directive line: the external scanner and the parse state decide its tokens and ranges",
+   "fragment": {
+    "start_byte": 48,
+    "end_byte": 129,
+    "start_point": [
+     0,
+     48
+    ],
+    "end_point": [
+     7,
+     0
+    ],
+    "bytes": 81,
+    "sha256": "04b74137a9e4bb4444308e4db3dc1d18b787452729a73749cabefaab3b3ed786"
+   }
+  }
+ ]
+}

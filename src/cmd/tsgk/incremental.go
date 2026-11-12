@@ -16,7 +16,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-const oracleUsage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] [--reuse-observation] [--reuse-accepted FILE] [--query-semantics FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
+const oracleUsage = "tsgk: USAGE: tsgk oracle record --root PATH [--grammar-root PATH] --profile FILE [--fact-pack FILE] [--source-witness] [--reuse-observation] [--reuse-accepted FILE] [--query-semantics FILE] [--ordinary-root DIR --ordinary-witness FILE --ordinary-plan FILE --ordinary-profile PATH --ordinary-assets PATH --ordinary-registry-sha256 SHA --ordinary-registration PATH ... --ordinary-shard ID ...] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 
 // runIncremental builds the native driver for a tsgk-incremental/r2 (or r1) profile and runs its
 // cases through the S04 runner (S05). Only this command, oracle record and reproduce
@@ -57,10 +57,20 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	var pack *string
 	var sourceWitness bool
 	var semanticsRegistration string
+	var ordinaryRoot, ordinaryWitness, ordinaryProfile, ordinaryAssets, ordinaryRegistrySHA, ordinaryPlan string
+	var ordinaryRegistrations, ordinaryShards multi
 	if kind == "oracle" {
 		fs.StringVar(&semanticsRegistration, "query-semantics", "", "preregistered query semantics outside input roots; records pending external approval")
 		pack = fs.String("fact-pack", "", "fact query pack the profile binds (outside the root)")
 		fs.BoolVar(&sourceWitness, "source-witness", false, "retain exact initial case source in a manifest r2 set")
+		fs.StringVar(&ordinaryRoot, "ordinary-root", "", "ordinary source-only input root with the pinned registry, qualification, profile, assets, registrations and bodies")
+		fs.StringVar(&ordinaryWitness, "ordinary-witness", "", "P1 source export file outside input roots")
+		fs.StringVar(&ordinaryPlan, "ordinary-plan", "", "full source-only ordinary shard plan outside input roots")
+		fs.StringVar(&ordinaryProfile, "ordinary-profile", "", "ordinary planning profile path relative to --ordinary-root")
+		fs.StringVar(&ordinaryAssets, "ordinary-assets", "", "ordinary asset registration path relative to --ordinary-root")
+		fs.StringVar(&ordinaryRegistrySHA, "ordinary-registry-sha256", "", "independently selected P0 registry SHA-256")
+		fs.Var(&ordinaryRegistrations, "ordinary-registration", "ordinary registration path relative to --ordinary-root (repeatable)")
+		fs.Var(&ordinaryShards, "ordinary-shard", "selected ordinary shard ID (repeatable)")
 	}
 	var tools, allow multi
 	fs.Var(&tools, "tool", "cc=PATH compiler executable")
@@ -70,9 +80,13 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	acceptedFlag := false
 	semanticsFlag := false
+	ordinaryFlags := false
 	fs.Visit(func(f *flag.Flag) {
 		if f.Name == "query-semantics" {
 			semanticsFlag = true
+		}
+		if strings.HasPrefix(f.Name, "ordinary-") {
+			ordinaryFlags = true
 		}
 		if f.Name == "reuse-accepted" {
 			acceptedFlag = true
@@ -85,6 +99,16 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	if acceptedFlag && *accepted == "" {
 		fmt.Fprintln(stderr, "tsgk: USAGE: empty --reuse-accepted")
 		return exitUsage
+	}
+	if ordinaryFlags && (semanticsFlag || ordinaryRoot == "" || ordinaryWitness == "" || ordinaryPlan == "" || ordinaryProfile == "" || ordinaryAssets == "" || ordinaryRegistrySHA == "" || len(ordinaryRegistrations) == 0 || len(ordinaryShards) == 0) {
+		fmt.Fprintln(stderr, "tsgk: USAGE: ordinary recording requires every --ordinary-* input and cannot be combined with --query-semantics")
+		return exitUsage
+	}
+	for _, id := range append(append([]string(nil), ordinaryRegistrations...), ordinaryShards...) {
+		if id == "" {
+			fmt.Fprintln(stderr, "tsgk: USAGE: empty --ordinary-registration or --ordinary-shard")
+			return exitUsage
+		}
 	}
 	usage := "tsgk: USAGE: tsgk incremental --root PATH [--grammar-root PATH] --profile FILE [--reuse-observation] [--reuse-accepted FILE] --runtime DIR --tool cc=PATH --work DIR --out DIR --allow BUILD_NATIVE --allow EXEC_NATIVE"
 	if kind == "oracle" {
@@ -110,6 +134,14 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	if *groot == "" {
 		*groot = *root
+	}
+	if ordinaryFlags {
+		a, err := filepath.Abs(ordinaryRoot)
+		if err != nil {
+			fmt.Fprintln(stderr, "tsgk: USAGE: invalid --ordinary-root")
+			return exitUsage
+		}
+		abs["ordinary-root"] = a
 	}
 	for k, p := range map[string]string{"root": *root, "grammar-root": *groot, "out": *out, "work": *work, "runtime": *rt, "cc": cc} {
 		a, err := filepath.Abs(p)
@@ -159,7 +191,11 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 			held = append(held, parent)
 			target = &native.OutputTarget{Parent: parent, Name: filepath.Base(abs["out"])}
 		}
-		for subjectIndex, subject := range []string{abs["root"], abs["grammar-root"]} {
+		subjects := []string{abs["root"], abs["grammar-root"]}
+		if ordinaryFlags {
+			subjects = append(subjects, abs["ordinary-root"])
+		}
+		for subjectIndex, subject := range subjects {
 			var contained bool
 			if k == "out" {
 				input, openErr := os.OpenRoot(subject)
@@ -169,7 +205,7 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 					held = append(held, input)
 					if subjectIndex == 0 {
 						inputs.Cases = input
-					} else {
+					} else if subjectIndex == 1 {
 						inputs.Grammar = input
 					}
 					contained, err = insideRoots(target.Parent, input)
@@ -196,6 +232,9 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 	}
 	if pack != nil && *pack != "" {
 		docs = append(docs, *pack)
+	}
+	if ordinaryFlags {
+		docs = append(docs, ordinaryWitness, ordinaryPlan)
 	}
 	for _, d := range docs {
 		for _, subject := range []string{abs["root"], abs["grammar-root"]} {
@@ -247,8 +286,20 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 				return exitIO
 			}
 		}
+		var ordinary *native.OrdinaryRecordingRequest
+		var factMapping []byte
+		if ordinaryFlags {
+			recording, code := loadOrdinaryForRecord(ctx, stderr, ordinaryLoadRequest{Root: ordinaryRoot, Witness: ordinaryWitness, Profile: ordinaryProfile, Assets: ordinaryAssets,
+				RegistrySHA256: ordinaryRegistrySHA, Plan: ordinaryPlan, Registrations: ordinaryRegistrations, ShardIDs: ordinaryShards, HasFactPack: *pack != "",
+				InputRoots: []string{abs["root"], abs["grammar-root"]}})
+			if recording == nil {
+				return code
+			}
+			defer recording.Close()
+			ordinary, factMapping = recording.recording, recording.factMapping
+		}
 		r, e := native.Oracle(ctx, native.OracleRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, FactPack: packData, Runtime: abs["runtime"], Compiler: abs["cc"],
-			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, SourceWitness: sourceWitness, ReuseObservation: reuseObservation, ReuseAccepted: acceptedData, QuerySemanticsRegistration: semanticsData})
+			Work: abs["work"], BuildCache: abs["build-cache"], Out: abs["out"], OutTarget: target, Inputs: inputs, Allow: allow, CgroupParent: *cgroup, RunWall: wall, SourceWitness: sourceWitness, ReuseObservation: reuseObservation, ReuseAccepted: acceptedData, QuerySemanticsRegistration: semanticsData, FactMapping: factMapping, Ordinary: ordinary})
 		res, report, rerr = &r, &r.Report, e
 	} else {
 		r, e := native.Incremental(ctx, native.IncrementalRequest{Root: abs["root"], GrammarRoot: abs["grammar-root"], Profile: data, Runtime: abs["runtime"], Compiler: abs["cc"],
@@ -271,11 +322,28 @@ func runNative(ctx context.Context, kind string, args []string, stdout, stderr i
 		return exitIO
 	}
 	line = append(line, '\n')
-	if n, err := stdout.Write(line); err != nil || n != len(line) {
+	n, werr := stdout.Write(line)
+	written := werr == nil && n == len(line)
+	if !written {
 		fmt.Fprintln(stderr, "tsgk: IO: OUTPUT_WRITE_FAILED")
+	}
+	return recordExit(ordinaryFlags, assessment, written, func() int { return nativeResultExit(status, assessment, rerr, stderr) })
+}
+
+// recordExit chooses the exit of a recording. An ordinary record keeps an established FAIL, and so the
+// first finding code in the result, ahead of a later cancellation, resource stop or output failure;
+// every other recording keeps its precedence (output failure, then the result).
+func recordExit(ordinary bool, assessment string, written bool, resultExit func() int) int {
+	if ordinary && assessment == kit.AssessFail {
+		if written {
+			resultExit() // reports the diagnostics of the result
+		}
+		return exitFail
+	}
+	if !written {
 		return exitIO
 	}
-	return nativeResultExit(status, assessment, rerr, stderr)
+	return resultExit()
 }
 
 func nativeResultExit(status, assessment string, rerr error, stderr io.Writer) int {

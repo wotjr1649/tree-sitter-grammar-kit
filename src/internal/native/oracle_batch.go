@@ -48,6 +48,36 @@ func unansweredFrame(fr runner.FrameResult) (status, assess, code string) {
 // after that process disposed of at least one frame with verified cleanup. Answered cases
 // of a batch whose process is not kit.OracleBatch.Accepted are not accepted.
 func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.IncrementalCase, reqs []caseRequest, out []CaseResult, pending []int) []kit.OracleBatch {
+	return b.runOracleBatchesCapture(ctx, x, cases, reqs, out, pending, nil)
+}
+
+// This internal producer primitive is reserved for ordinary full-input evidence. It does
+// not enable the planning profile in Oracle or publish an ordinary record set.
+func (b *Build) runOracleBatchesCaptured(ctx context.Context, x Context, cases []kit.IncrementalCase, reqs []caseRequest, out []CaseResult, pending []int) ([]kit.OracleBatch, []batchCapture, error) {
+	if x.Op.Name != "native-query-batch" || x.Protocol != ProtocolR4 || x.Output != kit.OutputTree || !x.API || x.Format != "" || x.SvcContext != nil || x.Preprocess != nil || x.ReuseAccepted != nil {
+		return nil, nil, refuse(kit.KindUnsupported, "BATCH_CAPTURE_SCOPE_UNSUPPORTED", nil)
+	}
+	for _, c := range cases {
+		if c.Encoding != kit.EncodingUTF8 || len(c.SvcSource) != 0 {
+			return nil, nil, refuse(kit.KindUnsupported, "BATCH_CAPTURE_SCOPE_UNSUPPORTED", nil)
+		}
+	}
+	for _, i := range pending {
+		if len(reqs[i].payload) > MaxRequestFrame {
+			return nil, nil, refuse(kit.KindResourceLimit, "REQUEST_BYTES_LIMIT", nil)
+		}
+	}
+	var captures []batchCapture
+	batches := b.runOracleBatchesCapture(ctx, x, cases, reqs, out, pending, &captures)
+	for _, capture := range captures {
+		if capture.result.CaptureError != "" {
+			return batches, captures, refuse(kit.KindResourceLimit, "BATCH_CAPTURE_BYTES_LIMIT", nil)
+		}
+	}
+	return batches, captures, nil
+}
+
+func (b *Build) runOracleBatchesCapture(ctx context.Context, x Context, cases []kit.IncrementalCase, reqs []caseRequest, out []CaseResult, pending []int, captures *[]batchCapture) []kit.OracleBatch {
 	batches := []kit.OracleBatch{}
 	queue := pending
 	stop := ""
@@ -90,6 +120,12 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 			StdoutBytes: int64(stdout), BatchWall: wall}
 		spec := runner.Spec{Path: b.Executable, Args: []string{"batch"}, Dir: b.Dir, StderrBytes: 65536, Grace: 5 * time.Second,
 			Memory: runner.Memory{Bytes: x.Op.MemoryBytes, Hard: runtime.GOOS != "darwin"}, CgroupParent: x.CgroupParent}
+		var capture *batchCapture
+		if captures != nil {
+			capture = newBatchCapture(len(batches), spec, pol, frames)
+			capture.buildIdentity, capture.executableSHA256, capture.executableBytes = b.Identity, b.ExecutableSHA256, b.ExecutableBytes
+			pol.Capture = capture.capture
+		}
 		br, err := runner.RunBatch(ctx, spec, pol, frames)
 		if err != nil {
 			code := "BATCH_START_FAILED"
@@ -103,6 +139,10 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 			stop = code
 			break
 		}
+		if capture != nil {
+			capture.result = br
+			*captures = append(*captures, *capture)
+		}
 		ob := kit.OracleBatch{Index: len(batches), Status: br.Process.Status, Reason: br.Process.Reason, ExitCode: max(br.Process.ExitCode, 0),
 			WallMillis: br.Process.WallMillis, PeakBytes: br.Process.Memory.Peak, CleanupVerified: br.Process.Cleanup.Verified, TrailingBytes: br.TrailingBytes}
 		var requeue, answered []int
@@ -110,7 +150,7 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 		for k, fr := range br.Frames {
 			i := idx[k]
 			ob.Cases = append(ob.Cases, cases[i].ID)
-			if fatal || fr.Status == runner.FrameRequeued && fr.Detail == "not sent" {
+			if fatal && captures == nil || fr.Status == runner.FrameRequeued && fr.Detail == "not sent" {
 				requeue = append(requeue, i) // never read by a driver
 				continue
 			}
@@ -128,7 +168,8 @@ func (b *Build) runOracleBatches(ctx context.Context, x Context, cases []kit.Inc
 				unanswered = true
 			}
 		}
-		if !ob.Accepted() || unanswered {
+		// Captured producers keep base observations; the transcript owns process eligibility.
+		if captures == nil && (!ob.Accepted() || unanswered) {
 			for _, i := range answered {
 				// a completed FAIL stays: a failure is never a support claim
 				if out[i].ExecutionStatus == kit.StatusCompleted && out[i].Assessment != kit.AssessFail {

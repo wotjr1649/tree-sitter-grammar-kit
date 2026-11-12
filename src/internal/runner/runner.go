@@ -199,22 +199,24 @@ func validate(s *Spec) *Error {
 
 // Process is a started supervised process.
 type Process struct {
-	spec    Spec
-	cmd     *exec.Cmd
-	tree    tree
-	caps    Capabilities
-	start   time.Time
-	stdin   *os.File
-	stdout  io.Reader
-	outPipe *os.File
-	errPipe *os.File
-	out     *capture
-	errs    *capture
-	exited  chan struct{}
-	superv  chan struct{} // closed when supervise returns
-	waitErr error
-	done    chan struct{}
-	result  Result
+	spec       Spec
+	cmd        *exec.Cmd
+	tree       tree
+	caps       Capabilities
+	start      time.Time
+	stdin      *os.File
+	stdout     io.Reader
+	outPipe    *os.File
+	errPipe    *os.File
+	out        *capture
+	errs       *capture
+	exited     chan struct{}
+	superv     chan struct{} // closed when supervise returns
+	waitErr    error
+	done       chan struct{}
+	result     Result
+	capture    func(direction string, data []byte) error
+	captureErr error
 
 	mu          sync.Mutex
 	residual    int // descendants terminated by supervise after an interactive exit
@@ -359,6 +361,14 @@ func (p *Process) Stdout() io.Reader { return p.stdout }
 
 // Capabilities returns the backend capabilities used for this process.
 func (p *Process) Capabilities() Capabilities { return p.caps }
+
+func (p *Process) captureChunk(direction string, data []byte) {
+	if p.capture != nil {
+		if err := p.capture(direction, data); err != nil && p.captureErr == nil {
+			p.captureErr = err
+		}
+	}
+}
 
 // ErrOutputLimit is returned by an interactive Stdout read past the cap.
 var ErrOutputLimit = errors.New("stdout limit exceeded")
@@ -639,6 +649,7 @@ func (c *capReader) Read(b []byte) (int, error) {
 		if k == 0 {
 			return 0, err
 		}
+		c.p.captureChunk("stdout", one[:k])
 		c.n += int64(k)
 		c.p.Terminate(ReasonOutput)
 		return 0, ErrOutputLimit
@@ -647,6 +658,9 @@ func (c *capReader) Read(b []byte) (int, error) {
 		b = b[:c.limit-c.n]
 	}
 	k, err := c.r.Read(b)
+	if k > 0 {
+		c.p.captureChunk("stdout", b[:k])
+	}
 	c.n += int64(k)
 	return k, err
 }

@@ -2,6 +2,7 @@ package kit
 
 import (
 	"cmp"
+	"math/bits"
 	"regexp"
 	"slices"
 	"strconv"
@@ -230,6 +231,12 @@ type ByteSpan struct {
 // One item per name in document order; NAME_MISSING without a name; HAS_ERROR when the
 // declaration node has an error; items in declaration-node preorder, then item order.
 func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []DeclarationItem {
+	out, _ := deriveDeclarations(items, caps, nil)
+	return out
+}
+
+// Ordinary input can repeat candidate edges; reserve each frontier before expanding it.
+func deriveDeclarations(items []NativeDeclaration, caps []Capture, budget *eligibilityBudget) ([]DeclarationItem, *Error) {
 	type edge struct {
 		item, level int
 		parent      int64
@@ -243,6 +250,9 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 		}
 	}
 	for _, mc := range matches {
+		if e := budget.charge(32+32*uint64(len(mc)), 512+512*uint64(len(mc)), "ordinary-base-fact-derive"); e != nil {
+			return nil, e
+		}
 		// One match can hold several nodes for the same level (the runtime returned both
 		// names of PostgreSQL `CREATE TABLE a PARTITION OF b` in one match), so every
 		// capture of a level is kept; the walk below picks the first in document order.
@@ -250,6 +260,9 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 		item, depth := -1, -1
 		ok := true
 		for _, c := range mc {
+			if e := budget.charge(8*uint64(len(c.Name))+1, 32*uint64(len(c.Name)), "ordinary-base-fact-derive"); e != nil {
+				return nil, e
+			}
 			parts := strings.Split(c.Name, ".")
 			if len(parts) != 4 {
 				ok = false
@@ -277,12 +290,18 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			}
 			continue
 		}
+		if e := budget.charge(uint64(max(depth, 0))+1, 0, "ordinary-base-fact-derive"); e != nil {
+			return nil, e
+		}
 		// every adjacent pair of captured levels is a parent-to-candidate edge; with several
 		// nodes on a level, a candidate belongs to its own parent: in preorder that is the
 		// last earlier node of the parent level whose range contains it (exact for siblings,
 		// also when a zero-width candidate sits on a boundary or two siblings share a range)
 		for k := 1; k <= depth; k++ {
 			for _, c := range lv[k] {
+				if e := budget.charge(16+uint64(len(lv[k-1])), 256, "ordinary-base-fact-derive"); e != nil {
+					return nil, e
+				}
 				var owner *Capture
 				for i, p := range lv[k-1] {
 					if p.Node < c.Node && c.StartByte >= p.StartByte && c.EndByte <= p.EndByte && (owner == nil || p.Node > owner.Node) {
@@ -306,24 +325,39 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			keys = append(keys, key{n, i})
 		}
 	}
+	if e := reserveDeclarationSort(budget, len(keys)); e != nil {
+		return nil, e
+	}
 	slices.SortFunc(keys, func(a, b key) int { return cmp.Or(cmp.Compare(a.node, b.node), cmp.Compare(a.item, b.item)) })
 	out := []DeclarationItem{}
 	for _, k := range keys {
 		d, c := items[k.item], decl[k.item][k.node]
+		if e := budget.charge(64+8*uint64(len(d.Name)), 64*uint64(len(d.Name))+256, "ordinary-base-fact-derive"); e != nil {
+			return nil, e
+		}
 		status := "PASS"
 		if c.HasError {
 			status = "HAS_ERROR"
 		}
 		item := DeclarationItem{Fact: d.Fact, NodeType: d.Node, StartByte: c.StartByte, EndByte: c.EndByte, Status: status}
 		if d.Name == "node" {
+			if e := reserveDeclarationItems(budget, d, 1); e != nil {
+				return nil, e
+			}
 			out = append(out, item)
 			continue
 		}
 		segs := splitPath(d.Name)
 		cur := []Capture{c}
 		for lv := 1; lv <= len(segs) && len(cur) > 0; lv++ {
+			if e := budget.charge(1+uint64(len(cur)), 0, "ordinary-base-fact-derive"); e != nil {
+				return nil, e
+			}
 			var next []Capture
 			for _, p := range cur {
+				if e := reserveDeclarationSort(budget, len(cands[edge{k.item, lv, p.Node}])); e != nil {
+					return nil, e
+				}
 				cs := slices.Clone(cands[edge{k.item, lv, p.Node}])
 				slices.SortFunc(cs, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
 				cs = slices.CompactFunc(cs, func(a, b Capture) bool { return a.Node == b.Node })
@@ -335,9 +369,18 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			cur = next
 		}
 		if len(cur) == 0 {
+			if e := reserveDeclarationItems(budget, d, 1); e != nil {
+				return nil, e
+			}
 			item.Status = "NAME_MISSING"
 			out = append(out, item)
 			continue
+		}
+		if e := reserveDeclarationSort(budget, len(cur)); e != nil {
+			return nil, e
+		}
+		if e := reserveDeclarationItems(budget, d, len(cur)); e != nil {
+			return nil, e
 		}
 		slices.SortFunc(cur, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
 		for _, n := range cur {
@@ -346,7 +389,17 @@ func DeriveDeclarations(items []NativeDeclaration, caps []Capture) []Declaration
 			out = append(out, it)
 		}
 	}
-	return out
+	return out, nil
+}
+
+func reserveDeclarationSort(b *eligibilityBudget, count int) *Error {
+	n := uint64(count)
+	return b.charge(64*(n+1)*uint64(bits.Len64(n)+1), 512*n, "ordinary-base-fact-derive")
+}
+
+func reserveDeclarationItems(b *eligibilityBudget, d NativeDeclaration, count int) *Error {
+	n := uint64(count)
+	return b.charge(n*(64+8*uint64(len(d.Fact)+len(d.Node))), n*(256+4*uint64(len(d.Fact)+len(d.Node))), "ordinary-base-fact-derive")
 }
 
 // DynamicSQLFact is one dynamic SQL location fact (dynamic-sql-r1).

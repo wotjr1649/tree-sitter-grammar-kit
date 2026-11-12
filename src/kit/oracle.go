@@ -580,10 +580,13 @@ func VerifyOracleSet(fsys fs.FS) OracleSetReport {
 		add("JSON_INVALID_UTF8", "manifest", "manifest가 UTF-8이 아니다")
 		return r
 	}
-	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil, OraclePagedSemanticsManifestSchema, OraclePagedBinariesSemanticsManifestSchema)
+	selected, selectionErr := selectJSONRevision(data, nil, "manifest", "schema", OracleSemanticsManifestSchema, nil, OraclePagedSemanticsManifestSchema, OraclePagedBinariesSemanticsManifestSchema, OracleOrdinaryManifestSchema)
 	if selectionErr != nil && selectionErr.Kind != KindInvalidInput {
 		add(selectionErr.Code, selectionErr.Path, "manifest revision을 선택하지 못했다")
 		return r
+	}
+	if selected == OracleOrdinaryManifestSchema {
+		return verifyOrdinaryOracleSet(fsys, data)
 	}
 	if semanticManifestSchema(selected) {
 		lim := ReplayOperations()["evidence-replay"]

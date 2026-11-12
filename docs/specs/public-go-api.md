@@ -22,7 +22,129 @@ Historical logger를 명시 선택하는 저수준 `reuseobs.RuntimePin`, `Runti
 
 ## #216 query semantics의 실험적 offline 진입점
 
+### #362 P2-A ordinary 사전 등록과 계획 helper
+
+P2-B 2단계는 `OrdinaryOracleManifest`(r8), `OrdinaryOracleRecord`(r5), `OrdinaryRunBatch`, `OrdinaryRunBinding`(r2)의 실험적 저장 자료형을 추가한다. `VerifyOracleSet`은 r8의 구조·물리 pin·process owner·case/frame/raw 연결을 검사하며, `ValidateOrdinaryRunBinding`은 caller가 보유한 binding bytes를 같은 manifest의 input pin·candidate/cohort/run·selected shard IDs·실제 members/batches와 대조한다. `selected_shard_ids`는 plan 순서(shard ID 오름차순)이며 실행 case(registration 순서)와는 위치가 아니라 shard의 case ID로 일대일 대응하고(순서 계약은 [identity-and-evidence](identity-and-evidence.md)) `full_scope_complete`는 false다. set의 `Complete`/`Valid`는 저장 완결성과 일관성을 뜻하며 독립 의미 검증·외부 승인·full ordinary 완료를 뜻하지 않는다. 기존 semantic API/replay reducer에 r8 수용을 추가하지 않는다.
+
+`nativewire.CompareAPI(nodes, api)`는 shape 검사에 성공한 `TreeNode`/`WireAPI`의 순수 의미 비교를 제공한다. native live producer와 offline raw 소비자가 같은 comparator를 쓰며 field·point·zero-width divergence의 기존 판단을 보존한다. 이 함수는 wire/tree/API shape를 대신 검증하지 않으며 호출자가 먼저 `CheckTree`를 통과시켜야 한다. 비용은 node와 API 행 수에 선형이고 point당 이분 탐색 한 번이며 field·name 문자열 byte를 더한다. 예산을 쓰는 호출자는 `nativewire.CompareAPIWork`(work)와 `nativewire.CompareAPILogical`(logical)을 예약식으로 쓴다. 둘은 순수 함수이며 `CompareAPI`의 결과와 동작을 바꾸지 않는다.
+
+`src/kit/queryregistrycore`는 #362 registry의 canonical model·namespace/set digest·strict shape·membership/coverage 계산을 담는 실험적 data-only package다. process·network·plugin 기능과 `src/internal` 의존이 없으며 offline API closure 검사(`TestOfflineClosure`)의 대상이다. kit와 기존 `src/internal/queryregistry` adapter가 같은 구현을 쓰기 위해 둔다.
+
+P2-A의 ordinary 계획 helper는 `src/kit`에서 제공한다: `ParseOrdinaryProfile`, `ParseOrdinaryAssets`, `ParseOrdinaryRegistration`, `BuildOrdinaryShardPlan`, `ParseOrdinaryShardPlan`, `ValidateOrdinaryShardPlan`, `OrdinaryPlanLimits`, `MarshalOrdinaryShardPlan`. Profile은 `tsgk-oracle/r4`, assets는 `tsgk-query-ordinary-assets/r1`, registration은 `tsgk-query-semantics-registration/r2`, plan은 `tsgk-query-ordinary-shard-plan/r1`이다. `ParseOrdinaryShardPlan`은 schema/shape와 고정 caps를 검사하지만 그 자체로 P0 exact union을 증명하지 않는다. `ValidateOrdinaryShardPlan`은 caller-pinned source documents로 계획을 다시 만들고 histories, bindings, IDs, query groups, members, pins, caps를 비교해 전체 ordinary ID union을 확인한다. `MarshalOrdinaryShardPlan`은 결정적 JSON과 newline을 내며 16 MiB를 넘기면 거부한다. `OrdinaryPlanLimits`는 변경할 수 없는 small limits를 반환한다. `OrdinaryReferenceEstimate`는 `Density`, `SourceBytes`, `VersionsTextBytes`, `RowBytes`, `ReceiptBytes`, `ReceiptLogical`, `DoubleRowDecodeLogical`, `ReserveReferenceLogical`, `TotalLogical`, `PreviousModelLogical`을 별도 필드로 제공해 P2 모델과 코드 기반 정적 추정을 비교한다. `OrdinaryShardCapacity`는 `ClosurePasses`, `FixedDocumentDecodeLogical`, `SourceHistoryBytes`, `DeclaredMemberBytes`, `UpperBound`를 제공하며 현재 full-output 상한은 nil이다. Top-level budget은 SQL fixed-cost 진단과 route별 nominal/dense reference 추정도 보존한다. 이 추정은 planning transparency용이고 current closure의 measured upper bound나 admission 근거가 아니다. Profile binding과 route별 ≤15-query group을 plan에서 공통화하는 것은 plan file size 관리이며 runtime 비용 절감이 아니다. 계획 API는 caller-provided bytes만 받고 arbitrary path callback이나 process 실행 권한을 제공하지 않는다. P2-A는 producer, evidence reader, reducer/replay 또는 ordinary runtime 판정을 추가하지 않고 기존 P0 registry/Fold 및 API 결과를 보존한다. `VerifyOrdinaryQuerySemantics` 같은 실행 API는 이 단계에서 제공되지 않는다.
+
+P2-C shard selection은 현재 public surface를 늘리지 않는다. Source-only `src/dev/query-ordinary-plan -commitment-dir`는 full-plan 검증 이후 `tsgk-query-ordinary-plan-commitment/r1`과 ordered per-shard proofs를 caller가 새 경로에 내보내는 개발 도구다. Merkle builder는 `src/internal/ordinarycommit`에 있고 kit는 offline closure를 위해 private matching verifier를 둔다. 이 serialization helper나 developer flag는 semantic admission API가 아니다. Full plan 및 commitment의 caller pins는 향후 private ordinary approval identity에서 함께 묶이며 r8/r2의 `shard_plan_pin` wire 의미는 변하지 않는다.
+
+#362 범위 3의 predicate scope helper는 `src/kit`에서 제공한다: `ParsePredicateExpected`(`PredicateExpected`, `PredicateExpectedTuple`), `PredicateExpectedTuple.Registration`, `VerifyPredicateTuple`, `CheckPredicateControl`(`PredicateControlOutcome`), `FoldPredicateScope`(`PredicateScopeCoverage`, `PredicateScopeCounter`). 입력은 caller bytes와 저장된 native raw·projection뿐이며 process를 시작하지 않는다. `VerifyPredicateTuple`은 기존 `VerifyQueryWitness` 재계산과 독립 full CST 대조를 함께 요구하고 `Evaluated=1`이 아니면 FAIL이다. `FoldPredicateScope`는 predicate scope만의 host별 집계이며 P0 root `Fold`와 합산하지 않는다. 결과의 `FullScopeComplete`는 항상 false다. 실험적 surface이며 ordinary(r9) replay 경로와는 아직 연결되지 않는다.
+
+#362 범위 5의 SVC scope helper는 `src/kit`에서 제공한다: `ParseSvcExpected`(`SvcExpected`, `SvcExpectedCase`, `SvcExpectedStep`), `SvcExpected.Obligations`(`SvcObligation`), `VerifySvcExpected`(`SvcJudgment`), `FoldSvcScope`(`SvcScopeCoverage`, `SvcScopeCounter`). 입력은 caller bytes(독립 expected asset, registry, qualification inventory, fixture)뿐이며 process를 시작하지 않는다. `VerifySvcExpected`는 기존 `ApplyEdits`·`ObserveServiceHostWithContext`·`svcVerdict`를 재사용해 오프라인 의무를 재계산하고, 실제 C# grammar가 필요한 inline tree와 expected가 등록되지 않은 두 query는 BLOCKED로 둔다. `FoldSvcScope`는 SVC scope만의 host별 집계이며 완료는 하나라도 VERIFIED가 아니면 BLOCKED, P0 root는 바꾸지 않고 `FullScopeComplete`는 항상 false다. 실험적 surface다.
+
+#362 범위 7의 completion fan-in은 `src/kit`에서 제공한다: `FoldQueryCompletion`(`QueryCompletionRequest`(large 계약 `LargeExpected`·`LargeFixtures` bytes 포함), `QueryCompletionResult`, `QueryCompletionScope`(`QueryCompletionNotApplicable` 목록 포함), `QueryCompletionCounter`, `QueryCompletionHost`, `QueryCompletionCounts`), `QueryScopeResult`(`QueryScopeCounter`, `NewQueryScopeResult`, `DecodeQueryScopeResult`), 네 adapter `OrdinaryScopeResult`·`PredicateScopeResult`·`SvcScopeResult`·`LargeScopeResult`(large 계약의 하위 의무 39개를 센다), `DecodeQueryCompletionResult`, 상수 `QueryScopeResultSchema`(`tsgk-query-scope-result/r1`)·`QueryCompletionSchema`(`tsgk-query-completion/r1`). 입력은 caller bytes(registry와 그 SHA-256, qualification·slot inventory, basis, SVC expected·fixture)와 scope 결과, caller가 사전에 고른 결과 digest·증거 pin뿐이며 파일을 읽거나 process를 시작하지 않는다. 없는 scope는 BLOCKED이고 0으로 세지 않는다. 하나라도 FAILED면 FAIL이며 첫 code를 보존한다. large의 Linux·macOS N/A와 사유는 결과의 `not_applicable`에 남는다. 이 revision의 결과는 오류 복구 fixture 둘의 분모가 미등록이라 `COMPLETE`가 될 수 없고 어떤 release gate도 열지 않는다. 구형 r9·r10·P0 `Fold`의 의미는 바뀌지 않는다. 실험적 surface다.
+
+inline C# tree·query 확장(#362)은 `DeriveSvcInline`(원문 bytes에서 `SvcInlineExpected`를 도출, native 출력을 읽지 않음), `ParseSvcInlineExpected`(asset을 같은 원문의 재도출과 결속), `JudgeSvcInline`(`SvcInlineObserved`·`SvcInlineView`·`SvcInlineQueryResult`로 받은 native 증거를 tree·query 의무의 `SvcJudgment`로 판정; `SvcInlineView.Role`은 `SvcInlineRoleIncremental`·`SvcInlineRoleFresh`이고, 같은 case의 앞선 inline step을 편집해 닿은 step은 두 역할을 모두 받아야 VERIFIED가 되며 역할이 빠지면 BLOCKED, 모르는·반복된·불필요한 역할은 `SVC_INLINE_VIEW_ROLE` 오류다), `MergeSvcJudgments`(오프라인 판정에 inline 판정을 덮어씀)와 상수 `SvcInlineSchema`·`SvcInlinePath`·`SvcInlineDerived`·`SvcInlineBlocked`·`SvcInlineErrorRecoveryCode`·`SvcInlinePreprocCode`·`SvcInlineSubsetCode`·`SvcInlineQueryTreeBlockedCode`·`SvcInlineNativeNotRunCode`, 타입 `SvcInlineStep`·`SvcInlineFragment`·`SvcInlineCST`·`SvcInlineQuery`·`SvcInlineQueryPin`·`SvcInlineGrammar`·`SvcInlineNameCount`·`SvcInlineCapture`를 추가한다. 도출 불가 fragment(오류 복구, 전처리 지시문, 부분집합 밖)는 사유 code의 BLOCKED이며 native 증거를 받으면 오류다. 기존 `FoldSvcScope`와 scope fold의 결과 형태는 바꾸지 않는다. 실험적 surface다.
+
+#362 범위 6의 large scope helper는 `src/kit`에서 제공한다: `LargeTemplates`·`LargeTemplate`(`Source`, `LargeWalk`, `CSTDigests`, `Occurrences`, 도출 규칙), `ParseLargeExpected`(`LargeExpected`, `LargeExpectedFixture`, `LargeExpectedControl`), `LargeExpected.Obligations`(`LargeObligation`), `VerifyLargeSource`·`VerifyLargeStatus`·`VerifyLargeCST`(`LargeCSTPage`, `LargeCSTFooter`, `DecodeLargeCSTPage`)·`VerifyLargeOccurrences`·`VerifyLargeControl`(`LargeJudgment`), `FoldLargeScope`(`LargeScopeCoverage`, `LargeScopeCounter`). 입력은 caller bytes(독립 expected asset, registry, qualification inventory, fixture inventory)와 이미 수집한 page·capture·상태뿐이며 process를 시작하지 않는다. 오류 복구에 의존하는 template은 `LargeNotDerivable`로 거부하고 해당 의무는 BLOCKED로 둔다. `FoldLargeScope`는 large scope만 집계하며 P0 root fold를 바꾸지 않는다.
+
+### #362 P2-C ordinary public API readiness
+
+P2-C 통합에서 `VerifyOrdinaryQuerySemantics`와 아래 request/result 타입을 추가했다. 이 offline API는 caller bytes만 읽고 process를 시작하지 않는다. 실행 profile, planning profile, ordinary registration, asset registration, plan commitment 및 선택 proofs, fixed P0 registry/inventory/slot bytes, run-binding/reference-selection, evidence root와 eligibility approval을 입력으로 받는다. Input pins는 approval의 strict `ordinary` block 및 r8/r2와 대조된다. Evidence members와 expected assets는 그 승인된 root·graph snapshot에서만 읽는다.
+
+```go
+const OrdinaryQuerySemanticsResultSchema = "tsgk-query-semantics-result/r2"
+
+type OrdinaryQuerySemanticsRequest struct {
+    Evidence                EvidenceRequest
+    Selection               OrdinaryQuerySemanticsBinding
+    Profile                 []byte // executable native-query-batch profile
+    PlanningProfile         []byte
+    Registration            []byte
+    AssetRegistration       []byte
+    PlanCommitment          []byte
+    ShardProofs             [][]byte
+    Registry                []byte
+    RegistrySHA256          string
+    QualificationInventory  []byte
+    SlotInventory           []byte
+    RunBinding              []byte
+    ReferenceSelection      []byte
+    EligibilityApproval     []byte
+    EligibilityRegistration []byte
+}
+
+// Same caller-owned pin bundle carried by approval.ordinary.
+type OrdinaryQuerySemanticsBinding = ordinaryEligibilityBinding
+
+// OrdinaryQuerySemanticsBinding fields and approval.ordinary JSON names:
+// Schema (schema), Context (context), ClosureEncoding (closure_encoding),
+// Profile (profile_pin), PlanningProfile (planning_profile_pin),
+// Registration (registration_pin), Assets (asset_registration_pin),
+// Plan (shard_plan_pin), Commitment (plan_commitment_pin),
+// ReferenceSelection (reference_selection_pin), RunBinding (run_binding_pin),
+// Candidate (candidate), SemanticCohort (semantic_cohort), RunID (run_id),
+// ShardIDs (selected_shard_ids)
+
+type OrdinaryQuerySemanticsTuple struct {
+    ID    string // selected P0 obligation ID
+    State string // VERIFIED, FAILED, BLOCKED, or UNPROCESSED
+    Code  string
+}
+
+type OrdinaryQuerySemanticsResult struct {
+    Report
+    ResultSchema       string
+    BindingValid       bool
+    ProducerRecorded   Verdict
+    BaseVerified       Verdict
+    Semantic           string
+    Code               string
+    SelectedShardIDs   []string
+    SelectedObligationIDs []string // exact ordered union of selected shard obligation IDs
+    CoverageSHA256     string // length-prefixed digest of SelectedObligationIDs
+    Tuple              QueryEligibilityCounts
+    Obligations        []OrdinaryQuerySemanticsTuple
+    Eligibility        *QueryReferenceEligibilityResult
+    Gates              []ReplayGate
+    BytesRead          uint64
+    Work               uint64
+    LogicalBytes       uint64
+    ProcessingComplete bool
+    FullScopeComplete  bool // always false for a shard-local P2-C evaluation
+    Complete           bool
+}
+```
+
+Coordinator는 하나의 `run`과 eligibility 원장을 공유한다. 먼저 caller `Selection`과 plan commitment/proofs/registration을 검증해 분모를 고정하고, approval이 주어지면 기존 Build/Control 및 evidence snapshot을 검증해 같은 session에 결속한다. 이어 r8/r5/transcript set과 native build closure를 검사한다. 그 다음 각 raw case에 기존 base reducer를 적용해 projection·query expectation·기존 FAIL을 재계산한다. 이후 reference row와 fact 입력을 확인하고, guarded independent metadata/CST/capture/fact를 해석해 required tuple을 adjudicate한 뒤 selected counters를 fold한다. 정상 경로의 끝에서 기존 snapshot 관측의 물리 identity와 paging authority를 재확인하고 결과를 봉인한다. Base 재계산에서 확인한 FAIL은 뒤의 reference 또는 asset 읽기가 중단돼도 유지된다.
+
+`Selection`은 `approval.ordinary`와 같은 pin 묶음 필드와 직렬화 이름을 가진 필수 caller 입력이고, `ShardProofs`는 그 선택에 맞는 순서 있는 Merkle proofs다. Coordinator는 외부 approval을 확인하기 전에 plan commitment, 선택 proofs, registration과 pin 묶음을 대조하여 selected plan에서 required 분모를 고정한다. 비어 있거나 유효하지 않은 selection은 입력 오류이며 의무가 0개인 완료 결과를 만들지 못한다. Caller selection만으로는 권한이 생기지 않는다. 현재 cohort까지 포함한 pin 묶음 전체가 `approval.ordinary`와 정확히 일치해야 eligibility session이 결속된다. Selection을 검증한 뒤 approval이 없으면 선택된 모든 의무를 BLOCKED로 두고 `Complete`와 `ProcessingComplete`는 false로 남는다. 이 중도 반환은 결과를 seal하지 않으므로 완료된 결과로 소비할 수 없다. 예산·취소·read 오류도 부분 상태와 이미 확인한 첫 FAIL을 반환하지만 `Complete=false`이며 결과는 봉인되지 않는다.
+
+정상 경로의 `Complete`는 offline 평가와 결과 봉인이 끝났다는 뜻이다. `ProcessingComplete`는 선택된 모든 의무가 최종 상태에 도달했다는 뜻이며, 둘 다 전체 registry 완료를 뜻하지 않는다. `FullScopeComplete`는 false고 P0의 미해결 범위와 `INCOMPLETE` 상태는 그대로다. `query_semantics=PASS`는 마지막 identity 확인 뒤 ordinary binding, eligibility, base verdict, 선택 tuple 전부가 통과해야 나온다. 내부 `cache.ready`, 저장 projection, reference 결과 또는 runtime fold PASS만으로 tuple을 올리지 않는다. CST field만 다른 경우는 BLOCKED/`INELIGIBLE`로 남고 따로 확인된 실패는 FAILED로 보존한다. 정상 처리 흐름을 끝내지 못한 조기 반환은 `Complete=false`이며 결과가 봉인되지 않는다.
+
+마지막 identity 재확인은 호출 초기에 기록한 파일과 디렉터리의 `SameFile`, 크기와 수정 시각을 비교한다. 이는 기존 호출자 소유권 계약의 관측 가능한 변경 검출 범위다. 같은 inode에서 bytes를 바꾸고 크기와 수정 시각까지 복원하는 적대적 writer를 차단하는 snapshot 또는 sandbox 보장은 아니다. 호출자는 처리 중 request와 source snapshot을 변경하지 않아야 한다.
+
+이 experimental API의 focused Windows E2E는 fixed P0 JSON case `alt-json-B01-05`에 대해 실제 owned native producer가 만든 r8을 공개 `VerifyOrdinaryQuerySemantics` 호출 하나에서 처리해 selected tuple 1/1 `VERIFIED`, base/eligibility/semantic `PASS`, identity 재확인 및 결과 seal까지 마쳤다. Valid한 HARD receipt는 native child에 1 GiB/30 s, verified `JOB_OBJECT` cleanup, residual 0을 기록했고, 여섯 build-step receipt는 각각 4 GiB HARD와 120 s 한도였다. 이 강제조건은 테스트 전용 runner overlay로 적용했으며 제품의 기본 4 GiB native operation policy는 바꾸지 않았다. 계량값은 logical 206,346,731 B, work 7,835,933, read 11,216,999 B다. 여섯 public-call 반례도 모두 통과했다(Go test `focused-hard-final`: PASS, SKIP 0, 27.24 s).
+
+이 결과는 선택된 JSON shard 하나의 실행 증거다. Test harness의 complete-plan scaffold는 전체 P0 exact-union source-only planner 실행이나 독립 planner provenance가 아니며, eligibility approval은 기존 synthetic fixture로 만들었다. Expected metadata/CST/captures는 사전 작성한 `src/testdata/query-semantics/json1-classification-anchors.json`에서 왔고, reference row는 같은 시험에서 합성했으며 reference process는 실행하지 않았다. 따라서 이 비교는 public coordinator의 입력·reader·adjudication·fold·seal 연결을 확인하지만 외부 reference와의 실행 독립성을 입증하지 않는다.
+
+SQL 측정도 선택 shard 수준으로 수행했다. PostgreSQL `alt-postgresql-sql-B04-22`는 actual owned r8과 독립 grammar-authored 10-node CST, PostgreSQL9 anchor에서 가져온 9 metadata, empty captures/declaration facts를 사용해 body/reference/adjudication/fold/identity/seal까지 처리했다. Reference rows는 synthetic이었고, 9개 tuple은 base `fact-reproduction` gate가 재계산되지 않아 `ORDINARY_PREREQUISITE_INCOMPLETE`/BLOCKED로 남았다. 측정은 logical 697,519,126 B, work 14,102,601, read 134,443,515 B다. TSQL `alt-tsql-B01-r001`은 actual owned binary-paged r8로 `ordinary-base-tree-projection` 단계까지 진행했지만 다음 1,731,872 B logical 예약에 1,265,854 B가 부족해 `ELIGIBILITY_WORK_LIMIT`으로 중단됐다. 중단 시 logical 1,073,275,806 B, work 31,403,098, read 126,923,139 B였으며 reference row 40개는 synthetic placeholder이고 independent expected 자산은 UNAVAILABLE이었다. 전체 SQL admission은 `CAPACITY_UNPROVEN`/BLOCKED다. 다른 closure family, 전체 P0 분모, `full_scope_complete`는 미완료다. P2-D stored result/replay는 아래 별도 절에 정의한다. 기존 `VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`, r4–r6 reducers, qualification r10의 schema와 ordinary 거부 경계는 유지된다.
+
+2026-11-12 ordinary base fact 후속 검증은 위 PostgreSQL의 미재계산 gate를 해소한다. Adapter는 같은 guarded session에서 fact pack·mapping을 한 번 확인한 뒤, P2-B2의 ordered suffix/query SHA와 mapping revision을 결속하고 편집 후 각 source version 및 incremental/fresh 각각의 raw captures로 declaration/dynamic SQL/XML facts를 다시 도출한다. 전체 step·role·query의 저장 `step_facts`와 step0 base `facts` projection을 대조하고, 기존 case claim의 step0 의미를 유지한 재계산 값을 공용 `semanticBase`에 전달한다. 저장 fact 자체는 독립 expected가 아니며 tuple의 metadata/CST/capture/fact 독립 비교를 생략하지 않는다. Legacy single small semantic admission은 fact pack을 받지 않으며 r4–r6와 r10 의미·한도를 바꾸지 않는다.
+
+2026-11-12 TSQL 독립 expected 후속 검증은 선택 shard `alt-tsql-B01-r001`(원문 267 B, 4 edits, 5 versions, 8 query, 72 tuple = 8 query × [step0 incremental + step1–4 incremental/fresh] 9개)의 expected asset 107개(metadata 8, full CST 9, ordered captures 72, facts 18)를 손으로 작성해 pin한다. CST는 prepared `grammar.json`의 production(`program`/`batch`/`statement`/`select`/`term`/`field`/`invocation`/`window_function`/`set_statement` 등)과 external scanner 원문(GO 줄 끝, `marginalia`, `QUOTED_IDENTIFIER` 상태)에서 도출하고 byte 범위만 원문에서 토큰을 찾아 계산한다. 쿼리 metadata는 query 원문의 pattern 수와 capture 이름 최초 출현 순서이며, ordered capture는 손으로 쓴 tree와 pinned runtime `query.c`의 capture cursor 규칙(finished-state heap의 start byte·pattern index·완료 순서, match id는 첫 yield 시 부여, 복사 state는 원본의 id·consumed 수를 물려받음)에서 도출한다. 작성 시 parser·native·reference 출력은 사용하지 않았고 native 첫 실행 전에 asset 본문의 SHA-256을 먼저 기록했다.
+
+같은 actual owned r8에서 실제 raw 응답을 `nativewire.Check`로 검증한 뒤 제품 tuple adjudicator(`adjudicateOrdinaryTuple`)에 직접 넣는 `TestOrdinaryTSQLExpectedAgainstNative`(opt-in)는 72/72 tuple을 VERIFIED로 판정한다. 첫 대조에서 dynamic SQL capture 8개 asset(step1–4 × incremental/fresh)의 match 구성이 달랐다. 원인은 작성 모델이 `ts_query_cursor__copy_state`(`query.c`)의 복사 방향을 반대로 가정한 것이었고, 복사본이 원본의 id·consumed 수를 물려받는다는 소스 근거로 교정했다. 이 교정은 봉인 대비 8개 asset만 바꾸며 나머지 99개는 같다. Root capture를 가진 wildcard child pattern의 definite 여부(`tsqlDefinite[12]`)는 생성된 parse table의 정적 분석 결과라 grammar.json만으로 손으로 증명하지 못한 모델 매개변수다. 이 값은 native 관측과 일치하도록 정했으므로 해당 pattern에 한해 독립 증거로 세지 않는다. 같은 test는 expected의 node 하나·capture 하나·fact 하나를 변조하면 변조를 소비하는 tuple만 FAILED(`ORDINARY_EXPECTED_TREE_MISMATCH` 8개 query tuple, `ORDINARY_CAPTURE_MISMATCH` 1개, `ORDINARY_FACT_MISMATCH` 1개)가 되고 나머지는 VERIFIED로 남음을 확인한다.
+
+공개 `TestOrdinarySQLPublicPassCapacity`의 TSQL 경로는 expected 107개를 소비하지만 `reference-rows` 단계에서 `reference-response` 결정 예약이 logical 한도를 넘어 `ELIGIBILITY_WORK_LIMIT`(실제 원인 logical)으로 멈춘다. 중단 시 logical 1,073,740,361 B, work 25,817,475, read 129,947,595 B였고 72 tuple은 모두 unprocessed, `CAPACITY_UNPROVEN`/BLOCKED다. Reference row 40개는 여전히 합성이지만 독립 expected와 비교하려면 expected와 같은 full CST·ordered captures를 담아야 하며, 같은 제품 계상으로 측정한 40행의 decode+reserve 비용은 logical 222,514,364 B, work 2,923,400이다(단계 진입 시 남은 logical 135,172,615 B). 따라서 지금 한도에서는 TSQL 공개 pass가 `independent-tuples`에 도달하지 못한다. 한도는 바꾸지 않았다. PostgreSQL은 같은 공개 pass에서 9/9 VERIFIED를 유지한다. Reference executable/library는 실행·load하지 않았고 approval·reference row는 합성이므로 외부 reference와의 실행 독립성은 입증하지 않는다.
+
+같은 PostgreSQL shard·실제 owned parser-paged r8·독립 DO expected·합성 approval/reference를 사용한 새 공개 호출은 `BaseVerified=PASS`, semantic/assessment `PASS`, required 9/verified 9/failed 0/blocked 0/unprocessed 0, complete/processing true다. 새 원장은 logical 698,039,669 B, work 14,108,124, read 134,443,451 B다. 이 수치는 선택 shard의 `FULL_BODY_MEASURED_VERIFIED`이며 전체 PostgreSQL route/P0 admission이나 reference 실행 증거가 아니다. 앞의 697,519,126 B 측정은 변경 전 역사적 결과다. 같은 후속 실행의 TSQL은 logical 1,073,723,418 B/work 30,896,698/read 126,923,074 B에서 `projection/steps/0/route`의 다음 logical 예약 32,896 B에 14,490 B가 부족해 중단됐다. Fact context를 base 전에 확인해 이전 측정과 중단 위치가 달라졌으며 full capacity는 여전히 미입증이다.
+
+P2-D에서 실제 owned native producer를 ordinary reader·r9 existing replay CLI와 연결한 SKIP 0 positive fixture를 관측했다. Caller approval/reference는 synthetic overlay이므로 이는 실제 reference 실행이나 실제 caller-approved workload의 증거가 아니다. P2-D의 저장 decoder와 existing replay CLI 계약은 바로 아래 별도 절에 정의하며 ordinary producer는 `oracle record` CLI([계약](cli-and-profile.md#362-ordinary-record-cli))가 선택한다.
+
 `VerifyQuerySemantics(ctx, QuerySemanticsRequest)`는 process를 실행하지 않는다. `Evidence`는 caller가 승인한 policy와 evidence root이고, `Profile`·`Registration`·`RunBinding`·`EligibilityApproval`·`EligibilityRegistration`·`WitnessRegistration`은 graph 밖의 caller 원문이다. root의 `oracle/`에 저장된 profile/r3 생산 set을 같은 evidence pass에서 읽는다. 첫 구현 범위는 단일 UTF-8 full-input `native-query` case이며 [계측 reference 계약](instrumented-query-reference.md)의 사전 등록과 기존 eligibility/r1 closure를 사용한다. SVC·전처리·batch·large 및 새 macOS claim은 이 진입점의 완료 근거가 아니다.
+
+### #362 P2-D ordinary 저장 결과와 replay
+
+P2-D는 `DecodeOrdinaryQuerySemanticsResult(data []byte) (OrdinaryQuerySemanticsResult, error)`로 caller가 저장한 `tsgk-query-semantics-result/r2`를 strict-decode한다. Result의 `selected_obligation_ids`는 selected shard의 exact ordered union이고 `coverage_sha256`는 domain-separated SHA-256이며 각 ID 앞에 8-byte big-endian 길이를 둔 순서 민감 digest다. Decoder는 schema·counter, selected ID uniqueness, 선택된 ID 순서의 obligation-row prefix, digest 및 기존 small budget 경계를 검증한다. 저장 result는 native/reference 증거를 다시 판독하거나 membership을 외부 plan으로 재증명하지 않으므로 이 decoder만으로 approval, provenance 또는 semantic PASS를 만들 수 없다. Replay core는 pinned plan/registration에 의무 ID와 coverage digest를 다시 대조한다. `processing_complete`, selected shard counters와 `full_scope_complete`는 별도 값이며 shard PASS가 full-scope 완료를 뜻하지 않는다.
+
+`Replay`의 `oracle-set-r9`는 ordinary record/member와 caller 등록 문서를 같은 replay `run`에서 `VerifyOrdinaryQuerySemantics`의 내부 경로로 전달한다. 바깥 replay inventory의 `records`는 선택된 obligation ID의 고정 순서 exact union이어야 한다. API와 replay는 assessment·최초 code·selected obligation IDs·coverage digest·typed counters에서 같아야 한다. Replay wrapper가 더하는 scope·member 검사 비용은 실제 원장에 반영되어 nested result의 `bytes_read`/`work`/`logical_bytes`가 outer replay totals와 같고, naked API totals보다 커질 수 있다. 이 delta는 wrapper overhead로 따로 보고하며 숫자 동등성을 주장하지 않는다. Replay는 ordinary 입력 문서와 evidence snapshot을 두 번 읽거나 별도 budget ledger를 열지 않는다. 출력은 `tsgk-replay-result/r4`의 `ordinary_query_semantics` payload이며 nested result schema는 r2다. Reducer r9만 ordinary context를 선택하며 r4–r6와 qualification r10의 계약은 그대로 유지한다.
 
 `tsgk-query-semantics-result/r1`은 `producer_recorded`, `producer_fold_valid`, `base_verified`, `query_semantics`와 최종 E0 판정을 구분한다. producer의 local pending leaf는 저장된 그대로 남는다. `producer_fold_valid`는 저장된 기존 claim과 pending leaf의 producer 집계 관계를 확인했는지 나타내며 실행 진위나 최종 PASS가 아니다. `tuple`은 사전 등록에서 먼저 고정한 `required`를 `verified`·`failed`·`blocked`·`unprocessed`로 나누며, 승인 ABSENT라도 분모를 없애지 않는다. ABSENT에서는 graph·producer set·실제 request·native·projection과 기존 base claim을 검증하지만 semantic PASS는 만들지 않는다. BOUND에서는 같은 run·누적 예산·held root·한 번의 evidence snapshot과 eligibility가 이미 검사한 native/tree/query/evaluation을 재사용한다. 실패가 확인된 뒤의 취소·자원 한도는 그 FAIL·최초 code·부분 counter를 지우지 않는다.
 
