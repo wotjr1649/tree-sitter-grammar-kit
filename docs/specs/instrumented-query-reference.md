@@ -422,14 +422,26 @@ P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, rou
 | `SVC_SEGMENT` | 109 | step의 directive·open/close·이름·attribute 범위와 point, diagnostics, Language 상태, CodeBehind 선언, included range, coverage | 독립 도출 |
 | `SVC_CODEBEHIND` | 2 | 선언된 참조(`OrderService.svc.cs`, `App_Code/OrderService.cs`)가 실제 관측에서 선언 case로 해석됨 | 독립 도출 |
 | `SVC_NEGATIVE` | 1 | VB `Language`의 unsupported-language negative | 원래 계약 보존 |
-| `SVC_INLINE_TREE` | 82 | C# inline 구간의 tree(composite step 81 + CodeBehind 참조 C# case 1) | 등록만, BLOCKED |
-| `SVC_INLINE_QUERY` | 164 | inline tree 82개 × 두 query | 등록만, BLOCKED |
+| `SVC_INLINE_TREE` | 82 | C# inline 구간의 tree(composite step 81 + CodeBehind 참조 C# case 1) | 독립 도출 30, BLOCKED 52 |
+| `SVC_INLINE_QUERY` | 164 | inline tree 82개 × 두 query | 독립 도출 60, BLOCKED 104 |
 
 109개 `SVC_SEGMENT`는 69 case 중 CodeBehind의 대상인 참조 C# case `n461-svc-reference-p-r2`(composite를 만들지 않는 일반 C# case)를 제외한 68 case의 step이다. 참조 case의 원문 history 1건은 `SVC_HISTORY`에, 그 C# tree는 `SVC_INLINE_TREE`에 포함된다.
 
 **독립 expected.** 원문 version과 edit point는 `svc.json`의 find/replace edit에서 도출하고 inventory의 byte-level edit(start/old-end/new-end, old/new bytes)과 서로 교차 검사했다. Directive 관측은 `docs/validation/net461-workload.md`의 `SVC-SERVICEHOST-r2` 형식에서 별도로 구현한 도출기로 만들었으며 native·reference·kit 출력을 읽지 않았다. native 첫 실행 전에 위 SHA를 봉인했다. 도출기는 같은 저자가 형식 문서를 읽고 썼으므로 diagnostics 코드 이름과 일부 경계 규칙은 producer 소스와 같은 규칙을 따른다. 그 한계를 줄이려고 directive 범위·닫는 구분자·inline 시작은 문자열 검색만으로 따로 도출한 anchor로도 확인한다(인용부 안의 `%>`를 가진 case는 제외).
 
-**BLOCKED로 남는 부분.** `SVC_INLINE_TREE`는 실제 C# grammar(`parser.c` 51 MB)가 저장소에 없어 이 host에서 실행하지 못한다. 등록된 `expect`(step 109개)는 inventory의 기존 수작업 기대값이며 이 계약이 새로 만든 값이 아니다. owned plain grammar는 inline 언어의 기계 장치만 확인하는 대역이며 C# tree의 증거가 아니다. `SVC_INLINE_QUERY`는 inventory의 69 case 모두에서 `query_expect`가 비어 있고 `dynamic_sql_expect`가 `null`이므로 query별 expected가 아예 등록되어 있지 않다. 빈 목록 `[]`로 바꾸지 않는다. Linux 몫은 등록되어 있으나 실행 결과가 없어 BLOCKED다. 따라서 SVC 완료는 BLOCKED이며 `full_scope_complete=false`다.
+**inline C# tree·query(범위 5 확장).** inventory의 69 case 모두에서 `query_expect`가 비어 있고 `dynamic_sql_expect`가 `null`이므로 query별 expected는 등록되어 있지 않았다. 별도 추적 계약 [`query-svc-inline-expected-r1.json`](../../src/contracts/query-svc-inline-expected-r1.json)(76,826 B, SHA-256 `bcaa50e276f00afe51ef3f6cf5612e92801b77e63896858c1e42a2e5de36b31c`)이 inline 의무 82개(composite step 81 + CodeBehind 참조 C# case 1)의 독립 expected를 담는다. 이 파일은 SVC 계약·registry·qualification inventory·`svc.json`·`fact-query-pack.json`의 정확한 bytes/SHA-256에 결속되고, `kit.ParseSvcInlineExpected`는 asset이 같은 원문의 재도출(`kit.DeriveSvcInline`)과 정확히 같음을 요구한다. 기존 계약 `query-svc-expected-r1.json`(SHA `bbe91167…b746`)은 바꾸지 않았다.
+
+**도출 범위.** 입력은 SVC 계약의 included range, 원문 history, C# grammar 규칙(tree-sitter-c-sharp 0.23.5 `grammar.json` SHA-256 `704882b5…9e16`, 등록 closure의 `parser.c` `b1a77b75…1dbb`·`scanner.c` `90c63e1f…1ae0`)과 두 query 원문뿐이며 native 출력을 읽지 않는다. 손으로 쓴 parser가 grammar 규칙대로 유효한 fragment가 쓰는 부분집합(using, namespace, class, interface, 이름 있는 attribute 인자, method, field, parameter, return, escape가 있는 string literal, member access, 이항 `+`, 줄 주석)만 해석한다. root는 첫 자식(token 또는 주석)에서 시작해 included range 끝까지 덮는다. 주석은 그것을 span에 포함한 가장 안쪽 node의 자식이며 없으면 root의 자식이다. 두 query는 원문(node pattern, 와일드카드, field, 첫 자식 anchor, capture)을 작은 matcher로 해석해 도출 tree에서 pattern index와 함께 순서 없는 multiset(개수·이름별 개수·정렬한 canonical record digest)으로 둔다. 런타임 capture 순서는 도출하지 않고 시작 byte 비감소만 확인한다.
+
+| 상태 | step | 사유 code | 내용 |
+|---|---:|---|---|
+| 도출 | 30 | — | CST와 두 query의 capture·`facts.dynamic_sql` fact 수 도출(예: `class S {}` 7 node) |
+| BLOCKED | 8 | `SVC_INLINE_ERROR_RECOVERY_NOT_DERIVABLE` | fragment가 언어에 속하지 않는다(`return text));`, `return return`, 선행 `>`, 닫히지 않은 문자열). tree-sitter의 오류 복구가 생성된 parse table에서 결정하므로 도출하지 않는다 |
+| BLOCKED | 44 | `SVC_INLINE_PREPROC_SCANNER_NOT_DERIVED` | `#if`·`#define` 등 전처리 지시문(issue179·182·184). external scanner의 상태와 parse 상태가 token·범위를 정하므로 grammar 규칙만으로 도출하지 않는다 |
+
+도출 불가 fragment는 추측하지 않고 사유 code를 남긴다. 그 step의 두 query는 `SVC_QUERY_INLINE_TREE_BLOCKED`(104개)이며 native 출력으로 VERIFIED가 되지 않는다(`kit.JudgeSvcInline`은 BLOCKED step의 증거를 오류로 거부한다). `facts.dynamic_sql` fact는 fact pack 규칙(`CSHARP_COMMAND` fact는 `oc.arg`·`ini.as`·`ma.as` pattern의 match가 있어야 한다)으로 도출할 수 있고 도출한 30 step에는 그런 match가 없어 fact 0개다. 도출한 step에서 이 규칙의 match가 생기면 도출기는 `SVC_INLINE_DYNAMIC_FACT_NOT_DERIVED`로 거부한다.
+
+**결과(Windows, 실제 C# grammar).** 등록 closure와 byte 단위로 같은 grammar를 읽어 native로 실행했다. 30 step의 incremental·fresh tree와 두 query가 모두 독립 expected와 같았다(SVC_INLINE_TREE VERIFIED 30·BLOCKED 52, SVC_INLINE_QUERY VERIFIED 60·BLOCKED 104, FAILED 0). 봉인한 expected는 native 첫 실행 뒤에도 바뀌지 않았다. Linux 몫은 등록되어 있으나 실행 결과가 없어 BLOCKED다. 따라서 SVC 완료는 BLOCKED이며 `full_scope_complete=false`다.
 
 **VB negative.** `n461-svc-language-vb-n-r1`(`Language="VB"`)은 원래 상태 그대로 `BLOCKED`/`SVC_INLINE_UNSUPPORTED`, process 없음, inline tree 없음으로 거부된다(`internal/native/run.go`의 `svcObservationOnly`와 `kit/replay_native.go`의 `svcVerdict`). 관측은 `UNSUPPORTED_LANGUAGE`와 inline coverage `UNSUPPORTED`다. 이 거부를 PASS로 바꾸거나 VB 지원을 추가하지 않는다.
 
@@ -508,7 +520,7 @@ P0 registry의 `n461-large` extra role은 Windows 전용 workload 두 개다. `s
 
 **검증.** `kit.ParseLargeExpected`는 asset을 세 pin·3+1 case·크기·SHA-256·syntax 기대·query·N/A 사유에 결속한다. `kit.VerifyLargeCST`는 page 순서·중복·누락·범위·digest와 footer 개수·digest·완결 위장을, `kit.VerifyLargeOccurrences`는 capture page와 footer를, `kit.VerifyLargeControl`은 정확한 거부 code를 확인한다. `kit.FoldLargeScope`는 `required = verified + failed + blocked + unprocessed`를 유지하며 FAIL을 우선한다. 이 fold는 scope-local이며 P0 root(`INCOMPLETE`, `full_scope_complete=false`)를 바꾸지 않는다.
 
-**현재 실행 범위.** 등록된 C# grammar로 Windows에서 실행한 결과, `cs-large-22m`의 CST page 12개와 footer, occurrence page 10개와 footer, source, status가 독립 expected와 일치했고 control은 정확한 code로 거부됐다. `cs-large-8m-errors`는 source·status(COMPLETED, syntax ERROR)만 검증되고 CST·occurrence는 BLOCKED다. `cs-large-32mib-errors`는 4 GiB HARD 한도에서 `MEMORY_LIMIT`로 끝나 status가 BLOCKED이고 source만 검증된다(등록된 large budget은 8 GiB). 완료는 BLOCKED이며 `full_scope_complete=false`다. Linux 실행, reference 독립 대조, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
+**현재 실행 범위.** 등록된 C# grammar로 Windows에서 실행한 결과, `cs-large-22m`의 CST page 12개와 footer, occurrence page 10개와 footer, source, status가 독립 expected와 일치했고 control은 정확한 code로 거부됐다. `cs-large-8m-errors`는 source·status(COMPLETED, syntax ERROR)만 검증되고 CST·occurrence는 BLOCKED다. `cs-large-32mib-errors`는 4 GiB task 한도에서 `MEMORY_LIMIT`로 끝났으나, 등록된 large budget(8 GiB HARD, `RealWorldR3MemoryBytes`)에서 이 한 사례만 다시 실행해 `COMPLETED`(syntax ERROR, node 17,478,169, native peak 5,193,478,144 B, wall 28.5초)이며 source와 status가 VERIFIED다(CST·occurrence는 오류 복구 때문에 BLOCKED). fold는 VERIFIED 31, BLOCKED 8이다. 완료는 BLOCKED이며 `full_scope_complete=false`다. Linux 실행, reference 독립 대조, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
 
 ## #362 ordinary 사전 등록과 capacity plan P2-A
 
