@@ -12,13 +12,13 @@ const (
 	ordinarySourceExportSchema = "tsgk-query-source-export/r1"
 	ordinaryRegistryPath       = "src/contracts/query-semantic-registry-r1.json"
 	ordinaryRegistryBytes      = uint64(82475)
-	ordinaryRegistrySHA        = "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+	ordinaryRegistrySHA        = "296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5"
 	ordinaryInventoryPath      = "src/contracts/qualification-c1.json"
 	ordinaryInventoryBytes     = uint64(8297072)
-	ordinaryInventorySHA       = "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+	ordinaryInventorySHA       = "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
 	ordinarySlotsPath          = "src/contracts/query-slot-inventory-r1.json"
 	ordinarySlotsBytes         = uint64(60490)
-	ordinarySlotsSHA           = "f24b4f0b4aad3fe165afd7950d2166fdc7e1d6a59d809faf670d5907c4f12789"
+	ordinarySlotsSHA           = "bca429d4e02729db4e66ae53ad31b835ec0b95471504d9b9ef0499b8b19bc0b6"
 )
 
 type ordinarySourceOrigin struct {

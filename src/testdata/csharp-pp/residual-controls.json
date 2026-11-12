@@ -1,0 +1,646 @@
+{
+  "schema": "tsgk-csharp-pp-residual-controls/r1",
+  "roslyn": "5.9.0.0",
+  "language_version": "Latest",
+  "cases_sha256": "437b4d345fa86f5b95fce494e79af551731ed9dfa6485c89f8b33ecdc6f7c55d",
+  "observed_sha256": "14c62706f61cc8f6a79830fdbf9e7898000a3b1826754565e3e97ff96337ab13",
+  "roslyn_dll_sha256": "12b0428203faae6555858d2ff856cef7450d2764cf00c57e7516587a04885870",
+  "cases": [
+    {
+      "id": "corpus/raw-single-line-unterminated",
+      "source": "eCA9ICIiIjsgCiNkZWZpbmUgQQojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+      "source_sha256": "4eeedc608fc3386f24e4d3fc65bb01437dcae5f6e1f97620ee8048688fa5f686",
+      "symbols": [],
+      "roslyn": {
+        "directive_hashes": [
+          10,
+          20,
+          37
+        ],
+        "errors": [
+          "CS1002",
+          "CS1032",
+          "CS8997"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8997",
+            "start": 9,
+            "end": 9,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 9,
+            "end": 9,
+            "context": "Other"
+          },
+          {
+            "id": "CS1032",
+            "start": 11,
+            "end": 17,
+            "context": "Define"
+          }
+        ]
+      }
+    },
+    {
+      "id": "corpus/interp-raw-single-line-unterminated",
+      "source": "eCA9ICQiIiJ7MX07IAojZGVmaW5lIEEK",
+      "source_sha256": "494b280bf199c69a00454a7f81907dcfefeb67ca06f14e3124aef53cf98befad",
+      "symbols": [],
+      "roslyn": {
+        "directive_hashes": [
+          14
+        ],
+        "errors": [
+          "CS1002",
+          "CS1032",
+          "CS8997"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8997",
+            "start": 13,
+            "end": 13,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 13,
+            "end": 13,
+            "context": "Other"
+          },
+          {
+            "id": "CS1032",
+            "start": 15,
+            "end": 21,
+            "context": "Define"
+          }
+        ]
+      }
+    },
+    {
+      "id": "corpus/pragma-raw-takes-lines",
+      "source": "I3ByYWdtYSB3YXJuaW5nIGRpc2FibGUgIiIiCiNpZiBBCiIiIgojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+      "source_sha256": "9a7cca4b78b5d7de709541a6a570b06c6e4d13100660a0c0c9310a91f6e38b7d",
+      "symbols": [
+        "A"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0,
+          38,
+          55
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "corpus/inactive-pragma-raw-takes-endif",
+      "source": "I2lmIE5PCiNwcmFnbWEgd2FybmluZyBkaXNhYmxlICIiIgojZW5kaWYKIiIiCmNsYXNzIEMge30KI2VuZGlmCg==",
+      "source_sha256": "cf1d4d8815dd33f4f1a2aade2fba4ce8a14aedbf3c7ae7b26c4705267e22193c",
+      "symbols": [],
+      "roslyn": {
+        "directive_hashes": [
+          0,
+          7,
+          57
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "e81/filename-raw",
+      "source": "I2xpbmUgMSAiIiIKI2lmIEhJRERFTgoiIiIKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+      "source_sha256": "2ce82fb8ead4c12ff91ba9b40b30cd8dee5b9f2ce6e28ee2908bfa9088bfb1f3",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0,
+          27,
+          44
+        ],
+        "errors": [
+          "CS8996"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8996",
+            "start": 8,
+            "end": 8,
+            "context": "Line"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e81/raw-q3-close2-multi0",
+      "source": "eCA9ICQkIiIieCIiOwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+      "source_sha256": "304d52d1f8333962edebb1e1627922e80fff7f9c655dc141551a321d3bf81725",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          14,
+          31
+        ],
+        "errors": [
+          "CS1002",
+          "CS8997"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8997",
+            "start": 13,
+            "end": 13,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 13,
+            "end": 13,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e81/raw-q3-close2-multi1",
+      "source": "eCA9ICQkIiIiCngKIiI7CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+      "source_sha256": "3ea781f3c4d13b636dd83a3772519d5651b37d058e1453f25ba5d457fe786235",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [],
+        "errors": [
+          "CS1002",
+          "CS8997"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8997",
+            "start": 40,
+            "end": 40,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 40,
+            "end": 40,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e81/raw-q3-close3-multi0",
+      "source": "eCA9ICQkIiIieCIiIjsKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+      "source_sha256": "7b1f5f4d805afce5be23dd9cbb86f5f155286584e4b8f47c4bef11a88956efd2",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          15,
+          32
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "e81/raw-q3-close3-multi1",
+      "source": "eCA9ICQkIiIiCngKIiIiOwojaWYgQQpjbGFzcyBYIHt9CiNlbmRpZgo=",
+      "source_sha256": "b520dac5210a4f81488081ee85fa3b1eaf024b5d97079b0c113f03178e6cb038",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          17,
+          34
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "e81/raw-q3-close4-multi0",
+      "source": "eCA9ICQkIiIieCIiIiI7CiNpZiBBCmNsYXNzIFgge30KI2VuZGlmCg==",
+      "source_sha256": "d959baf1582efec621bfa758e45d375ed41239def90b8dc044887e5b3c417fe6",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          16,
+          33
+        ],
+        "errors": [
+          "CS8998"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8998",
+            "start": 13,
+            "end": 14,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e81/raw-q3-close4-multi1",
+      "source": "eCA9ICQkIiIiCngKIiIiIjsKI2lmIEEKY2xhc3MgWCB7fQojZW5kaWYK",
+      "source_sha256": "335398b696b9dfabfe527a103f3fd12581bceb683fab3f8d902ddf7323394d25",
+      "symbols": [
+        "A",
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          18,
+          35
+        ],
+        "errors": [
+          "CS8998"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS8998",
+            "start": 15,
+            "end": 16,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pragma/pragma-exact",
+      "source": "I3ByYWdtYSAiIiIKI2lmIEhJRERFTgoiIiIKI3VuZGVmIFgK",
+      "source_sha256": "5be3ac882cd52589650f4413b17c9c093fc063cc94e2fa1a7de0fc8d93433a7d",
+      "symbols": [],
+      "roslyn": {
+        "directive_hashes": [
+          0,
+          27
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "e112/lf-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGMKKi8KY2xhc3MgQyB7fQ==",
+      "source_sha256": "dbac75fb93bc1dca087ae433b5e61526ef612123b5c808b2e94041e13649e14b",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 25,
+            "end": 26,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 26,
+            "end": 26,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 26,
+            "end": 26,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e112/crlf-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGMNCiovDQpjbGFzcyBDIHt9",
+      "source_sha256": "7a063240044576e626a48fb899031efbc7e8db66c6f98142c2cf21236e1a4364",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 26,
+            "end": 27,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 27,
+            "end": 27,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 27,
+            "end": 27,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e112/cr-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGMNKi8NY2xhc3MgQyB7fQ==",
+      "source_sha256": "ec6b35f271c98f33f09c696351480b717f945e1589a730165704700f40a473bb",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 25,
+            "end": 26,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 26,
+            "end": 26,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 26,
+            "end": 26,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e112/nel-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGPChSovwoVjbGFzcyBDIHt9",
+      "source_sha256": "b1e65aaae36e57a625fa7cbf91c8e9db41e07be473c1c1a30be8b8aafee93498",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 26,
+            "end": 27,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 27,
+            "end": 27,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 27,
+            "end": 27,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e112/ls-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGPigKgqL+KAqGNsYXNzIEMge30=",
+      "source_sha256": "f0f4f296fe67bfb78b88ec54b56c0e3446c0e773709f525b697b21b5e17706f2",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 27,
+            "end": 28,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 28,
+            "end": 28,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 28,
+            "end": 28,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e112/ps-after",
+      "source": "I2xpbmUgMTAgImZpbGUuY3MiIC8qIGPigKkqL+KAqWNsYXNzIEMge30=",
+      "source_sha256": "4cd3b1aea73e001d74e5245a78b88ec49e4e110d9a68140afb8671f2722f92e3",
+      "symbols": [
+        "HIDDEN"
+      ],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [
+          "CS1002",
+          "CS1025",
+          "CS1525"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS1025",
+            "start": 19,
+            "end": 20,
+            "context": "Line"
+          },
+          {
+            "id": "CS1525",
+            "start": 27,
+            "end": 28,
+            "context": "Other"
+          },
+          {
+            "id": "CS1525",
+            "start": 28,
+            "end": 28,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 28,
+            "end": 28,
+            "context": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "id": "controls/line-slash",
+      "source": "I2xpbmUgMSAiZmlsZS5jcyIgLy8gaGVsbG8KY2xhc3MgQyB7fQo=",
+      "source_sha256": "ddac6ed9f55610d1e8638c31bdd872fc176b9cd62e4f2b7d5bfa3ed989e7d2cc",
+      "symbols": [],
+      "roslyn": {
+        "directive_hashes": [
+          0
+        ],
+        "errors": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "corpus/one-quote-raw-hole-quote-closes",
+      "source": "Y2xhc3MgQyB7IHN0cmluZyBzID0gJCQiCnt7IjE6IyYmfX17eH0KI2k9PWYgQQoiIiI7IH0K",
+      "source_sha256": "e4d21cd6a27c8eba8fc2a3a21f583dffba91a67d16e8ad9f4a817a3d9d9f0b80",
+      "symbols": [
+        "A"
+      ],
+      "roslyn": {
+        "directive_hashes": [],
+        "errors": [
+          "CS1002",
+          "CS1003",
+          "CS1040",
+          "CS1513",
+          "CS1733",
+          "CS9004"
+        ],
+        "diagnostics": [
+          {
+            "id": "CS9004",
+            "start": 23,
+            "end": 24,
+            "context": "Other"
+          },
+          {
+            "id": "CS1733",
+            "start": 27,
+            "end": 27,
+            "context": "Other"
+          },
+          {
+            "id": "CS1003",
+            "start": 28,
+            "end": 29,
+            "context": "Other"
+          },
+          {
+            "id": "CS1040",
+            "start": 30,
+            "end": 31,
+            "context": "Other"
+          },
+          {
+            "id": "CS1040",
+            "start": 39,
+            "end": 40,
+            "context": "Other"
+          },
+          {
+            "id": "CS1002",
+            "start": 53,
+            "end": 53,
+            "context": "Other"
+          },
+          {
+            "id": "CS1513",
+            "start": 53,
+            "end": 53,
+            "context": "Other"
+          }
+        ]
+      }
+    }
+  ]
+}

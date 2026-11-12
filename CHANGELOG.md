@@ -66,6 +66,14 @@
 잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. 자세한 API 변화·검증 근거·미측정 범위는 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
+
+- C# pragma tail에서 verbatim 문자열의 doubled quote를 raw opener로 오인해 다음 실제 directive를 잃던 회귀를 교정했다(#233). `@`·`$@`·`@$`, 일반 문자열 escape 및 char literal의 정상30개 native 회귀를 추가하고 scanner와 파생 registry identity를 갱신했다.
+
+- C#의 #233 lexical recovery 잔여 후보(C1–C4)를 제품 C2 patch chain에 반영했다: malformed single-line raw token의 newline 소유, q−1/q+1 raw closing, `#pragma` raw tail의 내부 directive 차단, `#line` filename 뒤 block comment의 오류 유지. directive 뒤 `//` comment는 정상 comment로 받고 pragma 꼬리는 기존 `preproc_arg` CST를 보존한다. 원본 157개 중 정상 88개의 CST 변화는 0이고, 허용된 교정은 고정 Roslyn 근거의 raw 2·pragma 2·`#if A // note` 1, 총 5건이다. S05 C# 361·S06 C# 390이 모두 통과하고 SVC는 기존 BLOCKED 1건 외 통과한다.
+
+- 독립 승인한 sidecar·pin 집합의 원문 digest로 역사 자료를 결속하는 `ResolveEvidencePins`와 단일 생산 후보 원문을 선택하는 `SelectEvidenceProductionPin`을 추가했다. Content-addressed 보존 집합과 A/B/C 생산 선택 불변성·위조 거부 시험을 제공한다. V2-A의 PASS는 자료 결속에 한정되며 Rust/catalogue 생산·검증 이행(V2-B)과 runtime·semantic 통합(V2-C/D)은 남아 있다. Refs #370.
+
+- Go 기준을 1.27.4로 올렸다(#358). go1.27.4는 cgo, `go` 명령, 컴파일러, 링커, `net/http`의 보안 수정을 담는다. 공개 module의 최소 Go 버전도 1.27.4가 된다. 과거 margin report는 기록 당시의 `go1.27.3`으로 계속 검증된다.
 - foundation job의 `실행 identity 확인` step이 runner CPU 모델과 논리 프로세서 수를 기록한다(#329 E0). Windows runtime 치명 오류가 다시 나면 CPU와 대조하기 위한 진단이며, 읽기에 실패해도 job을 실패시키지 않는다.
 - Windows runner의 Job Object 정보 설정·조회 4곳이 `unsafe.Pointer` 규칙 4를 지키도록 고쳤다(#330). x/sys wrapper는 system call 자체가 아니어서, 호출 중 stack 버퍼가 이동하면 커널이 옛 주소를 읽거나 쓸 수 있었다. `//go:uintptrescapes` 지역 wrapper로 버퍼를 heap에 두고 호출 동안 유지한다. 동작은 바뀌지 않는다.
 - Offline core에서 쓰지 않는 encoding detector와 binary bytes 보관을 없애고, 같은 guarded session의 연속·index 순 paging part는 읽는 자리에서 전체 chain을 hash한다(Refs #362). Identity-only member·streamed part와 retained fallback의 실제 처리에 맞춰 원장과 관리 비용을 계상하며, owner·개별/전체 pin·SameFile/size/mtime 및 실패 분류를 유지한다. 기존 검증 identity·완성 logical identity 재사용과 1 GiB/기존 standalone 한도는 그대로다. Ordinary 전체 수용이나 새 runtime 관측을 뜻하지 않는다.

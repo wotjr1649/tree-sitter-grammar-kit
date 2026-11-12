@@ -12,6 +12,8 @@ P2-B 2단계는 내부 실행 API `OracleRequest.Ordinary`로 명시적으로 �
 
 독립 expected 자산의 compact row 형식(B3)과 reference stdout의 별도 pinned member 및 `tsgk-reference-process/r2`(B5)는 이 단위에서 만들지 않는다. 이번 형식은 native actual transcript이며 expected/reference 형식을 먼저 고정하면 아직 연결되지 않은 reader·receipt 계약을 확장하게 된다. 기존 자산/receipt 비용 추정과 SQL `CAPACITY_UNPROVEN`/BLOCKED를 유지하고 B3/B5 절감액을 선반영하지 않는다. reference 실행·한도 조정·public ordinary API·reader/replay 완료를 뜻하지 않는다.
 
+[#370 V2-A pin 보존·선택](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)이 추가됐다. 기존 생산의 Rust exact pin과 현재 catalogue 비교는 V2-B 소비자 이행 전까지 적용된다. 단일 selection의 후보 원문은 보존되지만 Python/workflow는 아직 이를 읽지 않는다. 후속 V2-B에서는 생산 시작 때 선택한 승인 tuple의 rustc/cargo release를 각각 정확히 검사하고 workflow도 같은 입력을 사용하며, 과거 증거는 당시 승인 tuple로 검증해야 한다. 기존 Rust 경로 의미는 역사 reader의 기준으로 보존한다. 이 자료 보존 단계가 새 reference 실행·자격 검증을 뜻하지 않는다.
+
 ## DartPHP12 단일 frame 정의 분류
 
 Dart7·PHP5는 기존 Web16·Script17·Small17·CJR 이름 집합과 겹치지 않는 닫힌 수동 profile이며 공통 empty-profile 검증기를 사용한다. 다음 값은 pinned grammar와 generated parser에서 도출한 독립 사전 기대값이다. 실제 parse·compile·query 결과는 별도 관측으로 확인한다.
@@ -111,7 +113,7 @@ JSON의 현재 문법은 `document`에 value 하나를 요구한다. JSON CST는
 
 `TSGK_QUERY_CLASSIFICATION_PROFILE=csharp15-empty`는 [독립 사전 기대값](../../src/testdata/query-semantics/csharp15-classification-anchors.json)의 빈 UTF-8 source, 편집 없음, API 관측 없음, 단일 `compilation_unit` root와 15개 query를 선택한다. `native-query`와 `Args=["single"]`을 사용한다. ABI 기대값은15/15/13/654/26이며, query metadata는 합계91 patterns·125 capture-name 항목과 명시적 `predicates:[]`다. 각 초기 incremental query의 structural/expected capture는 빈 배열이다. 이는 이 입력의 사전 기대값이며 실제 compiler/native/reference 관측을 대신하지 않는다.
 
-C# parser 원문51,472,926바이트는 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
+16 MiB를 넘는 C# parser 원문(#233 이전 51,472,926바이트, C1–C4 반영 뒤 53,114,064바이트. 크기는 `native-routes.json`의 등록 pin에서 읽는다)은 기존 `full-input-utf8-paged-parser/r1` 경로로 보존한다. 동일 guarded snapshot의 `oracle/` namespace에서 descriptor·분할 파일·원래 logical parser hash와 나머지 grammar pin을 대조한다. 이 예외는 parser 입력 한 개에만 적용하며 batch·문서 크기 제한이나 product core를 확장하지 않는다. Compiler 출력은 `csharp.dll`이며 기존 graph의 `go-library-build`와 `current/go.dll` 문자열은 opaque evidence ID로 재사용한다. C# 정체성은 route·symbol·ABI·원문 grammar pin과 preregistered context로 따로 검증한다.
 
 `definitions` stage는 새 graph에 대한 외부 caller approval과 같은 guarded eligibility·CST·request/frame·compiler/library·native/reference metadata·public parity 검사를 통과해야 한다. 일반 query13개와 fact query2개의 원본 bytes를 각각 `csharp.json` 및 `fact-query-pack.json` pin으로 연결한다. 원장의 `csharp/s06-csharp`에 등록된390 cases·125 edits·515 case steps·640 tree roles에서 정의당640개, 합계9,600개 잠재 연결을 재구성한다. 이 분모는 qualification의 API 관측을 포함한 원래 배치 사례에 속하며, 이번 API=false 단일 입력 관측으로 그 사례들을 검증하지 않는다. 결과는 정의15개의 조건부 `STRUCTURAL_ONLY` 분류이며 사례별·semantic 완료와 r1/r10 상태는 유지한다. 출력 보호와 reader/관측 revision 구분은 Go 정의 분류와 같은 조건을 따른다.
 
@@ -526,7 +528,7 @@ P0 registry의 `n461-large` extra role은 Windows 전용 workload 두 개다. `s
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
 
-P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
+P0의 canonical registry 자료형·namespace/set digest·coordinate ID 및 membership/coverage 계산은 의존성 없는 내부 `queryregistrycore`가 소유한다. 기존 `queryregistry`는 qualification·slot 입력을 해석해 pinned source view를 core에 전달하고 기존 kit 오류로 바꾸는 adapter로 남는다. 두 소비 경로는 같은 canonical coordinate와 ID를 만든다. 독립 고정값은 registry 82,475 bytes와 SHA-256 `296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5`, 모든 P0 ID/set, 기존 Fold 결과다. 이 공용화는 P0 registry bytes, `INCOMPLETE`·`full_scope_complete=false`, asset 부재 상태나 기존 API 동작을 바꾸지 않는다.
 
 `src/kit`의 ordinary planning helpers는 `OrdinaryProfile` (`tsgk-oracle/r4`, `Context OrdinaryContext`), `ParseOrdinaryProfile`, `ParseOrdinaryAssets` (`tsgk-query-ordinary-assets/r1`), `ParseOrdinaryRegistration` (`tsgk-query-semantics-registration/r2`), `BuildOrdinaryShardPlan`, `ParseOrdinaryShardPlan`, `ValidateOrdinaryShardPlan`을 제공한다. Registration은 `registry_pin`, membership namespace, qualification/slot 원문 pin, route/set/platform 및 subject, execution context/closure, candidate/cohort, profile/asset pin, 원래 case selector와 초기 source pin, 순서 있는 전체 edit/version pin/points, query 원문·metadata asset pin, asset basis/review pin, full P0 coordinate·ID, planned members를 연결한다. Policy/limits는 pinned profile을 통해 결속한다. Plan은 registration pin을 단방향으로 참조한다. P0 ID는 기존 membership namespace와 전체 canonical coordinate로만 계산한다. 새 execution context를 P0 `context`에 덮어쓰거나 registry 전체를 다시 hash해 기존 selector를 대체하지 않는다. ID 분리 기준의 context는 P0 membership context다. 같은 source bytes를 쓰는 다른 case·history·host의 기존 membership coordinate는 각각 보존하고, 새 execution context는 그 P0 ID를 바꾸지 않는다.
 
@@ -636,7 +638,7 @@ registration의 physical 계획은 build 전에 고정한다. 기존 r5 producer
 
 Native.Grammar의 원본 parser 경로는 실제 descriptor 물리 pin을 가리킨다. standalone eligibility도 Native.InvocationID가 가리키는 실제 NATIVE_DRIVER node가 descriptor와 모든 part의 owner인지 확인하고 사용하지 않는 paged member도 거부한다. 의미 binding은 graph·D owner·DriverNode·사전 member 계획까지 정확히 대조한다. 승인 ABSENT에서도 동일 set/whole-file 검증을 수행하고 required 분모를 먼저 유지한 채 BLOCKED로 남긴다. caller-approved PASS는 저장 근거 일관성에 한정되며 실행 진위 인증이나 C# 실제 실행 증거가 아니다.
 
-이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=654는 SYMBOL_COUNT650+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
+이 계약의 회귀는 합성 저장 자료의 일관성과 경계 동작을 검사하며 실제 reference 실행 증거가 아니다. C# 사전 ABI 기대 symbol_count=662는 #233 C1–C4 반영 parser의 SYMBOL_COUNT658+ALIAS_COUNT4의 고정 runtime API에서 도출한 값이며 실행 관측이 아니다. 실제 compiled ABI·driver/reference 크기·독립 reference 실행은 별도 후보의 관측으로 확인해야 한다.
 
 ## #216 binary paging
 
