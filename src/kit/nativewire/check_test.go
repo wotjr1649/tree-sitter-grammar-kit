@@ -3,9 +3,14 @@ package nativewire
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/reuseobs"
 )
 
 // oneNodeTree is a completed full r1 tree of one root node over n bytes.
@@ -82,6 +87,53 @@ func TestCheckAbsentExpectations(t *testing.T) {
 				t.Fatalf("got %v, want %q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestApprovedHistoricalRuntimeLoggerForwarding(t *testing.T) {
+	historical := strings.Repeat("d", 64)
+	producer := strings.Repeat("a", 64)
+	source := []byte("x")
+	sourcePin := sourceID(source)
+	observation, err := json.Marshal(reuseobs.Observation{Schema: reuseobs.Schema, Policy: reuseobs.Policy,
+		RuntimeManifestSHA256: historical, RequestID: "case", RunID: "run-1", ProducerSHA256: producer,
+		Role: "initial", SourceSHA256: sourcePin.SHA256, SourceBytes: sourcePin.Bytes,
+		Status: "COMPLETE", Events: 2, Bytes: 30, Counts: &reuseobs.Counts{NewParse: 1, Done: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	step := Step{Step: 0, SourceBytes: sourcePin.Bytes, SourceSHA256: sourcePin.SHA256,
+		Incremental: oneNodeTree(1, StatusCompleted, ""), Observations: jsontext.Value("[" + string(observation) + "]")}
+	step.Incremental.Queries = jsontext.Value("null")
+	step.Incremental.API = jsontext.Value("null")
+	api, predicates, query := "tsgk-api/r1", "NOT_EVALUATED", "tsgk-query/r1"
+	symbols, fields := uint32(1), uint32(0)
+	exit := 0
+	r := Response{Protocol: ProtocolR4, ID: "case", Status: StatusCompleted,
+		Producer: Producer{Query: query, API: &api, Predicates: &predicates, SymbolCount: &symbols, FieldCount: &fields,
+			ReuseObservation: jsontext.Value(fmt.Sprintf(`{"policy":%q,"runtime_manifest_sha256":%q}`, reuseobs.Policy, historical))},
+		SourceBytes: sourcePin.Bytes, StepsCompleted: 1, Steps: []Step{step}, Complete: true}
+	e := Expect{Revision: ProtocolR4, ID: "case", Nodes: 10, SourceBytes: sourcePin.Bytes,
+		Sources: []SourceID{sourcePin}, Exit: &exit,
+		Observation: &Binding{Manifest: historical, RunID: "run-1", ProducerSHA256: producer}}
+	if _, err := Check(r, e); err == nil {
+		t.Fatal("legacy nativewire binding accepted an unlisted runtime")
+	}
+	pin, err := reuseobs.NewRuntimePin(historical, reuseobs.RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.Observation.Runtime = &pin
+	if _, err := Check(r, e); err != nil {
+		t.Fatalf("historical nativewire binding rejected: %v", err)
+	}
+	wrong, err := reuseobs.NewRuntimePin(strings.Repeat("e", 64), reuseobs.RuntimeLoggerReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.Observation.Runtime = &wrong
+	if _, err := Check(r, e); code(err) == "" {
+		t.Fatal("nativewire accepted a capability outside the approved runtime pin")
 	}
 }
 

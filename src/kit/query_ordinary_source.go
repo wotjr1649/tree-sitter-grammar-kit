@@ -12,7 +12,7 @@ const (
 	ordinarySourceExportSchema = "tsgk-query-source-export/r1"
 	ordinaryRegistryPath       = "src/contracts/query-semantic-registry-r1.json"
 	ordinaryRegistryBytes      = uint64(82475)
-	ordinaryRegistrySHA        = "296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5"
+	ordinaryRegistrySHA        = "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
 	ordinaryInventoryPath      = "src/contracts/qualification-c1.json"
 	ordinaryInventoryBytes     = uint64(8297072)
 	ordinaryInventorySHA       = "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"

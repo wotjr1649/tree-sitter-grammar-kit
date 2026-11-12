@@ -3,7 +3,7 @@
  "registry": {
   "path": "src/contracts/query-semantic-registry-r1.json",
   "bytes": 82475,
-  "sha256": "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+  "sha256": "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
  },
  "grammar": {
   "path": "src/testdata/native/plain/src/grammar.json",

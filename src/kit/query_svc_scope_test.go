@@ -34,7 +34,7 @@ func svcCode(t *testing.T, err error) string {
 
 func TestSvcExpectedSealedAndBound(t *testing.T) {
 	asset, registry, inventory, fixture := svcAssets(t)
-	if len(asset) != 196457 || digestHex(asset) != "bbe9116749abe78cc218a0455cad476d9d4b4b9044447ff35d10a181df7eb746" {
+	if len(asset) != 196457 || digestHex(asset) != "660c62b36794859a3911e0d65152f58d02a10db779e66f13865296010a74bde9" {
 		t.Fatalf("sealed expected asset changed: %d/%s", len(asset), digestHex(asset))
 	}
 	e, err := ParseSvcExpected(asset, registry, inventory, fixture)

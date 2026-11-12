@@ -3,17 +3,17 @@
  "svc_expected": {
   "path": "src/contracts/query-svc-expected-r1.json",
   "bytes": 196457,
-  "sha256": "bbe9116749abe78cc218a0455cad476d9d4b4b9044447ff35d10a181df7eb746"
+  "sha256": "660c62b36794859a3911e0d65152f58d02a10db779e66f13865296010a74bde9"
  },
  "registry": {
   "path": "src/contracts/query-semantic-registry-r1.json",
   "bytes": 82475,
-  "sha256": "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+  "sha256": "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
  },
  "qualification": {
   "path": "src/contracts/qualification-c1.json",
   "bytes": 8297072,
-  "sha256": "cce474cac1f21f8a5ff8dc1fe25ac11840d4e1dcb8c174c049fa0f78672c06cb"
+  "sha256": "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
  },
  "fixture": {
   "path": "src/testdata/native/n461/svc.json",
@@ -28,8 +28,8 @@
  "grammar": {
   "version": "tree-sitter-c-sharp 0.23.5",
   "grammar_json_sha256": "704882b5d27ee79c69a1508d3d649e8d7c64d43c57e07ef0041cb9daf0669e16",
-  "parser_sha256": "b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb",
-  "scanner_sha256": "90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0"
+  "parser_sha256": "1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6",
+  "scanner_sha256": "8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed"
  },
  "queries": [
   {

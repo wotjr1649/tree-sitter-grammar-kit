@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -117,6 +119,102 @@ func TestReplayCLI(t *testing.T) {
 	errb.Reset()
 	if code := run(context.Background(), []string{"evidence", "verify", "--input", root, "--profile", pol}, &out, &errb); code != exitUsage || !strings.Contains(errb.String(), "JSON_DUPLICATE_KEY") {
 		t.Fatalf("evidence verify duplicate key: %d %s", code, errb.String())
+	}
+}
+
+func TestReplayCLIRuntimePinsEnvelopeForwarding(t *testing.T) {
+	root := t.TempDir()
+	profile, err := json.Marshal(map[string]any{
+		"schema": kit.ReplaySchema, "id": "runtime-pins-cli", "reducer": "native-result-r9", "operation": "evidence-replay",
+		"subject":    map[string]any{"run": "run", "attempt": 1, "platform": "linux/amd64", "commit": "", "evidence_mode": kit.ModeNewRun, "execution_status": kit.StatusCompleted, "assessment": kit.AssessPass},
+		"identities": map[string]string{}, "records": []string{}, "members": []kit.ReplayMember{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pinSet := []byte(`{"schema":"` + kit.EvidencePinSetSchema + `","reader":"` + kit.EvidencePinReader + `","materials":[{"name":"native/runtime-tuple.json","role":"runtime-tuple","bytes":5,"sha256":"` + fmt.Sprintf("%x", sha256.Sum256([]byte("tuple"))) + `"}]}`)
+	pinInput, err := json.Marshal(map[string]any{
+		"schema": cliEvidencePinsInputSchema, "subject_base64": base64.StdEncoding.EncodeToString(profile),
+		"approved_approval_sha256": strings.Repeat("0", 64), "approval_base64": base64.StdEncoding.EncodeToString([]byte(`{}`)),
+		"approved_pin_set_sha256": strings.Repeat("0", 64), "pin_set_base64": base64.StdEncoding.EncodeToString(pinSet),
+		"materials_base64": map[string]string{"native/runtime-tuple.json": base64.StdEncoding.EncodeToString([]byte("tuple"))},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	profilePath, pinsPath := filepath.Join(t.TempDir(), "profile.json"), filepath.Join(t.TempDir(), "pins.json")
+	if err := os.WriteFile(profilePath, profile, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(pinsPath, pinInput, 0600); err != nil {
+		t.Fatal(err)
+	}
+	request, err := decodeCLIEvidencePins(pinInput, profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	want, wantErr := kit.Replay(ctx, kit.ReplayRequest{Root: root, Profile: profile, RuntimePins: request})
+	if want.RuntimePins == nil || want.ResultSchema != kit.ReplayLoggerPinsResultSchema {
+		t.Fatalf("API did not exercise runtime pin path: schema=%s runtime=%+v err=%v", want.ResultSchema, want.RuntimePins, wantErr)
+	}
+	var out, errb bytes.Buffer
+	code := run(ctx, []string{"replay", "--input", root, "--profile", profilePath, "--runtime-pins", pinsPath}, &out, &errb)
+	wantJSON, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSuffix(out.String(), "\n") != string(wantJSON) || code != replayExit(want.Assessment) {
+		t.Fatalf("CLI did not forward the bounded runtime pin envelope: exit=%d want=%d stderr=%s\n%s\n%s", code, replayExit(want.Assessment), errb.String(), out.String(), wantJSON)
+	}
+}
+
+func TestReplayCLIPinsEnvelopeForwarding(t *testing.T) {
+	root := t.TempDir()
+	profile, err := json.Marshal(map[string]any{
+		"schema": kit.ReplaySchema, "id": "reference-pins-cli", "reducer": "native-result-r9", "operation": "evidence-replay",
+		"subject":    map[string]any{"run": "run", "attempt": 1, "platform": "linux/amd64", "commit": "", "evidence_mode": kit.ModeNewRun, "execution_status": kit.StatusCompleted, "assessment": kit.AssessPass},
+		"identities": map[string]string{}, "records": []string{}, "members": []kit.ReplayMember{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pinInput, err := json.Marshal(map[string]any{
+		"schema": cliEvidencePinsInputSchema, "subject_base64": base64.StdEncoding.EncodeToString([]byte("graph approval subject")),
+		"approved_approval_sha256": strings.Repeat("a", 64), "approval_base64": base64.StdEncoding.EncodeToString([]byte(`{}`)),
+		"approved_pin_set_sha256": strings.Repeat("b", 64), "pin_set_base64": base64.StdEncoding.EncodeToString([]byte(`{}`)),
+		"materials_base64": map[string]string{"reference/catalogue.json": base64.StdEncoding.EncodeToString([]byte("catalogue"))},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	profilePath, pinsPath := filepath.Join(t.TempDir(), "profile.json"), filepath.Join(t.TempDir(), "pins.json")
+	if err := os.WriteFile(profilePath, profile, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(pinsPath, pinInput, 0600); err != nil {
+		t.Fatal(err)
+	}
+	pins, err := decodeCLIEvidencePins(pinInput, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	want, wantErr := kit.Replay(ctx, kit.ReplayRequest{Root: root, Profile: profile, Pins: pins})
+	var ke *kit.Error
+	if !errors.As(wantErr, &ke) || ke.Code != "REPLAY_PINS_REDUCER_MISMATCH" {
+		t.Fatalf("API did not receive Pins: err=%v", wantErr)
+	}
+	var out, errb bytes.Buffer
+	code := run(ctx, []string{"replay", "--input", root, "--profile", profilePath, "--pins", pinsPath}, &out, &errb)
+	wantJSON, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSuffix(out.String(), "\n") != string(wantJSON) || code != exitUsage || !strings.Contains(errb.String(), ke.Code) {
+		t.Fatalf("CLI did not forward Pins envelope: exit=%d stderr=%s\n%s\n%s", code, errb.String(), out.String(), wantJSON)
 	}
 }
 

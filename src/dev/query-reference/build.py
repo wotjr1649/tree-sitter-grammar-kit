@@ -9,24 +9,9 @@ import subprocess
 import sys
 import tarfile
 import tomllib
-from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha as sha
+from checks import process_receipt, streams, stream_text, execution, snapshot, unchanged, unchanged_bytes, unit, read_bounded, file_sha as sha, production_pins, pinned_release
 
-UPSTREAM = "10eb5ac119eec9cb4267a8e035066473983f5f3a"
-ARCHIVE = "6025ffd838c63bb011eeec9b259891ae0e051a3db9aa24c8812679f7462a50a9"
-BINDING = "3a350f2c4735d3a07a0892547afff9f34cabe1e63f962e2d4f26e1b7db8836c2"
 TARGETS = ("x86_64-pc-windows-gnu", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin")
-
-
-
-def pinned_release(output):
-    releases = []
-    for line in output.splitlines():
-        key, separator, value = line.partition(":")
-        if separator and key.strip() == "release":
-            releases.append(value.strip())
-    if releases != ["1.97.1"]:
-        raise RuntimeError("REFERENCE_TOOL_VERSION")
-
 
 def main():
     if sys.flags.optimize:
@@ -34,17 +19,26 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("archive", "vendor", "cargo", "rustc", "cc", "ar", "git", "supervisor", "work"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--pin-context", type=Path)
+    parser.add_argument("--pin-context-sha256")
     parser.add_argument("--target", choices=TARGETS, required=True)
     parser.add_argument("--cgroup-parent", default="")
     args = parser.parse_args()
+    repository = Path(__file__).resolve().parents[3]
+    pins, pin_context_raw, explicit_pins = production_pins(
+        repository, args.pin_context, args.pin_context_sha256, args.archive.parent / "pin-context.json")
+    catalogue, toolchain = pins["catalogue"], pins["tuple"]
     for name in ("archive", "vendor", "cargo", "rustc", "cc", "ar", "git", "supervisor", "work"):
         path = getattr(args, name)
         assert path.is_absolute(), name
         if name != "work":
             assert path.exists() and not path.is_symlink(), name
     archive_bytes = read_bounded(args.archive, 128 * 1024**2)
-    assert hashlib.sha256(archive_bytes).hexdigest() == ARCHIVE
+    assert hashlib.sha256(archive_bytes).hexdigest() == catalogue["archive_sha256"]
     args.work.mkdir(exist_ok=False)
+    if not explicit_pins:
+        with (args.work / "pin-context.json").open("xb") as output:
+            output.write(pin_context_raw)
     source = args.work / "source"
     source.mkdir()
     (args.work / "tmp").mkdir()
@@ -97,10 +91,9 @@ def main():
     tools = {name: getattr(args, name) for name in ("cargo", "rustc", "cc", "ar", "git", "supervisor")}
     tools["python"] = Path(sys.executable).resolve(strict=True)
     tool_hashes = {name: sha(path) for name, path in tools.items()}
-    assert sha(source / "lib/binding_rust/lib.rs") == "1837935ea37e0d8bde7c4e6daab9e6020047b7d7af40fbc55eceb6c982403b7a"
     execute("patch-check", args.git, ["apply", "--unidiff-zero", "--check", here / "instrumentation.patch"])
     execute("patch", args.git, ["apply", "--unidiff-zero", here / "instrumentation.patch"])
-    assert sha(source / "lib/binding_rust/lib.rs") == BINDING
+    assert sha(source / "lib/binding_rust/lib.rs") == catalogue["binding_sha256"]
     manifest = source / "Cargo.toml"
     text = manifest.read_text(encoding="utf-8")
     assert text.count("members = [\n") == 1
@@ -114,7 +107,7 @@ def main():
     original_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
     versions = {"rustc": execute("rustc-version", args.rustc, ["-vV"]), "cargo": execute("cargo-version", args.cargo, ["-vV"]), "cc": execute("cc-version", args.cc, ["--version"]), "python": sys.version}
     for name in ("rustc", "cargo"):
-        pinned_release(versions[name])
+        pinned_release(versions[name], toolchain[name + "_release"])
     metadata = execute("metadata", args.cargo, ["metadata", "--offline", "--format-version", "1", "--filter-platform", args.target])
     effective_lock = tomllib.loads((source / "Cargo.lock").read_text(encoding="utf-8"))
     before = {(p["name"], p["version"]): p for p in original_lock["package"]}
@@ -140,9 +133,9 @@ def main():
     unchanged(args.vendor, vendor_snapshot)
     for name, data in snapshot_bytes.items():
         unchanged_bytes(args.work / name, data)
-    assert sha(source / "lib/binding_rust/lib.rs") == BINDING
-    assert sha(args.archive) == ARCHIVE, "REFERENCE_ARCHIVE_CHANGED"
-    identity = {"schema": "tsgk-instrumented-reference-build/r1", "upstream_commit": UPSTREAM, "archive_sha256": ARCHIVE, "binding_sha256": BINDING, "target": args.target,
+    assert sha(source / "lib/binding_rust/lib.rs") == catalogue["binding_sha256"]
+    assert sha(args.archive) == catalogue["archive_sha256"], "REFERENCE_ARCHIVE_CHANGED"
+    identity = {"schema": "tsgk-instrumented-reference-build/r1", "upstream_commit": catalogue["upstream_commit"], "archive_sha256": catalogue["archive_sha256"], "binding_sha256": catalogue["binding_sha256"], "target": args.target,
         "binary_sha256": sha(binary), "lock_sha256": sha(source / "Cargo.lock"), "metadata_sha256": hashlib.sha256(metadata.encode()).hexdigest(), "versions": versions,
         "inputs": input_hashes, "tools": tool_hashes, "tool_paths": {name: str(path) for name, path in tools.items()},
         "selected_tree_sha256": hashlib.sha256(selected_tree).hexdigest(), "source_snapshot_sha256": hashlib.sha256(snapshot_bytes["source-snapshot.json"]).hexdigest(),

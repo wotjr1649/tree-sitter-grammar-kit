@@ -52,7 +52,7 @@ func loadLarge(t *testing.T) (LargeExpected, []LargeTemplate) {
 // f3ffa566...8226 and differed only in the 22m occurrence digest).
 func TestLargeExpectedSealedAndBound(t *testing.T) {
 	asset, registry, inventory, fixtures := largeAssets(t)
-	if len(asset) != 4966 || digestHex(asset) != "2bf95de58bb9812f76f14b54f757c6c24efb43d52f652213b7f0431e1801b583" {
+	if len(asset) != 4966 || digestHex(asset) != "7b2e7374ffbd85d8c35ae58c525e82cfce9994c1cd7aa150d14d9f9a3647b929" {
 		t.Fatalf("sealed expected asset changed: %d/%s", len(asset), digestHex(asset))
 	}
 	e, err := ParseLargeExpected(asset, registry, inventory, fixtures)

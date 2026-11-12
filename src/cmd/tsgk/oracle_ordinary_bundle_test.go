@@ -13,7 +13,7 @@ import (
 // These tests run the whole source-only loader on the real inputs of the record end-to-end test
 // (src/kit TestOrdinaryRecordCLIOwnedPostgreSQLPublicParity writes them under .work). They do not run
 // native code and are skipped when no bundle directory is given.
-const ordinaryBundleRegistrySHA = "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c"
+const ordinaryBundleRegistrySHA = "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8"
 
 type ordinaryBundle struct {
 	dir   string

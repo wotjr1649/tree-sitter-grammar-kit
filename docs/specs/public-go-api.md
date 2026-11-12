@@ -1,12 +1,22 @@
 # 공개 offline Go API — 설계 r2 (S01 구현)
 
+## #370 V2-E 기본 승인 provenance
+
+`RepositoryEvidenceDefaults() (RepositoryEvidenceApproval, error)`는 내장 기본 승인 자료의 무결성을 검사한 뒤 `result_schema=tsgk-repository-evidence-approval/r1`, `approval_source=repository-default`, `approval_sha256`, `pin_set_sha256`, `policy_sha256`을 반환한다. Process·network·host 파일 조회는 없다. 기존 legacy 결과 bytes·schema·counter를 유지하기 위한 별도 provenance 결과이며, caller가 원래 결과와 함께 보관할 수 있다. 명시적 `Pins`/`RuntimePins`는 계속 `caller` 승인이고 기존 nested 결과에 실제 digest를 기록한다. 기본 승인으로 caller 승인의 실패를 대체하지 않는다. 기본 runtime만 사용하는 reference-only Pins의 scope도 구분한다. 자세한 신뢰 기점·scope·자료 보존은 [V2-E 정본](query-reference-eligibility.md#370-v2-e-legacy-기본-승인-집합)을 따른다.
+
+`reuseobs.DefaultRuntimeManifest()`는 검토된 기본 runtime manifest를 반환한다. 기존 `reuseobs.RuntimeManifestSHA256` 식별자는 소스 호환을 위한 deprecated snapshot 변수로 남지만 더 이상 compile-time constant가 아니다. 기존 consumer가 `const` 식에 사용했다면 함수 호출 또는 변수 초기화로 옮겨야 한다. 해당 공개 snapshot을 변경해도 reader 승인·fallback·native 기대값은 바뀌지 않는다.
+
 이 문서는 S01에서 구현한 첫 공개 계약이다. root module의 `github.com/wotjr1649/tree-sitter-grammar-kit/src/kit`이 entry이고, CLI `src/cmd/tsgk`는 같은 operation을 호출하며 API가 CLI를 실행하지 않는다. r1 초안 대비 r2는 kit 설정 wall, encoding 선언, identity 한정 대용량 예외, 비공개 corpus 진입점과 결과의 policy 공개를 더했다. 고급 native/replay API 전체 공개는 약속하지 않는다.
 
 ## #370 역사 자료 pin의 실험적 offline 진입점
 
-별도 실험적 `ResolveEvidencePins`·`SelectEvidenceProductionPin`과 `EvidencePinsRequest`·`EvidencePinsResult`·`EvidencePinMaterial`은 [#370 V2-A pin 계약](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)을 따른다. 독립 승인한 두 raw digest와 원문 bytes를 받아 `historical-materials` 결속만 평가하며 기존 fixed-runtime API의 동작은 유지한다. Caller deadline·입력 불변성·소유권·strict decode·오류·예산은 같은 절이 소유한다. 직접 `VerifyQueryReferenceEligibility`의 선택적 `Pins *EvidencePinsRequest`와 r2 결과는 [V2-B1 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. Subject는 이 호출의 eligibility Approval 원문이며 고정 reader 의무·exact Rust tuple과 기존 closure를 함께 검사한다. 입력 map/slice는 호출 동안 caller가 변경하지 않으며 반환 결과는 입력 원문을 소유하지 않는다. CLI/replay/qualification·semantic과 runtime 전체 전달은 후속 구현 범위다.
+별도 실험적 `ResolveEvidencePins`·`SelectEvidenceProductionPin`과 `EvidencePinsRequest`·`EvidencePinsResult`·`EvidencePinMaterial`은 [#370 V2-A pin 계약](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)을 따른다. 독립 승인한 두 raw digest와 원문 bytes를 받아 `historical-materials` 결속만 평가하며 기존 fixed-runtime API의 동작은 유지한다. Caller deadline·입력 불변성·소유권·strict decode·오류·예산은 같은 절이 소유한다. 직접 `VerifyQueryReferenceEligibility`의 선택적 `Pins *EvidencePinsRequest`와 r2 결과는 [V2-B1 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. Subject는 이 호출의 eligibility Approval 원문이며 고정 reader 의무·exact Rust tuple과 기존 closure를 함께 검사한다. 같은 선택적 `Pins`의 semantic/replay/qualification 전달과 새 결과/reducer는 [V2-B2 계약](query-reference-eligibility.md#370-v2-b2-공개-reference-pin-전달)을 따른다. 입력 map/slice는 호출 동안 caller가 변경하지 않으며 반환 결과는 입력 원문을 소유하지 않는다. Historical runtime은 아래 V2-C의 명시적 tuple 범위에서 지원하며 일반 logger replay·qualification은 아래 V2-C2 opt-in을 사용하며 accepted·preprocess-CST와 Roslyn은 후속 구현 범위다.
+
+V2-C의 선택적 `native/runtime-tuple.json`과 `QueryReferenceEligibilityResult.RuntimePin *QueryRuntimePinIdentity`는 [historical runtime 계약](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)을 따른다. 검증한 manifest·driver/CP949/shim·ABI를 같은 historical Pins semantic/replay/qualification 경로에서 소비한다. Reference-only/nil 호출의 schema와 결과는 유지한다. 일반 logger replay·qualification은 아래 V2-C2에서 명시적으로 지원한다. Accepted·preprocess-CST 및 Roslyn의 historical 통합은 남아 있다.
 
 ## #197 logger 관측의 offline validator
+
+Historical logger를 명시 선택하는 저수준 `reuseobs.RuntimePin`, `RuntimeLoggerReader`, `NewRuntimePin(manifestSHA256, reader) (RuntimePin, error)`와 `Matches`/`Valid`, 선택적 `reuseobs.Binding.Runtime`·`nativewire.Binding.Runtime`을 제공한다. `JudgeWithRuntime`, `MandatoryWithRuntime`, `CaseClaimWithRuntime`은 같은 token을 받으며 기존 함수의 signature·nil 의미는 유지한다. 생성자는 hash 형식과 고정 reader만 검사하며 승인·closure를 검증하지 않는다. 상위 caller는 독립 승인과 해당 claim 범위의 closure를 검증한 뒤 token을 만들어야 한다. Token만으로 full semantic/accepted/provenance PASS를 주장하지 않는다.
 
 `src/kit/reuseobs`는 native host와 offline replay가 공유하는 실험적 pure Go validator다. `Observation`, `Counts`, `Binding`, `Decode`와 `Judge` 및 고정 schema/policy/runtime·수집 상한, 기록된 관측을 읽을 runtime manifest를 판정하는 `VerifiedRuntimeManifest`를 제공한다. `Decode`는 호출자가 독립적으로 검증한 입력·build·run·history·role의 `Binding`과 versioned 관측을 대조하며, `Judge`는 유효한 수집과 actual old-tree 전달의 별도 축만 판정한다(결과 r2의 의미). `Mandatory`·`CaseClaim`·`Step`은 모든 native parse 관측을 필수로 요구하는 결과 r3의 판정이며(#217), 역할 순서 누락과 host marker 모순도 판정한다. event 수로 공개 node 재사용·구문 적합성·성능을 판정하지 않는다. 자체 구조 검증은 실행의 인증을 대신하지 않으며 연결되지 않은 관측을 `Judge`에 제공하는 것만으로 workload 결속을 주장할 수 없다. package는 파일·process·network를 사용하지 않는다. native 실행·logger 설치는 계속 CLI의 별도 process 경계 안에 있고 `TestOfflineClosure`의 기존 금지는 유지한다. 구체적인 값·상태는 [native protocol](tree-and-adapter-protocol.md), 공개 replay 선택자는 [identity/evidence](identity-and-evidence.md)가 소유한다.
 
@@ -587,3 +597,11 @@ S01의 local replace는 초기 소비 경계만 검증한다. S08 `TestModulePro
 ## Parser-only paging과 기존 의미 API
 
 `VerifyQuerySemantics`, `VerifyQueryReferenceEligibility`와 `Replay`의 인자·결과 shape를 유지하며 [명시적 parser paging context](instrumented-query-reference.md#216-parser-only-paging)를 같은 core에서 검증한다. `OraclePagedSemanticsManifestSchema`는 manifest/r6를 나타낸다. 호출자가 승인한 문서의 context·전체 logical 입력과 동일 pass의 physical part pin을 대조하며, 새로운 source/CST 대형 한도를 부여하지 않는다. `oracle-set-r5`만 새 문맥을 받고 기존 `oracle-set-r4`는 이를 거부한다. 승인 ABSENT는 base 검증과 고정 required를 유지한 BLOCKED이며, caller-approved PASS는 저장 자료의 일관성에 한정된다. `OraclePagedBinariesSemanticsManifestSchema`는 binaries 문맥의 manifest revision을 구분하며, r5·r6만 허용하는 reader는 r7을 거부한다.
+
+## #370 V2-C2 logger 승인 전달
+
+V2-C3의 `ReuseAcceptedRequest.RuntimePins`와 `PreprocessCSTRequest.RuntimePins`는 exact `Raw`를 승인 subject로 받는다. [Scope 계약](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)의 reader 자료가 필요하다. 직접 API r2 결과에만 `RuntimePins`가 추가되며 nil 호출의 r1·current 검증은 보존한다. 기존 함수 signature는 유지하고 승인 해석은 유한 replay run에서 수행한다. Accepted API는 기존 `Expected.Check`를 승인 해석 전후에도 확인한다. CST API는 기존 반환 signature 안에 원래 오류 code와 UNVERIFIED/FAIL을 보존한다. 입력 map/slice·receipt 소유권은 기존대로다.
+
+새 Replay r6와 qualification r13은 각각 profile/host identity 승인에서 검증한 private context를 같은 checker에 전달한다. `RuntimeEvidenceResult.Reader`와 `QualSet.RuntimePins`가 실제 판독 범위를 기록한다. 공개 저수준 logger token 자체는 승인 또는 accepted/CST 권한이 아니다. Standalone CLI의 새 파일 admission과 Roslyn/V2-D는 후속 범위다.
+
+`ReplayRequest.RuntimePins`, `QualifyHost.RuntimePins`와 `RuntimeEvidenceResult`는 [logger opt-in 계약](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)을 따른다. Replay의 subject는 Profile 원문, host의 subject는 run-identity.json 원문이다. 입력 map/slice는 호출이 끝날 때까지 변경하지 않는다. 반환 결과는 입력 bytes나 실행 가능한 reader를 보유하지 않으며 tuple/manifest·reader·ABI와 승인 digest를 기록한다. 기존 nil 호출은 그대로다. Replay r5/native-result r9·r10, qualification r12만 새 의미를 사용한다. CLI admission, accepted·preprocess-CST의 historical 지원과 Roslyn은 포함하지 않는다.

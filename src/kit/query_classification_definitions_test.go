@@ -722,7 +722,7 @@ func classificationGoDefinitionProjection(anchors classificationAnchors, plan cl
 	if err := s.r.check(); err != nil {
 		return result, err
 	}
-	if core.ResultSchema != QueryReferenceEligibilityResultSchema || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: 3, Verified: 3}) ||
+	if !classificationEligibilityResultMatches(plan, core) || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != (QueryEligibilityCounts{Required: 3, Verified: 3}) ||
 		s.res.ResultSchema != core.ResultSchema || s.res.ApprovalSHA256 != core.ApprovalSHA256 || s.res.RegistrationSHA256 != core.RegistrationSHA256 || s.res.WitnessSHA256 != core.WitnessSHA256 || s.res.CatalogueSHA256 != core.CatalogueSHA256 || s.res.GraphSHA256 != core.GraphSHA256 || !s.res.Complete {
 		return result, fmt.Errorf("definition projection requires the same completed guarded result")
 	}
@@ -828,7 +828,7 @@ func classificationCSharpDefinitionProjection(anchors classificationAnchors, pla
 		return result, err
 	}
 	wantTuple := QueryEligibilityCounts{Required: 15, Verified: 15}
-	if core.ResultSchema != QueryReferenceEligibilityResultSchema || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != wantTuple ||
+	if !classificationEligibilityResultMatches(plan, core) || core.ExecutionStatus != StatusCompleted || core.Assessment != AssessPass || !core.Complete || core.Tuple != wantTuple ||
 		s.res.ResultSchema != core.ResultSchema || s.res.ExecutionStatus != core.ExecutionStatus || s.res.Assessment != core.Assessment || s.res.Complete != core.Complete || s.res.Tuple != wantTuple ||
 		s.res.ApprovalSHA256 != core.ApprovalSHA256 || s.res.RegistrationSHA256 != core.RegistrationSHA256 || s.res.WitnessSHA256 != core.WitnessSHA256 || s.res.CatalogueSHA256 != core.CatalogueSHA256 || s.res.GraphSHA256 != core.GraphSHA256 {
 		return result, fmt.Errorf("C# definition projection requires the same completed 15-tuple guarded result")

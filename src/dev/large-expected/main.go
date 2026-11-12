@@ -17,7 +17,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-const grammarBasis = "tree-sitter-c-sharp 0.23.5 grammar.json (parser.c sha256 b1a77b75e034af978ebbde75be71e362cae447f67ec25dcf297702cdca9a1dbb, scanner.c sha256 90c63e1fefc5a04070785bbbaec9c265392db8520e81a8d690d0e30d40891ae0), the registered qualification closure of the n461-large role"
+const grammarBasis = "tree-sitter-c-sharp 0.23.5 grammar.json (parser.c sha256 1fa40d539a31fce697144ea262d2ee7fc81f80a285db30c8edba2e47b2675df6, scanner.c sha256 8d00d37d375fc680d7cb728ee7e3cace7818b52c2591b42b6cafab4852ae51ed), the registered qualification closure of the n461-large role"
 
 const basis = "Rows are derived from the fixture template by a hand-written parser of the exact C# subset the valid template uses (namespace, class, field, method, local declaration, assignment of a binary sum, return), following the grammar.json rules; the two fixtures with `x = x + ;` depend on parser error recovery and are NOT_DERIVABLE. Occurrences are the facts.declarations captures of the same derived tree as an unordered multiset."
 

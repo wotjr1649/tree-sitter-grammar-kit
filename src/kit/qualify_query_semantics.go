@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	QualificationSemanticsResultSchema  = "tsgk-qualification-result/r10"
-	QualificationSemanticsPlanSchema    = "tsgk-qualification-query-semantics-plan/r1"
-	QualificationSemanticsContextSchema = "tsgk-qualification-query-semantics-context/r1"
+	QualificationSemanticsResultSchema     = "tsgk-qualification-result/r10"
+	QualificationSemanticsPinsResultSchema = "tsgk-qualification-result/r11"
+	QualificationSemanticsPlanSchema       = "tsgk-qualification-query-semantics-plan/r1"
+	QualificationSemanticsContextSchema    = "tsgk-qualification-query-semantics-context/r1"
 )
 
 // QualificationQuerySemanticsRequest supplies caller documents for the small r4 scope.
@@ -30,6 +31,7 @@ type QualificationQuerySemanticsInput struct {
 	ID                   string
 	Replay               ReplayRequest
 	EligibilityApproval  []byte
+	Pins                 *EvidencePinsRequest
 	Context              []byte
 	ExpectedRootIdentity fs.FileInfo `json:"-"`
 }
@@ -196,6 +198,7 @@ type qualSemanticRun struct {
 	axis      *QualQuerySemanticsAxis
 	planSHA   string
 	planBytes uint64
+	pinned    bool
 	targets   []*qualSemanticTargetRun
 	roots     []*os.Root
 }
@@ -335,6 +338,14 @@ func (q *qualifier) querySemantics(ctx context.Context, req QualificationQuerySe
 		if _, ok := inputs[input.ID]; ok {
 			return fail(KindInvalidInput, "SEMANTICS_INPUT_DUPLICATE", input.ID, nil)
 		}
+		if input.Pins != nil && input.Replay.Pins != nil {
+			return fail(KindInvalidInput, "SEMANTICS_PINS_DUPLICATE", input.ID, nil)
+		}
+		if input.Pins == nil {
+			input.Pins = input.Replay.Pins
+		}
+		input.Replay.Pins = nil
+		s.pinned = s.pinned || input.Pins != nil
 		inputs[input.ID] = input
 	}
 	ids, platforms := map[string]bool{}, map[string]bool{}
@@ -468,7 +479,7 @@ func (s *qualSemanticRun) target(t *qualSemanticTargetRun) (resultErr *Error) {
 		return e
 	}
 	t.row.Digests.Profile = semanticDigest(t.input.Replay.Profile)
-	profile, e := parseQualificationReplay(t.input.Replay.Profile, s.r)
+	profile, e := parseQualificationReplayPins(t.input.Replay.Profile, s.r, t.input.Pins != nil)
 	if e != nil {
 		return e
 	}
@@ -493,6 +504,43 @@ func (s *qualSemanticRun) target(t *qualSemanticTargetRun) (resultErr *Error) {
 			return e
 		}
 		*doc.pin = semanticDigest(doc.data)
+	}
+	if pins := t.input.Pins; pins != nil {
+		for _, doc := range []struct {
+			name string
+			data []byte
+		}{{"semantic-pin-approval", pins.Approval}, {"semantic-pin-set", pins.PinSet}, {"semantic-pin-subject", pins.Subject}} {
+			if e := s.document(doc.name, doc.data); e != nil {
+				return e
+			}
+		}
+		if uint64(len(pins.Materials)) > ReplayOperations()["evidence-replay"].Files {
+			return fail(KindResourceLimit, "FILE_COUNT_LIMIT", "semantic-pins", nil)
+		}
+		levels := uint64(1)
+		for n := len(pins.Materials); n > 1; n = (n + 1) / 2 {
+			levels++
+		}
+		work, e := eligibilityProduct("semantic-pins", uint64(len(pins.Materials)), levels)
+		if e != nil {
+			return e
+		}
+		logical, e := eligibilityProduct("semantic-pins", uint64(len(pins.Materials)), 128)
+		if e != nil {
+			return e
+		}
+		if e := s.r.eligibility.charge(work, logical, "semantic-pin-index"); e != nil {
+			return e
+		}
+		for _, name := range sortedKeys(pins.Materials) {
+			if e := s.document("semantic-pin-material/"+name, pins.Materials[name]); e != nil {
+				return e
+			}
+		}
+		if !bytes.Equal(pins.Subject, t.input.EligibilityApproval) {
+			t.failure("SEMANTICS_PIN_SUBJECT_MISMATCH")
+			return nil
+		}
 	}
 	if t.input.Context != nil {
 		if e := s.r.eligibility.decode("semantic-context", t.input.Context, &t.context, true); e != nil {
@@ -526,7 +574,9 @@ func (s *qualSemanticRun) target(t *qualSemanticTargetRun) (resultErr *Error) {
 	if e := t.openRoot(); e != nil {
 		return e
 	}
-	rr, replayErr := replaySharedWithOptions(s.r.caller, t.input.Replay, &replayBudget{semantic: t}, s.r.options)
+	replayReq := t.input.Replay
+	replayReq.Pins = t.input.Pins
+	rr, replayErr := replaySharedWithOptions(s.r.caller, replayReq, &replayBudget{semantic: t}, s.r.options)
 	t.replay = &rr
 	t.row.Core = rr.QuerySemantics
 	if t.row.Core != nil {
@@ -569,14 +619,18 @@ func (s *qualSemanticRun) target(t *qualSemanticTargetRun) (resultErr *Error) {
 }
 
 func parseQualificationReplay(data []byte, r *run) (ReplayProfile, *Error) {
+	return parseQualificationReplayPins(data, r, false)
+}
+
+func parseQualificationReplayPins(data []byte, r *run, pinned bool) (ReplayProfile, *Error) {
 	if e := r.eligibility.charge(2*uint64(len(data))+1, 2*uint64(len(data))+256, "qualification-replay-selector"); e != nil {
 		return ReplayProfile{}, e
 	}
-	selected, e := selectJSONRevision(data, r, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6")
+	selected, e := selectJSONRevision(data, r, "replay", "reducer", "oracle-set-r4", nil, "oracle-set-r5", "oracle-set-r6", "oracle-set-r7")
 	if e != nil {
 		return ReplayProfile{}, e
 	}
-	if selected != "oracle-set-r4" {
+	if !pinned && selected != "oracle-set-r4" || pinned && selected != "oracle-set-r7" {
 		return ReplayProfile{}, fail(KindUnsupported, "SEMANTICS_REDUCER_UNSUPPORTED", "replay", nil)
 	}
 	return parseSemanticReplayInRun(data, r)
@@ -940,7 +994,11 @@ func (q *qualifier) foldQuerySemantics(res *QualificationResult) {
 
 func validQualificationSemantics(res QualificationResult, s *qualSemanticRun) bool {
 	a := res.QuerySemantics
-	if s == nil || res.ResultSchema != QualificationSemanticsResultSchema || a == nil || res.Baseline == nil || a.Scope != qualSemanticScope || a.FullScopeComplete || res.SupportClaim != "BLOCKED" || len(a.Targets) != 2 || !slices.Equal(a.MissingScopes, []string{"ordinary-query-workloads", "svc-query-workloads", "large-query-workloads"}) || a.PlanSHA256 == nil || *a.PlanSHA256 != s.planSHA {
+	wantSchema := QualificationSemanticsResultSchema
+	if s != nil && s.pinned {
+		wantSchema = QualificationSemanticsPinsResultSchema
+	}
+	if s == nil || res.ResultSchema != wantSchema || a == nil || res.Baseline == nil || a.Scope != qualSemanticScope || a.FullScopeComplete || res.SupportClaim != "BLOCKED" || len(a.Targets) != 2 || !slices.Equal(a.MissingScopes, []string{"ordinary-query-workloads", "svc-query-workloads", "large-query-workloads"}) || a.PlanSHA256 == nil || *a.PlanSHA256 != s.planSHA {
 		return false
 	}
 	if a.BytesRead > a.Limits.TotalBytes || a.Work > a.WorkLimit || a.LogicalBytes > a.LogicalBytesLimit || a.Entries > a.Limits.Files || res.BytesRead < a.BytesRead {
@@ -1016,6 +1074,13 @@ func validQualificationSemantics(res QualificationResult, s *qualSemanticRun) bo
 		}
 		if core := row.Core; core != nil {
 			if actual == nil || actual.replay == nil {
+				return false
+			}
+			if actual.input.Pins != nil {
+				if core.ResultSchema != QuerySemanticsPinsResultSchema || core.Eligibility == nil || core.Eligibility.ResultSchema != QueryReferenceEligibilityPinsResultSchema || core.Eligibility.Pins == nil {
+					return false
+				}
+			} else if core.ResultSchema != QuerySemanticsResultSchema || core.Eligibility != nil && core.Eligibility.ResultSchema != QueryReferenceEligibilityResultSchema {
 				return false
 			}
 			replay := *actual.replay

@@ -8,7 +8,9 @@ cases.json (record its sha256 with a run). Batches are cases.json-shaped files
 OUT_DIR/batch-<seed>-<k>.json, each under 900 KiB so the oracle's 1 MiB input bound holds.
 Then, per batch, with a 120 s bound:
   timeout 120 dotnet <oracle>/Oracle.dll OUT_DIR/batch-S-K.json OUT_DIR/observed-S-K.json
-and compare:
+After independent review, supply observed-S-K.json.pins.json (the approved Roslyn tuple,
+material set and approval digests; see the V2-D contract). Never self-approve generated output.
+Then compare:
   TSGK_PP_DIFF_DIR=OUT_DIR go test ./src/kit -run TestCSharpPreprocessDifferential -count=1 -v
 (a case Roslyn fails to observe passes only when named in TSGK_PP_DIFF_UNOBSERVED=id,id)
 Generated sources stay far below the evaluator's byte, directive, depth and symbol bounds.

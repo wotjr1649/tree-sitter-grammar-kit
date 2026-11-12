@@ -1,4 +1,1 @@
-{
-  "schema": "tsgk-evidence-pin-selection/r1",
-  "pin_set_sha256": "8f0666ed6933645114fddff1cd8f30a2e55ae23e219fc33a656b0aae12473b26"
-}
+{"schema":"tsgk-evidence-pin-selection/r1","pin_set_sha256":"a170958be2970059a8e22c1e0eab4ecad73993336ec99383b664ec831e1671ca"}

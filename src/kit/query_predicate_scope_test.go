@@ -34,11 +34,11 @@ func predicateCode(t *testing.T, err error) string {
 
 func TestPredicateExpectedAssetBindsRegistryAndRoster(t *testing.T) {
 	asset, registry := predicateAssets(t)
-	if len(asset) != 80893 || queryregistrycore.Digest(asset) != "b08e2d23454eed94e4527128d7772e01b294f317b1cb3574acc977edbdebf8f4" {
+	if len(asset) != 80893 || queryregistrycore.Digest(asset) != "1f057de4a4dd870f1bddef5b1ef780343b0996d9c473d3b937807d464280b61c" {
 		t.Fatalf("sealed expected asset changed: %d/%s", len(asset), queryregistrycore.Digest(asset))
 	}
 	e, err := ParsePredicateExpected(asset, registry)
-	if err != nil || len(e.Tuples) != 20 || e.Registry.SHA256 != "91e8475fd6a207a1c64af50c63e2456601f59097445790f2523b39c265f2a06c" {
+	if err != nil || len(e.Tuples) != 20 || e.Registry.SHA256 != "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8" {
 		t.Fatalf("asset: %v %d", err, len(e.Tuples))
 	}
 	for _, id := range []string{"pattern-isolation", "evaluated-empty"} {

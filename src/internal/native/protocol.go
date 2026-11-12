@@ -272,7 +272,7 @@ func (r Request) expect(versions [][]byte, points []kit.EditPoints, exit *int) n
 		e.Sources = append(e.Sources, nativewire.SourceID{Bytes: uint64(len(v)), SHA256: sha(v)})
 	}
 	if r.observes() {
-		e.Observation = &nativewire.Binding{Manifest: reuseobs.RuntimeManifestSHA256, RunID: r.ObservationRunID,
+		e.Observation = &nativewire.Binding{Manifest: reuseobs.DefaultRuntimeManifest(), RunID: r.ObservationRunID,
 			ProducerSHA256: r.ObservationProducerSHA256, HistoryStart: r.ObservationHistoryStart}
 	}
 	return e

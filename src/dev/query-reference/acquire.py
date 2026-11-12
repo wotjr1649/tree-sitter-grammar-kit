@@ -14,7 +14,7 @@ import time
 import tomllib
 import urllib.request
 
-from build import ARCHIVE, UPSTREAM
+from checks import production_pins
 
 DEADLINE = time.monotonic() + 900
 LIMIT = 256 * 1024**2
@@ -141,24 +141,33 @@ def main():
     parser.add_argument('--upstream', type=pathlib.Path, required=True, help='pristine checkout of the pinned upstream commit')
     parser.add_argument('--git', type=pathlib.Path, required=True)
     parser.add_argument('--out', type=pathlib.Path, required=True, help='new directory for upstream.tar, vendor/ and acquisition.json')
+    parser.add_argument('--pin-context', type=pathlib.Path)
+    parser.add_argument('--pin-context-sha256')
     args = parser.parse_args()
+    repository = pathlib.Path(__file__).resolve().parents[3]
+    pins, pin_context_raw, explicit_pins = production_pins(
+        repository, args.pin_context, args.pin_context_sha256)
+    catalogue = pins['catalogue']
     for path in (args.upstream, args.git, args.out):
         assert path.is_absolute(), path
     git = [str(args.git), '-C', str(args.upstream)]
     head = subprocess.check_output(git + ['rev-parse', 'HEAD'], text=True, timeout=60).strip()
     status = subprocess.check_output(git + ['status', '--porcelain'], text=True, timeout=60)
-    if head != UPSTREAM or status:
+    if head != catalogue['upstream_commit'] or status:
         raise RuntimeError('pinned pristine upstream required')
     args.out.mkdir()
+    if not explicit_pins:
+        with (args.out / 'pin-context.json').open('xb') as output:
+            output.write(pin_context_raw)
     (args.out / 'vendor').mkdir()
     (args.out / 'source').mkdir()
     with (args.out / 'upstream.tar').open('xb') as output:
-        subprocess.run(git + ['archive', '--format=tar', UPSTREAM], stdout=output, check=True, timeout=60)
+        subprocess.run(git + ['archive', '--format=tar', catalogue['upstream_commit']], stdout=output, check=True, timeout=60)
     archive = (args.out / 'upstream.tar').read_bytes()
     if len(archive) > 128 * 1024**2:
         raise RuntimeError('upstream archive bound')
     # build.py accepts only these exact bytes; a different git archive output fails here first
-    if digest(archive) != ARCHIVE:
+    if digest(archive) != catalogue['archive_sha256']:
         raise RuntimeError('upstream archive identity mismatch')
     hashes, _ = unpack(archive, args.out / 'source')
     lock_bytes = (args.out / 'source/Cargo.lock').read_bytes()
@@ -168,7 +177,7 @@ def main():
         raise RuntimeError('registry package count bound')
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         receipts = list(executor.map(lambda p: acquire(p, args.out / 'vendor'), registry))
-    receipt = {'schema': 'tsgk-reference-acquisition/r1', 'upstream_commit': UPSTREAM,
+    receipt = {'schema': 'tsgk-reference-acquisition/r1', 'upstream_commit': catalogue['upstream_commit'],
                'archive_sha256': digest(archive), 'upstream_files': hashes,
                'upstream_lock_sha256': digest(lock_bytes), 'packages': receipts,
                'execution': 'NOT_RUN', 'complete': True}

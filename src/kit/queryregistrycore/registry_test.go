@@ -11,7 +11,7 @@ func TestPinnedP0RegistryIdentitySurvivesCoreExtraction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(data) != 82475 || Digest(data) != "296511b2bbe91811f1afc2af68b8ea66050867dc4175fa3f4d922a52242b15d5" {
+	if len(data) != 82475 || Digest(data) != "ffd3552dee2d6a9b476b9de76195d2c118bb58de9079ab76dfb1e469d34aa3c8" {
 		t.Fatalf("P0 registry bytes/hash changed: %d/%s", len(data), Digest(data))
 	}
 	reg, err := Parse(data)
@@ -22,7 +22,7 @@ func TestPinnedP0RegistryIdentitySurvivesCoreExtraction(t *testing.T) {
 	for _, set := range reg.RequiredSets {
 		required += set.Required
 	}
-	if reg.Namespace != "2d1720e6f5e2d035491486cc80503c101f2b960f5c4d4298d7082d090ec29fbe" || len(reg.RequiredSets) != 58 || required != 106346 || reg.ContentState != "INCOMPLETE" || reg.FullScopeComplete {
+	if reg.Namespace != "4059089557e10dfaa3fe68c379d87fbd6c6c8507fa71afe0ea89f6e15407a21b" || len(reg.RequiredSets) != 58 || required != 106346 || reg.ContentState != "INCOMPLETE" || reg.FullScopeComplete {
 		t.Fatalf("P0 registry contract changed: namespace=%s sets=%d required=%d content=%s complete=%t", reg.Namespace, len(reg.RequiredSets), required, reg.ContentState, reg.FullScopeComplete)
 	}
 }

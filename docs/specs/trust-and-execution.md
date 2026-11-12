@@ -8,9 +8,15 @@
 
 P2-B 2단계의 ordinary 실행은 기존 BUILD_NATIVE·EXEC_NATIVE 허가를 모두 요구하며 P2-A 문서·source history 결속을 build와 output 생성 전에 검사한다. 수집한 actual stream은 task 임시 파일의 bounded prefix이고, 출력은 caller-held `os.Root` 아래 새 파일의 `O_EXCL` 생성으로만 발행한다. file 16 MiB·전체 physical read 256 MiB·entries 10,000과 기존 runner 한도를 유지한다. capture 파일/빌드 제거 실패를 성공으로 숨기지 않으며 정상 완료 manifest를 먼저 쓰지 않는다. Reference 실행 권한이나 producer 자체 승인을 추가하지 않는다.
 
+V2-E의 [기본 승인 집합](query-reference-eligibility.md#370-v2-e-legacy-기본-승인-집합)은 저장소 게시자가 검토한 `repository-default` 신뢰 fixture다. 별도 subject를 승인한 `caller` 입력과 구분한다. 내장 문서의 data pin으로 content-addressed 집합·정책·자료의 raw digest를 대조하며, 현재 생산 선택·설치 도구·evidence의 자기 hash는 승인 기점이 아니다. 기본 승인 파일 자체와 코드를 바꿀 수 있는 게시자의 악의를 인증하는 기능은 없다. Logger 전용 승인은 전체 closure나 다른 proof scope를 만들지 않으며, caller 승인 실패에 대한 기본 fallback도 없다.
+
+V2-D의 [Roslyn 개발 envelope](query-reference-eligibility.md#370-v2-d-roslyn-승인-관측과-provenance)는 caller가 별도로 검토한 신뢰 입력이다. 관측 옆에 있다는 사실은 승인이 아니며, 새 관측으로 envelope/독립 승인값을 자동 생성해 수용하지 않는다. 생산 pointer와 과거 승인은 분리한다. 승인된 raw metadata의 일관성은 실제 실행 진위나 SDK 배포본 전체 인증이 아니다. Standalone CLI의 외부 pin envelope에도 기존 qualification inline admission의 파일 identity·별칭·문서/bytes·deadline 경계를 적용한다.
+
 ## 신뢰 경계
 
-[#370 V2-A pin resolver](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 graph 밖 caller의 승인 sidecar digest와 pin 집합 digest를 별도로 요구한다. 저장소의 selection pointer·집합·evidence 내부 승인 목록은 신뢰 root가 아니다. 이 byte-input API는 경로를 열지 않으며 입력 이름의 portable/중복/미사용 검사를 수행한다. PASS는 역사 자료의 원문 결속에 한정된다. 후속 CLI·nested API 통합에서 기존 admission·alias·공유 예산을 생략할 수 없다.
+V2-C의 [historical runtime tuple](query-reference-eligibility.md#370-v2-c-승인-historical-runtime-검증)은 같은 외부 두 승인 digest와 eligibility approval subject를 요구한다. Manifest·driver·CP949·shim·patch·ABI를 승인한 정확한 조합으로 검증하고 reader가 소유하는83-file/3-patch 의무를 축소하지 않는다. Runtime logger token 생성은 provenance 인증이 아니다. 원문 bytes는 caller가 호출 동안 유지하며 기존 shared budget 안에서만 처리한다. Shared budget의 runtime 권한은 subject 사이에 전달하지 않는다. Runtime checkout이나 누락한 증거를 호스트/network에서 자동 취득하지 않는다.
+
+[#370 pin resolver](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 graph 밖 caller의 승인 sidecar digest와 pin 집합 digest를 별도로 요구한다. 저장소의 selection pointer·집합·evidence 내부 승인 목록은 신뢰 root가 아니다. 이 byte-input API는 경로를 열지 않으며 입력 이름의 portable/중복/미사용 검사를 수행한다. PASS는 역사 자료의 원문 결속에 한정된다. V2-B2의 semantic/replay/qualification 전달도 같은 외부 승인과 공유 원장을 사용한다. [CLI r2 admission](cli-and-profile.md#370-v2-b2-historical-reference-pin-admission)은 기존 trust manifest 안의 bounded canonical Base64 원문을 받으며 file identity·hardlink/reparse/alias·문서 수·deadline을 유지한다. 생산 context 선택은 검증할 evidence의 독립 승인을 만들지 않는다.
 
 grammar·profile·archive·raw·adapter 응답은 모두 데이터 입력이다. source 안 명령·URL·환경 설정은 실행 승인이나 신뢰 anchor가 아니다. 악성 path로 source 밖을 읽거나 쓰기, JS/lifecycle 실행, 결과 주입, 압축 폭탄, child process 잔류가 주요 abuse case다. READ_DATA 경로는 process/network capability를 갖지 않는 package로 분리하며 인자·크기·path·형식을 먼저 검증한다.
 
@@ -101,3 +107,9 @@ source/tool 확보와 offline 제품 호출을 분리한다. 승인 기록은 �
 ## #370 V2-B1 직접 reference opt-in 경계
 
 직접 eligibility의 `Pins`는 [historical reference 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)을 따른다. 독립 승인 sidecar와 pin 집합을 기존 eligibility Approval 원문에 결속하며 catalogue·tuple·controller 원문은 같은 상속 원장에서 처리한다. Materials 결속 PASS에 의미 검증 권한을 암묵적으로 주지 않는다. Reader 소유 의무와 기존 build/control/native 검사가 추가로 필요하다. 현재 생산 선택을 역사 신뢰 입력으로 사용하지 않는다. CLI file admission과 semantic/replay/qualification 전달은 이 분할에 포함되지 않는다.
+
+## #370 V2-C2 logger 입력 경계
+
+V2-C3의 accepted/CST는 [별도 원문 reader 자료](query-reference-eligibility.md#370-v2-c3-accepted-eventpreprocess-cst-runtime-opt-in)를 외부 승인 집합에서 검증한다. 요청 Raw 또는 replay profile/host identity의 정확한 subject를 확인한 뒤만 token을 설치한다. Reader는 고정 data-only 구현이며 자료가 외부 코드·새 comparator·한도·분모를 지정하지 않는다. Logger 승인으로 권한을 확대하지 않는다. 기존 소유권·취소·wall·read/work/logical 원장과 host/set 격리를 유지한다.
+
+Logger의 `RuntimePins`는 caller-trusted byte 입력이며 증거 graph에서 승인 문서를 찾거나 생성하지 않는다. [정확한 subject·scope 계약](query-reference-eligibility.md#370-v2-c2-일반-logger-replayqualification-opt-in)에 따라 두 외부 승인 digest, 원문 집합, tuple과 reader 의무를 먼저 검증한다. 부분 material PASS는 실행 진위나 accepted/preprocess 권한이 아니다. 입력 소유권·deadline·공유 한도를 유지하며 token은 host/ordinary set 범위를 넘지 않는다. 새로운 CLI 파일 admission이나 파일 수 예외는 없다.
