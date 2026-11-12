@@ -5,13 +5,14 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 // ordinaryP0Registry derives the pinned P0 registry once per test binary. The Validated value is
-// read-only, so the callers share it; each caller still parses its own (mutable) inventory.
+// read-only, so the callers share it.
 var ordinaryP0Registry = sync.OnceValues(func() (*queryregistrycore.Validated, error) {
 	read := map[string][]byte{}
 	for _, path := range []string{"../contracts/query-semantic-registry-r1.json", "../contracts/qualification-c1.json", "../contracts/query-slot-inventory-r1.json",
@@ -31,13 +32,22 @@ var ordinaryP0Registry = sync.OnceValues(func() (*queryregistrycore.Validated, e
 	return v, err
 })
 
-func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
-	t.Helper()
+// ordinaryP0Inventory parses the pinned inventory once per test binary. Its callers only read it
+// (TestMain re-parses the file after the run and fails the package if the shared value changed).
+var ordinaryP0InventoryUsed atomic.Bool
+
+var ordinaryP0Inventory = sync.OnceValues(func() (QualificationInventory, error) {
 	qualification, err := os.ReadFile("../contracts/qualification-c1.json")
 	if err != nil {
-		t.Fatal(err)
+		return QualificationInventory{}, err
 	}
-	inv, err := ParseQualificationInventory(qualification)
+	return ParseQualificationInventory(qualification)
+})
+
+func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
+	t.Helper()
+	ordinaryP0InventoryUsed.Store(true)
+	inv, err := ordinaryP0Inventory()
 	if err != nil {
 		t.Fatal(err)
 	}
