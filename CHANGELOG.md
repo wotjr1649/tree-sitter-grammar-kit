@@ -9,6 +9,8 @@ release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거�
 - VERIFIED와 experimental의 구분은 v0.2.0과 같다. offline core와 공개 API가 VERIFIED이고 `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API는 experimental이다. 현재 CI의 검증 host는 Windows·Linux다(#332).
 - query 의미는 experimental이며, 통합 PR #416이 main에 병합된 뒤 Windows에서 실제로 검증한 하위 범위만 주장한다: predicate 독립 평가 20/20·거부 정책 47/47, SVC 오프라인 의무 263, SVC inline C# tree 30·query 60, large 31/39(`cs-large-22m` 전체 CST 포함), 선택 SQL shard 공개 pass(TSQL 72/72, PostgreSQL 9/9), JSON 다중 case·편집 이력 양성.
 - 주장하지 않는다(BLOCKED): 오류 복구 입력, 전처리 scanner 상태가 필요한 SVC inline, Linux 몫, ordinary 전량, synthetic reference row·approval. #362 completion gate는 닫힌 채로 출하하며 2026-11-12 사용자 결정으로 #220 출하 조건이 아니다. #362는 출하 뒤에도 열어 둔다.
+- C#은 검증된 범위(C1–C4 잔여 교정 #369, 기존 qualification PASS)만 주장한다. 전체 선언 범위의 대조는 미주장이며 #233은 출하 뒤에도 열어 둔다. CI 운영 여유 표본(#280·#303·#352·#329)은 미판정이고 제품 동작이 아니다. 둘 다 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
+- **소비자 요구 사항: Go 1.27.4 이상**(`go.mod`의 `go` 지시어 1.27.1 → 1.27.4, #358). stable 표면의 깨짐은 없다. experimental 표면의 호환성 깨짐(`qualify`의 inventory r3 거부, `QualificationInventorySchema`·`QualificationResultSchema`·`SvcCompositeSchema`·`SvcFormat`의 revision 상승, omitempty 없는 새 JSON key 3개)은 [release 문서](docs/reports/issue-220-v030-release.md)의 "공개 API·CLI·schema 변화(v0.2.0 대비)"에 있다.
 
 ### 변경
 

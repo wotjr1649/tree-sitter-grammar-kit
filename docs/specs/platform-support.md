@@ -62,6 +62,9 @@ Local grammar/runtime patch의 source·순서·결과 hash·제거 조건은 [pr
 - **query 의미는 experimental이다.** 통합 PR [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416)이 main에 병합된 뒤에만, Windows에서 실제로 검증한 하위 범위를 주장한다: predicate 독립 평가 20/20과 거부 정책 47/47, SVC 오프라인 의무 263, SVC inline C# tree 30·query 60, large 31/39(`cs-large-22m` 전체 CST 포함), 선택 SQL shard 공개 pass(TSQL 72/72, PostgreSQL 9/9)와 JSON 다중 case·편집 이력 양성. 근거와 조건은 release 문서의 "query 의미 claim"에 있다.
 - **주장하지 않는다(BLOCKED):** 오류 복구(ERROR·MISSING) 입력, 전처리 scanner 상태가 필요한 SVC inline, Linux 몫, ordinary 전량, synthetic reference row·approval. native producer의 predicate capability는 `NOT_EVALUATED`로 유지한다.
 - **#362 completion gate는 닫힌 채로 출하한다.** 2026-11-12 사용자 결정으로 이 gate는 #220 출하 조건이 아니다. 지원 범위를 줄이는 것이 아니라 이미 experimental인 기능의 주장 문구를 검증된 사실과 맞추는 것이다.
+- **C#은 검증된 범위만 주장한다.** C1–C4 잔여 교정(#369)과 기존 qualification PASS다. C# 전체 선언 범위의 의무 → 독립 기대값 → 실행 근거 대조는 미주장이며 [#233](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233)은 출하 뒤에도 열어 둔다(2026-11-12 사용자 결정).
+- **소비자 요구 사항: Go 1.27.4 이상.** `go.mod`의 `go` 지시어가 1.27.1에서 1.27.4로 올랐다. stable 표면의 깨짐은 없고 experimental 표면의 호환성 깨짐(`qualify`의 inventory r3 거부, schema revision 상승, 새 JSON key)은 release 문서의 "공개 API·CLI·schema 변화(v0.2.0 대비)"에 있다.
+- **CI 운영 여유 표본(#280·#303·#352·#329)은 미판정이며 제품 동작이 아니다.** 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
 
 ## Release v0.2.0의 claim
 

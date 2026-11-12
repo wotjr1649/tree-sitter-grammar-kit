@@ -6,7 +6,7 @@ This is the English body draft of the source-only release `v0.3.0`. The Korean v
 
 - Every item under "Query semantics claim" below is valid only after integration PR [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416) (`integ/362`, `Refs #362`) is merged into main. Before that merge, none of those items is claimed.
 - The scope already claimed (see "Product scope") is unchanged and is not reduced. The only new claim is the verified subset of query semantics.
-- This document's counts are not final-release evidence until the [pre-publication checks](#pre-publication-checks-still-open) are run again on the final candidate commit.
+- This document's counts are not final-release evidence until the [pre-publication checks](#pre-publication-checks-still-open) are run again on the final candidate commit. The fan-in counts are recomputed on the final candidate and updated.
 
 ## Product scope
 
@@ -14,6 +14,8 @@ Owned by [product scope](../specs/scope.md) and the [platform support contract](
 
 - **VERIFIED:** offline `inspect`, `identity`, `verify`, `schema check`/`schema diff` and their public Go API (`src/kit`). The qualification verdict for the registered 26 routes concerns fixed inputs and obligations; it does not certify arbitrary source programs. Current CI verifies Windows and Linux (a derived 52 cells, #332).
 - **experimental (no compatibility promise):** `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify` and their APIs, and all query semantics verification below.
+- **C#:** only the verified scope is claimed: the residual C1–C4 corrections (PR [#369](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/369)) and the existing qualification PASS (C# symbol 26 PASS, 0 MISMATCH, 4 NOT_APPLICABLE). The comparison of obligations → independent expected values → execution evidence across the full C# declaration scope is not claimed (see "Remaining constraints" below).
+- **Consumer requirement: Go 1.27.4 or newer.** The `go` directive in `go.mod` rose from 1.27.1 to 1.27.4 (#358). Details are in "Public API, CLI and schema changes (against v0.2.0)" below.
 - The artifacts are a source tag and a source-only GitHub Release. There is no binary or package.
 
 ## Query semantics claim (experimental)
@@ -32,7 +34,7 @@ All results are from Windows, with the actual owned native producer and the regi
 | Windows large | 31 of 39 obligations VERIFIED. For `cs-large-22m`, source, status, the full CST (11,463,151 nodes, 12 pages) and occurrences match native. The `cs-large-32mib-errors` status is `COMPLETED` under the registered 8 GiB HARD limit. The over-limit control is rejected exactly as `RESOURCE_LIMIT`/`OUTPUT_LIMIT` | [#412](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/412), [#415](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/415), [expected](../../src/contracts/query-large-expected-r1.json) |
 | ordinary selected SQL shard public pass | TSQL `alt-tsql-B01-r001` 72/72 and PostgreSQL `alt-postgresql-sql-B04-22` 9/9 VERIFIED. Limits unchanged; the remaining TSQL margin is thin (work 7.3%, logical 3.47%) | [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416), [#403](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/403) |
 | ordinary JSON positives | Multiple cases (2/2) and an edit history (3 edits, 4 versions, 14/14) agree across the public API, r9 replay and `tsgk replay` (JSON grammar fixture tracked in the repository) | [#404](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/404), [#402](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/402) |
-| per-scope fan-in | Collects the current state with machine checks; FAILED 0. The tally is VERIFIED 360 of 107,399 obligations (before the large 32 MiB rerun), the rest BLOCKED | [#413](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/413), [#414](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/414) |
+| per-scope fan-in | Collects the current state with machine checks; FAILED 0. The tally is VERIFIED 360 of 107,399 obligations (per the PR #416 body, before the large 32 MiB rerun), the rest BLOCKED. This count is recomputed on the final candidate commit and updated | [#413](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/413), [#414](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/414) |
 
 ### Not claimed (BLOCKED reasons)
 
@@ -58,7 +60,59 @@ The list of changes since v0.2.0 is owned by the v0.3.0 section of the [changelo
 - Version-independent historical verification (V2, #393) and the query semantics verification base (#362 P0–P2, budget reduction #385, source restoration P1 #367).
 - Go baseline 1.27.4 (#358), the Windows runner Job Object fix (#330), and CI operations changes (macOS exclusion #332 and others). CI changes do not alter product behavior.
 
-The final-candidate comparison of public API, CLI and schema against v0.2.0 is part of the pre-publication checks and has not been done yet. The historical comparison (21 additions, nine changes, one flag) belongs only to that earlier candidate in the [#199 document](issue-199-source-release.en.md#api-cli-and-schema-consumption). Added fields on experimental structs and the SVC r1→r2 change require explicit review by consumers.
+The public API, CLI and schema changes are in the next section. The historical comparison (21 additions, nine changes, one flag) belongs only to that earlier candidate in the [#199 document](issue-199-source-release.en.md#api-cli-and-schema-consumption).
+
+## Public API, CLI and schema changes (against v0.2.0)
+
+The baseline is tag `v0.2.0` and the integration candidate `integ/362` (PR #416). The analysis was a normalized comparison of exported declarations (`src/kit/...`, `_test.go` excluded), a comparison of each `tsgk` subcommand's `-h` flag list, and a comparison of schema constants and literals and the `schema` fields of `src/contracts/**/*.json`. The exported elements added by the #416 review fixes after the analysis (the "review-fix" row below) are included. Re-comparison on the final candidate commit is in [Pre-publication checks still open](#pre-publication-checks-still-open).
+
+> **Consumer requirement: Go 1.27.4 or newer.** The `go` directive in `go.mod` rose from `1.27.1` to `1.27.4` (#358). A consumer that builds this module needs Go 1.27.4 or newer. If automatic toolchain switching is disabled, the build fails on an older Go. This applies to consumers of the stable surface too.
+
+### Stable surface: no breaking change
+
+- Public Go API: no exported identifier was deleted, no signature of an existing function or method changed, and no method was added to an existing interface.
+- CLI: the flag lists, defaults and descriptions of `inspect`, `identity`, `verify`, `schema check`/`schema diff` (and of the experimental `corpus` and `reproduce`) are the same as in v0.2.0. Every new flag defaults to empty or false.
+- Schema: the values of the schema constants used by the stable API (`ReportSchema`, `ProfileSchema`, `ExpectedSchema`, `ManifestSchema`, `FileSetSchema`, the `PolicySchema` family, `SchemaFormat`, `SchemaComparator`, `TreeSummarySchema`, and others) are unchanged.
+- Behavior: running `inspect`, `identity`, `schema check` and `schema diff` on the v0.2.0 plain fixture with both versions gives byte-identical stdout (exit 0).
+- The Go minimum-version increase above applies to stable consumers as well.
+
+### Counts of changes, additions and deletions
+
+| Surface | Changed | Deleted | Added |
+|---|---:|---:|---:|
+| Go `src/kit/...` | 7 (3 types, 4 consts) | 0 | 1,826 elements: 323 new top-level (59 funcs, 142 types, 122 consts), 945 members of new types, 42 new members of existing types, and 516 in 5 new sub-packages (`nativewire`, `querypolicy`, `queryregistrycore`, `querywire`, `reuseobs`) |
+| CLI `tsgk` | 2 help texts (`qualify --inventory`, the `evidence` usage error) | 0 (subcommands, flags) | 1 new subcommand (`evidence query-reference`), 27 new flags (22 on existing subcommands, 5 on the new one) |
+| schema | 3 exported constant values + 1 format string; 1 contracts JSON (`qualification-c1.json`) | 3 literals in `src/kit` | 66 exported constants, 74 new families in `src/kit`, 16 new contracts JSON files |
+
+- The seven Go "changed" items are by v0.2.0 identifier. `TreeNode`, `Point` and `EditPoints`, formerly structs, became aliases of the same structs in `nativewire` (same fields and tags), and the four changed consts are in the table below. No identifier was deleted.
+- "Review-fix" means the three exported elements added by the #416 review fix (`0ad8aef`): the constants `SvcInlineRoleIncremental` and `SvcInlineRoleFresh`, and the field `SvcInlineView.Role`. All belong to the SVC inline types that are new in v0.3.0.
+- The new surface belongs to the experimental features listed in "Product scope". The scope claimed as VERIFIED is the same as in v0.2.0.
+
+### Compatibility breaks on the experimental surface
+
+These are changes to the experimental surface of the v0.2.0 claim (`qualify`, `incremental`, `replay`, SVC records, the native tree and edit helpers). Compatibility is not promised for that surface, but consumers need to know.
+
+| # | Item | v0.2.0 → v0.3.0 | Effect |
+|---|---|---|---|
+| 1 | `qualify` rejects inventory r3 | r3 accepted → only r8 and historical r7, r6, r5 accepted; r3 gives `SCHEMA_UNSUPPORTED` (`kit.Qualify`, `tsgk qualify`) | The v0.2.0 `qualification-c1.json` (r3) is rejected as is. The repository's `src/contracts/qualification-c1.json` changed to r8. Rejection was confirmed with the v0.2.0 inventory |
+| 2 | `kit.QualificationInventorySchema` | `tsgk-qualification-inventory/r3` → `/r8` | A consumer that builds inventories from the constant now emits r8 |
+| 3 | `kit.QualificationResultSchema` | `tsgk-qualification-result/r3` → `/r9` (constants r10–r13 added), r3 literal removed | The qualify output revision changes |
+| 4 | `kit.SvcCompositeSchema` | `tsgk-svc-composite/r1` → `/r2`, r1 literal removed | The r2 composite adds `SvcDirective.DiagnosticSpans` (item 6), `AdditionalDirectives`, `SvcLanguage.Origin`/`Source` and `SvcCodeBehind.Case`. Replay checks the composite schema as r2 for the r2 format |
+| 5 | `kit.SvcFormat` | `SVC-SERVICEHOST-r1` → `-r2` (r1 is the new `SvcLegacyFormat`) | The candidate code accepts `SvcLegacyFormat` as well on most paths, but external code that compared against `SvcFormat` no longer matches r1 input |
+| 6 | Three new JSON keys without omitempty | `QualRole.Deferred` (`deferred`), `QualSet.BranchSelectionNotClaimed` (`branch_selection_not_claimed`), `SvcDirective.DiagnosticSpans` (`diagnostic_spans`) | The JSON output gains new keys even for the same input. The other 37 new fields on existing structs are omitempty, `json:"-"` or untagged, so output does not change. Only consumers using unkeyed struct literals break at source level |
+
+Items 2–5 are the four schema-constant revision bumps (three constants, one format string). Notes:
+
+- `kit.TreeNode`, `kit.Point` and `kit.EditPoints` are source-compatible as aliases, but their `reflect` name, `PkgPath` and `%T` output change to `nativewire`.
+- The root USAGE string does not mention `evidence query-reference`. The `evidence` sub-usage error now reads `tsgk evidence <verify|query-reference> ...`.
+- `kit.OrdinaryQuerySemanticsBinding` is an alias of an unexported type, so `go doc` does not show its structure (field access works).
+
+### Not checked
+
+- The result of replaying records (an evidence set) made at v0.2.0 with the candidate's `tsgk replay`. The tables above rest on declaration and `-h` comparison and one inventory rejection; this replay has not been done.
+- Running the native paths of `incremental` and `oracle record` with both versions and comparing. That omitting a new flag takes the old path is based on declarations and help; the only execution check is the stable four-command smoke above.
+
+Both are in [Pre-publication checks still open](#pre-publication-checks-still-open). Depending on the results, the break list in this section is amended.
 
 ## Remaining constraints
 
@@ -67,10 +121,58 @@ The final-candidate comparison of public API, CLI and schema against v0.2.0 is p
 - C/C++ macro contexts are heuristic and may accept ambiguous input without an error. Selection of non-literal conditional branches by the default C# parser is `NOT_CLAIMED`.
 - Observation-limit BLOCKED items: strong macOS isolation, the unclaimed query semantics above, and the Windows-only large normal runs.
 - Real consumer performance and whole-26-language accuracy are unmeasured. A verdict on registered cases does not certify arbitrary input.
-- The CI time-margin samples of [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303) and [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352) are not yet judged. This concerns CI operating margin, not product behavior.
+- **Not claimed: comparison across the full C# declaration scope.** The comparison of obligations → independent expected values → execution evidence across the full C# declaration scope (G1) has not been done and is not claimed. What is claimed is only the residual C1–C4 corrections (#369) and the existing qualification PASS in "Product scope". [#233](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233) stays open after shipping and continues (2026-11-12 user decision).
+- CI operating-margin samples not yet judged, not product behavior: [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303), [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352), [#329](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/329). These Issues are not shipping preconditions (2026-11-12 user decision). Samples keep accumulating naturally and are judged then.
 
 ## Pre-publication checks still open
 
-Before publication, the final candidate commit must pass source export, installation, public API/CLI/schema consumption and LICENSE/NOTICE checks, plus required CI, fan-in and actual-main verification. The #220 work report owns the command list; no new tool is built. Consumption checks and PR success of earlier candidates are not inherited.
+Before publication, the final candidate commit (`$sha`) is verified in the order below. No new tool is built; only the repository's tests and tools and GitHub read commands are used. Consumption checks and PR success of earlier candidates are not inherited, and if the candidate changes, B–F are redone. This list is an execution plan and has not been run yet. PowerShell is `pwsh` (7) only; the environment is `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, and Go is the toolchain matching the `go` line of `go.mod` (1.27.4). `$work` is a new empty directory outside the repository.
+
+**A. Preconditions and candidate selection**
+
+1. Read the state of PR #416 and the required checks (`foundation (windows-2025)`, `foundation (ubuntu-24.04)`, `integration gate`), and merge under the user's authority. Confirm that this document's base equals main.
+2. Integrate this release document PR through task branch → PR → required CI → merge (the Integration section of the [validation contract](../validation/validation.md)).
+3. `$sha` is main HEAD after that PR merges. B–F run only on that SHA.
+
+**B. Candidate identity (read)**
+
+4. `git rev-parse HEAD` == `$sha`; `git status --porcelain` and `git ls-files -u` empty; `git diff --check`.
+5. `go version` matches the `go` line of `go.mod`; compare with this document's Go baseline.
+
+**C. Local core gate**
+
+6. `go mod download`, `go mod verify`, then `GOPROXY=off`.
+7. `gofmt -l src` (no output), `go vet ./src/...`, `go build ./src/...`.
+8. foundation alone: `go test ./src/internal/foundation -count=1` (some tests are load-sensitive, so run it without overlapping tests).
+9. The remaining packages and the native package: the commands of the validation contract (`-timeout 300s`; native `-timeout 420s`). A test failing for a local-environment reason is recorded with its cause, and the CI Windows runner result is authoritative.
+
+**D. Public API, CLI and schema consumption and the offline boundary**
+
+10. `go test ./src/cmd/tsgk -run '^(TestExternalConsumerAndCLI|TestExternalConsumerSchema|TestOfflineClosure)$' -count=1 -v`
+11. `go test ./src/cmd/tsgk -run '^TestModuleProxyConsumer$' -count=1 -v` (run in a git checkout; the module cache must be ready from step 6).
+12. `go test ./src/cmd/tsgk -count=1`.
+13. Re-compare the change list against v0.2.0: extract exported declarations (`go doc -all`), each subcommand's `-h` and the schema strings of `src/contracts/*.json` from `v0.2.0` and from `$sha`, compare them, and update the section "Public API, CLI and schema changes (against v0.2.0)" above and the [public API document](../specs/public-go-api.md). No single reproducible command exists, so this is a manual comparison.
+14. **Replay of the v0.2.0 evidence set.** Replay records (an evidence set) made at v0.2.0 with the `tsgk replay` of `$sha` and record the results and error codes. If any is rejected or differs, add an item to the compatibility-break list above.
+15. **Two-version run of the native paths.** With the same input (a registered native fixture), run `incremental` and `oracle record` with the v0.2.0 binary and the `$sha` binary without any new flag, and compare. If they differ, record the cause and impact and add it to the list above. This needs approved native capabilities and a host compiler.
+
+**E. Source export, installation, LICENSE/NOTICE**
+
+16. Export into a new empty directory with `git archive --format=tar -o "$work/export.tar" $sha`, unpack it where no parent has `.git`, and record the file count and bytes. Compare the paths and blob SHAs of `git ls-tree -r $sha` with `git hash-object` of each exported file, and confirm there is no forbidden extension (`.exe .dll .so .dylib .a .o .obj .lib .pdb .wasm .node`).
+17. Inside the export, with `GOPROXY=off`: `go test ./src/internal/foundation -run '^(TestRepositoryFiles|TestSourceOnlyDoesNotDiscoverParentGit)$' -count=1`, `go vet ./src/...`, `go build ./src/...`.
+18. Install: from the export, `go install ./src/cmd/tsgk` with `GOBIN=$work/bin`, then run the installed binary's `--help` and `inspect` on one fixture without `PATH`.
+19. LICENSE/NOTICE: compare the SHA-256 of `LICENSE`, `src/dev/prepare-p05/fixtures/LICENSE.mssql`, `src/kit/data/NOTICE-index-euc-kr.md` and `src/testdata/native/samples/NOTICE.md` with the blobs at `$sha` and the fixed bytes of the previous release, and check that no new dependency or upstream license change exists via the `go.mod`/`go.sum` diff and [provenance](../provenance/upstream-sources.md). Automated test: `go test ./src/internal/foundation -run '^TestSampleNotices$' -count=1`.
+
+**F. Required CI, fan-in, actual main**
+
+20. On the final head of the release document PR, confirm with `gh pr checks` that `foundation (windows-2025)`, `foundation (ubuntu-24.04)`, `integration gate` and `CI mode` all succeeded. Skipped, cancelled or missing is not PASS. Just before merging, read the ruleset, checks, conversations and reviews anew.
+21. After the merge, on actual main: confirm the merge SHA's `foundation.yml` run and the success of all jobs with `gh run list` and `gh run view`. For a reused run, confirm the PR run, attempt, synthetic SHA and tree in the `CI mode` log.
+22. Fan-in and qualification: confirm `integration gate` succeeded and the official artifacts' digests, sizes, members, cohort and merge parents/tree, and compare the Windows/Linux derived 52-cell qualification PASS and the C# symbol 26 PASS, 0 MISMATCH, 4 NOT_APPLICABLE.
+23. **Recompute the query semantics fan-in.** Run `go test ./src/kit -run '^TestQueryCompletion' -count=1 -v` and, where native and runtime are ready, `TSGK_NATIVE_REQUIRED=1 go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v` to confirm the current VERIFIED and BLOCKED totals, gate `BLOCKED`/`complete=false` and FAILED 0. Update the figure in the "per-scope fan-in" row above (VERIFIED 360) to the actual value. The environment follows the "#362 per-scope fan-in" section of the validation contract.
+24. (Optional) On the same candidate, reproduce the opt-in tests of the predicate, SVC, large and SQL public passes once, keeping limits unchanged and the HARD Job condition (the #362 section of the validation contract).
+25. Read the current state of the CI operating samples (#280, #303, #352, #329) and confirm it matches the "Remaining constraints" wording. They are not preconditions.
+
+**G. Publication proposal**
+
+26. Present the exact version `v0.3.0`, the full commit `$sha`, an annotated-tag proposal, the Korean and English bodies (this document and the CHANGELOG v0.3.0 section with date and commit filled in), source-only scope (no binary or package), and the verified, unverified and rollback boundaries in one document, and ask for the user's publication approval. Before approval, create no tag, push no tag and create no Release.
 
 The publication scope is the annotated source tag `v0.3.0` and a source-only GitHub Release. It excludes uploaded binaries, package-registry publication and consumer-repository changes.
