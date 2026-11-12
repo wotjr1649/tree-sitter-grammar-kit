@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"sync"
 	"testing"
@@ -26,11 +27,29 @@ var ordinaryTempDirs sync.Map
 // TestMain removes the shared producer and CLI directories after the package's tests.
 func TestMain(m *testing.M) {
 	code := m.Run()
+	if code == 0 && ordinaryP0InventoryUsed.Load() && !ordinaryP0InventoryUnchanged() {
+		fmt.Fprintln(os.Stderr, "FAIL: a test changed the shared pinned inventory (ordinaryP0Inventory)")
+		code = 1
+	}
 	ordinaryTempDirs.Range(func(dir, _ any) bool {
 		_ = os.RemoveAll(dir.(string))
 		return true
 	})
 	os.Exit(code)
+}
+
+// ordinaryP0InventoryUnchanged compares the shared inventory with a fresh parse of the same bytes.
+func ordinaryP0InventoryUnchanged() bool {
+	shared, err := ordinaryP0Inventory()
+	if err != nil {
+		return false
+	}
+	data, err := os.ReadFile("../contracts/qualification-c1.json")
+	if err != nil {
+		return false
+	}
+	fresh, err := ParseQualificationInventory(data)
+	return err == nil && reflect.DeepEqual(shared, fresh)
 }
 
 type ordinaryProducerShare struct {

@@ -2,7 +2,7 @@
 
 ## Unreleased — 다음 0.x source-only release 준비 (#199)
 
-- Windows CI `src/kit` 시험 wall 단축(Refs #419): owned-native producer 시험이 native 시험 binary·tsgk CLI·JSON driver build cache를 package 수준에서 한 번만 만들어 공유하고(cache hit인 producer만 reader가 받으므로 첫 producer 앞에 버리는 warm-up 1회), 독립적인 무거운 kit 시험 50개를 `t.Parallel()`로 돌린다. 시험 삭제·SKIP·사례 축소·단정 제거와 timeout 상향은 없고 제품 코드와 한도는 그대로다.
+- Windows CI `src/kit` 시험 wall 단축(Refs #419): owned-native producer 시험이 native 시험 binary·tsgk CLI·JSON driver build cache를 package 수준에서 한 번만 만들어 공유하고(cache hit인 producer만 reader가 받으므로 첫 producer 앞에 버리는 warm-up 1회), 독립적인 무거운 kit 시험 50개를 `t.Parallel()`로 돌린다. 후속(CPU 비용 감소): registry coordinate ID·정규 직렬화(`Coordinate.ID`·`Coordinate.Canonical`)를 reflection 없는 byte 조립으로 바꿨다 (출력 byte는 기존 `Canonical`과 같고, 인쇄 가능한 ASCII가 아닌 문자열은 기존 경로로 돌아간다. 106,346개 coordinate의 ID 계산 CPU 약 4배 감소, 할당 약 7배 감소). 고정 inventory 파싱은 시험 binary에서 한 번만 하고 TestMain이 공유값이 바뀌지 않았는지 확인한다. 시험 삭제·SKIP·사례 축소·단정 제거와 timeout·한도·CI workflow 변경은 없고 판정·오류 code·원장 계상 수치는 그대로다.
 
 - PR #416 리뷰 4차 교정(Refs #362): (1) ordinary scope fan-in이 FAIL shard의 최초 실패 code를 shard가 저장한 `Code`로 보존한다. 이전에는 FAILED tuple이 하나라도 있으면 tuple의 code가 최초 code가 되어 producer·base 실패의 code가 사라졌다. (2) SVC inline CST 관측의 parent를 `int32`로 바꾸기 전에 구조(root는 -1, 나머지는 앞선 index와 preorder 조상)를 검사한다. root `Parent`가 4294967295인 관측이 faithful CST로 환원돼 VERIFIED되던 결함이며 새 code `SVC_INLINE_CST_STRUCTURE`로 FAILED가 된다. (3) 응답 없이 끝난 SENT frame(watchdog·memory·batch 한도, 취소, crash)의 base 재계산이 빈 raw와 projection의 `execution_status`를 비교해 `ORDINARY_BASE_PROJECTION_BINDING`으로 FAIL하던 것을 BLOCKED로 유지한다. 한도와 TSQL 72/72·PostgreSQL 9/9 결과는 바뀌지 않았다.
 

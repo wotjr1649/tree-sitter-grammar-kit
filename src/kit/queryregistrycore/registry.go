@@ -14,6 +14,7 @@ import (
 	"io"
 	"reflect"
 	"sort"
+	"strconv"
 )
 
 const (
@@ -308,11 +309,62 @@ type Coordinate struct {
 }
 
 func (c Coordinate) Canonical() []byte {
+	if b, ok := appendCoordinate(append(make([]byte, 0, 192), '['), c); ok {
+		return append(b, ']')
+	}
+	return c.slowCanonical()
+}
+
+func (c Coordinate) slowCanonical() []byte {
 	return Canonical([]any{c.Kind, c.Route, c.Platform, c.Subject, c.Role, c.Set, c.Case, c.Query, c.Step, c.TreeRole, c.Context})
 }
 
 func (c Coordinate) ID(namespace string) string {
+	b := append(make([]byte, 0, 256), `["tsgk-query-obligation-id/r1",`...)
+	b, ok := appendPlainJSONString(b, namespace)
+	if ok {
+		if b, ok = appendCoordinate(append(b, ','), c); ok {
+			return "qsem1:" + Digest(append(b, ']'))
+		}
+	}
+	return c.slowID(namespace)
+}
+
+func (c Coordinate) slowID(namespace string) string {
 	return "qsem1:" + Digest(Canonical([]any{"tsgk-query-obligation-id/r1", namespace, c.Kind, c.Route, c.Platform, c.Subject, c.Role, c.Set, c.Case, c.Query, c.Step, c.TreeRole, c.Context}))
+}
+
+// appendCoordinate writes the eleven Canonical elements without reflection. It handles only strings of
+// printable ASCII without quote or backslash, where JSON encoding is the identity; it reports false
+// for anything else and the caller falls back to Canonical, so the bytes never differ.
+func appendCoordinate(b []byte, c Coordinate) ([]byte, bool) {
+	ok := true
+	str := func(s string, comma bool) {
+		if comma {
+			b = append(b, ',')
+		}
+		if ok {
+			b, ok = appendPlainJSONString(b, s)
+		}
+	}
+	str(c.Kind, false)
+	for _, s := range [...]string{c.Route, c.Platform, c.Subject, c.Role, c.Set, c.Case, c.Query} {
+		str(s, true)
+	}
+	b = strconv.AppendUint(append(b, ','), uint64(c.Step), 10)
+	str(c.TreeRole, true)
+	str(c.Context, true)
+	return b, ok
+}
+
+func appendPlainJSONString(b []byte, s string) ([]byte, bool) {
+	b = append(b, '"')
+	for i := 0; i < len(s); i++ {
+		if ch := s[i]; ch < 0x20 || ch > 0x7e || ch == '"' || ch == '\\' {
+			return b, false
+		}
+	}
+	return append(append(b, s...), '"'), true
 }
 
 // Expand visits the original pinned inventory, never a result or a filtered expectation list.
