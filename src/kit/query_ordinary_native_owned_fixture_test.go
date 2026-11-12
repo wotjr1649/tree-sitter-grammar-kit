@@ -120,12 +120,22 @@ func testOrdinaryNativeClosureBuildReuse(t *testing.T, fixture ordinaryOwnedRead
 		t.Fatal(err)
 	}
 	steps := string(doc["steps"])
+	var parts []json.RawMessage
+	if err := json.Unmarshal(doc["steps"], &parts); err != nil || len(parts) < 2 {
+		t.Fatalf("producer build steps: err=%v steps=%d", err, len(parts))
+	}
+	parts[0], parts[1] = parts[1], parts[0]
+	reordered, err := json.Marshal(parts)
+	if err != nil {
+		t.Fatal(err)
+	}
 	cases := []struct {
 		name, steps, reuse string
 		reject             bool
 	}{
 		{"miss", steps, `{"key":"k","hit":false,"source_steps":[]}`, false},
 		{"hit", `[]`, `{"key":"k","hit":true,"source_steps":` + steps + `}`, false},
+		{"miss with reordered steps", string(reordered), `{"key":"k","hit":false,"source_steps":[]}`, true},
 		{"miss with source steps", steps, `{"key":"k","hit":false,"source_steps":` + steps + `}`, true},
 		{"miss with null source steps", steps, `{"key":"k","hit":false,"source_steps":null}`, true},
 		{"miss without steps", `[]`, `{"key":"k","hit":false,"source_steps":[]}`, true},

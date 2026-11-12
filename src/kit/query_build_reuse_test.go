@@ -1,6 +1,9 @@
 package kit
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestBuildDescriptionEffectiveStepsReuseShapes(t *testing.T) {
 	steps := []semanticBuildStep{{Name: "version", Argv: []string{"cc"}}}
@@ -24,7 +27,7 @@ func TestBuildDescriptionEffectiveStepsReuseShapes(t *testing.T) {
 	}
 	for _, c := range cases {
 		got, ok := c.build.effectiveSteps()
-		if ok != c.wantOK || len(got) != len(c.want) {
+		if ok != c.wantOK || !reflect.DeepEqual(got, c.want) {
 			t.Errorf("%s: ok=%v steps=%v, want ok=%v steps=%v", c.name, ok, got, c.wantOK, c.want)
 		}
 	}
