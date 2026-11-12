@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1431,8 +1432,17 @@ func membersText(ms []ReplayMember) string {
 	}
 	b.Grow(size)
 	b.WriteString("tsgk-replay-members/r1\n")
+	// Written without fmt: fmt's pooled printer allocates on a pool miss, which the charge cannot bound per CPU count.
+	var digits [20]byte
 	for _, m := range sorted {
-		fmt.Fprintf(&b, "%s\x00%s\x00%d\x00%s\n", m.Path, m.Role, m.Bytes, m.SHA256)
+		b.WriteString(m.Path)
+		b.WriteByte(0)
+		b.WriteString(m.Role)
+		b.WriteByte(0)
+		b.Write(strconv.AppendUint(digits[:0], m.Bytes, 10))
+		b.WriteByte(0)
+		b.WriteString(m.SHA256)
+		b.WriteByte('\n')
 	}
 	return b.String()
 }
