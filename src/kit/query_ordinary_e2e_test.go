@@ -626,6 +626,7 @@ func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 }
 
 func TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases(t *testing.T) {
+	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryNativeTools(t)
 	fixture := ordinaryE2EJSONInput(t)
 	inputPath, producerDir := ordinaryE2EWriteProducerInput(t, fixture.Producer)

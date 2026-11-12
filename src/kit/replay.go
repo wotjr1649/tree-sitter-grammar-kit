@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1108,18 +1109,7 @@ func replaySharedWithOptions(ctx context.Context, req ReplayRequest, budget *rep
 			return bad(e)
 		}
 	} else if semanticRun != nil {
-		var fields uint64
-		for _, member := range prof.Members {
-			if e := semanticRun.eligibility.charge(1, 0, "replay-profile-members"); e != nil {
-				return bad(e)
-			}
-			fields += uint64(len(member.Path) + len(member.Role) + len(member.SHA256) + 32)
-		}
-		levels := uint64(1)
-		for n := len(prof.Members); n > 1; n = (n + 1) / 2 {
-			levels++
-		}
-		if e := semanticRun.eligibility.charge(32*levels*(fields+1), 3*fields+128*uint64(len(prof.Members)), "replay-profile-members"); e != nil {
+		if e := chargeReplayMembers(semanticRun.eligibility, prof.Members); e != nil {
 			return bad(e)
 		}
 	}
@@ -1412,13 +1402,47 @@ func replayPolicyText(op string, l ReplayLimits) string {
 		op, l.Files, l.FileBytes, l.TotalBytes, l.Records, l.RecordBytes, l.OutputBytes, l.WallMillis)
 }
 
+// chargeReplayMembers reserves membersText: the merge sort over the member paths (ordinarySortWork), one pass
+// that writes the header and every field of every member (fields includes 32 bytes of separators and the byte
+// count per member) and, as logical bytes, the clone and sort buffer (2 x 56 B per member), the presized builder,
+// the boxed fmt arguments and fmt's line buffer (it grows by doubling, so at most 4 times the longest line).
+func chargeReplayMembers(b *eligibilityBudget, members []ReplayMember) *Error {
+	var fields, pathBytes, longest uint64
+	for _, member := range members {
+		if e := b.charge(1, 0, "replay-profile-members"); e != nil {
+			return e
+		}
+		line := uint64(len(member.Path) + len(member.Role) + len(member.SHA256) + 32)
+		fields += line
+		longest = max(longest, line)
+		pathBytes += uint64(len(member.Path)) + 1
+	}
+	return b.charge(ordinarySortWork(len(members), pathBytes)+fields+32, 3*fields+128*uint64(len(members))+4*longest+256, "replay-profile-members")
+}
+
+// membersText sorts with ordinaryMergeSort; member paths are unique (case-folded) after parsing, so the order is total.
 func membersText(ms []ReplayMember) string {
 	sorted := slices.Clone(ms)
-	slices.SortFunc(sorted, func(a, b ReplayMember) int { return strings.Compare(a.Path, b.Path) })
+	cost := ordinaryMergeSort(sorted, func(m ReplayMember) string { return m.Path })
+	ordinaryVisitObserved("members-sort", cost.compares+cost.bytes+cost.moved)
 	var b strings.Builder
-	b.WriteString("tsgk-replay-members/r1\n")
+	size := 32
 	for _, m := range sorted {
-		fmt.Fprintf(&b, "%s\x00%s\x00%d\x00%s\n", m.Path, m.Role, m.Bytes, m.SHA256)
+		size += len(m.Path) + len(m.Role) + len(m.SHA256) + 32
+	}
+	b.Grow(size)
+	b.WriteString("tsgk-replay-members/r1\n")
+	// Written without fmt: fmt's pooled printer allocates on a pool miss, which the charge cannot bound per CPU count.
+	var digits [20]byte
+	for _, m := range sorted {
+		b.WriteString(m.Path)
+		b.WriteByte(0)
+		b.WriteString(m.Role)
+		b.WriteByte(0)
+		b.Write(strconv.AppendUint(digits[:0], m.Bytes, 10))
+		b.WriteByte(0)
+		b.WriteString(m.SHA256)
+		b.WriteByte('\n')
 	}
 	return b.String()
 }

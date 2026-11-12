@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"os"
 	"slices"
@@ -502,4 +503,44 @@ func sameDerivation(c LargeExpectedFixture, cst LargeCSTDigests, occ LargeOccurr
 		}
 	}
 	return true
+}
+
+// Occurrence and CST counts are bounded by the native-query-large operation (captures and nodes) at
+// parse time, so Obligations and the page judgments never expand an unbounded count; a per-name
+// count above the total (whose sum could wrap) is refused too.
+func TestLargeExpectedBoundsCountsBeforeExpansion(t *testing.T) {
+	asset, registry, inventory, fixtures := largeAssets(t)
+	op := NativeOperations()["native-query-large"]
+	edit := func(f func(c *LargeExpectedFixture)) []byte {
+		var e LargeExpected
+		if err := json.Unmarshal(asset, &e); err != nil {
+			t.Fatal(err)
+		}
+		f(&e.Cases[0])
+		return mustJSON(t, e)
+	}
+	occ := func(total uint64, byName map[string]uint64) func(c *LargeExpectedFixture) {
+		return func(c *LargeExpectedFixture) {
+			c.Occurrences.Total, c.Occurrences.Pages, c.Occurrences.ByName = total, 1+(total-1)/LargeOccurrencePage, byName
+		}
+	}
+	for name, data := range map[string][]byte{
+		"huge occurrence total":       edit(occ(^uint64(0), map[string]uint64{"c.0.0.0": ^uint64(0)})),
+		"occurrence total over limit": edit(occ(op.Captures+1, map[string]uint64{"c.0.0.0": op.Captures + 1})),
+		"by-name sum that wraps":      edit(occ(1, map[string]uint64{"c.0.0.0": ^uint64(0), "c.0.1.0": 2})),
+		"cst nodes over the node limit": edit(func(c *LargeExpectedFixture) {
+			c.CST.Nodes = op.Nodes + 1
+			for uint64(len(c.CST.PageDigests)) < 1+(c.CST.Nodes-1)/c.CST.PageRows {
+				c.CST.PageDigests = append(c.CST.PageDigests, c.CST.PageDigests[0])
+			}
+		}),
+	} {
+		_, err := ParseLargeExpected(data, registry, inventory, fixtures)
+		if err == nil || largeCode(t, err) != "LARGE_EXPECTED_DERIVED" {
+			t.Errorf("%s: %v, want LARGE_EXPECTED_DERIVED", name, err)
+		}
+	}
+	if _, err := ParseLargeExpected(edit(occ(op.Captures, map[string]uint64{"c.0.0.0": op.Captures})), registry, inventory, fixtures); err != nil {
+		t.Errorf("occurrence total at the limit: %v", err)
+	}
 }

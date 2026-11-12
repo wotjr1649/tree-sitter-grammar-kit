@@ -306,7 +306,8 @@ func svcInlineID(kind string, s SvcInlineStep, query string) string {
 // evidence), a BLOCKED step with its registered code. Evidence for a BLOCKED, unknown or repeated
 // step is an error: a blocked step never becomes VERIFIED through native output. Evidence that lacks
 // a view role its step needs is never VERIFIED: it is BLOCKED unless a view it does have already
-// mismatches, which stays FAILED.
+// mismatches, which stays FAILED. The same holds for a missing Source; a Source that does not hold
+// the registered fragment (range, length, SHA-256) is FAILED SVC_INLINE_SOURCE_MISMATCH.
 func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJudgment, error) {
 	byStep := map[string]SvcInlineObserved{}
 	for _, o := range observed {
@@ -335,6 +336,9 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			}
 			continue
 		}
+		if seen {
+			used++ // a known observation is consumed even when its views are missing
+		}
 		if !seen || len(o.Views) == 0 {
 			out = append(out, SvcJudgment{ID: treeID, State: "BLOCKED", Code: SvcInlineNativeNotRunCode})
 			for _, q := range x.queryIDs() {
@@ -342,12 +346,19 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			}
 			continue
 		}
-		used++
 		complete, err := svcInlineViewsComplete(o, s.Step > 0 && inline[svcID("", s.Case, s.Step-1, "")])
 		if err != nil {
 			return nil, err
 		}
+		// The CST and capture digests do not cover the source text, so the source binds the views to
+		// the registered fragment: missing source is incomplete evidence (like a missing view), other
+		// bytes contradict the pin and fail every obligation of the step.
+		source := svcInlineSourceCode(s.Fragment, o.Source)
+		complete = complete && len(o.Source) > 0
 		judge := func(id, code string) SvcJudgment {
+			if source != "" {
+				return svcInlineJudge(id, source)
+			}
 			if code == "" && !complete {
 				return SvcJudgment{ID: id, State: "BLOCKED", Code: SvcInlineNativeNotRunCode}
 			}
@@ -391,6 +402,22 @@ func (x SvcInlineExpected) queryIDs() []string {
 		ids[i] = q.ID
 	}
 	return ids
+}
+
+// svcInlineSourceCode checks that source holds the registered fragment: its range is inside source
+// and those bytes have the pinned length and SHA-256. Missing source is not judged here.
+func svcInlineSourceCode(f SvcInlineFragment, source []byte) string {
+	if len(source) == 0 {
+		return ""
+	}
+	if f.StartByte > f.EndByte || uint64(f.EndByte) > uint64(len(source)) {
+		return "SVC_INLINE_SOURCE_MISMATCH"
+	}
+	text := source[f.StartByte:f.EndByte]
+	if uint64(len(text)) != f.Bytes || digestHex(text) != f.SHA256 {
+		return "SVC_INLINE_SOURCE_MISMATCH"
+	}
+	return ""
 }
 
 func svcInlineJudge(id, code string) SvcJudgment {
@@ -438,7 +465,7 @@ func svcInlineQueryCode(q SvcInlineQuery, o SvcInlineObserved) string {
 		case got.SHA256 != q.SHA256:
 			return "SVC_INLINE_QUERY_DIGEST"
 		}
-		if q.Facts != nil {
+		if q.Facts != nil && len(o.Source) > 0 { // without source the step stays BLOCKED, not FAILED
 			facts, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, r.Captures, o.Source)
 			if err != nil || uint64(len(facts.Items)) != *q.Facts || len(facts.KnownMisses) != 0 || !strings.HasPrefix(facts.Mapping, "dynamic-sql-") {
 				return "SVC_INLINE_DYNAMIC_FACTS"

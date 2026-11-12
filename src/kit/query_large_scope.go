@@ -201,6 +201,9 @@ func ParseLargeExpected(data, registry, inventory, fixtures []byte) (LargeExpect
 			return e, largeFault("LARGE_EXPECTED_NOT_APPLICABLE")
 		}
 	}
+	// The operation limits bound every count before Obligations expands it into pages: a run that
+	// emits more nodes or captures ends RESOURCE_LIMIT and has no page to verify.
+	op := NativeOperations()[positive.Operation]
 	for i, c := range e.Cases {
 		q, t := positive.Cases[i], templates[i]
 		if c.ID != q.ID || c.ID != t.ID || c.Set != positive.Set || c.Bytes != q.Input.Bytes || c.Bytes != t.Bytes || c.SHA256 != q.Input.SHA256 || c.SHA256 != t.SHA256 ||
@@ -211,12 +214,16 @@ func ParseLargeExpected(data, registry, inventory, fixtures []byte) (LargeExpect
 		case c.Derivation == LargeDerivedByTemplate && c.Code == "" && c.CST != nil && c.Occurrences != nil:
 			cst, occ := c.CST, c.Occurrences
 			if cst.PageRows != LargePageRows || cst.Nodes == 0 || uint64(len(cst.PageDigests)) != 1+(cst.Nodes-1)/cst.PageRows || len(cst.PagesSHA256) != 64 || len(cst.AllRowsSHA256) != 64 ||
-				cst.HasError != (c.Syntax == "ERROR") || occ.PageCaptures != LargeOccurrencePage || occ.Total == 0 || occ.Pages != 1+(occ.Total-1)/occ.PageCaptures || len(occ.SHA256) != 64 {
+				cst.HasError != (c.Syntax == "ERROR") || occ.PageCaptures != LargeOccurrencePage || occ.Total == 0 || occ.Pages != 1+(occ.Total-1)/occ.PageCaptures || len(occ.SHA256) != 64 ||
+				cst.Nodes > op.Nodes || occ.Total > op.Captures {
 				return e, largeFault("LARGE_EXPECTED_DERIVED")
 			}
 			var sum uint64
 			for _, n := range occ.ByName {
-				sum += n
+				if n > occ.Total {
+					return e, largeFault("LARGE_EXPECTED_DERIVED")
+				}
+				sum += n // bounded: each n <= Total <= op.Captures and the asset size bounds the names
 			}
 			if sum != occ.Total {
 				return e, largeFault("LARGE_EXPECTED_DERIVED")

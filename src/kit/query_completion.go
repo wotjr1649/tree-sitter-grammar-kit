@@ -576,7 +576,8 @@ func validNotApplicable(scope string, na []QueryCompletionNotApplicable) bool {
 }
 
 // DecodeQueryCompletionResult strictly decodes a stored completion result and re-derives every
-// level of arithmetic and the verdict from its counters. A stored result cannot claim a state its
+// level of arithmetic, each scope's denominator pin and the verdict from its counters (canonical
+// order, no duplicate row). A stored result cannot claim a state its
 // own counters do not support; it is not a recomputation from the scope evidence.
 func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 	var r QueryCompletionResult
@@ -608,6 +609,8 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 	hosts := map[string]*QueryCompletionCounts{}
 	var total QueryCompletionCounts
 	scopeFailed := map[string]bool{}
+	rows := map[string][]QueryScopeCounter{}
+	last := -1
 	for _, c := range r.Counters {
 		if !slices.Contains(queryKindOrder[c.Scope], c.Kind) || !slices.Contains(queryPlatformOrder, c.Platform) {
 			return bad("QUERY_COMPLETION_COUNTER")
@@ -615,6 +618,13 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 		if c.Scope == QueryScopeLarge && c.Platform != queryLargeHost {
 			return bad("QUERY_COMPLETION_COUNTER")
 		}
+		// canonical scope, kind and host order, strictly increasing: no duplicate row
+		rank := (slices.Index(queryScopeOrder, c.Scope)*16+slices.Index(queryKindOrder[c.Scope], c.Kind))*4 + slices.Index(queryPlatformOrder, c.Platform)
+		if rank <= last {
+			return bad("QUERY_COMPLETION_COUNTER")
+		}
+		last = rank
+		rows[c.Scope] = append(rows[c.Scope], QueryScopeCounter{Kind: c.Kind, Platform: c.Platform, Required: c.Required})
 		if !c.sums() {
 			return bad("QUERY_COMPLETION_SUM")
 		}
@@ -639,6 +649,10 @@ func DecodeQueryCompletionResult(data []byte) (QueryCompletionResult, error) {
 		return bad("QUERY_COMPLETION_SUM")
 	}
 	for _, s := range r.Scopes {
+		// the required rows must re-derive the scope's denominator pin, so no row is dropped or resized
+		if scopeDenominatorDigest(s.Scope, rows[s.Scope]) != s.DenominatorSHA256 {
+			return bad("QUERY_COMPLETION_DENOMINATOR")
+		}
 		if scopeFailed[s.Scope] != (s.FirstFailure != "") {
 			return bad("QUERY_COMPLETION_FAILURE_CODE")
 		}

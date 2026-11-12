@@ -2,6 +2,7 @@ package kit
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"reflect"
 	"runtime"
@@ -55,6 +56,12 @@ func expDecodeDocs(t *testing.T) []expDecodeDoc {
 	}
 	facts := ordinaryJSON(t, ordinaryExpectedFact{Schema: ordinaryExpectedFactSchema, Case: "c", Query: "q", TreeRole: "incremental", Source: pin, Status: AssessPass,
 		Declarations: &ordinaryExpectedDeclarations{Items: items, Assessment: AssessPass}})
+	// xml_structure is the one map in an ordinary expected asset; each entry costs far more than its value.
+	xml := map[string]int{}
+	for i := 0; i < 20000; i++ {
+		xml[fmt.Sprintf("element-%d", i)] = i % 7
+	}
+	xmlFacts := ordinaryJSON(t, ordinaryExpectedFact{Schema: ordinaryExpectedFactSchema, Case: "c", Query: "q", TreeRole: "incremental", Source: pin, Status: AssessPass, XML: &xml})
 	emptyNames := strings.TrimSuffix(strings.Repeat(`"",`, 100000), ",")
 	return []expDecodeDoc{
 		{"tree-tiny", "tree", tree(4, "t"), true},
@@ -66,6 +73,7 @@ func expDecodeDocs(t *testing.T) []expDecodeDoc {
 		{"metadata-wide", "metadata", metadata(slices.Repeat([]string{strings.Repeat("n", 40)}, 20000)), true},
 		{"metadata-empty-names", "metadata", []byte(`{"patterns":1,"capture_names":[` + emptyNames + `],"predicates":[]}`), true},
 		{"facts-many-items", "facts", facts, true},
+		{"facts-xml-map", "facts", xmlFacts, true},
 		{"error-deep-long-names", "tree", []byte(strings.Repeat(`{"`+strings.Repeat("a", 30000)+`":`, 31) + `[1,}`), false},
 		{"error-long-string-bad-escape", "tree", []byte(`{"schema":"` + strings.Repeat("x", 1<<20) + `\q"}`), false},
 		{"error-duplicate-long-name", "tree", []byte(`{"` + strings.Repeat("d", 1<<19) + `":1,"` + strings.Repeat("d", 1<<19) + `":2}`), false},

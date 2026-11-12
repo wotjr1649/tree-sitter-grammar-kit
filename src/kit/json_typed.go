@@ -198,6 +198,22 @@ func (b *eligibilityBudget) decodeTypedScanned(doc string, data []byte, target a
 	return nil
 }
 
+// compactMapEntryLogical is the allocation one map entry with a key of keyLen bytes causes beyond the per-value
+// terms (the value's own size is already priced by 8*sizeof). Three decoders touch the entry:
+//   - The two jsontext walks (syntax preflight, typed shape walk) each record every member name of an object for
+//     duplicate detection (jsontext objectNamespace): once an object has more than 64 names or 1,024 name bytes the
+//     namespace appends the unquoted name to one byte buffer (growth by about 1.25x sums to at most 6 times the
+//     final bytes), appends an 8-byte end offset (6 x 8), and inserts a copy of the name into a map[string]struct{}
+//     (a 16-byte slot per entry plus a control byte; the table, growing by doubling at a 7/8 load factor, allocates
+//     at most about 4.6 slots per entry over its life, 80 B, and the name copy, rounded up, is keyLen+16).
+//     That is 7*keyLen + 144 per walk, 14*keyLen + 288 for both.
+//   - jsonv2.Unmarshal into the Go map (it disables the namespace): 5 slots of 17 B for the key header and control
+//     byte (85) and the key string (keyLen+16).
+//
+// Measured per entry for map[string]int with 3 and 64 byte keys (50,000 entries): 351 B and 1,152 B; this term and
+// the per-value terms price about 1.5 times that.
+func compactMapEntryLogical(keyLen uint64) uint64 { return 15*keyLen + 389 }
+
 func compactTypedShape(s *typedJSONShape) {
 	s.compact = true
 	if s.elem != nil {
@@ -325,6 +341,11 @@ func (b *eligibilityBudget) readTypedJSONChecked(doc string, dec *jsontext.Decod
 			name, err := dec.ReadToken()
 			if err != nil {
 				return jsonError(doc, "", err)
+			}
+			if s.kind == reflect.Map && s.compact {
+				if e := b.charge(0, compactMapEntryLogical(uint64(len(name.String()))), doc); e != nil {
+					return e
+				}
 			}
 			child := s.elem
 			if s.kind == reflect.Struct {

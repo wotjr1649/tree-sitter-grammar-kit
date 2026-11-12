@@ -4,33 +4,44 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
-	t.Helper()
-	read := func(path string) []byte {
-		t.Helper()
+// ordinaryP0Registry derives the pinned P0 registry once per test binary. The Validated value is
+// read-only, so the callers share it; each caller still parses its own (mutable) inventory.
+var ordinaryP0Registry = sync.OnceValues(func() (*queryregistrycore.Validated, error) {
+	read := map[string][]byte{}
+	for _, path := range []string{"../contracts/query-semantic-registry-r1.json", "../contracts/qualification-c1.json", "../contracts/query-slot-inventory-r1.json",
+		"../dev/query-reference/check.py", "../internal/native/query_policy_test.go"} {
 		data, err := os.ReadFile(path)
 		if err != nil {
-			t.Fatal(err)
+			return nil, err
 		}
-		return data
+		read[path] = data
 	}
-	registry := read("../contracts/query-semantic-registry-r1.json")
-	qualification := read("../contracts/qualification-c1.json")
-	slots := read("../contracts/query-slot-inventory-r1.json")
 	basis := map[string][]byte{
-		"src/dev/query-reference/check.py":         read("../dev/query-reference/check.py"),
-		"src/internal/native/query_policy_test.go": read("../internal/native/query_policy_test.go"),
+		"src/dev/query-reference/check.py":         read["../dev/query-reference/check.py"],
+		"src/internal/native/query_policy_test.go": read["../internal/native/query_policy_test.go"],
+	}
+	v, _, err := ordinaryRegistry(OrdinaryPlanRequest{Registry: read["../contracts/query-semantic-registry-r1.json"], Qualification: read["../contracts/qualification-c1.json"],
+		Slots: read["../contracts/query-slot-inventory-r1.json"], RegistrySHA256: ordinaryRegistrySHA, Basis: basis})
+	return v, err
+})
+
+func ordinaryP0ForPlanTest(t *testing.T) (*queryregistrycore.Validated, QualificationInventory) {
+	t.Helper()
+	qualification, err := os.ReadFile("../contracts/qualification-c1.json")
+	if err != nil {
+		t.Fatal(err)
 	}
 	inv, err := ParseQualificationInventory(qualification)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v, _, err := ordinaryRegistry(OrdinaryPlanRequest{Registry: registry, Qualification: qualification, Slots: slots, RegistrySHA256: ordinaryRegistrySHA, Basis: basis})
+	v, err := ordinaryP0Registry()
 	if err != nil {
 		t.Fatal(err)
 	}
