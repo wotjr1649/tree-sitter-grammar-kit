@@ -96,9 +96,9 @@ branch: `session/07-evidence-replay`. 계약: [identity-and-evidence.md](specs/i
 
 ## Session 08
 
-26개 필수 구문 route 전체의 현재 후보 qualification을 세 OS에서 수행한다.
+Session 08은 당시 26개 필수 구문 route 전체의 후보 qualification을 세 OS에서 수행했다. 현재 CI는 #332의 예외에 따라 Windows·Linux 파생 52칸을 계산한다. macOS는 제외 전 근거를 역사로 보존하며 이후 실행은 NOT_RUN이다([platform](specs/platform-support.md)).
 
-완료 조건: 승인된 legacy~stable feature/fixture/check를 가진 78개 route×OS 요약 칸과 maintained BrightScript/historical audit/owned fixture를 구분한다. exact source/input/profile/protocol/comparator/run attempt의 새 native 실행을 집계하고 semantic parity와 host 관측을 분리한다. historical/replay/다른 후보의 PASS는 대체 근거가 아니다. CLI grammar-update와 공개 API의 versioned external consumer 사용을 검증하고 실제 지원 한계를 문서화한다.
+당시 완료 조건: 승인된 legacy~stable feature/fixture/check를 가진 78개 route×OS 요약 칸과 maintained BrightScript/historical audit/owned fixture를 구분한다. exact source/input/profile/protocol/comparator/run attempt의 새 native 실행을 집계하고 semantic parity와 host 관측을 분리한다. historical/replay/다른 후보의 PASS는 대체 근거가 아니다. CLI grammar-update와 공개 API의 versioned external consumer 사용을 검증하고 실제 지원 한계를 문서화한다.
 
 제외: 자동 tag/Release/package·Go adapter·추가 플랫폼 지원 추정.
 

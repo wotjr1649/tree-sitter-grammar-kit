@@ -971,7 +971,7 @@ func (s *eligibilitySession) currentReferences(versions [][]byte) *Error {
 			} else if !knownStep[i] {
 				responseVersions = nil
 			}
-			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, queries[i], queryKnown[i], responseVersions, s.r)
+			ref, code, complete, e := decodeReferenceResponseBound(out.rows[i], obs, librarySHA, symbol, s.catalogue.UpstreamCommit, queries[i], queryKnown[i], responseVersions, s.r)
 			if e != nil {
 				return e
 			}

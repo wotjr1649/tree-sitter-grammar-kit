@@ -1,5 +1,7 @@
 # Identity와 evidence — draft/r0, manifest r2 구현
 
+[#370 V2-A](query-reference-eligibility.md#370-v2-a-역사-자료-pin-입력)는 원본 subject·승인·pin 집합·자료 bytes를 수정하지 않는 별도 자료 결속 API다. 생산 pin 갱신만으로 동일한 승인 historical subject 자료의 새 실행을 요구하지 않는다. 기록 verdict·NEW_RUN은 당시 subject의 기록이며 오늘의 실행으로 바꾸지 않는다. 기존 reducer와 fixed-runtime qualification 의미는 유지한다. 새 plan/source/policy의 재판정 의무나 full runtime·semantic closure 검증을 materials PASS가 대체하지 않는다. Roslyn5.9/r2 원문은 역사 출처로 보관하며 새 관측·SDK/DLL provenance를 소급 생성하지 않는다.
+
 ## 파일 identity
 
 manifest r0와 그 hash preimage는 아래 역사적 설계로 보존한다. S01 착수 전 채택 설계는 `tsgk-manifest/r1`이며 `algorithm: sha256`, `mode_policy`, `files`를 가진다. 각 파일은 portable `path`, `role`, `mode`(`100644` 또는 `100755`), `mode_provenance`, `size`(bytes), 소문자 64자리 `sha256`으로 나타낸다. path의 UTF-8 bytes 오름차순으로 정렬하고 중복을 거부한다. 디렉터리·symlink·special file은 파일 항목이 아니다. 기본 `mode_policy=portable-default`, `mode_provenance=POLICY_DEFAULT`, mode `100644`는 관측된 executable bit가 아니다. 별도 filesystem mode는 실제 관측 가능할 때 출처와 다른 policy로 등록한다. API/offline 경로가 Git process를 실행해 mode를 추정하지 않는다.
@@ -289,3 +291,15 @@ CLI는 최대9개 trust 문서의 열린 file identity도 `QualificationQuerySem
 이 scope에서는 `full_scope_complete=false`와 `ordinary-query-workloads`, `svc-query-workloads`, `large-query-workloads` 누락이 항상 남는다. 모든 probe와 baseline이 PASS여도 `support_claim=BLOCKED`, platform claims BLOCKED, top assessment BLOCKED다. Baseline 또는 semantic의 확인된 FAIL은 top FAIL로 우선한다. 미처리 분모는 unprocessed로 남고 input 부재는 고정 plan N개를 blocked로 남긴다. `r10`의 생성 invariant만 추가되며 저장 r10의 public decoder·r9 CI gate 변경·workflow 활성화는 포함하지 않는다. 이 scope는 전체 #216/#195, 전체26 route, SVC 또는 large 완료 근거가 아니다.
 
 Core와 plan의 tuple ID 집합이 다르면 core 원 counter를 계획 행에 복사하지 않는다. 알려진 host rejection과 semantic FAIL·최초 code는 typed 취소·resource·I/O 중단 뒤에도 보존한다. CLI는 이 r10 FAIL report를 출력하면 중단의 원래 error kind와 execution status를 유지하면서 exit1을 우선한다. 알려진 FAIL이 없으면 기존 typed exit를 따르고, report 쓰기 또는 publication 실패는 exit4다. Nil opt-in의 r9 exit는 바뀌지 않는다.
+
+## #370 V2-B1 역사 reference 결과 identity
+
+직접 eligibility의 명시적 `Pins` opt-in은 [r2 소비 계약](query-reference-eligibility.md#370-v2-b1-승인-historical-reference-검증)에 따라 같은 승인 historical subject를 검증한다. 생산 pin 갱신만으로 그 subject의 새 실행을 요구하지 않는다. 원래 subject의 NEW_RUN·recorded verdict·raw bytes는 보존하고, 이번 REPLAYED_RAW 판정과 소비한 pin/tuple/catalogue identity를 r2 결과에 기록한다. 새 정책·candidate 자격 심사는 별도이며 runtime/semantic/replay의 기존 revision 의미를 넓히지 않는다.
+
+## #362 full-scope registry P0 membership contract
+
+P0 구현은 `src/internal/queryregistry`에 한정되며 public `kit` API를 추가하지 않는다. 고정 manifest는 `go run ./src/dev/query-registry -root . -write`로 명시 생성하고 일반 validation은 writer를 호출하지 않는다. Root selector는 pinned qualification 원본의 route/case/query/source/edit를 참조해 별도 case catalogue를 복제하지 않는다. Registry selection은 결과 취득 전에 caller가 고정한 registry hash에 결속한다. Registry 안의 ID namespace는 membership 원문에서 계산하고 registry 자기 hash를 포함하지 않는다. 검증은 고정 qualification/slot 원본을 독립적으로 전개한 ID 집합과 registry의 exact set을 비교한다. Shard를 소비하는 후속 결과는 caller가 pin한 같은 registry와 실제 consumed ID·coordinate·shard 집합에 결속해야 하며, 중복·누락·미등록 tuple을 count 또는 digest 일치로 통과시키지 않는다.
+
+Typed coverage는 structural, predicate-positive와 expected-rejection을 분리한다. Known Windows large workload는 완료3개와 자원 제한 control1개를 `LARGE_WORKLOAD_POSITIVE`·`LARGE_WORKLOAD_CONTROL`로 별도 등록한다. 전체 coordinate는 ordinary106,208, predicate40, control94, large4로106,346개다. Large node/occurrence/page/footer와 SVC 하위 분모는 아직 null이다. `verified`, `failed`, `blocked`, `unprocessed`의 합은 알려진 required 분모와 같아야 한다. Fold 입력은 이미 adjudicated state이며 runtime raw claim/evidence parser가 아니다. P0의 독립 expected와 실행·승인 asset은 unavailable이므로 positive 의무는 BLOCKED로 남고 control은 별도 typed 상태로 집계할 수 있다. 확인된 불일치와 변조는 FAIL 및 최초 code를 유지하며, 취소·자원 한도·finding cap이 먼저 확정된 FAIL을 덮지 않는다. P0의 `full_scope_complete`는 모든 상태가 VERIFIED여도 항상 false다.
+
+이 P0 계약은 r9 baseline과 small-only r10의 schema·판정·scope 의미를 변경하지 않으며 full-scope result schema, public stored replay, CLI 또는 CI completion gate를 추가하지 않는다. 이후 결과 revision과 reducer는 별도 변경에서 정하고, caller의 사전 registry 선택과 사후 승인 문서를 분리해야 한다. Caller 문서 자체의 hash 일치만으로 독립 검토나 실행을 증명하지 않는다.

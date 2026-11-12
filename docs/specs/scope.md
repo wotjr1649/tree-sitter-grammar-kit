@@ -10,7 +10,7 @@ kit는 grammar·runtime·정책 조합이 실사용 코드를 믿고 파싱하�
 
 파일·결과 코어는 불필요한 C 종속을 갖지 않으며 첫 실행 backend는 표준 Tree-sitter다. `parser.c`는 native build가 요구하는 입력이고 inventory/schema/기록 비교의 일률적 선행 조건이 아니다. repository snapshot, 선택 grammar, 공유 source/dependency closure를 구분한다.
 
-필수 qualification은 [언어·feature 등록부](../validation/language-feature-scope.md)의 26개 route 전체와 Windows amd64/Linux amd64/macOS arm64의 78개 요약 칸이다. maintained BrightScript, 제한된 historical audit, 자체 scannerless/stateful 및 경계 fixture는 별도 역할로 유지한다. 소비자가 26개 grammar를 모두 설치해야 한다는 뜻은 아니다.
+Campaign 설계의 필수 qualification은 [언어·feature 등록부](../validation/language-feature-scope.md)의 26개 route 전체와 Windows amd64/Linux amd64/macOS arm64의 78개 요약 칸이다. 현재 CI는 #332의 예외에 따라 Windows·Linux 파생 52칸을 계산한다([platform](platform-support.md)). macOS의 제외 전 근거는 역사로 보존하며 이후 실행은 NOT_RUN이다. maintained BrightScript, 제한된 historical audit, 자체 scannerless/stateful 및 경계 fixture는 별도 역할로 유지한다. 소비자가 26개 grammar를 모두 설치해야 한다는 뜻은 아니다.
 
 언어의 공식 구문 근거와 검토된 구조 기대값으로 correctness를 판단하고 native 결과는 회귀·비교에 사용한다. upstream corpus와 ERROR 없는 tree만으로 feature 지원을 확정하지 않는다. required grammar gap은 kit의 검출 성공과 별도로 남으며 historical expected failure로 옮겨 지원 목표를 통과시키지 않는다. framework·서버·DB 실행과 미등록 확장은 구문 범위에 포함되지 않는다.
 

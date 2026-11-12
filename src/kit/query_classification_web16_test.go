@@ -14,7 +14,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/querywire"
 )
 
-const classificationWeb16NativeRoutesSHA = "7be36efe4cafcefa460c8841c8698a0d055cb25d6f86a5bed8561d601c093ad2"
+const classificationWeb16NativeRoutesSHA = "5cd47f70e7af9cad9eb0e19cc70daae1c3244127c92c89f4e5192d2a1f6946d7"
 
 type classificationEmptyGrammarFile struct {
 	Path string

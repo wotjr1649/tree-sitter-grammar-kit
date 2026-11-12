@@ -9,12 +9,15 @@ const (
 	QueryReferenceEligibilityApprovalSchema     = "tsgk-query-reference-eligibility-approval/r1"
 	QueryReferenceEligibilityRegistrationSchema = "tsgk-query-reference-eligibility-registration/r1"
 	QueryReferenceEligibilityResultSchema       = "tsgk-query-reference-eligibility-result/r1"
+	QueryReferenceEligibilityPinsResultSchema   = "tsgk-query-reference-eligibility-result/r2"
 	queryEligibilityWitnessSchema               = "tsgk-query-witness-registration/r2"
 )
 
 // QueryReferenceEligibilityRequest carries caller-trusted approval separately from stored evidence.
 // Approval attests provenance; this offline operation does not authenticate its author.
 type QueryReferenceEligibilityRequest struct {
+	// Pins opts into approved historical reference materials; Subject must be Approval.
+	Pins                *EvidencePinsRequest
 	Evidence            EvidenceRequest
 	Approval            []byte
 	Registration        []byte
@@ -34,22 +37,25 @@ type QueryEligibilityCounts struct {
 // Complete means evaluation finished, independently of the assessment.
 type QueryReferenceEligibilityResult struct {
 	Report
-	ResultSchema       string                 `json:"result_schema"`
-	ApprovalSHA256     string                 `json:"approval_sha256"`
-	RegistrationSHA256 string                 `json:"registration_sha256"`
-	WitnessSHA256      string                 `json:"witness_sha256"`
-	CatalogueSHA256    string                 `json:"catalogue_sha256"`
-	GraphSHA256        string                 `json:"graph_sha256"`
-	Evidence           *EvidenceResult        `json:"evidence"`
-	Build              QueryEligibilityCounts `json:"build"`
-	Unit               QueryEligibilityCounts `json:"unit"`
-	Control            QueryEligibilityCounts `json:"control"`
-	Assertion          QueryEligibilityCounts `json:"assertion"`
-	Tuple              QueryEligibilityCounts `json:"tuple"`
-	BytesRead          uint64                 `json:"bytes_read"`
-	Work               uint64                 `json:"work"`
-	LogicalBytes       uint64                 `json:"logical_bytes"`
-	Complete           bool                   `json:"complete"`
+	ResultSchema         string                 `json:"result_schema"`
+	ApprovalSHA256       string                 `json:"approval_sha256"`
+	RegistrationSHA256   string                 `json:"registration_sha256"`
+	WitnessSHA256        string                 `json:"witness_sha256"`
+	Pins                 *EvidencePinsResult    `json:"pins,omitempty"`
+	ReferenceTupleSHA256 string                 `json:"reference_tuple_sha256,omitempty"`
+	ReferencePathReader  string                 `json:"reference_path_reader,omitempty"`
+	CatalogueSHA256      string                 `json:"catalogue_sha256"`
+	GraphSHA256          string                 `json:"graph_sha256"`
+	Evidence             *EvidenceResult        `json:"evidence"`
+	Build                QueryEligibilityCounts `json:"build"`
+	Unit                 QueryEligibilityCounts `json:"unit"`
+	Control              QueryEligibilityCounts `json:"control"`
+	Assertion            QueryEligibilityCounts `json:"assertion"`
+	Tuple                QueryEligibilityCounts `json:"tuple"`
+	BytesRead            uint64                 `json:"bytes_read"`
+	Work                 uint64                 `json:"work"`
+	LogicalBytes         uint64                 `json:"logical_bytes"`
+	Complete             bool                   `json:"complete"`
 }
 
 type eligibilityCandidate struct {

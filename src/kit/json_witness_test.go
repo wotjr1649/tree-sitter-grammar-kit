@@ -282,7 +282,7 @@ func TestTypedJSONReferencePointWork(t *testing.T) {
 	data := mustJSON(t, response)
 	obs := QueryReferenceObservation{Query: "q", SourceBytes: uint64(len(source)), SourceSHA256: sum(source)}
 	decode := func(r *run, versions [][]byte) *Error {
-		_, code, complete, e := decodeReferenceResponseBound(data, obs, f.registration.LibrarySHA256, f.registration.Symbol, QueryWitnessQuery{}, false, versions, r)
+		_, code, complete, e := decodeReferenceResponseBound(data, obs, f.registration.LibrarySHA256, f.registration.Symbol, instrumentedReferenceCommit, QueryWitnessQuery{}, false, versions, r)
 		if e == nil && (code != "" || !complete) {
 			t.Fatalf("reference control: code=%q complete=%v", code, complete)
 		}
@@ -366,7 +366,7 @@ func TestTypedJSONReferenceFailedEnvelopePriority(t *testing.T) {
 			data := []byte(input.data)
 			for _, metered := range []bool{false, true} {
 				r := witnessTestRun(t, metered)
-				_, code, _, e := decodeReferenceResponseBound(data, QueryReferenceObservation{}, "", "", QueryWitnessQuery{}, false, nil, r)
+				_, code, _, e := decodeReferenceResponseBound(data, QueryReferenceObservation{}, "", "", instrumentedReferenceCommit, QueryWitnessQuery{}, false, nil, r)
 				if metered {
 					if input.wantBoundError == "" {
 						if e != nil || code != input.wantCode {
