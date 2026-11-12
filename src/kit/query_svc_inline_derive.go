@@ -591,10 +591,15 @@ func siRowsDigest(rows []LargeRow) SvcInlineCST {
 	return out
 }
 
-// siRowsOfNodes converts the public CST of a native tree to canonical rows.
-func siRowsOfNodes(nodes []TreeNode) []LargeRow {
+// siRowsOfNodes converts the public CST of a native tree to canonical rows. It reports false, without rows, when a
+// parent is not -1 for the root or an earlier index for any other node: such a value must not be narrowed to int32
+// (a Parent of 2^32-1 would become the root's -1 and an out-of-range parent would name a different node).
+func siRowsOfNodes(nodes []TreeNode) ([]LargeRow, bool) {
 	rows := make([]LargeRow, len(nodes))
 	for i, n := range nodes {
+		if i == 0 && n.Parent != -1 || i > 0 && (n.Parent < 0 || n.Parent >= int64(i)) {
+			return nil, false
+		}
 		r := LargeRow{Index: uint32(i), Parent: int32(n.Parent), StartByte: n.StartByte, EndByte: n.EndByte, StartRow: n.StartPoint.Row, StartCol: n.StartPoint.Column,
 			EndRow: n.EndPoint.Row, EndCol: n.EndPoint.Column, Type: n.Type, Depth: 1}
 		if n.Field != nil {
@@ -610,7 +615,7 @@ func siRowsOfNodes(nodes []TreeNode) []LargeRow {
 		}
 		rows[i] = r
 	}
-	return rows
+	return rows, true
 }
 
 // siQNode is one node pattern of a query; typ "_" is the wildcard, named restricts it to named nodes.

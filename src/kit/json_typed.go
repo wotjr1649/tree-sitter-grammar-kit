@@ -198,8 +198,10 @@ func (b *eligibilityBudget) decodeTypedScanned(doc string, data []byte, target a
 	return nil
 }
 
-// compactMapEntryLogical is the allocation one map entry with a key of keyLen bytes causes beyond the per-value
-// terms (the value's own size is already priced by 8*sizeof). Three decoders touch the entry:
+// mapEntryLogical is the allocation one map entry with a key of keyLen bytes causes beyond the per-value
+// terms (the value's own size is already priced by 8*sizeof in the compact decode). Both typed decodes, compact
+// and plain, charge it for every map member: the plain decode's flat 32 B per input byte does not cover entries
+// of 2 to 4 byte keys (0.79-0.9 of the allocation at 1,000 to 3,500 entries). Three decoders touch the entry:
 //   - The two jsontext walks (syntax preflight, typed shape walk) each record every member name of an object for
 //     duplicate detection (jsontext objectNamespace): once an object has more than 64 names or 1,024 name bytes the
 //     namespace appends the unquoted name to one byte buffer (growth by about 1.25x sums to at most 6 times the
@@ -212,7 +214,7 @@ func (b *eligibilityBudget) decodeTypedScanned(doc string, data []byte, target a
 //
 // Measured per entry for map[string]int with 3 and 64 byte keys (50,000 entries): 351 B and 1,152 B; this term and
 // the per-value terms price about 1.5 times that.
-func compactMapEntryLogical(keyLen uint64) uint64 { return 15*keyLen + 389 }
+func mapEntryLogical(keyLen uint64) uint64 { return 15*keyLen + 389 }
 
 func compactTypedShape(s *typedJSONShape) {
 	s.compact = true
@@ -342,8 +344,8 @@ func (b *eligibilityBudget) readTypedJSONChecked(doc string, dec *jsontext.Decod
 			if err != nil {
 				return jsonError(doc, "", err)
 			}
-			if s.kind == reflect.Map && s.compact {
-				if e := b.charge(0, compactMapEntryLogical(uint64(len(name.String()))), doc); e != nil {
+			if s.kind == reflect.Map {
+				if e := b.charge(0, mapEntryLogical(uint64(len(name.String()))), doc); e != nil {
 					return e
 				}
 			}

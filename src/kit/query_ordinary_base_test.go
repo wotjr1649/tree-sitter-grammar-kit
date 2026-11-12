@@ -2,6 +2,7 @@ package kit
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
@@ -86,5 +87,64 @@ func TestOrdinaryBaseKeepsStoredFailWhenRecomputationStops(t *testing.T) {
 	got, runErr := b.recomputeOrdinaryBase(profile, 0, cache, nil)
 	if runErr == nil || got.Verdict.Assessment != AssessFail || got.Verdict.ExecutionStatus != StatusFailed {
 		t.Fatalf("partial recomputation erased saved FAIL: result=%+v err=%v", got, runErr)
+	}
+}
+
+// A frame that was sent and never answered (watchdog, memory or output limit, batch limit, cancellation) stores a
+// RESOURCE_LIMIT/BLOCKED projection and has no raw response. The base recomputation must keep it BLOCKED: comparing
+// the projection's execution_status with the empty raw status would turn honest resource-limit evidence into an
+// ORDINARY_BASE_PROJECTION_BINDING FAIL. A projection that claims more than the missing response can support is
+// still a contradiction.
+func TestOrdinaryBaseKeepsAFrameWithoutAResponseBlocked(t *testing.T) {
+	source := []byte("x")
+	input := NativeInput{Role: "case", Path: "source.txt", Bytes: uint64(len(source)), SHA256: digestHex(source)}
+	profile := OracleProfile{
+		Native:      IncrementalProfile{Schema: OracleSemanticsSchema, ID: "ordinary-base-test", Route: "test-route", Operation: "native-query-batch", Encoding: EncodingUTF8, Output: OutputTree, Cases: []IncrementalCase{{ID: "c1", Input: input, Encoding: EncodingUTF8}}},
+		OracleCases: []OracleCase{{IncrementalCase: IncrementalCase{ID: "c1", Input: input, Encoding: EncodingUTF8}}},
+	}
+	projection := func(status, assessment, code string) []byte {
+		raw, err := json.Marshal(map[string]any{"id": "c1", "input": input, "encoding": EncodingUTF8, "execution_status": status, "assessment": assessment, "code": code, "steps": []any{}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	for _, tc := range []struct {
+		name                     string
+		status, assessment, code string
+		wantAssessment           string
+		wantFinding              string
+	}{
+		{"frame watchdog", StatusResourceLimit, AssessBlocked, "FRAME_WALL_LIMIT", AssessBlocked, ""},
+		{"batch wall limit", StatusResourceLimit, AssessBlocked, "BATCH_WALL_LIMIT", AssessBlocked, ""},
+		{"cancelled", StatusCancelled, AssessNotAssessed, "CANCELLED", AssessBlocked, ""},
+		{"crash or protocol break", StatusFailed, AssessNotAssessed, "BATCH_FRAME_FAILED", AssessBlocked, ""},
+		{"a response that never came, claimed completed", StatusCompleted, AssessBlocked, "", AssessFail, "ORDINARY_BASE_PROJECTION_BINDING"},
+		{"a response that never came, claimed PASS", StatusResourceLimit, AssessPass, "", AssessFail, "ORDINARY_BASE_PROJECTION_BINDING"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := semanticTestBudget(t)
+			cache := &ordinaryCaseCache{Case: "c1", unanswered: true, projection: projection(tc.status, tc.assessment, tc.code), recordedBase: Verdict{tc.status, tc.assessment}, recordedBaseCode: tc.code}
+			got, err := b.recomputeOrdinaryBase(profile, 0, cache, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Verdict.Assessment != tc.wantAssessment {
+				t.Fatalf("verdict %+v, want %s; findings %+v", got.Verdict, tc.wantAssessment, got.Findings)
+			}
+			if tc.wantFinding == "" && len(got.Findings) != 0 {
+				t.Fatalf("honest resource-limit evidence produced findings: %+v", got.Findings)
+			}
+			if tc.wantFinding != "" && !slices.ContainsFunc(got.Findings, func(f Finding) bool { return f.Code == tc.wantFinding }) {
+				t.Fatalf("missing finding %s: %+v", tc.wantFinding, got.Findings)
+			}
+		})
+	}
+	// an answered frame (no unanswered mark) keeps the status comparison with its raw response
+	b := semanticTestBudget(t)
+	cache := &ordinaryCaseCache{Case: "c1", projection: projection(StatusResourceLimit, AssessBlocked, "FRAME_WALL_LIMIT"), raw: nativewire.Response{Status: StatusCompleted}, ResponseFrame: []byte{0, 0, 0, 0}, ready: true}
+	got, _ := b.recomputeOrdinaryBase(profile, 0, cache, nil)
+	if !slices.ContainsFunc(got.Findings, func(f Finding) bool { return f.Code == "ORDINARY_BASE_PROJECTION_BINDING" }) {
+		t.Fatalf("an answered frame whose projection status differs from the raw status must still fail the binding: %+v", got)
 	}
 }

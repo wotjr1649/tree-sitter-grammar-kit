@@ -299,6 +299,41 @@ func siVerdicts(t *testing.T, x SvcInlineExpected, obs ...SvcInlineObserved) map
 	return out
 }
 
+// A parent that is not a valid preorder index must not be narrowed to int32 into a valid row: a root Parent of
+// 4294967295 (or a huge parent whose low 32 bits name an earlier node) used to convert back to the faithful
+// value, so the digest matched and the wrong CST was VERIFIED. The structure is checked before the rows are built.
+func TestSvcInlineJudgeRejectsParentsThatAreNotPreorderIndexes(t *testing.T) {
+	src := "using System;\n// c\nclass K\n{\n    string M(string s)\n    {\n        return \"a\" + s + \"é\";\n    }\n}\n"
+	x, obs, _ := siSyntheticStep(t, src)
+	treeID := svcID(SvcKindInlineTree, "synthetic", 0, "")
+	if j := siVerdicts(t, x, obs)[treeID]; j.State != "VERIFIED" {
+		t.Fatalf("faithful evidence: %s %s", j.State, j.Code)
+	}
+	original := obs.Views[0].Nodes
+	if len(original) < 6 || original[0].Parent != -1 || original[3].Parent < 0 {
+		t.Fatalf("unexpected synthetic tree: %d nodes", len(original))
+	}
+	for name, edit := range map[string]func(n []TreeNode){
+		"root parent 2^32-1":                func(n []TreeNode) { n[0].Parent = 1<<32 - 1 },
+		"root parent -2":                    func(n []TreeNode) { n[0].Parent = -2 },
+		"root parent 2^33-1":                func(n []TreeNode) { n[0].Parent = 1<<33 - 1 },
+		"node parent wraps to its faithful": func(n []TreeNode) { n[3].Parent += 1 << 32 },
+		"node parent negative wraps":        func(n []TreeNode) { n[3].Parent -= 1 << 32 },
+		"node parent is itself":             func(n []TreeNode) { n[3].Parent = 3 },
+		"node parent is a later node":       func(n []TreeNode) { n[3].Parent = 4 },
+		"non-root parent -1":                func(n []TreeNode) { n[3].Parent = -1 },
+	} {
+		o := obs
+		v := o.Views[0]
+		v.Nodes = slices.Clone(original)
+		edit(v.Nodes)
+		o.Views = []SvcInlineView{v}
+		if j := siVerdicts(t, x, o)[treeID]; j.State != "FAILED" || j.Code != "SVC_INLINE_CST_STRUCTURE" {
+			t.Errorf("%s: %s %s, want FAILED SVC_INLINE_CST_STRUCTURE", name, j.State, j.Code)
+		}
+	}
+}
+
 // Evidence that differs from the expectation in any way is FAILED with the exact code, and the
 // untouched evidence is VERIFIED (so every failure below is caused by its own mutation).
 func TestSvcInlineJudgeCounterexamples(t *testing.T) {
@@ -335,7 +370,7 @@ func TestSvcInlineJudgeCounterexamples(t *testing.T) {
 		"field":           {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[3].Field = str("other") }},
 		"range":           {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[4].EndByte++ }},
 		"point":           {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[4].StartPoint.Column++ }},
-		"parent":          {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[3].Parent = 0 }},
+		"parent":          {treeID, "SVC_INLINE_CST_STRUCTURE", func(o *SvcInlineObserved) { last(o).Nodes[3].Parent = 0 }},
 		"named flag":      {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[2].Named = !last(o).Nodes[2].Named }},
 		"extra flag":      {treeID, "SVC_INLINE_CST_DIGEST", func(o *SvcInlineObserved) { last(o).Nodes[2].Extra = true }},
 		"root error flag": {treeID, "SVC_INLINE_CST_ERROR", func(o *SvcInlineObserved) { last(o).Nodes[0].HasError = true }},

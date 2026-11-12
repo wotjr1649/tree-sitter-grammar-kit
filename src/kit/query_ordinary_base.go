@@ -100,6 +100,17 @@ func (b *eligibilityBudget) recomputeOrdinaryBase(profile OracleProfile, caseInd
 	if len(cache.projection) == 0 {
 		return out, fail(KindInvalidInput, "ORDINARY_BASE_PROJECTION", cache.Case, nil)
 	}
+	if cache.unanswered {
+		// A sent frame without a complete response (watchdog, memory or output limit, batch limit, cancellation,
+		// crash) has no raw response to recompute from. Its stored RESOURCE_LIMIT/BLOCKED projection is honest
+		// evidence, so the base stays BLOCKED; an original FAIL kept above stays FAIL. A projection that claims a
+		// completed or passing base for a frame that never answered contradicts the transport.
+		if cache.recordedBase.ExecutionStatus == StatusCompleted || cache.recordedBase.Assessment == AssessPass {
+			out.Verdict = Verdict{ExecutionStatus: StatusFailed, Assessment: AssessFail}
+			out.Findings = append(out.Findings, Finding{Severity: "error", Code: "ORDINARY_BASE_PROJECTION_BINDING", Path: cache.Case, Message: "응답이 없는 frame의 projection이 완료나 PASS를 주장한다"})
+		}
+		return out, nil
+	}
 	one := profile
 	one.Native.Cases = []IncrementalCase{profile.Native.Cases[caseIndex]}
 	one.OracleCases = []OracleCase{profile.OracleCases[caseIndex]}

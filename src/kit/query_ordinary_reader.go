@@ -67,6 +67,9 @@ type ordinaryCaseCache struct {
 	recordedBaseCode            string
 	ready                       bool
 	BatchAccepted               bool
+	// unanswered marks a sent frame without a complete response (watchdog, memory or output limit, batch limit,
+	// cancellation, crash): no raw response exists, so nothing is recomputed from it.
+	unanswered bool
 }
 
 type ordinaryGuardedSet struct {
@@ -771,6 +774,7 @@ func (b *eligibilityBudget) ordinaryCase(s *eligibilitySession, registration Ord
 	}
 	frame := loc.capture.Frames[loc.frame]
 	if frame.State != "ANSWERED" {
+		cache.unanswered = true
 		return cache, nil
 	}
 	if len(registered.VersionPins) == 0 {

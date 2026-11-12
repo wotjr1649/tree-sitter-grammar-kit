@@ -202,17 +202,33 @@ func (p physicalIdentityFixture) measure(t *testing.T) (paths int, spent, charge
 // "Charge >= actual" for the physical identity walk: the work reserved for each path covers what the
 // guard really scanned, hashed and handed to the root, for very deep paths, very long components, a
 // wide directory, and snapshots that omit the ancestors of a path.
+//
+// The deepest case (depth 300, the tightest: its worst path spends 16 of 21 charged units) stays in every run. The
+// wide directory and the two cases with missing ancestors, whose worst path is the same 51 of 121, use a smaller
+// size by default; TSGK_LONG_BUDGET_TESTS=1 runs the full sizes and a file on every level of the deep chain.
 func TestOrdinaryPhysicalIdentityChargeCoversTheWalk(t *testing.T) {
+	long := os.Getenv("TSGK_LONG_BUDGET_TESTS") == "1"
+	size := func(full, short int) int {
+		if long {
+			return full
+		}
+		return short
+	}
+	wide, missing, partial := size(2000, 500), size(200, 100), size(120, 60)
 	cases := []struct {
 		name  string
 		build func(t *testing.T, p physicalIdentityFixture)
 	}{
+		// Every directory is in the snapshot and a file hangs on every tenth level; the walk of each path scales with
+		// its depth, so a file on every level is the long matrix (TSGK_LONG_BUDGET_TESTS=1).
 		{"depth-300-single-byte-components", func(t *testing.T, p physicalIdentityFixture) {
 			path := ""
 			for i := 0; i < 300; i++ {
 				path += string(rune('a' + i%26))
 				p.addDir(t, path, true)
-				p.addFile(t, path+"/_")
+				if i%10 == 9 {
+					p.addFile(t, path+"/_")
+				}
 				path += "/"
 			}
 		}},
@@ -228,13 +244,13 @@ func TestOrdinaryPhysicalIdentityChargeCoversTheWalk(t *testing.T) {
 		{"one-component-of-255-bytes-and-wide-directory", func(t *testing.T, p physicalIdentityFixture) {
 			long := strings.Repeat("l", 255)
 			p.addDir(t, long, true)
-			for i := 0; i < 2000; i++ {
+			for i := 0; i < wide; i++ {
 				p.addFile(t, fmt.Sprintf("%s/%s%04d", long, strings.Repeat("n", 200), i))
 			}
 		}},
 		{"deep-path-whose-ancestors-are-not-in-the-snapshot", func(t *testing.T, p physicalIdentityFixture) {
 			path := ""
-			for i := 0; i < 200; i++ {
+			for i := 0; i < missing; i++ {
 				path += strings.Repeat("d", 8) + "/"
 				p.addDir(t, strings.TrimSuffix(path, "/"), false)
 			}
@@ -243,12 +259,26 @@ func TestOrdinaryPhysicalIdentityChargeCoversTheWalk(t *testing.T) {
 		}},
 		{"deep-path-with-only-some-ancestors-in-the-snapshot", func(t *testing.T, p physicalIdentityFixture) {
 			path := ""
-			for i := 0; i < 120; i++ {
+			for i := 0; i < partial; i++ {
 				path += strings.Repeat("e", 30) + "/"
 				p.addDir(t, strings.TrimSuffix(path, "/"), i%7 == 0)
 			}
 			p.addFile(t, path+"leaf")
 		}},
+	}
+	if long {
+		cases = append(cases, struct {
+			name  string
+			build func(t *testing.T, p physicalIdentityFixture)
+		}{"depth-300-a-file-on-every-level", func(t *testing.T, p physicalIdentityFixture) {
+			path := ""
+			for i := 0; i < 300; i++ {
+				path += string(rune('a' + i%26))
+				p.addDir(t, path, true)
+				p.addFile(t, path+"/_")
+				path += "/"
+			}
+		}})
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

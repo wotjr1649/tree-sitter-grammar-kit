@@ -4,6 +4,7 @@ import (
 	"bytes"
 	jsonv2 "encoding/json/v2"
 	"errors"
+	"math"
 	"slices"
 	"strings"
 
@@ -432,7 +433,13 @@ func svcInlineTreeCode(s SvcInlineStep, o SvcInlineObserved) string {
 		if len(v.Nodes) == 0 {
 			return "SVC_INLINE_CST_EMPTY"
 		}
-		got := siRowsDigest(siRowsOfNodes(v.Nodes))
+		// The rows hold int32 parents: the structure (root -1, every other parent an earlier index on the
+		// preorder ancestry) is checked first, so no parent is narrowed into a different valid row.
+		rows, ok := siRowsOfNodes(v.Nodes)
+		if !ok || ValidateTree(v.Nodes, math.MaxUint32) != nil {
+			return "SVC_INLINE_CST_STRUCTURE"
+		}
+		got := siRowsDigest(rows)
 		switch {
 		case got.Nodes != s.CST.Nodes:
 			return "SVC_INLINE_CST_NODES"
