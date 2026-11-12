@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- #233 G1-2 development tool: references the Roslyn assemblies of the local .NET SDK (no package, so restore needs no network). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net$([System.Text.RegularExpressions.Regex]::Match('$(NETCoreSdkVersion)', '^[0-9]+').Value).0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseAppHost>false</UseAppHost>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <NuGetAudit>false</NuGetAudit>
+    <!-- the assembly hash must not depend on the checkout: no source-control revision, no PDB path -->
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <DebugType>none</DebugType>
+    <RoslynDir Condition="'$(RoslynDir)' == ''">$(NetCoreRoot)sdk\$(NETCoreSdkVersion)\Roslyn\bincore\</RoslynDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="TSGK.SDK" Value="$(NETCoreSdkVersion)" />
+    <AssemblyMetadata Include="TSGK.RoslynDir" Value="$(RoslynDir)" />
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(RoslynDir)Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(RoslynDir)Microsoft.CodeAnalysis.CSharp.dll" />
+  </ItemGroup>
+</Project>

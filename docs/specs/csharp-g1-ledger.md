@@ -1,6 +1,6 @@
 # C# 선언 지원 범위의 의무 원장 계약 (#233 G1-1)
 
-이 문서는 별도 추적 계약 [`csharp-g1-ledger-r1.json`](../../src/contracts/csharp-g1-ledger-r1.json)(schema `tsgk-csharp-g1-ledger/r1`)의 형식과 검증을 정한다. 원장은 grammar-kit가 선언한 C# 지원 범위 전체를 의무로 펼친 **정적 목록**이다. 기대값이 없고, native·Roslyn·`dotnet`을 실행하지 않으며, 어떤 지원 범위나 release claim도 바꾸지 않는다. 계약 자체는 완료된 기능이 아니라 G1(C# 전체 선언 범위의 의무 → 독립 기대값 → 실행 근거 대조)의 첫 단계다. v0.3.0의 C# claim은 그대로 C1–C4 교정과 기존 qualification PASS로 한정된다.
+이 문서는 별도 추적 계약 [`csharp-g1-ledger-r1.json`](../../src/contracts/csharp-g1-ledger-r1.json)(schema `tsgk-csharp-g1-ledger/r1`)의 형식과 검증을 정한다. 원장은 grammar-kit가 선언한 C# 지원 범위 전체를 의무로 펼친 **정적 목록**이다. 기대값이 없고, native·Roslyn·`dotnet`을 실행하지 않으며, 어떤 지원 범위나 release claim도 바꾸지 않는다. 계약 자체는 완료된 기능이 아니라 G1(C# 전체 선언 범위의 의무 → 독립 기대값 → 실행 근거 대조)의 첫 단계다. 이 문서는 뒤에서 G1-2의 Roslyn 관측 계약도 정한다. v0.3.0의 C# claim은 그대로 C1–C4 교정과 기존 qualification PASS로 한정된다.
 
 ## 범위와 상태
 
@@ -71,6 +71,70 @@ go run ./src/dev/csharp-g1-ledger -root . [-write]
 
 ## 아직 주장하지 않는 것
 
-- 대안별 기대 node type·범위(독립 기대값), 오류 복구의 속성 기대값, 선언 항목의 이름·범위 기대값, version 경계 수락 행렬, Roslyn 관측은 이후 단계(G1-2부터)의 일이다.
+- 대안별 기대 node type·범위(독립 기대값), 오류 복구의 속성 기대값, 선언 항목의 이름·범위 기대값, version 경계 수락 행렬은 이후 단계(G1-3부터)의 일이다. Roslyn 관측은 G1-2가 별도 asset으로 더했다(아래 절).
 - 원장은 어떤 의무가 충족됐다고 판정하지 않는다. `NO_EXPECTED`는 "기대값이 아직 없다"는 뜻이다.
 - 추가 역할은 사례·step 수만 연결한다. SVC inline·large 오류 fixture·ordinary query 좌표의 소유는 #362·#216이다.
+
+## Roslyn 관측 계약 (G1-2)
+
+별도 추적 계약 [`csharp-g1-roslyn-observed-r1.json`](../../src/contracts/csharp-g1-roslyn-observed-r1.json)(schema `tsgk-csharp-g1-roslyn-observed/r1`)은 원장의 사례 source를 **로컬 .NET SDK 10.0.401에 포함된 Roslyn DLL이 관측한 결과**다. 이 asset의 주장은 "그 DLL이 그 source에서 보인 행동"으로 한정한다. Roslyn 소스나 C# 사양 자체의 일반화가 아니며, 기대값이 아니다(원장의 모든 의무는 계속 `NO_EXPECTED`). 이것은 G1-3 이후 단계가 "차분 oracle 기대값"(사용자 결정 D2)을 만들 때 읽는 입력이다. native 출력은 읽지 않는다.
+
+### 도구
+
+- `src/dev/csharp-g1-roslyn`(`Observe.cs`, `Observe.csproj`, `global.json`)이 관측한다. 기존 `src/dev/csharp-pp-oracle`을 확장하지 않고 새 project로 둔 이유: 그 oracle의 출력(`tsgk-csharp-pp-roslyn/r2`·`r3`)은 `ppexpect`와 승인 pin(`roslyn-pins.json`)이 엄격히 읽으므로 필드·provenance를 바꾸면 기존 계약이 흔들린다. 새 도구는 그 oracle의 directive 관측 필드(`features`, `directives`, `disabled`, `errors`, `diagnostics`)를 같은 의미로 함께 내서 기존 관측 157개를 재현할 수 있고, 선언·구문 node·수락 여부·`LanguageVersion` 관측을 더한다.
+- `global.json`이 SDK를 10.0.401로 고정한다(`rollForward: disable`). `Observe.csproj`는 패키지 없이 SDK의 `Roslyn/bincore`에 있는 `Microsoft.CodeAnalysis.dll`·`Microsoft.CodeAnalysis.CSharp.dll`만 참조하므로 NuGet 복원은 패키지를 받지 않는다. 어셈블리 hash가 checkout이나 PDB 경로에 달라지지 않도록 source revision과 PDB를 끈다.
+- 입력은 `go run ./src/dev/csharp-g1-roslyn-asset -root . -input <파일>`이 원장과 fixture에서 만든다(사례마다 원본과 edit 뒤의 source 각각이 한 항목, id `<사례>#<step>`, preprocessor symbols 없음). `dotnet Observe.dll <입력> <출력> <원장>`이 관측하고 원장의 pin을 출력에 적는다. 출력은 결정적이어서 같은 입력의 두 실행이 byte 단위로 같다. 도구는 개발용이며 CI에서 실행하지 않는다. CI는 추적 asset만 offline으로 읽는다.
+- 실행은 HARD Job(메모리 4 GiB)과 단계별 시간 한도 안에서만 하고, 끝난 뒤 `dotnet`·`VBCSCompiler`·MSBuild node가 남지 않았는지 확인한다.
+
+### 관측 항목
+
+모든 offset은 source의 UTF-8 byte offset이다. source마다 한 줄이다.
+
+| 항목 | 내용 |
+|---|---|
+| `id`, `sha256`, `bytes` | `<사례>#<step>`, source의 SHA-256과 크기. 원장에서 다시 유도한 source와 같아야 한다 |
+| `accepted` | `LanguageVersion.Latest`로 파싱한 결과에 error 진단이 하나도 없는가 |
+| `diagnostics`, `errors` | error 진단의 ID·span과 Roslyn이 붙인 문맥(directive 종류, `EndOfFile`, `Other`), 그 ID 집합 |
+| `features`, `directives`, `disabled` | 기존 oracle의 관측: parser feature, directive의 종류·`#` 위치·active·taken·물리 줄, 비활성 구간 |
+| `declarations` | 선언 node의 SyntaxKind·span과 이름(이름 token의 text·span. 이름이 없거나 누락 token이면 빈 목록) |
+| `nodes` | 모든 구문 node(token·trivia 제외)의 `[kind 번호, start, end]`를 preorder로. `kinds`가 번호의 SyntaxKind 이름표 |
+| `versions` | `LanguageVersion` C# 7.3, 8, …, 14 각각의 수락 여부와 error 진단(ID·span) |
+| `oracle_error` | Roslyn이 진단을 열거하지 못한 source(관측 없음). 이 항목은 다른 필드를 갖지 않는다 |
+
+선언 node는 `MemberDeclarationSyntax`(top-level statement·`extension` block 포함), type·delegate·namespace 선언, 접근자, 지역 함수, 지역 변수 선언문, 매개변수, 형식 매개변수, using 지시문, extern alias, 최상위 attribute 목록이다. 이는 원장의 선언 node 20종과 매핑 밖 11종을 모두 덮는 Roslyn 쪽 분류이며 tree-sitter node와의 대응표(G1-3)는 아니다.
+
+### provenance와 결속
+
+- `ledger`: 원장 asset의 경로·bytes·SHA-256. `input`: 도구 입력 문서의 bytes·SHA-256(verifier가 원장과 fixture에서 다시 유도한 문서와 같아야 한다).
+- `provenance`: `sdk`(10.0.401), `runtime`(`.NET 10.0.12`), 도구 어셈블리 SHA-256, 로드한 Roslyn 어셈블리 2개(`Microsoft.CodeAnalysis`, `Microsoft.CodeAnalysis.CSharp`)의 SDK 상대 경로·bytes·SHA-256·assembly 버전·product 버전, `LanguageVersion` 열거 전체와 관측한 버전 목록과 `Latest`가 가리키는 유효 버전(CSharp14), 파싱 옵션(`DocumentationMode.Parse`, `SourceCodeKind.Regular`). 도구는 SDK 파일과 로드한 사본의 bytes가 같음을 확인한 뒤에만 기록한다.
+- verifier는 provenance의 **형식과 일관성**만 확인한다(`sdk`가 `주.부.수` 형식, 어셈블리 경로가 그 SDK를 가리킴, 두 DLL의 product 버전이 같음, SHA-256이 hex 64자, bytes가 양수 등). 저장소의 버전 가드(`TestNoHardcodedToolVersions`)가 코드에 도구 버전·DLL pin을 두는 것을 금지하므로 SDK 10.0.401과 DLL SHA-256은 코드 상수가 아니라 asset의 provenance에 있다. 그것을 고정하는 것은 asset의 SHA-256이다: 시험이 asset 전체의 크기·SHA-256을 봉인하고, 승인된 evidence pin(#370 V2-D)에 결속하는 일은 G1-3 봉인 단계의 몫이다(이 단계는 승인을 만들지 않는다).
+
+### 검증
+
+`kit.ParseCSharpG1RoslynObserved(data, ledger, sources)`는 먼저 원장이 저장소 선언의 유도 결과와 같음을 확인하고, asset을 엄격히 decode한 뒤(알 수 없는 member 거부, 4 MiB 상한) 다음을 요구한다. 이 verifier는 Roslyn을 다시 실행하지 않는다.
+
+| code | 거부하는 것 |
+|---|---|
+| `G1_ROSLYN_JSON`, `_SCHEMA`, `_SIZE` | 형식, schema, 크기 |
+| `G1_ROSLYN_LEDGER_PIN`, `_INPUT_PIN` | 원장·입력 문서와 다른 pin |
+| `G1_ROSLYN_PROVENANCE` | SDK 형식·어셈블리 이름·경로·크기·SHA-256 형식·product 버전 일관성, 열거·관측 버전 목록(C# 7.3 이상, 열거의 값과 일치, `Latest`의 유효 버전 포함)·파싱 옵션이 맞지 않음 |
+| `G1_ROSLYN_KINDS` | SyntaxKind 이름표가 정렬·유일·형식을 지키지 않음 |
+| `G1_ROSLYN_SOURCE_SET` | 원장 사례의 source 목록과 id·순서·SHA-256·bytes가 다름(누락·추가·교환 포함) |
+| `G1_ROSLYN_OBSERVATION`, `_ORACLE_ERROR` | 관측 필드 누락, `oracle_error`와 다른 필드의 공존 |
+| `G1_ROSLYN_DIAGNOSTIC`, `_DIRECTIVE` | 진단 span·ID 형식·집합·수락 여부 불일치, `#`가 아닌 directive 위치·줄 범위·비활성 구간 순서 |
+| `G1_ROSLYN_NODES` | 첫 node가 compilation unit이 아님, kind 번호·span 범위, 부분 겹침(중첩 위반) |
+| `G1_ROSLYN_DECLARATION` | 선언이 node가 아님(종류·span), 이름 text가 source와 다르거나 선언 밖 |
+| `G1_ROSLYN_VERSIONS` | 버전 목록·순서, 수락 여부와 진단의 모순, `Latest`의 유효 버전과 주 관측의 진단 불일치 |
+
+```
+go run ./src/dev/csharp-g1-roslyn-asset -root . -verify src/contracts/csharp-g1-roslyn-observed-r1.json
+go run ./src/dev/csharp-g1-roslyn-asset -root . -regress <cases.json를 관측한 출력>
+```
+
+`-regress`는 `src/testdata/csharp-pp/cases.json`을 같은 도구로 관측한 출력의 directive 필드가 `roslyn-observed.json`의 157개 관측과 같은지 비교한다.
+
+### 이 단계가 주장하지 않는 것
+
+- 기대값, native 대조, 수락 여부가 "정답"이라는 판정. Roslyn과 tree-sitter 결과의 차이는 G1-3 이후에 사양을 인용해 처분한다.
+- token·trivia와 누락(missing) 표지, 의미 분석(binding), preprocessor symbols가 있는 문맥(기본 모드만), `LanguageVersion.Preview`.
+- 승인 pin(evidence-pin approval)과의 결속, CI에서의 재현.

@@ -398,10 +398,16 @@ type g1CaseData struct {
 
 // DeriveCSharpG1Ledger derives the ledger from the pinned declarations alone.
 func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
+	out, _, err := deriveCSharpG1(src)
+	return out, err
+}
+
+// deriveCSharpG1 also returns the registered cases with their source versions (G1-2 observes them).
+func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData, error) {
 	var out CSharpG1Ledger
 	inv, err := ParseQualificationInventory(src.Inventory)
 	if err != nil {
-		return out, err
+		return out, nil, err
 	}
 	var route *QualRoute
 	for i := range inv.Routes {
@@ -410,24 +416,24 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 		}
 	}
 	if route == nil {
-		return out, g1Fault("G1_LEDGER_ROUTE")
+		return out, nil, g1Fault("G1_LEDGER_ROUTE")
 	}
 	var alts g1AltFile
 	if err := json.Unmarshal(src.Alternatives, &alts); err != nil || alts.Schema != g1AlternativesSchema || alts.Routes[g1Route] == nil {
-		return out, g1Fault("G1_LEDGER_ALTERNATIVES")
+		return out, nil, g1Fault("G1_LEDGER_ALTERNATIVES")
 	}
 	var mapping g1MappingFile
 	if err := json.Unmarshal(src.FactMapping, &mapping); err != nil || mapping.Schema != g1MappingSchema {
-		return out, g1Fault("G1_LEDGER_MAPPING")
+		return out, nil, g1Fault("G1_LEDGER_MAPPING")
 	}
 	decl := route.Workload.Declarations
 	if decl == nil || decl.Mapping != mapping.Revision {
-		return out, g1Fault("G1_LEDGER_MAPPING")
+		return out, nil, g1Fault("G1_LEDGER_MAPPING")
 	}
 	// the declaration nodes are the workload's declaration items; each must be a mapping fact
 	mapped := decl.Items
 	if len(mapped) == 0 {
-		return out, g1Fault("G1_LEDGER_MAPPING")
+		return out, nil, g1Fault("G1_LEDGER_MAPPING")
 	}
 	for _, m := range mapped {
 		ok := false
@@ -437,7 +443,7 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 			}
 		}
 		if !ok {
-			return out, g1Fault("G1_LEDGER_MAPPING")
+			return out, nil, g1Fault("G1_LEDGER_MAPPING")
 		}
 	}
 	out = CSharpG1Ledger{Schema: CSharpG1LedgerSchema, Basis: csharpG1Basis}
@@ -452,7 +458,7 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 	for _, dir := range csharpG1Fixtures {
 		data, ok := src.Fixtures[dir]
 		if !ok {
-			return out, g1Fault("G1_LEDGER_FIXTURE")
+			return out, nil, g1Fault("G1_LEDGER_FIXTURE")
 		}
 		out.Inputs.Fixtures = append(out.Inputs.Fixtures, queryregistrycore.FilePin(csharpG1FixturePath(dir), data))
 		var f g1FixtureFile
@@ -461,11 +467,11 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 			want = g1QueryFixtureSchema
 		}
 		if err := json.Unmarshal(data, &f); err != nil || f.Schema != want || f.Route != g1Route {
-			return out, g1Fault("G1_LEDGER_FIXTURE")
+			return out, nil, g1Fault("G1_LEDGER_FIXTURE")
 		}
 		for _, c := range f.Cases {
 			if _, dup := fixtureOf[c.ID]; dup {
-				return out, g1Fault("G1_LEDGER_FIXTURE")
+				return out, nil, g1Fault("G1_LEDGER_FIXTURE")
 			}
 			fixtureOf[c.ID] = dir
 			if dir == "queries" {
@@ -478,7 +484,7 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 	for id, from := range queryCases {
 		s, ok := sources[from]
 		if !ok {
-			return out, g1Fault("G1_LEDGER_FIXTURE")
+			return out, nil, g1Fault("G1_LEDGER_FIXTURE")
 		}
 		sources[id] = s
 	}
@@ -488,21 +494,21 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 	for _, c := range route.Workload.Cases {
 		if c.Role != "requirement" {
 			if len(c.Covers) != 0 || len(c.Alternatives) != 0 {
-				return out, g1Fault("G1_LEDGER_CASE")
+				return out, nil, g1Fault("G1_LEDGER_CASE")
 			}
 			continue
 		}
 		s, ok := sources[c.ID]
 		if !ok || digestHex([]byte(s)) != c.Input.SHA256 || uint64(len(s)) != c.Input.Bytes {
-			return out, g1Fault("G1_LEDGER_SOURCE")
+			return out, nil, g1Fault("G1_LEDGER_SOURCE")
 		}
 		versions, _, err := ApplyEdits(EncodingUTF8, []byte(s), c.Edits, g1SourceLimit)
 		if err != nil {
-			return out, err
+			return out, nil, err
 		}
 		for _, e := range c.Expect {
 			if e.Step < 0 || e.Step >= len(versions) {
-				return out, g1Fault("G1_LEDGER_CASE")
+				return out, nil, g1Fault("G1_LEDGER_CASE")
 			}
 		}
 		data[c.ID] = &g1CaseData{c: c, fixture: csharpG1FixturePath(fixtureOf[c.ID]), versions: versions}
@@ -569,11 +575,11 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 
 		file, ok := alts.Routes[g1Route][req.Row]
 		if !ok || len(file.Alternatives) != len(req.Alternatives) {
-			return out, g1Fault("G1_LEDGER_ALTERNATIVES")
+			return out, nil, g1Fault("G1_LEDGER_ALTERNATIVES")
 		}
 		for i, a := range file.Alternatives {
 			if a.ID != req.Alternatives[i] || a.Kind != "production" && a.Kind != "fact" {
-				return out, g1Fault("G1_LEDGER_ALTERNATIVES")
+				return out, nil, g1Fault("G1_LEDGER_ALTERNATIVES")
 			}
 			altSource[a.ID] = a
 		}
@@ -723,7 +729,7 @@ func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
 			out.ExtraRoles = append(out.ExtraRoles, r)
 		}
 	}
-	return out, nil
+	return out, data, nil
 }
 
 // MarshalCSharpG1Ledger writes the canonical asset: one line per row, case, alternative and the

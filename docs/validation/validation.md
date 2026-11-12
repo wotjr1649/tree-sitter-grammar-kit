@@ -9,6 +9,15 @@
 - `go run ./src/dev/csharp-g1-ledger -root .`는 추적 asset이 유도 결과와 같음을 확인한다.
 - 아직 검증하지 않는 것: 대안별 기대값(G1-2 이후), `LITERAL_MATCH`의 구문 정확성, Roslyn 관측.
 
+## #233 G1-2 Roslyn 관측 검증
+
+- 계약: [Roslyn 관측 계약](../specs/csharp-g1-ledger.md#roslyn-관측-계약-g1-2). 관측 asset은 SDK 10.0.401의 Roslyn DLL이 원장 사례 source 514개에서 보인 행동이며 기대값이 아니다. `kit` 시험과 `go run ./src/dev/csharp-g1-roslyn-asset`은 native·Roslyn·`dotnet`을 실행하지 않는다. 관측 도구(`src/dev/csharp-g1-roslyn`)는 개발용이며 CI에서 실행하지 않는다.
+- `kit` 시험(native 없음): `TestCSharpG1RoslynAssetSealedAndBound`는 추적 asset의 크기·SHA-256을 고정하고 원장·입력 pin과 source 514개(수락 361)·관측 버전 C# 7.3–14·원장 step의 관측을 확인한다. `TestCSharpG1RoslynInputIsDerivedAndStable`은 도구 입력이 원장과 fixture에서 안정적으로 유도되고 edit 뒤 source를 담는지 확인한다.
+- 반례: `TestCSharpG1RoslynRejectsTampering`은 schema, 원장·입력 pin, SDK 형식·runtime·도구 SHA 형식·DLL(경로·bytes·SHA 형식·product 버전 일관성·순서)·`LanguageVersion` 열거·관측 버전 목록, 이름표 정렬·중복, source의 누락·추가·교환·이름·SHA·bytes, 수락 여부·진단 집합·span·ID, directive 위치·종류·비활성 구간 순서, node의 첫 항목·kind 번호·span·부분 겹침·빈 목록, 선언의 종류·span·이름 text·이름 범위, 버전 목록·수락 여부·`Latest` 진단 불일치·진단 누락, `oracle_error`와 다른 필드의 공존, 필수 관측 누락을 정해진 code로 거부한다. `TestCSharpG1RoslynRejectsMalformedBytes`는 알 수 없는 member·잘린 JSON·빈 입력·크기 초과와 변조한 원장을 거부한다.
+- mutant: pin·SDK 형식·DLL(bytes·SHA 형식·경로·product 버전)·도구 SHA 형식·알 수 없는 member 허용·크기 상한·source 수·SHA·bytes·수락 여부·오류 목록·directive 위치·첫 node·중첩·선언 이름 text·선언 소속·버전 순서·`Latest` 일치·`oracle_error`·이름표 정렬·최소 버전 비교를 각각 끈 mutant 25개가 모두 시험으로 검출된다(`go test -overlay`).
+- 도구 실행 근거(로컬 Windows, HARD Job 4 GiB, 단계별 시간 한도, 실행 뒤 process 정리): 같은 입력의 두 실행이 byte 단위로 같고(1,500,932 B), `src/testdata/csharp-pp/cases.json`의 관측 157개를 `-regress`로 재현한다(directive 필드 157/157 동일).
+- 아직 검증하지 않는 것: 기대값(G1-3), Roslyn과 native의 대조, token·누락 표지·의미 분석, symbols가 있는 문맥, CI에서의 재현, 승인 pin 결속.
+
 ## #362 scope별 fan-in·completion gate 검증 (범위 7)
 
 - `kit` 시험(native 없음, 실제 P0 registry·SVC asset 사용): `TestQueryCompletionDenominatorsAreDerivedFromTheRegistry`는 분모를 registry와 SVC asset에서 유도한 값(ordinary 53,104/host, predicate 20+47/host, SVC 509/host 일곱 종류, large 3+1 windows)과 미등록 scope 하나로 고정한다. `TestQueryCompletionAbsentScopesAreBlockedNotZero`는 결과가 전혀 없을 때 전체 107,399가 BLOCKED(`QUERY_SCOPE_RESULT_ABSENT`)이고 host별 53,719/53,680임을 확인한다. `TestQueryCompletionFoldsRealScopeResults`는 ordinary shard·predicate·SVC 결과를 합쳐 scope·host·전체의 합산식과 저장 결과의 재판독을 확인한다. `TestQueryCompletionFailPreemptsAndKeepsTheFirstCode`는 FAIL 우선과 다른 scope의 결함 뒤에도 최초 code 보존을 확인한다.

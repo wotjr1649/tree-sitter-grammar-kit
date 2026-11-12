@@ -3,6 +3,7 @@
 ## Unreleased
 
 - C# 선언 지원 범위의 의무 원장과 offline verifier(Refs #233, G1-1): 별도 추적 계약 `src/contracts/csharp-g1-ledger-r1.json`(`tsgk-csharp-g1-ledger/r1`)이 `csharp` route의 15행 × 필수 kind 의무 65개 → production·fact 대안 1,531개 → 사례 389개·step → 사례가 이미 등록한 기대 node type을 저장소 선언만으로 펼친다. 대안마다 정적 패턴의 존재 확인(`LITERAL_MATCH` 825·`LITERAL_ABSENT` 0·`UNVERIFIED_PRESENCE` 706)과 매핑 밖 선언 구문 11종(모두 선언한 범위 안), 선언 node 20종, C# 추가 역할을 담고 모든 의무는 `NO_EXPECTED`다. `kit.DeriveCSharpG1Ledger`·`ParseCSharpG1Ledger`는 asset이 유도 결과와 정확히 같음을 요구하며 누락·중복·순서·pin·상태 변조를 거부한다. 기대값·Roslyn 관측·실행 근거 대조는 이후 단계다. 지원 범위, claim, release 문서와 한도는 바꾸지 않았다.
+- C# 사례 source의 Roslyn 관측 도구와 관측 asset(Refs #233, G1-2): 개발 도구 `src/dev/csharp-g1-roslyn`(SDK 10.0.401로 `global.json` 고정, 패키지 없음)이 원장 사례의 source 514개(원본과 edit 뒤)에서 수락 여부, 진단 ID·span, 선언 node의 종류·이름·span, 구문 node의 종류·span, directive 관측, C# 7.3–14 각각의 수락 여부를 관측해 별도 추적 asset `src/contracts/csharp-g1-roslyn-observed-r1.json`(`tsgk-csharp-g1-roslyn-observed/r1`)으로 남긴다. asset은 원장·입력 문서의 pin에 결속되고 SDK·Roslyn DLL 2개의 경로·크기·SHA-256을 provenance로 담으며(고정은 asset의 SHA-256 봉인이 하고 승인 pin 결속은 이후 단계다) `kit.ParseCSharpG1RoslynObserved`가 offline으로 검증한다. 같은 입력의 두 실행은 byte 단위로 같고 기존 `roslyn-observed.json`의 157개 관측을 재현한다. 주장은 "SDK 10.0.401에 포함된 Roslyn DLL의 행동"이며 기대값·native 대조가 아니다. 지원 범위, claim, release 문서와 한도는 바꾸지 않았다.
 
 ## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
 
