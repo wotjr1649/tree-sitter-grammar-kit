@@ -409,6 +409,32 @@ P0 registry의 `predicate` 목록은 Windows/Linux 각각 67행이다. 앞 20행
 
 **현재 실행 범위.** Windows host의 20 tuple은 실제 owned native(plain grammar)로 실행해 20/20 VERIFIED이고 47행은 host policy evaluator로 47/47 VERIFIED다. Linux 몫(20+47)은 등록만 되어 있고 실행 결과가 없으므로 BLOCKED다. Reference 독립 실행, r9 replay, 외부 승인은 이 범위에 포함하지 않는다.
 
+## #362 SVC 사례의 독립 등록과 확장 분모 (범위 5)
+
+P0 registry의 `n461-svc` extra role(`s06-csharp-svc`, `SVC-SERVICEHOST-r2`, route `csharp`)은 case 69개, edit 41개, query 2개(`facts.declarations`, `facts.dynamic_sql`)이며 하위 분모는 `required:null`, `UNREGISTERED`와 `missing_scopes`의 `svc-segment-range-history-codebehind`로 남아 있다. 이 숫자는 `qualification-c1.json`의 해당 workload와 정확히 일치하고(case 69, edit 41, 전체 step 110) P0 registry의 값도 같다. P0 registry와 그 ID는 바꾸지 않는다. 별도 추적 계약 [`query-svc-expected-r1.json`](../../src/contracts/query-svc-expected-r1.json)(196,457 B, SHA-256 `bbe9116749abe78cc218a0455cad476d9d4b4b9044447ff35d10a181df7eb746`)이 확장 분모와 독립 expected를 담는다. 이 파일은 registry·qualification inventory·`src/testdata/native/n461/svc.json`의 정확한 bytes/SHA-256에 결속된다.
+
+**확장 분모(host당).** 의무는 asset에서 고정 순서로 다시 전개한다.
+
+| 종류 | 개수 | 내용 | 기대값 |
+|---|---:|---|---|
+| `SVC_HISTORY` | 110 | case·step마다 원문 version의 byte 수와 SHA-256 | 독립 도출 |
+| `SVC_EDIT_POINT` | 41 | edit의 byte와 start/old-end/new-end point | 독립 도출 |
+| `SVC_SEGMENT` | 109 | step의 directive·open/close·이름·attribute 범위와 point, diagnostics, Language 상태, CodeBehind 선언, included range, coverage | 독립 도출 |
+| `SVC_CODEBEHIND` | 2 | 선언된 참조(`OrderService.svc.cs`, `App_Code/OrderService.cs`)가 실제 관측에서 선언 case로 해석됨 | 독립 도출 |
+| `SVC_NEGATIVE` | 1 | VB `Language`의 unsupported-language negative | 원래 계약 보존 |
+| `SVC_INLINE_TREE` | 82 | C# inline 구간의 tree(composite step 81 + CodeBehind 참조 C# case 1) | 등록만, BLOCKED |
+| `SVC_INLINE_QUERY` | 164 | inline tree 82개 × 두 query | 등록만, BLOCKED |
+
+109개 `SVC_SEGMENT`는 69 case 중 CodeBehind의 대상인 참조 C# case `n461-svc-reference-p-r2`(composite를 만들지 않는 일반 C# case)를 제외한 68 case의 step이다. 참조 case의 원문 history 1건은 `SVC_HISTORY`에, 그 C# tree는 `SVC_INLINE_TREE`에 포함된다.
+
+**독립 expected.** 원문 version과 edit point는 `svc.json`의 find/replace edit에서 도출하고 inventory의 byte-level edit(start/old-end/new-end, old/new bytes)과 서로 교차 검사했다. Directive 관측은 `docs/validation/net461-workload.md`의 `SVC-SERVICEHOST-r2` 형식에서 별도로 구현한 도출기로 만들었으며 native·reference·kit 출력을 읽지 않았다. native 첫 실행 전에 위 SHA를 봉인했다. 도출기는 같은 저자가 형식 문서를 읽고 썼으므로 diagnostics 코드 이름과 일부 경계 규칙은 producer 소스와 같은 규칙을 따른다. 그 한계를 줄이려고 directive 범위·닫는 구분자·inline 시작은 문자열 검색만으로 따로 도출한 anchor로도 확인한다(인용부 안의 `%>`를 가진 case는 제외).
+
+**BLOCKED로 남는 부분.** `SVC_INLINE_TREE`는 실제 C# grammar(`parser.c` 51 MB)가 저장소에 없어 이 host에서 실행하지 못한다. 등록된 `expect`(step 109개)는 inventory의 기존 수작업 기대값이며 이 계약이 새로 만든 값이 아니다. owned plain grammar는 inline 언어의 기계 장치만 확인하는 대역이며 C# tree의 증거가 아니다. `SVC_INLINE_QUERY`는 inventory의 69 case 모두에서 `query_expect`가 비어 있고 `dynamic_sql_expect`가 `null`이므로 query별 expected가 아예 등록되어 있지 않다. 빈 목록 `[]`로 바꾸지 않는다. Linux 몫은 등록되어 있으나 실행 결과가 없어 BLOCKED다. 따라서 SVC 완료는 BLOCKED이며 `full_scope_complete=false`다.
+
+**VB negative.** `n461-svc-language-vb-n-r1`(`Language="VB"`)은 원래 상태 그대로 `BLOCKED`/`SVC_INLINE_UNSUPPORTED`, process 없음, inline tree 없음으로 거부된다(`internal/native/run.go`의 `svcObservationOnly`와 `kit/replay_native.go`의 `svcVerdict`). 관측은 `UNSUPPORTED_LANGUAGE`와 inline coverage `UNSUPPORTED`다. 이 거부를 PASS로 바꾸거나 VB 지원을 추가하지 않는다.
+
+**검증.** `kit.ParseSvcExpected`는 asset을 세 pin과 inventory의 69 case·41 edit·110 step·두 query·CodeBehind 선언에 결속한다. `kit.VerifySvcExpected`는 기존 `ApplyEdits`와 `ObserveServiceHostWithContext`, `svcVerdict`로 의무를 재계산해 독립 expected와 대조한다. `kit.FoldSvcScope`는 host별 `required = verified + failed + blocked + unprocessed`를 유지한다.
+
 ## #362 ordinary 사전 등록과 capacity plan P2-A
 
 P2-A는 ordinary 실행 전에 profile·semantic registration·asset registration·shard plan을 strict typed data로 고정하고, P0 ordinary ID를 이 계획에 정확히 연결하는 source-only 단계다. Ordinary execution context는 `ordinary-batch-full-input-utf8/r1`이며 P0 membership coordinate의 `context`와 별도다. `closure_encoding`은 `plain`, `parser-paged`, `binary-paged` 중 하나로 명시한다. P2-A는 producer·guarded reader·replay를 추가하거나 native/reference를 실행하지 않는다.
