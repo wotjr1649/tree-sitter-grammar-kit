@@ -334,7 +334,7 @@ func FoldPredicateScope(registry []byte, registrySHA string, judgments []queryre
 		}
 	}
 	for _, c := range out.Counters {
-		if c.Required != c.Verified+c.Failed+c.Blocked+c.Unprocessed {
+		if !countsSumTo(c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed) {
 			return out, predicateFault("PREDICATE_SCOPE_SUM")
 		}
 	}

@@ -408,7 +408,7 @@ func FoldSvcScope(e SvcExpected, platform string, judgments []SvcJudgment, block
 		}
 	}
 	for _, c := range out.Counters {
-		if c.Required != c.Verified+c.Failed+c.Blocked+c.Unprocessed {
+		if !countsSumTo(c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed) {
 			return out, svcFault("SVC_SCOPE_SUM")
 		}
 		if c.Failed > 0 {

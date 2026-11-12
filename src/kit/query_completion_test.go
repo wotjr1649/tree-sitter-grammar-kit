@@ -923,3 +923,120 @@ func TestQueryCompletionRefusesAnotherLargeContract(t *testing.T) {
 		}
 	}
 }
+
+// A shard whose FAIL no tuple carries (every selected tuple VERIFIED, the producer's FAIL kept
+// beside them) must still reach the fan-in as a FAIL with its first code.
+func TestOrdinaryScopeResultKeepsAShardFailThatEveryTupleVerifies(t *testing.T) {
+	f := faninFixtureFor(t)
+	ids := f.structuralIDs("windows-amd64", 3)
+	shard := faninShard(ids, []string{ordinaryTupleVerified, ordinaryTupleVerified, ordinaryTupleVerified}, true)
+	shard.ProducerRecorded = Verdict{StatusCompleted, AssessFail}
+	shard.finding("PRODUCER_FAIL", "", "")
+	if !validOrdinaryStoredResult(shard) {
+		t.Fatal("the shard must be a valid stored result")
+	}
+	scope, err := OrdinaryScopeResult(f.v, []queryregistrycore.Pin{faninOrdinaryAsset}, []OrdinaryQuerySemanticsResult{shard})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := scope.Counters[0]
+	if scope.FirstFailure != "PRODUCER_FAIL" || c.Failed == 0 || c.Verified+c.Failed != 3 {
+		t.Fatalf("the shard FAIL was lost: first=%q counter=%+v", scope.FirstFailure, c)
+	}
+	res, err := FoldQueryCompletion(f.request(scope))
+	if err != nil || res.Completion != QueryCompletionFail || res.Code != "PRODUCER_FAIL" || res.Total.Failed == 0 {
+		t.Fatalf("fan-in %s %s failed=%d: %v", res.Completion, res.Code, res.Total.Failed, err)
+	}
+	// a FAIL shard that selects nothing has no tuple to carry its FAIL: it is rejected, not dropped
+	empty := newOrdinarySemanticsResult()
+	empty.ProducerRecorded = Verdict{StatusCompleted, AssessFail}
+	empty.finding("PRODUCER_FAIL", "", "")
+	if !validOrdinaryStoredResult(empty) {
+		t.Fatal("the empty shard must be a valid stored result")
+	}
+	if _, err := OrdinaryScopeResult(f.v, nil, []OrdinaryQuerySemanticsResult{empty}); err == nil || faninCode(t, err) != "QUERY_SCOPE_ORDINARY_FAIL_UNCARRIED" {
+		t.Errorf("a FAIL shard without tuples: %v", err)
+	}
+}
+
+// A counter sum that wraps around uint64 is not a distribution: required = verified + failed +
+// blocked + unprocessed must hold without overflow at every level and in the stored decoder.
+func TestQueryCompletionRejectsCounterSumsThatWrap(t *testing.T) {
+	huge := ^uint64(0)
+	if (QueryCompletionCounts{Required: 53104, Verified: 53104, Blocked: huge, Unprocessed: 1}).sums() {
+		t.Error("a wrapping distribution was accepted by sums")
+	}
+	f := faninFixtureFor(t)
+	forge := func(c *QueryScopeCounter) { c.Verified, c.Failed, c.Blocked, c.Unprocessed = c.Required, 0, huge, 1 }
+	bad := cloneScope(f.predicateScope(t))
+	forge(&bad.Counters[0])
+	if _, err := FoldQueryCompletion(f.request(seal(bad))); err == nil || faninCode(t, err) != "QUERY_SCOPE_SUM" {
+		t.Errorf("a wrapping scope row was accepted: %v", err)
+	}
+
+	blocked, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := blocked
+	r.Counters, r.Hosts = slices.Clone(r.Counters), slices.Clone(r.Hosts)
+	for i := range r.Counters {
+		if r.Counters[i].Scope == QueryScopePredicate && r.Counters[i].Platform == "windows-amd64" {
+			c := &r.Counters[i]
+			c.Verified, c.Failed, c.Blocked, c.Unprocessed = c.Required, 0, huge, 1
+			break
+		}
+	}
+	// the stored host and total rows a forger would compute with the same wrapping addition
+	r.Total = QueryCompletionCounts{}
+	for h := range r.Hosts {
+		r.Hosts[h].QueryCompletionCounts = QueryCompletionCounts{}
+		for _, c := range r.Counters {
+			if c.Platform == r.Hosts[h].Platform {
+				w := &r.Hosts[h].QueryCompletionCounts
+				w.Required, w.Verified, w.Failed, w.Blocked, w.Unprocessed = w.Required+c.Required, w.Verified+c.Verified, w.Failed+c.Failed, w.Blocked+c.Blocked, w.Unprocessed+c.Unprocessed
+			}
+		}
+		w, h := &r.Total, r.Hosts[h].QueryCompletionCounts
+		w.Required, w.Verified, w.Failed, w.Blocked, w.Unprocessed = w.Required+h.Required, w.Verified+h.Verified, w.Failed+h.Failed, w.Blocked+h.Blocked, w.Unprocessed+h.Unprocessed
+	}
+	r.Completion, r.Code = completionVerdict(r)
+	r.Complete = r.Completion == QueryCompletionComplete
+	if _, err := DecodeQueryCompletionResult(mustJSON(t, r)); err == nil || faninCode(t, err) != "QUERY_COMPLETION_SUM" {
+		t.Errorf("a wrapping stored result was accepted: %v", err)
+	}
+}
+
+// Rows that each sum correctly can still add up past uint64 into a host or total: the stored
+// decoder must reject the wrapped host and total rows a forger computes with plain addition.
+func TestDecodeQueryCompletionResultRejectsHostTotalsThatWrap(t *testing.T) {
+	f := faninFixtureFor(t)
+	r, err := FoldQueryCompletion(f.request(f.predicateScope(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Counters, r.Hosts = slices.Clone(r.Counters), slices.Clone(r.Hosts)
+	for i := range r.Counters {
+		if r.Counters[i].Scope == QueryScopePredicate && r.Counters[i].Platform == "windows-amd64" {
+			c := &r.Counters[i]
+			c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed = ^uint64(0), 0, 0, ^uint64(0), 0
+			break
+		}
+	}
+	r.Total = QueryCompletionCounts{}
+	for h := range r.Hosts {
+		w := QueryCompletionCounts{}
+		for _, c := range r.Counters {
+			if c.Platform == r.Hosts[h].Platform {
+				w.Required, w.Verified, w.Failed, w.Blocked, w.Unprocessed = w.Required+c.Required, w.Verified+c.Verified, w.Failed+c.Failed, w.Blocked+c.Blocked, w.Unprocessed+c.Unprocessed
+			}
+		}
+		r.Hosts[h].QueryCompletionCounts = w
+		r.Total.Required, r.Total.Verified, r.Total.Failed, r.Total.Blocked, r.Total.Unprocessed = r.Total.Required+w.Required, r.Total.Verified+w.Verified, r.Total.Failed+w.Failed, r.Total.Blocked+w.Blocked, r.Total.Unprocessed+w.Unprocessed
+	}
+	r.Completion, r.Code = completionVerdict(r)
+	r.Complete = r.Completion == QueryCompletionComplete
+	if _, err := DecodeQueryCompletionResult(mustJSON(t, r)); err == nil || faninCode(t, err) != "QUERY_COMPLETION_SUM" {
+		t.Errorf("a stored result whose host totals wrap was accepted: %v", err)
+	}
+}

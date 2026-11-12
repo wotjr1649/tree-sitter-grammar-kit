@@ -586,7 +586,7 @@ func FoldLargeScope(e LargeExpected, judgments []LargeJudgment) (LargeScopeCover
 		}
 	}
 	for _, c := range out.Counters {
-		if c.Required != c.Verified+c.Failed+c.Blocked+c.Unprocessed {
+		if !countsSumTo(c.Required, c.Verified, c.Failed, c.Blocked, c.Unprocessed) {
 			return out, largeFault("LARGE_SCOPE_SUM")
 		}
 		if c.Failed > 0 {
