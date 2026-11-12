@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"io/fs"
 	"math/bits"
 	"os"
 	"reflect"
@@ -112,7 +113,7 @@ func (b *eligibilityBudget) ordinarySnapshotIdentity(root *os.Root, s *eligibili
 	ordinaryVisitObserved("sort", sorted.compares+sorted.bytes+sorted.moved)
 	g := newGuard(root)
 	for _, path := range paths {
-		if e := b.charge(20*uint64(len(path))+1, 0, "ordinary-final-physical-identity"); e != nil {
+		if e := b.charge(ordinaryPhysicalIdentityWork(path, snapshot.directories), 0, "ordinary-final-physical-identity"); e != nil {
 			return e
 		}
 		before, directory := snapshot.directories[path]
@@ -128,6 +129,19 @@ func (b *eligibilityBudget) ordinarySnapshotIdentity(root *os.Root, s *eligibili
 		}
 	}
 	return b.r.check()
+}
+
+// ordinaryPhysicalIdentityWork is the work bound of observing one snapshot path with a guard, in the order
+// ordinarySnapshotIdentity walks (a path after its prefixes). With the parent in the snapshot the guard has
+// cached it, so the observation is one probe of the parent, two scans, one Lstat and one insert: under 6
+// units per byte, reserved at 20 as before. Otherwise every ancestor may be uncached: per ancestor a failed
+// probe, an Lstat and an insert, each at most one unit per byte of the path.
+func ordinaryPhysicalIdentityWork(path string, directories map[string]fs.FileInfo) uint64 {
+	work := 20*uint64(len(path)) + 1
+	if i := strings.LastIndexByte(path, '/'); i >= 0 && directories[path[:i]] == nil {
+		work += 4 * uint64(strings.Count(path, "/")) * uint64(len(path)+1)
+	}
+	return work
 }
 
 // ordinarySortWork is the proven work bound of ordinarySortPaths: ceil(log2 n) merge levels, each

@@ -134,16 +134,44 @@ type guard struct {
 
 func newGuard(r *os.Root) *guard { return &guard{root: r, dirs: map[string]bool{".": true}} }
 
+// guardLstatHook is a test-only seam that reports the byte cost of each step of lstat: "scan" (the
+// path scanned for separators), "probe" and "insert" (a verified-directory key hashed) and "lstat" (a
+// path handed to the root). It never changes a result.
+var guardLstatHook func(step string, bytes int)
+
+func guardObserved(step string, bytes int) {
+	if guardLstatHook != nil {
+		guardLstatHook(step, bytes)
+	}
+}
+
 // lstat checks every parent component is a plain directory, then observes name itself.
 // It returns (nil, nil) when name or a parent does not exist.
+//
+// A directory enters g.dirs only after every ancestor was verified, so a cached directory vouches for
+// its ancestors and the check starts below the deepest cached one: found by probing prefixes from the
+// longest, one probe when the parent is cached. Each component is then looked at once, so the work is
+// linear in len(name) for a cached parent, and an uncached ancestor costs one Lstat and one insert.
 func (g *guard) lstat(name string) (fs.FileInfo, *Error) {
 	if name != "." {
-		parts := strings.Split(name, "/")
-		for i := 1; i < len(parts); i++ {
-			dir := strings.Join(parts[:i], "/")
-			if g.dirs[dir] {
-				continue
+		guardObserved("scan", 2*len(name))
+		from := 0 // the next component starts here
+		for end := strings.LastIndexByte(name, '/'); end >= 0; end = strings.LastIndexByte(name[:end], '/') {
+			guardObserved("probe", end)
+			if end > 0 && g.dirs[name[:end]] {
+				from = end + 1
+				break
 			}
+		}
+		for {
+			k := strings.IndexByte(name[from:], '/')
+			if k < 0 {
+				break
+			}
+			end := from + k
+			dir := name[:end]
+			from = end + 1
+			guardObserved("lstat", len(dir)+1)
 			info, err := g.root.Lstat(dir)
 			if errors.Is(err, fs.ErrNotExist) {
 				return nil, nil
@@ -157,9 +185,11 @@ func (g *guard) lstat(name string) (fs.FileInfo, *Error) {
 				}
 				return nil, fail(KindInvalidInput, "LINK_OR_SPECIAL_REJECTED", dir, nil)
 			}
+			guardObserved("insert", len(dir))
 			g.dirs[dir] = true
 		}
 	}
+	guardObserved("lstat", len(name)+1)
 	info, err := g.root.Lstat(name)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -168,6 +198,7 @@ func (g *guard) lstat(name string) (fs.FileInfo, *Error) {
 		return nil, fail(KindIO, "UNREADABLE", name, err)
 	}
 	if kind(info) == "dir" {
+		guardObserved("insert", len(name))
 		g.dirs[name] = true
 	}
 	return info, nil

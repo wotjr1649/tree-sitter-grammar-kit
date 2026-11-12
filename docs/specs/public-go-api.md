@@ -12,7 +12,7 @@
 
 P2-B 2단계는 `OrdinaryOracleManifest`(r8), `OrdinaryOracleRecord`(r5), `OrdinaryRunBatch`, `OrdinaryRunBinding`(r2)의 실험적 저장 자료형을 추가한다. `VerifyOracleSet`은 r8의 구조·물리 pin·process owner·case/frame/raw 연결을 검사하며, `ValidateOrdinaryRunBinding`은 caller가 보유한 binding bytes를 같은 manifest의 input pin·candidate/cohort/run·selected shard IDs·실제 members/batches와 대조한다. `selected_shard_ids`는 실행 case와 순서대로 대응하고 `full_scope_complete`는 false다. set의 `Complete`/`Valid`는 저장 완결성과 일관성을 뜻하며 독립 의미 검증·외부 승인·full ordinary 완료를 뜻하지 않는다. 기존 semantic API/replay reducer에 r8 수용을 추가하지 않는다.
 
-`nativewire.CompareAPI(nodes, api)`는 shape 검사에 성공한 `TreeNode`/`WireAPI`의 순수 의미 비교를 제공한다. native live producer와 offline raw 소비자가 같은 comparator를 쓰며 field·point·zero-width divergence의 기존 판단을 보존한다. 이 함수는 wire/tree/API shape를 대신 검증하지 않으며 호출자가 먼저 `CheckTree`를 통과시켜야 한다.
+`nativewire.CompareAPI(nodes, api)`는 shape 검사에 성공한 `TreeNode`/`WireAPI`의 순수 의미 비교를 제공한다. native live producer와 offline raw 소비자가 같은 comparator를 쓰며 field·point·zero-width divergence의 기존 판단을 보존한다. 이 함수는 wire/tree/API shape를 대신 검증하지 않으며 호출자가 먼저 `CheckTree`를 통과시켜야 한다. 비용은 node와 API 행 수에 선형이고 point당 이분 탐색 한 번이며 field·name 문자열 byte를 더한다. 예산을 쓰는 호출자는 `nativewire.CompareAPIWork`(work)와 `nativewire.CompareAPILogical`(logical)을 예약식으로 쓴다. 둘은 순수 함수이며 `CompareAPI`의 결과와 동작을 바꾸지 않는다.
 
 `src/kit/queryregistrycore`는 #362 registry의 canonical model·namespace/set digest·strict shape·membership/coverage 계산을 담는 실험적 data-only package다. process·network·plugin 기능과 `src/internal` 의존이 없으며 offline API closure 검사(`TestOfflineClosure`)의 대상이다. kit와 기존 `src/internal/queryregistry` adapter가 같은 구현을 쓰기 위해 둔다.
 

@@ -1,5 +1,11 @@
 # Validation and merge contract
 
+## #362 ordinary physical identity·`CompareAPI` 상한 검증
+
+`TestCompareAPIMatchesReference`·`TestCompareAPIDivergenceRuns`·`TestCompareAPIAdversarialMatchesReference`는 시험 파일에 둔 이전 `CompareAPI`와 결과·difference·divergence가 `DeepEqual`인지 무작위·zero-width run·큰 입력에서 확인한다. `TestCompareAPIStaysWithinCompareAPIWork`는 형제가 매우 많은 node, 사슬, field가 많은 node, 긴 field 이름, tree보다 크거나 작은 표, 많은 point에서 test-only hook(`compareAPICostHook`)이 센 방문+문자열 bytes가 `CompareAPIWork` 이하이고 `TotalAlloc`이 `CompareAPILogical` 이하인지 assert한다. `TestGuardLstatMatchesReference`는 새 `guard.lstat`이 이전 구현과 같은 관측·오류·cache를 내는지, `TestOrdinaryPhysicalIdentityChargeCoversTheWalk`는 깊이 수백의 경로, 긴 component, ancestor가 snapshot에 없는 경로에서 test-only hook(`guardLstatHook`)이 센 경로 byte가 경로별 `ordinaryPhysicalIdentityWork` 이하인지 assert한다.
+
+Mutant는 test-only overlay로 한 번에 하나만 실행한다. `CompareAPIWork`에서 문자열 항을 뺀 mutant, work 계수를 4로 줄인 mutant, positional walk를 형제 순회로 되돌린 mutant, `guard.lstat`이 cache된 ancestor를 건너뛰지 않게 한 mutant, physical identity 식에서 ancestor 항을 뺀 mutant가 모두 위 시험으로 실패해야 한다.
+
 ## #362 ordinary final identity 정렬·actual tree 공유 검증
 
 `TestOrdinarySortPathsStaysWithinChargedWork`는 native 없이 `ordinarySortPaths`가 `slices.Sort`와 같은 결과를 내고 비교 횟수·비교 bytes·이동 수의 합이 `ordinarySortWork` 미만이며 입력 복사를 뺀 할당이 `ordinarySortLogical` 이하인지 15개 입력군(공통 prefix가 긴 경로 3,000개의 무작위·정렬·역순, 1 MiB 경로, 짧은 경로 100,000개, 빈 문자열, 중복 포함)에서 assert한다. `TestOrdinaryFinalIdentityOrderChargeCoversSortAndBuffer`는 `ordinarySnapshotIdentity`의 실제 charge가 정렬이 쓴 값과 buffer를 덮고 변경된 파일을 `SOURCE_CHANGED`로 거절하는지 확인한다. `TestOrdinaryActualShareKeepsJudgmentsAndRunsOncePerTree`·`TestOrdinaryActualShareRebindsToTheTupleSource`·`TestOrdinaryActualShareLargeTreeManyQueries`·`TestOrdinaryActualShareValuesStayUnchanged`는 공유가 판정을 바꾸지 않고 검사가 tree·source pin·expected tree마다 한 번만 실행되며 charge가 실제 방문 수 이상이고 다른 source·expected tree에는 재사용되지 않고 공유 값이 변하지 않음을 확인한다. Opt-in `TestOrdinarySQLPublicPassCapacity`는 실제 pass의 방문 수가 label별 charge 이하인지와 TSQL 72/72·PostgreSQL 9/9 VERIFIED를 확인한다.

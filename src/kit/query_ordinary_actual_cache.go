@@ -113,16 +113,9 @@ func (b *eligibilityBudget) ordinaryActualAPICheck(entry *ordinaryActualEntry, a
 	}
 	api := actual.API
 	apiRows := uint64(len(api.Nodes) + len(api.ChildFields) + len(api.FieldLookups) + len(api.Points) + len(api.Names))
-	work, e := eligibilityProduct("ordinary-api-compare", uint64(len(actual.Nodes))+apiRows, 16)
-	if e != nil {
-		return ordinaryTreeCheck{}, e
-	}
-	logical, e := eligibilityProduct("ordinary-api-compare", uint64(len(actual.Nodes)), 512)
-	if e != nil {
-		return ordinaryTreeCheck{}, e
-	}
+	work, logical := nativewire.CompareAPIWork(actual.Nodes, api), nativewire.CompareAPILogical(actual.Nodes, api)
 	// The shape walk and the comparison are priced together, before either runs.
-	if e := b.charge(work+1, logical, "ordinary-api-compare"); e != nil {
+	if e := b.charge(work, logical, "ordinary-api-compare"); e != nil {
 		return ordinaryTreeCheck{}, e
 	}
 	ordinaryVisitObserved("api-compare", uint64(len(actual.Nodes))+apiRows)

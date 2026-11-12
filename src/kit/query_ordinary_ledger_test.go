@@ -32,7 +32,18 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 			panic(err)
 		}
 	}
-	prevStage, prevCharge, prevDecode, prevVisit := ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook, ordinaryVisitHook
+	prevStage, prevCharge, prevDecode, prevVisit, prevGuard := ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook, ordinaryVisitHook, guardLstatHook
+	// The final-identity physical walk: the guard's path bytes (between the runtime-fold stage and the
+	// final-identity stage) and physicalSameFileUnits per charged path, reported as the "physical" visits.
+	inFinalIdentity := false
+	guardLstatHook = func(step string, n int) {
+		mu.Lock()
+		defer mu.Unlock()
+		if inFinalIdentity {
+			v := visits["physical"]
+			visits["physical"] = [2]uint64{v[0] + guardLstatUnits(step, n), v[1]}
+		}
+	}
 	ordinaryVisitHook = func(kind string, n uint64) {
 		mu.Lock()
 		defer mu.Unlock()
@@ -70,10 +81,15 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 				"logical_deficit": max(logical, b.logicalCap()-beforeLogical) - (b.logicalCap() - beforeLogical)})
 		}
 		labels[b][at] = v
+		if at == "ordinary-final-physical-identity" {
+			p := visits["physical"]
+			visits["physical"] = [2]uint64{p[0] + physicalSameFileUnits, p[1] + 1}
+		}
 	}
 	ordinaryStageHook = func(stage string, b *eligibilityBudget) {
 		mu.Lock()
 		defer mu.Unlock()
+		inFinalIdentity = stage == "runtime-fold"
 		record := map[string]any{"kind": "stage", "stage": stage, "logical": b.logical, "work": b.work, "read": b.r.totalRead,
 			"remaining_logical": b.logicalCap() - b.logical, "remaining_work": eligibilityWorkLimit - b.work,
 			"remaining_read": ReplayOperations()["evidence-replay"].TotalBytes - b.r.totalRead}
@@ -87,6 +103,7 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 	}
 	t.Cleanup(func() {
 		ordinaryStageHook, ordinaryChargeHook, ordinaryDecodeHook, ordinaryVisitHook = prevStage, prevCharge, prevDecode, prevVisit
+		guardLstatHook = prevGuard
 	})
 }
 

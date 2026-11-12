@@ -812,7 +812,7 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 			// What the query-independent checks and the final-identity sort really did never exceeds what the
 			// ledger charged for them.
 			_, labels, visits := ordinaryLedgerExit(t, run.LedgerPath)
-			for kind, label := range map[string]string{"sort": "ordinary-final-identity-order", "tree-check": "ordinary-actual-tree-check", "api-compare": "ordinary-api-compare", "tree-compare": "ordinary-tree-compare"} {
+			for kind, label := range map[string]string{"sort": "ordinary-final-identity-order", "tree-check": "ordinary-actual-tree-check", "api-compare": "ordinary-api-compare", "tree-compare": "ordinary-tree-compare", "physical": "ordinary-final-physical-identity"} {
 				if visits[kind][0] > labels[label][0] {
 					t.Fatalf("%s: %s did %d visits for the %d work charged under %s", route, kind, visits[kind][0], labels[label][0], label)
 				}
