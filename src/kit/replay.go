@@ -656,30 +656,35 @@ func (x *replayEnv) verifyFile(path string, size uint64, sum string) *Error {
 }
 
 func (x *replayEnv) verifyFileBytes(path string, size uint64, sum string, keep bool) ([]byte, *Error) {
+	b, _, e := x.verifyFileContent(path, size, sum, keep, false)
+	return b, e
+}
+
+func (x *replayEnv) verifyFileContent(path string, size uint64, sum string, keep, seal bool) ([]byte, *guardedPart, *Error) {
 	info := x.files[path]
 	if info == nil {
-		return nil, fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
+		return nil, nil, fail(KindInvalidInput, "MEMBER_MISSING", path, nil)
 	}
 	if uint64(info.Size()) != size {
-		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+		return nil, nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	if size > x.lim.FileBytes {
 		x.over, x.overAt = true, path
-		return nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
+		return nil, nil, fail(KindResourceLimit, "FILE_BYTES_LIMIT", path, nil)
 	}
 	var retained uint64
 	if keep {
 		retained = size + 1
 	}
-	st, e := x.g.readFile(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, retained)
+	st, e := x.g.readFileContent(x.r, path, info, x.lim.FileBytes, x.lim.TotalBytes, retained, seal)
 	if e != nil {
-		return nil, e
+		return nil, nil, e
 	}
 	if st.sha256 != sum {
-		return nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
+		return nil, nil, fail(KindInvalidInput, "MEMBER_MISMATCH", path, nil)
 	}
 	x.verified[path] = true
-	return st.content, nil
+	return st.content, st.part, nil
 }
 
 // read reads one walked file whose identity comes from a trusted inventory.

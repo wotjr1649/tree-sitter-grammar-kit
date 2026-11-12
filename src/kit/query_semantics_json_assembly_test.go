@@ -374,7 +374,7 @@ func actualJSONAssembleCurrent(t *testing.T, a *actualJSONAssembly, root, caller
 		oracleID, libraryID, libraryStage, libraryFile = "oracle-csharp3", "csharp-library-build", "csharp-library", "csharp.dll"
 		protocol = OraclePagedSemanticsManifestSchema
 		actualJSONDecode(t, filepath.Join(root, "plan", "expected-abi.json"), &expectedABI)
-		if expectedABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 654, FieldCount: 26}) {
+		if expectedABI != (eligibilityProducerABI{LanguageVersion: 15, RuntimeLanguageVersion: 15, RuntimeMinCompatible: 13, SymbolCount: 662, FieldCount: 26}) {
 			t.Fatal("preregistered C# ABI changed")
 		}
 	}

@@ -51,7 +51,12 @@ func (s *eligibilitySession) referencePins(req QueryReferenceEligibilityRequest)
 	s.res.ResultSchema = QueryReferenceEligibilityPinsResultSchema
 	pins, err := resolveEvidencePins(*req.Pins, s.b)
 	s.res.Pins = &pins
-	for _, f := range pins.Findings {
+	findings := pins.Findings
+	if err != nil && len(findings) > 0 {
+		// The resolver's deferred failReport appends the typed stop as its last finding; it is returned as an error, not a contradiction.
+		findings = findings[:len(findings)-1]
+	}
+	for _, f := range findings {
 		s.finding(f.Code, f.Path, f.Severity == "error")
 	}
 	if pins.Assessment == AssessFail && s.res.Assessment != AssessFail {

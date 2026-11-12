@@ -1,0 +1,2565 @@
+{
+  "schema": "tsgk-query-semantic-registry/r1",
+  "policy": "tsgk-full-query-obligations/r1",
+  "qualification_inventory": {
+    "path": "src/contracts/qualification-c1.json",
+    "bytes": 8297072,
+    "sha256": "365154d19396001ea93f5cb7ceaf46a4f30b94e421079e7018b117165546712e"
+  },
+  "query_slot_inventory": {
+    "path": "src/contracts/query-slot-inventory-r1.json",
+    "bytes": 60490,
+    "sha256": "bca429d4e02729db4e66ae53ad31b835ec0b95471504d9b9ef0499b8b19bc0b6"
+  },
+  "predicate_basis": [
+    {
+      "path": "src/dev/query-reference/check.py",
+      "bytes": 18010,
+      "sha256": "5e34e6b724500325dacdafe47292d01a9feec3f11dfa30a2d5173d38d0b6f530"
+    },
+    {
+      "path": "src/internal/native/query_policy_test.go",
+      "bytes": 9103,
+      "sha256": "4be846efa73527a3d28eb1a49ac8773dfd0836fbcfbb263f111a28eed8203c8e"
+    }
+  ],
+  "platforms": [
+    {
+      "id": "windows-amd64",
+      "subject": "windows/amd64"
+    },
+    {
+      "id": "linux-amd64",
+      "subject": "linux/amd64"
+    }
+  ],
+  "ordinary": [
+    {
+      "route": "csharp",
+      "role": "primary",
+      "set": "s06-csharp",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/0/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/0/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/0/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "go",
+      "role": "primary",
+      "set": "s06-go",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/1/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/1/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/1/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "python",
+      "role": "primary",
+      "set": "s06-python",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/2/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/2/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/2/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "javascript",
+      "role": "primary",
+      "set": "s06-javascript",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/3/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/3/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/3/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "jsx",
+      "role": "primary",
+      "set": "s06-jsx",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/4/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/4/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/4/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "typescript",
+      "role": "primary",
+      "set": "s06-typescript",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/5/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/5/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/5/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "tsx",
+      "role": "primary",
+      "set": "s06-tsx",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/6/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/6/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/6/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "java",
+      "role": "primary",
+      "set": "s06-java",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/7/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/7/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/7/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "kotlin",
+      "role": "primary",
+      "set": "s06-kotlin",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/8/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/8/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/8/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "c",
+      "role": "primary",
+      "set": "s06-c",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/9/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/9/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/9/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "cpp",
+      "role": "primary",
+      "set": "s06-cpp",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/10/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/10/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/10/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "rust",
+      "role": "primary",
+      "set": "s06-rust",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/11/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/11/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/11/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "swift",
+      "role": "primary",
+      "set": "s06-swift",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/12/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/12/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/12/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "dart",
+      "role": "primary",
+      "set": "s06-dart",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/13/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/13/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/13/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "php",
+      "role": "primary",
+      "set": "s06-php",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/14/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/14/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/14/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "ruby",
+      "role": "primary",
+      "set": "s06-ruby",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/15/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/15/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/15/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "r",
+      "role": "primary",
+      "set": "s06-r",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/16/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/16/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/16/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "bash",
+      "role": "primary",
+      "set": "s06-bash",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/17/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/17/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/17/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "powershell",
+      "role": "primary",
+      "set": "s06-powershell",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/18/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/18/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/18/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "html",
+      "role": "primary",
+      "set": "s06-html",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/19/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/19/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/19/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "css",
+      "role": "primary",
+      "set": "s06-css",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/20/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/20/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/20/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "json",
+      "role": "primary",
+      "set": "s06-json",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/21/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/21/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/21/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "yaml",
+      "role": "primary",
+      "set": "s06-yaml",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/22/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/22/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/22/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "xml",
+      "role": "primary",
+      "set": "s06-xml",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/23/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/23/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/23/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "tsql",
+      "role": "primary",
+      "set": "s06-tsql",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/24/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/24/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/24/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    },
+    {
+      "route": "postgresql-sql",
+      "role": "primary",
+      "set": "s06-postgresql-sql",
+      "selection": "ALL",
+      "cases_ref": "qualification_inventory#/routes/25/workload/cases",
+      "queries_ref": "qualification_inventory#/routes/25/workload/queries",
+      "sources_ref": "qualification_inventory#/routes/25/workload/cases/*/{input,source,edits}",
+      "expected_ref": "independent-expectations"
+    }
+  ],
+  "predicate": [
+    {
+      "id": "eq-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "eq-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "not-eq-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#not-eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "not-eq-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#not-eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "any-of-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#any-of? @x \"x\" \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "any-of-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#any-of? @x \"x\" \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "not-any-of-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#not-any-of? @x \"x\" \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "not-any-of-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#not-any-of? @x \"x\" \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "capture-pair-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#eq? @x @x))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "capture-pair-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#eq? @x @x))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "multiple-0",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#eq? @x \"x\") (#not-eq? @x \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "multiple-1",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x (#eq? @x \"x\") (#not-eq? @x \"z\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "two-captures-kept",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x @y (#eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "two-captures-rejected",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "y;\n1;\n",
+      "query": "((identifier) @x @y (#eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "distinct-captures-eq-equal",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\nx;\n",
+      "query": "(source_file (expression_statement (identifier) @x) (expression_statement (identifier) @y) (#eq? @x @y))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "distinct-captures-eq-different",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\ny;\n",
+      "query": "(source_file (expression_statement (identifier) @x) (expression_statement (identifier) @y) (#eq? @x @y))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "distinct-captures-not-eq-equal",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\nx;\n",
+      "query": "(source_file (expression_statement (identifier) @x) (expression_statement (identifier) @y) (#not-eq? @x @y))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "distinct-captures-not-eq-different",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\ny;\n",
+      "query": "(source_file (expression_statement (identifier) @x) (expression_statement (identifier) @y) (#not-eq? @x @y))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/dev/query-reference/check.py#owned-query-cases",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EVALUATED_EXPECTED"
+    },
+    {
+      "id": "pattern-isolation",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "x;\n1;\n",
+      "query": "((identifier) @x (#eq? @x \"z\"))\n(number) @n",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "registry-policy/r1#pattern-isolation-proposal",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_STRUCTURAL_X_N_EVALUATED_N"
+    },
+    {
+      "id": "evaluated-empty",
+      "kind": "PREDICATE_REQUIRED",
+      "source": "",
+      "query": "((identifier) @x (#eq? @x \"x\"))",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "registry-policy/r1#evaluated-empty-proposal",
+      "status": "COMPLETED",
+      "code": "",
+      "evaluation": "EVALUATED",
+      "partial": false,
+      "structural": "REGISTER_EXPECTED",
+      "expected": "REGISTER_EMPTY_EVALUATED_ARRAY"
+    },
+    {
+      "id": "unsupported-match",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "match?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/match?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:match?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-not-match",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-match?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-match?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-match?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-any-eq",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-eq?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-any-not-eq",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-not-eq?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-any-match",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-match?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-match?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-match?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-any-not-match",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-not-match?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-not-match?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-not-match?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-is",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "is?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/is?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:is?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-is-not",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "is-not?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/is-not?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:is-not?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-set",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "set!",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/set!",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:set!",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-select-adjacent",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "select-adjacent!",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/select-adjacent!",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:select-adjacent!",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-strip",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "strip!",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/strip!",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:strip!",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "unsupported-unknown",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "unknown?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/unknown?",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:unknown?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-eq-zero",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/ZERO",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-eq-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/ZERO_OR_ONE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-eq-zero-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/ZERO_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-eq-one-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/ONE_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-eq-zero",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/ZERO",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-eq-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/ZERO_OR_ONE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-eq-zero-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/ZERO_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-eq-one-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/ONE_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-any-of-zero",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/ZERO",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-any-of-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/ZERO_OR_ONE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-any-of-zero-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/ZERO_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-any-of-one-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/ONE_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-any-of-zero",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/ZERO",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-any-of-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/ZERO_OR_ONE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-any-of-zero-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ZERO_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/ZERO_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "left-not-any-of-one-or-more",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE_OR_MORE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/ONE_OR_MORE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-any-of?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "right-eq-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "y",
+        "right_quantifier": "ZERO_OR_ONE",
+        "literals": []
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/right-quantifier",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "right-not-eq-zero-or-one",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "y",
+        "right_quantifier": "ZERO_OR_ONE",
+        "literals": []
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/right-quantifier",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_UNSUPPORTED:not-eq?",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-eq-utf16le",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16LE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/UTF-16LE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-eq-utf16be",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16BE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/UTF-16BE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-eq-cp949",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "CP949",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/eq?/CP949",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-eq-utf16le",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16LE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/UTF-16LE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-eq-utf16be",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16BE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/UTF-16BE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-eq-cp949",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "CP949",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-eq?/CP949",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-any-of-utf16le",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16LE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/UTF-16LE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-any-of-utf16be",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16BE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/UTF-16BE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-any-of-cp949",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "CP949",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/any-of?/CP949",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-any-of-utf16le",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16LE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/UTF-16LE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-any-of-utf16be",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-16BE",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/UTF-16BE",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "encoding-not-any-of-cp949",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-any-of?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "CP949",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyFailClosed/not-any-of?/CP949",
+      "status": "UNSUPPORTED",
+      "code": "QUERY_PREDICATE_ENCODING",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "absent-left-capture",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "absent",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyAbsentCapture",
+      "status": "FAILED",
+      "code": "QUERY_PREDICATE_CAPTURE_ABSENT",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "absent-right-capture",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "not-eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "absent",
+        "right_quantifier": "ONE",
+        "literals": []
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyAbsentCapture",
+      "status": "FAILED",
+      "code": "QUERY_PREDICATE_CAPTURE_ABSENT",
+      "evaluation": "UNSUPPORTED",
+      "partial": false,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "partial-predicate",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": {
+        "operator": "eq?",
+        "left_capture": "x",
+        "left_quantifier": "ONE",
+        "right_capture": "",
+        "right_quantifier": "",
+        "literals": [
+          "a"
+        ]
+      },
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyIncompleteAndEmptyStreams/partial-predicate",
+      "status": "RESOURCE_LIMIT",
+      "code": "CAPTURE_LIMIT",
+      "evaluation": "UNSUPPORTED",
+      "partial": true,
+      "structural": "PRESERVED_4",
+      "expected": "NULL"
+    },
+    {
+      "id": "partial-structural",
+      "kind": "EXPECTED_REJECTION",
+      "source": "a b b b",
+      "query": "owned host-policy fixture",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyIncompleteAndEmptyStreams/partial-structural",
+      "status": "RESOURCE_LIMIT",
+      "code": "CAPTURE_LIMIT",
+      "evaluation": "STRUCTURAL",
+      "partial": true,
+      "structural": "PRESERVED_4",
+      "expected": "PRESERVED_STRUCTURAL"
+    },
+    {
+      "id": "not-run",
+      "kind": "EXPECTED_REJECTION",
+      "source": "",
+      "query": "",
+      "policy_input": null,
+      "encoding": "UTF-8",
+      "basis": "src/internal/native/query_policy_test.go#TestPredicatePolicyIncompleteAndEmptyStreams/not-run",
+      "status": "NOT_RUN",
+      "code": "TREE_NOT_COMPLETED",
+      "evaluation": "",
+      "partial": false,
+      "structural": "NULL",
+      "expected": "NULL"
+    }
+  ],
+  "large_workloads": [
+    {
+      "set": "s06-large",
+      "case": "cs-large-22m",
+      "query": "facts.declarations",
+      "source_ref": "qualification_inventory#/extra_roles/1/workloads/0/cases/0",
+      "kind": "LARGE_WORKLOAD_POSITIVE",
+      "expected_status": "COMPLETED"
+    },
+    {
+      "set": "s06-large",
+      "case": "cs-large-8m-errors",
+      "query": "facts.declarations",
+      "source_ref": "qualification_inventory#/extra_roles/1/workloads/0/cases/1",
+      "kind": "LARGE_WORKLOAD_POSITIVE",
+      "expected_status": "COMPLETED"
+    },
+    {
+      "set": "s06-large",
+      "case": "cs-large-32mib-errors",
+      "query": "facts.declarations",
+      "source_ref": "qualification_inventory#/extra_roles/1/workloads/0/cases/2",
+      "kind": "LARGE_WORKLOAD_POSITIVE",
+      "expected_status": "COMPLETED"
+    },
+    {
+      "set": "s06-large-over",
+      "case": "cs-large-8m-over-captures",
+      "query": "all.nodes",
+      "source_ref": "qualification_inventory#/extra_roles/1/workloads/1/cases/0",
+      "kind": "LARGE_WORKLOAD_CONTROL",
+      "expected_status": "RESOURCE_LIMIT"
+    }
+  ],
+  "extra_roles": [
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/0",
+      "registration": "UNREGISTERED",
+      "required": null,
+      "original": {
+        "id": "n461-svc",
+        "role": "owned",
+        "registered_status": "EXECUTED",
+        "reason": "SVC-SERVICEHOST-r2 directive, C# inline, recovery and explicitly registered C# reference fixtures (OWNED_FIXTURE, three hosts; syntax only)",
+        "platforms": [
+          "windows-amd64",
+          "linux-amd64",
+          "darwin-arm64"
+        ],
+        "not_applicable": {},
+        "deferred": {},
+        "class": "CONTEXT_NOT_EXPANDED",
+        "workloads": [
+          {
+            "set": "s06-csharp-svc",
+            "profile": "s06-csharp-svc",
+            "route": "csharp",
+            "operation": "native-query",
+            "format": "SVC-SERVICEHOST-r2",
+            "cases": 69,
+            "edits": 41,
+            "queries": [
+              {
+                "id": "facts.declarations",
+                "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b"
+              },
+              {
+                "id": "facts.dynamic_sql",
+                "sha256": "3fcc7b47d445f2e109c24850eee5e61f24e52a53f4a6bb48b5b032aa25a7d812"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/1",
+      "registration": "UNREGISTERED",
+      "required": null,
+      "original": {
+        "id": "n461-large",
+        "role": "owned",
+        "registered_status": "EXECUTED",
+        "reason": "real-world-source-r3 / native-query-large synthetic large C# fixtures (OWNED_FIXTURE)",
+        "platforms": [
+          "windows-amd64"
+        ],
+        "not_applicable": {
+          "darwin-arm64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)",
+          "linux-amd64": "NET461 workload is Windows-hosted (WinForms/.NET Framework 4.6.1)"
+        },
+        "deferred": {},
+        "class": "CONTEXT_NOT_EXPANDED",
+        "workloads": [
+          {
+            "set": "s06-large",
+            "profile": "s06-large",
+            "route": "csharp",
+            "operation": "native-query-large",
+            "format": "",
+            "cases": 3,
+            "edits": 0,
+            "queries": [
+              {
+                "id": "facts.declarations",
+                "sha256": "632ee51300c1f1f1908f9078c832ed399ad29bfa5f11a2a5837fae6b9ea9ed9b"
+              }
+            ]
+          },
+          {
+            "set": "s06-large-over",
+            "profile": "s06-large-over",
+            "route": "csharp",
+            "operation": "native-query-large",
+            "format": "",
+            "cases": 1,
+            "edits": 0,
+            "queries": [
+              {
+                "id": "all.nodes",
+                "sha256": "da842c4ec943d4fa4de79e9a127b1dfed56a03ac8f3ace869525b569468d37f6"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/2",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "csharp-symbols",
+        "role": "owned",
+        "registered_status": "EXECUTED",
+        "reason": "C# symbol mode (csharp-symbols/r1, #218): selections derived from tsgk-csharp-pp-roslyn/r2 observation sha256 261213a109904e7572f7b7e229fe399e417025b7306e171959c51f40a4fd3ab6 by Roslyn 5.9.0.0 of src/testdata/csharp-pp/cases.json sha256 9981758151e43df80cb0aa0479a73ec119d713d7789a2afdb93e406c0eadae5d, with hand-registered syntax; syntax only",
+        "platforms": [
+          "windows-amd64",
+          "linux-amd64"
+        ],
+        "not_applicable": {},
+        "deferred": {
+          "darwin-arm64": "#243: the macOS symbol-mode host result is deferred (Windows amd64 and Linux amd64 are the completion criteria)"
+        },
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": [
+          {
+            "set": "s05-csharp-symbols-none",
+            "profile": "s05-csharp-symbols-none",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 14,
+            "edits": 1,
+            "queries": []
+          },
+          {
+            "set": "s05-csharp-symbols-a",
+            "profile": "s05-csharp-symbols-a",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 11,
+            "edits": 1,
+            "queries": []
+          },
+          {
+            "set": "s05-csharp-symbols-enabled",
+            "profile": "s05-csharp-symbols-enabled",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 1,
+            "edits": 0,
+            "queries": []
+          },
+          {
+            "set": "s05-csharp-symbols-a-c",
+            "profile": "s05-csharp-symbols-a-c",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 1,
+            "edits": 0,
+            "queries": []
+          },
+          {
+            "set": "s05-csharp-symbols-switch",
+            "profile": "s05-csharp-symbols-switch",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 1,
+            "edits": 1,
+            "queries": []
+          },
+          {
+            "set": "s05-csharp-symbols-cst-mismatch",
+            "profile": "s05-csharp-symbols-cst-mismatch",
+            "route": "csharp",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 2,
+            "edits": 0,
+            "queries": []
+          }
+        ]
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/3",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "reuse-accepted",
+        "role": "owned",
+        "registered_status": "EXECUTED",
+        "reason": "고정 original history의 accepted 관측과 fresh 전체 CST 동등성; node identity·성능은 주장하지 않는다",
+        "platforms": [
+          "windows-amd64",
+          "linux-amd64"
+        ],
+        "not_applicable": {},
+        "deferred": {
+          "darwin-arm64": "사용자 결정으로 macOS accepted claim 검증은 제외한다"
+        },
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": [
+          {
+            "set": "reuse-accepted-tsql",
+            "profile": "reuse-accepted-tsql",
+            "route": "tsql",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 12,
+            "edits": 40,
+            "queries": []
+          },
+          {
+            "set": "reuse-accepted-json",
+            "profile": "reuse-accepted-json",
+            "route": "json",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 3,
+            "edits": 3,
+            "queries": []
+          },
+          {
+            "set": "reuse-accepted-tsql-omit",
+            "profile": "reuse-accepted-tsql-omit",
+            "route": "tsql",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 12,
+            "edits": 40,
+            "queries": []
+          },
+          {
+            "set": "reuse-accepted-json-omit",
+            "profile": "reuse-accepted-json-omit",
+            "route": "json",
+            "operation": "native-parse-edit",
+            "format": "",
+            "cases": 3,
+            "edits": 3,
+            "queries": []
+          }
+        ]
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/4",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "owned-native-fixtures",
+        "role": "owned",
+        "registered_status": "EXTERNAL",
+        "reason": "owned scannerless and stateful-scanner fixtures: the foundation job's native tests on each host (src/internal/native), not this aggregation",
+        "platforms": [],
+        "not_applicable": {},
+        "deferred": {},
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": null
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/5",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "brightscript-maintained",
+        "role": "maintained",
+        "registered_status": "NOT_RUN",
+        "reason": "BrightScript v0.1.4 maintained reference: no native route or workload is registered in this campaign",
+        "platforms": [],
+        "not_applicable": {},
+        "deferred": {},
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": null
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/6",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "brightscript-historical",
+        "role": "historical",
+        "registered_status": "NOT_RUN",
+        "reason": "BrightScript v0.1.2 historical replay (S07-REPLAY-2ULP-r1): the verification bundle is not prepared; never a NEW_RUN",
+        "platforms": [],
+        "not_applicable": {},
+        "deferred": {},
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": null
+      }
+    },
+    {
+      "source_ref": "query_slot_inventory#/extra_roles/7",
+      "registration": "PRESERVED",
+      "required": null,
+      "original": {
+        "id": "cooklang-audit",
+        "role": "historical",
+        "registered_status": "NOT_RUN",
+        "reason": "Cooklang legacy metadata audit: static S00 observation only, not executed",
+        "platforms": [],
+        "not_applicable": {},
+        "deferred": {},
+        "class": "NO_REGISTERED_QUERIES",
+        "workloads": null
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "source-witness",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "independent-metadata",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "independent-expectations",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "full-cst-api",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "ordered-captures-facts",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "current-observations",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "caller-approval",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    },
+    {
+      "id": "stored-replay",
+      "state": "UNAVAILABLE",
+      "reason": "NOT_REGISTERED_IN_P0",
+      "pin": null
+    }
+  ],
+  "missing_scopes": [
+    "svc-segment-range-history-codebehind",
+    "large-node-occurrence-page-footer",
+    "independent-assets",
+    "current-cohort-approval-replay"
+  ],
+  "content_state": "INCOMPLETE",
+  "membership_namespace_sha256": "4059089557e10dfaa3fe68c379d87fbd6c6c8507fa71afe0ea89f6e15407a21b",
+  "required_sets": [
+    {
+      "kind": "EXPECTED_REJECTION",
+      "scope": "owned-plain",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 47,
+      "coordinate_sha256": "3d4e413b2e97ccbc5336f6d6d1a1c62c5f2ee4a647c0fdcde9ec77e384decb63"
+    },
+    {
+      "kind": "EXPECTED_REJECTION",
+      "scope": "owned-plain",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 47,
+      "coordinate_sha256": "c3d1a0db087c6a5474a61600d95b6dfe4edd55ef6c3bdee2fcde8d9d35bc51f6"
+    },
+    {
+      "kind": "LARGE_WORKLOAD_CONTROL",
+      "scope": "csharp",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 1,
+      "coordinate_sha256": "1b9efc723df291932f95d57e413754b9e18870676c343657ba4c09152809fb1b"
+    },
+    {
+      "kind": "LARGE_WORKLOAD_POSITIVE",
+      "scope": "csharp",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 3,
+      "coordinate_sha256": "262fe8e23d5af6bf366008cf36cbbdd04d044da993898200782a93f552df4cff"
+    },
+    {
+      "kind": "PREDICATE_REQUIRED",
+      "scope": "owned-plain",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 20,
+      "coordinate_sha256": "f91b9a39d356aac21aaf4b800947cafab6b148b28a4347cc6d347ecdb90cc772"
+    },
+    {
+      "kind": "PREDICATE_REQUIRED",
+      "scope": "owned-plain",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 20,
+      "coordinate_sha256": "5ffd29ed0b08010684d17033c501512894030da24105d9df5df9b84c870d7319"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "bash",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 134,
+      "coordinate_sha256": "dfed545c4e6e06d2870167bcd59896396c6fa13987209968f23778fca64b5cde"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "bash",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 134,
+      "coordinate_sha256": "744763892f75987667990d5ac81da69a6640742479db7a688b8c05a91ed09ed6"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "c",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 376,
+      "coordinate_sha256": "5ebf20329b302eec9338b4ae9d1d70fda0a2ecda51ec4dee0d57c7013abb5bd6"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "c",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 376,
+      "coordinate_sha256": "e47f7b92d426803adfb891c03e32f445fc612b1d9f57d245ef45f82dee82019f"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "cpp",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 412,
+      "coordinate_sha256": "5a637422809e9306d77c466c4a11479cb56ac71a58ef1d893c0ea6e021ad9569"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "cpp",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 412,
+      "coordinate_sha256": "bc14bb51c7f2695ad85124804693c2c9d96c77dcb0492e0c775eacc11793fa7c"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "csharp",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 9600,
+      "coordinate_sha256": "2c743bc75960f3b66402c23f91b8b95ed30c72aaf14c37e0c3df013f5a2baa5d"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "csharp",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 9600,
+      "coordinate_sha256": "0af41fe45c6c7c7edffbc2c4c6aa045032394bd325bcc52cb7374e029d987be0"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "css",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 3366,
+      "coordinate_sha256": "86852045cd8db2f52850b3b3324fb75a55de59283221674f67ba1bedbd9f0087"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "css",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 3366,
+      "coordinate_sha256": "4a8ee154580ff4d9d3c5e0046cd2ced0da09f13f62e8a039a98b69f36e28a7e8"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "dart",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 707,
+      "coordinate_sha256": "61466e1dec0125b492e15cd342f175da057b63ea4bd420fb939e61dc49ec8482"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "dart",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 707,
+      "coordinate_sha256": "2e1ecacdc2ea791f63e3fef6309821a00c70a1a09d8dd59c6c3d6e025d5dd3c0"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "go",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 393,
+      "coordinate_sha256": "74a0ecaa92b64aa5baab4f5954f8a09b63aace6203861ba05debdc5dd544b4de"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "go",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 393,
+      "coordinate_sha256": "1e52e78387d4d3c8a47ed3039714c3002d6a91a1835bb73a459e1df3738a5057"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "html",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 100,
+      "coordinate_sha256": "2bbd29158a6704344898c3c9238fc0b28fbb55590962a1da7e8800cf640c5884"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "html",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 100,
+      "coordinate_sha256": "c26c3825d0be6428d5e9fadce5b6a520d65c99005885da5bab348057e9930697"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "java",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 520,
+      "coordinate_sha256": "a2185829f0ea2932a76a26d4abc5a72df06dc8082b269a5d8228050d8ffa62db"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "java",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 520,
+      "coordinate_sha256": "9c3d8703a5eb727b4ce50d24555f379afa14d16a07a32111341a713a11ab492c"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "javascript",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 552,
+      "coordinate_sha256": "3b36691f2064c0aa816911c3b429f6780b6b636dc8c0c748ab46ce246a4366a4"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "javascript",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 552,
+      "coordinate_sha256": "b4f7d14da2dedae39d9bdca0e31bcb95bdba75ff6636705b74679c76837ede7e"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "json",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 71,
+      "coordinate_sha256": "3548090fb1fc20d880b2b081bdd89eb5c37e4cfe86fc516d25fdecf6afc5b8a6"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "json",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 71,
+      "coordinate_sha256": "292687b41b6b8a9a477efb434870aa8d9498f89c09081d8ef096116ed01d7738"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "jsx",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 342,
+      "coordinate_sha256": "e6f02f59187715f93f933f0cc26ab64e0c775b1310666903e33c0c01f19e88ff"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "jsx",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 342,
+      "coordinate_sha256": "9d010d05bdbc80ff325d6410a544a2438674c7ffbf38f8968e18e5b7a7b68806"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "kotlin",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 510,
+      "coordinate_sha256": "238c07d4ee745f6f883a3ac6fb9819ed9bcf583cd906de22678bb54b5f5d8328"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "kotlin",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 510,
+      "coordinate_sha256": "009396029e7f215b784f10ab0184a7ff7881486b7c578cbc635c4a595363e8f9"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "php",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 700,
+      "coordinate_sha256": "745abc91a0f4d2e0d9e915bff48313af5d9556e87fed690800c6285aeafeedeb"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "php",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 700,
+      "coordinate_sha256": "89b99abc07d2e93fbce3a2d4312fbe533f565c73eabc1cf2fbd092b278ed8499"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "postgresql-sql",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 5985,
+      "coordinate_sha256": "00915be4f7776cae42936eaacf4fa4728285cfdf1fe81e2b8a91d8fac6147d33"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "postgresql-sql",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 5985,
+      "coordinate_sha256": "ad83355ab89bbcfd4a5bdf18c2e8156c3c38e2fc80b87b5af488a8afc500c242"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "powershell",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 261,
+      "coordinate_sha256": "c0211b85f162ecc561e5f1df53726c5c2be957ae0c0bcf1ded408d2841c9536b"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "powershell",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 261,
+      "coordinate_sha256": "16bc26f49bcd678da5a3a9f1e252dcca00442597dc42b2a23ef8f8c09c2f397f"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "python",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 1352,
+      "coordinate_sha256": "8b6ca56acd62af92a7146eab29c422bb73b459703d0678c16cf86d7a9a555a04"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "python",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 1352,
+      "coordinate_sha256": "d2c632c7da0951e69f4cb42261a1588769802575197ea70447fba6be37c53f72"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "r",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 219,
+      "coordinate_sha256": "237889e1fce8f46aa9084187840b15489a21690fc2e202944d5f99d7fc9ae1b3"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "r",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 219,
+      "coordinate_sha256": "0dead72c8c510fd40cd75bcb6333507db62b4c6a80d1cdae7b6409c5f3934655"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "ruby",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 392,
+      "coordinate_sha256": "6db4f3cd1b70cd84cc905f6d054ebe29d43bfd2209e5aedfa7c600dc440a48e9"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "ruby",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 392,
+      "coordinate_sha256": "65d3476d3640ca3064684a6195d26215b6c884fbb783661cee271346e46daa28"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "rust",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 244,
+      "coordinate_sha256": "b584eb044c7dac41b92668c48a31adb3b8c408d3e4abf093966ffdbe988c8d45"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "rust",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 244,
+      "coordinate_sha256": "0e13c92d3db9baacdcf4ae2e92d58076c475ffbef279c9160adbed48bd807370"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "swift",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 1600,
+      "coordinate_sha256": "6c5867b23f79a8f62727a353a147a33818c9a42f2689da9cdd5acb766aafdef1"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "swift",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 1600,
+      "coordinate_sha256": "466a2f77db706fcb99139ef8dfc4112a6970201692d93540d18789bf279d052b"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "tsql",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 23856,
+      "coordinate_sha256": "06a13d3318bb8e73f1d7b785a9256b7f5b9404852e23dbf58a17a9da454f092e"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "tsql",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 23856,
+      "coordinate_sha256": "070f582f36d17274aaa6ac30eb64b8ce14b67454a9ca617def3b73dec9c827fe"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "tsx",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 214,
+      "coordinate_sha256": "b1c0cac7702baaf6bf35d0f3864b3a852630438b8063df842aa35811490542ee"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "tsx",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 214,
+      "coordinate_sha256": "1060852265a29a89feffd52a29193566de97a66dd0b22a8563b6875e5b3641ed"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "typescript",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 931,
+      "coordinate_sha256": "0467dd93d242fa8ba246d29b1946224044b3b5f7ee8e39e121c3c81be8c5978a"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "typescript",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 931,
+      "coordinate_sha256": "6e5c9bf860e51e3ee43e625c3b0765b6d86485f9754ab6427d74fc4926b9281a"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "xml",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 196,
+      "coordinate_sha256": "1e9d046e1dc93d7a1b92332e3bbe70507947c0993612d04a6ef9bc5bb45b199b"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "xml",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 196,
+      "coordinate_sha256": "fa0c2c5d3de752cdb8ffcf7884aa5bbdd347939d1e7bd5b7cfe7dd97b3885bb2"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "yaml",
+      "platform": "linux-amd64",
+      "registration": "REGISTERED",
+      "required": 71,
+      "coordinate_sha256": "8ff7a5ccadcf9121787b717ad2cc15e5b76473cbe7238334caa5aef59e99cd8c"
+    },
+    {
+      "kind": "STRUCTURAL_ONLY",
+      "scope": "yaml",
+      "platform": "windows-amd64",
+      "registration": "REGISTERED",
+      "required": 71,
+      "coordinate_sha256": "f2a6223b7576ec06f29384ab359e935e4df89a25c28de39b04ae3d0f95f26363"
+    }
+  ],
+  "full_scope_complete": false
+}

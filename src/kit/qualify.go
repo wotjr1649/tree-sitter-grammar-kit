@@ -329,29 +329,47 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		return inv, e
 	}
 	inv.SHA256 = digestHex(data)
+	return validateQualificationInventory(inv, -1)
+}
+
+// selected < 0 validates every workload; otherwise unselected workloads contain only global headers.
+func validateQualificationInventory(inv QualificationInventory, selected int) (QualificationInventory, *Error) {
+	return validateQualificationInventoryMode(inv, selected, false)
+}
+
+// localOnly follows a successful validation of the complete global projection.
+func validateQualificationInventoryMode(inv QualificationInventory, selected int, localOnly bool) (QualificationInventory, *Error) {
+	const doc = "inventory"
 	bad := func(code, path string) (QualificationInventory, *Error) {
 		return inv, fail(KindInvalidInput, code, doc+"#/"+path, nil)
 	}
-	if !validID(inv.ID) || inv.Campaign == "" || inv.CoverageRule != CoverageRule || !slices.Equal(inv.Kinds, caseKinds) {
-		return bad("INVENTORY_HEADER_INVALID", "id")
-	}
-	if len(inv.Platforms) == 0 || len(inv.Routes) == 0 || inv.Cells != len(inv.Platforms)*len(inv.Routes) {
-		return bad("CELL_COUNT_MISMATCH", "qualification_cells")
-	}
 	plat := map[string]bool{}
-	for i, p := range inv.Platforms {
-		if !validID(p.ID) || p.GOOS == "" || p.GOARCH == "" || plat[p.ID] {
-			return bad("PLATFORM_INVALID", fmt.Sprintf("platforms/%d", i))
+	if !localOnly {
+		if !validID(inv.ID) || inv.Campaign == "" || inv.CoverageRule != CoverageRule || !slices.Equal(inv.Kinds, caseKinds) {
+			return bad("INVENTORY_HEADER_INVALID", "id")
 		}
-		plat[p.ID] = true
+		if len(inv.Platforms) == 0 || len(inv.Routes) == 0 || inv.Cells != len(inv.Platforms)*len(inv.Routes) {
+			return bad("CELL_COUNT_MISMATCH", "qualification_cells")
+		}
+		for i, p := range inv.Platforms {
+			if !validID(p.ID) || p.GOOS == "" || p.GOARCH == "" || plat[p.ID] {
+				return bad("PLATFORM_INVALID", fmt.Sprintf("platforms/%d", i))
+			}
+			plat[p.ID] = true
+		}
 	}
 	sets, routes := map[string]bool{}, map[string]bool{}
-	checkWorkload := func(w QualWorkload, path string, rules routeRules, role bool) *Error {
+	checkWorkload := func(w QualWorkload, path string, rules routeRules, role, local bool) *Error {
 		badW := func(code, sub string) *Error { return fail(KindInvalidInput, code, doc+"#/"+path+sub, nil) }
-		if !validID(w.Set) || !validID(w.Profile) || sets[w.Set] || !validID(w.Route) || w.Operation == "" || w.Output == "" || !ValidLanguageSymbol(w.Symbol) {
-			return badW("WORKLOAD_INVALID", "")
+		if !localOnly {
+			if !validID(w.Set) || !validID(w.Profile) || sets[w.Set] || !validID(w.Route) || w.Operation == "" || w.Output == "" || !ValidLanguageSymbol(w.Symbol) {
+				return badW("WORKLOAD_INVALID", "")
+			}
+			sets[w.Set] = true
 		}
-		sets[w.Set] = true
+		if !local {
+			return nil
+		}
 		if len(w.Grammar) == 0 {
 			return badW("WORKLOAD_INVALID", "/grammar")
 		}
@@ -496,11 +514,24 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		}
 		return nil
 	}
-	for i, r := range inv.Routes {
-		if !validID(r.Route) || routes[r.Route] || r.Workload.Route != r.Route {
-			return bad("ROUTE_INVALID", fmt.Sprintf("routes/%d", i))
+	first, last := 0, len(inv.Routes)
+	if localOnly {
+		first, last = selected, selected+1
+	}
+	for i := first; i < last; i++ {
+		r := inv.Routes[i]
+		if !localOnly {
+			if !validID(r.Route) || routes[r.Route] || r.Workload.Route != r.Route {
+				return bad("ROUTE_INVALID", fmt.Sprintf("routes/%d", i))
+			}
+			routes[r.Route] = true
 		}
-		routes[r.Route] = true
+		if selected >= 0 && selected != i {
+			if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), routeRules{}, false, false); e != nil {
+				return inv, e
+			}
+			continue
+		}
 		for j, n := range r.ErrorNodes {
 			if !nodeName.MatchString(n) || n == "ERROR" || slices.Contains(r.ErrorNodes[:j], n) {
 				return bad("ROUTE_INVALID", fmt.Sprintf("routes/%d/error_nodes/%d", i, j))
@@ -532,9 +563,12 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 		if len(r.Requirements) == 0 {
 			return bad("REQUIREMENT_INVALID", fmt.Sprintf("routes/%d/requirements", i)) // a route without rows would pass vacuously
 		}
-		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), rules, false); e != nil {
+		if e := checkWorkload(r.Workload, fmt.Sprintf("routes/%d/workload", i), rules, false, true); e != nil {
 			return inv, e
 		}
+	}
+	if localOnly {
+		return inv, nil
 	}
 	roleIDs := map[string]bool{}
 	for i, x := range inv.ExtraRoles {
@@ -569,11 +603,12 @@ func parseInventory(data []byte) (QualificationInventory, *Error) {
 			if len(x.Workloads) == 0 || len(x.Platforms) == 0 {
 				return bad("ROLE_INVALID", p)
 			}
-			if (inv.Schema == QualificationInventorySchema && x.ID == "reuse-accepted" || slices.ContainsFunc(x.Workloads, func(w QualWorkload) bool { return w.ReuseAccepted != nil })) && !qualAcceptedRole(x, inv.Platforms) {
+			accepted := inv.Schema == QualificationInventorySchema && x.ID == "reuse-accepted" || slices.ContainsFunc(x.Workloads, func(w QualWorkload) bool { return w.ReuseAccepted != nil })
+			if accepted && (selected < 0 && !qualAcceptedRole(x, inv.Platforms) || selected >= 0 && !qualAcceptedRoleHeader(x, inv.Platforms)) {
 				return bad("ROLE_INVALID", p+"/reuse_accepted")
 			}
 			for j, w := range x.Workloads {
-				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), routeRules{reqs: map[string][]string{}, alts: map[string]string{}}, true); e != nil {
+				if e := checkWorkload(w, fmt.Sprintf("%s/workloads/%d", p, j), routeRules{reqs: map[string][]string{}, alts: map[string]string{}}, true, selected < 0); e != nil {
 					return inv, e
 				}
 			}

@@ -130,6 +130,8 @@ func VerifyEvidence(ctx context.Context, req EvidenceRequest) (EvidenceResult, e
 
 // Requested bytes come from the same guarded pass that hashes every graph member.
 type evidenceSnapshot struct {
+	paging            *verifiedPaging
+	parts             map[string]*guardedPart
 	observed          map[string]fs.FileInfo
 	directories       map[string]fs.FileInfo
 	wanted            map[string]bool
@@ -156,6 +158,10 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 		snapshot.directories = nil
 		snapshot.graphBound, snapshot.invalidNodes = false, map[string]bool{}
 		snapshot.verifiedMembers = map[string]ReplayMember{}
+		snapshot.parts = nil
+		if snapshot.paging != nil {
+			snapshot.parts = map[string]*guardedPart{}
+		}
 	}
 	res := EvidenceResult{Report: newReport("evidence verify"), ResultSchema: EvidenceResultSchema, Modes: map[string]int{}, Explanation: []string{}}
 	var x *replayEnv
@@ -368,11 +374,17 @@ func verifyEvidenceInRun(ctx context.Context, req EvidenceRequest, snapshot *evi
 				}
 			} else if snapshot != nil && snapshot.wanted[f.Path] {
 				var b []byte
-				if b, e = x.verifyFileBytes(f.Path, f.Bytes, f.SHA256, true); e == nil {
-					if b == nil {
-						b = []byte{}
+				var part *guardedPart
+				seal := snapshot.paging != nil && snapshot.graphBound && pagingPartRole(f.Role)
+				if b, part, e = x.verifyFileContent(f.Path, f.Bytes, f.SHA256, true, seal); e == nil {
+					if part != nil {
+						snapshot.parts[f.Path] = part
+					} else {
+						if b == nil {
+							b = []byte{}
+						}
+						snapshot.files[f.Path] = b
 					}
-					snapshot.files[f.Path] = b
 				}
 			} else {
 				e = x.verifyFile(f.Path, f.Bytes, f.SHA256)

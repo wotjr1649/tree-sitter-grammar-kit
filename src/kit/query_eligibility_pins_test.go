@@ -325,6 +325,9 @@ func TestEligibilityPinsSharedBudget(t *testing.T) {
 	if err == nil || err.Code != "ELIGIBILITY_WORK_LIMIT" || b.work != eligibilityWorkLimit || res.Pins == nil || res.Pins.Complete {
 		t.Fatalf("pin resolver reset inherited budget: %+v %v work=%d", res, err, b.work)
 	}
+	if res.Assessment == AssessFail || s.failures != 0 || eligibilityFinding(res, "ELIGIBILITY_WORK_LIMIT") {
+		t.Fatalf("pin resolver stop became a contradiction FAIL: %+v failures=%d", res, s.failures)
+	}
 }
 
 func TestEligibilityPinsReaderIdentity(t *testing.T) {
