@@ -335,6 +335,9 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			}
 			continue
 		}
+		if seen {
+			used++ // a known observation is consumed even when its views are missing
+		}
 		if !seen || len(o.Views) == 0 {
 			out = append(out, SvcJudgment{ID: treeID, State: "BLOCKED", Code: SvcInlineNativeNotRunCode})
 			for _, q := range x.queryIDs() {
@@ -342,7 +345,6 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 			}
 			continue
 		}
-		used++
 		complete, err := svcInlineViewsComplete(o, s.Step > 0 && inline[svcID("", s.Case, s.Step-1, "")])
 		if err != nil {
 			return nil, err

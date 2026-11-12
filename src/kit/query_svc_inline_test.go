@@ -443,6 +443,34 @@ func TestSvcInlineBlockedNeverVerified(t *testing.T) {
 	}
 }
 
+// A registered DERIVED step with an observation but no views is BLOCKED SVC_INLINE_NATIVE_NOT_RUN,
+// not an unknown observation; the FAILED judgment of another step survives. An unknown observation
+// with no views is still an error.
+func TestSvcInlineKnownEmptyObservationBlocked(t *testing.T) {
+	x, obs, _ := siSyntheticStep(t, "class C {}")
+	next := x.Steps[0]
+	next.Step = 1
+	x.Steps = append(x.Steps, next)
+	bad := obs
+	bad.Views = slices.Clone(obs.Views)
+	bad.Views[0].Nodes = slices.Clone(bad.Views[0].Nodes)
+	bad.Views[0].Nodes[2].EndByte++
+	empty := obs
+	empty.Step, empty.Views = 1, nil
+	got := siVerdicts(t, x, bad, empty)
+	if j := got[svcID(SvcKindInlineTree, "synthetic", 0, "")]; j.State != "FAILED" {
+		t.Errorf("mismatching step 0: %+v", j)
+	}
+	for id, j := range got {
+		if strings.Contains(id, "/synthetic/1/") && (j.State != "BLOCKED" || j.Code != SvcInlineNativeNotRunCode) {
+			t.Errorf("empty step 1: %s %s %s", id, j.State, j.Code)
+		}
+	}
+	if _, err := JudgeSvcInline(x, []SvcInlineObserved{bad, empty, {Case: "other", Step: 0}}); err == nil || svcCode(t, err) != "SVC_INLINE_OBSERVED_UNKNOWN" {
+		t.Errorf("unknown empty observation: %v", err)
+	}
+}
+
 // Without native evidence the inline obligations stay BLOCKED in the fold; with the offline
 // judgments the scope is still BLOCKED, never COMPLETE.
 func TestSvcInlineFoldWithoutEvidence(t *testing.T) {

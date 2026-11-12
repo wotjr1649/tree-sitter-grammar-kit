@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/nativewire"
@@ -25,6 +26,13 @@ type ordinaryReaderFixture struct {
 }
 
 func newOrdinaryReaderFixture(t *testing.T, caseIDs ...string) ordinaryReaderFixture {
+	t.Helper()
+	return newOrdinaryReaderFixtureEdited(t, func(string, map[string]any) {}, caseIDs...)
+}
+
+// newOrdinaryReaderFixtureEdited lets a test change the "process", "capture" or "transport"
+// document before it is serialized and pinned, so the members stay validly owned and pinned.
+func newOrdinaryReaderFixtureEdited(t *testing.T, edit func(doc string, v map[string]any), caseIDs ...string) ordinaryReaderFixture {
 	t.Helper()
 	dir := t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, "oracle"), 0700); err != nil {
@@ -77,6 +85,7 @@ func newOrdinaryReaderFixture(t *testing.T, caseIDs ...string) ordinaryReaderFix
 	responseBytes, _ := json.Marshal(response)
 	responseFrame := ordinaryReaderFrame(responseBytes)
 	process := map[string]any{"status": "COMPLETED", "reason": "EXITED", "exit_code": 2, "stdout_bytes": len(responseFrame), "stderr_bytes": 0, "stdout_truncated": false, "stderr_truncated": false, "wall_ms": 1, "cleanup": map[string]any{"verified": true, "residual_after_exit": 0, "method": "job", "scope": "process", "detail": ""}, "memory": map[string]any{}, "capabilities": map[string]any{}}
+	edit("process", process)
 	processBytes, _ := json.Marshal(process)
 	members := []OrdinaryMember{}
 	files := map[string][]byte{}
@@ -110,6 +119,7 @@ func newOrdinaryReaderFixture(t *testing.T, caseIDs ...string) ordinaryReaderFix
 		"frames":        []any{map[string]any{"index": 0, "case_id": caseID, "state": "ANSWERED", "status": "COMPLETED", "detail": "", "wall_ms": 1, "stdin": span(0, requestFrame, stdinPin), "stdout": span(0, responseFrame, stdoutPin)}},
 		"stdout_suffix": nil, "trailing_bytes": 0, "accepted": false, "code": "BATCH_CAPTURE_PROCESS_FAILED", "capture_error": "",
 	}
+	edit("capture", capture)
 	capBytes, _ := json.Marshal(capture)
 	capPin := put(owner, "capture/batch.json", "native-batch-capture", owner, capBytes)
 	put("O", "source/00000-"+caseID+".bin", "source", caseID, source)
@@ -118,7 +128,9 @@ func newOrdinaryReaderFixture(t *testing.T, caseIDs ...string) ordinaryReaderFix
 	projectionPin := put("O", "projection/00000-"+caseID+".json", "projection", caseID, projectionBytes)
 	registrationSHA := registrationPin.SHA256
 	pending := &OracleQuerySemantics{Phase: "PRODUCER_LOCAL", Claim: "BLOCKED", Code: "EXTERNAL_APPROVAL_PENDING", RegistrationSHA256: registrationSHA, Capture: &capPin, Projection: projectionPin}
-	transport, _ := json.Marshal(map[string]any{"batch": 0, "frame": 0, "state": "ANSWERED", "frame_wall_ms": 1})
+	transportDoc := map[string]any{"batch": 0, "frame": 0, "state": "ANSWERED", "frame_wall_ms": 1}
+	edit("transport", transportDoc)
+	transport, _ := json.Marshal(transportDoc)
 	record := OrdinaryOracleRecord{Schema: OracleOrdinaryRecordSchema, Case: caseID, Workload: "ordinary-test", BaseProjection: projectionPin, QuerySemantics: pending, Transport: transport, StepFacts: json.RawMessage(`[]`), Complete: true}
 	recordBytes, _ := json.Marshal(record)
 	put("O", "records/00000-"+caseID+".json", "record", caseID, append(recordBytes, '\n'))
@@ -263,6 +275,81 @@ func TestOrdinaryFinalCompleteMarker(t *testing.T) {
 	for _, data := range []string{`{"complete":false}`, `{"complete":true,"tail":0}`, `{"nested":{"complete":true}}`} {
 		if e := ordinaryTestBudget(t).ordinaryFinalComplete("test", []byte(data)); e == nil {
 			t.Fatalf("accepted nonfinal or nested completion: %s", data)
+		}
+	}
+}
+
+func ordinaryFindingCodes(set *ordinaryGuardedSet) []string {
+	codes := []string{}
+	for _, f := range set.Findings {
+		codes = append(codes, f.Code)
+	}
+	return codes
+}
+
+// A pinned and owned transcript with more frames than its batch cases is a finding, not a panic.
+func TestOrdinaryGuardedSetExtraCaptureFrameIsFinding(t *testing.T) {
+	f := newOrdinaryReaderFixtureEdited(t, func(doc string, v map[string]any) {
+		if doc == "capture" {
+			frames := v["frames"].([]any)
+			v["frames"] = append(frames, map[string]any{"index": 1, "case_id": "c2", "state": "NOT_SENT", "status": "REQUEUED", "detail": "not sent", "wall_ms": 0, "stdin": nil, "stdout": nil})
+		}
+	})
+	var set *ordinaryGuardedSet
+	var e *Error
+	func() {
+		defer func() {
+			if p := recover(); p != nil {
+				t.Fatalf("an extra transcript frame panicked: %v", p)
+			}
+		}()
+		set, e = f.b.ordinaryGuardedSet(f.root, f.s, f.registration, f.profile, f.manifest, f.runBinding)
+	}()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if set.Assessment != AssessFail || set.FirstFailure != "ORDINARY_BATCH_CAPTURE" {
+		t.Fatalf("extra frame: %s %s %v", set.Assessment, set.FirstFailure, ordinaryFindingCodes(set))
+	}
+}
+
+// SENT means the response did not complete; the request may have been written whole (a frame
+// watchdog or memory limit while waiting), in part, or not at all (a failed first write leaves no
+// stdin span). ANSWERED still needs the whole request.
+func TestOrdinaryGuardedSetSentFrameStdinCompletion(t *testing.T) {
+	for _, c := range []struct {
+		state, stdin string
+		ok           bool
+	}{{"SENT", "complete", true}, {"SENT", "partial", true}, {"SENT", "null", true}, {"ANSWERED", "partial", false}, {"ANSWERED", "null", false}} {
+		f := newOrdinaryReaderFixtureEdited(t, func(doc string, v map[string]any) {
+			switch doc {
+			case "process":
+				if c.state == "SENT" {
+					v["stdout_bytes"] = 0
+				}
+			case "capture":
+				frame := v["frames"].([]any)[0].(map[string]any)
+				frame["state"] = c.state
+				frame["stdin"].(map[string]any)["complete"] = c.stdin == "complete"
+				if c.stdin == "null" {
+					frame["stdin"] = nil
+					v["stdin"] = map[string]any{"bytes": 0, "sha256": digestHex(nil), "retained_bytes": 0}
+				}
+				if c.state == "SENT" {
+					frame["status"], frame["detail"], frame["stdout"] = "RESOURCE_LIMIT", "FRAME_TIME_LIMIT", nil
+					v["stdout"] = map[string]any{"bytes": 0, "sha256": digestHex(nil), "retained_bytes": 0}
+				}
+			case "transport":
+				v["state"] = c.state
+			}
+		})
+		set, e := f.b.ordinaryGuardedSet(f.root, f.s, f.registration, f.profile, f.manifest, f.runBinding)
+		if e != nil {
+			t.Fatal(e)
+		}
+		stateFinding := slices.Contains(ordinaryFindingCodes(set), "ORDINARY_BATCH_FRAME_STATE")
+		if c.ok && (set.Assessment != AssessBlocked || len(set.Findings) != 0) || !c.ok && (!stateFinding || set.Assessment != AssessFail) {
+			t.Errorf("%s with %s stdin: %s %v", c.state, c.stdin, set.Assessment, ordinaryFindingCodes(set))
 		}
 	}
 }

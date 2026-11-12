@@ -420,7 +420,7 @@ func (b *eligibilityBudget) ordinaryGuardedSet(root *os.Root, s *eligibilitySess
 			batchCache.Accepted = false
 		}
 		for j, frame := range capture.Frames {
-			if frame.Index != j || frame.Case != batch.Cases[j] || caseBatch[frame.Case].owner != "" || !containsString(manifest.Cases, frame.Case) {
+			if j >= len(batch.Cases) || frame.Index != j || frame.Case != batch.Cases[j] || caseBatch[frame.Case].owner != "" || !containsString(manifest.Cases, frame.Case) {
 				add("ORDINARY_BATCH_FRAME", capMember.Path, "frame 순서 또는 case 소유권이 중복·변조됐다")
 				continue
 			}
@@ -687,10 +687,10 @@ func (b *eligibilityBudget) ordinaryValidateBatchStreams(s *eligibilitySession, 
 			stdinOffset += span.Bytes
 			_, _ = stdinHash.Write(frameBytes)
 			data.Stdin = frameBytes
-			if frame.State == "ANSWERED" && !span.Complete || frame.State == "SENT" && span.Complete {
+			if frame.State == "ANSWERED" && !span.Complete { // SENT may carry a whole or a partial request
 				add("ORDINARY_BATCH_FRAME_STATE", captureMember.Path, "stdin 완료 상태가 frame state와 다르다")
 			}
-		} else if frame.State == "ANSWERED" || frame.State == "SENT" {
+		} else if frame.State == "ANSWERED" { // a SENT frame whose first write failed has no stdin span
 			add("ORDINARY_BATCH_FRAME_STATE", captureMember.Path, "보낸 frame의 stdin bytes가 없다")
 		}
 		if frame.Stdout.Kind() != 'n' {
