@@ -54,9 +54,9 @@ Query의 structural capture와 host predicate 평가는 구분한다. 현재 nat
 
 Local grammar/runtime patch의 source·순서·결과 hash·제거 조건은 [provenance](../provenance/upstream-sources.md)와 canonical source/runtime 등록부를 따른다. 새 upstream의 version명이나 release 존재만으로 local patch를 제거하거나 기존 지원 근거를 옮기지 않는다. 정확한 새 closure, 유지한 regression, 세 host qualification과 patch 영향의 API/large 검사가 검증된 변경 단위가 필요하다. 갱신·제거는 별도 추적 변경이며 성능 평가나 소비자 pilot이 자동 승인하지 않는다.
 
-## Release v0.3.0의 claim (초안)
+## Release v0.3.0의 claim
 
-발행 전 초안이다. tag 대상 commit과 발행일은 미정이고, 발행은 사용자의 별도 승인이 필요하다. 본문은 [한국어](../reports/issue-220-v030-release.md)·[English](../reports/issue-220-v030-release.en.md) release 문서가 소유한다. 이 절은 v0.2.0의 claim과 한계를 줄이지 않으며, 아래는 그 위에 새로 주장하는 query 의미 범위만 정한다.
+source-only release `v0.3.0`(2026-11-13)의 claim이다. 본문은 [한국어](../reports/issue-220-v030-release.md)·[English](../reports/issue-220-v030-release.en.md) release 문서가 소유한다. 이 절은 v0.2.0의 claim과 한계를 줄이지 않으며, 아래는 그 위에 새로 주장하는 query 의미 범위만 정한다.
 
 - **VERIFIED·experimental 구분은 v0.2.0과 같다.** offline core와 공개 API가 VERIFIED, 나머지 기능과 API가 experimental이다. 현재 CI의 검증 host는 Windows·Linux다(#332).
 - **query 의미는 experimental이다.** 통합 PR [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416)이 main에 병합된 뒤에만, Windows에서 실제로 검증한 하위 범위를 주장한다: predicate 독립 평가 20/20과 거부 정책 47/47, SVC 오프라인 의무 263, SVC inline C# tree 30·query 60, large 31/39(`cs-large-22m` 전체 CST 포함), 선택 SQL shard 공개 pass(TSQL 72/72, PostgreSQL 9/9)와 JSON 다중 case·편집 이력 양성. 근거와 조건은 release 문서의 "query 의미 claim"에 있다.

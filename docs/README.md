@@ -51,7 +51,7 @@ The current implementation consists of repository foundation checks, the Session
 | #193 성능 기준선·독립 정확도·소비자 도입 평가 | [후속 평가](reports/issue-193-evaluation.md) |
 | #197 선택적 logger 관측·source witness·기존 판정 유지 | [한국어](reports/issue-197-reuse-observation.md), [English](reports/issue-197-reuse-observation.en.md) |
 | #199 다음 source-only release의 API 변화·소비 검증·미완료 발행 준비(역사 기록, 최종 후보 아님) | [한국어](reports/issue-199-source-release.md) · [English](reports/issue-199-source-release.en.md) |
-| #220 v0.3.0 release 본문 초안: 제품 범위·query 의미 claim(검증·미주장)·공개 API·CLI·schema 변화(v0.2.0 대비)·잔존 제약·발행 전 남은 검증 | [한국어](reports/issue-220-v030-release.md) · [English](reports/issue-220-v030-release.en.md) |
+| #220 v0.3.0 release 본문: 제품 범위·query 의미 claim(검증·미주장)·공개 API·CLI·schema 변화(v0.2.0 대비)·잔존 제약·발행 전 남은 검증 | [한국어](reports/issue-220-v030-release.md) · [English](reports/issue-220-v030-release.en.md) |
 | #205 Go 식별자 범주·Unicode 17 수정과 로컬 검증 | [한국어](reports/issue-205-go-identifiers.md), [English](reports/issue-205-go-identifiers.en.md) |
 | #210 Windows native suite 빌드 직렬화 비용과 300초 timeout | [한국어](reports/issue-210-native-suite-build-cost.md) · [English](reports/issue-210-native-suite-build-cost.en.md) |
 | #217 오류 tree route BLOCKED 원본 처분·reuse holdout 원장·미처분 검사 | [처분 보고서](reports/issue-217-reuse-dispositions.md) |

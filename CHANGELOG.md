@@ -1,8 +1,8 @@
 # 변경 기록
 
-## v0.3.0 — 발행일 미정 (초안, tag 대상 commit 미정; #220)
+## v0.3.0 — 2026-11-13
 
-release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim-초안)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행할 예정이며 binary와 package는 없다. 발행은 사용자 승인 뒤에만 한다.
+release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행한다. binary와 package는 없다(#220).
 
 ### VERIFIED·experimental
 
@@ -18,7 +18,7 @@ release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거�
 - experimental `reuse-accepted` 역할(#264)을 추가했다. Windows·Linux의 original-history 증거와 omit 대조군을 쓰며 original의 구문 적합성·node identity·성능은 주장하지 않는다. qualification inventory가 r8, result가 r9로 올랐다.
 - 출력·trust document·실행 workspace가 입력 root나 그 하위 디렉터리의 별칭인지 handle-derived directory identity로 대조한다(#215). bind mount 별칭은 Linux CI의 private mount namespace에서, Windows `subst`는 actual main run 40203916886에서 확인했다. namespace 전체의 원자적 snapshot이나 모든 동시 경로 교체는 보장하지 않으며 macOS 생성 순간의 소유권 공백은 남는다.
 - **native runtime pin 변경(#213): 사용자 안내.** Tree-sitter runtime source가 commit `659cda7c`(v0.2.0)에서 release tag `v0.27.1`(`10eb5ac`)로 올랐다. `--runtime`은 사용하는 `tsgk`의 pin과 같아야 하며 다르면 어느 방향이든 `RUNTIME_MISMATCH`(exit 2)로 거부된다. v0.2.0용 runtime 디렉터리는 그대로 쓸 수 없고 build·producer identity도 달라진다. 근거는 `docs/provenance/upstream-sources.md`다.
-- experimental `replay`의 결과 형태가 옛 evidence에서 달라진다(호환성 변화, #220). v0.2.0이 만든 `incremental` result·`oracle record` set의 판정·exit·code·`result_schema`(`tsgk-replay-result/r1`)·findings는 같지만 `case-binding`·`tree` gate의 recomputed 개수(1→6, 3→12)와 `oracle-set` reducer의 gate 목록(10→13개, `query-expectations`·`fact-reproduction`·`dynamic-sql` 추가)이 바뀌어, 결과를 counter나 gate 목록 단위로 비교하는 소비자는 영향을 받는다. 후보 `aca5385`에서 실측했고 최종 후보에서 다시 확인한다.
+- experimental `replay`의 결과 형태가 옛 evidence에서 달라진다(호환성 변화, #220). v0.2.0이 만든 `incremental` result·`oracle record` set의 판정·exit·code·`result_schema`(`tsgk-replay-result/r1`)·findings는 같지만 `case-binding`·`tree` gate의 recomputed 개수(1→6, 3→12)와 `oracle-set` reducer의 gate 목록(10→13개, `query-expectations`·`fact-reproduction`·`dynamic-sql` 추가)이 바뀌어, 결과를 counter나 gate 목록 단위로 비교하는 소비자는 영향을 받는다. 후보 `aca5385`에서 실측했고 최종 후보의 재확인 결과는 release 문서의 "발행 전 남은 검증"에 적는다.
 - `oracle record`가 `queries`가 빈 profile에서 manifest에 `"queries": null`을 써서 자신이 발행한 set을 `REFERENCE_SET_INVALID`(exit 4)로 거부하던 v0.2.0의 결함을 고쳤다. 이제 `[]`를 쓰고 같은 입력에서 PASS한다(#220).
 
 - #418 `TestRegisteredAnchors` 환경 민감성 교정(Refs #418): HARD Job wrapper처럼 환경변수 8개(`SystemRoot`, `WINDIR`, `PATH`, `USERPROFILE`, `LOCALAPPDATA`, `APPDATA`, `COMSPEC`, `PATHEXT`)만 전달하는 환경에서 이 시험이 묶음당 45–90초 이상 걸려 90초 wall을 넘고 `context deadline exceeded`로 실패했다(정상 환경 약 2–4초). `run-routes.ps1`의 변환 구간은 모두 균일하게 느려졌고(`Get-ShaBytes` 약 100배 등), 원인은 `SystemDrive`와 `ALLUSERSPROFILE`이 둘 다 없을 때 PowerShell 7의 .NET 정적 호출이 호출당 약 6 ms가 되는 것이다(둘 중 하나만 있어도 정상). 시험이 변환 process에 `SystemDrive`(없으면 `SystemRoot`의 drive)를 보충한다. production script·한도·90초 wall은 바꾸지 않았고 SKIP도 없다. 실패 메시지에 묶음 번호·파일 수·경과 시간·자식 환경 변수 수를 넣고 성공 로그에 묶음별 `elapsed`를 남긴다. `TestConvertChildEnvSupplyingSystemDrive`가 보충 규칙을 고정한다.
