@@ -607,6 +607,64 @@ Shard plan은 ordinary obligation ID를 각 고정 case shard에 정확히 한 �
 - 오류 복구 tuple의 BLOCKED 사유: 사용자 결정(#427 마지막 주석)은 "도출 불가" 사유의 BLOCKED다. plan은 tuple별 사유를 갖지 않고 모든 shard를 `CAPACITY_UNPROVEN`으로 둔다. P3는 새 사유 코드를 만들지 않는다. plan 수준의 사유는 `CAPACITY_UNPROVEN`이고, tuple별 "도출 불가" 사유는 결과 계층(P4/P5)이 가진다. TODO: 오류 복구 tuple의 not-derivable 사유 기준은 #432에서 정한다(코드에는 참조를 두지 않는다).
 - 가장 큰 registration(`tsql`)은 약 12.3 MB, plan은 약 13.4 MB로 16 MiB 파일 한도 안이다. 생성 파일은 추적하지 않는다. 기존 계약 집합이 이 파일을 요구하지 않고 P1 witness와 plan도 추적하지 않으므로, 시험이 매번 생성해 digest만 고정한다.
 
+### #427 ordinary pass 용량 모델과 packing 규칙 (P2, 측정 전용)
+
+P2는 공개 `VerifyOrdinaryQuerySemantics` 한 pass가 한도(`OrdinaryPlanLimits`: logical 1 GiB, work 32,000,000, read 256 MiB) 안에 몇 shard를 담는지 Windows amd64 HARD Job에서 측정해 packing 규칙의 입력 상수를 정한다. 이 절은 제품 한도·claim·분모·필수 check를 바꾸지 않으며 모델 상수는 증거가 아니다. 측정 하네스(`src/kit/query_ordinary_measure_*_test.go`)는 opt-in 시험이고 해당 환경 변수가 없으면 모두 SKIP한다. 측정에서 쓴 expected asset은 native 출력을 복사한 측정 전용 자료이므로 어떤 결과도 scope 결과로 저장하거나 VERIFIED로 세지 않는다. 용량(charge)만 보며 독립 expected의 정확성은 P5가 다룬다.
+
+모델은 한 pass의 세 자원(logical, work, read) 비용을 `pass = F′(route) + Σ_{shard} c(shard) + margin`으로 쓴다. 같은 route의 서로 다른 shard 묶음(k=2~5)이 같은 F′를 주므로(한도 대비 0.7% 이내) 비용은 shard에 대해 가산적이다.
+
+- 입력(전부 plan 시점 값): shard의 step 수 `S`, tuple 수 `T`, 질의 수 `q = T/(2S−1)`, step별 source byte 수 `b`, case의 expect 앵커 수 `Ea`.
+- node·capture 추정: `n̂(b) = exp(a + b₁·ln(b) + shift) − 1` (route별 `a`, `b₁`, 상한 `shift`; capture도 같은 형태). `N̂in = Σ n̂(b_step)`, `N̂ = N̂in · (2S−1)/S`(incremental·fresh 두 tree), `Ĉ`는 capture 추정에 `(2S−1)`을 곱한 값, `QN̂ = q · N̂in`, `EaN̂ = Ea · n̂`. `UpperBound`는 `shift` 포함(상한 밀도)을 쓴다.
+- shard 비용 기울기(모두 `c(shard)`의 항):
+  - logical = 1,472,571.34·T + 92,316.31·N̂ + 11,923.27·N̂in + 7,146.92·QN̂ + 108,461.73·Ĉ
+  - work = 62,987.50·T + 3,965.50·N̂in + 267.22·QN̂ + 4,113.63·Ĉ + 156.23·EaN̂ + 1,350,708.64·S
+  - read = 4,093.20·T + 661.68·N̂ + 954.83·Ĉ + 324.71·QN̂
+- pass당 마진(한 번만): logical 5%(한도의 53.7 MiB), work 12%(3,840,000), read 1%(2.7 MiB). 마진은 plan 시점 입력만 쓸 때의 과소 추정(측정 표본에서 logical 최대 2.7%, work 최대 10.8%)을 덮는다.
+- route별 F′(pass 고정비)와 node·capture 거듭제곱 식 상수:
+
+| route | F′ logical B | F′ work | F′ read B | node a / b₁ / shift | capture a / b₁ / shift |
+|---|---:|---:|---:|---|---|
+| bash | 250876182 | 15996746 | 24306870 | -1.375094 / 1.059936 / 0.384934 | -2.433694 / 0.753146 / 0.371001 |
+| c | 222669947 | 10119775 | 17766882 | -0.458124 / 0.914600 / 0.555551 | -3.371368 / 0.827538 / 0.813412 |
+| cpp | 367154982 | 4736617 | 71592506 | -0.550861 / 0.933861 / 0.136551 | -1.002035 / 0.503224 / 0.611756 |
+| csharp | 426311048 | 7017293 | 79735638 | -0.279465 / 0.876002 / 0.222669 | -1.483225 / 0.872597 / 1.161496 |
+| css | 223933176 | 6276946 | 13758334 | -0.425975 / 0.910765 / 0.138414 | -1.018883 / 0.856043 / 0.147687 |
+| dart | 237523444 | 12513782 | 20608123 | 0.902614 / 0.742929 / 0.404116 | 0.175870 / 0.398696 / 0.637469 |
+| go | 201053532 | 6187028 | 13250238 | -0.948606 / 1.011594 / 0.114434 | -3.229005 / 0.846441 / 0.508699 |
+| html | 189493584 | 4509359 | 11315076 | 0.748526 / 0.743176 / 0.108472 | -0.855501 / 0.744325 / 0.516112 |
+| java | 208416989 | 7159634 | 14391470 | -0.152803 / 0.881527 / 0.422901 | -1.047863 / 0.464437 / 0.523094 |
+| javascript | 219224386 | 9101318 | 16454418 | -0.322391 / 0.900040 / 0.338676 | -0.699924 / 0.410611 / 0.810855 |
+| json | 187395465 | 4336821 | 11185852 | 1.093937 / 0.714660 / 0.330213 | -1.506864 / 0.688900 / 1.029355 |
+| jsx | 217787078 | 8977859 | 16354872 | -0.112381 / 0.877536 / 0.487077 | -4.326269 / 1.040266 / 1.020249 |
+| kotlin | 307692682 | 4715131 | 50522096 | 0.492817 / 0.778781 / 0.263238 | 0.016753 / 0.505822 / 0.639357 |
+| php | 239306257 | 12804492 | 20794909 | 0.316511 / 0.802569 / 0.100219 | -1.246416 / 0.550555 / 0.859130 |
+| postgresql-sql | 590736573 | 6533264 | 134275825 | 0.563291 / 0.838729 / 0.168671 | -2.415722 / 0.753760 / 0.848323 |
+| powershell | 227188118 | 10904844 | 18734351 | 0.524349 / 0.848910 / 0.250775 | -0.854252 / 0.467335 / 0.150263 |
+| python | 217321737 | 8560594 | 16046999 | 0.732689 / 0.740075 / 0.327700 | -2.399796 / 0.745174 / 0.514900 |
+| r | 209953018 | 8415834 | 15781210 | -0.012068 / 0.858423 / 0.334868 | -3.444755 / 0.986966 / 0.454807 |
+| ruby | 277751713 | 20762243 | 29816584 | 1.606363 / 0.606721 / 0.349107 | -1.047284 / 0.604656 / 0.461520 |
+| rust | 233261721 | 11999386 | 20003863 | 0.165544 / 0.859767 / 0.363540 | 0.197390 / 0.354745 / 1.407214 |
+| swift | 305726458 | 4925005 | 48119396 | 1.223377 / 0.665886 / 0.250729 | -1.617147 / 0.567343 / 0.852190 |
+| tsql | 650597731 | 10519617 | 125672111 | -0.028972 / 0.840696 / 0.381649 | -0.301691 / 0.717600 / 1.079133 |
+| tsx | 241436105 | 13637667 | 21990272 | -0.703412 / 0.986528 / 0.308453 | -1.589790 / 0.574361 / 0.439013 |
+| typescript | 242866724 | 13457150 | 21888273 | -0.628873 / 0.952631 / 0.189200 | -1.620083 / 0.581803 / 0.669270 |
+| xml | 191772620 | 4637598 | 11553744 | 0.139162 / 0.799977 / 0.369729 | -1.791099 / 0.915855 / 0.794519 |
+| yaml | 195977081 | 5757256 | 12731842 | 0.844067 / 0.723362 / 0.473789 | -2.736710 / 0.827512 / 0.392191 |
+
+**결정적 packing 규칙.** 입력은 registry·qualification inventory·host와 위 상수 표다. host 측정값은 입력이 아니다.
+
+1. 대상은 step 단위로 도출 가능한 tuple이 하나 이상 있는 shard다. 모든 step이 오류 복구인 shard는 pass에 넣지 않는다.
+2. shard별 `c(shard)`를 위 식과 상한 밀도로 계산한다.
+3. `max(c_logical/1 GiB, c_work/32,000,000, c_read/256 MiB)` 내림차순, 같으면 case ID 오름차순으로 정렬한다.
+4. 번호가 가장 작은 pass에 first-fit으로 넣는다. 조건은 세 자원 모두 `F′ + Σc + margin ≤ 한도`다.
+5. 빈 pass에도 들어가지 않는 shard는 pass에 넣지 않고 `CAPACITY_UNPROVEN`(BLOCKED)으로 센다. 분모는 유지한다.
+6. 실행 중 pass가 `ELIGIBILITY_WORK_LIMIT`(logical 부족도 같은 code)로 멈추면 그 pass의 shard를 ID 순으로 반으로 나눠 다시 돌린다. 한 shard가 단독으로 멈추면 BLOCKED다. 모델이 틀렸을 때의 방어선이며 멈춘 pass는 증거가 아니다.
+7. plan의 `UpperBound`(현재 nil)는 `F′ + c(shard) + margin`의 세 값을 `OrdinaryLimits{Logical, Work, ReadBytes}`에 채운다. `FileBytes`·`Entries`·`WallMillis`는 이번 측정에서 구속하지 않으므로 한도 그대로 둔다. 이 채움은 P3 생성기의 확장이며 이 P2 변경은 하지 않는다.
+
+이 상수가 설명하는 범위는 측정 표본(route당 case 5~6개와 k=2~5 묶음)과 held-out 26개다. 이 표본의 plan 시점 UpperBound는 과소 예측 0건이었고 Windows에서 약 650 pass, 단독 초과 shard 약 153개(상한)·45개(중앙)로 추산한다(Linux 미측정). 증명이 아니므로 규칙 6의 재분할이 마지막 방어선이다. C#은 비-tsql dynamic SQL 어댑터의 work가 `facts.dynamic_sql` capture 수의 3차식(`64·n²·(n+byte+text+1)`, `query_ordinary_base.go`)이어서 위 선형 모델이 하한만 준다.
+
+**하네스 환경.** `TestOrdinaryMeasurePass`는 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_CASES`(쉼표 목록), `TestOrdinaryMeasurePack`은 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_PACKS`, `TestOrdinaryMeasureCaseTable`은 `TSGK_MEASURE_OUT`, `TestOrdinaryMeasureShape`는 `TSGK_MEASURE_SHAPE_ROOT`가 있어야 실행한다. `TSGK_MEASURE_WITNESS`는 source-only witness export에서 임의 case의 source를 읽고, `TSGK_MEASURE_SKIP_PHASE_C=1`은 독립 producer 재실행(phase C)을 생략한다. 실행은 `hardjob.lock`을 잡고 HARD Job 안에서 한다.
+
 ### #362 shard commitment와 선택 plan 검증 (P2-C)
 
 기존 P2-A `BuildOrdinaryShardPlan`은 pinned P0 registry, qualification inventory와 source-only inputs를 모두 검증하고 106,208개 ordinary ID의 전체 disjoint union을 확인한다. 이 전체 증명을 매 selected pass에서 반복하지 않도록 별도 source-only 단계가 전체 plan JSON에서 `tsgk-query-ordinary-plan-commitment/r1`을 만든다. Commitment는 P2-A 전체 plan의 `path/bytes/SHA-256` pin, shard 배열만 빈 배열로 바꾼 전체 공통 header, shard 수 6,402와 순서가 고정된 SHA-256 Merkle root를 가진다. 각 leaf는 도메인 구분자, 전체 plan pin, header digest, shard 수, 0부터 시작하는 위치와 shard의 정확한 JSON 원문을 길이 접두 방식으로 hash한다. Pair hash도 별도 도메인을 쓴다. 6,402개 leaf의 proof는 최대 13개 sibling digest이며 홀수 층의 자기 복제 sibling을 verifier가 강제한다. Shard ID는 전체 plan에서 엄격히 정렬되고 고유해야 한다.
