@@ -151,7 +151,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 - CI 운영 여유 표본 미판정, 제품 동작 아님: [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303), [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352). 표본은 계속 자연스럽게 모아 판정한다.
 - [#329](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/329): hosted Windows runner에서 Go runtime 치명 오류가 한 번 관측된 상류 의심 사건이며 재현 계측(E0)을 남겨 두었다. 제품 동작이 아니다.
 - #280·#303·#352·#329는 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
-- 최근 nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)에서 비필수 `race diagnostic (ubuntu-24.04)` lane이 failure였다. data race 보고가 아니라 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)이다. 같은 run의 필수 job은 모두 success다.
+- nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)와 [43330901793](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43330901793)(main `95e7411`)에서 비필수 `race diagnostic (ubuntu-24.04)` lane이 failure였다. data race 보고는 없었다. 원인은 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)과, 두 번째 run의 `TestBatchCaptureKeepsActualWireBytes`(race로 build한 helper의 종료 직전 1초 sleep이 시험의 1초 기한과 겹침)다. 두 run의 필수 job은 모두 success다. kit 분리 실행(#426)과 runner·시험 교정(#428)은 이 release에 들어 있고, 그 뒤 nightly는 아직 돌지 않았다.
 
 ## 발행 전 남은 검증
 

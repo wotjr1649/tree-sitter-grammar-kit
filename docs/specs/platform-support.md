@@ -65,7 +65,7 @@ source-only release `v0.3.0`(2026-11-13)의 claim이다. 본문은 [한국어](.
 - **C#은 검증된 범위만 주장한다.** C1–C4 잔여 교정(#369)과 기존 qualification PASS다. C# 전체 선언 범위의 의무 → 독립 기대값 → 실행 근거 대조는 미주장이며 [#233](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233)은 출하 뒤에도 열어 둔다(2026-11-12 사용자 결정).
 - **소비자 요구 사항: Go 1.27.4 이상.** `go.mod`의 `go` 지시어가 1.27.1에서 1.27.4로 올랐다. stable 표면의 깨짐은 없고 experimental 표면의 호환성 깨짐(`qualify`의 inventory r3 거부, schema revision 상승, 새 JSON key)은 release 문서의 "공개 API·CLI·schema 변화(v0.2.0 대비)"에 있다.
 - **CI 운영 여유 표본(#280·#303·#352)은 미판정이며 제품 동작이 아니다.** #329는 hosted Windows runner의 Go runtime 치명 오류 1회에 대한 상류 의심 사건이며 제품 동작이 아니다. 넷 모두 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
-- **최근 nightly의 비필수 race 진단 failure.** [nightly 43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)의 `race diagnostic (ubuntu-24.04)`는 data race 보고가 아니라 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)으로 failure였다. 같은 run의 필수 job은 모두 success다.
+- **nightly의 비필수 race 진단 failure.** nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)와 [43330901793](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43330901793)(main `95e7411`)의 `race diagnostic (ubuntu-24.04)`는 data race 보고가 아니라 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)과, 두 번째 run의 `TestBatchCaptureKeepsActualWireBytes`(race로 build한 helper의 종료 직전 1초 sleep이 시험 기한과 겹침)로 failure였다. 두 run의 필수 job은 모두 success다. kit 분리 실행(#426)과 runner·시험 교정(#428)이 v0.3.0에 들어 있다.
 
 ## Release v0.2.0의 claim
 

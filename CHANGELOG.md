@@ -119,7 +119,7 @@ release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거�
 
 - ordinary 입력 처리를 위한 내부 inventory 선택 decode를 추가했다(Refs #362). 전체 bytes hash와 strict token·전역 ID/플랫폼 검사를 유지하고 header/전역 투영·선택 route만 typed decode한다. 공개 전체 파서·한도는 그대로이며26 route differential·오류 반례와 실제 P0 registry를 포함한 test-only 원장 측정으로 검증한다. P2-C ordinary producer/replay 연결과 전체 의미 완료는 후속 범위다.
 
-잠정 version은 `v0.3.0`이며 최종 tag 대상 commit과 발행일은 미확정이다. 이 항목은 준비 상태를 기록한다. 기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. release 본문과 query 의미 claim은 [한국어 release 문서](docs/reports/issue-220-v030-release.md)와 [English release document](docs/reports/issue-220-v030-release.en.md)에 있고, 이전 준비 기록(역사 후보 기준)은 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
+기존 `v0.2.0`의 범위와 관측은 아래 이력 그대로 보존한다. release 본문과 query 의미 claim은 [한국어 release 문서](docs/reports/issue-220-v030-release.md)와 [English release document](docs/reports/issue-220-v030-release.en.md)에 있고, 이전 준비 기록(역사 후보 기준)은 [한국어 안내](docs/reports/issue-199-source-release.md)와 [English preparation notes](docs/reports/issue-199-source-release.en.md)에 있다.
 
 - #362 P0에 내부 전체 의미 의무 registry verifier와 명시 generator를 추가했다. Ordinary106,208·predicate40·control94·known Windows large4개를 exact coordinate로 등록해 합계106,346을 보존한다. `query-slot/r1`의 `semantic_required:null` 및 `full_scope_complete=false`는 유지되며 public API·runtime evidence reader·completion gate는 추가하지 않았다(Refs #362).
 
