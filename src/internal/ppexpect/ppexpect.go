@@ -15,7 +15,7 @@ const (
 	ProvenanceSchema = "tsgk-csharp-pp-roslyn/r3"
 )
 
-// Observation is one case of a tsgk-csharp-pp-roslyn/r2 document (src/dev/csharp-pp-oracle).
+// Observation is one case of a tsgk-csharp-pp-roslyn/r2 document (src/dev/csharp-g1-roslyn, mode pp-r2).
 type Observation struct {
 	ID          string       `json:"id"`
 	Features    []string     `json:"features"`

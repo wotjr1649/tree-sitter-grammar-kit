@@ -5,9 +5,9 @@ usage: python -I gen.py OUT_DIR SEED... [--count N]
 Each seed gives N cases (default 500): half generated from a small directive grammar, half
 mutated from src/testdata/csharp-pp/cases.json, so a seed reproduces only with the same
 cases.json (record its sha256 with a run). Batches are cases.json-shaped files
-OUT_DIR/batch-<seed>-<k>.json, each under 900 KiB so the oracle's 1 MiB input bound holds.
+OUT_DIR/batch-<seed>-<k>.json, each under 900 KiB (the batch size the former 1 MiB input bound set; kept).
 Then, per batch, with a 120 s bound:
-  timeout 120 dotnet <oracle>/Oracle.dll OUT_DIR/batch-S-K.json OUT_DIR/observed-S-K.json
+  timeout 120 dotnet <tool>/Observe.dll pp-r3 OUT_DIR/batch-S-K.json OUT_DIR/observed-S-K.json   (src/dev/csharp-g1-roslyn)
 After independent review, supply observed-S-K.json.pins.json (the approved Roslyn tuple,
 material set and approval digests; see the V2-D contract). Never self-approve generated output.
 Then compare:
