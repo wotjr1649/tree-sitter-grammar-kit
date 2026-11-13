@@ -522,6 +522,12 @@ func g1cBuildExpected(r1 CSharpG1Expected, in CSharpG1ExpectedR2Sources, cs []G1
 
 // ParseCSharpG1ExpectedR2 decodes the r2 asset and verifies it as described at the top of this file.
 func ParseCSharpG1ExpectedR2(data []byte, in CSharpG1ExpectedR2Sources) (CSharpG1Expected, error) {
+	return parseCSharpG1ExpectedR2(data, in, nil)
+}
+
+// parseCSharpG1ExpectedR2 is ParseCSharpG1ExpectedR2 with step (1) done by the caller: a non-nil r1 must be the result of
+// ParseCSharpG1Expected(in.Previous, in.R1). A caller that checks many r2 candidates against one r1 derives it once.
+func parseCSharpG1ExpectedR2(data []byte, in CSharpG1ExpectedR2Sources, verified *CSharpG1Expected) (CSharpG1Expected, error) {
 	x, err := DecodeCSharpG1Expected(data)
 	if err != nil {
 		return x, err
@@ -530,8 +536,10 @@ func ParseCSharpG1ExpectedR2(data []byte, in CSharpG1ExpectedR2Sources) (CSharpG
 		return x, g1eFault("G1_EXPECTED_SCHEMA")
 	}
 	// (1) the sealed r1 asset is intact
-	r1, err := ParseCSharpG1Expected(in.Previous, in.R1)
-	if err != nil {
+	var r1 CSharpG1Expected
+	if verified != nil {
+		r1 = *verified
+	} else if r1, err = ParseCSharpG1Expected(in.Previous, in.R1); err != nil {
 		return x, err
 	}
 	// (3) the corrections are well formed and replace what r1 holds

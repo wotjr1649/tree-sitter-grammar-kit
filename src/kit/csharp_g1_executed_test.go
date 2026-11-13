@@ -2,9 +2,11 @@ package kit
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"maps"
 	"os"
 	"regexp"
 	"slices"
@@ -12,6 +14,59 @@ import (
 	"sync"
 	"testing"
 )
+
+type g1xCtxResult struct {
+	c   g1xContext
+	err error
+}
+
+var g1xCtxCache sync.Map // content key of the context inputs -> g1xCtxResult
+
+// g1xCtx is g1xContextOf with the result kept by the content of the inputs the context is built from (the pinned
+// declarations, the expected asset, the kind map and the observation; the raw native response is not one of them), so
+// that cases which change only the asset or the raw response share one context. A context is read, never changed.
+func g1xCtx(in CSharpG1ExecutedSources) (g1xContext, error) {
+	h := sha256.New()
+	put := func(b []byte) {
+		fmt.Fprintf(h, "%d:", len(b))
+		h.Write(b)
+	}
+	for _, b := range [][]byte{in.Expected, in.KindMap, in.Observation, in.Src.Inventory, in.Src.Alternatives, in.Src.FactMapping} {
+		put(b)
+	}
+	for _, k := range slices.Sorted(maps.Keys(in.Src.Fixtures)) {
+		put([]byte(k))
+		put(in.Src.Fixtures[k])
+	}
+	key := string(h.Sum(nil))
+	if r, ok := g1xCtxCache.Load(key); ok {
+		return r.(g1xCtxResult).c, r.(g1xCtxResult).err
+	}
+	c, err := g1xContextOf(in)
+	g1xCtxCache.Store(key, g1xCtxResult{c, err})
+	return c, err
+}
+
+// g1xParse is ParseCSharpG1Executed over the shared context of g1xCtx; g1xDeriveShared is DeriveCSharpG1Executed over it.
+func g1xParse(data []byte, in CSharpG1ExecutedSources) (CSharpG1Executed, error) {
+	x, err := DecodeCSharpG1Executed(data)
+	if err != nil {
+		return x, err
+	}
+	c, err := g1xCtx(in)
+	if err != nil {
+		return x, err
+	}
+	return x, g1xCheck(data, x, c, in)
+}
+
+func g1xDeriveShared(in CSharpG1ExecutedSources) (CSharpG1Executed, error) {
+	c, err := g1xCtx(in)
+	if err != nil {
+		return CSharpG1Executed{}, err
+	}
+	return g1xDerive(c, in)
+}
 
 type g1xAssets struct {
 	asset []byte
@@ -203,7 +258,7 @@ func TestCSharpG1ExecutedSyntheticComparison(t *testing.T) {
 	a := g1xLoad(t)
 	in := a.in
 	in.Raw = g1xSynthetic(t, a, nil)
-	x, err := DeriveCSharpG1Executed(in)
+	x, err := g1xDeriveShared(in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,13 +270,13 @@ func TestCSharpG1ExecutedSyntheticComparison(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ParseCSharpG1Executed(data, in); err != nil {
+	if _, err := g1xParse(data, in); err != nil {
 		t.Fatalf("all-match asset: %v", err)
 	}
 	// the asset is the comparison re-derived from the raw observation, and not from another one
 	other := in
 	other.Raw = g1xSynthetic(t, a, func(s *G1NativeSource) { s.Types = append(s.Types, "unused") })
-	if _, err := ParseCSharpG1Executed(data, other); g1Code(err) != "G1_EXECUTED_PIN" && g1Code(err) != "G1_EXECUTED_RAW" {
+	if _, err := g1xParse(data, other); g1Code(err) != "G1_EXECUTED_PIN" && g1Code(err) != "G1_EXECUTED_RAW" {
 		t.Errorf("another raw observation: %v", err)
 	}
 	// a changed type makes the witnesses of that source MISMATCH, and an undisposed mismatch is refused
@@ -237,7 +292,7 @@ func TestCSharpG1ExecutedSyntheticComparison(t *testing.T) {
 			}
 		}
 	})
-	y, err := DeriveCSharpG1Executed(changed)
+	y, err := g1xDeriveShared(changed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +308,7 @@ func TestCSharpG1ExecutedSyntheticComparison(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ParseCSharpG1Executed(bad, changed); g1Code(err) != "G1_EXECUTED_UNDISPOSED" {
+	if _, err := g1xParse(bad, changed); g1Code(err) != "G1_EXECUTED_UNDISPOSED" {
 		t.Errorf("undisposed mismatch: %v", err)
 	}
 	// the expectation is not an output of the comparison: it is the same bytes before and after
@@ -274,7 +329,7 @@ func TestCSharpG1ExecutedNotApplicable(t *testing.T) {
 	in.Raw = g1xSynthetic(t, a, func(s *G1NativeSource) {
 		s.Status, s.Code, s.Nodes, s.Types, s.TreeDigest, s.HasError = "RESOURCE_LIMIT", "PARSE_TIME_LIMIT", [][5]int{}, []string{}, "", false
 	})
-	x, err := DeriveCSharpG1Executed(in)
+	x, err := g1xDeriveShared(in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,7 +341,7 @@ func TestCSharpG1ExecutedNotApplicable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ParseCSharpG1Executed(data, in); err != nil {
+	if _, err := g1xParse(data, in); err != nil {
 		t.Fatal(err)
 	}
 	if len(x.ExecutedIDs()) != 0 {
@@ -310,7 +365,7 @@ func TestCSharpG1ExecutedNotApplicable(t *testing.T) {
 		}
 		offline := in
 		offline.Raw = nil
-		if _, err := ParseCSharpG1Executed(bad, offline); g1Code(err) != "G1_EXECUTED_RESULT" {
+		if _, err := g1xParse(bad, offline); g1Code(err) != "G1_EXECUTED_RESULT" {
 			t.Errorf("forged %s on a witness that was not compared: %v", name, err)
 		}
 	}
@@ -325,7 +380,7 @@ func TestCSharpG1ExecutedNotApplicable(t *testing.T) {
 			s.Status, s.Code, s.Nodes, s.Types, s.TreeDigest = "RESOURCE_LIMIT", "PARSE_TIME_LIMIT", [][5]int{}, []string{}, ""
 		}
 	})
-	y, err := DeriveCSharpG1Executed(one)
+	y, err := g1xDeriveShared(one)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -543,11 +598,11 @@ func TestCSharpG1ExecutedRejectsTampering(t *testing.T) {
 		if forged.text == text {
 			t.Fatalf("%s: forgery did not change the asset", name)
 		}
-		if _, err := ParseCSharpG1Executed([]byte(forged.text), a.in); g1Code(err) != forged.code {
+		if _, err := g1xParse([]byte(forged.text), a.in); g1Code(err) != forged.code {
 			t.Errorf("%s: %v, want %s", name, err, forged.code)
 		}
 	}
-	if _, err := ParseCSharpG1Executed(append(slices.Clone(a.asset), make([]byte, csharpG1ExecutedMax)...), a.in); g1Code(err) != "G1_EXECUTED_SIZE" {
+	if _, err := g1xParse(append(slices.Clone(a.asset), make([]byte, csharpG1ExecutedMax)...), a.in); g1Code(err) != "G1_EXECUTED_SIZE" {
 		t.Errorf("oversize: %v", err)
 	}
 	// the sealed inputs are the ones the asset is bound to: a changed expected asset, kind map or observation is another pin
@@ -558,7 +613,7 @@ func TestCSharpG1ExecutedRejectsTampering(t *testing.T) {
 	} {
 		in := a.in
 		edit(&in)
-		if _, err := ParseCSharpG1Executed(a.asset, in); err == nil {
+		if _, err := g1xParse(a.asset, in); err == nil {
 			t.Errorf("%s changed under the executed asset: accepted", name)
 		}
 	}
@@ -570,7 +625,7 @@ func TestCSharpG1ExecutedForgedEvidenceNeedsTheRaw(t *testing.T) {
 	a := g1xLoad(t)
 	in := a.in
 	in.Raw = g1xSynthetic(t, a, nil)
-	x, err := DeriveCSharpG1Executed(in)
+	x, err := g1xDeriveShared(in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -582,10 +637,10 @@ func TestCSharpG1ExecutedForgedEvidenceNeedsTheRaw(t *testing.T) {
 	}
 	offline := in
 	offline.Raw = nil
-	if _, err := ParseCSharpG1Executed(data, offline); err != nil {
+	if _, err := g1xParse(data, offline); err != nil {
 		t.Fatalf("offline: %v", err)
 	}
-	if _, err := ParseCSharpG1Executed(data, in); g1Code(err) != "G1_EXECUTED_RAW" {
+	if _, err := g1xParse(data, in); g1Code(err) != "G1_EXECUTED_RAW" {
 		t.Errorf("with the raw observation: %v", err)
 	}
 }
@@ -635,7 +690,7 @@ func TestCSharpG1ExecutedRawCoverage(t *testing.T) {
 			t.Fatal(err)
 		}
 		in.Raw = data
-		if _, err := DeriveCSharpG1Executed(in); g1Code(err) != tc.code {
+		if _, err := g1xDeriveShared(in); g1Code(err) != tc.code {
 			t.Errorf("%s: %v, want %s", name, err, tc.code)
 		}
 	}
@@ -753,7 +808,7 @@ func TestCSharpG1NativeNeverFeedsExpectations(t *testing.T) {
 			s.Types[i] += "_disagreeing"
 		}
 	})
-	x, err := DeriveCSharpG1Executed(in)
+	x, err := g1xDeriveShared(in)
 	if err != nil {
 		t.Fatal(err)
 	}
