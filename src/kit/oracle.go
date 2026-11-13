@@ -456,7 +456,7 @@ type OracleBatch struct {
 	ExitCode        int      `json:"exit_code"`
 	WallMillis      int64    `json:"wall_ms"`
 	PeakBytes       uint64   `json:"peak_bytes"`
-	CleanupVerified bool     `json:"cleanup_verified"`
+	CleanupVerified bool     `json:"cleanup_verified"` // runner cleanup verified and no descendant left after exit; stricter than the capture process record
 	TrailingBytes   int64    `json:"trailing_bytes"`
 }
 
