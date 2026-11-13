@@ -232,6 +232,15 @@ TSQL은 `ordinary-base-tree-projection`의 다음 logical 예약 1,731,872 B에 
 | reference-rows (거절) | 1,073,740,361 | 25,817,475 | 129,947,595 | 1,463 | 6,182,525 | 138,487,861 |
 
 
+## #427 P2 ordinary pass 용량 측정 하네스 검증
+
+계약은 [용량 모델과 packing 규칙](../specs/instrumented-query-reference.md#427-ordinary-pass-용량-모델과-packing-규칙-p2-측정-전용)이 정한다. 하네스(`src/kit/query_ordinary_measure_*_test.go`)는 측정 전용 opt-in 시험이고 제품 코드·한도·claim·분모·필수 check를 바꾸지 않는다. 측정 전용 expected(native 출력 복사)는 증거가 아니므로 결과를 저장하거나 VERIFIED로 세지 않는다.
+
+- 모든 하네스 시험(`TestOrdinaryMeasurePass`·`Pack`·`CaseTable`·`Shape`)은 해당 환경 변수(`TSGK_MEASURE_OUT`·`_ROUTE`·`_CASES`·`_PACKS`·`_SHAPE_ROOT`)가 없으면 SKIP하고, 기존 SQL capacity 시험의 witness 읽기(`TSGK_MEASURE_WITNESS`)는 변수가 없으면 기존 fixture 경로를 그대로 쓴다. 병렬 시험이 전역을 쓰지 않는다는 `TestParallelTestsDoNotReachGlobalWrites` 검사를 지켜야 하므로 witness 캐시는 `sync.OnceValues`로 둔다. foundation·kit CI의 시험 시간은 늘지 않는다: 하네스 시험은 각 0.00s에 SKIP하고 `go test ./src/kit` 전체는 하네스 없이 68.0·70.8s, 있을 때 72.1·75.0s로 실행 간 편차 안이다(Windows 로컬, 같은 머신·같은 락).
+- 실행은 `hardjob.lock`을 잡고 4 GiB HARD Job 안에서 한다. 완주·다중 shard 측정은 모두 공개 `VerifyOrdinaryQuerySemantics`와 불변 한도로 한 pass를 센다. 단일 shard는 phase A(native 출력 취득)·B(등록에 pin 후 producer 재실행)·C(독립 producer 재실행)로 돈다. `TSGK_MEASURE_SKIP_PHASE_C=1`은 C를 생략해 host 보정 측정의 producer 실행을 한 번 줄인다.
+- 재현 기준: 같은 r8을 읽는 두 pass는 단계 원장·label별 charge가 정확히 같다. producer를 새로 돌려 run id가 바뀌면 work는 같거나 ±5, read는 ±10 B, logical은 상대 3e-6 이내로 다르다(producer 기록의 숫자 자릿수). main `9f41e89` 기준 JSON 재측정(`alt-json-B01-07`, `alt-json-B01-09`, 3 shard 묶음, 5 shard 묶음)은 모두 이 기준 안에서 저장된 값을 재현하고 전부 VERIFIED였다.
+- 한계: 이 측정은 Windows 한 host이고 Linux는 측정하지 않았다. 표본 밖(24 KB 초과 source, C#의 3차식 fact 파생)에서는 모델이 틀릴 수 있으며, 그때의 방어선은 pass의 `ELIGIBILITY_WORK_LIMIT`와 재분할 규칙이다.
+
 ## #362 P2-B actual capture 기반 검증
 
 2단계의 `TestOracleOrdinaryPublication`은 owned grammar로 두 case·한 case의 두 edits·incremental/fresh·API=true·일반 query와 fact suffix를 실행하고 record/r5·manifest/r8, process/stderr owner 단일성, caller binding, immutable base PASS/FAIL과 pending을 검사한다. 이 시험은 전체 P0 문서 사전 검증과 분리된 내부 publication 경로를 사용하며 실제 qualification route의 full ordinary 수집 근거는 아니다. `TestOrdinaryExecutionBindsSourcesHistoryQueriesAndRuntime`은 실행 직전 source/version·edit/point·query·runtime·case 순서 대조를 검사하고, public `Oracle`의 잘못된 context/문서 없는 거부는 출력 생성 전에 확인한다.
