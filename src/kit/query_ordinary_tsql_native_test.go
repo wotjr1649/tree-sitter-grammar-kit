@@ -3,6 +3,7 @@ package kit
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -28,9 +29,28 @@ type ordinaryTSQLTuple struct {
 
 func (k ordinaryTSQLTuple) String() string { return fmt.Sprintf("%s/s%d/%s", k.Query, k.Step, k.Role) }
 
-// ordinaryTSQLJudgeR8 adjudicates every (query, step, role) tuple of the selected case against
+// ordinaryBodyNames name the expectation bodies of a route under their asset directory: the metadata, tree,
+// captures and fact asset of one (query, step, role) tuple (suffix is "s<step>-<role>").
+type ordinaryBodyNames struct {
+	Dir                        string
+	Meta, Tree, Captures, Fact func(query, suffix string) string
+}
+
+var ordinaryTSQLBodyNames = ordinaryBodyNames{Dir: "expected/tsql/",
+	Meta:     func(q, _ string) string { return "meta-" + q },
+	Tree:     func(_, s string) string { return "tsql-tree-" + s },
+	Captures: func(q, s string) string { return "tsql-captures-" + q + "-" + s },
+	Fact:     func(q, s string) string { return "tsql-facts-" + q + "-" + s }}
+
+// ordinaryTSQLJudgeR8 adjudicates every (query, step, role) tuple of the selected TSQL case against
 // the native raw response of an owned producer run, with expectation bodies from assets.
 func ordinaryTSQLJudgeR8(t *testing.T, produced ordinarySQLProduced, bodies map[string][]byte) (map[ordinaryTSQLTuple]ordinaryTupleJudgment, []ordinaryTSQLTuple) {
+	t.Helper()
+	return ordinaryJudgeR8(t, produced, bodies, ordinaryTSQLBodyNames)
+}
+
+// ordinaryJudgeR8 is the same for any SQL route whose bodies the names locate.
+func ordinaryJudgeR8(t *testing.T, produced ordinarySQLProduced, bodies map[string][]byte, names ordinaryBodyNames) (map[ordinaryTSQLTuple]ordinaryTupleJudgment, []ordinaryTSQLTuple) {
 	t.Helper()
 	profile, err := ParseOracleProfile(produced.Req.Profile)
 	if err != nil || len(profile.Native.Cases) != 1 || profile.FactPack == nil {
@@ -132,7 +152,7 @@ func ordinaryTSQLJudgeR8(t *testing.T, produced ordinarySQLProduced, bodies map[
 				key := ordinaryTSQLTuple{query.ID, uint32(step), role}
 				suffix := fmt.Sprintf("s%d-%s", step, role)
 				body := func(id string) []byte {
-					data, ok := bodies["expected/tsql/"+id+".json"]
+					data, ok := bodies[names.Dir+id+".json"]
 					if !ok {
 						t.Fatalf("expected asset %s is missing", id)
 					}
@@ -140,10 +160,10 @@ func ordinaryTSQLJudgeR8(t *testing.T, produced ordinarySQLProduced, bodies map[
 				}
 				var factData []byte
 				if strings.HasPrefix(query.ID, "facts.") {
-					factData = body("tsql-facts-" + query.ID + "-" + suffix)
+					factData = body(names.Fact(query.ID, suffix))
 				}
 				id := ordinaryTupleIdentity{Case: caseProfile.ID, Query: query.ID, Step: uint32(step), TreeRole: role, Source: pin}
-				judgment, e := adjudicateOrdinaryTuple(b, id, actual, version, body("meta-"+query.ID), body("tsql-tree-"+suffix), body("tsql-captures-"+query.ID+"-"+suffix), factData, &facts)
+				judgment, e := adjudicateOrdinaryTuple(b, id, actual, version, body(names.Meta(query.ID, suffix)), body(names.Tree(query.ID, suffix)), body(names.Captures(query.ID, suffix)), factData, &facts)
 				if e != nil {
 					t.Fatalf("%s: adjudicator stopped: %v", key, e)
 				}
@@ -271,4 +291,110 @@ func TestOrdinaryTSQLExpectedAgainstNative(t *testing.T) {
 func ordinaryTSQLAssetsFromProduced(t *testing.T, produced ordinarySQLProduced, mutation *ordinaryTSQLMutation) (OrdinaryAssetRegistration, map[string][]byte, ordinaryTSQLExpected, map[string]QueryWitnessMetadata) {
 	t.Helper()
 	return ordinaryTSQLAssets(t, "alt-tsql-B01-r001", produced.Source, produced.Req.Profile, mutation)
+}
+
+var ordinaryPostgreSQLBodyNames = ordinaryBodyNames{Dir: "expected/postgresql-do/",
+	Meta:     func(q, _ string) string { return "meta-" + q },
+	Tree:     func(string, string) string { return "tree-selected" },
+	Captures: func(q, _ string) string { return "captures-" + q },
+	Fact:     func(string, string) string { return "fact-declarations" }}
+
+// TestOrdinaryPostgreSQLExpectedAgainstNative is the TSQL forgery counterexample for the PostgreSQL shard: one owned
+// native producer run, all 9 independently authored tuples VERIFIED by the product tuple adjudicator, and then one
+// tampered tree node, capture or fact fails exactly the tuples that consume it (the DO shard has one expected tree
+// that all 9 tuples read, one capture body and one fact body per query).
+func TestOrdinaryPostgreSQLExpectedAgainstNative(t *testing.T) {
+	artifactRoot := ordinarySQLEnv(t)
+	produced := ordinarySQLProduce(t, filepath.Join(artifactRoot, "sql-postgresql-direct"), "postgresql-sql", nil)
+	judge := func(bodies map[string][]byte) (map[ordinaryTSQLTuple]ordinaryTupleJudgment, []ordinaryTSQLTuple) {
+		return ordinaryJudgeR8(t, produced, bodies, ordinaryPostgreSQLBodyNames)
+	}
+	got, order := judge(produced.AssetBodies)
+	if len(order) != 9 {
+		t.Fatalf("expected 9 tuples, adjudicated %d", len(order))
+	}
+	for _, key := range order {
+		if j := got[key]; j.State != ordinaryTupleVerified || j.Code != "" {
+			t.Errorf("%s: %s %s %+v", key, j.State, j.Code, j.Findings)
+		}
+	}
+	if t.Failed() {
+		return
+	}
+	// a copy of the bodies with one body rewritten
+	tampered := func(path string, edit func(body []byte) []byte) map[string][]byte {
+		bodies := maps.Clone(produced.AssetBodies)
+		body, ok := bodies[path]
+		if !ok {
+			t.Fatalf("expected body %s is missing", path)
+		}
+		bodies[path] = edit(body)
+		return bodies
+	}
+	var captureQuery, factQuery string
+	for _, key := range order {
+		switch {
+		case strings.HasPrefix(key.Query, "facts."):
+			factQuery = key.Query
+		case captureQuery == "":
+			captureQuery = key.Query
+		}
+	}
+	if captureQuery == "" || factQuery == "" {
+		t.Fatalf("the shard needs a structural and a fact query: %v", order)
+	}
+	allTuples := map[ordinaryTSQLTuple]string{}
+	for _, key := range order {
+		allTuples[key] = "ORDINARY_EXPECTED_TREE_MISMATCH"
+	}
+	for _, c := range []struct {
+		name   string
+		bodies map[string][]byte
+		want   map[ordinaryTSQLTuple]string
+	}{
+		{"tree node", tampered("expected/postgresql-do/tree-selected.json", func(body []byte) []byte {
+			var tree ordinaryExpectedTree
+			if err := json.Unmarshal(body, &tree); err != nil {
+				t.Fatal(err)
+			}
+			tree.Tree[len(tree.Tree)-1].Type = "tampered"
+			return ordinaryJSON(t, tree)
+		}), allTuples},
+		{"capture", tampered("expected/postgresql-do/captures-"+captureQuery+".json", func(body []byte) []byte {
+			var captures ordinaryExpectedCaptures
+			if err := json.Unmarshal(body, &captures); err != nil {
+				t.Fatal(err)
+			}
+			captures.Matches = 1 // one match no native run produced
+			return ordinaryJSON(t, captures)
+		}), map[ordinaryTSQLTuple]string{{captureQuery, 0, "incremental"}: "ORDINARY_CAPTURE_MATCHES_MISMATCH"}},
+		{"fact", tampered("expected/postgresql-do/fact-declarations.json", func(body []byte) []byte {
+			var fact ordinaryExpectedFact
+			if err := json.Unmarshal(body, &fact); err != nil {
+				t.Fatal(err)
+			}
+			fact.Declarations.Items = append(fact.Declarations.Items, DeclarationItem{Fact: "create_object", NodeType: "do_statement", Name: &ByteSpan{StartByte: 0, EndByte: 1}, Status: AssessPass})
+			fact.Declarations.Assessment = AssessPass
+			return ordinaryJSON(t, fact)
+		}), map[ordinaryTSQLTuple]string{{factQuery, 0, "incremental"}: "ORDINARY_FACT_MISMATCH"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			got, order := judge(c.bodies)
+			var failed []string
+			for _, key := range order {
+				j := got[key]
+				switch want, tamperedTuple := c.want[key]; {
+				case tamperedTuple && (j.State != ordinaryTupleFailed || j.Code != want):
+					t.Errorf("%s: tampered expectation gave %s %s, want FAILED %s", key, j.State, j.Code, want)
+				case !tamperedTuple && (j.State != ordinaryTupleVerified || j.Code != ""):
+					t.Errorf("%s: untouched tuple gave %s %s %+v", key, j.State, j.Code, j.Findings)
+				}
+				if j.State == ordinaryTupleFailed {
+					failed = append(failed, key.String()+"="+j.Code)
+				}
+			}
+			slices.Sort(failed)
+			t.Logf("%s tampered: %d tuples FAILED: %v", c.name, len(failed), failed)
+		})
+	}
 }

@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -17,6 +18,31 @@ import (
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
+
+// A reduced environment without SystemDrive makes PowerShell 7 .NET calls ~300x slower
+// (#418); the converter's environment must carry it, derived from SystemRoot, never replacing one that is set.
+func TestConvertChildEnvSupplyingSystemDrive(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("SystemDrive is a Windows variable")
+	}
+	last := func() string {
+		got := ""
+		for _, e := range convertChildEnv() {
+			if k, v, ok := strings.Cut(e, "="); ok && strings.EqualFold(k, "SystemDrive") {
+				got = v
+			}
+		}
+		return got
+	}
+	t.Setenv("SystemDrive", "")
+	if want := filepath.VolumeName(os.Getenv("SystemRoot")); want == "" || last() != want {
+		t.Fatalf("missing SystemDrive not supplied from SystemRoot: %q, want %q", last(), want)
+	}
+	t.Setenv("SystemDrive", "Z:")
+	if last() != "Z:" {
+		t.Fatalf("set SystemDrive replaced: %q", last())
+	}
+}
 
 func TestConversionOutputBound(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())

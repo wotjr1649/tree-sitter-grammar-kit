@@ -1,16 +1,17 @@
-# v0.3.0 release 문서 (초안, #220)
+# v0.3.0 release 문서 (#220)
 
-이 문서는 source-only release `v0.3.0`의 한국어 본문 초안이다. 영어판은 [English](issue-220-v030-release.en.md)다. 최종 tag 대상 commit과 발행일은 미정이며, 발행은 정확한 version·commit·한영 본문·source-only 범위를 검토한 뒤 사용자가 별도로 승인한다. 이 초안은 발행 승인 요청이나 발행 완료 증거가 아니다. 추적 Issue는 [#220](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/220)이다. 이전 준비 기록은 [#199 문서](issue-199-source-release.md)이며, 그 안의 후보(`33f84fc`, `52c1e2b`)와 수치는 역사 기록으로만 둔다.
+이 문서는 source-only release `v0.3.0`의 한국어 본문이다. 영어판은 [English](issue-220-v030-release.en.md)다. 발행 예정일은 2026-11-13이다. 검증한 최종 후보는 main `703b233bd83bb19a812e91d8ecf4af37a06872a8`이고, tag 대상 commit은 이 문서를 최종화한 문서 전용 PR의 병합 commit이다(자기 참조를 피하려고 그 SHA는 문서에 쓰지 않고 발행안과 Release 본문에 적는다). 발행은 정확한 version·commit·한영 본문·source-only 범위를 검토한 뒤 사용자가 별도로 승인한다. 이 문서는 발행 승인 요청이나 발행 완료 증거가 아니다. 추적 Issue는 [#220](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/220)이다. 이전 준비 기록은 [#199 문서](issue-199-source-release.md)이며, 그 안의 후보(`33f84fc`, `52c1e2b`)와 수치는 역사 기록으로만 둔다.
 
 ## 조건
 
 - 아래 "query 의미 claim"의 모든 항목은 통합 PR [#416](https://github.com/wotjr1649/tree-sitter-grammar-kit/pull/416)(`integ/362`, `Refs #362`)이 main에 병합된 뒤에만 유효하다. 병합 전에는 어떤 항목도 주장하지 않는다.
 - 이미 주장하던 범위(아래 "제품 범위")는 새로 줄이거나 넓히지 않는다. 다만 macOS는 v0.2.0 시점 근거만 있고 v0.3.0에서 재검증하지 않았다(NOT_RUN, 제외를 PASS로 세지 않는다). 새로 주장하는 것은 query 의미의 검증된 하위 범위뿐이다.
 - 최종 후보 commit에서 [발행 전 남은 검증](#발행-전-남은-검증)을 다시 실행하기 전에는 이 문서의 수치를 최종 release 근거로 쓰지 않는다. fan-in 수치는 최종 후보에서 다시 계산해 갱신한다.
+- 최종 후보 `703b233`의 run-final 결과: PASS 19, FAIL 0, MANUAL 2(13번 API·CLI·schema 추출과 19a번 LICENSE/NOTICE·provenance 대조. 직전 후보 `c157b65`와 비교해 판독했고 계약 파일 집합 동일, API 차이는 주석 2곳뿐, 19a 출력 byte 동일로 문제 없음), SKIP 9(GitHub 읽기·병합·발행 단계는 script 범위 밖). 같은 후보의 main post-merge CI는 성공했다.
 
 ## 제품 범위
 
-[제품 범위](../specs/scope.md)와 [플랫폼 지원 계약](../specs/platform-support.md#release-v030의-claim-초안)이 정한다.
+[제품 범위](../specs/scope.md)와 [플랫폼 지원 계약](../specs/platform-support.md#release-v030의-claim)이 정한다.
 
 - **VERIFIED:** offline `inspect`, `identity`, `verify`, `schema check`/`schema diff`와 해당 공개 Go API(`src/kit`). 등록 26 route qualification 판정은 고정 입력·의무에 대한 것이며 임의 입력의 문법 적합성 인증이 아니다. 현재 CI의 검증 host는 Windows·Linux다(derived 52칸, #332).
 - **experimental(호환성 약속 없음):** `corpus`, `reproduce`, `incremental`, `oracle record`, `replay`, `evidence verify`, `qualify`와 그 API, 그리고 아래 query 의미 검증 전부.
@@ -150,17 +151,19 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 - CI 운영 여유 표본 미판정, 제품 동작 아님: [#280](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/280), [#303](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/303), [#352](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/352). 표본은 계속 자연스럽게 모아 판정한다.
 - [#329](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/329): hosted Windows runner에서 Go runtime 치명 오류가 한 번 관측된 상류 의심 사건이며 재현 계측(E0)을 남겨 두었다. 제품 동작이 아니다.
 - #280·#303·#352·#329는 출하 선행 조건이 아니다(2026-11-12 사용자 결정).
-- 최근 nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)에서 비필수 `race diagnostic (ubuntu-24.04)` lane이 failure였다. data race 보고가 아니라 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)이다. 같은 run의 필수 job은 모두 success다.
+- nightly [43129863719](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43129863719)(main `15dac94`)와 [43330901793](https://github.com/wotjr1649/tree-sitter-grammar-kit/actions/runs/43330901793)(main `95e7411`)에서 비필수 `race diagnostic (ubuntu-24.04)` lane이 failure였다. data race 보고는 없었다. 원인은 `src/kit` package의 10분 test timeout(`panic: test timed out after 10m0s`)과, 두 번째 run의 `TestBatchCaptureKeepsActualWireBytes`(race로 build한 helper의 종료 직전 1초 sleep이 시험의 1초 기한과 겹침)다. 두 run의 필수 job은 모두 success다. kit 분리 실행(#426)과 runner·시험 교정(#428)은 이 release에 들어 있고, 그 뒤 nightly는 아직 돌지 않았다.
 
 ## 발행 전 남은 검증
 
-발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이며 최종 후보에서는 아직 실행하지 않았다(B~E의 명령은 후보 `5e64ec5`(`integ/362`)에서 한 번 예행 실행해 점검했다(예행 뒤 #416에 `c4527d0`까지 더해졌다). 그 결과는 이 문서의 근거가 아니다. 14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다. `pwsh`에서 `-test.count=1`처럼 점이 든 인자를 native 실행 파일(예: `go test -c`로 만든 시험 binary)에 줄 때는 `'-test.count=1'`처럼 따옴표로 묶는다. 묶지 않으면 `-test`와 `.count=1`로 쪼개져 exit 2가 난다. 각 항목 끝의 시간은 예행 실행의 Windows 개발 host 실측이며 다른 시험이 겹치면 늘어난다.
+최종 후보 `703b233`의 run-final 결과: PASS 19, FAIL 0, MANUAL 2(13번 API·CLI·schema 추출과 19a번 LICENSE/NOTICE·provenance 대조. 직전 후보 `c157b65`와 비교해 판독했고 계약 파일 집합 동일, API 차이는 주석 2곳뿐, 19a 출력 byte 동일로 문제 없음), SKIP 9(GitHub 읽기·병합·발행 단계는 script 범위 밖). 같은 후보의 main post-merge CI는 성공했다.
+
+발행 전에 최종 후보 commit(`$sha`)에서 아래를 순서대로 검증한다. 새 도구는 만들지 않고 저장소의 시험·도구와 GitHub 읽기 명령만 쓴다. 이전 후보의 소비 검증과 PR 성공은 승계하지 않으며, 후보가 바뀌면 B~F를 다시 한다. 이 목록은 실행 계획이다. 최종 후보에서의 실행 결과는 위 "run-final 결과"에 적는다(B~E의 명령은 후보 `5e64ec5`(`integ/362`)에서 한 번 예행 실행해 점검했다(예행 뒤 #416에 `c4527d0`까지 더해졌다). 그 결과는 이 문서의 근거가 아니다. 14·15는 이전 후보 `aca5385`에서 한 번 실측했으며 최종 후보에서 다시 한다). PowerShell은 `pwsh`(7)만 쓰고, 환경은 `CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=local GOFLAGS=-mod=readonly`, Go는 `go.mod`의 `go` 줄(1.27.4)과 같은 toolchain이다. `$work`는 저장소 밖의 새 빈 디렉터리다. `pwsh`에서 `-test.count=1`처럼 점이 든 인자를 native 실행 파일(예: `go test -c`로 만든 시험 binary)에 줄 때는 `'-test.count=1'`처럼 따옴표로 묶는다. 묶지 않으면 `-test`와 `.count=1`로 쪼개져 exit 2가 난다. 각 항목 끝의 시간은 예행 실행의 Windows 개발 host 실측이며 다른 시험이 겹치면 늘어난다.
 
 **A. 전제와 후보 결정**
 
 1. PR #416 상태와 필수 check(`foundation (windows-2025)`, `foundation (ubuntu-24.04)`, `integration gate`)를 읽고, 사용자 권한 아래 병합한다. 이 문서의 base가 main과 같은지 확인한다.
 2. 이 release 문서 PR을 task branch → PR → 필수 CI → 병합으로 통합한다([검증 계약](../validation/validation.md)의 Integration 절).
-3. `$sha`는 위 PR이 병합된 뒤의 main HEAD다. 이후 같은 SHA에서만 B~F를 수행한다.
+3. `$sha`는 최종 후보인 main `703b233bd83bb19a812e91d8ecf4af37a06872a8`(위 PR이 병합된 뒤의 main HEAD)다. B~F는 이 SHA에서 수행한다. tag 대상은 이 문서를 최종화한 문서 전용 PR의 병합 commit이며 26번에서 다룬다.
 
 **B. 후보 정체성(읽기)**
 
@@ -172,7 +175,7 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 6. `go mod download`(`GOPROXY=https://proxy.golang.org`, `GOSUMDB=sum.golang.org`로 외부 네트워크를 쓴다), `go mod verify` 뒤 `GOPROXY=off`와 `GOFLAGS=-mod=readonly`. (6·7 합쳐 약 12초)
 7. `gofmt -l src`(출력 없음), `go vet ./src/...`, `go build ./src/...`.
 8. foundation 단독: `go test ./src/internal/foundation -count=1`(부하에 민감한 시험이 있어 다른 시험과 겹치지 않게 실행). 다른 `go test`·gcc·native 프로세스가 없는 것을 확인한 뒤 시작한다. (약 83초)
-9. foundation을 뺀 나머지 package와 native package: 검증 계약의 명령(`-count=1 -v`, `-timeout 300s`, native는 `-timeout 420s`)에서 `$otherPackages`를 `go list ./src/...`에서 native와 foundation을 제외한 목록으로 한다(foundation은 8번이 이미 단독으로 돌렸다). `TSGK_NATIVE_REQUIRED`·`TSGK_NATIVE_CC`·`TSGK_NATIVE_RUNTIME` 없이는 native 의존 시험이 SKIP이다. 시험 결과에서 SKIP 개수를 PASS와 따로 기록한다(예행 실행: native 제외 package에 `--- SKIP` 99줄, native package 708 PASS·129 SKIP). SKIP은 PASS가 아니며, native compile·실행 시험의 정본은 CI Windows runner 결과다. 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록한다. (native 제외 약 142초, native package 약 3초)
+9. foundation을 뺀 나머지 package와 native package: 검증 계약의 명령(`-count=1 -v`, `-timeout 420s`, native도 `-timeout 420s`)에서 `$otherPackages`를 `go list ./src/...`에서 native와 foundation을 제외한 목록으로 한다(foundation은 8번이 이미 단독으로 돌렸다). `TSGK_NATIVE_REQUIRED`·`TSGK_NATIVE_CC`·`TSGK_NATIVE_RUNTIME` 없이는 native 의존 시험이 SKIP이다. 시험 결과에서 SKIP 개수를 PASS와 따로 기록한다(예행 실행: native 제외 package에 `--- SKIP` 108줄(`c157b65` 실측. 이전 `5e64ec5` 예행 99줄), native package 708 PASS·129 SKIP). SKIP은 PASS가 아니며, native compile·실행 시험의 정본은 CI Windows runner 결과다. 로컬 환경 문제로 실패하는 시험은 원인과 함께 기록한다. (native 제외 약 142초, native package 약 3초)
 
 **D. 공개 API·CLI·schema 소비와 offline 경계**
 
@@ -212,6 +215,6 @@ experimental 표면의 실행 호환성을 후보 `aca5385`(`integ/362`)에서 v
 
 **G. 발행안**
 
-26. 정확한 version `v0.3.0`, full commit `$sha`, 주석 tag 제안, 한·영 본문(이 문서와 CHANGELOG v0.3.0 절의 날짜·commit 채움), source-only(binary·package 없음), 검증·미검증·rollback 경계를 한 문서로 제시하고 사용자 발행 승인을 요청한다. 승인 전에는 tag 생성·push·Release 생성을 하지 않는다.
+26. 정확한 version `v0.3.0`, 검증한 최종 후보 `$sha`, tag 대상 commit(이 문서를 최종화한 문서 전용 PR의 병합 commit `$tag`의 full SHA), 주석 tag 제안, 한·영 본문(CHANGELOG v0.3.0 절의 날짜는 2026-11-13으로 이미 확정했고 commit은 문서에 쓰지 않는다), source-only(binary·package 없음), 검증·미검증·rollback 경계를 한 문서로 제시하고 사용자 발행 승인을 요청한다. `$tag`는 `$sha`와 문서(`CHANGELOG.md`, `README.md`, `docs/**/*.md`)만 다르다는 것을 `git diff --name-only $sha $tag`로 보이고, `$tag`에서 foundation 시험·source export 검증(16~19번)과 필수 CI를 확인한다. 승인 전에는 tag 생성·push·Release 생성을 하지 않는다.
 
 발행 범위는 source tag `v0.3.0`(주석 tag)과 source-only GitHub Release다. uploaded binary, package registry 발행, 소비자 저장소 변경은 포함하지 않는다.

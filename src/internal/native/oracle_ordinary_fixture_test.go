@@ -45,6 +45,8 @@ func TestOracleOrdinaryOwnedFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := oracleRequest(t, profile, root, filepath.Join(dir, "r8"))
+	// An empty cache makes this run a build cache miss; the kit reader test must accept that evidence.
+	req.BuildCache = os.Getenv("TSGK_ORDINARY_OWNED_BUILD_CACHE")
 	req.Ordinary = &OrdinaryRecordingRequest{
 		Inputs:       kit.OrdinaryPlanRequest{Profile: []byte(`{"fixture":"planning-profile"}`), Assets: []byte(`{"fixture":"asset-registration"}`)},
 		Registration: []byte(`{"fixture":"registration"}`),
@@ -52,9 +54,9 @@ func TestOracleOrdinaryOwnedFixture(t *testing.T) {
 	}
 	prepared := &ordinaryRecording{
 		profile:      kit.OrdinaryProfile{Candidate: "owned-e2e", SemanticCohort: "owned-e2e-current"},
-		registration: kit.OrdinaryRegistration{Route: "owned", Platform: "windows-amd64", Subject: "windows/amd64", ClosureEncoding: "plain"},
+		registration: kit.OrdinaryRegistration{Route: "owned", Platform: strings.ReplaceAll(hostPlatform, "/", "-"), Subject: hostPlatform, ClosureEncoding: "plain"},
 		sources:      [][]byte{[]byte(source)},
-		shardIDs:     []string{"owned/windows-amd64/ca"},
+		shardIDs:     []string{"owned/" + strings.ReplaceAll(hostPlatform, "/", "-") + "/ca"},
 	}
 	initial := OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{}}}, Cases: []CaseLine{}, Platform: hostPlatform}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)

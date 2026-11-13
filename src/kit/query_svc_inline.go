@@ -37,6 +37,11 @@ const (
 	// A derived expectation has no native evidence yet.
 	SvcInlineNativeNotRunCode = "SVC_INLINE_NATIVE_NOT_RUN"
 
+	// The BLOCKED codes the offline scope gives the inline obligations: no C# grammar there, and no registered
+	// query expectation. The inline run is the only one that may move them.
+	SvcInlineTreeUnavailableCode = "SVC_INLINE_TREE_GRAMMAR_UNAVAILABLE"
+	SvcQueryUnregisteredCode     = "SVC_QUERY_EXPECTATION_UNREGISTERED"
+
 	// The tree role a view was parsed in: the incremental tree, or the fresh re-parse of an edited step.
 	SvcInlineRoleIncremental = "incremental"
 	SvcInlineRoleFresh       = "fresh"
@@ -395,6 +400,23 @@ func svcInlineViewsComplete(o SvcInlineObserved, edited bool) (bool, error) {
 		return false, svcInlineFault("SVC_INLINE_VIEW_ROLE")
 	}
 	return incremental == 1 && (fresh == 1) == edited, nil
+}
+
+// InlineCodes maps every inline obligation ID of the asset (tree and query) to "" when the step is
+// DERIVED, so the native run may judge it, or to the BLOCKED code JudgeSvcInline gives it otherwise.
+func (x SvcInlineExpected) InlineCodes() map[string]string {
+	out := map[string]string{}
+	for _, s := range x.Steps {
+		treeCode, queryCode := "", ""
+		if s.State != SvcInlineDerived {
+			treeCode, queryCode = s.Code, SvcInlineQueryTreeBlockedCode
+		}
+		out[svcInlineID(SvcKindInlineTree, s, "")] = treeCode
+		for _, q := range x.queryIDs() {
+			out[svcInlineID(SvcKindQuery, s, q)] = queryCode
+		}
+	}
+	return out
 }
 
 func (x SvcInlineExpected) queryIDs() []string {

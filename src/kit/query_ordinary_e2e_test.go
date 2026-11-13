@@ -37,6 +37,7 @@ type ordinaryE2EProducerInput struct {
 // reference rows. The rows are stored fixtures; this helper never executes a reference.
 func ordinaryE2EAssemble(t *testing.T, req OrdinaryQuerySemanticsRequest, producerDir string, references []ordinaryE2EReference, assetBodies map[string][]byte) OrdinaryQuerySemanticsRequest {
 	t.Helper()
+	_, subject := ordinaryRunHost()
 	read := func(path string) []byte {
 		t.Helper()
 		data, err := os.ReadFile(path)
@@ -164,12 +165,15 @@ func ordinaryE2EAssemble(t *testing.T, req OrdinaryQuerySemanticsRequest, produc
 		selection.Rows = append(selection.Rows, ordinaryReferenceSelectionRow{Case: ref.Case, Step: ref.Step, Query: ref.Query, Source: source,
 			Invocation: invocationID, ResponseOrdinal: 0, ByteOffset: 0, ByteLength: uint64(len(row)), SHA256: digestHex(row)})
 
-		libraryPath := `C:\ordinary\reference-library.bin`
-		sourcePath := fmt.Sprintf(`C:\ordinary\sources\%s-%d.txt`, ref.Case, ref.Step)
-		queryPath := fmt.Sprintf(`C:\ordinary\queries\%s.scm`, ref.Query)
-		spec := eligibilityProcessRequest{Path: `C:\ordinary\reference.exe`, Args: []string{libraryPath, profile.Native.Symbol, sourcePath, queryPath, ref.Query, response.Grammar.LibrarySHA256},
-			Dir: `C:\ordinary`, Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 10_000_000_000, Grace: 2_000_000_000}
+		libraryPath := ordinaryE2EPath("reference-library.bin")
+		sourcePath := ordinaryE2EPath("sources", fmt.Sprintf("%s-%d.txt", ref.Case, ref.Step))
+		queryPath := ordinaryE2EPath("queries", ref.Query+".scm")
+		spec := eligibilityProcessRequest{Path: ordinaryE2EPath("reference" + ordinaryE2EExeSuffix()), Args: []string{libraryPath, profile.Native.Symbol, sourcePath, queryPath, ref.Query, response.Grammar.LibrarySHA256},
+			Dir: ordinaryE2EPath(), Env: []string{}, StdoutBytes: 64 << 20, StderrBytes: 1 << 20, Wall: 10_000_000_000, Grace: 2_000_000_000}
 		spec.Memory.Bytes, spec.Memory.Hard = 1<<30, true
+		if runtime.GOOS == "linux" { // a hard memory cap needs a delegated cgroup parent in the recorded request
+			spec.CgroupParent = "/delegated"
+		}
 		stdout := append(append([]byte(nil), row...), '\n')
 		inv := f.invocation(invocationID, "current", invocationID, spec, stdout, 0, false)
 		inv.Executable, inv.ExecutablePath = f.reg.Build.ReferenceBinary, spec.Path
@@ -185,7 +189,7 @@ func ordinaryE2EAssemble(t *testing.T, req OrdinaryQuerySemanticsRequest, produc
 		queryMember := f.member(invocationID, invocationID+"/query.scm", "query", []byte(profileQuery.Source))
 		inv.Inputs["query-0"] = eligibilityInput{Kind: "PINNED", MemberPin: &queryMember, ContentBasis: "APPROVED_EXPECTED_BYTES", ArgvIndex: eligibilityIndex(3), PathLiteral: queryPath}
 		f.receiptMutation(invocationID, func(receipt *eligibilityReceipt) {
-			receipt.Execution = ordinaryE2EWindowsExecution(receipt.Execution)
+			receipt.Execution = ordinaryE2EHostExecution(receipt.Execution)
 		})
 		for j := range f.reg.Invocations {
 			if f.reg.Invocations[j].ID == invocationID {
@@ -193,9 +197,9 @@ func ordinaryE2EAssemble(t *testing.T, req OrdinaryQuerySemanticsRequest, produc
 				break
 			}
 		}
-		inv.Node.Identities["platform"] = "windows/amd64"
+		inv.Node.Identities["platform"] = subject
 		node := f.nodes[inv.Node.ID]
-		node.Identities["platform"] = "windows/amd64"
+		node.Identities["platform"] = subject
 		f.nodes[inv.Node.ID] = node
 	}
 	selectionBytes := eligibilityJSON(t, selection)
@@ -205,7 +209,7 @@ func ordinaryE2EAssemble(t *testing.T, req OrdinaryQuerySemanticsRequest, produc
 	}
 
 	// The checked-in eligibility fixture's current reference processes are synthetic Linux
-	// processes; the actual owned producer runs on this Windows worker.
+	// processes; on a Windows worker they are rewritten to the host the actual owned producer runs on.
 	ordinaryE2EWindowsFixtureReferences(t, f)
 	eligibility := f.request()
 	approval := f.approval
@@ -255,6 +259,32 @@ func ordinarySourceMemberPath(t *testing.T, manifest OrdinaryOracleManifest, cas
 	}
 	t.Fatalf("ordinary r8 has no source member for %s", caseID)
 	return ""
+}
+
+// ordinaryE2EPath is a synthetic absolute path of the reference process in the form of this host's platform:
+// the recorded request is validated by the Go path grammar of its recorded platform, so it must not be a
+// Windows path on Linux.
+func ordinaryE2EPath(elem ...string) string {
+	if runtime.GOOS == "windows" {
+		return strings.Join(append([]string{`C:\ordinary`}, elem...), `\`)
+	}
+	return strings.Join(append([]string{"/ordinary"}, elem...), "/")
+}
+
+func ordinaryE2EExeSuffix() string {
+	if runtime.GOOS == "windows" {
+		return ".exe"
+	}
+	return ""
+}
+
+// ordinaryE2EHostExecution is the synthetic reference execution of this host. The fixture's execution is
+// already the Linux cgroup one; Windows replaces it with the Job Object one.
+func ordinaryE2EHostExecution(execution eligibilityExecution) eligibilityExecution {
+	if runtime.GOOS != "windows" {
+		return execution
+	}
+	return ordinaryE2EWindowsExecution(execution)
 }
 
 func ordinaryE2EWindowsExecution(execution eligibilityExecution) eligibilityExecution {
@@ -373,6 +403,7 @@ func ordinaryE2EOracleProfileBytes(t *testing.T, profile OracleProfile) []byte {
 func ordinaryE2EJSONInput(t *testing.T) ordinaryE2EJSONFixture {
 	t.Helper()
 	const caseID = "alt-json-B01-05"
+	hostPlatform, _ := ordinaryRunHost()
 	routeSources := ordinaryRouteSources(t, "json")
 	source, ok := routeSources[caseID]
 	if !ok || source != "null" {
@@ -385,7 +416,7 @@ func ordinaryE2EJSONInput(t *testing.T) ordinaryE2EJSONFixture {
 	}
 	p0, qualification := ordinaryP0ForPlanTest(t)
 	plan := ordinaryPlanForTest(p0, qualification)
-	binding := plan.Bindings[slices.IndexFunc(plan.Bindings, func(v OrdinaryBinding) bool { return v.Route == "json" && v.Platform == "windows-amd64" })]
+	binding := plan.Bindings[slices.IndexFunc(plan.Bindings, func(v OrdinaryBinding) bool { return v.Route == "json" && v.Platform == hostPlatform })]
 	if len(binding.Grammar) == 0 {
 		t.Fatal("P0 JSON grammar pins are absent")
 	}
@@ -459,12 +490,12 @@ func ordinaryE2EJSONInput(t *testing.T) ordinaryE2EJSONFixture {
 	}
 	runtimePin := queryregistrycore.FilePin("runtime/runtime-manifest.json", runtimeManifest)
 	for i := range planning.Bindings {
-		if planning.Bindings[i].Route == "json" && planning.Bindings[i].Platform == "windows-amd64" {
+		if planning.Bindings[i].Route == "json" && planning.Bindings[i].Platform == hostPlatform {
 			planning.Bindings[i].Runtime = runtimePin
 		}
 	}
 	for i := range fullPlan.Bindings {
-		if fullPlan.Bindings[i].Route == "json" && fullPlan.Bindings[i].Platform == "windows-amd64" {
+		if fullPlan.Bindings[i].Route == "json" && fullPlan.Bindings[i].Platform == hostPlatform {
 			fullPlan.Bindings[i].Runtime = runtimePin
 		}
 	}
@@ -495,6 +526,9 @@ func ordinaryE2EJSONInput(t *testing.T) ordinaryE2EJSONFixture {
 
 func ordinaryE2EWindowsFixtureReferences(t *testing.T, f *eligibilityFixture) {
 	t.Helper()
+	if runtime.GOOS != "windows" {
+		return // the fixture's references are synthetic Linux processes already
+	}
 	for i := range f.reg.Invocations {
 		inv := &f.reg.Invocations[i]
 		if inv.CohortID != "current" || inv.Kind != "REFERENCE_PROCESS" || inv.Request == nil {
@@ -606,7 +640,7 @@ func ordinaryE2EWriteProducerInput(t *testing.T, input ordinaryE2EProducerInput)
 func ordinaryE2ERunOwnedProducer(t *testing.T, inputPath, producerDir string) {
 	t.Helper()
 	ordinaryNativeTools(t)
-	env := ordinaryOwnedNativeEnv(producerDir)
+	env := ordinaryOwnedNativeEnv(producerDir, "")
 	env = slices.DeleteFunc(env, func(entry string) bool {
 		return strings.HasPrefix(strings.ToUpper(entry), "TSGK_ORDINARY_OWNED_INPUTS=")
 	})
