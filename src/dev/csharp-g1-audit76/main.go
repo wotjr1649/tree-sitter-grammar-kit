@@ -23,9 +23,9 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-func sources(root string) (kit.G1Audit76Sources, error) {
+func sources(root string) (kit.G1Audit76Input, error) {
 	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
-	var out kit.G1Audit76Sources
+	var out kit.G1Audit76Input
 	src := kit.CSharpG1Sources{Fixtures: map[string][]byte{}}
 	var err error
 	if src.Inventory, err = read(queryregistrycore.QualificationPin.Path); err != nil {
@@ -42,26 +42,39 @@ func sources(root string) (kit.G1Audit76Sources, error) {
 			return out, err
 		}
 	}
-	if out.Expected, err = read(kit.CSharpG1ExpectedPathR2); err != nil {
+	expected, err := read(kit.CSharpG1ExpectedPathR2)
+	if err != nil {
 		return out, err
 	}
 	all, err := kit.CSharpG1RoslynSources(src)
 	if err != nil {
 		return out, err
 	}
-	out.Texts = map[string][]byte{}
+	texts := map[string][]byte{}
 	for _, s := range all {
-		out.Texts[s.ID] = s.Data
+		texts[s.ID] = s.Data
 	}
-	return out, nil
+	return kit.G1Audit76View(expected, texts)
 }
 
-func run(root, in string, write bool, grammarDir, specDir string) error {
+func run(root, in string, write, pins bool, grammarDir, specDir string) error {
+	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1Audit76Path))
+	if pins {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		x, err := kit.DecodeCSharpG1Audit76(data)
+		if err != nil {
+			return err
+		}
+		fmt.Print(kit.G1GroundPinSource("g1a76GroundPins", kit.G1Audit76GroundPins(x.Rows)))
+		return nil
+	}
 	src, err := sources(root)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1Audit76Path))
 	var data []byte
 	if in == "" {
 		if data, err = os.ReadFile(path); err != nil {
@@ -127,6 +140,7 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	in := flag.String("in", "", "authored rows (JSON list) to complete and verify")
 	write := flag.Bool("write", false, "write the asset instead of comparing (with -in)")
+	pins := flag.Bool("pins", false, "print the ground pin table of the tracked asset (Go source for csharp_g1_ground_pins.go) and stop")
 	grammar := flag.String("grammar", "", "directory holding the pinned grammar.js (checks the grounds)")
 	spec := flag.String("spec", "", "directory holding the pinned specification files (checks the grounds)")
 	flag.Parse()
@@ -134,7 +148,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "-grammar and -spec go together")
 		os.Exit(2)
 	}
-	if err := run(*root, *in, *write, *grammar, *spec); err != nil {
+	if err := run(*root, *in, *write, *pins, *grammar, *spec); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

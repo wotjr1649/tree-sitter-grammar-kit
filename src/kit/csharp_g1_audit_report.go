@@ -67,11 +67,19 @@ type G1AuditStratum struct {
 	// the audit had matched it; Upper95Later is the exact bound with those counted as errors too.
 	LaterWrong   int    `json:"later_wrong"`
 	Upper95Later string `json:"upper_95_percent_with_later_wrong,omitempty"`
-	// Found counts the alternatives of the full audit (G1AUDIT76) whose witness did not pass the first comparison and was
-	// corrected from the specification and grammar text; Upper95Found is the exact bound with those counted as errors.
-	// The full audit compares the position of the witness, not the types (the sample audit compares the types).
-	Found        int    `json:"found_and_corrected,omitempty"`
-	Upper95Found string `json:"upper_95_percent_with_found,omitempty"`
+	// Found counts the alternatives of the differential-oracle stratum whose witness was wrong when first compared and was
+	// corrected afterwards from the specification and grammar text, however the error was found: the ones the full audit
+	// (G1AUDIT76) found (FoundAudit, a first comparison that did not match) and the ones the native comparison had found
+	// before the audit (FoundNative: the alternatives with a witness correction after the native result that the audit
+	// derived as matching at first, csharp-B01.a383, a396 and a397, whose kind map entry was wrong). Upper95Found is the exact
+	// bound with all of them counted as errors; Upper95FoundAudit the bound with the audit's findings only, stated next to it
+	// because the audit did not find the native ones. The full audit compares the position of the witness, not the types (the
+	// sample audit compares the types).
+	Found             int    `json:"found_and_corrected,omitempty"`
+	FoundAudit        int    `json:"found_by_audit,omitempty"`
+	FoundNative       int    `json:"found_by_native,omitempty"`
+	Upper95Found      string `json:"upper_95_percent_with_found,omitempty"`
+	Upper95FoundAudit string `json:"upper_95_percent_with_found_by_audit,omitempty"`
 	// The type bound of the differential-oracle stratum (G1TYPEAUDIT76), stated apart from the position bound above: Samples
 	// and Mismatches there are the position audit, these the type audit of the same 76 alternatives. TypeFound counts the rows
 	// whose ts did not pass the first comparison and were corrected, TypeNotDerivable the rows where the grammar text leaves the
@@ -114,9 +122,13 @@ func G1AuditStrataWithTypes(x CSharpG1Expected, full []G1Audit76Row, types []G1T
 		byName[out[i].Stratum] = &out[i]
 	}
 	corrected := map[string]bool{}
+	nativeWitness := map[string]bool{} // a witness correction after the native result
 	for _, c := range x.Corrections {
 		if c.AfterNative && (c.Field == G1FieldTS || c.Field == G1FieldEvidence) {
 			corrected[c.Item] = true
+		}
+		if c.AfterNative && c.Field == G1FieldWitnessMatch {
+			nativeWitness[c.Item] = true
 		}
 	}
 	for _, s := range x.Audit.Samples {
@@ -147,6 +159,10 @@ func G1AuditStrataWithTypes(x CSharpG1Expected, full []G1Audit76Row, types []G1T
 			st.Mismatches++
 		} else if r.Initial == G1AuditMismatch {
 			st.Found++
+			st.FoundAudit++
+		} else if nativeWitness[r.ID] {
+			st.Found++
+			st.FoundNative++
 		}
 	}
 	for _, r := range types {
@@ -169,11 +185,15 @@ func G1AuditStrataWithTypes(x CSharpG1Expected, full []G1Audit76Row, types []G1T
 			values.Mismatches += out[i].Mismatches
 			values.LaterWrong += out[i].LaterWrong
 			values.Found += out[i].Found
+			values.FoundAudit += out[i].FoundAudit
+			values.FoundNative += out[i].FoundNative
 		}
 		all.Samples += out[i].Samples
 		all.Mismatches += out[i].Mismatches
 		all.LaterWrong += out[i].LaterWrong
 		all.Found += out[i].Found
+		all.FoundAudit += out[i].FoundAudit
+		all.FoundNative += out[i].FoundNative
 	}
 	out = append(out, values, all)
 	for i := range out {
@@ -185,6 +205,9 @@ func G1AuditStrataWithTypes(x CSharpG1Expected, full []G1Audit76Row, types []G1T
 		st.Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong, st.Samples))
 		if st.Found > 0 {
 			st.Upper95Found = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong+st.Found, st.Samples))
+		}
+		if st.FoundNative > 0 {
+			st.Upper95FoundAudit = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong+st.FoundAudit, st.Samples))
 		}
 		if st.TypeSamples > 0 {
 			st.TypeUpper95 = fmt.Sprintf("%.1f", G1AuditUpper95(st.TypeMismatches, st.TypeSamples))

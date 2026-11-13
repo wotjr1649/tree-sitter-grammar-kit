@@ -12,7 +12,8 @@ import (
 	"testing"
 )
 
-func g1a76Sources(t *testing.T, expected []byte) G1Audit76Sources {
+// g1a76Sources is the input of the position audit made from an r2 asset (the bytes may be a mutant of the tracked one).
+func g1a76Sources(t *testing.T, expected []byte) G1Audit76Input {
 	t.Helper()
 	a := g1cLoad(t)
 	src := a.expIn.R1.Src
@@ -25,10 +26,14 @@ func g1a76Sources(t *testing.T, expected []byte) G1Audit76Sources {
 	for _, s := range all {
 		texts[s.ID] = s.Data
 	}
-	return G1Audit76Sources{Expected: expected, Texts: texts}
+	in, err := G1Audit76View(expected, texts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return in
 }
 
-func g1a76Tracked(t *testing.T) (CSharpG1Audit76, []byte, G1Audit76Sources) {
+func g1a76Tracked(t *testing.T) (CSharpG1Audit76, []byte, G1Audit76Input) {
 	t.Helper()
 	data := mustRead(t, "../contracts/csharp-g1-audit76-r1.json")
 	in := g1a76Sources(t, g1cLoad(t).r2Exp)
@@ -43,11 +48,11 @@ func g1a76Tracked(t *testing.T) (CSharpG1Audit76, []byte, G1Audit76Sources) {
 // states is the fresh one: after the corrections of r2 every row is consistent.
 func TestCSharpG1Audit76IsConsistentWithR2(t *testing.T) {
 	x, _, in := g1a76Tracked(t)
-	r2, alts, err := g1a76Differential(in.Expected)
+	r2, alts, err := g1ViewDifferential(g1cLoad(t).r2Exp)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r2.Counts.Differential != 76 || len(alts) != 76 || len(x.Rows) != 76 {
+	if r2.Counts.Differential != 76 || len(alts) != 76 || len(in.Alts) != 76 || len(x.Rows) != 76 {
 		t.Fatalf("differential %d, alternatives %d, rows %d", r2.Counts.Differential, len(alts), len(x.Rows))
 	}
 	if want := (G1Audit76Counts{Rows: 76, Match: 76, Mismatch: 0, Corrected: 11, Node: 3}); x.Counts != want {
@@ -86,15 +91,17 @@ func g1a76Mutant(t *testing.T, mutateAudit func(x *CSharpG1Audit76), mutateExpec
 		mutateAudit(&x)
 	}
 	if mutateExpected != nil {
-		r2, err := DecodeCSharpG1Expected(in.Expected)
+		r2, err := DecodeCSharpG1Expected(g1cLoad(t).r2Exp)
 		if err != nil {
 			t.Fatal(err)
 		}
 		r2 = g1cCloneExpected(r2)
 		mutateExpected(&r2)
-		if in.Expected, err = MarshalCSharpG1Expected(r2); err != nil {
+		mutated, err := MarshalCSharpG1Expected(r2)
+		if err != nil {
 			t.Fatal(err)
 		}
+		in = g1a76Sources(t, mutated)
 	}
 	data, err := MarshalCSharpG1Audit76(x)
 	if err != nil {
@@ -142,7 +149,7 @@ func TestCSharpG1Audit76Rejects(t *testing.T) {
 		"a row whose result disagrees": {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a021").Result = G1AuditMismatch }, code: "G1_AUDIT76_COMPARISON"},
 		"a row whose relation changed": {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a021").Relation = G1AuditRelStartsAt }, code: "G1_AUDIT76_COMPARISON"},
 		"a row whose initial changed":  {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a021").Initial = G1AuditMatch }, code: "G1_AUDIT76_COMPARISON"},
-		"an instance that moved":       {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a094").Instances[0][0]++ }, code: "G1_AUDIT76_COMPARISON"},
+		"an instance that moved":       {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a094").Instances[0][0]++ }, code: "G1_AUDIT76_RULE"},
 		"an instance outside the text": {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a094").Instances[0] = [2]int{0, 1 << 30} }, code: "G1_AUDIT76_INSTANCE"},
 		"a row without a spec ground":  {audit: func(x *CSharpG1Audit76) { g1a76Row(x, "csharp-B02.a094").Grounds = nil }, code: "G1_AUDIT76_ROW"},
 		"a spec ground of another file": {audit: func(x *CSharpG1Audit76) {
@@ -171,10 +178,10 @@ func TestCSharpG1Audit76Rejects(t *testing.T) {
 	}
 }
 
-// The audit derivation must not read the expected types. The closure test proves that the derivation cannot reach native
-// input; it cannot express which fields of an alternative a function reads. So this checks the audit file syntactically: no
-// selector of the field TS. The comparison takes the witness and the source text only; the old record of a correction is
-// read for its witness (the TS member of its record is decoded and never named).
+// The audit derivation must not read the expected types. That is proved structurally (csharp_g1_audit_independence_test.go: the
+// input type has no member for them, the call closure reaches no file that holds them). This is the secondary check, of the
+// audit file itself: no selector or key of the field TS, no string "ts" or "kind" (a decode into a map), and no name of the
+// expected asset, its alternatives or the correction records.
 func g1a76NamesTS(src string) (bool, error) {
 	f, err := parser.ParseFile(token.NewFileSet(), "audit76.go", src, 0)
 	if err != nil {
@@ -190,6 +197,14 @@ func g1a76NamesTS(src string) (bool, error) {
 				found = true
 			}
 		}
+		if l, ok := n.(*ast.BasicLit); ok && l.Kind == token.STRING {
+			if v, err := strconv.Unquote(l.Value); err == nil && (v == "ts" || v == "kind" || v == "kinds") {
+				found = true
+			}
+		}
+		if id, ok := n.(*ast.Ident); ok && slices.Contains([]string{"G1ExpAlt", "CSharpG1Expected", "G1Correction", "DecodeCSharpG1Expected", "g1cEvidence"}, id.Name) {
+			found = true
+		}
 		return !found
 	})
 	return found, nil
@@ -202,8 +217,13 @@ func TestCSharpG1Audit76NeverNamesTheExpectedTypes(t *testing.T) {
 	}
 	// mutants: a row that reads the types, by selector and by composite literal
 	for name, snippet := range map[string]string{
-		"selector": "func f(a G1ExpAlt) int { return len(a.TS) }",
-		"literal":  "func f() any { return G1ExpAlt{TS: nil} }",
+		"selector": "func f(a G1Audit76Alt) int { return len(a.TS) }",
+		"literal":  "func f() any { return G1Audit76Alt{TS: nil} }",
+		// S2 of the review: a decode into a map and a read of its key
+		"map":     "func f(b []byte) any { var m map[string]any; _ = json.Unmarshal(b, &m); return m[\"ts\"] }",
+		"type":    "func f(a G1ExpAlt) int { return len(a.Witnesses) }",
+		"decoder": "func f(b []byte) error { _, err := DecodeCSharpG1Expected(b); return err }",
+		"records": "func f(c []G1Correction) int { return len(c) }",
 	} {
 		if named, err := g1a76NamesTS("package kit\n" + snippet); err != nil || !named {
 			t.Errorf("%s: a read of TS was not found (%v, %v)", name, named, err)
@@ -225,10 +245,10 @@ func TestCSharpG1AuditStrataCountTheFullAudit(t *testing.T) {
 			diff = &rows[i]
 		}
 	}
-	if diff == nil || diff.Samples != 76 || diff.Mismatches != 0 || diff.Found != 11 || diff.Upper95 != "3.9" || diff.Upper95Found != strconv.FormatFloat(G1AuditUpper95(11, 76), 'f', 1, 64) {
+	if diff == nil || diff.Samples != 76 || diff.Mismatches != 0 || diff.Found != 14 || diff.FoundAudit != 11 || diff.FoundNative != 3 || diff.Upper95 != "3.9" || diff.Upper95Found != strconv.FormatFloat(G1AuditUpper95(14, 76), 'f', 1, 64) || diff.Upper95FoundAudit != strconv.FormatFloat(G1AuditUpper95(11, 76), 'f', 1, 64) {
 		t.Fatalf("differential stratum: %+v", diff)
 	}
-	if got := rows[len(rows)-1]; got.Stratum != "all samples" || got.Samples != 16+76+5+1 || got.Found != 11 {
+	if got := rows[len(rows)-1]; got.Stratum != "all samples" || got.Samples != 16+76+5+1 || got.Found != 14 {
 		t.Errorf("all samples: %+v", got)
 	}
 	// a mismatching row moves the bound of its stratum

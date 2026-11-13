@@ -13,10 +13,20 @@ import (
 	"testing"
 )
 
-func g1t76Tracked(t *testing.T) (CSharpG1TypeAudit76, []byte, G1TypeAudit76Sources) {
+// g1t76Input is the input of the type audit made from an r2 asset (the bytes may be a mutant of the tracked one).
+func g1t76Input(t *testing.T, expected []byte) G1TypeAudit76Input {
+	t.Helper()
+	in, err := G1TypeAudit76View(expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return in
+}
+
+func g1t76Tracked(t *testing.T) (CSharpG1TypeAudit76, []byte, G1TypeAudit76Input) {
 	t.Helper()
 	data := mustRead(t, "../contracts/csharp-g1-typeaudit76-r1.json")
-	in := G1TypeAudit76Sources{Expected: g1cLoad(t).r2Exp}
+	in := g1t76Input(t, g1cLoad(t).r2Exp)
 	x, err := ParseCSharpG1TypeAudit76(data, in)
 	if err != nil {
 		t.Fatal(err)
@@ -46,15 +56,17 @@ func g1t76Mutant(t *testing.T, mutateAudit func(x *CSharpG1TypeAudit76), mutateE
 		mutateAudit(&x)
 	}
 	if mutateExpected != nil {
-		r2, err := DecodeCSharpG1Expected(in.Expected)
+		r2, err := DecodeCSharpG1Expected(g1cLoad(t).r2Exp)
 		if err != nil {
 			t.Fatal(err)
 		}
 		r2 = g1cCloneExpected(r2)
 		mutateExpected(&r2)
-		if in.Expected, err = MarshalCSharpG1Expected(r2); err != nil {
+		mutated, err := MarshalCSharpG1Expected(r2)
+		if err != nil {
 			t.Fatal(err)
 		}
+		in = g1t76Input(t, mutated)
 	}
 	data, err := MarshalCSharpG1TypeAudit76(x)
 	if err != nil {
@@ -69,10 +81,7 @@ func g1t76Mutant(t *testing.T, mutateAudit func(x *CSharpG1TypeAudit76), mutateE
 // candidate set, and the external scanner rows are marked as type only.
 func TestCSharpG1TypeAudit76IsConsistentWithR2(t *testing.T) {
 	x, _, in := g1t76Tracked(t)
-	_, alts, err := g1a76Differential(in.Expected)
-	if err != nil {
-		t.Fatal(err)
-	}
+	alts := in.Alts
 	if len(alts) != 76 || len(x.Rows) != 76 {
 		t.Fatalf("alternatives %d, rows %d", len(alts), len(x.Rows))
 	}
@@ -193,8 +202,9 @@ func TestCSharpG1TypeAudit76Rejects(t *testing.T) {
 }
 
 // The type audit must not read the kind map: the types of the 76 alternatives were translated from it, and an audit that reads
-// the map would only repeat the translation. The closure test proves the derivation cannot reach native input; it cannot say
-// which asset a function reads, so this checks the file syntactically: no identifier that names the kind map.
+// the map would only repeat the translation. That is proved structurally (csharp_g1_audit_independence_test.go: the input type
+// has no member for it, the call closure reaches no file that holds it). This is the secondary check, of the file itself: no
+// identifier that names the kind map and no string that is one of its members.
 func g1t76NamesKindMap(src string) (bool, error) {
 	f, err := parser.ParseFile(token.NewFileSet(), "typeaudit76.go", src, 0)
 	if err != nil {
@@ -205,6 +215,11 @@ func g1t76NamesKindMap(src string) (bool, error) {
 		if id, ok := n.(*ast.Ident); ok {
 			low := strings.ToLower(id.Name)
 			found = found || strings.Contains(low, "kindmap") || strings.HasPrefix(low, "g1km")
+		}
+		if l, ok := n.(*ast.BasicLit); ok && l.Kind == token.STRING {
+			if v, err := strconv.Unquote(l.Value); err == nil && (v == "kinds" || v == "kind_map" || v == "roslyn") {
+				found = true
+			}
 		}
 		return !found
 	})
@@ -226,6 +241,8 @@ func TestCSharpG1TypeAudit76NeverReadsTheKindMap(t *testing.T) {
 		"type": "func f(m CSharpG1KindMap) int { return len(m.Kinds) }",
 		"kind": "func f(k G1KMKind) []string { return k.TS }",
 		"path": "var p = CSharpG1KindMapPathR2",
+		// S2 of the review: a decode of the map into a generic value and a read of its key
+		"map": "func f(m map[string]any) any { return m[\"kinds\"] }",
 	} {
 		if named, err := g1t76NamesKindMap("package kit\n" + snippet); err != nil || !named {
 			t.Errorf("%s: a read of the kind map was not found (%v, %v)", name, named, err)
@@ -277,8 +294,9 @@ func TestCSharpG1AuditStrataStateTypeBoundsApart(t *testing.T) {
 	rows := G1AuditStrataWithTypes(r2, pos.Rows, typ.Rows)
 	d := find(rows, G1StratumDifferential)
 	bound := func(k int) string { return strconv.FormatFloat(G1AuditUpper95(k, 76), 'f', 1, 64) }
-	// position: 76 compared, none wrong, 11 found; type: 76 compared, none wrong, 2 found, 3 left open by the grammar text
-	if d.Samples != 76 || d.Mismatches != 0 || d.Found != 11 || d.Upper95 != bound(0) || d.Upper95Found != bound(11) {
+	// position: 76 compared, none wrong, 14 found (11 by the audit, 3 by the native comparison); type: 76 compared, none wrong, 2
+	// found, 3 left open by the grammar text
+	if d.Samples != 76 || d.Mismatches != 0 || d.Found != 14 || d.Upper95 != bound(0) || d.Upper95Found != bound(14) || d.Upper95FoundAudit != bound(11) {
 		t.Errorf("position bound: %+v", d)
 	}
 	if d.TypeSamples != 76 || d.TypeMismatches != 0 || d.TypeFound != 2 || d.TypeNotDerivable != 3 || d.TypeUpper95 != bound(0) || d.TypeUpper95Found != bound(2) {

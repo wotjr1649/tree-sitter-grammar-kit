@@ -20,13 +20,28 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-func run(root, in string, write bool, grammarDir string) error {
+func run(root, in string, write, pins bool, grammarDir string) error {
+	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1TypeAudit76Path))
+	if pins {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		x, err := kit.DecodeCSharpG1TypeAudit76(data)
+		if err != nil {
+			return err
+		}
+		fmt.Print(kit.G1GroundPinSource("g1t76GroundPins", kit.G1TypeAudit76GroundPins(x.Rows)))
+		return nil
+	}
 	expected, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(kit.CSharpG1ExpectedPathR2)))
 	if err != nil {
 		return err
 	}
-	src := kit.G1TypeAudit76Sources{Expected: expected}
-	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1TypeAudit76Path))
+	src, err := kit.G1TypeAudit76View(expected)
+	if err != nil {
+		return err
+	}
 	var data []byte
 	if in == "" {
 		if data, err = os.ReadFile(path); err != nil {
@@ -84,9 +99,10 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	in := flag.String("in", "", "authored rows (JSON list) to complete and verify")
 	write := flag.Bool("write", false, "write the asset instead of comparing (with -in)")
+	pins := flag.Bool("pins", false, "print the ground pin table of the tracked asset (Go source for csharp_g1_ground_pins.go) and stop")
 	grammar := flag.String("grammar", "", "directory holding the pinned grammar.js (checks the grounds)")
 	flag.Parse()
-	if err := run(*root, *in, *write, *grammar); err != nil {
+	if err := run(*root, *in, *write, *pins, *grammar); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

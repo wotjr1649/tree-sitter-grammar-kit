@@ -58,6 +58,14 @@ var g1SepClass = map[string]string{
 	// The closure proves it cannot reach native input; that it never reads the expected types is a syntactic check of its own
 	// (TestCSharpG1Audit76NeverNamesTheExpectedTypes), which the closure cannot express.
 	"csharp_g1_audit76.go": "derivation",
+	// what the position audit is given and checked with: the rules of its instances, the grounds and their pins. They hold data
+	// about the rows of the audits only (the expected asset, the correction records and the kind map are in other files).
+	"csharp_g1_audit76_rules.go": "derivation",
+	"csharp_g1_ground.go":        "derivation",
+	"csharp_g1_ground_pins.go":   "derivation",
+	// the view of the r2 asset for the two audits: the one place where the audits' input is read from the asset (see the test
+	// TestCSharpG1AuditsReachOnlyTheirOwnInputs). It is on the expectation side, so the closure checks it too.
+	"csharp_g1_audit_view.go": "derivation",
 	// the type audit of the same alternatives: a hand derivation from grammar.js compared with the r2 expected types. The closure
 	// proves it cannot reach native input; that it never reads the kind map is a syntactic check of its own
 	// (TestCSharpG1TypeAudit76NeverReadsTheKindMap).
@@ -129,6 +137,7 @@ var g1SepRoots = []string{
 	"CSharpG1RoslynVocabulary", "CheckG1Grounds", "G1ExpectedCorrections", "G1KindMapCorrections",
 	"G1AuditStrata", "G1AuditUpper95",
 	"DeriveCSharpG1Audit76", "ParseCSharpG1Audit76", "DecodeCSharpG1Audit76", "MarshalCSharpG1Audit76", "CheckG1Audit76Grounds", "CheckG1GroundList",
+	"G1Audit76View", "G1TypeAudit76View", "G1GroundPin", "G1GroundPinSource", "G1Audit76GroundPins", "G1TypeAudit76GroundPins",
 	"DeriveCSharpG1TypeAudit76", "ParseCSharpG1TypeAudit76", "DecodeCSharpG1TypeAudit76", "MarshalCSharpG1TypeAudit76", "CheckG1TypeAudit76Grounds", "G1AuditStrataWithTypes",
 	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
 }

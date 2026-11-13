@@ -18,8 +18,10 @@ import (
 // the other half: for each of the 76 alternatives the node type that the pinned grammar.js gives the witness, derived by
 // hand from the grammar text alone (rule names, aliases, fields, hidden rules, inline, supertypes, externals) and compared
 // with the types (ts) of the r2 expected asset. The ts of these alternatives were translated from the kind map; the audit
-// is the check that the grammar text agrees, and it must not read the kind map: its only input besides the rows is the
-// r2 asset (a syntactic test, TestCSharpG1TypeAudit76NeverReadsTheKindMap, checks the file).
+// is the check that the grammar text agrees, and it must not read the kind map. That is structural: its only input besides
+// the rows is G1TypeAudit76Input, the types of the r2 asset and nothing else, made by csharp_g1_audit_view.go, which is not
+// called from here; the call closure of this file reaches no kind map file (csharp_g1_audit_independence_test.go, and the
+// syntactic test TestCSharpG1TypeAudit76NeverReadsTheKindMap as a secondary check).
 //
 // A row states the class of the derivation: NODE (one visible node type), NO_OWN_NODE (the specification production has no
 // node of its own; the type is the node of the same extent), ALIAS (the type is fixed by an alias), EXTERNAL_TOKEN (the
@@ -88,9 +90,18 @@ type CSharpG1TypeAudit76 struct {
 	Rows   []G1TypeAudit76Row  `json:"rows"`
 }
 
-// G1TypeAudit76Sources is what the type audit is compared with: the r2 expected asset, nothing else.
-type G1TypeAudit76Sources struct {
-	Expected []byte
+// G1TypeAudit76Alt is one alternative as the type audit sees it: the expected types of the r2 asset and the types as they were
+// before the ts corrections of r2 (InitialTS). There is no member for the kind map, the Roslyn kind or the witness.
+type G1TypeAudit76Alt struct {
+	ID        string
+	TS        []string
+	InitialTS []string
+}
+
+// G1TypeAudit76Input is what the type audit is compared with: the expected types of the differential-oracle alternatives of r2,
+// sorted by id (the view that builds it is csharp_g1_audit_view.go, which no function of this file calls).
+type G1TypeAudit76Input struct {
+	Alts []G1TypeAudit76Alt
 }
 
 func g1t76Fault(code string) error { return fail(KindInvalidInput, code, CSharpG1TypeAudit76Path, nil) }
@@ -133,28 +144,9 @@ func g1t76Compare(r G1TypeAudit76Row, ts []string) (result, relation string) {
 	return G1AuditMismatch, G1TypeRelDisjoint
 }
 
-// g1t76InitialTS is the ts of the alternative before the ts corrections of the r2 asset.
-func g1t76InitialTS(item string, ts []string, cs []G1Correction) ([]string, error) {
-	for _, c := range cs {
-		if c.Item == item && c.Field == G1FieldTS {
-			var old []string
-			if err := json.Unmarshal([]byte(c.Old), &old); err != nil {
-				return ts, g1t76Fault("G1_TYPEAUDIT76_CORRECTION")
-			}
-			ts = old
-		}
-	}
-	return ts, nil
-}
-
-func g1t76Fill(r *G1TypeAudit76Row, alt G1ExpAlt, cs []G1Correction) error {
+func g1t76Fill(r *G1TypeAudit76Row, alt G1TypeAudit76Alt) {
 	r.Result, r.Relation = g1t76Compare(*r, alt.TS)
-	initial, err := g1t76InitialTS(alt.ID, alt.TS, cs)
-	if err != nil {
-		return err
-	}
-	r.Initial, _ = g1t76Compare(*r, initial)
-	return nil
+	r.Initial, _ = g1t76Compare(*r, alt.InitialTS)
 }
 
 func g1t76Counts(rows []G1TypeAudit76Row) G1TypeAudit76Counts {
@@ -185,24 +177,18 @@ func g1t76Counts(rows []G1TypeAudit76Row) G1TypeAudit76Counts {
 }
 
 // DeriveCSharpG1TypeAudit76 completes the authored rows (class, types, grounds) with their comparison against the r2 asset.
-func DeriveCSharpG1TypeAudit76(authored []G1TypeAudit76Row, in G1TypeAudit76Sources) (CSharpG1TypeAudit76, error) {
+func DeriveCSharpG1TypeAudit76(authored []G1TypeAudit76Row, in G1TypeAudit76Input) (CSharpG1TypeAudit76, error) {
 	out := CSharpG1TypeAudit76{Schema: CSharpG1TypeAudit76Schema, Basis: csharpG1TypeAudit76Basis}
-	x, alts, err := g1a76Differential(in.Expected)
-	if err != nil {
-		return out, err
-	}
 	rows := slices.Clone(authored)
 	slices.SortFunc(rows, func(a, b G1TypeAudit76Row) int { return strings.Compare(a.ID, b.ID) })
-	if len(rows) != len(alts) {
+	if len(rows) != len(in.Alts) {
 		return out, g1t76Fault("G1_TYPEAUDIT76_ROWS")
 	}
 	for i := range rows {
-		if rows[i].ID != alts[i].ID {
+		if rows[i].ID != in.Alts[i].ID {
 			return out, g1t76Fault("G1_TYPEAUDIT76_ROWS")
 		}
-		if err := g1t76Fill(&rows[i], alts[i], x.Corrections); err != nil {
-			return out, err
-		}
+		g1t76Fill(&rows[i], in.Alts[i])
 	}
 	out.Rows, out.Counts = rows, g1t76Counts(rows)
 	return out, nil
@@ -285,31 +271,29 @@ func g1t76CheckRow(r G1TypeAudit76Row) bool {
 }
 
 // ParseCSharpG1TypeAudit76 decodes the asset and verifies it: its rows are exactly the differential-oracle alternatives of the
-// r2 asset, every row is well formed with checkable grammar grounds, the comparison each row states is the comparison made
-// now against the ts of the r2 asset (and against the ts before the corrections), and the bytes are canonical.
-func ParseCSharpG1TypeAudit76(data []byte, in G1TypeAudit76Sources) (CSharpG1TypeAudit76, error) {
+// r2 asset, every row is well formed with checkable grammar grounds (each pinned to the row, see csharp_g1_ground_pins.go),
+// the comparison each row states is the comparison made now against the ts of the r2 asset (and against the ts before the
+// corrections), and the bytes are canonical.
+func ParseCSharpG1TypeAudit76(data []byte, in G1TypeAudit76Input) (CSharpG1TypeAudit76, error) {
 	x, err := DecodeCSharpG1TypeAudit76(data)
 	if err != nil {
 		return x, err
 	}
-	r2, alts, err := g1a76Differential(in.Expected)
-	if err != nil {
-		return x, err
-	}
-	if len(x.Rows) != len(alts) {
+	if len(x.Rows) != len(in.Alts) {
 		return x, g1t76Fault("G1_TYPEAUDIT76_ROWS")
 	}
 	for i, r := range x.Rows {
-		if r.ID != alts[i].ID {
+		if r.ID != in.Alts[i].ID {
 			return x, g1t76Fault("G1_TYPEAUDIT76_ROWS")
 		}
 		if !g1t76CheckRow(r) {
 			return x, g1t76Fault("G1_TYPEAUDIT76_ROW")
 		}
-		want := r
-		if err := g1t76Fill(&want, alts[i], r2.Corrections); err != nil {
-			return x, err
+		if g1t76GroundPins[r.ID] != G1GroundPin(r.Grounds) {
+			return x, g1t76Fault("G1_TYPEAUDIT76_GROUND")
 		}
+		want := r
+		g1t76Fill(&want, in.Alts[i])
 		if want.Result != r.Result || want.Relation != r.Relation || want.Initial != r.Initial {
 			return x, g1t76Fault("G1_TYPEAUDIT76_COMPARISON")
 		}

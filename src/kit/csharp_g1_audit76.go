@@ -19,9 +19,12 @@ import (
 // verifier then compares those instances with the witness of the r2 expected asset: a witness of match span must have
 // the extent of an instance, a witness of match starts-at the start of one.
 //
-// The audit does not read the expected types (ts): the comparison takes the witness and the source text only, the
-// pinned old value of a correction is read for its witness only, and the separation test checks that no function of this
-// file names the field. An instance of an interpolation or alignment clause is the extent of the specification symbol
+// The audit does not read the expected types (ts), and this is structural: what it is given (G1Audit76Input) carries the
+// witnesses and the source text only, the view that makes it from the r2 asset (csharp_g1_audit_view.go) reads the old
+// value of a correction for its witness and is not called from here, and the call closure of this file reaches no other G1 file
+// than its rules, grounds and pins (csharp_g1_audit_independence_test.go). The instances a row lists are checked against the
+// source text by the rule of the row (csharp_g1_audit76_rules.go) and its grounds by their pin (csharp_g1_ground_pins.go).
+// An instance of an interpolation or alignment clause is the extent of the specification symbol
 // (the expression between the braces); the grammar text puts the braces and the comma inside the node, so a row may
 // state the terminals that the node adds (Node, with grammar grounds). A terminal that is an external scanner token has
 // no extent in the grammar text: for such a row only the start of the node is derivable, and a span claim does not match.
@@ -88,16 +91,35 @@ type CSharpG1Audit76 struct {
 	Rows   []G1Audit76Row  `json:"rows"`
 }
 
-// G1Audit76Sources are what the audit is compared with: the r2 expected asset and the text of the sources it names.
-type G1Audit76Sources struct {
-	Expected []byte
-	Texts    map[string][]byte
+// G1Audit76Witness is the position of a witness: all the audit may know of an alternative of the r2 asset.
+type G1Audit76Witness struct {
+	Source string
+	Match  string
+	Start  int
+	End    int
+}
+
+// G1Audit76Alt is one alternative as the position audit sees it: the witness of the r2 asset and the witness as it was
+// before the after-native corrections of r2 (Initial). There is no member for the expected types, for the Roslyn kind
+// or for a correction record: the audit cannot reach what its input does not carry (the view that builds the input
+// is csharp_g1_audit_view.go, which no function of this file calls).
+type G1Audit76Alt struct {
+	ID      string
+	Witness G1Audit76Witness
+	Initial G1Audit76Witness
+}
+
+// G1Audit76Input is what the audit is compared with: the witnesses of the differential-oracle alternatives of r2, sorted
+// by id, and the text of the sources they name.
+type G1Audit76Input struct {
+	Alts  []G1Audit76Alt
+	Texts map[string][]byte
 }
 
 func g1a76Fault(code string) error { return fail(KindInvalidInput, code, CSharpG1Audit76Path, nil) }
 
 // g1a76Compare compares one witness with the instances of a row. It sees the witness and the source text only.
-func g1a76Compare(r G1Audit76Row, w G1ExpWitness, text []byte) (result, relation string) {
+func g1a76Compare(r G1Audit76Row, w G1Audit76Witness, text []byte) (result, relation string) {
 	relation = G1AuditRelNoInstance
 	for _, in := range r.Instances {
 		lo, hi := in[0], in[1]
@@ -123,60 +145,13 @@ func g1a76Compare(r G1Audit76Row, w G1ExpWitness, text []byte) (result, relation
 	return G1AuditMismatch, relation
 }
 
-// g1a76Initial is the witness of the alternative before the corrections of the r2 asset that moved or relaxed it.
-func g1a76Initial(item string, w G1ExpWitness, cs []G1Correction) (G1ExpWitness, error) {
-	for _, c := range cs {
-		if c.Item != item {
-			continue
-		}
-		switch c.Field {
-		case G1FieldEvidence:
-			var o g1cEvidence
-			if err := json.Unmarshal([]byte(c.Old), &o); err != nil {
-				return w, g1a76Fault("G1_AUDIT76_CORRECTION")
-			}
-			w = o.Witness
-		case G1FieldWitnessMatch:
-			var m string
-			if err := json.Unmarshal([]byte(c.Old), &m); err != nil {
-				return w, g1a76Fault("G1_AUDIT76_CORRECTION")
-			}
-			w.Match = m
-		}
-	}
-	return w, nil
-}
-
-// g1a76Differential returns the r2 alternatives of the differential-oracle stratum, by id.
-func g1a76Differential(expected []byte) (CSharpG1Expected, []G1ExpAlt, error) {
-	x, err := DecodeCSharpG1Expected(expected)
-	if err != nil {
-		return x, nil, err
-	}
-	if x.Schema != CSharpG1ExpectedSchemaR2 {
-		return x, nil, g1a76Fault("G1_AUDIT76_EXPECTED")
-	}
-	var alts []G1ExpAlt
-	for _, a := range x.Alternatives {
-		if a.Status == G1ExpExpected && a.Basis == G1BasisDiff {
-			alts = append(alts, a)
-		}
-	}
-	slices.SortFunc(alts, func(a, b G1ExpAlt) int { return strings.Compare(a.ID, b.ID) })
-	return x, alts, nil
-}
-
-// g1a76Fill sets the comparison fields of a row from the asset (the inputs are the instances, the node and the grounds).
-func g1a76Fill(r *G1Audit76Row, alt G1ExpAlt, cs []G1Correction, text []byte) error {
-	if len(alt.Witnesses) != 1 || alt.Witnesses[0].Source != r.Source {
+// g1a76Fill sets the comparison fields of a row from the witnesses (the inputs are the instances, the node and the grounds).
+func g1a76Fill(r *G1Audit76Row, alt G1Audit76Alt, text []byte) error {
+	if alt.Witness.Source != r.Source {
 		return g1a76Fault("G1_AUDIT76_WITNESS")
 	}
-	r.Result, r.Relation = g1a76Compare(*r, alt.Witnesses[0], text)
-	initial, err := g1a76Initial(alt.ID, alt.Witnesses[0], cs)
-	if err != nil {
-		return err
-	}
-	r.Initial, _ = g1a76Compare(*r, initial, text)
+	r.Result, r.Relation = g1a76Compare(*r, alt.Witness, text)
+	r.Initial, _ = g1a76Compare(*r, alt.Initial, text)
 	return nil
 }
 
@@ -199,22 +174,18 @@ func g1a76Counts(rows []G1Audit76Row) G1Audit76Counts {
 }
 
 // DeriveCSharpG1Audit76 completes the authored rows (instances, node, grounds) with their comparison against the r2 asset.
-func DeriveCSharpG1Audit76(authored []G1Audit76Row, in G1Audit76Sources) (CSharpG1Audit76, error) {
+func DeriveCSharpG1Audit76(authored []G1Audit76Row, in G1Audit76Input) (CSharpG1Audit76, error) {
 	out := CSharpG1Audit76{Schema: CSharpG1Audit76Schema, Basis: csharpG1Audit76Basis}
-	x, alts, err := g1a76Differential(in.Expected)
-	if err != nil {
-		return out, err
-	}
 	rows := slices.Clone(authored)
 	slices.SortFunc(rows, func(a, b G1Audit76Row) int { return strings.Compare(a.ID, b.ID) })
-	if len(rows) != len(alts) {
+	if len(rows) != len(in.Alts) {
 		return out, g1a76Fault("G1_AUDIT76_ROWS")
 	}
 	for i := range rows {
-		if rows[i].ID != alts[i].ID {
+		if rows[i].ID != in.Alts[i].ID {
 			return out, g1a76Fault("G1_AUDIT76_ROWS")
 		}
-		if err := g1a76Fill(&rows[i], alts[i], x.Corrections, in.Texts[rows[i].Source]); err != nil {
+		if err := g1a76Fill(&rows[i], in.Alts[i], in.Texts[rows[i].Source]); err != nil {
 			return out, err
 		}
 	}
@@ -282,39 +253,46 @@ func g1a76CheckGrounds(gs []G1Ground, doc string) bool {
 }
 
 // ParseCSharpG1Audit76 decodes the asset and verifies it: its rows are exactly the differential-oracle alternatives of the
-// r2 asset, every row is well formed with checkable grounds, the comparison each row states is the comparison made now
-// against the r2 witness (and against the witness before the corrections), and the bytes are canonical.
-func ParseCSharpG1Audit76(data []byte, in G1Audit76Sources) (CSharpG1Audit76, error) {
+// r2 asset, every row is well formed with checkable grounds (each pinned to the row, see csharp_g1_ground_pins.go), every
+// instance is a text of the source that the rule of its row accepts (csharp_g1_audit76_rules.go), the comparison each row
+// states is the comparison made now against the r2 witness (and against the witness before the corrections), and the bytes
+// are canonical. A rule accepts or rejects the text of an instance; it does not find the instances the row left out.
+func ParseCSharpG1Audit76(data []byte, in G1Audit76Input) (CSharpG1Audit76, error) {
 	x, err := DecodeCSharpG1Audit76(data)
 	if err != nil {
 		return x, err
 	}
-	r2, alts, err := g1a76Differential(in.Expected)
-	if err != nil {
-		return x, err
-	}
-	if len(x.Rows) != len(alts) {
+	if len(x.Rows) != len(in.Alts) || len(g1a76Rules) != len(in.Alts) {
 		return x, g1a76Fault("G1_AUDIT76_ROWS")
 	}
 	for i, r := range x.Rows {
-		alt := alts[i]
+		alt := in.Alts[i]
 		text, ok := in.Texts[r.Source]
 		if r.ID != alt.ID || !ok {
 			return x, g1a76Fault("G1_AUDIT76_ROWS")
 		}
+		if alt.Witness.Source != r.Source {
+			return x, g1a76Fault("G1_AUDIT76_WITNESS")
+		}
 		if !r.Accepted || r.Form == "" || len(r.Instances) == 0 || !g1a76CheckGrounds(r.Grounds, G1DocSpec) {
 			return x, g1a76Fault("G1_AUDIT76_ROW")
+		}
+		if n := r.Node; n != nil && (n.Leading == "" && n.Trailing == "" || !g1a76CheckGrounds(n.Grounds, G1DocGrammar)) {
+			return x, g1a76Fault("G1_AUDIT76_ROW")
+		}
+		if g1a76GroundPins[r.ID] != G1GroundPin(r.Grounds) || r.Node != nil && g1a76GroundPins[r.ID+"#node"] != G1GroundPin(r.Node.Grounds) || r.Node == nil && g1a76GroundPins[r.ID+"#node"] != "" {
+			return x, g1a76Fault("G1_AUDIT76_GROUND")
 		}
 		for j, in := range r.Instances {
 			if in[0] < 0 || in[0] >= in[1] || in[1] > len(text) || j > 0 && !(r.Instances[j-1][0] < in[0] || r.Instances[j-1][0] == in[0] && r.Instances[j-1][1] < in[1]) {
 				return x, g1a76Fault("G1_AUDIT76_INSTANCE")
 			}
-		}
-		if n := r.Node; n != nil && (n.Leading == "" && n.Trailing == "" || !g1a76CheckGrounds(n.Grounds, G1DocGrammar)) {
-			return x, g1a76Fault("G1_AUDIT76_ROW")
+			if !g1a76Rules[r.ID].accepts(string(text[in[0]:in[1]])) {
+				return x, g1a76Fault("G1_AUDIT76_RULE")
+			}
 		}
 		want := r
-		if err := g1a76Fill(&want, alt, r2.Corrections, text); err != nil {
+		if err := g1a76Fill(&want, alt, text); err != nil {
 			return x, err
 		}
 		if want.Result != r.Result || want.Relation != r.Relation || want.Initial != r.Initial {
