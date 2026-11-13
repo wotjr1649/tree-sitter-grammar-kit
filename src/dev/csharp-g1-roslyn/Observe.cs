@@ -126,8 +126,11 @@ public static class Observe
         var producer = typeof(Observe).Assembly;
         string meta(string key) => producer.GetCustomAttributes<AssemblyMetadataAttribute>().Single(x => x.Key == key).Value!;
         string sdk = meta("TSGK.SDK");
-        string roslynDir = Path.GetFullPath(meta("TSGK.RoslynDir"));
         if (string.IsNullOrWhiteSpace(sdk)) throw new Exception("missing build SDK identity");
+        // the install path is not part of the assembly (its hash must not depend on the host): the dotnet root is found at run time,
+        // three levels above the shared framework directory (<root>/shared/Microsoft.NETCore.App/<version>/); no other location is tried
+        string roslynDir = Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", "..", "sdk", sdk, "Roslyn", "bincore")) + Path.DirectorySeparatorChar;
+        if (!File.Exists(Path.Combine(roslynDir, "Microsoft.CodeAnalysis.dll"))) throw new Exception("Roslyn of SDK " + sdk + " not found at " + roslynDir);
 
         // LanguageVersion: the whole enum, the versions observed (C# 7.3 and later by name) and what Latest means
         var enumNames = Enum.GetValues<LanguageVersion>().Select(v => (name: v.ToString(), value: (int)v)).Distinct().OrderBy(x => x.value).ThenBy(x => x.name, StringComparer.Ordinal).ToArray();
