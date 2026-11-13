@@ -469,8 +469,9 @@ func TestCSharpG1ExpectedSeparation(t *testing.T) {
 			}
 		}
 	}
-	// the derivation is a function of its byte inputs: changing nothing gives the same asset, and a
-	// different observation changes it (it does read the observation, not a hidden file)
+	// the derivation is repeatable: the same inputs give the same asset. That alone does not show that it
+	// reads only its inputs; TestCSharpG1SeparationClosure (the call closure) and
+	// TestCSharpG1ExpectedFollowsItsInputsOnly (another observation gives another asset) do.
 	again, err := DeriveCSharpG1Expected(CSharpG1ExpectedSources{Src: a.in.Src, Observation: a.obs, KindMap: a.kindmap, Sealed: a.x.Metamorphic.Results()})
 	if err != nil || !g1eSame(again, a.want) {
 		t.Errorf("derivation is not a function of its inputs: %v", err)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -416,5 +417,20 @@ func TestCSharpG1RoslynRejectsMalformedBytes(t *testing.T) {
 	other := bytes.Replace(a.ledger, []byte(`"basis": "`), []byte(`"basis": " `), 1)
 	if _, err := ParseCSharpG1RoslynObserved(a.data, other, a.src); err == nil {
 		t.Error("an observation of another ledger was accepted")
+	}
+}
+
+// TestCSharpG1ObserverCarriesNoInstallPath: the observer's assembly hash (tool_sha256) must not depend on where
+// dotnet is installed, so the only assembly metadata is the SDK version string (not a path); the Roslyn
+// directory is found at run time. A local check (two directory junctions to one SDK build the same Observe.dll)
+// is in the csharp-g1-ledger spec.
+func TestCSharpG1ObserverCarriesNoInstallPath(t *testing.T) {
+	data, err := os.ReadFile("../dev/csharp-g1-roslyn/Observe.csproj")
+	if err != nil {
+		t.Fatal(err)
+	}
+	items := regexp.MustCompile(`<AssemblyMetadata\b[^>]*>`).FindAllString(string(data), -1)
+	if len(items) != 1 || !regexp.MustCompile(`^<AssemblyMetadata\s+Include="TSGK\.SDK"\s+Value="\$\(NETCoreSdkVersion\)"\s*/>$`).MatchString(items[0]) {
+		t.Errorf("Observe.csproj AssemblyMetadata must be exactly TSGK.SDK = $(NETCoreSdkVersion): %q", items)
 	}
 }
