@@ -28,9 +28,9 @@ func otherOf(host string) string {
 }
 
 type fixture struct {
-	registry, predAsset, svcAsset []byte
-	svc                           kit.SvcExpected
-	inventory                     []byte
+	registry, predAsset, svcAsset, svcInline []byte
+	svc                                      kit.SvcExpected
+	inventory                                []byte
 }
 
 var (
@@ -48,7 +48,7 @@ func fixtureFor(t *testing.T) *fixture {
 			}
 			return b
 		}
-		fix.registry, fix.predAsset, fix.svcAsset = read(queryregistrycore.Path), read(kit.PredicateExpectedPath), read(kit.SvcExpectedPath)
+		fix.registry, fix.predAsset, fix.svcAsset, fix.svcInline = read(queryregistrycore.Path), read(kit.PredicateExpectedPath), read(kit.SvcExpectedPath), read(kit.SvcInlinePath)
 		fix.inventory = read(queryregistrycore.QualificationPin.Path)
 		svc, err := kit.ParseSvcExpected(fix.svcAsset, fix.registry, fix.inventory, read("src/testdata/native/n461/svc.json"))
 		if err != nil {
@@ -61,7 +61,8 @@ func fixtureFor(t *testing.T) *fixture {
 
 // hostResults are the scope results one host stores when it judges all its own obligations
 // VERIFIED (the shape the native fan-in test stores), the other host stays BLOCKED. failSvc turns
-// one VERIFIED SVC judgment into FAILED.
+// one VERIFIED SVC judgment into FAILED. The svc-inline entry is the svc result of the real-grammar
+// run: the same judgments with 30 inline trees and 60 inline queries VERIFIED on top.
 func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[string]kit.QueryScopeHostResult {
 	t.Helper()
 	reg, err := queryregistrycore.Parse(f.registry)
@@ -100,7 +101,7 @@ func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[strin
 	if err != nil {
 		t.Fatal(err)
 	}
-	out := map[string]kit.QueryScopeHostResult{}
+	out := map[string]kit.QueryScopeHostResult{svcInlineKey: f.inlineResult(t, host, svcJudgments, nil)}
 	for scope, r := range map[string]kit.QueryScopeResult{kit.QueryScopePredicate: predicate, kit.QueryScopeSvc: svc} {
 		h, err := kit.NewQueryScopeHostResult(host, r)
 		if err != nil {
@@ -109,6 +110,35 @@ func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[strin
 		out[scope] = h
 	}
 	return out
+}
+
+// inlineResult is the host's svc result after the inline run: the first 30 inline tree and 60 inline
+// query obligations are judged VERIFIED on top of the offline judgments (edit may then change them).
+func (f *fixture) inlineResult(t *testing.T, host string, offline []kit.SvcJudgment, edit func([]kit.SvcJudgment)) kit.QueryScopeHostResult {
+	t.Helper()
+	js := slices.Clone(offline)
+	trees, queries := 30, 60
+	for i, o := range f.svc.Obligations() {
+		switch {
+		case o.Kind == kit.SvcKindInlineTree && trees > 0:
+			js[i], trees = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, trees-1
+		case o.Kind == kit.SvcKindQuery && queries > 0:
+			js[i], queries = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, queries-1
+		}
+	}
+	if edit != nil {
+		edit(js)
+	}
+	r, err := kit.SvcScopeResult(f.svc, f.svcAsset, f.registry, host, js, map[string]bool{otherOf(host): true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pins := append(slices.Clone(r.Assets), queryregistrycore.FilePin(kit.SvcInlinePath, f.svcInline))
+	h, err := kit.NewQueryScopeHostResult(host, kit.NewQueryScopeResult(r.Scope, r.RegistrySHA256, pins, r.Counters, r.FirstFailure))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }
 
 func runIdentity(host string) kit.RunIdentity {
@@ -148,7 +178,7 @@ func writeHost(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity),
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(dir, kit.QueryScopeHostFile(scope, host)), data, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, fileOf(scope, host)), data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -171,17 +201,85 @@ func TestMergeBothHosts(t *testing.T) {
 	if rep.Status != statusMerged || rep.Code != "QUERY_SCOPE_RESULT_ABSENT" || rep.Completion == nil {
 		t.Fatalf("%s %s", rep.Status, rep.Code)
 	}
-	// predicate 2 x 67 and SVC offline 2 x 263, computed from the registered denominators
-	if tot := rep.Completion.Total; tot.Verified != 2*(67+263) || tot.Failed != 0 || rep.Completion.Complete {
+	// predicate 2 x 67, SVC offline 2 x 263 and the inline 2 x (30 trees + 60 queries), computed from
+	// the registered denominators; the inline rows are rows of the svc scope, not an extra scope
+	if tot := rep.Completion.Total; tot.Verified != 2*(67+263+30+60) || tot.Failed != 0 || rep.Completion.Complete {
 		t.Fatalf("total %+v", tot)
 	}
 	for _, h := range rep.Completion.Hosts {
-		if h.Verified != 330 {
-			t.Errorf("host %s verified %d, want 330", h.Platform, h.Verified)
+		if h.Verified != 420 {
+			t.Errorf("host %s verified %d, want 420", h.Platform, h.Verified)
 		}
 	}
-	if len(rep.Inputs) != 2 || len(rep.Inputs[0].Files) != 3 || len(rep.Scopes) != 2 {
+	inline := map[string]uint64{}
+	for _, c := range rep.Completion.Counters {
+		if c.Scope == kit.QueryScopeSvc && c.Platform == windows && (c.Kind == kit.SvcKindInlineTree || c.Kind == kit.SvcKindQuery) {
+			inline[c.Kind] = c.Verified
+			if c.Verified+c.Blocked != c.Required {
+				t.Errorf("%s: %+v", c.Kind, c.QueryCompletionCounts)
+			}
+		}
+	}
+	if inline[kit.SvcKindInlineTree] != 30 || inline[kit.SvcKindQuery] != 60 {
+		t.Errorf("inline rows %v, want 30 trees and 60 queries VERIFIED", inline)
+	}
+	if len(rep.Inputs) != 2 || len(rep.Inputs[0].Files) != 4 || len(rep.Scopes) != 2 {
 		t.Fatalf("inputs %+v scopes %v", rep.Inputs, rep.Scopes)
+	}
+}
+
+// The inline file is the host's svc result: it must agree with the offline svc file everywhere but
+// that host's inline rows, and its inline asset pin must be the checkout's.
+func TestMergeRefusesAnInlineResultThatDisagreesWithTheOfflineOne(t *testing.T) {
+	f := fixtureFor(t)
+	offline, err := kit.VerifySvcExpected(f.svc, f.inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreignPin := func(h kit.QueryScopeHostResult) kit.QueryScopeHostResult {
+		r := h.Result
+		pins := slices.Clone(r.Assets)
+		pins[len(pins)-1] = queryregistrycore.FilePin(kit.SvcInlinePath, []byte("another asset"))
+		sealed, err := kit.NewQueryScopeHostResult(h.Host, kit.NewQueryScopeResult(r.Scope, r.RegistrySHA256, pins, r.Counters, r.FirstFailure))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return sealed
+	}
+	for name, c := range map[string]struct {
+		inline func(rs map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult
+		code   string
+	}{
+		"offline obligation judged differently": {func(map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
+			return f.inlineResult(t, linux, offline, func(js []kit.SvcJudgment) {
+				i := slices.IndexFunc(js, func(j kit.SvcJudgment) bool { return j.State == "VERIFIED" })
+				js[i] = kit.SvcJudgment{ID: js[i].ID, State: "BLOCKED", Code: "SVC_ONLY_HERE"}
+			})
+		}, "QUERY_SCOPE_SVC_INLINE_MISMATCH"},
+		"offline result in the inline file (no inline pin)": {func(rs map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
+			return rs[kit.QueryScopeSvc]
+		}, "QUERY_SCOPE_SVC_INLINE_MISMATCH"},
+		// the two hosts then disagree on the pinned assets
+		"inline asset pin of another asset on one host": {func(rs map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
+			return foreignPin(rs[svcInlineKey])
+		}, "QUERY_SCOPE_HOST_MISMATCH"},
+		"the other host's rows claimed": {func(map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
+			return f.inlineResult(t, windows, offline, nil) // a Windows result under the Linux name
+		}, "QUERY_SCOPE_HOST_MISMATCH"},
+	} {
+		dirs := twoHosts(t, f)
+		dirs[linux] = writeHost(t, f, linux, nil, func(rs map[string]kit.QueryScopeHostResult) { rs[svcInlineKey] = c.inline(rs) })
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != c.code || rep.Completion != nil {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
+	}
+	// both hosts agree on an inline asset pin that is not the checkout's: the fold refuses it
+	dirs := twoHosts(t, f)
+	for _, host := range []string{windows, linux} {
+		dirs[host] = writeHost(t, f, host, nil, func(rs map[string]kit.QueryScopeHostResult) { rs[svcInlineKey] = foreignPin(rs[svcInlineKey]) })
+	}
+	if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_ASSET_PIN" || rep.Completion != nil {
+		t.Errorf("foreign inline pin on both hosts: %s %s", rep.Status, rep.Code)
 	}
 }
 
@@ -189,8 +287,8 @@ func TestMergeKeepsAHostFailure(t *testing.T) {
 	f := fixtureFor(t)
 	dirs := twoHosts(t, f)
 	dirs[linux] = writeHost(t, f, linux, nil, func(rs map[string]kit.QueryScopeHostResult) {
-		r := f.hostResults(t, linux, true)[kit.QueryScopeSvc]
-		rs[kit.QueryScopeSvc] = r
+		failed := f.hostResults(t, linux, true)
+		rs[kit.QueryScopeSvc], rs[svcInlineKey] = failed[kit.QueryScopeSvc], failed[svcInlineKey]
 	})
 	rep := merge(root, expected(), dirs)
 	if rep.Status != statusFail || rep.Completion == nil || rep.Completion.Total.Failed != 1 {

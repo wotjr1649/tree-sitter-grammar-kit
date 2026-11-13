@@ -10,9 +10,9 @@ import (
 )
 
 // storeQueryScopeHost writes this host's scope result to the directory named by
-// TSGK_QUERY_SCOPE_OUT and reads it back; without the variable nothing is written. A stored file is
-// never overwritten: evidence of an earlier run stays.
-func storeQueryScopeHost(t *testing.T, host string, r kit.QueryScopeResult) {
+// TSGK_QUERY_SCOPE_OUT under the given file name and reads it back; without the variable nothing is
+// written. A stored file is never overwritten: evidence of an earlier run stays.
+func storeQueryScopeHost(t *testing.T, host, file string, r kit.QueryScopeResult) {
 	t.Helper()
 	dir := os.Getenv(kit.QueryScopeHostEnv)
 	if dir == "" {
@@ -29,7 +29,7 @@ func storeQueryScopeHost(t *testing.T, host string, r kit.QueryScopeResult) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.OpenFile(filepath.Join(dir, kit.QueryScopeHostFile(r.Scope, host)), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	f, err := os.OpenFile(filepath.Join(dir, file), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,5 +41,5 @@ func storeQueryScopeHost(t *testing.T, host string, r kit.QueryScopeResult) {
 	if err != nil || !reflect.DeepEqual(back, h) {
 		t.Fatalf("stored %s/%s does not read back: %v", r.Scope, host, err)
 	}
-	t.Logf("STORED %s %s result=%s", r.Scope, host, r.ResultSHA256)
+	t.Logf("STORED %s %s result=%s", file, host, r.ResultSHA256)
 }

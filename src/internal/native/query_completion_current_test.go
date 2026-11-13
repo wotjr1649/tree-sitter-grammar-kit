@@ -89,8 +89,8 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 		t.Fatal(err)
 	}
 	// opt-in: keep this host's two judgments for the merge of both hosts (TSGK_QUERY_SCOPE_OUT)
-	storeQueryScopeHost(t, platform, predicate)
-	storeQueryScopeHost(t, platform, svcScope)
+	storeQueryScopeHost(t, platform, kit.QueryScopeHostFile(kit.QueryScopePredicate, platform), predicate)
+	storeQueryScopeHost(t, platform, kit.QueryScopeHostFile(kit.QueryScopeSvc, platform), svcScope)
 
 	// large scope: the judgments #412 recorded per case (TSGK_LARGE_FOLD, ';' separated record
 	// files) and the HARD-cap receipt of the case that could not run in 4 GiB. No native large run

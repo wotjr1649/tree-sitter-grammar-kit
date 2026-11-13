@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 // TestNativeSvcInlineRealGrammar runs the SVC69 cases that have a DERIVED inline expectation on the
@@ -43,7 +44,8 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	x, err := kit.ParseSvcInlineExpected(read(kit.SvcInlinePath[len("src/"):]), svcContract, registry, inventory, fixture, pack)
+	inlineContract := read(kit.SvcInlinePath[len("src/"):])
+	x, err := kit.ParseSvcInlineExpected(inlineContract, svcContract, registry, inventory, fixture, pack)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,6 +202,20 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		t.Log(c.String())
 	}
 	t.Logf("completion %s full_scope_complete %t", coverage.Completion, coverage.FullScopeComplete)
+	// the result this host stores: every derived step is VERIFIED, x.Derived trees and two queries each
+	result, err := kit.SvcScopeResult(e, svcContract, registry, platform, merged, map[string]bool{otherHost: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	verified := map[string]uint64{}
+	for _, c := range result.Counters {
+		if c.Platform == platform {
+			verified[c.Kind] = c.Verified
+		}
+	}
+	if verified[kit.SvcKindInlineTree] != uint64(x.Derived) || verified[kit.SvcKindQuery] != 2*uint64(x.Derived) {
+		t.Errorf("inline VERIFIED tree %d query %d, want %d and %d", verified[kit.SvcKindInlineTree], verified[kit.SvcKindQuery], x.Derived, 2*x.Derived)
+	}
 
 	// forged native evidence must not verify: each mutation of the real native output fails the judgment
 	first := observed[0]
@@ -244,5 +260,13 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		if failed == 0 {
 			t.Errorf("forged native evidence %q verified", name)
 		}
+	}
+
+	// opt-in (TSGK_QUERY_SCOPE_OUT): this host's complete SVC result, the offline judgments plus the
+	// inline ones, for the merge of both hosts. It pins the inline expected asset its inline VERIFIED
+	// rows rest on, and is stored only when nothing above failed.
+	if !t.Failed() {
+		pins := append(slices.Clone(result.Assets), queryregistrycore.FilePin(kit.SvcInlinePath, inlineContract))
+		storeQueryScopeHost(t, platform, kit.QueryScopeSvcInlineFile(platform), kit.NewQueryScopeResult(result.Scope, result.RegistrySHA256, pins, result.Counters, result.FirstFailure))
 	}
 }

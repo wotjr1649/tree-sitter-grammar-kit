@@ -1,7 +1,10 @@
 // Command query-scope-merge folds the stored scope judgments of both hosts of one CI run (#362 L2).
 //
-// Each host hands over a closed directory: its run-identity.json and the two files
-// query-scope-{predicate,svc}-<host>.json that the native fan-in test stores. The tool binds those
+// Each host hands over a closed directory: its run-identity.json, the two files
+// query-scope-{predicate,svc}-<host>.json that the native fan-in test stores, and
+// query-scope-svc-inline-<host>.json from the real-C#-grammar SVC test (#362 L3). The last is the same
+// scope and rows as the svc file with that host's inline rows judged further; it must agree with the
+// svc file everywhere else and then stands for the host's svc result. The tool binds those
 // directories to the run it executes in (artifact layer: run id, attempt, commit and head SHA, the
 // stored format stays tsgk-query-scope-host/r1), decodes and merges the host files, folds the merged
 // scopes with FoldQueryCompletion and writes one report. It is evidence only: it opens no gate.
@@ -41,6 +44,37 @@ const (
 var hostPairs = map[string][2]string{"windows-amd64": {"windows", "amd64"}, "linux-amd64": {"linux", "amd64"}}
 
 var scopes = []string{kit.QueryScopePredicate, kit.QueryScopeSvc}
+
+// svcInlineKey names the stored svc result of the inline run next to the scopes; it is not a scope.
+const svcInlineKey = "svc-inline"
+
+func fileOf(key, host string) string {
+	if key == svcInlineKey {
+		return kit.QueryScopeSvcInlineFile(host)
+	}
+	return kit.QueryScopeHostFile(key, host)
+}
+
+// refinesOffline reports whether the inline-run svc result of a host is the host's offline svc
+// result with only that host's inline rows judged further, and the inline expected asset pinned
+// after the offline pins. Any other difference means the two runs disagree about the same judgments.
+func refinesOffline(off, in kit.QueryScopeHostResult) bool {
+	a, b := off.Result, in.Result
+	n := len(a.Assets)
+	if off.Host != in.Host || a.Scope != b.Scope || a.RegistrySHA256 != b.RegistrySHA256 || a.DenominatorSHA256 != b.DenominatorSHA256 ||
+		len(a.Counters) != len(b.Counters) || len(b.Assets) != n+1 || !slices.Equal(b.Assets[:n], a.Assets) {
+		return false
+	}
+	for i, c := range b.Counters {
+		if inlineRow := c.Platform == in.Host && (c.Kind == kit.SvcKindInlineTree || c.Kind == kit.SvcKindQuery); !inlineRow && c != a.Counters[i] {
+			return false
+		}
+		if x := a.Counters[i]; c.Kind != x.Kind || c.Platform != x.Platform || c.Required != x.Required {
+			return false
+		}
+	}
+	return true
+}
 
 type fileDigest struct {
 	Name   string `json:"name"`
@@ -105,8 +139,8 @@ func bound(got, want kit.RunIdentity, host string) bool {
 
 func wantedFiles(host string) []string {
 	names := []string{identityFile}
-	for _, scope := range scopes {
-		names = append(names, kit.QueryScopeHostFile(scope, host))
+	for _, key := range append(slices.Clone(scopes), svcInlineKey) {
+		names = append(names, fileOf(key, host))
 	}
 	slices.Sort(names)
 	return names
@@ -151,16 +185,25 @@ func loadHost(dir, host string, expected kit.RunIdentity) (hostInput, map[string
 		return in, nil, refuse("QUERY_SCOPE_RUN_MISMATCH")
 	}
 	results := map[string]kit.QueryScopeHostResult{}
-	for _, scope := range scopes {
-		h, err := kit.DecodeQueryScopeHostResult(read[kit.QueryScopeHostFile(scope, host)])
+	for _, key := range append(slices.Clone(scopes), svcInlineKey) {
+		h, err := kit.DecodeQueryScopeHostResult(read[fileOf(key, host)])
 		if err != nil {
 			return in, nil, refuse(codeOf(err))
+		}
+		scope := key
+		if key == svcInlineKey {
+			scope = kit.QueryScopeSvc
 		}
 		if h.Host != host || h.Result.Scope != scope {
 			return in, nil, refuse("QUERY_SCOPE_HOST_MISMATCH")
 		}
-		results[scope] = h
+		results[key] = h
 	}
+	// the inline run's result is the same scope and rows: it stands for the host's svc result
+	if !refinesOffline(results[kit.QueryScopeSvc], results[svcInlineKey]) {
+		return in, nil, refuse("QUERY_SCOPE_SVC_INLINE_MISMATCH")
+	}
+	results[kit.QueryScopeSvc] = results[svcInlineKey]
 	return in, results, nil
 }
 
@@ -186,7 +229,7 @@ func foldRequest(root string) (kit.QueryCompletionRequest, error) {
 		return data
 	}
 	registry := read(queryregistrycore.Path)
-	predicate, svc, large := read(kit.PredicateExpectedPath), read(kit.SvcExpectedPath), read(kit.LargeExpectedPath)
+	predicate, svc, large, svcInline := read(kit.PredicateExpectedPath), read(kit.SvcExpectedPath), read(kit.LargeExpectedPath), read(kit.SvcInlinePath)
 	req := kit.QueryCompletionRequest{
 		Registry: registry, RegistrySHA256: queryregistrycore.Digest(registry),
 		Qualification: read(queryregistrycore.QualificationPin.Path), Slots: read(queryregistrycore.SlotPin.Path),
@@ -194,12 +237,12 @@ func foldRequest(root string) (kit.QueryCompletionRequest, error) {
 		SvcExpected: svc, SvcFixture: read("src/testdata/native/n461/svc.json"), LargeExpected: large, LargeFixtures: read("src/contracts/native-large-fixtures.json"),
 		AssetPins: map[string][]queryregistrycore.Pin{
 			kit.QueryScopePredicate: {queryregistrycore.FilePin(kit.PredicateExpectedPath, predicate)},
-			kit.QueryScopeSvc:       {queryregistrycore.FilePin(kit.SvcExpectedPath, svc)},
+			kit.QueryScopeSvc:       {queryregistrycore.FilePin(kit.SvcExpectedPath, svc), queryregistrycore.FilePin(kit.SvcInlinePath, svcInline)},
 			kit.QueryScopeLarge:     {queryregistrycore.FilePin(kit.LargeExpectedPath, large)},
 		},
 		ResultPins: map[string]string{},
 	}
-	for _, b := range [][]byte{registry, predicate, svc, large, req.Qualification, req.Slots, req.SvcFixture, req.LargeFixtures} {
+	for _, b := range [][]byte{registry, predicate, svc, svcInline, large, req.Qualification, req.Slots, req.SvcFixture, req.LargeFixtures} {
 		if len(b) == 0 {
 			return req, errors.New("committed contract missing")
 		}

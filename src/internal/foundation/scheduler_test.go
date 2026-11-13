@@ -1130,7 +1130,7 @@ func TestWorkflowConcurrencyPolicy(t *testing.T) {
 }
 
 // queryScopeEvidencePolicy pins the gate-external collection and merge of the scope judgments
-// (#362 L2): no new job (the gate's margin counts the run's jobs), no foundation step (its Linux
+// (#362 L2, L3): no new job (the gate's margin counts the run's jobs), no foundation step (its Linux
 // budget has no room), no required check. The producers store files without failing, the
 // qualification job merges them with steps that cannot fail it, and neither the gate's needs nor its
 // artifact set name the evidence.
@@ -1138,6 +1138,9 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 	routes := workflowJobBody(text, "native-routes")
 	for _, required := range []string{
 		"TSGK_QUERY_SCOPE_OUT = $scopeOut", "-run '^TestNativeQueryCompletionCurrentState$'",
+		// #362 L3: the SVC inline run on the C# closure this job prepared, counted only when it ran and stored
+		"$env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "-run '^TestNativeSvcInlineRealGrammar$'",
+		"-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", ".Count -ne 3) { throw 'scope judgment files missing' }",
 		"      - name: scope 판정 근거 보관 (host별, gate 밖)\n        if: always()\n        timeout-minutes: 2\n",
 		"name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n",
 		"$global:LASTEXITCODE = 0\n",
@@ -1204,18 +1207,22 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 	download := "      - name: scope 판정 host 근거 받기 (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        continue-on-error: true\n"
 	merge := "      - name: 두 host scope 판정 병합과 fold (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 4\n"
 	for name, broken := range map[string]string{
-		"download-fails-job":   strings.Replace(text, download, strings.Replace(download, "        continue-on-error: true\n", "", 1), 1),
-		"download-unbounded":   strings.Replace(text, download, strings.Replace(download, "        timeout-minutes: 2\n", "", 1), 1),
-		"merge-unbounded":      strings.Replace(text, merge, strings.Replace(merge, "        timeout-minutes: 4\n", "", 1), 1),
-		"merge-fails-job":      strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
-		"merge-throws":         strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
-		"merge-skips-failure":  strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
-		"collection-throws":    strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
-		"collection-fails-job": strings.Replace(text, "          $env:TSGK_QUERY_SCOPE_OUT = $null\n          $global:LASTEXITCODE = 0\n", "          $env:TSGK_QUERY_SCOPE_OUT = $null\n", 1),
-		"upload-requires":      strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
-		"previous-attempt":     strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
-		"gate-waits":           strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
-		"foundation-step":      strings.Replace(text, "      - name: Verify clean validation output\n        timeout-minutes: 1\n        run: |\n          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching\n          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }\n          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }\n\n  race:", "      - name: scope 판정 query-scope\n        timeout-minutes: 1\n        run: Write-Output 'x'\n\n  race:", 1),
+		"download-fails-job":    strings.Replace(text, download, strings.Replace(download, "        continue-on-error: true\n", "", 1), 1),
+		"download-unbounded":    strings.Replace(text, download, strings.Replace(download, "        timeout-minutes: 2\n", "", 1), 1),
+		"merge-unbounded":       strings.Replace(text, merge, strings.Replace(merge, "        timeout-minutes: 4\n", "", 1), 1),
+		"merge-fails-job":       strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
+		"merge-throws":          strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
+		"merge-skips-failure":   strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
+		"collection-throws":     strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
+		"collection-fails-job":  strings.Replace(text, "          $env:TSGK_SVC_CSHARP_GRAMMAR = $null\n          $global:LASTEXITCODE = 0\n", "          $env:TSGK_SVC_CSHARP_GRAMMAR = $null\n", 1),
+		"upload-requires":       strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
+		"previous-attempt":      strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
+		"gate-waits":            strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
+		"inline-not-run":        strings.Replace(text, "-run '^TestNativeSvcInlineRealGrammar$'", "-run '^TestNativeSvcInline$'", 1),
+		"inline-skip-passes":    strings.Replace(text, "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
+		"inline-file-uncounted": strings.Replace(text, ".Count -ne 3) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
+		"inline-other-grammar":  strings.Replace(text, "Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "Join-Path $env:TSGK_BENCH_PREPARED 'routes/json'", 1),
+		"foundation-step":       strings.Replace(text, "      - name: Verify clean validation output\n        timeout-minutes: 1\n        run: |\n          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching\n          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }\n          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }\n\n  race:", "      - name: scope 판정 query-scope\n        timeout-minutes: 1\n        run: Write-Output 'x'\n\n  race:", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || queryScopeEvidencePolicy(broken, gate) == nil {

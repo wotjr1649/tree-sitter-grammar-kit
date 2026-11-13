@@ -836,15 +836,25 @@ jobs:
             go test ./src/internal/native -run '^Test(JSONHoldoutLabels|NativeJSONHoldout|NativeBenchmarkControls)$' -count=1 -v -timeout=180s > (Join-Path $out 'json-holdout.log') 2>&1
             if ($LASTEXITCODE -ne 0) { throw 'independent JSON holdout failed' }
           }
-          # #362 L2: store this host's predicate and SVC scope judgments with the run identity for the
-          # qualification job's merge. Gate-external evidence: a failed collection leaves no files and
-          # the merge reports this host absent, so it never fails this required producer.
+          # #362 L2/L3: store this host's predicate and SVC scope judgments with the run identity for the
+          # qualification job's merge; L3 adds the SVC result whose inline obligations ran on the C#
+          # grammar this job prepared (the closure the registered qualification role pins). Gate-external
+          # evidence: a failed collection leaves no files and the merge reports this host absent, so it
+          # never fails this required producer.
           $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           try {
             $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
             go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v -timeout=180s
             if ($LASTEXITCODE -ne 0) { throw "scope fan-in test failed ($LASTEXITCODE)" }
-            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 2) { throw 'scope judgment files missing' }
+            $env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'
+            $inlineLog = Join-Path $out 'svc-inline.log'
+            go test ./src/internal/native -run '^TestNativeSvcInlineRealGrammar$' -count=1 -v -timeout=300s > $inlineLog 2>&1
+            $inlineExit = $LASTEXITCODE
+            Get-Content -LiteralPath $inlineLog
+            if ($inlineExit -ne 0) { throw "SVC inline test failed ($inlineExit)" }
+            # a skipped run passes go test; it must have run and stored its result
+            if (!(Select-String -LiteralPath $inlineLog -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \(')) { throw 'SVC inline test did not run' }
+            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 3) { throw 'scope judgment files missing' }
             & src/dev/s08-qualify/run-identity.ps1 -Destination $scopeOut -HeadSHA $env:PR_HEAD_SHA
             if ($LASTEXITCODE -ne 0) { throw 'scope run identity failed' }
           } catch {
@@ -852,6 +862,7 @@ jobs:
             if (Test-Path -LiteralPath $scopeOut) { Remove-Item -LiteralPath $scopeOut -Recurse -Force }
           }
           $env:TSGK_QUERY_SCOPE_OUT = $null
+          $env:TSGK_SVC_CSHARP_GRAMMAR = $null
           $global:LASTEXITCODE = 0
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}

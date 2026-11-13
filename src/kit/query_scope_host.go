@@ -39,6 +39,15 @@ func QueryScopeHostFile(scope, host string) string {
 	return "query-scope-" + scope + "-" + host + ".json"
 }
 
+// QueryScopeSvcInlineFile is the file name of a host's SVC result that also judged the inline
+// obligations on the real C# grammar (#362 L3). It is the same scope and the same rows as
+// QueryScopeHostFile(QueryScopeSvc, host): the inline obligations are the SVC_INLINE_TREE and
+// SVC_INLINE_QUERY rows that the offline result leaves BLOCKED, so the two files are two views of
+// one host's SVC result, never two scopes.
+func QueryScopeSvcInlineFile(host string) string {
+	return "query-scope-svc-inline-" + host + ".json"
+}
+
 // check is every integrity rule of a stored host result. The rows of the other hosts are never
 // this host's claim: a VERIFIED or FAILED count there means judgments of another host were mixed in.
 func (h QueryScopeHostResult) check() error {
