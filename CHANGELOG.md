@@ -1,5 +1,9 @@
 # 변경 기록
 
+## Unreleased
+
+- ordinary 등록 자료 생성기를 추가했다(Refs #427). `kit.GenerateOrdinaryRegistration`과 `src/dev/ordinary-registration`이 26 route × 2 host의 profile·asset registration·semantic registration을 source-only로 생성하고 기존 planner로 6,402 shard·정확한 합집합 106,208과 commitment를 재현한다. 모든 tuple은 계속 BLOCKED이며 VERIFIED는 늘지 않는다. approval·독립 expected asset·native 실행은 없다.
+
 ## v0.3.0 — 2026-11-13
 
 release의 범위는 [제품 범위](docs/specs/scope.md)가 정하고, 근거와 한계는 [플랫폼 지원 계약](docs/specs/platform-support.md#release-v030의-claim)과 [v0.3.0 release 문서](docs/reports/issue-220-v030-release.md)([English](docs/reports/issue-220-v030-release.en.md))에 있다. tag `v0.3.0`과 GitHub Release로 소스만 발행한다. binary와 package는 없다(#220).
