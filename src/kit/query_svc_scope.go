@@ -302,9 +302,9 @@ func VerifySvcExpected(e SvcExpected, inventory []byte) ([]SvcJudgment, error) {
 		switch {
 		case ok:
 		case o.Kind == SvcKindInlineTree:
-			j = SvcJudgment{ID: o.ID, State: "BLOCKED", Code: "SVC_INLINE_TREE_GRAMMAR_UNAVAILABLE"}
+			j = SvcJudgment{ID: o.ID, State: "BLOCKED", Code: SvcInlineTreeUnavailableCode}
 		case o.Kind == SvcKindQuery:
-			j = SvcJudgment{ID: o.ID, State: "BLOCKED", Code: "SVC_QUERY_EXPECTATION_UNREGISTERED"}
+			j = SvcJudgment{ID: o.ID, State: "BLOCKED", Code: SvcQueryUnregisteredCode}
 		default:
 			j = SvcJudgment{ID: o.ID, State: "FAILED", Code: "SVC_OBLIGATION_UNJUDGED"}
 		}

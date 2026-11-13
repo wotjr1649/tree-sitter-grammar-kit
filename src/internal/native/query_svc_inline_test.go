@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/scopeobligations"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 // TestNativeSvcInlineRealGrammar runs the SVC69 cases that have a DERIVED inline expectation on the
@@ -23,6 +25,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if grammarRoot == "" {
 		t.Skip("set TSGK_SVC_CSHARP_GRAMMAR to the prepared registered C# grammar directory to run the SVC inline native regression (the grammar is not tracked)")
 	}
+	platform, _, otherHost := queryHostOrSkip(t, false)
 	rt, cc := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC")
 	if rt == "" || cc == "" {
 		if os.Getenv("TSGK_NATIVE_REQUIRED") == "1" {
@@ -43,7 +46,8 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	x, err := kit.ParseSvcInlineExpected(read(kit.SvcInlinePath[len("src/"):]), svcContract, registry, inventory, fixture, pack)
+	inlineContract := read(kit.SvcInlinePath[len("src/"):])
+	x, err := kit.ParseSvcInlineExpected(inlineContract, svcContract, registry, inventory, fixture, pack)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,9 +173,15 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// a failure before the judgments (a case that did not run) leaves nothing to store; a FAILED judgment is a
+	// result of this host and is stored, so the merge reports it as FAIL (#362). A broken run is not a result:
+	// native evidence the judge could not use (NotRun) or a derived obligation neither VERIFIED nor FAILED
+	// (checked below) leaves nothing to store either.
+	storable := !t.Failed()
 	for _, j := range inline {
 		if j.State == "BLOCKED" && j.Code == kit.SvcInlineNativeNotRunCode {
 			t.Errorf("%s: the native run did not report every tree role the step needs", j.ID)
+			storable = false
 		}
 	}
 	offline, err := kit.VerifySvcExpected(e, inventory)
@@ -187,7 +197,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			t.Errorf("FAILED %s: %s", j.ID, j.Code)
 		}
 	}
-	coverage, err := kit.FoldSvcScope(e, "windows-amd64", merged, map[string]bool{"linux-amd64": true})
+	coverage, err := kit.FoldSvcScope(e, platform, merged, map[string]bool{otherHost: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,6 +205,24 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		t.Log(c.String())
 	}
 	t.Logf("completion %s full_scope_complete %t", coverage.Completion, coverage.FullScopeComplete)
+	// the result this host stores: every derived step is VERIFIED, x.Derived trees and two queries each
+	result, err := kit.SvcScopeResult(e, svcContract, registry, platform, merged, map[string]bool{otherHost: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	verified, judged := map[string]uint64{}, map[string]uint64{}
+	for _, c := range result.Counters {
+		if c.Platform == platform {
+			verified[c.Kind], judged[c.Kind] = c.Verified, c.Verified+c.Failed
+		}
+	}
+	// every derived step judged, VERIFIED or FAILED (a FAILED lowers the VERIFIED count below but is a result)
+	if judged[kit.SvcKindInlineTree] != uint64(x.Derived) || judged[kit.SvcKindQuery] != 2*uint64(x.Derived) {
+		storable = false
+	}
+	if verified[kit.SvcKindInlineTree] != uint64(x.Derived) || verified[kit.SvcKindQuery] != 2*uint64(x.Derived) {
+		t.Errorf("inline VERIFIED tree %d query %d, want %d and %d", verified[kit.SvcKindInlineTree], verified[kit.SvcKindQuery], x.Derived, 2*x.Derived)
+	}
 
 	// forged native evidence must not verify: each mutation of the real native output fails the judgment
 	first := observed[0]
@@ -223,6 +251,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			return o
 		},
 	}
+	forgedVerified := false
 	for name, f := range mutate {
 		forged := slices.Clone(observed)
 		forged[0] = f(first)
@@ -237,7 +266,24 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			}
 		}
 		if failed == 0 {
+			forgedVerified = true
 			t.Errorf("forged native evidence %q verified", name)
 		}
+	}
+
+	// opt-in (TSGK_QUERY_SCOPE_OUT): this host's complete SVC result, the offline judgments plus the
+	// inline ones, for the merge of both hosts. It pins the inline expected asset its inline VERIFIED
+	// rows rest on. It is stored with its FAILED rows too, but not when the run itself broke or the judge
+	// accepted forged evidence.
+	if storable && !forgedVerified {
+		pins := append(slices.Clone(result.Assets), queryregistrycore.FilePin(kit.SvcInlinePath, inlineContract))
+		storeQueryScopeHost(t, platform, kit.QueryScopeSvcInlineFile(platform), kit.NewQueryScopeResult(result.Scope, result.RegistrySHA256, pins, result.Counters, result.FirstFailure))
+		// the judgment of every obligation, offline and final: the merge recomputes both stored results from it
+		// and checks per obligation that the inline run changed only what the offline run left BLOCKED
+		companion, err := scopeobligations.Encode(scopeobligations.New(platform, offline, merged))
+		if err != nil {
+			t.Fatal(err)
+		}
+		storeQueryScopeFile(t, scopeobligations.FileName(platform), companion)
 	}
 }
