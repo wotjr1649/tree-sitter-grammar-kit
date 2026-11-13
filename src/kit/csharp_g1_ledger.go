@@ -26,11 +26,15 @@ const (
 	// shortcut: the asset is about 1 MiB today; raise only with a new ledger revision.
 	csharpG1MaxBytes = 4 << 20
 
-	// Obligation states. NO_EXPECTED: no sealed expectation. SEALED: the alternative has an EXPECTED
-	// record in the sealed expected asset (a P obligation is SEALED when every alternative of its row
-	// is). EXECUTED needs a native comparison (G1-3 native commit) and is rejected until then.
+	// Obligation states. NO_EXPECTED: no expectation was made yet. SEALED: the alternative has an EXPECTED
+	// record in the sealed expected asset. BLOCKED: the sealed expected asset records a BLOCKED disposition
+	// for it, with a reason code (the ledger's `block` member). EXECUTED: the executed asset records the
+	// native comparison of a SEALED alternative. NO_EXPECTED goes to SEALED or BLOCKED, SEALED goes to
+	// EXECUTED, and nothing else changes state. A P obligation is SEALED when every alternative of its row
+	// is SEALED or EXECUTED, and EXECUTED when every one is EXECUTED.
 	G1NoExpected = "NO_EXPECTED"
 	G1Sealed     = "SEALED"
+	G1Blocked    = "BLOCKED"
 	G1Executed   = "EXECUTED"
 
 	// Presence of an alternative in the registered case sources, by static pattern only.
@@ -63,6 +67,10 @@ type CSharpG1Sources struct {
 	// bytes: the observation pins the ledger and the expected asset pins the observation, so a pin
 	// back to the expected asset would be a cycle.
 	Expected []byte
+	// Executed is the executed asset of the same rows (G1-3a native comparison), or nil. Its alternatives
+	// become EXECUTED; each must be SEALED by Expected. The ledger reads only its alternative IDs and
+	// results and does not pin its bytes (the executed asset pins the observation, which pins the ledger).
+	Executed []byte
 }
 
 type CSharpG1Inputs struct {
@@ -125,6 +133,7 @@ type G1Alternative struct {
 	Row      string     `json:"row"`
 	Kind     string     `json:"kind"`
 	Status   string     `json:"status"`
+	Block    string     `json:"block,omitempty"` // BLOCKED only: the reason code of the expected asset
 	Presence G1Presence `json:"presence"`
 	Links    []G1Link   `json:"links"`
 }
@@ -197,7 +206,7 @@ type CSharpG1Ledger struct {
 	ExtraRoles     []G1Role        `json:"extra_roles"`
 }
 
-const csharpG1Basis = "Obligations are enumerated from the repository declarations alone: the C# route requirements and cases of the qualification inventory, the production/fact alternatives of feature-alternatives.json, the declaration mapping of fact-mapping.json and the registered case sources of the native fixtures. No native or reference output is read and no expected value is derived: every state is NO_EXPECTED. An alternative's presence is a static check of the literals its production requires (top-level quoted terminals that are not optional) against the source versions of its linked P steps; it is textual (comments and strings are not excluded), so LITERAL_MATCH with PUNCTUATION strength proves little, and an alternative with no such literal is UNVERIFIED_PRESENCE. Out-of-mapping declaration constructs come from a hand-declared construct table matched against the alternatives' production heads."
+const csharpG1Basis = "Obligations are enumerated from the repository declarations alone: the C# route requirements and cases of the qualification inventory, the production/fact alternatives of feature-alternatives.json, the declaration mapping of fact-mapping.json and the registered case sources of the native fixtures. No native or reference output is read and no expected value is derived here: every state is NO_EXPECTED unless the sealed expected asset (SEALED, or BLOCKED with its reason code) or the executed asset (EXECUTED) says otherwise, and the ledger takes only alternative IDs, rows, statuses and reason codes from them. An alternative's presence is a static check of the literals its production requires (top-level quoted terminals that are not optional) against the source versions of its linked P steps; it is textual (comments and strings are not excluded), so LITERAL_MATCH with PUNCTUATION strength proves little, and an alternative with no such literal is UNVERIFIED_PRESENCE. Out-of-mapping declaration constructs come from a hand-declared construct table matched against the alternatives' production heads."
 
 func g1Fault(code string) error { return fail(KindInvalidInput, code, CSharpG1LedgerPath, nil) }
 
@@ -719,9 +728,11 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 	}
 
 	if src.Expected != nil {
-		if err := g1ApplySealed(&out, src.Expected); err != nil {
+		if err := g1ApplyStates(&out, src.Expected, src.Executed); err != nil {
 			return out, nil, err
 		}
+	} else if src.Executed != nil {
+		return out, nil, g1Fault("G1_LEDGER_EXECUTED")
 	}
 
 	// extra roles that run the C# route
@@ -744,27 +755,62 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 	return out, data, nil
 }
 
-// g1ApplySealed marks SEALED the alternatives the expected asset holds EXPECTED. The expected asset is
-// read here only for its alternative IDs and statuses; it is verified on its own against the same
-// pinned sources (ParseCSharpG1Expected), and the ledger test compares the two.
-func g1ApplySealed(l *CSharpG1Ledger, expected []byte) error {
+// g1ApplyStates moves the alternatives of the two lexical rows out of NO_EXPECTED. The expected asset
+// decides SEALED (EXPECTED) or BLOCKED (BLOCKED, with its reason code); the executed asset, when
+// present, moves SEALED alternatives to EXECUTED. Both assets are read here only for alternative IDs,
+// statuses and reason codes; each is verified on its own against the same pinned sources
+// (ParseCSharpG1Expected, ParseCSharpG1Executed), and the ledger test compares the three.
+func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 	var doc struct {
 		Alternatives []struct {
 			ID     string `json:"id"`
 			Row    string `json:"row"`
 			Status string `json:"status"`
+			Block  string `json:"block"`
 		} `json:"alternatives"`
 	}
 	if err := json.Unmarshal(expected, &doc); err != nil || len(doc.Alternatives) == 0 {
 		return g1Fault("G1_LEDGER_SEALED")
 	}
-	sealed := map[string]bool{}
+	sealed, blocked, rowOf := map[string]bool{}, map[string]string{}, map[string]string{}
 	for _, a := range doc.Alternatives {
-		if a.Status == G1ExpExpected {
+		rowOf[a.ID] = a.Row
+		switch a.Status {
+		case G1ExpExpected:
 			sealed[a.ID] = true
+		case G1ExpBlocked:
+			if a.Block == "" {
+				return g1Fault("G1_LEDGER_SEALED")
+			}
+			blocked[a.ID] = a.Block
+		default:
+			return g1Fault("G1_LEDGER_SEALED")
 		}
 	}
-	rowAlts, rowSealed := map[string]int{}, map[string]int{}
+	executedIDs, listed := map[string]bool{}, map[string]bool{}
+	if executed != nil {
+		var ex struct {
+			Alternatives []struct {
+				ID       string `json:"id"`
+				Row      string `json:"row"`
+				Executed bool   `json:"executed"`
+			} `json:"alternatives"`
+		}
+		if err := json.Unmarshal(executed, &ex); err != nil || len(ex.Alternatives) == 0 {
+			return g1Fault("G1_LEDGER_EXECUTED")
+		}
+		for _, a := range ex.Alternatives {
+			// only a SEALED alternative can be EXECUTED: BLOCKED and unknown IDs are refused
+			if !sealed[a.ID] || a.Row != rowOf[a.ID] || a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 || listed[a.ID] {
+				return g1Fault("G1_LEDGER_EXECUTED")
+			}
+			listed[a.ID] = true
+			if a.Executed {
+				executedIDs[a.ID] = true
+			}
+		}
+	}
+	rowAlts, rowSealed, rowExecuted := map[string]int{}, map[string]int{}, map[string]int{}
 	known := map[string]bool{}
 	for i := range l.Alternatives {
 		a := &l.Alternatives[i]
@@ -773,9 +819,16 @@ func g1ApplySealed(l *CSharpG1Ledger, expected []byte) error {
 			continue
 		}
 		rowAlts[a.Row]++
-		if sealed[a.ID] {
+		switch {
+		case executedIDs[a.ID]:
+			a.Status = G1Executed
+			rowSealed[a.Row]++
+			rowExecuted[a.Row]++
+		case sealed[a.ID]:
 			a.Status = G1Sealed
 			rowSealed[a.Row]++
+		case blocked[a.ID] != "":
+			a.Status, a.Block = G1Blocked, blocked[a.ID]
 		}
 	}
 	for _, a := range doc.Alternatives {
@@ -789,8 +842,12 @@ func g1ApplySealed(l *CSharpG1Ledger, expected []byte) error {
 			continue
 		}
 		for j := range r.Obligations {
-			if r.Obligations[j].Kind == "P" {
-				r.Obligations[j].Status = G1Sealed
+			if r.Obligations[j].Kind != "P" {
+				continue
+			}
+			r.Obligations[j].Status = G1Sealed
+			if rowExecuted[r.Row] == rowAlts[r.Row] {
+				r.Obligations[j].Status = G1Executed
 			}
 		}
 	}
@@ -877,7 +934,7 @@ func checkCSharpG1Ledger(data []byte, want CSharpG1Ledger) (CSharpG1Ledger, erro
 		return x, g1Fault("G1_LEDGER_PIN")
 	}
 	for _, s := range g1States(x) {
-		if s != G1NoExpected && s != G1Sealed && s != "" {
+		if s != G1NoExpected && s != G1Sealed && s != G1Blocked && s != G1Executed && s != "" {
 			return x, g1Fault("G1_LEDGER_STATUS")
 		}
 	}

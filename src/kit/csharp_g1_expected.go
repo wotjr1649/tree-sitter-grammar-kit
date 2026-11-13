@@ -289,7 +289,7 @@ func g1ExpContext(in CSharpG1ExpectedSources) (G1ExpInputs, *g1Ctx, CSharpG1Ledg
 	var inputs G1ExpInputs
 	// the expectation is derived from the ledger before any status is sealed: no expected asset here
 	src := in.Src
-	src.Expected = nil
+	src.Expected, src.Executed = nil, nil
 	ledger, _, err := deriveCSharpG1(src)
 	if err != nil {
 		return inputs, nil, ledger, err

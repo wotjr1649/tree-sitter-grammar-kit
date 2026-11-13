@@ -61,9 +61,28 @@ func g1ExpLoad(t *testing.T) *g1ExpAssets {
 	return &g1ExpLoaded
 }
 
+// The native comparison step re-pinned the observation (its ledger pin follows the ledger's new states)
+// and so changed one member of this asset. Nothing else changed: with the observation pin blanked the
+// content digest is the one of the seal commit (76317fb), so no expectation moved.
+func TestCSharpG1ExpectedContentIsTheSealedOne(t *testing.T) {
+	a := g1ExpLoad(t)
+	x, err := DecodeCSharpG1Expected(a.asset)
+	if err != nil {
+		t.Fatal(err)
+	}
+	x.Inputs.Observation.SHA256 = ""
+	content, err := json.Marshal(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := digestHex(content); got != "3a7c45a292bc05741156ca42e92ffbd0175acd441da80a43e4ad455aa8433b2e" {
+		t.Fatalf("an expectation moved after the seal: content digest %s", got)
+	}
+}
+
 func TestCSharpG1ExpectedSealedAndBound(t *testing.T) {
 	a := g1ExpLoad(t)
-	if len(a.asset) != 236615 || digestHex(a.asset) != "eb42b3878f1e24500348a4509be9f20941fa18f2f7aa78b6f7202aadc1e50938" {
+	if len(a.asset) != 236615 || digestHex(a.asset) != "fe8cc88ef48c2596c391b07c88050539641e985e6cc28c22af98b4f0958fd869" {
 		t.Fatalf("sealed expected asset changed: %d/%s", len(a.asset), digestHex(a.asset))
 	}
 	if len(a.kindmap) != 55247 || digestHex(a.kindmap) != g1KindMapSHA {
@@ -98,24 +117,37 @@ func TestCSharpG1ExpectedSealedAndBound(t *testing.T) {
 	if !slices.Equal(ids, got) {
 		t.Fatal("expected asset alternatives differ from the ledger's B01 and B02 alternatives")
 	}
-	// the ledger seals exactly the EXPECTED alternatives; the BLOCKED ones stay NO_EXPECTED
+	// the ledger carries exactly the EXPECTED alternatives past NO_EXPECTED (SEALED, or EXECUTED once
+	// the executed asset ran them) and the BLOCKED ones as BLOCKED with the asset's reason code
 	sealed := map[string]bool{}
 	for _, id := range a.x.SealedIDs() {
 		sealed[id] = true
 	}
-	n := 0
-	for _, alt := range l.want.Alternatives {
-		if alt.Status == G1Sealed {
-			n++
-			if !sealed[alt.ID] {
-				t.Errorf("%s sealed in the ledger without an expectation", alt.ID)
-			}
-		} else if sealed[alt.ID] {
-			t.Errorf("%s has an expectation but is not sealed in the ledger", alt.ID)
+	blocked := map[string]string{}
+	for _, alt := range a.x.Alternatives {
+		if alt.Status == G1ExpBlocked {
+			blocked[alt.ID] = alt.Block
 		}
 	}
-	if n != 426 {
-		t.Fatalf("ledger seals %d alternatives", n)
+	n, nb := 0, 0
+	for _, alt := range l.want.Alternatives {
+		switch {
+		case alt.Status == G1Sealed || alt.Status == G1Executed:
+			n++
+			if !sealed[alt.ID] {
+				t.Errorf("%s is %s in the ledger without an expectation", alt.ID, alt.Status)
+			}
+		case alt.Status == G1Blocked:
+			nb++
+			if blocked[alt.ID] == "" || alt.Block != blocked[alt.ID] {
+				t.Errorf("%s is BLOCKED in the ledger with reason %q, the expected asset says %q", alt.ID, alt.Block, blocked[alt.ID])
+			}
+		case sealed[alt.ID] || blocked[alt.ID] != "":
+			t.Errorf("%s has a disposition in the expected asset but is %s in the ledger", alt.ID, alt.Status)
+		}
+	}
+	if n != 426 || nb != 79 {
+		t.Fatalf("ledger carries %d expectations and %d blocked alternatives", n, nb)
 	}
 	// witnesses sit inside observed accepted sources, with types of the kind-map vocabulary
 	in := a.in

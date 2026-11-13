@@ -44,6 +44,9 @@ func sources(root string) (kit.CSharpG1Sources, error) {
 	if src.Expected, err = read(kit.CSharpG1ExpectedPath); err != nil {
 		return src, err
 	}
+	if exe, err := read(kit.CSharpG1ExecutedPath); err == nil {
+		src.Executed = exe
+	}
 	return src, nil
 }
 

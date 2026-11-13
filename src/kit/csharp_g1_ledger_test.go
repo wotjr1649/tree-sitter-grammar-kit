@@ -39,6 +39,7 @@ func g1Load(t *testing.T) g1Assets {
 			FactMapping:  read("../contracts/fact-mapping.json"),
 			Fixtures:     map[string][]byte{},
 			Expected:     read("../contracts/csharp-g1-expected-b01b02-r1.json"),
+			Executed:     read("../contracts/csharp-g1-executed-b01b02-r1.json"),
 		}
 		for _, dir := range csharpG1Fixtures {
 			a.src.Fixtures[dir] = read("../testdata/native/" + dir + "/csharp.json")
@@ -63,7 +64,7 @@ func g1Code(err error) string {
 
 func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	a := g1Load(t)
-	if len(a.asset) != 711266 || digestHex(a.asset) != "42863f7c74ab81b09183c42759b4c929c2dd5604473b0d8f17dbb7bbad7a27d1" {
+	if len(a.asset) != 714461 || digestHex(a.asset) != "5b42627b3bb47cbb656f37541292b3a1d313f808401e85b3e438bf9c39acee77" {
 		t.Fatalf("sealed ledger changed: %d/%s", len(a.asset), digestHex(a.asset))
 	}
 	x, err := ParseCSharpG1Ledger(a.asset, a.src)
@@ -109,24 +110,44 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 			}
 		}
 	}
-	// SEALED is exactly the set the expected asset holds EXPECTED (G1-3a); the asset is verified in its own test
+	// the states follow the two assets (each verified in its own test): the expected asset's EXPECTED
+	// alternatives are SEALED and its BLOCKED ones BLOCKED with the same reason code, and the alternatives
+	// the executed asset ran are EXECUTED
 	var expDoc struct {
 		Alternatives []struct {
-			ID, Status string
+			ID, Status, Block string
 		}
 	}
 	if err := json.Unmarshal(a.src.Expected, &expDoc); err != nil {
 		t.Fatal(err)
 	}
-	sealed := map[string]bool{}
-	for _, e := range expDoc.Alternatives {
-		if e.Status == G1ExpExpected {
-			sealed[e.ID] = true
+	var exeDoc struct {
+		Alternatives []struct {
+			ID       string
+			Executed bool
 		}
 	}
-	if len(sealed) != 426 {
-		t.Fatalf("sealed alternatives %d", len(sealed))
+	if err := json.Unmarshal(a.src.Executed, &exeDoc); err != nil {
+		t.Fatal(err)
 	}
+	sealed, blocked, executed := map[string]bool{}, map[string]string{}, map[string]bool{}
+	for _, e := range expDoc.Alternatives {
+		switch e.Status {
+		case G1ExpExpected:
+			sealed[e.ID] = true
+		case G1ExpBlocked:
+			blocked[e.ID] = e.Block
+		}
+	}
+	for _, e := range exeDoc.Alternatives {
+		if e.Executed {
+			executed[e.ID] = true
+		}
+	}
+	if len(sealed) != 426 || len(blocked) != 79 || len(executed) != 426 {
+		t.Fatalf("sealed %d blocked %d executed %d", len(sealed), len(blocked), len(executed))
+	}
+	byState := map[string]int{}
 	var ids []string
 	cases := map[string]bool{}
 	for _, c := range x.Cases {
@@ -134,12 +155,18 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	}
 	for _, alt := range x.Alternatives {
 		ids = append(ids, alt.ID)
-		wantStatus := G1NoExpected
-		if sealed[alt.ID] {
+		wantStatus, wantBlock := G1NoExpected, ""
+		switch {
+		case executed[alt.ID]:
+			wantStatus = G1Executed
+		case sealed[alt.ID]:
 			wantStatus = G1Sealed
+		case blocked[alt.ID] != "":
+			wantStatus, wantBlock = G1Blocked, blocked[alt.ID]
 		}
-		if alt.Status != wantStatus || len(alt.Links) == 0 {
-			t.Errorf("%s: status %q want %q links %d", alt.ID, alt.Status, wantStatus, len(alt.Links))
+		byState[alt.Status]++
+		if alt.Status != wantStatus || alt.Block != wantBlock || len(alt.Links) == 0 {
+			t.Errorf("%s: status %q block %q want %q %q links %d", alt.ID, alt.Status, alt.Block, wantStatus, wantBlock, len(alt.Links))
 		}
 		for _, l := range alt.Links {
 			if !cases[l.Case] || len(l.Steps) == 0 {
@@ -154,6 +181,9 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 	}
 	if !slices.Equal(ids, want) {
 		t.Fatal("ledger alternatives differ from the inventory's rows")
+	}
+	if byState[G1NoExpected] != 1026 || byState[G1Sealed] != 0 || byState[G1Blocked] != 79 || byState[G1Executed] != 426 {
+		t.Fatalf("states %v", byState)
 	}
 	// the 20 declaration nodes and every out-of-mapping construct are in the declared scope
 	if len(x.Declarations) != 20 || len(x.OutsideMapping) != len(csharpG1Constructs) {
@@ -267,6 +297,16 @@ func TestG1Subsequence(t *testing.T) {
 }
 
 // Every well-formed but wrong ledger is rejected with the code of what is wrong.
+// g1First is the index of the first alternative in the given state.
+func g1First(l *CSharpG1Ledger, status string) int {
+	for i, a := range l.Alternatives {
+		if a.Status == status {
+			return i
+		}
+	}
+	panic("no alternative in state " + status)
+}
+
 func TestCSharpG1LedgerForgeries(t *testing.T) {
 	a := g1Load(t)
 	clone := func() CSharpG1Ledger {
@@ -300,8 +340,20 @@ func TestCSharpG1LedgerForgeries(t *testing.T) {
 		{"alternative row changed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[0].Row = "csharp-B02" }},
 		{"alternative sealed without an expectation", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[0].Status = G1Sealed }},
 		{"sealed alternative unsealed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = G1NoExpected }},
-		{"alternative executed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = G1Executed }},
-		{"obligation executed", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Rows[0].Obligations[0].Status = G1Executed }},
+		{"unknown alternative state", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = "PASS" }},
+		{"alternative without a comparison executed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { last(l).Status = G1Executed }},
+		{"executed alternative back to sealed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[1].Status = G1Sealed }},
+		{"blocked alternative executed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[g1First(l, G1Blocked)].Status = G1Executed }},
+		{"blocked alternative sealed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[g1First(l, G1Blocked)].Status = G1Sealed }},
+		{"blocked alternative back to no expectation", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) {
+			i := g1First(l, G1Blocked)
+			l.Alternatives[i].Status, l.Alternatives[i].Block = G1NoExpected, ""
+		}},
+		{"blocked reason dropped", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[g1First(l, G1Blocked)].Block = "" }},
+		{"blocked reason changed", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[g1First(l, G1Blocked)].Block = "NO_TREE_COUNTERPART_X" }},
+		{"reason on an alternative that is not blocked", "G1_LEDGER_ALTERNATIVE", func(l *CSharpG1Ledger) { l.Alternatives[1].Block = "NO_TREE_COUNTERPART" }},
+		{"obligation executed", "G1_LEDGER_ROWS", func(l *CSharpG1Ledger) { l.Rows[0].Obligations[0].Status = G1Executed }},
+		{"obligation blocked", "G1_LEDGER_ROWS", func(l *CSharpG1Ledger) { l.Rows[0].Obligations[0].Status = G1Blocked }},
 		{"declaration sealed", "G1_LEDGER_DECLARATIONS", func(l *CSharpG1Ledger) { l.Declarations[0].Status = G1Sealed }},
 		{"role status", "G1_LEDGER_STATUS", func(l *CSharpG1Ledger) { l.ExtraRoles[0].Status = "PASS" }},
 		{"row dropped", "G1_LEDGER_ROWS", func(l *CSharpG1Ledger) { l.Rows = l.Rows[1:] }},
@@ -381,6 +433,139 @@ func TestCSharpG1LedgerSourceTampering(t *testing.T) {
 	} {
 		if _, err := ParseCSharpG1Ledger(a.asset, tc.src); g1Code(err) != tc.code {
 			t.Errorf("%s: %v, want %s", name, err, tc.code)
+		}
+	}
+}
+
+// The state rules of the two lexical rows: NO_EXPECTED becomes SEALED or BLOCKED by the expected asset,
+// only a SEALED alternative becomes EXECUTED by the executed asset, and a row's P obligation follows its
+// alternatives. The ledger derivation is given hand-made assets (it reads only IDs, rows, statuses and
+// reason codes), so each rule has a counterexample.
+func TestCSharpG1LedgerStateRules(t *testing.T) {
+	a := g1Load(t)
+	base := a.src
+	base.Expected, base.Executed = nil, nil
+	plain, err := DeriveCSharpG1Ledger(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type expAlt struct {
+		ID     string `json:"id"`
+		Row    string `json:"row"`
+		Status string `json:"status"`
+		Block  string `json:"block,omitempty"`
+	}
+	type exeAlt struct {
+		ID       string `json:"id"`
+		Row      string `json:"row"`
+		Executed bool   `json:"executed"`
+	}
+	var b02 []string
+	for _, alt := range plain.Alternatives {
+		if alt.Row == g1ExpRowB02 {
+			b02 = append(b02, alt.ID)
+		}
+	}
+	mk := func(status func(i int) (string, string), executed func(i int) (bool, bool)) CSharpG1Sources {
+		var exp []expAlt
+		var exe []exeAlt
+		for i, id := range b02 {
+			s, block := status(i)
+			exp = append(exp, expAlt{id, g1ExpRowB02, s, block})
+			if ok, listed := executed(i); listed {
+				exe = append(exe, exeAlt{id, g1ExpRowB02, ok})
+			}
+		}
+		e, _ := json.Marshal(map[string]any{"alternatives": exp})
+		s := base
+		s.Expected = e
+		if len(exe) > 0 {
+			x, _ := json.Marshal(map[string]any{"alternatives": exe})
+			s.Executed = x
+		}
+		return s
+	}
+	allExpected := func(int) (string, string) { return G1ExpExpected, "" }
+	pStatus := func(l CSharpG1Ledger) string {
+		for _, r := range l.Rows {
+			if r.Row == g1ExpRowB02 {
+				for _, o := range r.Obligations {
+					if o.Kind == "P" {
+						return o.Status
+					}
+				}
+			}
+		}
+		return ""
+	}
+	altStatus := func(l CSharpG1Ledger, id string) (string, string) {
+		for _, alt := range l.Alternatives {
+			if alt.ID == id {
+				return alt.Status, alt.Block
+			}
+		}
+		return "", ""
+	}
+	// every alternative EXPECTED and executed: the row's P obligation is EXECUTED, the others stay
+	l, err := DeriveCSharpG1Ledger(mk(allExpected, func(int) (bool, bool) { return true, true }))
+	if err != nil || pStatus(l) != G1Executed {
+		t.Fatalf("all executed: %v, P %q", err, pStatus(l))
+	}
+	for _, r := range l.Rows {
+		for _, o := range r.Obligations {
+			if r.Row == g1ExpRowB02 && o.Kind != "P" && o.Status != G1NoExpected {
+				t.Errorf("%s %s became %s", r.Row, o.Kind, o.Status)
+			}
+		}
+	}
+	// SEALED without a run stays SEALED, and the row follows its weakest alternative
+	l, err = DeriveCSharpG1Ledger(mk(allExpected, func(i int) (bool, bool) { return i != 0, true }))
+	if st, _ := altStatus(l, b02[0]); err != nil || st != G1Sealed || pStatus(l) != G1Sealed {
+		t.Fatalf("one sealed only: %v %q P %q", err, st, pStatus(l))
+	}
+	// a BLOCKED alternative keeps its reason and keeps the row at NO_EXPECTED
+	blockOne := func(i int) (string, string) {
+		if i == 1 {
+			return G1ExpBlocked, "SEMANTIC_BINDING"
+		}
+		return G1ExpExpected, ""
+	}
+	l, err = DeriveCSharpG1Ledger(mk(blockOne, func(i int) (bool, bool) { return i != 1, i != 1 }))
+	if st, why := altStatus(l, b02[1]); err != nil || st != G1Blocked || why != "SEMANTIC_BINDING" || pStatus(l) != G1NoExpected {
+		t.Fatalf("one blocked: %v %q %q P %q", err, st, why, pStatus(l))
+	}
+	// counterexamples of the transitions
+	for _, tc := range []struct {
+		name string
+		src  CSharpG1Sources
+		code string
+	}{
+		{"executing a blocked alternative", mk(blockOne, func(int) (bool, bool) { return true, true }), "G1_LEDGER_EXECUTED"},
+		{"executing an alternative that is not in the expected asset", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return true, true })
+			s.Executed = []byte(`{"alternatives":[{"id":"csharp-B02.a9999","row":"csharp-B02","executed":true}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"executing an alternative twice", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true},{"id":"` + b02[0] + `","row":"csharp-B02","executed":true}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"executing without a sealed expected asset", func() CSharpG1Sources {
+			s := base
+			s.Executed = a.src.Executed
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"executed row mismatch", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B01","executed":true}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"blocked without a reason", mk(func(i int) (string, string) { return G1ExpBlocked, "" }, func(int) (bool, bool) { return false, false }), "G1_LEDGER_SEALED"},
+		{"unknown expected status", mk(func(i int) (string, string) { return "MAYBE", "" }, func(int) (bool, bool) { return false, false }), "G1_LEDGER_SEALED"},
+	} {
+		if _, err := DeriveCSharpG1Ledger(tc.src); g1Code(err) != tc.code {
+			t.Errorf("%s: %v, want %s", tc.name, err, tc.code)
 		}
 	}
 }

@@ -111,6 +111,7 @@ func TestCSharpG1ExpectedRequiresDispositions(t *testing.T) {
 func TestCSharpG1LedgerSealedSetIsChecked(t *testing.T) {
 	a := g1ExpLoad(t)
 	src := a.in.Src
+	src.Executed = nil
 	for name, doc := range map[string]string{
 		"unknown alternative": `{"alternatives":[{"id":"csharp-B01.a999","row":"csharp-B01","status":"EXPECTED"}]}`,
 		"other row":           `{"alternatives":[{"id":"csharp-B03.a001","row":"csharp-B03","status":"EXPECTED"}]}`,

@@ -39,6 +39,10 @@ func run(root string, write bool) error {
 	if exp, err := read(kit.CSharpG1ExpectedPath); err == nil {
 		src.Expected = exp
 	}
+	// the executed asset, when present, turns the compared SEALED alternatives into EXECUTED
+	if exe, err := read(kit.CSharpG1ExecutedPath); err == nil {
+		src.Executed = exe
+	}
 	l, err := kit.DeriveCSharpG1Ledger(src)
 	if err != nil {
 		return err

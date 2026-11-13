@@ -87,7 +87,7 @@ func g1rFirst(t *testing.T, x CSharpG1RoslynObserved, what string, ok func(s G1R
 
 func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
 	a := g1rLoad(t)
-	if len(a.data) != 2142812 || digestHex(a.data) != "3a0e1b459d7c8a869206a24fd0ff4b57df3b34e05746707d3be1d6d8cbbf22d7" {
+	if len(a.data) != 2142812 || digestHex(a.data) != "8930422a2b06743e22ffe47c5189447974c7567e6f0c0ff6943417170335c39f" {
 		t.Fatalf("sealed observation changed: %d/%s", len(a.data), digestHex(a.data))
 	}
 	x, err := checkCSharpG1Roslyn(a.data, a.pin, a.input, a.sources)

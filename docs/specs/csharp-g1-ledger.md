@@ -5,7 +5,7 @@
 ## 범위와 상태
 
 - 대상은 inventory(`qualification-c1.json`)의 `csharp` route 15행(B01–B05, V73, V08–V13, V14a/b/c)의 필수 kind 의무 65개(P15·N15·R9·E12·Q12·W2), `feature-alternatives.json`의 production 1,425·fact 106 = 대안 1,531개, 등록 사례 389개(514 step), 선언 node 20종, 그리고 C#을 실행하는 추가 역할(`n461-svc`, `n461-large`, `csharp-symbols`)이다.
-- 의무의 상태는 `NO_EXPECTED`, `SEALED`, `EXECUTED` 중 하나다. `SEALED`는 독립 기대값이 봉인됐다는 뜻이고 `EXECUTED`는 실행 근거와 대조했다는 뜻이다. `csharp-B01`·`csharp-B02`의 대안은 기대값 asset([기대값 계약](csharp-g1-expected.md))이 `EXPECTED`로 가진 것만 `SEALED`이고 나머지(`BLOCKED` 대안과 다른 행의 모든 대안)는 `NO_EXPECTED`다. 한 행의 P 의무는 그 행의 모든 대안이 `SEALED`일 때만 `SEALED`다. verifier는 상태가 기대값 asset의 `EXPECTED` 집합과 같을 때만 받아들이며(`G1_LEDGER_ALTERNATIVE`·`G1_LEDGER_ROWS`), `EXECUTED`와 그 밖의 값은 `G1_LEDGER_STATUS`로 거부한다. 원장은 기대값 asset의 bytes를 pin하지 않는다(관측 asset이 원장을, 기대값 asset이 관측 asset을 pin하므로 되돌아 pin하면 순환이다). 기대값 asset은 `SEALED`가 없는 원장 유도 결과(상태 미설정)에서 나온다.
+- 의무의 상태는 `NO_EXPECTED`, `SEALED`, `BLOCKED`, `EXECUTED` 중 하나다. `NO_EXPECTED`는 아직 기대값을 만들지 않았다는 뜻, `SEALED`는 독립 기대값이 봉인됐다는 뜻, `BLOCKED`는 기대값을 만들 수 없다고 처분했다는 뜻(대안의 `block` member가 사유 code를 적는다), `EXECUTED`는 봉인된 기대값을 실행 근거(native)와 대조했다는 뜻이다. 전환은 `NO_EXPECTED`→`SEALED`/`BLOCKED`(기대값 asset)와 `SEALED`→`EXECUTED`(executed asset)뿐이며 `BLOCKED`는 `EXECUTED`가 될 수 없다. `csharp-B01`·`csharp-B02`의 대안은 기대값 asset([기대값 계약](csharp-g1-expected.md))이 `EXPECTED`로 가진 것이 `SEALED`(native 비교가 끝나면 `EXECUTED`), `BLOCKED`로 가진 것이 `BLOCKED`이고 다른 행의 모든 대안은 `NO_EXPECTED`다. 한 행의 P 의무는 그 행의 모든 대안이 `SEALED` 또는 `EXECUTED`일 때만 `SEALED`, 모두 `EXECUTED`일 때만 `EXECUTED`다. verifier는 유도 결과와 정확히 같을 때만 받아들이며(`G1_LEDGER_ALTERNATIVE`·`G1_LEDGER_ROWS`) 어휘 밖의 값은 `G1_LEDGER_STATUS`로 거부한다. 규칙과 반례는 [상태 전환 규칙](csharp-g1-expected.md#원장-상태-전환-규칙)에 있다. 원장은 기대값 asset의 bytes를 pin하지 않는다(관측 asset이 원장을, 기대값 asset이 관측 asset을 pin하므로 되돌아 pin하면 순환이다). 기대값 asset은 `SEALED`가 없는 원장 유도 결과(상태 미설정)에서 나온다.
 - 원장은 기대값을 만들지도 베끼지도 않는다. 사례가 이미 등록한 기대 node type(`contains`와 anchor의 type)을 사례 step별로 옮겨 적을 뿐이며, 이는 대안별 기대값이 아니다.
 
 ## 입력과 결속
@@ -23,7 +23,7 @@
 |---|---|
 | `rows` | 행마다 대안 수와 kind 의무(`P`/`N`/`R`/`E`/`Q`/`W`). 의무마다 연결 사례와 그 사례의 해당 step. step은 coverage rule(`stepCovers`)이 그 kind로 세는 step이다(E는 edit 뒤 step, Q는 capture 기대가 있는 query step) |
 | `cases` | 등록된 requirement 사례 389개: fixture, 입력 SHA-256, step별 syntax와 기대 node type |
-| `alternatives` | 1,531개를 행 순서·대안 순서대로. 대안 id·행·kind·상태·`presence`·사례 연결(`links`) |
+| `alternatives` | 1,531개를 행 순서·대안 순서대로. 대안 id·행·kind·상태·`block`(`BLOCKED`만: 기대값 asset의 사유 code)·`presence`·사례 연결(`links`) |
 | `declarations` | `fact-mapping.json`의 선언 node 20종(type 8·member 12). production head가 그 node인 대안과 그 node를 기대하는 사례 수 |
 | `outside_mapping` | 매핑 밖 선언 구문 11종의 목록과 선언한 지원 범위 안의 대안 |
 | `extra_roles` | C# route를 실행하는 추가 역할의 workload별 사례·step 수 |
@@ -55,7 +55,8 @@
 |---|---|
 | `G1_LEDGER_JSON`, `_SCHEMA`, `_SIZE` | 형식, schema, 크기 |
 | `G1_LEDGER_PIN` | 입력 파일의 경로·bytes·SHA-256, fixture pin 목록 |
-| `G1_LEDGER_STATUS` | `NO_EXPECTED`·`SEALED` 밖의 상태(`EXECUTED` 등) |
+| `G1_LEDGER_STATUS` | `NO_EXPECTED`·`SEALED`·`BLOCKED`·`EXECUTED` 밖의 상태 |
+| `G1_LEDGER_SEALED`, `G1_LEDGER_EXECUTED` | 원장이 읽는 기대값 asset(상태·`BLOCKED`의 사유 누락·알 수 없는 대안)과 executed asset(`BLOCKED`·알 수 없는 대안·다른 행·중복·기대값 asset 없음)의 위반 |
 | `G1_LEDGER_ROWS` | 행·kind 의무·분모·사례 연결의 변조 |
 | `G1_LEDGER_ALTERNATIVE_MISSING`, `_DUPLICATE`, `_EXTRA`, `_ORDER` | 대안의 누락·중복·추가·순서 |
 | `G1_LEDGER_ALTERNATIVE`, `_CASES`, `_DECLARATIONS`, `_OUTSIDE_MAPPING`, `_ROLES`, `_COUNTS` | 각 절의 내용 |
