@@ -766,6 +766,7 @@ var (
 // C# 6.4.3 compares identifiers after removing @, decoding Unicode escapes,
 // and removing formatting characters. Keep source ranges and variable spelling intact.
 func csharpIdentifierName(s string) string {
+	factStepObserved("text-bytes", 2*uint64(len(s))) // reads s, writes at most as many bytes
 	s = strings.TrimPrefix(s, "@")
 	var name strings.Builder
 	for len(s) > 0 {

@@ -28,7 +28,8 @@ func ordinaryVisitObserved(kind string, visits uint64) {
 
 // factStepHook receives the steps the dynamic SQL adapters really take: "pair-steps" (scans,
 // sort comparisons and outputs of one capIndex.pairs call or of the site sort), "chain-hops"
-// (lastIdent hops) and "decoded-bytes" (source bytes decoded by srcText.span). It is separate
+// (lastIdent hops), "decoded-bytes" (source bytes decoded by srcText.span) and "text-bytes"
+// (bytes read plus written by csharpIdentifierName on decoded text). It is separate
 // from ordinaryVisitHook because sort comparison counts follow map iteration order, so the
 // ledger harness that records visits must not see them.
 var factStepHook func(kind string, steps uint64)

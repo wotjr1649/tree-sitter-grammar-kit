@@ -9,8 +9,10 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
+	"unsafe"
 )
 
 // csharpFactGen builds the captures of a synthetic C# tree over a source it appends to or
@@ -202,37 +204,56 @@ func csharpFixtureGen(t *testing.T) *csharpFactGen {
 	return g
 }
 
+// csharpFactRun is one adapter run: its facts, the steps it really took and the bytes it
+// allocated (cumulative, not a peak).
+type csharpFactRun struct {
+	facts                     DynamicSQLFacts
+	pair, hops, decoded, text uint64
+	alloc                     uint64
+}
+
 // csharpFactSteps runs the adapter and counts the steps it really takes.
-func csharpFactSteps(t *testing.T, caps []Capture, src []byte, enc string) (facts DynamicSQLFacts, pairSteps, hops, decoded uint64) {
+func csharpFactSteps(t *testing.T, caps []Capture, src []byte, enc string) (r csharpFactRun) {
 	t.Helper()
 	prev := factStepHook
 	factStepHook = func(kind string, n uint64) {
 		switch kind {
 		case "pair-steps":
-			pairSteps += n
+			r.pair += n
 		case "chain-hops":
-			hops += n
+			r.hops += n
 		case "decoded-bytes":
-			decoded += n
+			r.decoded += n
+		case "text-bytes":
+			r.text += n
 		}
 	}
 	defer func() { factStepHook = prev }()
+	runtime.GC()
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
 	facts, err := DeriveDynamicSQLChecked("csharp", enc, caps, src)
+	runtime.ReadMemStats(&after)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return facts, pairSteps, hops, decoded
+	r.facts, r.alloc = facts, after.TotalAlloc-before.TotalAlloc
+	return r
 }
 
-// csharpFactCharges returns the three C# terms (sorted passes, chain, decode) of the reservation.
+// csharpFactCharges returns the three C# work terms (sorted passes, chain, decode) and the
+// whole logical reservation of the derivation (shared conversion included). The budget is
+// unmetered so inputs beyond the pass limit can still be compared with their reservation.
 func csharpFactCharges(t *testing.T, caps []Capture, src []byte) (terms [3]uint64, logical uint64, err *Error) {
 	t.Helper()
 	b := semanticTestBudget(t)
+	b.unmetered = true
 	var got []uint64
 	prev := ordinaryChargeHook
-	ordinaryChargeHook = func(_ *eligibilityBudget, work, _ uint64, at string, _, _ uint64) {
+	ordinaryChargeHook = func(_ *eligibilityBudget, work, l uint64, at string, _, _ uint64) {
 		if at == "ordinary-base-fact-derive" {
 			got = append(got, work)
+			logical += l
 		}
 	}
 	defer func() { ordinaryChargeHook = prev }()
@@ -240,30 +261,46 @@ func csharpFactCharges(t *testing.T, caps []Capture, src []byte) (terms [3]uint6
 	if err == nil {
 		copy(terms[:], got[1:]) // got[0] is the shared capture conversion
 	}
-	return terms, b.logical, err
+	return terms, logical, err
 }
 
-// Every step the adapter takes costs 64 work in the matching term: the unit of the shared
-// capture conversion charge. The sorted passes cover the scans, comparisons and outputs of
-// the eleven pair calls and the site sort; the chain term the lastIdent hops; the decode
-// term the bytes handed to srcText.span.
-func assertCSharpFactChargeCovers(t *testing.T, label string, caps []Capture, src []byte, enc string) DynamicSQLFacts {
+// csharpFactRatio is how much of each reservation a run used (1 = exactly reserved).
+type csharpFactRatio struct{ sort, chain, decode, logical float64 }
+
+func (r *csharpFactRatio) widen(o csharpFactRatio) {
+	r.sort, r.chain = max(r.sort, o.sort), max(r.chain, o.chain)
+	r.decode, r.logical = max(r.decode, o.decode), max(r.logical, o.logical)
+}
+
+func csharpFactDiv(used, reserved uint64) float64 { return float64(used) / float64(max(reserved, 1)) }
+
+// Every counted step the adapter takes costs 64 work in the matching term: the unit of the
+// shared capture conversion charge. The sorted passes cover the scans, comparisons and outputs
+// of the eleven pair calls and the site sort; the chain term the lastIdent hops; the decode term
+// the bytes handed to srcText.span (64 each) and the text bytes csharpIdentifierName reads and
+// writes (8 each, the conversion charge's text unit). The logical reservation must also cover
+// the bytes the derivation really allocates, cumulatively, plus the converted captures.
+func assertCSharpFactChargeCovers(t *testing.T, label string, caps []Capture, src []byte, enc string) (DynamicSQLFacts, csharpFactRatio) {
 	t.Helper()
-	facts, pairSteps, hops, decoded := csharpFactSteps(t, caps, src, enc)
-	terms, _, err := csharpFactCharges(t, caps, src)
+	run := csharpFactSteps(t, caps, src, enc)
+	terms, logical, err := csharpFactCharges(t, caps, src)
 	if err != nil {
 		t.Fatalf("%s: %v", label, err)
 	}
-	t.Logf("%s: captures=%d steps pair=%d hops=%d decoded=%d, charged terms=%v", label, len(caps), pairSteps, hops, decoded, terms)
-	if 64*pairSteps > terms[0] || 64*hops > terms[1] || 64*decoded > terms[2] {
-		t.Fatalf("%s: steps pair=%d hops=%d decoded=%d (x64) exceed charged terms %v", label, pairSteps, hops, decoded, terms)
+	real := run.alloc + uint64(len(caps))*uint64(unsafe.Sizeof(Capture{}))
+	ratio := csharpFactRatio{csharpFactDiv(64*run.pair, terms[0]), csharpFactDiv(64*run.hops, terms[1]), csharpFactDiv(64*run.decoded+8*run.text, terms[2]), csharpFactDiv(real, logical)}
+	if ratio.sort > 1 || ratio.chain > 1 || ratio.decode > 1 {
+		t.Fatalf("%s: steps pair=%d hops=%d decoded=%d text=%d (work 64/64/64/8 each) exceed charged terms %v", label, run.pair, run.hops, run.decoded, run.text, terms)
 	}
-	return facts
+	if ratio.logical > 1 {
+		t.Fatalf("%s: allocated %d bytes exceed the logical reservation %d", label, real, logical)
+	}
+	return run.facts, ratio
 }
 
 func TestOrdinaryBaseCSharpFactChargeCoversTrackedFixture(t *testing.T) {
 	g := csharpFixtureGen(t)
-	facts := assertCSharpFactChargeCovers(t, "csharp-command.cs", g.caps, g.src, EncodingUTF8)
+	facts, _ := assertCSharpFactChargeCovers(t, "csharp-command.cs", g.caps, g.src, EncodingUTF8)
 	var doc struct {
 		Files []struct {
 			Path  string           `json:"path"`
@@ -322,8 +359,8 @@ func TestOrdinaryBaseCSharpFactChargeGrowsNearLinearly(t *testing.T) {
 func TestCSharpDeriveStepsGrowNearLinearly(t *testing.T) {
 	steps := func(sites int) uint64 {
 		g := csharpFactSites(sites)
-		_, p, h, d := csharpFactSteps(t, g.caps, g.src, EncodingUTF8)
-		return p + h + d
+		r := csharpFactSteps(t, g.caps, g.src, EncodingUTF8)
+		return r.pair + r.hops + r.decoded + r.text
 	}
 	small, large := steps(16), steps(256)
 	if large > small*16*2 {
@@ -349,7 +386,7 @@ func TestOrdinaryBaseCSharpFactChargeCoversRandomShapes(t *testing.T) {
 		if g.utf16 {
 			enc = EncodingUTF16LE
 		}
-		facts := assertCSharpFactChargeCovers(t, fmt.Sprintf("round %d", round), g.caps, g.src, enc)
+		facts, _ := assertCSharpFactChargeCovers(t, fmt.Sprintf("round %d", round), g.caps, g.src, enc)
 		if len(facts.Items) != g.sites {
 			t.Fatalf("round %d: %d facts for %d sites", round, len(facts.Items), g.sites)
 		}
@@ -378,7 +415,7 @@ func TestCSharpDeriveSurvivesQualifiedNameCycles(t *testing.T) {
 		g.pair("oc.a", oc, "oc.arg", arg)
 		g.pair("arg", arg, "arg.expr", g.text("identifier", "cycle"))
 		g.command(0, "after")
-		facts := assertCSharpFactChargeCovers(t, loop, g.caps, g.src, EncodingUTF8)
+		facts, _ := assertCSharpFactChargeCovers(t, loop, g.caps, g.src, EncodingUTF8)
 		if len(facts.Items) != 2 || facts.Items[0].Variable == nil || *facts.Items[0].Variable != "before" || *facts.Items[1].Variable != "after" {
 			t.Fatalf("%s: %+v", loop, facts.Items)
 		}

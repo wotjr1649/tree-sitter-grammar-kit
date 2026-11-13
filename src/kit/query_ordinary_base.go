@@ -777,6 +777,19 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 // capIndex.pairs calls plus the final site sort.
 const csharpFactScans = 12
 
+// The decode term charges each decoded span byte csharpDecodeWork work and csharpDecodeLogical
+// logical bytes. Work: a counted decode step (64: one source byte read, up to three output
+// bytes written) plus csharpIdentifierName's reads and writes of the decoded text at the 8 per
+// text byte of the shared conversion charge, at most 3 reads + 3 writes per source byte
+// (CP949 turns one invalid byte into a 3-byte U+FFFD): 64 + 8·6 = 112 <= 128. Logical: the
+// cumulative bytes allocated for one span by srcText.span and csharpIdentifierName, measured
+// at at most 32.03 per source byte (CP949 invalid bytes, 1 MiB span; UTF-16LE 12.6-20.6, UTF-8
+// 6.0, CP949 text 10-17.5), doubled for margin. Not a peak or RSS measure.
+const (
+	csharpDecodeWork    = 128
+	csharpDecodeLogical = 64
+)
+
 // ordinaryBaseCSharpFactReservation charges what deriveCSharp does: csharpFactScans sorted
 // passes (n log n), one chain walk per command argument (at most the qualified-name captures
 // long) and at most two decoded spans per argument or assignment (bounded by the longest span
@@ -803,7 +816,7 @@ func (b *eligibilityBudget) ordinaryBaseCSharpFactReservation(query querywire.Qu
 	}{
 		{[]uint64{64, csharpFactScans, n, 2 + uint64(bits.Len64(n))}, []uint64{1024, csharpFactScans, n}},
 		{[]uint64{64, args, names + 1}, nil},
-		{[]uint64{64, decodes, longest + 1}, []uint64{8, decodes, longest + 1}},
+		{[]uint64{csharpDecodeWork, decodes, longest + 1}, []uint64{csharpDecodeLogical, decodes, longest + 1}},
 	} {
 		work, e := eligibilityProduct("ordinary-base-fact-derive", term.work...)
 		if e != nil {
