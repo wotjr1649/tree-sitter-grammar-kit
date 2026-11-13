@@ -1,5 +1,5 @@
-// Command csharp-g1-executed derives src/contracts/csharp-g1-executed-b01b02-r1.json (#233 G1-3a native
-// comparison) from the sealed expected asset, the kind map, the Roslyn observation and the raw native
+// Command csharp-g1-executed derives src/contracts/csharp-g1-executed-b01b02-r2.json (r1 with -r1; #233 G1-3a native
+// comparison) from the expected asset, the kind map, the Roslyn observation and the raw native
 // observation written by csharp-g1-native. It runs no native code and changes none of its inputs.
 //
 //	go run ./src/dev/csharp-g1-executed -root . -native <raw.json> [-write]
@@ -20,7 +20,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-func load(root, rawPath string) (kit.CSharpG1ExecutedSources, error) {
+func load(root, rawPath string, r2 bool) (kit.CSharpG1ExecutedSources, error) {
 	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
 	var in kit.CSharpG1ExecutedSources
 	in.Src = kit.CSharpG1Sources{Fixtures: map[string][]byte{}}
@@ -39,10 +39,14 @@ func load(root, rawPath string) (kit.CSharpG1ExecutedSources, error) {
 			return in, err
 		}
 	}
-	if in.Expected, err = read(kit.CSharpG1ExpectedPath); err != nil {
+	expPath, kmPath := kit.CSharpG1ExpectedPath, kit.CSharpG1KindMapPath
+	if r2 {
+		expPath, kmPath = kit.CSharpG1ExpectedPathR2, kit.CSharpG1KindMapPathR2
+	}
+	if in.Expected, err = read(expPath); err != nil {
 		return in, err
 	}
-	if in.KindMap, err = read(kit.CSharpG1KindMapPath); err != nil {
+	if in.KindMap, err = read(kmPath); err != nil {
 		return in, err
 	}
 	if in.Observation, err = read(kit.CSharpG1RoslynPath); err != nil {
@@ -56,12 +60,16 @@ func load(root, rawPath string) (kit.CSharpG1ExecutedSources, error) {
 	return in, nil
 }
 
-func run(root, rawPath string, write bool) error {
-	in, err := load(root, rawPath)
+func run(root, rawPath string, write, r2 bool) error {
+	in, err := load(root, rawPath, r2)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1ExecutedPath))
+	outPath := kit.CSharpG1ExecutedPath
+	if r2 {
+		outPath = kit.CSharpG1ExecutedPathR2
+	}
+	path := filepath.Join(root, filepath.FromSlash(outPath))
 	if rawPath == "" {
 		if write {
 			return errors.New("-write needs -native")
@@ -94,7 +102,7 @@ func run(root, rawPath string, write bool) error {
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s: %d bytes %+v\n", kit.CSharpG1ExecutedPath, len(data), x.Counts)
+	fmt.Printf("wrote %s: %d bytes %+v\n", outPath, len(data), x.Counts)
 	return nil
 }
 
@@ -102,8 +110,9 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	raw := flag.String("native", "", "raw native observation written by csharp-g1-native")
 	write := flag.Bool("write", false, "write the asset instead of comparing")
+	r1 := flag.Bool("r1", false, "use the sealed r1 assets instead of the r2 ones")
 	flag.Parse()
-	if err := run(*root, *raw, *write); err != nil {
+	if err := run(*root, *raw, *write, !*r1); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

@@ -41,10 +41,10 @@ func sources(root string) (kit.CSharpG1Sources, error) {
 		}
 	}
 	// the tracked ledger carries the SEALED statuses of the expected asset
-	if src.Expected, err = read(kit.CSharpG1ExpectedPath); err != nil {
+	if src.Expected, err = read(kit.CSharpG1ExpectedPathR2); err != nil {
 		return src, err
 	}
-	if exe, err := read(kit.CSharpG1ExecutedPath); err == nil {
+	if exe, err := read(kit.CSharpG1ExecutedPathR2); err == nil {
 		src.Executed = exe
 	}
 	return src, nil

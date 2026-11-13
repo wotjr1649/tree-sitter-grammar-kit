@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	jsonv2 "encoding/json/v2"
+
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
 // Roslyn SyntaxKind -> tree-sitter-c-sharp node type map (#233, G1-3a).
@@ -105,6 +107,9 @@ type CSharpG1KindMap struct {
 	Counts     G1KMCounts     `json:"counts"`
 	Kinds      []G1KMKind     `json:"kinds"`
 	TSOnly     []G1KMTSOnly   `json:"ts_only"`
+	// Previous pins the sealed r1 map a r2 map corrects; Corrections lists the post-native changes. Both are empty in r1.
+	Previous    queryregistrycore.Pin `json:"previous,omitzero"`
+	Corrections []G1Correction        `json:"corrections,omitempty"`
 }
 
 func g1kmFault(code string) error { return fail(KindInvalidInput, code, CSharpG1KindMapPath, nil) }
@@ -189,6 +194,10 @@ func MarshalCSharpG1KindMap(m CSharpG1KindMap) ([]byte, error) {
 	scalar("spec", m.Spec)
 	scalar("vocabulary", m.Vocabulary)
 	scalar("counts", m.Counts)
+	if m.Schema == CSharpG1KindMapSchemaR2 {
+		scalar("previous", m.Previous)
+		list("corrections", len(m.Corrections), func(i int) any { return m.Corrections[i] }, false)
+	}
 	list("kinds", len(m.Kinds), func(i int) any { return m.Kinds[i] }, false)
 	list("ts_only", len(m.TSOnly), func(i int) any { return m.TSOnly[i] }, true)
 	b.WriteString("}\n")
@@ -205,7 +214,8 @@ func ParseCSharpG1KindMap(data []byte, observed []string) (CSharpG1KindMap, erro
 	if err := jsonv2.Unmarshal(data, &m, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return m, fail(KindInvalidInput, "G1_KINDMAP_JSON", CSharpG1KindMapPath, err)
 	}
-	if m.Schema != CSharpG1KindMapSchema || m.Basis == "" || len(m.Spec) == 0 {
+	r2 := m.Schema == CSharpG1KindMapSchemaR2
+	if m.Schema != CSharpG1KindMapSchema && !r2 || m.Basis == "" || len(m.Spec) == 0 || r2 != (len(m.Corrections) > 0) || !r2 && m.Previous != (queryregistrycore.Pin{}) {
 		return m, g1kmFault("G1_KINDMAP_SCHEMA")
 	}
 	g := m.Grammar

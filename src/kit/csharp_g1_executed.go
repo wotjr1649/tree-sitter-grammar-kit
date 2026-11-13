@@ -32,6 +32,9 @@ import (
 const (
 	CSharpG1ExecutedSchema = "tsgk-csharp-g1-executed/r1"
 	CSharpG1ExecutedPath   = "src/contracts/csharp-g1-executed-b01b02-r1.json"
+
+	CSharpG1ExecutedSchemaR2 = "tsgk-csharp-g1-executed/r2"
+	CSharpG1ExecutedPathR2   = "src/contracts/csharp-g1-executed-b01b02-r2.json"
 	// shortcut: the asset is far below this today; raise only with a new revision.
 	csharpG1ExecutedMax = 4 << 20
 
@@ -127,6 +130,10 @@ type G1ExecCounts struct {
 	Sources              int `json:"sources"`
 	SourcesCompleted     int `json:"sources_completed"`
 	NativeErrorAccepted  int `json:"native_error_roslyn_accepted"`
+	// r2 only: the alternatives a correction left as sealed that match, the corrected ones, and those that match.
+	SealedMatch    int `json:"sealed_match,omitzero"`
+	Corrected      int `json:"corrected,omitzero"`
+	CorrectedMatch int `json:"corrected_match,omitzero"`
 }
 
 type CSharpG1Executed struct {
@@ -142,6 +149,19 @@ type CSharpG1Executed struct {
 
 const csharpG1ExecutedBasis = "Native comparison of the sealed expected asset for csharp-B01 and csharp-B02. For every EXPECTED alternative and each of its witnesses (copied unchanged from the sealed asset) the tree-sitter-c-sharp tree of the witness's source, parsed by the registered native build (provenance in native; raw_native pins the local raw observation), is searched for a node of one of the alternative's sealed types with the witness's span (match span) or start (match starts-at): MATCH, else MISMATCH, or NOT_APPLICABLE when the native parse did not complete. An alternative is MISMATCH if any witness is, MATCH if some witness is and none mismatches, NOT_APPLICABLE otherwise, and EXECUTED when a completed native witness was compared. Each mismatch has a disposition with a cause: GRAMMAR_DEFECT, KIND_MAP_ERROR, EXPECTED_ERROR or DESIGN_DIFFERENCE. Expectations, the kind map and the observation are not changed by this asset; a sealed value that the native result contradicts stays as sealed and is reported. The comparison covers the witnesses only: it does not say the grammar parses every construct of an alternative, and a MATCH is a property of the pinned Roslyn observation's spans on these sources."
 
+// g1xRev is one revision of the executed asset: it compares the expected asset and kind map of the same revision.
+type g1xRev struct {
+	schema, path, expectedPath, kindMapPath, basis string
+	dispositions                                   map[string]G1ExecDisposition
+}
+
+const csharpG1ExecutedBasisR2 = csharpG1ExecutedBasis + " Revision r2 compares the r2 expected asset and kind map, which correct four values after the r1 native result was seen (post_native corrections); the r1 executed asset stays as sealed. The counts sealed_match, corrected and corrected_match keep the uncorrected comparisons and the post-native corrections apart."
+
+var g1xRevisions = map[string]g1xRev{
+	CSharpG1ExpectedSchema:   {CSharpG1ExecutedSchema, CSharpG1ExecutedPath, CSharpG1ExpectedPath, CSharpG1KindMapPath, csharpG1ExecutedBasis, g1ExecDispositions},
+	CSharpG1ExpectedSchemaR2: {CSharpG1ExecutedSchemaR2, CSharpG1ExecutedPathR2, CSharpG1ExpectedPathR2, CSharpG1KindMapPathR2, csharpG1ExecutedBasisR2, g1ExecDispositionsR2},
+}
+
 func g1xFault(code string) error { return fail(KindInvalidInput, code, CSharpG1ExecutedPath, nil) }
 
 // g1ExecDispositions are the authored causes of the mismatches, keyed by alternative. They are written
@@ -152,6 +172,10 @@ var g1ExecDispositions = map[string]G1ExecDisposition{
 	"csharp-B01.a396": {Cause: G1CauseKindMap, Reason: "Same entry as csharp-B01.a383: the Roslyn token InterpolatedVerbatimStringStartToken ($@\") spans the interpolation_start node [141,143) and the quote node [143,144) in alt-csharp-B01-09#0, which the kind map lists as one type of the whole extent."},
 	"csharp-B01.a397": {Cause: G1CauseKindMap, Reason: "Same entry as csharp-B01.a383: the Roslyn token InterpolatedVerbatimStringStartToken (@$\") spans an interpolation_start node and a quote node in alt-csharp-B01-09#0, which the kind map lists as one type of the whole extent."},
 }
+
+// g1ExecDispositionsR2 are the authored causes of the r2 mismatches. None: after the corrections the
+// native result contradicts no r2 value. A mismatch without an entry is rejected.
+var g1ExecDispositionsR2 = map[string]G1ExecDisposition{}
 
 // ---- native index ----------------------------------------------------------------------------
 
@@ -279,6 +303,9 @@ type g1xContext struct {
 	accepted map[string]bool
 	ids      []string
 	inputs   G1ExecInputs
+	rev      g1xRev
+	// corrected lists the alternatives a post-native correction changed (r2); nil in r1
+	corrected map[string]bool
 }
 
 func g1xSpanKey(source, kind string, start, end int) string {
@@ -303,6 +330,18 @@ func g1xContextOf(in CSharpG1ExecutedSources) (g1xContext, error) {
 	km, err := ParseCSharpG1KindMap(in.KindMap, obs.Kinds)
 	if err != nil {
 		return c, err
+	}
+	// the revision follows the expected asset; the kind map must be of the same revision
+	rev, ok := g1xRevisions[exp.Schema]
+	if !ok || km.Schema != map[string]string{CSharpG1ExpectedSchema: CSharpG1KindMapSchema, CSharpG1ExpectedSchemaR2: CSharpG1KindMapSchemaR2}[exp.Schema] {
+		return c, g1xFault("G1_EXECUTED_PIN")
+	}
+	c.rev = rev
+	if exp.Schema == CSharpG1ExpectedSchemaR2 {
+		c.corrected = map[string]bool{}
+		for _, k := range exp.Corrections {
+			c.corrected[k.Item] = true
+		}
 	}
 	src := in.Src
 	src.Expected, src.Executed = nil, nil
@@ -340,9 +379,13 @@ func g1xContextOf(in CSharpG1ExecutedSources) (g1xContext, error) {
 		}
 	}
 	c.inputs = G1ExecInputs{
-		Expected:    queryregistrycore.FilePin(CSharpG1ExpectedPath, in.Expected),
-		KindMap:     queryregistrycore.FilePin(CSharpG1KindMapPath, in.KindMap),
+		Expected:    queryregistrycore.FilePin(rev.expectedPath, in.Expected),
+		KindMap:     queryregistrycore.FilePin(rev.kindMapPath, in.KindMap),
 		Observation: queryregistrycore.FilePin(CSharpG1RoslynPath, in.Observation),
+	}
+	// the expected asset pins the same kind map and observation
+	if exp.Inputs.KindMap != c.inputs.KindMap || exp.Inputs.Observation != c.inputs.Observation {
+		return c, g1xFault("G1_EXECUTED_PIN")
 	}
 	return c, nil
 }
@@ -374,7 +417,7 @@ func DeriveCSharpG1Executed(in CSharpG1ExecutedSources) (CSharpG1Executed, error
 		}
 	}
 	c.inputs.Raw = queryregistrycore.FilePin("csharp-g1-native-raw", in.Raw)
-	out.Schema, out.Basis, out.Inputs, out.Native = CSharpG1ExecutedSchema, csharpG1ExecutedBasis, c.inputs, raw.Provenance
+	out.Schema, out.Basis, out.Inputs, out.Native = c.rev.schema, c.rev.basis, c.inputs, raw.Provenance
 	for _, id := range c.ids {
 		s := trees[id].src
 		out.Sources = append(out.Sources, G1ExecSource{ID: id, SHA256: s.SHA256, Bytes: s.Bytes, RoslynAccepted: c.accepted[id], Status: s.Status, Code: s.Code,
@@ -391,7 +434,7 @@ func DeriveCSharpG1Executed(in CSharpG1ExecutedSources) (CSharpG1Executed, error
 		alt.Result, alt.Executed = g1xAltResult(alt.Witnesses)
 		out.Alternatives = append(out.Alternatives, alt)
 		if alt.Result == G1ResMismatch {
-			d := g1ExecDispositions[a.ID]
+			d := c.rev.dispositions[a.ID]
 			d.Alternative = a.ID
 			if d.Cause == "" {
 				d.Cause, d.Reason = "UNDISPOSED", ""
@@ -402,11 +445,11 @@ func DeriveCSharpG1Executed(in CSharpG1ExecutedSources) (CSharpG1Executed, error
 	if out.Dispositions == nil {
 		out.Dispositions = []G1ExecDisposition{}
 	}
-	out.Counts = g1xCounts(out)
+	out.Counts = g1xCounts(out, c.corrected)
 	return out, nil
 }
 
-func g1xCounts(x CSharpG1Executed) G1ExecCounts {
+func g1xCounts(x CSharpG1Executed, corrected map[string]bool) G1ExecCounts {
 	var n G1ExecCounts
 	n.Alternatives, n.Sources = len(x.Alternatives), len(x.Sources)
 	for _, s := range x.Sources {
@@ -421,9 +464,18 @@ func g1xCounts(x CSharpG1Executed) G1ExecCounts {
 		if a.Executed {
 			n.Executed++
 		}
+		if corrected[a.ID] {
+			n.Corrected++
+			if a.Result == G1ResMatch {
+				n.CorrectedMatch++
+			}
+		}
 		switch a.Result {
 		case G1ResMatch:
 			n.Match++
+			if corrected != nil && !corrected[a.ID] {
+				n.SealedMatch++
+			}
 		case G1ResMismatch:
 			n.Mismatch++
 		default:
@@ -463,7 +515,7 @@ func DecodeCSharpG1Executed(data []byte) (CSharpG1Executed, error) {
 	if err := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return x, fail(KindInvalidInput, "G1_EXECUTED_JSON", CSharpG1ExecutedPath, err)
 	}
-	if x.Schema != CSharpG1ExecutedSchema || x.Basis == "" {
+	if x.Schema != CSharpG1ExecutedSchema && x.Schema != CSharpG1ExecutedSchemaR2 || x.Basis == "" {
 		return x, g1xFault("G1_EXECUTED_SCHEMA")
 	}
 	return x, nil
@@ -488,7 +540,10 @@ func ParseCSharpG1Executed(data []byte, in CSharpG1ExecutedSources) (CSharpG1Exe
 
 // g1xCheck is ParseCSharpG1Executed after the decode and the context.
 func g1xCheck(data []byte, x CSharpG1Executed, c g1xContext, in CSharpG1ExecutedSources) error {
-	if x.Basis != csharpG1ExecutedBasis {
+	if x.Schema != c.rev.schema {
+		return g1xFault("G1_EXECUTED_SCHEMA")
+	}
+	if x.Basis != c.rev.basis {
 		return g1xFault("G1_EXECUTED_BYTES")
 	}
 	if x.Inputs.Expected != c.inputs.Expected || x.Inputs.KindMap != c.inputs.KindMap || x.Inputs.Observation != c.inputs.Observation {
@@ -552,12 +607,12 @@ func g1xCheck(data []byte, x CSharpG1Executed, c g1xContext, in CSharpG1Executed
 		return g1xFault("G1_EXECUTED_UNDISPOSED")
 	}
 	for i, d := range x.Dispositions {
-		auth, ok := g1ExecDispositions[mismatches[i]]
+		auth, ok := c.rev.dispositions[mismatches[i]]
 		if d.Alternative != mismatches[i] || !ok || d.Cause != auth.Cause || d.Reason != auth.Reason || !slices.Contains([]string{G1CauseGrammar, G1CauseKindMap, G1CauseExpected, G1CauseDesign}, d.Cause) || d.Reason == "" {
 			return g1xFault("G1_EXECUTED_UNDISPOSED")
 		}
 	}
-	if x.Counts != g1xCounts(x) {
+	if x.Counts != g1xCounts(x, c.corrected) {
 		return g1xFault("G1_EXECUTED_COUNTS")
 	}
 	if x.Native.Route != "csharp" || x.Native.NativeMemory != 1<<30 || x.Native.NativeWallMS != 30000 || x.Native.BuildMemory != 4<<30 || x.Native.BuildWallMS != 120000 || len(x.Native.Grammar) == 0 || x.Inputs.Raw.SHA256 == "" {

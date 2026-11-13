@@ -35,12 +35,12 @@ func run(root string, write bool) error {
 			return err
 		}
 	}
-	// the sealed expected asset, when present, turns its EXPECTED alternatives into SEALED
-	if exp, err := read(kit.CSharpG1ExpectedPath); err == nil {
+	// the r2 expected asset (r1 plus the post-native corrections), when present, turns its EXPECTED alternatives into SEALED
+	if exp, err := read(kit.CSharpG1ExpectedPathR2); err == nil {
 		src.Expected = exp
 	}
 	// the executed asset, when present, turns the compared SEALED alternatives into EXECUTED
-	if exe, err := read(kit.CSharpG1ExecutedPath); err == nil {
+	if exe, err := read(kit.CSharpG1ExecutedPathR2); err == nil {
 		src.Executed = exe
 	}
 	l, err := kit.DeriveCSharpG1Ledger(src)

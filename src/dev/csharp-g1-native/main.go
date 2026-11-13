@@ -111,7 +111,7 @@ func run(root, prepared, cc, work, out string) error {
 	if err != nil {
 		return err
 	}
-	expData, err := read(root, kit.CSharpG1ExpectedPath)
+	expData, err := read(root, kit.CSharpG1ExpectedPathR2)
 	if err != nil {
 		return err
 	}

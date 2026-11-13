@@ -133,7 +133,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 | `csharp-B01.a396` (`$@"`) | `alt-csharp-B01-09#0` [141,144) | 두 node | `KIND_MAP_ERROR`(같은 항목, `InterpolatedVerbatimStringStartToken`) |
 | `csharp-B01.a397` (`@$"`) | `alt-csharp-B01-09#0` [171,174) | 두 node | `KIND_MAP_ERROR`(같은 항목) |
 
-`GRAMMAR_DEFECT` 후보는 없다: native는 오류 없이 파싱했고 네 불일치는 모두 고정 grammar 원문과 같은 표현이다. 기대값 오류와 매핑표 오류로 본 네 건은 **고치지 않았다**. 봉인 뒤 수정은 별도 결정이 필요하다. 이 처분은 사람이 쓴 판단이며 `kit`의 `g1ExecDispositions` 표에 있다. 처분이 없는 불일치가 있으면 verifier가 `G1_EXECUTED_UNDISPOSED`로 거부한다.
+`GRAMMAR_DEFECT` 후보는 없다: native는 오류 없이 파싱했고 네 불일치는 모두 고정 grammar 원문과 같은 표현이다. 기대값 오류와 매핑표 오류로 본 네 건은 r1에서 **고치지 않았다**. 사용자 결정(2026-11-13)에 따라 r1을 그대로 두고 아래 "봉인 뒤 정정 (r2)"의 변경 기록으로 정정했다. 이 처분은 사람이 쓴 판단이며 `kit`의 `g1ExecDispositions` 표에 있다. 처분이 없는 불일치가 있으면 verifier가 `G1_EXECUTED_UNDISPOSED`로 거부한다.
 
 ### 기대값을 거꾸로 만들 수 없음
 
@@ -145,6 +145,32 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - 판정은 witness(대안당 사례 하나·최대 3개)에 한정되며 grammar가 대안의 모든 구문을 파싱한다는 뜻이 아니다. 대안의 `ts`가 넓으면(1:n) 일치가 약한 근거일 수 있다.
 - offline verifier는 native를 다시 실행하지 못한다. 증거가 판정과 모순 없음, 봉인된 값·pin·source 신원·처분·bytes까지 확인하며, 증거 자체의 진위는 원시 관측과의 재유도(`TSGK_G1_NATIVE_RAW`로 `TestCSharpG1ExecutedMatchesRawNative`)가 확인한다. 원시 관측은 추적하지 않는다.
 - 한 host(Windows, gcc 16.2.0)의 한 빌드, 기본 모드(preprocessor symbols 없음)다. symbols 문맥 13건과 오류 복구는 비교하지 않았다.
+
+## 봉인 뒤 정정 (r2)
+
+봉인된 asset의 값이 native 결과를 본 뒤에 명세·grammar 원문과 어긋난 것으로 드러나면 그 asset을 고치지 않고 **새 revision(r2)**으로 올려 정정한다. 규칙은 다음과 같다.
+
+- **r1 보존.** r1 asset(`csharp-g1-expected-b01b02-r1.json`, `csharp-g1-kind-map-r1.json`, `csharp-g1-executed-b01b02-r1.json`)은 봉인된 그대로 둔다. 시험 `TestCSharpG1CorrectR1StaysAsSealed`가 크기와 SHA-256을 고정한다. r2 asset은 r1의 SHA-256과 크기를 `previous` pin으로 가리키고, r2 verifier는 그 r1이 봉인된 asset으로 검증되는지부터 확인한다(r1 변조 거부).
+- **변경 기록(`corrections`).** r2 asset은 r1과 변경 기록만큼만 다르다. 항목마다 대안 id(매핑표는 Roslyn 종류, 목록 정정은 type)·`field`·이전 값(`old`)·새 값(`new`)·`reason`·`ground`·`post_native`를 둔다. `post_native`는 native 결과를 본 뒤의 정정이면 `true`, 명세·grammar 원문에서만 도출한 정정이면 `false`이며 저작된 기록과 같아야 한다. `ground`는 고정 grammar 원문(`grammar.js`의 규칙)과 명세(csharpstandard alpha-v13 commit `79ad4e90…`의 파일·절)의 인용문이며 둘 다 있어야 한다(tree-sitter 쪽은 grammar 원문만이 근거다). `old`는 r1이 가진 값과 같아야 하고, 기록에 없는 차이·근거 없는 항목·저작되지 않은(`post_native` 값이 다른 것 포함) 항목은 거부된다. `src/dev/csharp-g1-correct -grammar … -spec …`은 모든 인용문이 고정 grammar.js(SHA-256이 매핑표의 pin과 같아야 한다)와 명세 파일에 실제로 있는지 확인한다.
+- **근거는 명세·grammar 원문만.** 정정 값은 native 산출물이 아니라 명세와 grammar 원문에서 다시 도출한다. native와 같아지는 것은 근거가 아니다. 원문으로 정할 수 없으면 정정하지 않고 BLOCKED와 사유로 둔다. 도출 코드(`csharp_g1_correct.go`)는 native 입력을 받지 않는다.
+- **통계를 둘로 나눈다.** "봉인 시 일치"(r1 executed asset: 426 중 422)와 "사후 정정 뒤 일치"(r2 executed asset의 `corrected`·`corrected_match`: 정정 4건 중 n건)를 합치지 않는다. 정정한 대안은 독립 기대값 통계(표본 감사, 봉인 시 일치율)에서 "사후 정정"으로 따로 센다. r2의 표본 감사·metamorphic·cross_check 절은 r1의 것 그대로다(봉인 당시의 기록이며 정정 값으로 다시 계산하지 않는다).
+- **r2 executed asset**은 r2 기대값·매핑표를 같은 native 원시 관측(`raw_native`)과 다시 대조한 기록이며, `sealed_match`(정정하지 않은 대안 중 일치)·`corrected`·`corrected_match`를 가진다.
+
+### r2 정정 9건
+
+| 항목 | field | 이전 → 새 | 근거 |
+|---|---|---|---|
+| `csharp-B01.a335` (#define·#undef의 조건부 심볼) | `ts` | `["identifier"]` → `["preproc_arg"]` | grammar.js `preproc_define`·`preproc_undef`는 심볼을 `preproc_arg` 하나로 둔다(identifier는 #if·#elif 조건에만 있다). 명세 §6.5.4는 심볼을 `PP_Conditional_Symbol`(어휘 조각)로만 정의하고 tree-sitter type을 정하지 않는다 |
+| `csharp-B01.a383` (`$"`) | `witnesses[0].match` | `span` → `starts-at` | 명세 `Interpolated_Regular_String_Start`는 `$"` 한 lexeme이다. grammar.js `interpolated_string_expression`은 시작을 `interpolation_start`(외부 token의 alias)와 그 뒤 따옴표 node 둘로 만든다. 외부 token의 범위는 grammar 원문에 없으므로 도출할 수 있는 것은 시작뿐이다 |
+| `csharp-B01.a396` (`$@"`), `a397` (`@$"`) | `witnesses[0].match` | `span` → `starts-at` | 위와 같은 규칙(`interpolation_verbatim_start`). 명세 `Interpolated_Verbatim_String_Start` |
+| 매핑표 `InterpolatedStringStartToken` | `entry` | `1:1 [interpolation_start]` → `none NO_SEPARATE_NODE` | 매핑표는 같은 범위의 node type을 적는데 grammar 원문에는 그 범위의 node가 없다 |
+| 매핑표 `InterpolatedVerbatimStringStartToken` | `entry` | 위와 같은 변경 | 위와 같다 |
+| 매핑표 `InterpolatedSingleLineRawStringStartToken`·`InterpolatedMultiLineRawStringStartToken` (`post_native: false`) | `entry` | 위와 같은 변경 | 명세 `Interpolated_Raw_String_Start`는 lexeme 하나이고 grammar.js의 raw 선택지는 `interpolation_start`(`interpolation_raw_start`의 alias)와 `interpolation_quote` 둘이다. native 불일치로 드러난 적이 없고 명세·grammar 원문만으로 도출했으며, 이 두 종류를 쓰는 B01·B02 대안은 없다(관측 token은 cross_check의 `TOKEN_OF_OTHER_ROW`) |
+| 매핑표 `ts_only` `interpolation_start` | `ts_only` | 없음 → `EXTERNAL_SCANNER_NODE` | 위 네 항목의 결과: 이 type을 가리키는 Roslyn 종류가 더는 없어 목록에 든다. grammar.js `externals`가 세 시작 token을 외부 scanner token으로 선언하며 r1이 `interpolation_brace`에 준 사유와 같다 |
+
+한계: 보간 시작 정정 대안의 새 기대값은 `interpolation_start` node의 **시작**만 요구하고 뒤따르는 따옴표 node는 확인하지 않는다(범위·순서를 도출할 근거가 grammar 원문에 없다). **남은 과제(G1-3d):** 시작 token을 "시작 node + 따옴표 node"의 복합으로 매핑표에 적고 그 순서·범위를 대조하는 것은 매핑표 schema 확장이 필요해 G1-3d(보간 문자열)로 넘겼다.
+
+재생성(순서): `go run ./src/dev/csharp-g1-correct -root . [-write] [-grammar … -spec …]`(r2 매핑표·기대값, native 없음) → `csharp-g1-native`(HARD Job, 원시 관측) → `go run ./src/dev/csharp-g1-executed -root . -native <원시 관측> [-write]`(r2 executed; `-r1`은 봉인된 r1) → `csharp-g1-ledger`·`csharp-g1-roslyn-asset -verify`(원장·관측은 내용이 그대로여서 pin이 바뀌지 않는다).
 
 ## 분리 시험
 
@@ -167,6 +193,8 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 | `G1_EXECUTED_PIN`, `_SOURCES`, `_NATIVE` | 기대값·매핑표·관측 pin, source 목록·신원·수락 여부, native provenance·한도·원시 관측 pin |
 | `G1_EXECUTED_ALTERNATIVES`, `_EXPECTATION` | 대안의 누락·추가, 봉인된 witness·type·근거·행의 변조 |
 | `G1_EXECUTED_RESULT`, `_EVIDENCE`, `_COUNTS`, `_UNDISPOSED`, `_RAW` | 증거와 모순되는 결과·`executed`·`map`, 증거 형식, 집계, 처분 없거나 바뀐 불일치, 원시 관측과 다른 asset |
+| `G1_CORRECTION_FORM`, `_GROUND`, `_ITEM`, `_OLD` | r2 변경 기록의 형식(`post_native`·사유·중복·필드), 근거(grammar·명세 인용 둘 다), 알 수 없는 항목, r1이 가진 값과 다른 이전 값·새 값 형식 |
+| `G1_CORRECTION_UNLISTED`, `_UNAUTHORED`, `_PIN`, `_BYTES` | 변경 기록에 없는 차이, 저작되지 않은(바뀐) 기록, r1·매핑표 pin 불일치, 정규 bytes와 다름. r1 변조는 r1 verifier의 code(`G1_EXPECTED_*`·`G1_KINDMAP_*`)로 거부된다 |
 | `G1_NATIVE_JSON`, `_SCHEMA`, `_SIZE`, `_SOURCE`, `_TREE` | 원시 관측의 형식, source 중복·상태, node 범위·부모·digest |
 | `G1_LEDGER_SEALED`, `_EXECUTED` | 원장이 읽는 기대값·executed asset의 상태·사유·대안 참조 위반 |
 | `G1_KINDMAP_JSON`, `_SCHEMA`, `_SIZE`, `_BYTES`, `_GRAMMAR`, `_VOCABULARY`, `_ADDITION`, `_KINDS`, `_CLASS`, `_ENTRY`, `_COVERAGE`, `_TS_ONLY`, `_COUNTS` | 매핑표의 형식·pin·어휘·항목·관측 종류 덮임·집계 |
@@ -175,6 +203,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 go run ./src/dev/csharp-g1-kindmap -root . -grammar <tree-sitter-c-sharp checkout>
 go run ./src/dev/csharp-g1-expected -root .
 go run ./src/dev/csharp-g1-executed -root . [-native <원시 관측> [-write]]
+go run ./src/dev/csharp-g1-correct -root . [-grammar <checkout> -spec <dir>]
 go run ./src/dev/csharp-g1-ledger -root .
 ```
 

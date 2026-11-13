@@ -50,6 +50,8 @@ type G1ExpInputs struct {
 	Ledger      CSharpG1Inputs        `json:"ledger_sources"`
 	Observation queryregistrycore.Pin `json:"observation"`
 	KindMap     queryregistrycore.Pin `json:"kind_map"`
+	// Previous pins the sealed r1 asset a r2 asset corrects; it is zero in r1.
+	Previous queryregistrycore.Pin `json:"previous,omitzero"`
 }
 
 type G1ExpWitness struct {
@@ -124,6 +126,8 @@ type CSharpG1Expected struct {
 	SymbolsContext []G1ExpSymbols   `json:"symbols_context"`
 	Audit          G1ExpAudit       `json:"audit"`
 	Metamorphic    G1ExpMetamorphic `json:"metamorphic"`
+	// Corrections are the post-native changes of a r2 asset to its r1 asset (csharp_g1_correct.go); none in r1.
+	Corrections []G1Correction `json:"corrections,omitempty"`
 }
 
 const csharpG1ExpectedBasis = "Expected values for the lexical row csharp-B01 and the type-name row csharp-B02, derived without any native output. An alternative is EXPECTED with witnesses (spans of the pinned Roslyn observation, accepted sources linked to the alternative by the ledger, at most one per case and three in all) and the tree-sitter node types the pinned grammar allows, or BLOCKED with a reason code. basis spec-derived: the lexeme or lexical form comes from the ECMA-334 lexical grammar as published in the C# standard draft v13 on learn.microsoft.com (clauses in the spec field) and Roslyn only locates it; basis differential-oracle: the structure is what the pinned Roslyn DLLs observed, translated by the kind map. match span: a node of one of the types spans exactly [start,end); starts-at: a node of one of the types starts at start. The cross_check section compares every observed token and directive with the spec derivation; its mismatches are dispositions, not adopted values. The sections audit and metamorphic record the specification sample audit and the metamorphic check. The single-oracle limit applies: a differential-oracle expectation is the behavior of one Roslyn build, not the specification."
@@ -515,6 +519,9 @@ func MarshalCSharpG1Expected(x CSharpG1Expected) ([]byte, error) {
 	scalar("basis", x.Basis, false)
 	scalar("witness_limit", x.WitnessLimit, false)
 	scalar("counts", x.Counts, false)
+	if x.Corrections != nil {
+		list("corrections", len(x.Corrections), func(i int) any { return x.Corrections[i] }, false)
+	}
 	list("alternatives", len(x.Alternatives), func(i int) any { return x.Alternatives[i] }, false)
 	b.WriteString(` "cross_check": {` + "\n")
 	fmt.Fprintf(&b, "  \"sources\": %d, \"tokens\": %d, \"directives\": %d,\n  \"mismatches\": [\n", x.Cross.Sources, x.Cross.Tokens, x.Cross.Directives)
@@ -573,7 +580,8 @@ func DecodeCSharpG1Expected(data []byte) (CSharpG1Expected, error) {
 	if err := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return x, fail(KindInvalidInput, "G1_EXPECTED_JSON", CSharpG1ExpectedPath, err)
 	}
-	if x.Schema != CSharpG1ExpectedSchema || x.Basis == "" {
+	r2 := x.Schema == CSharpG1ExpectedSchemaR2
+	if x.Schema != CSharpG1ExpectedSchema && !r2 || x.Basis == "" || r2 != (len(x.Corrections) > 0) || !r2 && x.Inputs.Previous != (queryregistrycore.Pin{}) {
 		return x, g1eFault("G1_EXPECTED_SCHEMA")
 	}
 	return x, nil
@@ -585,6 +593,9 @@ func ParseCSharpG1Expected(data []byte, in CSharpG1ExpectedSources) (CSharpG1Exp
 	x, err := DecodeCSharpG1Expected(data)
 	if err != nil {
 		return x, err
+	}
+	if x.Schema != CSharpG1ExpectedSchema {
+		return x, g1eFault("G1_EXPECTED_SCHEMA") // r2 has its own verifier
 	}
 	// the sealed Roslyn digests are the one input the asset supplies itself
 	in.Sealed = x.Metamorphic.Results()
