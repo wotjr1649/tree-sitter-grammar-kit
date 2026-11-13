@@ -234,12 +234,14 @@ func TestBatchCapturePartialAndProcessFailure(t *testing.T) {
 			}
 		})
 	}
-	for _, failure := range []string{"cleanup", "stdout-truncated", "stderr-truncated", "batch-cap", "capture", "trailing"} {
+	for _, failure := range []string{"cleanup", "residual", "stdout-truncated", "stderr-truncated", "batch-cap", "capture", "trailing"} {
 		t.Run(failure, func(t *testing.T) {
 			c := syntheticBatchCapture(t)
 			switch failure {
 			case "cleanup":
 				c.result.Process.Cleanup.Verified = false
+			case "residual": // the runner ended a descendant the driver left behind: verified, but not clean
+				c.result.Process.Cleanup.ResidualAfterExit = 1
 			case "stdout-truncated":
 				c.result.Process.StdoutTruncated = true
 			case "stderr-truncated":

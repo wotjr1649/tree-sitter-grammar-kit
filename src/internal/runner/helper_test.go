@@ -36,10 +36,21 @@ func spawn(mode string, detach bool) *exec.Cmd { return spawnIO(mode, detach, tr
 
 // spawnIO starts the helper; without inherit its stdio is the null device.
 func spawnIO(mode string, detach, inherit bool) *exec.Cmd {
+	if inherit {
+		return spawnWith(mode, detach, os.Stdout, os.Stderr)
+	}
+	return spawnWith(mode, detach, nil, nil)
+}
+
+// spawnWith starts the helper with the given stdout and stderr (nil is the null device).
+func spawnWith(mode string, detach bool, stdout, stderr *os.File) *exec.Cmd {
 	cmd := exec.Command(self())
 	cmd.Env = []string{"TSGK_RUNNER_HELPER=" + mode, "TSGK_PIDS=" + os.Getenv("TSGK_PIDS")}
-	if inherit {
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if stdout != nil {
+		cmd.Stdout = stdout
+	}
+	if stderr != nil {
+		cmd.Stderr = stderr
 	}
 	if detach {
 		detachAttr(cmd)
@@ -182,7 +193,8 @@ func helper(mode string) int {
 
 // frameHelper answers length-prefixed frames. arg is "<action>@<k>" acting at frame k
 // (0-based): hang, crash, big (oversized response header), fat (1000-byte padded response),
-// alloc; "echo" answers all.
+// alloc; "echo" answers all; "linger" answers all and then does not exit; "exit-holder"
+// answers all, leaves a detached descendant holding only stdout and exits 0.
 func frameHelper(arg string) int {
 	action, at, _ := strings.Cut(arg, "@")
 	k := -1
@@ -199,6 +211,13 @@ func frameHelper(arg string) int {
 	for i := 0; ; i++ {
 		var hdr [4]byte
 		if _, err := io.ReadFull(in, hdr[:]); err != nil {
+			if action == "exit-holder" { // the descendant holds stdout but not stderr
+				spawnWith("sleep", true, os.Stdout, nil)
+				return 0
+			}
+			if action == "linger" { // does not exit after its last frame
+				time.Sleep(time.Hour)
+			}
 			if action == "tail" { // stray bytes after the last response
 				out.WriteString("junk")
 				out.Flush()
