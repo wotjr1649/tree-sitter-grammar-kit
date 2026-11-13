@@ -19,6 +19,7 @@ import (
 // they are absent. The gate
 // must stay closed and the table shows which scope's obligations close it.
 func TestNativeQueryCompletionCurrentState(t *testing.T) {
+	platform, subject, otherHost := queryHostOrSkip(t, true)
 	read := func(path string) []byte {
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -34,11 +35,6 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	platform, subject := predicateHost()
-	if platform != "windows-amd64" {
-		t.Skip("the registered current state is judged on windows-amd64")
-	}
-
 	// predicate scope: 20 EVALUATED tuples on the owned native plus the 47 rejection rows
 	b := fixtureBuild(t, "plain")
 	ok := map[string]bool{}
@@ -72,7 +68,7 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 		}
 		judgments = append(judgments, j)
 	}
-	other := map[string]bool{"linux-amd64": true}
+	other := map[string]bool{otherHost: true}
 	predicate, err := kit.PredicateScopeResult(registry, predAsset, judgments, other)
 	if err != nil {
 		t.Fatal(err)
@@ -87,6 +83,9 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// opt-in: keep this host's two judgments for the merge of both hosts (TSGK_QUERY_SCOPE_OUT)
+	storeQueryScopeHost(t, platform, kit.QueryScopeHostFile(kit.QueryScopePredicate, platform), predicate)
+	storeQueryScopeHost(t, platform, kit.QueryScopeHostFile(kit.QueryScopeSvc, platform), svcScope)
 
 	// large scope: the judgments #412 recorded per case (TSGK_LARGE_FOLD, ';' separated record
 	// files) and the HARD-cap receipt of the case that could not run in 4 GiB. No native large run

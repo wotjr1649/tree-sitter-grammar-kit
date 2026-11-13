@@ -786,6 +786,9 @@ jobs:
             $cgroup = "$base/jobs"
           }
           $cc = & src/dev/s05-native/select-compiler.ps1
+          # #362: the gate-external scope collection step after this one reuses this compiler. It cannot reuse
+          # this step's cgroup parent: it is a new process outside this step's supervisor, so it delegates its own.
+          "TSGK_SCOPE_CC=$cc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           # #218: the csharp-symbols role runs on Windows and Linux; darwin is deferred (#243)
           & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large -Oracle -Symbols:(-not $IsMacOS)
@@ -849,6 +852,75 @@ jobs:
         env:
           PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: scope 판정 근거 수집 (host별, gate 밖)
+        if: ${{ success() }}
+        timeout-minutes: 10
+        continue-on-error: true
+        run: |
+          # #362 L2/L3: store this host's predicate and SVC scope judgments with the run identity for the
+          # qualification job's merge; L3 adds the SVC result whose inline obligations ran on the C#
+          # grammar this job prepared (the closure the registered qualification role pins). Gate-external
+          # evidence in a step of its own, so that its time is bounded by a step timeout and a failure or a
+          # timeout cannot fail this required producer (continue-on-error). It runs only after every
+          # required step passed. A failed collection leaves no files and the merge reports this host absent.
+          $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          $base = ''
+          $origin = ''
+          try {
+            if ($IsLinux) {
+              # This step is a new process outside the required step's supervisor cgroup, where the runner's
+              # clone into a jobs leaf is refused (run 43384610234: fork/exec permission denied): delegate
+              # a subtree of its own, as the required step does.
+              $origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')
+              $base = "/sys/fs/cgroup/tsgk-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              sudo mkdir -p "$base/supervisor" "$base/jobs"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+              sudo chown -R "$(id -u):$(id -g)" $base
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+              sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+              Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+              Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+              $cgroup = "$base/jobs"
+            }
+            $env:TSGK_NATIVE_REQUIRED = '1'
+            $env:TSGK_CGROUP_PARENT = $cgroup
+            $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'
+            $env:TSGK_NATIVE_RUNTIME = Join-Path $env:TSGK_BENCH_PREPARED 'runtime'
+            $env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC
+            if ([string]::IsNullOrWhiteSpace($env:TSGK_NATIVE_CC)) { throw 'compiler of the route step missing' }
+            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
+            go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v -timeout=180s
+            # A FAILED judgment also ends a test nonzero, but the test stores its judgments before it concludes, so
+            # the stored file is kept and the merge reports the host's FAIL. A run that stored nothing is a
+            # collection failure: the file count below sends it to the catch block.
+            if ($LASTEXITCODE -ne 0) { Write-Output "::warning::scope fan-in test exited $LASTEXITCODE; its judgments are kept only if it stored them" }
+            $env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'
+            New-Item -ItemType Directory -Force -Path $out | Out-Null
+            $inlineLog = Join-Path $out 'svc-inline.log'
+            go test ./src/internal/native -run '^TestNativeSvcInlineRealGrammar$' -count=1 -v -timeout=300s > $inlineLog 2>&1
+            $inlineExit = $LASTEXITCODE
+            Get-Content -LiteralPath $inlineLog
+            if ($inlineExit -ne 0) { Write-Output "::warning::SVC inline test exited $inlineExit; its judgments are kept only if it stored them" }
+            # a skipped run passes go test and stores nothing; the test must have run (PASS or FAIL) and stored its result
+            if (!(Select-String -LiteralPath $inlineLog -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \(')) { throw 'SVC inline test did not run' }
+            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 4) { throw 'scope judgment files missing' }
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $scopeOut -HeadSHA $env:PR_HEAD_SHA
+            if ($LASTEXITCODE -ne 0) { throw 'scope run identity failed' }
+          } catch {
+            Write-Output "::warning::query scope collection failed: $_"
+            if (Test-Path -LiteralPath $scopeOut) { Remove-Item -LiteralPath $scopeOut -Recurse -Force }
+          }
+          if ($base -ne '') {
+            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner
+            sudo sh -c "echo $PID > '$origin/cgroup.procs'" 2>$null
+            sudo rmdir "$base/jobs" "$base/supervisor" $base 2>$null
+          }
+          $global:LASTEXITCODE = 0
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -887,6 +959,21 @@ jobs:
           name: json-holdout-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/s05-routes-${{ github.run_id }}-${{ github.run_attempt }}/json-holdout.log
           if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+      - name: scope 판정 근거 보관 (host별, gate 밖)
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # #362 L2: separate evidence like the JSON holdout (but this producer is a required job, so a failing
+          # upload of the extra evidence must not fail it): neither the closed qualification host file
+          # set nor the gate's artifact set changes. A host without files uploads nothing, which the
+          # merge reports as that host absent.
+          name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
           retention-days: 7
           compression-level: 6
       - name: Margin 실행 구성 기록
@@ -1107,6 +1194,77 @@ jobs:
           path: ${{ runner.temp }}/ci-config-qualification-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
           if-no-files-found: error
           retention-days: 7
+      # #362 L2: gate-external evidence. The two hosts' stored scope judgments of this run and attempt are
+      # merged and folded by src/dev/query-scope-merge. These steps never fail the job (the integration
+      # gate does not read their artifact); a missing or unbound host shows as a warning and in the report.
+      # Every step continues on error: the script steps catch their own errors, but a step timeout is not an
+      # error a script can catch. They run after the margin configuration steps the gate requires, so even a
+      # step that runs to its timeout cannot keep those artifacts from being written.
+      - name: scope 판정 host 근거 받기 (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 1
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-hosts
+      - name: scope 판정 host 근거 목록 지연 확인 (gate 밖)
+        id: scope_hosts
+        if: ${{ !cancelled() }}
+        timeout-minutes: 1
+        continue-on-error: true
+        run: |
+          # The listing can trail the producers; wait once before the merge reads the hosts.
+          $hosts = Join-Path $env:RUNNER_TEMP 'query-scope-hosts'
+          $missing = @('windows', 'linux') | Where-Object { -not (Test-Path -LiteralPath (Join-Path $hosts "query-scope-$_-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT")) }
+          if ($missing) {
+            Write-Output "scope artifact listing missing $($missing -join ','); retrying once after 30 s (after a partial re-run of failed jobs the earlier attempt's artifact is not visible: re-run all jobs)"
+            Start-Sleep -Seconds 30
+          }
+          "missing=$($missing -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: scope 판정 host 근거 다시 받기 (gate 밖)
+        if: ${{ !cancelled() && steps.scope_hosts.outputs.missing != '' }}
+        timeout-minutes: 1
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/query-scope-hosts
+      - name: 두 host scope 판정 병합과 fold (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        continue-on-error: true
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          try {
+            $hosts = Join-Path $env:RUNNER_TEMP 'query-scope-hosts'
+            $out = Join-Path $env:RUNNER_TEMP "scope-merge-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            New-Item -ItemType Directory -Path $out | Out-Null
+            & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
+            if ($LASTEXITCODE -ne 0) { throw 'merge run identity failed' }
+            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'))
+            foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'))) {
+              $dir = Join-Path $hosts "query-scope-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              if (Test-Path -LiteralPath $dir) { $cliArgs += @('-host', "$($p[1])=$dir") } else { Write-Output "scope host evidence missing: $($p[1])" }
+            }
+            go run ./src/dev/query-scope-merge @cliArgs
+            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, FAIL or REFUSED)" }
+          } catch {
+            Write-Output "::warning::query scope merge: $_"
+          }
+          $global:LASTEXITCODE = 0
+      - name: scope 병합 결과 보관 (gate 밖)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 1
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scope-merge-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/scope-merge-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 6
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }
