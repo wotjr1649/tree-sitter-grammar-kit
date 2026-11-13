@@ -82,6 +82,27 @@ func loadRequest(root, witnessPath, candidate, cohort string) (kit.OrdinaryGener
 	return req, err
 }
 
+// checkRegistrationSet requires one registration pin for exactly every route x host the profile binds,
+// under the key "registrations/<route>/<platform>.json". BuildOrdinaryShardPlan validates only the
+// registrations it is given (its consumers legitimately pass one), so a missing or extra registration
+// file is caught here, where the complete set is generated.
+func checkRegistrationSet(plan kit.OrdinaryShardPlan) error {
+	want := make(map[string]bool, len(plan.Bindings))
+	for _, b := range plan.Bindings {
+		want["registrations/"+b.Route+"/"+b.Platform+".json"] = true
+	}
+	if len(plan.Registrations) != len(want) {
+		return fmt.Errorf("registration set has %d files, the profile binds %d route-host pairs", len(plan.Registrations), len(want))
+	}
+	for _, pin := range plan.Registrations {
+		if !want[pin.Path] {
+			return fmt.Errorf("registration %s is not a bound route-host pair or is repeated", pin.Path)
+		}
+		delete(want, pin.Path)
+	}
+	return nil
+}
+
 // generate builds every document and proves the full plan with the existing planner and commitment.
 func generate(req kit.OrdinaryGenerateRequest) (Output, error) {
 	out := Output{Files: map[string][]byte{}}
@@ -92,6 +113,9 @@ func generate(req kit.OrdinaryGenerateRequest) (Output, error) {
 	planReq := g.PlanRequest(req)
 	out.PlanRequest = planReq
 	if out.Plan, err = kit.BuildOrdinaryShardPlan(planReq); err != nil {
+		return out, err
+	}
+	if err = checkRegistrationSet(out.Plan); err != nil {
 		return out, err
 	}
 	planBytes, err := kit.MarshalOrdinaryShardPlan(out.Plan)
