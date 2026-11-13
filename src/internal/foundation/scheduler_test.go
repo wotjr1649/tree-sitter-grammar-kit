@@ -149,6 +149,14 @@ const scopeEvidenceUploadHead = "      - name: scope 판정 근거 보관 (host�
 // build stay below it) and it cannot fail the required producer.
 const scopeEvidenceCollectHead = "      - name: scope 판정 근거 수집 (host별, gate 밖)\n        if: ${{ success() }}\n        timeout-minutes: 10\n        continue-on-error: true\n"
 
+// ordinaryEvidenceCollectHead and ordinaryEvidenceUploadHead are the two further steps that may continue on error
+// (#427 P1): the collection of the selected ordinary shards, after the scope collection and gate-external like it,
+// and the upload of its results and logs.
+const (
+	ordinaryEvidenceCollectHead = "      - name: ordinary 선택 shard 수집 (host별, gate 밖)\n        if: ${{ success() }}\n        timeout-minutes: 12\n        continue-on-error: true\n"
+	ordinaryEvidenceUploadHead  = "      - name: ordinary 결과와 원장 보관 (host별, gate 밖)\n        if: always()\n        timeout-minutes: 2\n        continue-on-error: true\n"
+)
+
 func routeSchedulePolicy(text string) error {
 	// #332: macOS is out of CI; no route job targets darwin
 	matrix := "          - os: windows-2025\n            goos: windows\n            goarch: amd64\n          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n"
@@ -165,7 +173,7 @@ func routeSchedulePolicy(text string) error {
 	}
 	// a required producer has no continue-on-error, except on the two gate-external evidence steps (#362)
 	allowed := body
-	for _, head := range []string{scopeEvidenceUploadHead, scopeEvidenceCollectHead} {
+	for _, head := range []string{scopeEvidenceUploadHead, scopeEvidenceCollectHead, ordinaryEvidenceCollectHead, ordinaryEvidenceUploadHead} {
 		allowed = strings.Replace(allowed, head, strings.Replace(head, "        continue-on-error: true\n", "", 1), 1)
 	}
 	if strings.Contains(allowed, "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
@@ -1187,7 +1195,12 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		return fmt.Errorf("native-routes scope collection step missing, unbounded or not continuing on error")
 	}
 	collect, _, _ = strings.Cut(collect, "\n      - ")
-	if rest := strings.Replace(routes, collect, "", 1); strings.Contains(rest, "TSGK_QUERY_SCOPE_OUT") || strings.Contains(rest, "TestNativeQueryCompletionCurrentState") || strings.Contains(rest, "TestNativeSvcInlineRealGrammar") {
+	rest := strings.Replace(routes, collect, "", 1)
+	if _, ordinary, found := strings.Cut(rest, ordinaryEvidenceCollectHead); found { // the ordinary collection is judged by ordinaryEvidencePolicy
+		ordinary, _, _ = strings.Cut(ordinary, "\n      - ")
+		rest = strings.Replace(rest, ordinary, "", 1)
+	}
+	if strings.Contains(rest, "TSGK_QUERY_SCOPE_OUT") || strings.Contains(rest, "TestNativeQueryCompletionCurrentState") || strings.Contains(rest, "TestNativeSvcInlineRealGrammar") {
 		return fmt.Errorf("scope collection inside a required step")
 	}
 	// what the collection step takes over from the required route step, through GITHUB_ENV
@@ -1374,7 +1387,7 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		"merge-skips-failure":  strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
 		"merge-before-margin":  moved,
 		"collection-throws":    strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
-		"collection-fails-job": strings.Replace(text, "          $global:LASTEXITCODE = 0\n        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: route", "        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: route", 1),
+		"collection-fails-job": strings.Replace(text, "          $global:LASTEXITCODE = 0\n        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", "        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", 1),
 		// the time budget (#362): the step limits, the wait and the go test limits, edited as the review's probes did
 		"merge-limit-40":               strings.Replace(text, merge, strings.Replace(merge, "timeout-minutes: 2", "timeout-minutes: 40", 1), 1),
 		"download-limit-30":            strings.Replace(text, download, strings.Replace(download, "timeout-minutes: 1", "timeout-minutes: 30", 1), 1),

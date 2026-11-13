@@ -150,7 +150,7 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 	plan := ordinaryPlanForTest(v, inventory)
 	routeIndex := ordinaryRouteIndex(inventory, "json")
 	route := inventory.Routes[routeIndex]
-	const platform = "windows-amd64"
+	platform := ordinaryHostPlatform()
 	cases := make([]ordinaryFullPosCase, 0, len(caseIDs))
 	for _, id := range caseIDs {
 		cases = append(cases, ordinaryFullPosQuality(t, id))
@@ -299,7 +299,7 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 	plan.Assets = queryregistrycore.FilePin(assetsPath, assetData)
 	registration := OrdinaryRegistration{Schema: "tsgk-query-semantics-registration/r2", Registry: plan.Registry, Namespace: plan.Namespace,
 		Inventory: queryregistrycore.QualificationPin, Slots: queryregistrycore.SlotPin, Profile: plan.Profile, Assets: plan.Assets,
-		Route: route.Route, Set: route.Workload.Set, Platform: platform, Subject: "windows/amd64", MembershipContext: "qualification/r8",
+		Route: route.Route, Set: route.Workload.Set, Platform: platform, Subject: ordinaryHostSubject(), MembershipContext: "qualification/r8",
 		Context: OrdinaryContext, ClosureEncoding: "plain", Candidate: plan.Candidate, SemanticCohort: plan.SemanticCohort, PlannedMembers: []OrdinaryMember{planned}}
 	for i, original := range route.Workload.Cases {
 		index := shardIndex(original.ID)
@@ -353,7 +353,7 @@ func ordinaryFullPosJSONInput(t *testing.T, grammarRoot string, caseIDs []string
 	}
 	registration.Required = slices.Clone(registration.Required)
 	registrationData := ordinaryJSON(t, registration)
-	plan.Registrations = []OrdinaryPin{queryregistrycore.FilePin("registrations/json/windows-amd64.json", registrationData)}
+	plan.Registrations = []OrdinaryPin{queryregistrycore.FilePin("registrations/json/"+platform+".json", registrationData)}
 	commitment, selection := ordinarySelectionForTest(t, plan, indices)
 	selection.Binding.ClosureEncoding = "plain"
 	selection.Binding.Profile = queryregistrycore.FilePin("profile/executable.json", executable)

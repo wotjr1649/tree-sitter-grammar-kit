@@ -54,9 +54,9 @@ func TestOracleOrdinaryOwnedFixture(t *testing.T) {
 	}
 	prepared := &ordinaryRecording{
 		profile:      kit.OrdinaryProfile{Candidate: "owned-e2e", SemanticCohort: "owned-e2e-current"},
-		registration: kit.OrdinaryRegistration{Route: "owned", Platform: "windows-amd64", Subject: "windows/amd64", ClosureEncoding: "plain"},
+		registration: kit.OrdinaryRegistration{Route: "owned", Platform: strings.ReplaceAll(hostPlatform, "/", "-"), Subject: hostPlatform, ClosureEncoding: "plain"},
 		sources:      [][]byte{[]byte(source)},
-		shardIDs:     []string{"owned/windows-amd64/ca"},
+		shardIDs:     []string{"owned/" + strings.ReplaceAll(hostPlatform, "/", "-") + "/ca"},
 	}
 	initial := OracleResult{Report: kit.Report{Schema: kit.ReportSchema, Command: "oracle record", Findings: []kit.Finding{}, Coverage: kit.Coverage{Requested: []string{}, Observed: []string{}, Unsupported: []string{}}}, Cases: []CaseLine{}, Platform: hostPlatform}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)

@@ -36,7 +36,7 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 	route := inventory.Routes[routeIndex]
 	if caseID == "" {
 		for _, shard := range plan.Shards {
-			if shard.Route == route.Route && shard.Platform == "windows-amd64" {
+			if shard.Route == route.Route && shard.Platform == ordinaryHostPlatform() {
 				caseID = shard.Case
 				break
 			}
@@ -77,7 +77,7 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 	plan.Assets = queryregistrycore.FilePin("profile/assets.json", assetData)
 	registration := OrdinaryRegistration{Schema: "tsgk-query-semantics-registration/r2", Registry: plan.Registry, Namespace: plan.Namespace,
 		Inventory: queryregistrycore.QualificationPin, Slots: queryregistrycore.SlotPin, Profile: plan.Profile, Assets: plan.Assets,
-		Route: route.Route, Set: route.Workload.Set, Platform: "windows-amd64", Subject: "windows/amd64", MembershipContext: "qualification/r8",
+		Route: route.Route, Set: route.Workload.Set, Platform: ordinaryHostPlatform(), Subject: ordinaryHostSubject(), MembershipContext: "qualification/r8",
 		Context: OrdinaryContext, ClosureEncoding: closure, Candidate: plan.Candidate, SemanticCohort: plan.SemanticCohort, PlannedMembers: append([]OrdinaryMember{}, planned...)}
 	selectedIndex := -1
 	for i, shard := range plan.Shards {
@@ -200,9 +200,9 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 		}
 		registration.Required = append(registration.Required, required)
 	}
-	registrationPath, profilePath, assetsPath := "registrations/"+routeName+"-windows.json", "profile/ordinary.json", "profile/assets.json"
+	registrationPath, profilePath, assetsPath := "registrations/"+routeName+"-"+ordinaryHostPlatform()+".json", "profile/ordinary.json", "profile/assets.json"
 	if exactSource {
-		registrationPath, profilePath, assetsPath = "registrations/"+routeName+"/windows-amd64.json", "profile/tsgk-oracle-r4.json", "profile/ordinary-assets-r1.json"
+		registrationPath, profilePath, assetsPath = "registrations/"+routeName+"/"+ordinaryHostPlatform()+".json", "profile/tsgk-oracle-r4.json", "profile/ordinary-assets-r1.json"
 	}
 	plan.Registrations = []OrdinaryPin{}
 	plan.Profile = queryregistrycore.FilePin(profilePath, planningProfile)
@@ -768,6 +768,7 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 		t.Run(route, func(t *testing.T) {
 			run := ordinarySQLRunRoute(t, filepath.Join(artifactRoot, "sql-"+route), route, nil)
 			result, verifyErr := run.Result, run.Err
+			ordinaryScopeRecord(t, "sql-"+route, result)
 			limits := OrdinaryPlanLimits()
 			if run.AssetBodies == 0 && (result.Tuple.Verified != 0 || result.Semantic == AssessPass) {
 				t.Fatalf("synthetic SQL references without independent expected assets were incorrectly treated as verified: %+v", result)

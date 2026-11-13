@@ -921,6 +921,123 @@ jobs:
           $global:LASTEXITCODE = 0
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: ordinary 선택 shard 수집 (host별, gate 밖)
+        if: ${{ success() }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: |
+          # #427 P1: the selected ordinary shards (JSON 2 and 14 tuples, PostgreSQL 9, TSQL 72) run their native
+          # regressions on this host and store the public pass results; the last test folds them into this host's
+          # ordinary scope result next to the predicate and SVC ones, for the qualification job's merge. Gate-external
+          # in a step of its own, after the scope collection: a step timeout bounds it (the go test timeouts below add
+          # up to 9 min), a failure or a timeout cannot fail this required producer (continue-on-error), and a
+          # missing or partial result leaves the tuples it did not judge BLOCKED. It extends the host directory the
+          # scope collection stored, and does nothing without it. A skipped test passes go test and stores nothing:
+          # every test must have run (PASS or FAIL), else the step ends with a warning.
+          $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $ordinaryOut = Join-Path $env:RUNNER_TEMP "ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          $base = ''
+          $origin = ''
+          try {
+            if (!(Test-Path -LiteralPath (Join-Path $scopeOut 'run-identity.json') -PathType Leaf)) { throw 'the scope collection stored no host files to extend' }
+            if ($IsLinux) {
+              # a new process outside the earlier steps' supervisor cgroups: delegate a subtree of its own (run 43384610234)
+              $origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')
+              $base = "/sys/fs/cgroup/tsgk-ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              sudo mkdir -p "$base/supervisor" "$base/jobs"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+              sudo chown -R "$(id -u):$(id -g)" $base
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+              sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+              Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+              Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+              $cgroup = "$base/jobs"
+            }
+            $prepared = Join-Path $env:RUNNER_TEMP 's05-prepared'
+            $env:TSGK_NATIVE_REQUIRED = '1'
+            $env:TSGK_CGROUP_PARENT = $cgroup
+            $env:TSGK_NATIVE_RUNTIME = Join-Path $prepared 'runtime'
+            $env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC
+            if ([string]::IsNullOrWhiteSpace($env:TSGK_NATIVE_CC)) { throw 'compiler of the route step missing' }
+            $env:TSGK_ORDINARY_SQL_E2E = '1'
+            $env:TSGK_ORDINARY_GRAMMAR_ROOT = Join-Path $prepared 'routes'
+            $env:TSGK_ORDINARY_E2E_ARTIFACTS = Join-Path $ordinaryOut 'artifacts'
+            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'
+            New-Item -ItemType Directory -Force -Path $ordinaryOut | Out-Null
+            $notRun = @()
+            # JSON: the single case, the two-case zero-edit run and the 14-tuple history run (the first tuple of the
+            # single case is the first of the two-case run, so only the two multi-case results are stored)
+            $log = Join-Path $ordinaryOut 'json.log'
+            go test ./src/kit -run '^(TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases|TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase|TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase)$' -count=1 -v -timeout=150s > $log 2>&1
+            Get-Content -LiteralPath $log
+            foreach ($test in @('TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases', 'TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase', 'TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase')) {
+              if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
+            }
+            $log = Join-Path $ordinaryOut 'postgresql.log'
+            go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^postgresql-sql$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/postgresql-sql \(')) { $notRun += 'postgresql-sql' }
+            # PostgreSQL forgery counterexamples: one tampered tree node, capture or fact fails exactly the tuples that consume it
+            $log = Join-Path $ordinaryOut 'postgresql-tamper.log'
+            go test ./src/kit -run '^TestOrdinaryPostgreSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryPostgreSQLExpectedAgainstNative \(')) { $notRun += 'postgresql-tamper' }
+            # TSQL: the 72-tuple public pass (about 96.5 % of the logical limit on Windows) and the tamper counterexamples
+            $log = Join-Path $ordinaryOut 'tsql.log'
+            go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^tsql$' -count=1 -v -timeout=100s > $log 2>&1
+            Get-Content -LiteralPath $log
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql \(')) { $notRun += 'tsql' }
+            $log = Join-Path $ordinaryOut 'tsql-tamper.log'
+            go test ./src/kit -run '^TestOrdinaryTSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryTSQLExpectedAgainstNative \(')) { $notRun += 'tsql-tamper' }
+            # the platform neutrality of the inputs: the same bytes on both hosts, and the scanners that ask the host's libc
+            $log = Join-Path $ordinaryOut 'neutrality.log'
+            go test ./src/dev/query-witness -run '^(TestOrdinarySourcesAreByteIdenticalOnBothHosts|TestOrdinaryScannerLibcExposure)$' -count=1 -v -timeout=45s > $log 2>&1
+            Get-Content -LiteralPath $log
+            foreach ($test in @('TestOrdinarySourcesAreByteIdenticalOnBothHosts', 'TestOrdinaryScannerLibcExposure')) {
+              if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
+            }
+            # the store: this host's ordinary scope result from what the tests above stored
+            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
+            $log = Join-Path $ordinaryOut 'store.log'
+            go test ./src/kit -run '^TestOrdinaryScopeStore$' -count=1 -v -timeout=30s > $log 2>&1
+            Get-Content -LiteralPath $log
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore \(')) { $notRun += 'store' }
+            if ($notRun.Count -gt 0) { throw "ordinary tests did not run: $($notRun -join ', ')" }
+            if (!(Test-Path -LiteralPath (Join-Path $scopeOut "query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json"))) { throw 'ordinary scope file missing' }
+          } catch {
+            Write-Output "::warning::ordinary scope collection failed: $_"
+          }
+          if ($base -ne '') {
+            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner
+            sudo sh -c "echo $PID > '$origin/cgroup.procs'" 2>$null
+            sudo rmdir "$base/jobs" "$base/supervisor" $base 2>$null
+          }
+          $global:LASTEXITCODE = 0
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+      - name: ordinary 결과와 원장 보관 (host별, gate 밖)
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # #427 P1: the stored public pass results, the test logs and the ledgers of the first Linux ordinary runs.
+          # Evidence apart from the closed host file set of the scope merge, which names none of it.
+          name: ordinary-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/*.log
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/results
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/public-ledger.jsonl
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/public-result.json
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/capacity-stop.json
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/native-producer.log
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 6
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

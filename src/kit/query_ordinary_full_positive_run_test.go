@@ -18,9 +18,14 @@ func ordinaryFullPosVerify(t *testing.T, ctx context.Context, req OrdinaryQueryS
 }
 
 // ordinaryFullPosRequireAllVerified checks the public result, then that the r9 replay and `tsgk replay` agree with it.
-func ordinaryFullPosRequireAllVerified(t *testing.T, ctx context.Context, name string, in ordinaryFullPosInput, req OrdinaryQuerySemanticsRequest, required int) {
+// A non-empty collect stores the public result for the ordinary scope result of this host (ordinaryScopeRecord)
+// before it is judged.
+func ordinaryFullPosRequireAllVerified(t *testing.T, ctx context.Context, name string, in ordinaryFullPosInput, req OrdinaryQuerySemanticsRequest, required int, collect string) {
 	t.Helper()
 	api, err := ordinaryFullPosVerify(t, ctx, req)
+	if collect != "" {
+		ordinaryScopeRecord(t, collect, api)
+	}
 	if err != nil || api.Assessment != AssessPass || api.Semantic != AssessPass || api.BaseVerified.Assessment != AssessPass || !api.Complete || !api.ProcessingComplete || !api.BindingValid || api.FullScopeComplete ||
 		api.Tuple.Required != uint64(required) || api.Tuple.Verified != uint64(required) || api.Tuple.Failed != 0 || api.Tuple.Blocked != 0 || api.Tuple.Unprocessed != 0 || len(api.SelectedObligationIDs) != required {
 		t.Fatalf("%s: public ordinary API over the owned r8: err=%v result=%+v", name, err, api)
@@ -77,7 +82,7 @@ func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
 	caseIDs := []string{"alt-json-B01-05", "alt-json-B01-09"}
 	in := ordinaryFullPosJSONInput(t, grammarRoot, caseIDs, ordinaryFullPosMutation{})
 	req, producerDir := ordinaryFullPosProduce(t, in)
-	ordinaryFullPosRequireAllVerified(t, ctx, "zero-edit multi-case", in, req, 2)
+	ordinaryFullPosRequireAllVerified(t, ctx, "zero-edit multi-case", in, req, 2, "json-zero-edit")
 
 	// Case substitution: the two documents swap their independent expectations. Every pin stays consistent,
 	// so only the comparison with the actual native tree can object.
@@ -115,7 +120,7 @@ func TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase(t *testing.T) {
 		t.Fatalf("the history cases must have four versions: %d %d", len(in.Cases[0].Versions), len(in.Cases[1].Versions))
 	}
 	req, producerDir := ordinaryFullPosProduce(t, in)
-	ordinaryFullPosRequireAllVerified(t, ctx, "edit-history multi-case", in, req, 14)
+	ordinaryFullPosRequireAllVerified(t, ctx, "edit-history multi-case", in, req, 14, "json-history")
 
 	// Step missing: the step-2 reference row of the first case is absent.
 	ordinaryFullPosRequireNotVerified(t, ctx, "step 2 reference row missing",
@@ -184,7 +189,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	caseIDs := []string{"alt-json-B01-05", "json-feature-r1"}
 	in := ordinaryFullPosJSONInput(t, grammarRoot, caseIDs, ordinaryFullPosMutation{})
 	registered := []string{in.Cases[0].ID, in.Cases[1].ID}
-	byPlan := []string{ordinaryPlanShardKey("json", "windows-amd64", caseIDs[0]), ordinaryPlanShardKey("json", "windows-amd64", caseIDs[1])}
+	byPlan := []string{ordinaryPlanShardKey("json", ordinaryHostPlatform(), caseIDs[0]), ordinaryPlanShardKey("json", ordinaryHostPlatform(), caseIDs[1])}
 	if !slices.Equal(registered, []string{"json-feature-r1", "alt-json-B01-05"}) || !slices.Equal(in.ShardIDs, byPlan) || !slices.IsSorted(in.ShardIDs) {
 		t.Fatalf("the premise changed: the registration order must be the reverse of the plan order: cases=%v shards=%v", registered, in.ShardIDs)
 	}
@@ -198,7 +203,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	if !slices.Equal(manifest.Cases, registered) || !slices.Equal(manifest.ShardIDs, byPlan) {
 		t.Fatalf("the r8 must list cases in registration order and shard IDs in plan order: cases=%v shards=%v", manifest.Cases, manifest.ShardIDs)
 	}
-	ordinaryFullPosRequireAllVerified(t, ctx, "shard order differs from registration order", in, req, 8)
+	ordinaryFullPosRequireAllVerified(t, ctx, "shard order differs from registration order", in, req, 8, "")
 
 	// Same shard-ID set, different binding: every variant must be refused by the public API.
 	swap := func(ids []string) []string { ids[0], ids[1] = ids[1], ids[0]; return ids }
@@ -209,7 +214,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	ordinaryFullPosRequireNotVerified(t, ctx, "one shard ID omitted", ordinaryFullPosSelect(t, req, func(ids []string) []string { return ids[:1] }, func(p [][]byte) [][]byte { return p[:1] }))
 	ordinaryFullPosRequireNotVerified(t, ctx, "shard ID of another case substituted", ordinaryFullPosSelect(t, req,
 		func(ids []string) []string {
-			ids[1] = ordinaryPlanShardKey("json", "windows-amd64", "alt-json-B01-09")
+			ids[1] = ordinaryPlanShardKey("json", ordinaryHostPlatform(), "alt-json-B01-09")
 			return ids
 		}, nil))
 }

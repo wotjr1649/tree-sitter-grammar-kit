@@ -2,7 +2,11 @@
 //
 // Each host hands over a closed directory: its run-identity.json, the two files
 // query-scope-{predicate,svc}-<host>.json that the native fan-in test stores, and
-// query-scope-svc-inline-<host>.json from the real-C#-grammar SVC test (#362 L3). The last is the same
+// query-scope-svc-inline-<host>.json from the real-C#-grammar SVC test (#362 L3), and optionally
+// query-scope-ordinary-<host>.json from the selected-shard ordinary regressions (#427 P1). The ordinary file
+// is optional because its collection is a step of its own that can fail or time out without taking the other
+// evidence with it: a host without it leaves its ordinary rows BLOCKED, a present one is checked like the
+// others. The svc-inline file is the same
 // scope and rows as the svc file with that host's inline rows judged further; it must agree with the
 // svc file everywhere else and then stands for the host's svc result. The tool binds those
 // directories to the run it executes in (artifact layer: run id, attempt, commit and head SHA, the
@@ -46,6 +50,9 @@ const (
 var hostPairs = map[string][2]string{"windows-amd64": {"windows", "amd64"}, "linux-amd64": {"linux", "amd64"}}
 
 var scopes = []string{kit.QueryScopePredicate, kit.QueryScopeSvc}
+
+// The ordinary scope is not in scopes: its file is optional (see above), so it is read apart.
+const ordinaryKey = kit.QueryScopeOrdinary
 
 // svcInlineKey names the stored svc result of the inline run next to the scopes; it is not a scope.
 const svcInlineKey = "svc-inline"
@@ -159,12 +166,15 @@ func bound(got, want kit.RunIdentity, host string) bool {
 		got.EvidenceMode == "NEW_RUN" && got.Job == producerJob && got.GOOS == pair[0] && got.GOARCH == pair[1]
 }
 
-func wantedFiles(host string) []string {
+func wantedFiles(host string, ordinary bool) []string {
 	names := []string{identityFile}
 	for _, key := range append(slices.Clone(scopes), svcInlineKey) {
 		names = append(names, fileOf(key, host))
 	}
 	names = append(names, scopeobligations.FileName(host))
+	if ordinary {
+		names = append(names, fileOf(ordinaryKey, host))
+	}
 	slices.Sort(names)
 	return names
 }
@@ -186,7 +196,9 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 		}
 		names = append(names, e.Name())
 	}
-	if !slices.Equal(names, wantedFiles(host)) { // ReadDir is sorted by name
+	// ReadDir is sorted by name
+	withOrdinary := slices.Equal(names, wantedFiles(host, true))
+	if !withOrdinary && !slices.Equal(names, wantedFiles(host, false)) {
 		return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
 	}
 	read := map[string][]byte{}
@@ -223,6 +235,16 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 			return in, nil, refuse("QUERY_SCOPE_HOST_MISMATCH")
 		}
 		results[key] = h
+	}
+	if withOrdinary {
+		h, err := kit.DecodeQueryScopeHostResult(read[fileOf(ordinaryKey, host)])
+		if err != nil {
+			return in, nil, refuse(codeOf(err))
+		}
+		if h.Host != host || h.Result.Scope != kit.QueryScopeOrdinary {
+			return in, nil, refuse("QUERY_SCOPE_HOST_MISMATCH")
+		}
+		results[ordinaryKey] = h
 	}
 	// the inline run's result is the same scope and rows: it stands for the host's svc result
 	if !refinesOffline(results[kit.QueryScopeSvc], results[svcInlineKey]) {
@@ -335,6 +357,11 @@ func foldRequest(root string) (kit.QueryCompletionRequest, error) {
 		},
 		ResultPins: map[string]string{},
 	}
+	ordinaryPins, err := kit.OrdinaryScopeAssetPins(func(path string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(path))) })
+	if err != nil {
+		return req, err
+	}
+	req.AssetPins[kit.QueryScopeOrdinary] = ordinaryPins
 	for _, b := range [][]byte{registry, predicate, svc, svcInline, large, req.Qualification, req.Slots, req.SvcFixture, req.LargeFixtures} {
 		if len(b) == 0 {
 			return req, errors.New("committed contract missing")
@@ -368,6 +395,7 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
 	}
 	byScope := map[string][]kit.QueryScopeHostResult{}
+	var ordinary []kit.QueryScopeHostResult
 	var absent error
 	for _, host := range []string{"windows-amd64", "linux-amd64"} {
 		dir, ok := dirs[host]
@@ -388,6 +416,9 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		for _, scope := range scopes {
 			byScope[scope] = append(byScope[scope], results[scope])
 		}
+		if h, ok := results[ordinaryKey]; ok {
+			ordinary = append(ordinary, h)
+		}
 	}
 	if absent != nil { // a present host is not folded alone: the other host stays unjudged
 		return fail(absent)
@@ -402,6 +433,19 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		req.Scopes = append(req.Scopes, merged)
 		req.ResultPins[scope] = merged.ResultSHA256 // the pin is the merged digest itself: only the checks above give it meaning
 		rep.Scopes[scope] = merged.ResultSHA256
+	}
+	// ordinary: both hosts' files merge; one host's file stands alone (the other host's rows are BLOCKED in it
+	// by construction); none leaves the scope absent, which the fold counts BLOCKED
+	if len(ordinary) > 0 {
+		scope := ordinary[0].Result
+		if len(ordinary) > 1 {
+			if scope, err = kit.MergeQueryScopeHostResults(ordinary); err != nil {
+				return fail(refuse(codeOf(err)))
+			}
+		}
+		req.Scopes = append(req.Scopes, scope)
+		req.ResultPins[kit.QueryScopeOrdinary] = scope.ResultSHA256
+		rep.Scopes[kit.QueryScopeOrdinary] = scope.ResultSHA256
 	}
 	res, err := kit.FoldQueryCompletion(req)
 	if err != nil {
