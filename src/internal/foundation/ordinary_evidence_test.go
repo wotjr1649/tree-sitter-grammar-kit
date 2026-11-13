@@ -43,12 +43,25 @@ var ordinaryGoTests = [7]struct{ run, complete string }{
 	{`-run '^TestOrdinaryScopeStore$' -count=1 -v -timeout=30s`, `-Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore \('`},
 }
 
+// ordinaryFailureFunction is the warning of a go test that exited nonzero, pinned exactly: a refactoring that returns
+// early, swallows the output, narrows the status or throws (a throw would end the step before the store and leave the
+// host silent) is not accepted. It names the failed tests and what a failure means for the claim.
+const ordinaryFailureFunction = `          function Write-OrdinaryFailure($log, $status) {
+            if ($status -eq 0) { return }
+            $failed = @(Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+            if ($failed.Count -eq 0) { $failed = @('none named, a build failure or a panic or timeout') }
+            Write-Output "::warning::ordinary go test exited ${status} ($(Split-Path -Leaf $log)); failed: $($failed -join ', '); a failed test stores no result (its tuples stay BLOCKED) unless its only failure is a FAILED verdict, which is stored and reported as FAIL by the merge"
+          }
+`
+
 // ordinaryEvidencePolicy pins the gate-external collection of the selected ordinary shards (#427 P1), on the lines of
 // queryScopeEvidencePolicy: no new job, no required step, no change of a limit. The collection is a step of its own
 // after the scope collection, bounded by its step timeout, unable to fail the required producer, with a cgroup
 // delegation of its own; it extends the host directory the scope collection stored and never removes anything in it;
-// a failing go test is a result (FAILED tuples are stored before the verdict), while a test that did not run
-// (a skip passes go test) ends the step with a warning and leaves what it did not judge BLOCKED.
+// a go test that exits nonzero is named in a warning that never throws (its function body is pinned exactly:
+// ordinaryFailureFunction), a test that did not run (a skip passes go test) ends the step with a warning and leaves
+// what it did not judge BLOCKED. What a test stores is decided by the regressions (the #362 L2/L3 rule: a run with an
+// integrity failure stores nothing, a genuine FAILED verdict is stored), not by this policy.
 func ordinaryEvidencePolicy(text string) error {
 	routes := workflowJobBody(text, "native-routes")
 	_, step, ok := strings.Cut(routes, ordinaryEvidenceCollectHead)
@@ -88,15 +101,15 @@ func ordinaryEvidencePolicy(text string) error {
 		// a test that did not run is named, kept as a warning, and does not discard what the others stored
 		"if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }",
 		// a go test that exits nonzero is visible: a warning naming the failed tests (F1 of #435), never a throw
-		"function Write-OrdinaryFailure($log, $status) {", "if ($status -eq 0) { return }",
-		`Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)'`, "$($failed -join ', ')",
-		`Write-Output "::warning::ordinary go test exited ${status} (`, "a test that failed stores no result and its tuples stay BLOCKED",
 		`Write-Output "::warning::ordinary scope collection failed: $_"`, "$global:LASTEXITCODE = 0\n",
 		`$env:PLATFORM -replace '/', '-'`,
 	} {
 		if !strings.Contains(step, required) {
 			return fmt.Errorf("native-routes ordinary collection missing: %s", required)
 		}
+	}
+	if !strings.Contains(step, ordinaryFailureFunction) {
+		return fmt.Errorf("the failure warning function is not the pinned one (ordinaryFailureFunction): it must warn for every nonzero status and never throw")
 	}
 	// the host files of the scope collection are never removed here, and no other step's cgroup or base is reused
 	for _, forbidden := range []string{"Remove-Item", "TSGK_SCOPE_CGROUP", "tsgk-scope-", "TSGK_BENCH_PREPARED", "throw \"ordinary test failed", "-Pattern '^'"} {
@@ -105,7 +118,7 @@ func ordinaryEvidencePolicy(text string) error {
 		}
 	}
 	// exactly the seven go test commands, each followed by its log and none turning a failing test into a collection
-	// failure (the next line shows the log; a FAILED tuple is a result), each with its own pinned time limit
+	// failure (the next line shows the log, the warning names the failed tests), each with its own pinned time limit
 	goTests := regexp.MustCompile(`(?m)^\s*go test (\S+ )?(.*)> \$log 2>&1\n\s*Get-Content -LiteralPath \$log\n\s*Write-OrdinaryFailure \$log \$LASTEXITCODE\n`).FindAllStringSubmatch(step, -1)
 	if all := regexp.MustCompile(`(?m)^\s*go test `).FindAllString(step, -1); len(all) != len(ordinaryGoTests) || len(goTests) != len(all) || strings.Count(step, "-timeout") != len(all) {
 		return fmt.Errorf("the ordinary collection runs exactly %d go test commands, each logged, each followed by its failure warning and each with its own timeout", len(ordinaryGoTests))
@@ -323,16 +336,22 @@ func TestWorkflowOrdinaryEvidenceIsGateExternal(t *testing.T) {
 		"failure-warning-dropped-json":  inBlock("            Get-Content -LiteralPath $log\n            Write-OrdinaryFailure $log $LASTEXITCODE\n            foreach ($test in @('TestVerifyOrdinary", "            Get-Content -LiteralPath $log\n            foreach ($test in @('TestVerifyOrdinary"),
 		"failure-warning-dropped-store": inBlock("            Write-OrdinaryFailure $log $LASTEXITCODE\n            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore", "            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore"),
 		"failure-warning-silent":        inBlock("            if ($status -eq 0) { return }\n", "            return\n"),
-		"failure-warning-always-silent": inBlock("            Write-Output \"::warning::ordinary go test exited ${status} (", "            Write-Verbose \"::warning::ordinary go test exited ${status} ("),
-		"failure-tests-not-named":       inBlock("failed: $($failed -join ', '); ", ""),
-		"failure-pattern-wrong":         inBlock("'^\\s*--- FAIL: (\\S+)'", "'^--- FAIL: (\\S+)'"),
-		"failure-claim-not-stated":      inBlock("; a test that failed stores no result and its tuples stay BLOCKED", ""),
-		"failure-function-in-try":       strings.Replace(inBlock(failureFunc, ""), "            $log = Join-Path $ordinaryOut 'postgresql.log'\n", strings.ReplaceAll(failureFunc, "          ", "            ")+"            $log = Join-Path $ordinaryOut 'postgresql.log'\n", 1),
-		"not-run-ignored":               inBlock("            if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }\n", ""),
-		"scope-dir-global":              "", // two edits, below
-		"scope-dir-not-named":           inBlock("            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", ""),
-		"result-dir-dropped":            inBlock("            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'\n", ""),
-		"file-check-dropped":            inBlock("            if (!(Test-Path -LiteralPath (Join-Path $scopeOut \"query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json\"))) { throw 'ordinary scope file missing' }\n", ""),
+		// the function body is pinned (R3 of #435): none of these edits may pass, whatever the pieces they leave alone
+		"failure-w1-return-before-warning": inBlock("            Write-Output \"::warning::ordinary go test exited", "            return\n            Write-Output \"::warning::ordinary go test exited"),
+		"failure-w2-output-swallowed":      inBlock("            Write-Output \"::warning::ordinary go test exited", "            $null = Write-Output \"::warning::ordinary go test exited"),
+		"failure-w3-only-status-1":         inBlock("            if ($status -eq 0) { return }\n", "            if ($status -eq 0) { return }\n            if ($status -ne 1) { return }\n"),
+		"failure-w4-throws":                inBlock("            if ($status -eq 0) { return }\n", "            if ($status -eq 0) { return }\n            if ($status -eq 1) { throw 'ordinary go test failed' }\n"),
+		"failure-w8-status-overwritten":    inBlock("            if ($status -eq 0) { return }\n", "            $status = 0\n            if ($status -eq 0) { return }\n"),
+		"failure-warning-always-silent":    inBlock("            Write-Output \"::warning::ordinary go test exited ${status} (", "            Write-Verbose \"::warning::ordinary go test exited ${status} ("),
+		"failure-tests-not-named":          inBlock("failed: $($failed -join ', '); ", ""),
+		"failure-pattern-wrong":            inBlock("'^\\s*--- FAIL: (\\S+)'", "'^--- FAIL: (\\S+)'"),
+		"failure-claim-not-stated":         inBlock("; a failed test stores no result (its tuples stay BLOCKED) unless its only failure is a FAILED verdict, which is stored and reported as FAIL by the merge", ""),
+		"failure-function-in-try":          strings.Replace(inBlock(failureFunc, ""), "            $log = Join-Path $ordinaryOut 'postgresql.log'\n", strings.ReplaceAll(failureFunc, "          ", "            ")+"            $log = Join-Path $ordinaryOut 'postgresql.log'\n", 1),
+		"not-run-ignored":                  inBlock("            if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }\n", ""),
+		"scope-dir-global":                 "", // two edits, below
+		"scope-dir-not-named":              inBlock("            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", ""),
+		"result-dir-dropped":               inBlock("            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'\n", ""),
+		"file-check-dropped":               inBlock("            if (!(Test-Path -LiteralPath (Join-Path $scopeOut \"query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json\"))) { throw 'ordinary scope file missing' }\n", ""),
 		// the upload
 		"upload-requires":       inUpload("if-no-files-found: ignore\n", "if-no-files-found: error\n"),
 		"upload-fails-producer": strings.Replace(text, ordinaryEvidenceUploadHead, strings.Replace(ordinaryEvidenceUploadHead, "        continue-on-error: true\n", "", 1), 1),

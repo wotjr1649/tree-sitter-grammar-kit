@@ -766,22 +766,27 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 	artifactRoot := ordinarySQLEnv(t)
 	for _, route := range []string{"postgresql-sql", "tsql"} {
 		t.Run(route, func(t *testing.T) {
+			rec := ordinaryScopeCollect(t, "sql-"+route) // first: its cleanup runs after every other one
 			run := ordinarySQLRunRoute(t, filepath.Join(artifactRoot, "sql-"+route), route, nil)
 			result, verifyErr := run.Result, run.Err
-			ordinaryScopeRecord(t, "sql-"+route, result)
 			limits := OrdinaryPlanLimits()
+			// Tuples FAILED against the native r8 are a verdict, not an integrity failure: the remaining checks run and the
+			// verdict fails the test last (ordinaryScopeRecorder). Any other deviation is fatal as before.
+			verdictOnly := rec.Judged(result, verifyErr, int(result.Tuple.Required)) && run.AssetBodies != 0
 			if run.AssetBodies == 0 && (result.Tuple.Verified != 0 || result.Semantic == AssessPass) {
 				t.Fatalf("synthetic SQL references without independent expected assets were incorrectly treated as verified: %+v", result)
 			}
-			if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
+			if verdictOnly {
+				rec.VerdictFailed("%s: %d of %d independently authored tuples FAILED against the native r8: %+v", route, result.Tuple.Failed, result.Tuple.Required, result.Tuple)
+			} else if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
 				t.Fatalf("%s: an independently authored tuple FAILED against the native r8: %+v", route, result)
 			}
 			// A route with independently authored expected assets must finish with every required tuple VERIFIED;
 			// a capacity stop is a failure here, not a measurement.
-			if run.AssetBodies != 0 && verifyErr != nil {
+			if !verdictOnly && run.AssetBodies != 0 && verifyErr != nil {
 				t.Fatalf("%s did not finish: err=%v capacity=%s stop_boundary=%s rejected=%v verified=%d/%d", route, verifyErr, run.Capacity, run.LastStage, run.LastRejected, result.Tuple.Verified, result.Tuple.Required)
 			}
-			if run.AssetBodies != 0 {
+			if !verdictOnly && run.AssetBodies != 0 {
 				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessPass || result.Semantic != AssessPass || result.Assessment != AssessPass || result.Tuple.Required == 0 ||
 					result.Tuple.Failed != 0 || result.Tuple.Verified != result.Tuple.Required || result.Tuple.Blocked != 0 {
 					t.Fatalf("%s body adjudication did not finish with a recomputed base PASS: %+v", route, result)

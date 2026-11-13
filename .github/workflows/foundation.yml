@@ -651,14 +651,17 @@ jobs:
           $dest = Join-Path $env:RUNNER_TEMP "s05-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform linux/amd64 -CgroupParent $cgroup
           # keep the regeneration reports, drop the duplicated outputs, tools and CLI. The PostgreSQL route keeps the
-          # two small generated files of each workspace (grammar.json, node-types.json; about 2 MB each): the ordinary
-          # PostgreSQL regressions (#427 P1) check their hand-authored tree against them and against the pinned digests
-          # of src/contracts/reproduction-routes.json, so the opt-in collection finds what a local preparation holds.
+          # two small generated files of each workspace (out/grammar.json 1.4 MB, out/node-types.json 0.5 MB, about
+          # 3.9 MB for both workspaces): the ordinary PostgreSQL regressions (#427 P1) check their hand-authored tree
+          # against them and against the pinned digests of src/contracts/reproduction-routes.json, so the opt-in
+          # collection finds what a local preparation holds. Only workspace-*/out/ of that route stays.
           Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object {
             $route = $_.Name
             Get-ChildItem -LiteralPath $_.FullName -Directory | ForEach-Object {
-              if ($route -ne 'postgresql-sql') { Remove-Item -LiteralPath $_.FullName -Recurse -Force; return }
-              Get-ChildItem -LiteralPath $_.FullName -File -Recurse | Where-Object { $_.Directory.Name -ne 'out' -or $_.Name -notin @('grammar.json', 'node-types.json') } | Remove-Item -Force
+              $workspace = $_
+              if ($route -ne 'postgresql-sql' -or $workspace.Name -notlike 'workspace-*') { Remove-Item -LiteralPath $workspace.FullName -Recurse -Force; return }
+              $keep = Join-Path $workspace.FullName 'out'
+              Get-ChildItem -LiteralPath $workspace.FullName -File -Recurse | Where-Object { $_.DirectoryName -ne $keep -or $_.Name -notin @('grammar.json', 'node-types.json') } | Remove-Item -Force
             }
           }
           Remove-Item -LiteralPath (Join-Path $dest 'tools'), (Join-Path $dest 'profiles') -Recurse -Force
@@ -941,23 +944,27 @@ jobs:
           # in a step of its own, after the scope collection: a step timeout bounds it (the go test timeouts below add
           # up to 9 min), a failure or a timeout cannot fail this required producer (continue-on-error), and a
           # missing or partial result leaves the tuples it did not judge BLOCKED. It extends the host directory the
-          # scope collection stored, and does nothing without it. A regression stores its result only when it has
-          # passed: a test that failed (a FAILED tuple included) stores nothing, is named in a warning, and the
-          # merge reports the host's ordinary rows under-filled. A skipped test passes go test and stores nothing:
-          # every test must have run (PASS or FAIL), else the step ends with a warning. The VERIFIED rows rest on
-          # synthetic reference rows and approval (#427 decision B5).
+          # scope collection stored, and does nothing without it. The rule is the one of #362 L2/L3: a regression whose
+          # run integrity held stores its result (a PASS, or a run whose only failure is tuples FAILED against the
+          # native tree: the merge then reports FAIL); a test that failed otherwise (a build, a start, a replay parity,
+          # a ledger, a negative control, a panic, a timeout) stores nothing, is named in a warning, and its tuples stay
+          # BLOCKED (the merge reports the host's ordinary rows under-filled). The store writes the host's file even
+          # when no test stored a result (every tuple unjudged); the merge, told of this step (-ordinary-step), reports
+          # a host without the file as absent. A skipped test passes go test and stores nothing: every test must have
+          # run (PASS or FAIL), else the step ends with a warning. The VERIFIED rows rest on synthetic reference rows
+          # and approval (#427 decision B5).
           $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $ordinaryOut = Join-Path $env:RUNNER_TEMP "ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $cgroup = ''
           $base = ''
           $origin = ''
-          # a go test that exits nonzero is named in a warning with the tests that failed in it. The regressions store
-          # their result only once they have passed, so a failed test leaves no claim and its tuples stay BLOCKED.
+          # a go test that exits nonzero is named in a warning with the tests that failed in it. A test that failed for
+          # a reason other than a FAILED verdict stores no result and its tuples stay BLOCKED; a FAILED verdict is stored.
           function Write-OrdinaryFailure($log, $status) {
             if ($status -eq 0) { return }
             $failed = @(Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
             if ($failed.Count -eq 0) { $failed = @('none named, a build failure or a panic or timeout') }
-            Write-Output "::warning::ordinary go test exited ${status} ($(Split-Path -Leaf $log)); failed: $($failed -join ', '); a test that failed stores no result and its tuples stay BLOCKED"
+            Write-Output "::warning::ordinary go test exited ${status} ($(Split-Path -Leaf $log)); failed: $($failed -join ', '); a failed test stores no result (its tuples stay BLOCKED) unless its only failure is a FAILED verdict, which is stored and reported as FAIL by the merge"
           }
           try {
             if (!(Test-Path -LiteralPath (Join-Path $scopeOut 'run-identity.json') -PathType Leaf)) { throw 'the scope collection stored no host files to extend' }
@@ -1387,13 +1394,13 @@ jobs:
             New-Item -ItemType Directory -Path $out | Out-Null
             & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
             if ($LASTEXITCODE -ne 0) { throw 'merge run identity failed' }
-            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'))
+            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'), '-ordinary-step')
             foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'))) {
               $dir = Join-Path $hosts "query-scope-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
               if (Test-Path -LiteralPath $dir) { $cliArgs += @('-host', "$($p[1])=$dir") } else { Write-Output "scope host evidence missing: $($p[1])" }
             }
             go run ./src/dev/query-scope-merge @cliArgs
-            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, FAIL or REFUSED)" }
+            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, ordinary rejected, absent or underfilled, FAIL or REFUSED)" }
           } catch {
             Write-Output "::warning::query scope merge: $_"
           }

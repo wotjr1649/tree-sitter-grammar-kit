@@ -1319,6 +1319,10 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 			if !strings.Contains(step, "$global:LASTEXITCODE = 0") || !strings.Contains(step, "} catch {") || !strings.Contains(step, "::warning::query scope merge: $_") {
 				return fmt.Errorf("the merge step must only warn")
 			}
+			// the run has the ordinary collection step: a host without its file is reported, not a silent MERGED (R1 of #435)
+			if !strings.Contains(step, "'-out', (Join-Path $out 'query-scope-merge.json'), '-ordinary-step')") {
+				return fmt.Errorf("the merge step must tell the tool that the run had the ordinary collection step (-ordinary-step)")
+			}
 		}
 	}
 	if merged != 1 {
@@ -1377,17 +1381,18 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		return text[:m] + text[a:v] + text[m:a] + text[v:]
 	}()
 	for name, broken := range map[string]string{
-		"download-fails-job":   without(download, "        continue-on-error: true\n"),
-		"download-unbounded":   without(download, "        timeout-minutes: 1\n"),
-		"hosts-script-timeout": without(hosts, "        continue-on-error: true\n"),
-		"merge-unbounded":      without(merge, "        timeout-minutes: 2\n"),
-		"merge-timeout-fails":  without(merge, "        continue-on-error: true\n"),
-		"merge-fails-job":      strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
-		"merge-throws":         strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
-		"merge-skips-failure":  strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
-		"merge-before-margin":  moved,
-		"collection-throws":    strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
-		"collection-fails-job": strings.Replace(text, "          $global:LASTEXITCODE = 0\n        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", "        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", 1),
+		"download-fails-job":          without(download, "        continue-on-error: true\n"),
+		"download-unbounded":          without(download, "        timeout-minutes: 1\n"),
+		"hosts-script-timeout":        without(hosts, "        continue-on-error: true\n"),
+		"merge-unbounded":             without(merge, "        timeout-minutes: 2\n"),
+		"merge-timeout-fails":         without(merge, "        continue-on-error: true\n"),
+		"merge-fails-job":             strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
+		"merge-throws":                strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
+		"merge-skips-failure":         strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
+		"merge-before-margin":         moved,
+		"merge-without-ordinary-step": strings.Replace(text, ", '-ordinary-step')", ")", 1),
+		"collection-throws":           strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
+		"collection-fails-job":        strings.Replace(text, "          $global:LASTEXITCODE = 0\n        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", "        env:\n          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}\n      - name: ordinary", 1),
 		// the time budget (#362): the step limits, the wait and the go test limits, edited as the review's probes did
 		"merge-limit-40":               strings.Replace(text, merge, strings.Replace(merge, "timeout-minutes: 2", "timeout-minutes: 40", 1), 1),
 		"download-limit-30":            strings.Replace(text, download, strings.Replace(download, "timeout-minutes: 1", "timeout-minutes: 30", 1), 1),

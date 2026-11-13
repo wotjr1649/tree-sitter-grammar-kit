@@ -150,7 +150,9 @@ func TestMergeTakesTheOrdinaryFileOfEachHost(t *testing.T) {
 	}
 }
 
-// A FAILED ordinary tuple is kept as the run's FAIL, like a FAILED predicate or SVC judgment, ahead of an under-fill.
+// A FAILED ordinary tuple is kept as the run's FAIL, like a FAILED predicate or SVC judgment, ahead of an under-fill
+// and of an absent file. The regressions store a genuine FAILED verdict (R2 of #435, the #362 L2/L3 rule), so this is
+// a path a producer reaches: a run whose only failure is the verdict stores its FAILED tuples with the VERIFIED ones.
 func TestMergeKeepsAnOrdinaryFailure(t *testing.T) {
 	f := fixtureFor(t)
 	dirs := twoHosts(t, f)
@@ -159,6 +161,66 @@ func TestMergeKeepsAnOrdinaryFailure(t *testing.T) {
 	if rep.Status != statusFail || rep.Completion == nil || rep.Completion.Total.Failed != 2 || rep.Code != "ORDINARY_CAPTURE_MISMATCH" {
 		t.Fatalf("%s %s %+v", rep.Status, rep.Code, rep.Completion)
 	}
+	// a single FAILED tuple among a full 97 is FAIL, with the other host's file absent or short as well
+	dirs[windows] = withOrdinary(t, f, windows, ordinaryHostFile(t, f, windows, 96, 1, nil))
+	for _, step := range []bool{false, true} {
+		if rep := mergeRun(root, expected(), dirs, step); rep.Status != statusFail || rep.Completion == nil || rep.Completion.Total.Failed != 1 {
+			t.Errorf("one FAILED tuple (ordinary step %v): %s %s", step, rep.Status, rep.Code)
+		}
+	}
+}
+
+// R1 of #435: for a run that had the ordinary step, a host directory without its ordinary file is reported, not a
+// silent MERGED: the step stored nothing (every test failed, it threw, it timed out). A zero-judged file (the store
+// ran and no test had stored a result) is the under-fill it is. For a run without the step the file stays optional.
+func TestMergeReportsAnOrdinaryStepThatStoredNothing(t *testing.T) {
+	f := fixtureFor(t)
+	const withoutOrdinary = 2 * (67 + 263 + 30 + 60)
+	full := func(host string) string { return withOrdinary(t, f, host, ordinaryHostFile(t, f, host, 97, 0, nil)) }
+	check := func(name string, dirs map[string]string, status, code string, absent ...string) report {
+		t.Helper()
+		rep := mergeRun(root, expected(), dirs, true)
+		var got []string
+		if rep.Ordinary != nil {
+			got = rep.Ordinary.Absent
+		}
+		if rep.Status != status || code != "*" && rep.Code != code || rep.Completion == nil || !slices.Equal(got, absent) {
+			t.Errorf("%s: %s %s absent %v, want %s %s absent %v", name, rep.Status, rep.Code, got, status, code, absent)
+		}
+		return rep
+	}
+	// the honest pair is MERGED, the files themselves unchanged by the flag
+	honest := twoHosts(t, f)
+	honest[windows], honest[linux] = full(windows), full(linux)
+	check("honest pair", honest, statusMerged, "*")
+	// no file on either host: BLOCKED, not MERGED; the rest is folded as before
+	rep := check("no file on either host", twoHosts(t, f), statusBlocked, "QUERY_SCOPE_ORDINARY_ABSENT", windows, linux)
+	if rep.Completion.Total.Verified != withoutOrdinary || rep.Scopes[kit.QueryScopeOrdinary] != "" {
+		t.Errorf("no file: total %+v scopes %v", rep.Completion.Total, rep.Scopes)
+	}
+	// the same directories for a run without the step stay MERGED with no ordinary trace (the file is optional there)
+	if rep := merge(root, expected(), twoHosts(t, f)); rep.Status != statusMerged || rep.Ordinary != nil {
+		t.Errorf("a run without the ordinary step: %s %s %+v", rep.Status, rep.Code, rep.Ordinary)
+	}
+	// one host has a file, the other none: absent (the specific cause), not the under-fill it also is
+	one := twoHosts(t, f)
+	one[windows] = full(windows)
+	check("windows only", one, statusBlocked, "QUERY_SCOPE_ORDINARY_ABSENT", linux)
+	// a zero-judged file on both hosts (the store ran, no test had stored a result) is the under-fill, nothing absent
+	zero := twoHosts(t, f)
+	zero[windows] = withOrdinary(t, f, windows, ordinaryHostFile(t, f, windows, 0, 0, nil))
+	zero[linux] = withOrdinary(t, f, linux, ordinaryHostFile(t, f, linux, 0, 0, nil))
+	rep = check("zero-judged files", zero, statusBlocked, "QUERY_SCOPE_ORDINARY_UNDERFILLED")
+	if u := rep.Ordinary.Unjudged; u[windows] != 97 || u[linux] != 97 {
+		t.Errorf("zero-judged: unjudged %v, want 97 on both hosts", u)
+	}
+	// the order of the verdicts: FAIL, then a dropped file, then absent
+	failed := twoHosts(t, f)
+	failed[windows] = withOrdinary(t, f, windows, ordinaryHostFile(t, f, windows, 96, 1, nil))
+	check("a FAILED tuple and an absent file", failed, statusFail, "ORDINARY_CAPTURE_MISMATCH", linux)
+	rejected := twoHosts(t, f)
+	rejected[windows] = withOrdinary(t, f, windows, ordinaryHostFile(t, f, windows, ordinaryRows(t, f)[0].Required, 0, nil))
+	check("an overclaimed file and an absent one", rejected, statusBlocked, "QUERY_SCOPE_ORDINARY_REJECTED", linux)
 }
 
 // What the selected shards do not derive is not accepted (F2 of #435): a host file that judges more tuples than the

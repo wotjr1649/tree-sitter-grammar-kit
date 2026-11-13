@@ -1,6 +1,12 @@
 package kit
 
 import (
+	"errors"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -15,49 +21,112 @@ import (
 // single-case regression does not store its result: its tuple is the first one of the two-case run.
 var ordinaryScopeResultNames = []string{"json-zero-edit", "json-history", "sql-postgresql-sql", "sql-tsql"}
 
-// ordinaryScopeRecord keeps the public pass result of a selected-shard regression for TestOrdinaryScopeStore when
-// QueryScopeOrdinaryResultsEnv names a directory, and stores it only once the test has finished: a test that failed
-// anywhere (a FAILED tuple, a later check, a panic or a timeout that never reaches the cleanup) or skipped stores
-// nothing, so that no claim includes tuples of a test that did not complete with PASS; its tuples stay BLOCKED and the
-// collection step names the failed test. A stored file is never overwritten.
-func ordinaryScopeRecord(t *testing.T, name string, result OrdinaryQuerySemanticsResult) {
+// ordinaryScopeRecorder keeps the public result of a selected-shard regression for TestOrdinaryScopeStore when
+// QueryScopeOrdinaryResultsEnv names a directory. The rule is the one of #362 L2/L3: a run with a run-integrity error
+// stores nothing, a genuine FAILED verdict is stored. The regression takes the recorder as its first statement, so that
+// its cleanup is the last one to run (cleanups are LIFO): a cleanup registered earlier that fails later still
+// counts. At that point the test has either failed (a build, a start, a replay parity, a ledger, a negative control, a
+// panic; a timeout never reaches the cleanup), skipped, or ended, and only a test that did not fail stores:
+//   - a PASS stores its result;
+//   - a verdict-only failure stores it as well and then fails the test. It is reported by VerdictFailed, which only
+//     Judged (a complete, bound run whose only deviation is tuples FAILED because the expected tree, captures or
+//     metadata differ from the native result) allows; the test goes on with its other checks, and any failure of
+//     those clears the claim, so the FAILED tuples reach the merge only from a run whose integrity held.
+//
+// A stored file is never overwritten. Without the environment nothing is stored, but the verdict still fails the test.
+type ordinaryScopeRecorder struct {
+	name    string
+	dir     string
+	result  *OrdinaryQuerySemanticsResult
+	verdict string
+}
+
+// ordinaryDivergenceCodes are the tuple codes that say the independent expectation differs from the native result.
+var ordinaryDivergenceCodes = []string{"ORDINARY_EXPECTED_TREE_MISMATCH", "ORDINARY_CAPTURE_MISMATCH", "ORDINARY_CAPTURE_MATCHES_MISMATCH", "ORDINARY_METADATA_MISMATCH"}
+
+func ordinaryScopeCollect(t *testing.T, name string) *ordinaryScopeRecorder {
 	t.Helper()
-	dir := os.Getenv(QueryScopeOrdinaryResultsEnv)
-	if dir == "" {
-		return
-	}
-	if !slices.Contains(ordinaryScopeResultNames, name) {
+	r := &ordinaryScopeRecorder{name: name, dir: os.Getenv(QueryScopeOrdinaryResultsEnv)}
+	if r.dir != "" && !slices.Contains(ordinaryScopeResultNames, name) {
 		t.Fatalf("ordinary scope result %q is not a collected one", name)
 	}
-	data := ordinaryJSON(t, result)
-	t.Cleanup(func() {
-		if t.Failed() || t.Skipped() {
-			t.Logf("ordinary scope result %q not stored: the test did not complete with PASS", name)
-			return
+	t.Cleanup(func() { r.finish(t) })
+	return r
+}
+
+// ordinaryVerdictOnly reports whether a public result is a finished, bound judgment of exactly `required` tuples
+// whose only deviation from PASS is tuples FAILED by a divergence of the expectation from the native result.
+func ordinaryVerdictOnly(r OrdinaryQuerySemanticsResult, err error, required int) bool {
+	if err != nil || r.ExecutionStatus != StatusCompleted || !r.ProcessingComplete || !r.BindingValid || r.BaseVerified.Assessment != AssessPass ||
+		r.Tuple.Required != uint64(required) || r.Tuple.Failed == 0 || r.Tuple.Verified+r.Tuple.Failed != r.Tuple.Required ||
+		len(r.SelectedObligationIDs) != required || len(r.Obligations) != required {
+		return false
+	}
+	for _, o := range r.Obligations {
+		if o.State != ordinaryTupleVerified && !(o.State == ordinaryTupleFailed && slices.Contains(ordinaryDivergenceCodes, o.Code)) {
+			return false
 		}
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			t.Errorf("ordinary scope result %q: %v", name, err)
-			return
+	}
+	return true
+}
+
+// Judged keeps the public result and reports whether the run is verdict-only (see ordinaryVerdictOnly). A nil
+// recorder keeps nothing and reports false: the caller then checks for PASS.
+func (r *ordinaryScopeRecorder) Judged(result OrdinaryQuerySemanticsResult, err error, required int) bool {
+	if r == nil {
+		return false
+	}
+	r.result = &result
+	return ordinaryVerdictOnly(result, err, required)
+}
+
+// VerdictFailed defers the FAILED verdict: the test fails with it once its cleanups have run and nothing else failed.
+func (r *ordinaryScopeRecorder) VerdictFailed(format string, args ...any) {
+	r.verdict = fmt.Sprintf(format, args...)
+}
+
+func (r *ordinaryScopeRecorder) finish(t *testing.T) {
+	if t.Failed() || t.Skipped() {
+		if r.dir != "" {
+			t.Logf("ordinary scope result %q not stored: the test failed or skipped before its verdict was final", r.name)
 		}
-		f, err := os.OpenFile(filepath.Join(dir, name+".json"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
-		if err != nil {
-			t.Errorf("ordinary scope result %q: %v", name, err)
-			return
+		if r.verdict != "" {
+			t.Logf("verdict (not stored): %s", r.verdict)
 		}
-		_, werr := f.Write(data)
-		if err := f.Close(); werr != nil || err != nil {
-			t.Errorf("ordinary scope result %q write: %v %v", name, werr, err)
-		}
-	})
+		return
+	}
+	if r.verdict != "" {
+		defer t.Error(r.verdict)
+	}
+	if r.dir == "" {
+		return
+	}
+	if r.result == nil {
+		t.Errorf("ordinary scope result %q was never recorded", r.name)
+		return
+	}
+	if err := os.MkdirAll(r.dir, 0o755); err != nil {
+		t.Errorf("ordinary scope result %q: %v", r.name, err)
+		return
+	}
+	f, err := os.OpenFile(filepath.Join(r.dir, r.name+".json"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		t.Errorf("ordinary scope result %q: %v", r.name, err)
+		return
+	}
+	_, werr := f.Write(ordinaryJSON(t, *r.result))
+	if err := f.Close(); werr != nil || err != nil {
+		t.Errorf("ordinary scope result %q write: %v %v", r.name, werr, err)
+	}
 }
 
 // ordinaryHostScope folds the stored results of a directory into the host's ordinary scope result. The directory
 // is closed: only the named results, each decoded and recomputed by DecodeOrdinaryQuerySemanticsResult; a name
-// missing is a shard no pass judged (it stays BLOCKED), a stranger is a defect.
+// missing is a shard no run judged (it stays BLOCKED, all of them when the directory is empty or absent), a stranger is a defect.
 func ordinaryHostScope(t *testing.T, v *queryregistrycore.Validated, assets []queryregistrycore.Pin, host, dir string) QueryScopeHostResult {
 	t.Helper()
 	entries, err := os.ReadDir(dir)
-	if err != nil {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) { // no directory: no test stored a result
 		t.Fatal(err)
 	}
 	claimable := ordinaryScopeClaimIDs(v)[host]
@@ -83,9 +152,7 @@ func ordinaryHostScope(t *testing.T, v *queryregistrycore.Validated, assets []qu
 		}
 		results = append(results, result)
 	}
-	if len(results) == 0 {
-		t.Fatal("no ordinary result stored: nothing to claim")
-	}
+	// no stored result is a zero-judged file, not an absent one: the merge then reports every tuple of the host unjudged
 	scope, err := OrdinaryScopeResult(v, assets, results)
 	if err != nil {
 		t.Fatal(err)
@@ -232,25 +299,191 @@ func TestOrdinaryScopeResultsRefuseAnOverlappingPass(t *testing.T) {
 	}
 }
 
-// A result is stored only by a test that completed with PASS: one that failed after recording it (a later check, a
-// FAILED tuple) or skipped leaves no file, so no claim includes the tuples of a test that did not pass (F1 of #435).
-// The inner tests run through testing.RunTests; the failing ones print their own "--- FAIL: ordinaryRecord…" lines.
-func TestOrdinaryScopeRecordStoresOnlyPassingTests(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv(QueryScopeOrdinaryResultsEnv, dir)
-	inner := func(name, result string, body func(t *testing.T)) {
-		testing.RunTests(func(string, string) (bool, error) { return true, nil }, []testing.InternalTest{{Name: name, F: func(t *testing.T) {
-			ordinaryScopeRecord(t, result, newOrdinarySemanticsResult())
-			body(t)
+// A result is stored only by a test whose run integrity held (the #362 L2/L3 rule, R2 of #435): a PASS stores it; a
+// test whose only failure is the FAILED verdict stores it too (and still fails); a test that failed or skipped for any
+// other reason leaves no file. The inner tests run through testing.RunTests and print their own
+// "--- FAIL: ordinaryRecord…" lines, which do not match the CI completion patterns.
+func TestOrdinaryScopeRecorderStoresVerdictsButNotIntegrityFailures(t *testing.T) {
+	f := faninFixtureFor(t)
+	ids := ordinaryScopeClaimIDs(f.v)["windows-amd64"]
+	// two tuples judged against the native tree: one VERIFIED, one FAILED by a divergence of the expectation
+	failedShard := func(code string) OrdinaryQuerySemanticsResult {
+		r := faninShard(ids[:2], []string{"VERIFIED", "FAILED"}, true)
+		r.Obligations[1].Code = code
+		r.Findings, r.Code = nil, ""
+		r.finding(code, ids[1], "")
+		r.BaseVerified = Verdict{StatusCompleted, AssessPass} // the recomputed base held: the tuples were judged
+		for _, id := range []string{"case-binding", "case-status", "tree", "verdict", "incremental-equality", "incremental-route", "expectations", "query-equality", "api", "query-expectations", "fact-reproduction", "dynamic-sql"} {
+			gate := ReplayGate{ID: id, Recomputed: 1}
+			gate.finish()
+			r.Gates = append(r.Gates, gate)
+		}
+		r.ProcessingComplete, r.Complete = true, true
+		return r
+	}
+	diverged := failedShard("ORDINARY_EXPECTED_TREE_MISMATCH")
+	if !ordinaryVerdictOnly(diverged, nil, 2) {
+		t.Fatalf("a divergence of the expectation is a verdict: %+v", diverged)
+	}
+	for name, c := range map[string]struct {
+		r        OrdinaryQuerySemanticsResult
+		err      error
+		required int
+	}{
+		"an error":                 {diverged, errors.New("stopped"), 2},
+		"a binding failure":        {failedShard("ORDINARY_EXPECTED_TREE_BINDING"), nil, 2},
+		"a source binding failure": {failedShard("ORDINARY_TUPLE_SOURCE_BINDING"), nil, 2},
+		"a blocked tuple":          {faninShard(ids[:2], []string{"VERIFIED", "BLOCKED"}, true), nil, 2},
+		"all VERIFIED":             {faninShard(ids[:2], []string{"VERIFIED", "VERIFIED"}, true), nil, 2},
+		"another number of tuples": {diverged, nil, 3},
+		"a binding that is invalid": {func() OrdinaryQuerySemanticsResult {
+			r := diverged
+			r.BindingValid = false
+			return r
+		}(), nil, 2},
+		"a base that is not PASS": {func() OrdinaryQuerySemanticsResult {
+			r := diverged
+			r.BaseVerified.Assessment = AssessFail
+			return r
+		}(), nil, 2},
+	} {
+		if ordinaryVerdictOnly(c.r, c.err, c.required) {
+			t.Errorf("%s was taken for a verdict-only failure", name)
+		}
+	}
+
+	inner := func(dir, name, result string, body func(t *testing.T, rec *ordinaryScopeRecorder)) (passed bool) {
+		t.Setenv(QueryScopeOrdinaryResultsEnv, dir)
+		return testing.RunTests(func(string, string) (bool, error) { return true, nil }, []testing.InternalTest{{Name: name, F: func(t *testing.T) {
+			body(t, ordinaryScopeCollect(t, result))
 		}}})
 	}
-	inner("ordinaryRecordPasses", "json-zero-edit", func(t *testing.T) {})
-	inner("ordinaryRecordFailsLater", "json-history", func(t *testing.T) { t.Error("a check after the record failed") })
-	inner("ordinaryRecordSkips", "sql-postgresql-sql", func(t *testing.T) { t.Skip("skipped after the record") })
-	inner("ordinaryRecordFailsNow", "sql-tsql", func(t *testing.T) { t.Fatal("a FAILED tuple") })
-	entries, err := os.ReadDir(dir)
-	if err != nil || len(entries) != 1 || entries[0].Name() != "json-zero-edit.json" {
-		t.Fatalf("stored %v %v: only the passing test may leave a file", entries, err)
+	pass := newOrdinarySemanticsResult()
+	record := func(rec *ordinaryScopeRecorder) { rec.Judged(pass, nil, 0) }
+	// as the regressions do: the verdict is deferred only for a run Judged takes for verdict-only
+	verdict := func(t *testing.T, rec *ordinaryScopeRecorder) {
+		if !rec.Judged(diverged, nil, 2) {
+			t.Fatal("the divergence was not taken for a verdict")
+		}
+		rec.VerdictFailed("2 tuples FAILED")
+	}
+	stored := func(dir string) []string {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		return names
+	}
+
+	// the reviewer's cases: the PASS and the verdict-only run store, every integrity failure stores nothing
+	dir := t.TempDir()
+	if !inner(dir, "ordinaryRecordPasses", "json-zero-edit", func(t *testing.T, rec *ordinaryScopeRecorder) { record(rec) }) {
+		t.Error("a PASS failed")
+	}
+	if inner(dir, "ordinaryRecordVerdictOnly", "json-history", func(t *testing.T, rec *ordinaryScopeRecorder) { verdict(t, rec) }) {
+		t.Error("the FAILED verdict did not fail the test")
+	}
+	if inner(dir, "ordinaryRecordFailsLater", "sql-postgresql-sql", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		record(rec)
+		t.Error("a check after the record failed")
+	}) {
+		t.Error("a failing test passed")
+	}
+	if inner(dir, "ordinaryRecordVerdictThenIntegrity", "sql-tsql", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		verdict(t, rec)
+		t.Error("a negative control after the verdict did not behave")
+	}) {
+		t.Error("a failing test passed")
+	}
+	if got := stored(dir); !slices.Equal(got, []string{"json-history.json", "json-zero-edit.json"}) {
+		t.Fatalf("stored %v: the PASS and the verdict-only run store, the integrity failures do not", got)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "json-history.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := DecodeOrdinaryQuerySemanticsResult(data); err != nil || got.Tuple.Failed != 1 || got.Tuple.Verified != 1 {
+		t.Fatalf("the stored verdict-only result keeps its FAILED tuple: %+v %v", got.Tuple, err)
+	}
+
+	// K3 of the review: shapes the real tests have, and a cleanup that fails after the verdict
+	dir2 := t.TempDir()
+	inner(dir2, "ordinaryRecordSubtestFails", "json-zero-edit", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		record(rec)
+		t.Run("negative", func(t *testing.T) { t.Error("a negative control failed") })
+	})
+	inner(dir2, "ordinaryRecordSkips", "json-history", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		record(rec)
+		t.Skip("skipped after the record")
+	})
+	// R6 of the review: a cleanup the test or a helper registers (a temporary directory, a hook restore) fails after
+	// the verdict was reached. The recorder is the first statement, so its cleanup runs last and sees the failure.
+	inner(dir2, "ordinaryRecordCleanupFails", "sql-tsql", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		t.Cleanup(func() { t.Error("a cleanup registered by the test failed") })
+		record(rec)
+	})
+	inner(dir2, "ordinaryRecordCleanupFailsAfterVerdict", "sql-postgresql-sql", func(t *testing.T, rec *ordinaryScopeRecorder) {
+		t.Cleanup(func() { t.Error("a cleanup registered by the test failed") })
+		verdict(t, rec)
+	})
+	if got := stored(dir2); len(got) != 0 {
+		t.Errorf("stored %v: a test that failed anywhere, skipped, or whose cleanup failed stores nothing", got)
+	}
+}
+
+// R6 of #435: the recorder stores from the cleanup that runs last only when it is the first one registered, so every
+// call of ordinaryScopeCollect must be the first statement of its test function (or function literal). This reads the
+// package's test sources: a collecting regression that registers a cleanup first would store before that cleanup fails.
+func TestOrdinaryScopeCollectIsTheFirstStatement(t *testing.T) {
+	files, err := filepath.Glob("*_test.go")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no test sources: %v", err)
+	}
+	isCollect := func(n ast.Node) bool {
+		c, ok := n.(*ast.CallExpr)
+		if !ok {
+			return false
+		}
+		id, ok := c.Fun.(*ast.Ident)
+		return ok && id.Name == "ordinaryScopeCollect"
+	}
+	all, first := 0, 0
+	for _, name := range files {
+		f, err := parser.ParseFile(token.NewFileSet(), name, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			if isCollect(n) {
+				all++
+			}
+			var body *ast.BlockStmt
+			switch fn := n.(type) {
+			case *ast.FuncDecl:
+				body = fn.Body
+			case *ast.FuncLit:
+				body = fn.Body
+			}
+			if body != nil && len(body.List) > 0 {
+				ast.Inspect(body.List[0], func(m ast.Node) bool {
+					if _, nested := m.(*ast.FuncLit); nested {
+						return false
+					}
+					if isCollect(m) {
+						first++
+					}
+					return true
+				})
+			}
+			return true
+		})
+	}
+	if all < 5 || first != all {
+		t.Errorf("%d calls of ordinaryScopeCollect, %d of them the first statement of their function: the recorder must be registered before any other cleanup", all, first)
 	}
 }
 
@@ -268,8 +501,9 @@ func TestOrdinaryScopeStoreClaimsOnlyWhatPassed(t *testing.T) {
 	t.Setenv(QueryScopeOrdinaryResultsEnv, dir)
 	run := func(name, result string, ids []string, fails bool) {
 		testing.RunTests(func(string, string) (bool, error) { return true, nil }, []testing.InternalTest{{Name: name, F: func(t *testing.T) {
+			rec := ordinaryScopeCollect(t, result)
 			if ids != nil {
-				ordinaryScopeRecord(t, result, verified(ids))
+				rec.Judged(verified(ids), nil, len(ids))
 			}
 			if fails {
 				t.Error("the r9 replay refused the subject")
@@ -289,6 +523,24 @@ func TestOrdinaryScopeStoreClaimsOnlyWhatPassed(t *testing.T) {
 	claims := map[string]uint64{"windows-amd64": 97, "linux-amd64": 97}
 	if OrdinaryScopeOverclaim(h.Result, claims) || OrdinaryScopeUnjudged(h.Result, claims)[host] != 25 {
 		t.Errorf("the file is not reported 25 tuples short on %s: %v", host, OrdinaryScopeUnjudged(h.Result, claims))
+	}
+}
+
+// R1 of #435: a host whose regressions all failed stores no result, and the store still writes its file: every tuple
+// of the host unjudged (a zero-judged file), not an absent one. An absent directory is the same case.
+func TestOrdinaryHostScopeWithNothingStoredIsZeroJudged(t *testing.T) {
+	f := faninFixtureFor(t)
+	claims := map[string]uint64{"windows-amd64": 97, "linux-amd64": 97}
+	for name, dir := range map[string]string{"empty": t.TempDir(), "absent": filepath.Join(t.TempDir(), "never-created")} {
+		h := ordinaryHostScope(t, f.v, []queryregistrycore.Pin{faninOrdinaryAsset}, "linux-amd64", dir)
+		for _, c := range h.Result.Counters {
+			if c.Verified != 0 || c.Failed != 0 || c.Unprocessed != 0 || c.Blocked != c.Required {
+				t.Errorf("%s: %+v", name, c)
+			}
+		}
+		if got := OrdinaryScopeUnjudged(h.Result, claims); got["linux-amd64"] != 97 || got["windows-amd64"] != 97 || OrdinaryScopeOverclaim(h.Result, claims) {
+			t.Errorf("%s: unjudged %v", name, got)
+		}
 	}
 }
 
