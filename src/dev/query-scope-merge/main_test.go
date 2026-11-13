@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -33,6 +34,8 @@ type fixture struct {
 	svc                                      kit.SvcExpected
 	inventory                                []byte
 	rec                                      map[string][]kit.SvcJudgment // svc judgments by the result they were folded into
+	codes                                    map[string]string            // the inline asset's per-obligation codes ("" = derivable)
+	trees, queries                           []int                        // obligation indexes of the derivable inline trees and queries
 }
 
 // record remembers the judgments a host's svc result was built from; writeHost stores them as the
@@ -64,6 +67,20 @@ func fixtureFor(t *testing.T) *fixture {
 			t.Fatal(err)
 		}
 		fix.svc = svc
+		x, err := kit.ParseSvcInlineExpected(fix.svcInline, fix.svcAsset, fix.registry, fix.inventory, read("src/testdata/native/n461/svc.json"), read("src/contracts/fact-query-pack.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		fix.codes = x.InlineCodes()
+		for i, o := range svc.Obligations() {
+			switch {
+			case fix.codes[o.ID] != "":
+			case o.Kind == kit.SvcKindInlineTree:
+				fix.trees = append(fix.trees, i)
+			case o.Kind == kit.SvcKindQuery:
+				fix.queries = append(fix.queries, i)
+			}
+		}
 		fix.rec = map[string][]kit.SvcJudgment{}
 	})
 	return &fix
@@ -74,6 +91,29 @@ func fixtureFor(t *testing.T) *fixture {
 // one VERIFIED SVC judgment into FAILED. The svc-inline entry is the svc result of the real-grammar
 // run: the same judgments with 30 inline trees and 60 inline queries VERIFIED on top.
 func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[string]kit.QueryScopeHostResult {
+	t.Helper()
+	hostMu.Lock()
+	defer hostMu.Unlock()
+	k := hostKey{host, failSvc}
+	if _, ok := hostCache[k]; !ok {
+		hostCache[k] = f.computeHostResults(t, host, failSvc)
+	}
+	return maps.Clone(hostCache[k]) // a test edits its copy of the map, never the shared one
+}
+
+// hostKey and hostCache: the results of one host are computed once (predicate fold, SVC verification and
+// folds are the slow part of every test); a variant is made by editing a copy.
+type hostKey struct {
+	host    string
+	failSvc bool
+}
+
+var (
+	hostMu    sync.Mutex
+	hostCache = map[hostKey]map[string]kit.QueryScopeHostResult{}
+)
+
+func (f *fixture) computeHostResults(t *testing.T, host string, failSvc bool) map[string]kit.QueryScopeHostResult {
 	t.Helper()
 	reg, err := queryregistrycore.Parse(f.registry)
 	if err != nil {
@@ -125,19 +165,14 @@ func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[strin
 	return out
 }
 
-// inlineResult is the host's svc result after the inline run: the first 30 inline tree and 60 inline
-// query obligations are judged VERIFIED on top of the offline judgments (edit may then change them).
+// inlineResult is the host's svc result after the inline run: the derivable inline tree (30) and query (60)
+// obligations of the committed asset are judged VERIFIED on top of the offline judgments (edit may then
+// change them).
 func (f *fixture) inlineResult(t *testing.T, host string, offline []kit.SvcJudgment, edit func([]kit.SvcJudgment)) kit.QueryScopeHostResult {
 	t.Helper()
 	js := slices.Clone(offline)
-	trees, queries := 30, 60
-	for i, o := range f.svc.Obligations() {
-		switch {
-		case o.Kind == kit.SvcKindInlineTree && trees > 0:
-			js[i], trees = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, trees-1
-		case o.Kind == kit.SvcKindQuery && queries > 0:
-			js[i], queries = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, queries-1
-		}
+	for _, i := range append(slices.Clone(f.trees), f.queries...) {
+		js[i] = kit.SvcJudgment{ID: f.svc.Obligations()[i].ID, State: "VERIFIED"}
 	}
 	if edit != nil {
 		edit(js)
@@ -185,6 +220,12 @@ func writeHost(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity),
 func writeHostWith(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity), results func(map[string]kit.QueryScopeHostResult), companion func(*scopeobligations.Document)) string {
 	t.Helper()
 	dir := t.TempDir()
+	writeHostTo(t, f, dir, host, id, results, companion)
+	return dir
+}
+
+func writeHostTo(t *testing.T, f *fixture, dir, host string, id func(*kit.RunIdentity), results func(map[string]kit.QueryScopeHostResult), companion func(*scopeobligations.Document)) {
+	t.Helper()
 	identity := runIdentity(host)
 	if id != nil {
 		id(&identity)
@@ -223,7 +264,6 @@ func writeHostWith(t *testing.T, f *fixture, host string, id func(*kit.RunIdenti
 	if err := os.WriteFile(filepath.Join(dir, scopeobligations.FileName(host)), data, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	return dir
 }
 
 func expected() kit.RunIdentity {
@@ -232,8 +272,43 @@ func expected() kit.RunIdentity {
 	return id
 }
 
+var (
+	baseOnce sync.Once
+	baseDir  string
+)
+
+// twoHosts is a fresh copy of the two honest host directories, which are written once per test binary.
 func twoHosts(t *testing.T, f *fixture) map[string]string {
-	return map[string]string{windows: writeHost(t, f, windows, nil, nil), linux: writeHost(t, f, linux, nil, nil)}
+	t.Helper()
+	baseOnce.Do(func() {
+		dir, err := os.MkdirTemp("", "query-scope-merge-base-")
+		if err != nil {
+			t.Fatal(err)
+		}
+		baseDir = dir
+		for _, host := range []string{windows, linux} {
+			if err := os.Mkdir(filepath.Join(dir, host), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeHostTo(t, f, filepath.Join(dir, host), host, nil, nil, nil)
+		}
+	})
+	dirs := map[string]string{}
+	for _, host := range []string{windows, linux} {
+		dirs[host] = filepath.Join(t.TempDir(), host)
+		if err := os.CopyFS(dirs[host], os.DirFS(filepath.Join(baseDir, host))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return dirs
+}
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	if baseDir != "" {
+		os.RemoveAll(baseDir)
+	}
+	os.Exit(code)
 }
 
 func TestMergeBothHosts(t *testing.T) {
@@ -366,6 +441,8 @@ func TestMergeRefusesAnotherRunsArtifact(t *testing.T) {
 		"job":        func(id *kit.RunIdentity) { id.Job = "foundation" },
 		"mode":       func(id *kit.RunIdentity) { id.EvidenceMode = "REPLAY" },
 		"os":         func(id *kit.RunIdentity) { id.GOOS = "linux" },
+		"arch":       func(id *kit.RunIdentity) { id.GOARCH = "arm64" },
+		"workflow":   func(id *kit.RunIdentity) { id.Workflow = "Other" },
 	} {
 		dirs := twoHosts(t, f)
 		dirs[windows] = writeHost(t, f, windows, change, nil)
@@ -500,26 +577,15 @@ func TestMergeRefusesAnInlineResultThatTakesBackAnOfflineJudgment(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	first := func(kind string) int {
-		for i, o := range f.svc.Obligations() {
-			if o.Kind == kind {
-				return i
-			}
-		}
-		t.Fatalf("no %s obligation", kind)
-		return -1
-	}
 	with := func(i int, j kit.SvcJudgment) []kit.SvcJudgment {
 		js := slices.Clone(offline)
 		js[i] = j
 		return js
 	}
-	tree, query := first(kit.SvcKindInlineTree), first(kit.SvcKindQuery)
+	tree, query := f.trees[0], f.queries[0]
 	allTrees := slices.Clone(offline)
-	for i, n := 0, 0; i < len(allTrees) && n < 30; i++ {
-		if o := f.svc.Obligations()[i]; o.Kind == kit.SvcKindInlineTree {
-			allTrees[i], n = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, n+1
-		}
+	for _, i := range f.trees {
+		allTrees[i] = kit.SvcJudgment{ID: f.svc.Obligations()[i].ID, State: "VERIFIED"}
 	}
 	id := func(i int) string { return f.svc.Obligations()[i].ID }
 	for name, c := range map[string]struct {
@@ -582,6 +648,8 @@ func TestMergeRefusesIncompleteExpectedAndLooseIdentities(t *testing.T) {
 		"job":        func(id *kit.RunIdentity) { id.Job = "" },
 		"goos":       func(id *kit.RunIdentity) { id.GOOS = "" },
 		"head":       func(id *kit.RunIdentity) { id.HeadSHA = " " },
+		"goarch":     func(id *kit.RunIdentity) { id.GOARCH = "" },
+		"mode":       func(id *kit.RunIdentity) { id.EvidenceMode = "REPLAY" },
 	} {
 		// the hosts carry the same blank value: equal blanks must not count as a binding
 		dirs := map[string]string{windows: writeHost(t, f, windows, blank, nil), linux: writeHost(t, f, linux, blank, nil)}
@@ -633,7 +701,7 @@ func TestMergeKeepsAnInlineJudgmentFailure(t *testing.T) {
 	dirs := twoHosts(t, f)
 	dirs[linux] = writeHost(t, f, linux, nil, func(rs map[string]kit.QueryScopeHostResult) {
 		rs[svcInlineKey] = f.inlineResult(t, linux, offline, func(js []kit.SvcJudgment) {
-			i := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool { return o.Kind == kit.SvcKindInlineTree })
+			i := f.trees[0]
 			js[i] = kit.SvcJudgment{ID: js[i].ID, State: "FAILED", Code: "SVC_INLINE_NATIVE_TREE"}
 		})
 	})
@@ -652,15 +720,10 @@ func TestMergeRefusesAnExchangeOfInlineJudgments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var trees []int
-	for i, o := range f.svc.Obligations() {
-		if o.Kind == kit.SvcKindInlineTree {
-			trees = append(trees, i)
-		}
-	}
+	trees := f.trees
 	id := func(i int) string { return f.svc.Obligations()[i].ID }
-	allTrees := slices.Clone(offline) // the first 30 inline trees VERIFIED offline
-	for _, i := range trees[:30] {
+	allTrees := slices.Clone(offline) // the derivable inline trees VERIFIED offline
+	for _, i := range trees {
 		allTrees[i] = kit.SvcJudgment{ID: id(i), State: "VERIFIED"}
 	}
 	failedFirst := slices.Clone(offline) // the first inline tree FAILED offline
@@ -675,7 +738,7 @@ func TestMergeRefusesAnExchangeOfInlineJudgments(t *testing.T) {
 		}},
 		"offline VERIFIED turned BLOCKED, another inline tree VERIFIED": {allTrees, func(js []kit.SvcJudgment) {
 			js[trees[0]] = kit.SvcJudgment{ID: id(trees[0]), State: "BLOCKED", Code: "SVC_BLOCKED_AGAIN"}
-			js[trees[30]] = kit.SvcJudgment{ID: id(trees[30]), State: "VERIFIED"}
+			js[trees[1]] = kit.SvcJudgment{ID: id(trees[1]), State: "VERIFIED"}
 		}},
 	} {
 		dirs := twoHosts(t, f)
@@ -696,7 +759,7 @@ func TestMergeRefusesAnExchangeOfInlineJudgments(t *testing.T) {
 func TestMergeChecksThePerObligationCompanion(t *testing.T) {
 	f := fixtureFor(t)
 	n := len(f.svc.Obligations())
-	tree := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool { return o.Kind == kit.SvcKindInlineTree })
+	tree := f.trees[0]
 	history := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool {
 		return o.Kind != kit.SvcKindInlineTree && o.Kind != kit.SvcKindQuery
 	})
@@ -711,11 +774,8 @@ func TestMergeChecksThePerObligationCompanion(t *testing.T) {
 		}, scopeobligations.CodeShape},
 		"unknown state": {func(d *scopeobligations.Document) { d.Inline[0].State = "PASSED" }, scopeobligations.CodeShape},
 		"inline list does not recompute to the stored inline result": {func(d *scopeobligations.Document) {
-			d.Inline[tree] = scopeobligations.Judgment{ID: d.Inline[tree].ID, State: "BLOCKED", Code: "SVC_ONLY_HERE"}
-		}, scopeobligations.CodeShape},
-		"offline list does not recompute to the stored offline result": {func(d *scopeobligations.Document) {
-			// the inline list still agrees with the stored inline result; only the offline one does not
-			d.Offline[tree] = scopeobligations.Judgment{ID: d.Offline[tree].ID, State: "VERIFIED"}
+			// a derivable obligation reported as not run is a sound list, but the stored inline result has it VERIFIED
+			d.Inline[tree] = scopeobligations.Judgment{ID: d.Inline[tree].ID, State: "BLOCKED", Code: kit.SvcInlineNativeNotRunCode}
 		}, scopeobligations.CodeShape},
 		"offline judgment taken back by the inline list": {func(d *scopeobligations.Document) {
 			d.Inline[history] = scopeobligations.Judgment{ID: d.Inline[history].ID, State: "BLOCKED", Code: "SVC_ONLY_HERE"}

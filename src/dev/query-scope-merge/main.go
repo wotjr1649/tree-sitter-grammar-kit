@@ -17,6 +17,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -34,7 +35,7 @@ const (
 
 	statusMerged  = "MERGED"  // both hosts bound, merged and folded, no FAILED row
 	statusFail    = "FAIL"    // merged and folded, a host judged an obligation FAILED
-	statusBlocked = "BLOCKED" // a registered host's evidence is absent
+	statusBlocked = "BLOCKED" // a registered host's evidence is absent, or its inline run judged less than the asset derives
 	statusRefused = "REFUSED" // evidence present but not bound to this run or not intact
 
 	maxIdentityBytes = 64 << 10
@@ -92,6 +93,9 @@ type fileDigest struct {
 type hostInput struct {
 	Host  string       `json:"host"`
 	Files []fileDigest `json:"files"`
+	// InlineUnjudged counts the inline obligations the committed inline expected asset derives that the host's
+	// inline run left BLOCKED (not run): a host that judged less than it could.
+	InlineUnjudged int `json:"inline_unjudged"`
 }
 
 type report struct {
@@ -170,8 +174,10 @@ func wantedFiles(host string) []string {
 func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInput, map[string]kit.QueryScopeHostResult, error) {
 	in := hostInput{Host: host}
 	entries, err := os.ReadDir(dir)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
 		return in, nil, refusal{statusBlocked, "QUERY_SCOPE_HOST_ABSENT"}
+	} else if err != nil { // present but unreadable (permission, not a directory): not the same as absent
+		return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
 	}
 	var names []string
 	for _, e := range entries {
@@ -224,18 +230,22 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 	}
 	// the per-obligation companion: both stored results recomputed from it, the inline run changing only
 	// what the offline run left BLOCKED
-	if code := c.checkObligations(read[scopeobligations.FileName(host)], host, results); code != "" {
+	code, unjudged := c.checkObligations(read[scopeobligations.FileName(host)], host, results)
+	if code != "" {
 		return in, nil, refuse(code)
 	}
+	in.InlineUnjudged = unjudged
 	results[kit.QueryScopeSvc] = results[svcInlineKey]
 	return in, results, nil
 }
 
-// contracts are the committed contracts of the run's checkout: the fold request and the parsed SVC
-// denominator the per-obligation checks run against.
+// contracts are the committed contracts of the run's checkout: the fold request, the parsed SVC
+// denominator and the inline expected asset's per-obligation codes (see Document.Check) the per-obligation
+// checks run against.
 type contracts struct {
-	req kit.QueryCompletionRequest
-	e   kit.SvcExpected
+	req    kit.QueryCompletionRequest
+	e      kit.SvcExpected
+	inline map[string]string
 }
 
 func loadContracts(root string) (contracts, error) {
@@ -244,19 +254,33 @@ func loadContracts(root string) (contracts, error) {
 		return contracts{}, err
 	}
 	e, err := kit.ParseSvcExpected(req.SvcExpected, req.Registry, req.Qualification, req.SvcFixture)
-	return contracts{req, e}, err
+	if err != nil {
+		return contracts{}, err
+	}
+	// the asset the inline pin names, parsed against the pinned sources: which obligations are derivable
+	pack, err := os.ReadFile(filepath.Join(root, "src", "contracts", "fact-query-pack.json"))
+	if err != nil {
+		return contracts{}, err
+	}
+	asset, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(kit.SvcInlinePath)))
+	if err != nil {
+		return contracts{}, err
+	}
+	x, err := kit.ParseSvcInlineExpected(asset, req.SvcExpected, req.Registry, req.Qualification, req.SvcFixture, pack)
+	return contracts{req, e, x.InlineCodes()}, err
 }
 
 // checkObligations validates a host's companion file (scopeobligations): it is the host's, lists exactly
 // the SVC obligations, refines per obligation (Document.Check), and recomputes to the two stored svc
-// results of the host, the offline one and the inline one. It returns the refusal code, "" when sound.
-func (c contracts) checkObligations(data []byte, host string, results map[string]kit.QueryScopeHostResult) string {
+// results of the host, the offline one and the inline one. It returns the refusal code, "" when sound, and
+// the number of derivable inline obligations the host's inline run left unjudged.
+func (c contracts) checkObligations(data []byte, host string, results map[string]kit.QueryScopeHostResult) (string, int) {
 	d, err := scopeobligations.Decode(data)
 	if err != nil || d.Host != host {
-		return scopeobligations.CodeShape
+		return scopeobligations.CodeShape, 0
 	}
-	if code := d.Check(c.e); code != "" {
-		return code
+	if code := d.Check(c.e, c.inline); code != "" {
+		return code, 0
 	}
 	blocked := map[string]bool{}
 	for h := range hostPairs {
@@ -271,9 +295,9 @@ func (c contracts) checkObligations(data []byte, host string, results map[string
 	}
 	if recompute(d.OfflineJudgments()) != results[kit.QueryScopeSvc].Result.ResultSHA256 ||
 		recompute(d.InlineJudgments(), c.req.AssetPins[kit.QueryScopeSvc][1:]...) != results[svcInlineKey].Result.ResultSHA256 {
-		return scopeobligations.CodeShape
+		return scopeobligations.CodeShape, 0
 	}
-	return ""
+	return "", d.Unjudged(c.inline)
 }
 
 func codeOf(err error) string {
@@ -376,7 +400,7 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 			return fail(refuse(codeOf(err)))
 		}
 		req.Scopes = append(req.Scopes, merged)
-		req.ResultPins[scope] = merged.ResultSHA256
+		req.ResultPins[scope] = merged.ResultSHA256 // the pin is the merged digest itself: only the checks above give it meaning
 		rep.Scopes[scope] = merged.ResultSHA256
 	}
 	res, err := kit.FoldQueryCompletion(req)
@@ -385,8 +409,12 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 	}
 	rep.Completion = &res
 	rep.Status, rep.Code = statusMerged, res.Code
-	if res.Total.Failed != 0 {
+	switch {
+	case res.Total.Failed != 0:
 		rep.Status = statusFail
+	case slices.ContainsFunc(rep.Inputs, func(in hostInput) bool { return in.InlineUnjudged != 0 }):
+		// folded and sound, but not complete: a host's inline run judged less than the asset derives
+		rep.Status, rep.Code = statusBlocked, "QUERY_SCOPE_SVC_INLINE_UNDERFILLED"
 	}
 	return rep
 }

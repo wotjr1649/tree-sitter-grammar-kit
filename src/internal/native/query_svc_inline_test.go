@@ -174,11 +174,14 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		t.Fatal(err)
 	}
 	// a failure before the judgments (a case that did not run) leaves nothing to store; a FAILED judgment is a
-	// result of this host and is stored, so the merge reports it as FAIL (#362)
+	// result of this host and is stored, so the merge reports it as FAIL (#362). A broken run is not a result:
+	// native evidence the judge could not use (NotRun) or a derived obligation neither VERIFIED nor FAILED
+	// (checked below) leaves nothing to store either.
 	storable := !t.Failed()
 	for _, j := range inline {
 		if j.State == "BLOCKED" && j.Code == kit.SvcInlineNativeNotRunCode {
 			t.Errorf("%s: the native run did not report every tree role the step needs", j.ID)
+			storable = false
 		}
 	}
 	offline, err := kit.VerifySvcExpected(e, inventory)
@@ -207,11 +210,15 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	verified := map[string]uint64{}
+	verified, judged := map[string]uint64{}, map[string]uint64{}
 	for _, c := range result.Counters {
 		if c.Platform == platform {
-			verified[c.Kind] = c.Verified
+			verified[c.Kind], judged[c.Kind] = c.Verified, c.Verified+c.Failed
 		}
+	}
+	// every derived step judged, VERIFIED or FAILED (a FAILED lowers the VERIFIED count below but is a result)
+	if judged[kit.SvcKindInlineTree] != uint64(x.Derived) || judged[kit.SvcKindQuery] != 2*uint64(x.Derived) {
+		storable = false
 	}
 	if verified[kit.SvcKindInlineTree] != uint64(x.Derived) || verified[kit.SvcKindQuery] != 2*uint64(x.Derived) {
 		t.Errorf("inline VERIFIED tree %d query %d, want %d and %d", verified[kit.SvcKindInlineTree], verified[kit.SvcKindQuery], x.Derived, 2*x.Derived)

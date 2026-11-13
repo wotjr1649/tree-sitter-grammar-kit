@@ -91,8 +91,11 @@ func (d Document) InlineJudgments() []kit.SvcJudgment  { return judgments(d.Inli
 // Check returns "" when both judgment lists are exactly the obligations of e, in order, with known
 // states, and the inline list refines the offline one per obligation: an obligation the offline run
 // judged VERIFIED or FAILED keeps that judgment and code, and only the inline obligations (SVC_INLINE_TREE,
-// SVC_INLINE_QUERY) the offline run left BLOCKED may change. Otherwise it returns CodeShape or CodeInline.
-func (d Document) Check(e kit.SvcExpected) string {
+// SVC_INLINE_QUERY) the offline run left BLOCKED may change. inline is the committed inline expected asset's
+// InlineCodes: the offline run has no C# grammar, so it must leave every inline obligation BLOCKED with its
+// registered code, and the inline run may judge (VERIFIED or FAILED) only the obligations the asset derives;
+// every other inline obligation stays BLOCKED. Otherwise it returns CodeShape or CodeInline.
+func (d Document) Check(e kit.SvcExpected, inline map[string]string) string {
 	obligations := e.Obligations()
 	if len(d.Offline) != len(obligations) || len(d.Inline) != len(obligations) {
 		return CodeShape
@@ -103,10 +106,51 @@ func (d Document) Check(e kit.SvcExpected) string {
 		if off.ID != o.ID || in.ID != o.ID || !slices.Contains(known, off.State) || !slices.Contains(known, in.State) {
 			return CodeShape
 		}
-		inlineKind := o.Kind == kit.SvcKindInlineTree || o.Kind == kit.SvcKindQuery
-		if (off.State != "BLOCKED" || !inlineKind) && in != off {
+		offlineCode, inlineKind := offlineInlineCode(o.Kind)
+		if !inlineKind {
+			if in != off {
+				return CodeInline
+			}
+			continue
+		}
+		blockedCode, ok := inline[o.ID]
+		if !ok {
+			return CodeShape
+		}
+		if off.State != "BLOCKED" || off.Code != offlineCode {
+			return CodeInline
+		}
+		switch {
+		case blockedCode == "": // derivable: judged, left as the offline run had it, or reported as not run
+			if in.State == "BLOCKED" && in != off && in.Code != kit.SvcInlineNativeNotRunCode {
+				return CodeInline
+			}
+		case in.State != "BLOCKED" || in.Code != blockedCode && in != off: // not derivable: it stays BLOCKED
 			return CodeInline
 		}
 	}
 	return ""
+}
+
+// offlineInlineCode is the BLOCKED code the offline run gives an inline kind, and whether the kind is one.
+func offlineInlineCode(kind string) (string, bool) {
+	switch kind {
+	case kit.SvcKindInlineTree:
+		return kit.SvcInlineTreeUnavailableCode, true
+	case kit.SvcKindQuery:
+		return kit.SvcQueryUnregisteredCode, true
+	}
+	return "", false
+}
+
+// Unjudged counts the inline obligations the asset derives that the inline list leaves BLOCKED: an inline
+// run that judged less than it could. Call it on a document Check accepted.
+func (d Document) Unjudged(inline map[string]string) int {
+	n := 0
+	for _, j := range d.Inline {
+		if code, ok := inline[j.ID]; ok && code == "" && j.State == "BLOCKED" {
+			n++
+		}
+	}
+	return n
 }
