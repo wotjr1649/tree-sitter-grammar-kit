@@ -350,7 +350,8 @@ jobs:
       matrix:
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # 600 s for the other packages, then 1200 s for src/kit, plus setup and the identity record
+    timeout-minutes: 35
     env:
       CGO_ENABLED: '1'
     defaults:
@@ -406,8 +407,17 @@ jobs:
             Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
             $env:TSGK_CGROUP_PARENT = "$base/jobs"
           }
-          go test -race -count=1 -timeout 600s ./src/...
-          if ($LASTEXITCODE -ne 0) { throw 'race diagnostic failed' }
+          # src/kit runs alone with its own bound: under -race it needs about 800-900 s, while the other packages keep 600 s (#419 follow-up).
+          $kitPackage = 'github.com/wotjr1649/tree-sitter-grammar-kit/src/kit'
+          $packages = @(go list ./src/...)
+          if ($LASTEXITCODE -ne 0 -or $packages -notcontains $kitPackage) { throw 'kit package enumeration failed' }
+          $otherPackages = @($packages | Where-Object { $_ -ne $kitPackage })
+          if ($otherPackages.Count -eq 0) { throw 'other packages missing' }
+          go test -race -count=1 -timeout 600s @otherPackages
+          $otherExit = $LASTEXITCODE
+          go test -race -count=1 -timeout 1200s $kitPackage
+          $kitExit = $LASTEXITCODE
+          if ($otherExit -ne 0 -or $kitExit -ne 0) { throw "race diagnostic failed (other=$otherExit kit=$kitExit)" }
       - name: 진단 outcome과 실행 identity 기록
         if: always()
         env:

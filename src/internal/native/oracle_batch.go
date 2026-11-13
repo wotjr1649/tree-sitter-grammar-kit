@@ -144,7 +144,7 @@ func (b *Build) runOracleBatchesCapture(ctx context.Context, x Context, cases []
 			*captures = append(*captures, *capture)
 		}
 		ob := kit.OracleBatch{Index: len(batches), Status: br.Process.Status, Reason: br.Process.Reason, ExitCode: max(br.Process.ExitCode, 0),
-			WallMillis: br.Process.WallMillis, PeakBytes: br.Process.Memory.Peak, CleanupVerified: br.Process.Cleanup.Verified, TrailingBytes: br.TrailingBytes}
+			WallMillis: br.Process.WallMillis, PeakBytes: br.Process.Memory.Peak, CleanupVerified: batchCleanupClean(br.Process), TrailingBytes: br.TrailingBytes}
 		var requeue, answered []int
 		fatal, progress, unanswered := false, false, false
 		for k, fr := range br.Frames {

@@ -114,6 +114,10 @@ type BatchResult struct {
 // first frame, so a test can keep process start-up out of the first frame's watchdog.
 var testHookBatchStarted func()
 
+// testHookBeforeWait, when a test sets it, runs after the last frame and before Wait, so a
+// test can hold the batch there while the linger deadline passes.
+var testHookBeforeWait func(*Process)
+
 // testHookFrameTimer replaces only the test's frame timer; it returns its stop function.
 var testHookFrameTimer func(time.Duration, func()) func()
 
@@ -154,10 +158,15 @@ func RunBatch(ctx context.Context, spec Spec, pol BatchPolicy, frames []Frame) (
 	}
 	// A process that neither exits nor stops writing after its last frame is ended.
 	p.Stdin().Close()
-	linger := time.AfterFunc(pol.FrameGrace, func() { p.Terminate(ReasonBatchExit) })
+	// The deadline is on the exit itself: cleanup after an observed exit (waitEmpty, pipe
+	// drain, backend release) may outlast it without changing the reason.
+	linger := time.AfterFunc(pol.FrameGrace, func() { p.terminateIfRunning(ReasonBatchExit) })
 	if inflight < 0 {
 		// Every frame was answered: anything more on stdout is not a response.
 		out.TrailingBytes, _ = io.Copy(io.Discard, p.Stdout())
+	}
+	if testHookBeforeWait != nil {
+		testHookBeforeWait(p)
 	}
 	out.Process = p.Wait()
 	if p.captureErr != nil {

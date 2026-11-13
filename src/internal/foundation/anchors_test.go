@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -218,14 +219,34 @@ func runConvertCaseFiles(t *testing.T, root string, caseFiles []string) ([]conve
 		return nil, false, nil
 	}
 	var files []convertedFile
+	chunks := (len(caseFiles) + 3) / 4
+	index := 0
 	for paths := range slices.Chunk(caseFiles, 4) {
+		index++
+		start := time.Now()
 		batch, err := runConvertCaseBatch(t, root, pwsh, paths)
 		if err != nil {
-			return nil, true, err
+			// A deadline alone does not say whether the converter or its environment was slow.
+			return nil, true, fmt.Errorf("conversion batch %d of %d (%d files) failed after %s with %d child environment variables: %w",
+				index, chunks, len(paths), time.Since(start).Round(time.Millisecond), len(convertChildEnv()), err)
 		}
 		files = append(files, batch...)
 	}
 	return files, true, nil
+}
+
+// convertChildEnv is the converter's environment: the caller's, plus SystemDrive when a
+// reduced environment (a job wrapper passing a handful of variables) lacks it. Without
+// SystemDrive and ALLUSERSPROFILE, every .NET static call from PowerShell 7 costs about
+// 6 ms instead of 0.02 ms (#418), which makes the conversion 10 to 100 times slower.
+func convertChildEnv() []string {
+	env := os.Environ()
+	if runtime.GOOS == "windows" && os.Getenv("SystemDrive") == "" {
+		if drive := filepath.VolumeName(os.Getenv("SystemRoot")); drive != "" {
+			env = append(env, "SystemDrive="+drive)
+		}
+	}
+	return env
 }
 
 func runConvertCaseBatch(t *testing.T, root, pwsh string, caseFiles []string) ([]convertedFile, error) {
@@ -264,6 +285,7 @@ func runConvertCaseBatch(t *testing.T, root, pwsh string, caseFiles []string) ([
 	if err := os.WriteFile(manifest, data, 0600); err != nil {
 		t.Fatal(err)
 	}
+	began := time.Now()
 	wall := 90 * time.Second
 	if deadline, ok := t.Deadline(); ok {
 		wall = min(wall, time.Until(deadline)-5*time.Second)
@@ -276,6 +298,7 @@ func runConvertCaseBatch(t *testing.T, root, pwsh string, caseFiles []string) ([
 	stdout, stderr := conversionOutput{cancel: cancel}, conversionOutput{cancel: cancel}
 	script := filepath.Join(root, "src", "dev", "s05-native", "run-routes.ps1")
 	cmd := exec.CommandContext(ctx, pwsh, "-NoProfile", "-NonInteractive", "-File", harness, "-Script", script, "-Manifest", manifest, "-Root", outputRoot)
+	cmd.Env = convertChildEnv()
 	cmd.WaitDelay = 5 * time.Second
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -303,7 +326,7 @@ func runConvertCaseBatch(t *testing.T, root, pwsh string, caseFiles []string) ([
 	if err := validateConvertedFiles(files, inputs, outputRoot); err != nil {
 		return nil, err
 	}
-	t.Logf("Convert-Cases: files=%d stdout_bytes=%d", len(files), stdout.buf.Len())
+	t.Logf("Convert-Cases: files=%d stdout_bytes=%d elapsed=%s", len(files), stdout.buf.Len(), time.Since(began).Round(time.Millisecond))
 	return files, nil
 }
 

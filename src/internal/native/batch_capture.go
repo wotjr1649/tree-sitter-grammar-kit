@@ -264,7 +264,7 @@ func (c *batchCapture) files(prefix string) ([]captureFile, error) {
 		Spec: captureSpec{Path: c.spec.Path, Args: c.spec.Args, Dir: c.spec.Dir, Env: c.spec.Env, Interactive: true,
 			StdoutBytes: c.spec.StdoutBytes, StderrBytes: c.spec.StderrBytes, Wall: c.spec.Wall, Grace: c.spec.Grace, Memory: c.spec.Memory, CgroupParent: c.spec.CgroupParent},
 		Stdin: c.stdin.pin(), Stdout: c.stdout.pin(), Frames: []batchCaptureFrame{}, TrailingBytes: c.result.TrailingBytes,
-		Accepted: p.Succeeded() && !p.StdoutTruncated && !p.StderrTruncated && c.result.TrailingBytes == 0}
+		Accepted: p.Succeeded() && p.Cleanup.ResidualAfterExit == 0 && !p.StdoutTruncated && !p.StderrTruncated && c.result.TrailingBytes == 0}
 	var files []captureFile
 	add := func(path, role string, data []byte) kit.ReplayMember {
 		pin := kit.ReplayMember{Path: prefix + path, Role: role, Bytes: uint64(len(data)), SHA256: sha(data)}
