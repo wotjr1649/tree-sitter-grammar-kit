@@ -202,6 +202,11 @@ func CSharpG1RoslynSources(src CSharpG1Sources) ([]G1RoslynCaseSource, error) {
 	if err != nil {
 		return nil, err
 	}
+	return g1rSourcesOf(ledger, data)
+}
+
+// g1rSourcesOf lists the source versions of a derived ledger; a caller that also needs the ledger derives once.
+func g1rSourcesOf(ledger CSharpG1Ledger, data map[string]*g1CaseData) ([]G1RoslynCaseSource, error) {
 	var out []G1RoslynCaseSource
 	for _, c := range ledger.Cases {
 		d := data[c.ID]
@@ -242,29 +247,57 @@ func MarshalCSharpG1RoslynInput(sources []G1RoslynCaseSource) ([]byte, error) {
 // ParseCSharpG1RoslynObserved decodes the asset and requires it to describe exactly the source
 // versions of the ledger's cases. ledger is the tracked ledger asset; it must itself verify against src.
 func ParseCSharpG1RoslynObserved(data, ledger []byte, src CSharpG1Sources) (CSharpG1RoslynObserved, error) {
-	if _, err := ParseCSharpG1Ledger(ledger, src); err != nil {
-		return CSharpG1RoslynObserved{}, err
-	}
-	sources, err := CSharpG1RoslynSources(src)
+	b, err := g1rBind(ledger, src)
 	if err != nil {
 		return CSharpG1RoslynObserved{}, err
 	}
-	input, err := MarshalCSharpG1RoslynInput(sources)
+	return b.check(data)
+}
+
+// g1rBinding is what an observation of the ledger's source versions must bind to: the ledger pin, the tool input and the
+// source versions. One derivation of the ledger gives all three.
+type g1rBinding struct {
+	pin     queryregistrycore.Pin
+	input   []byte
+	sources []G1RoslynCaseSource
+}
+
+func g1rBind(ledger []byte, src CSharpG1Sources) (g1rBinding, error) {
+	var b g1rBinding
+	want, data, err := deriveCSharpG1(src)
 	if err != nil {
-		return CSharpG1RoslynObserved{}, err
+		return b, err
 	}
-	return checkCSharpG1Roslyn(data, queryregistrycore.FilePin(CSharpG1LedgerPath, ledger), input, sources)
+	if _, err := checkCSharpG1Ledger(ledger, want); err != nil {
+		return b, err
+	}
+	if b.sources, err = g1rSourcesOf(want, data); err != nil {
+		return b, err
+	}
+	if b.input, err = MarshalCSharpG1RoslynInput(b.sources); err != nil {
+		return b, err
+	}
+	b.pin = queryregistrycore.FilePin(CSharpG1LedgerPath, ledger)
+	return b, nil
+}
+
+func (b g1rBinding) check(data []byte) (CSharpG1RoslynObserved, error) {
+	return checkCSharpG1Roslyn(data, b.pin, b.input, b.sources)
 }
 
 // ParseCSharpG1RoslynObservedR3 verifies the r3 observation: it parses with the same schema and bindings as every
 // observation, it equals the frozen r2 observation in every value except provenance.tool_sha256, and that hash is the
 // one of a clean build of the tracked observer source (CSharpG1RoslynR3ToolSHA256).
 func ParseCSharpG1RoslynObservedR3(r3, r2, ledger []byte, src CSharpG1Sources) (CSharpG1RoslynObserved, error) {
-	x, err := ParseCSharpG1RoslynObserved(r3, ledger, src)
+	bind, err := g1rBind(ledger, src)
+	if err != nil {
+		return CSharpG1RoslynObserved{}, err
+	}
+	x, err := bind.check(r3)
 	if err != nil {
 		return x, err
 	}
-	old, err := ParseCSharpG1RoslynObserved(r2, ledger, src)
+	old, err := bind.check(r2)
 	if err != nil {
 		return x, err
 	}

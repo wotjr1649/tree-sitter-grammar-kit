@@ -9,21 +9,30 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
+)
+
+var (
+	g1a76Once sync.Once
+	g1a76All  []G1RoslynCaseSource
+	g1a76Err  error
 )
 
 // g1a76Sources is the input of the position audit made from an r2 asset (the bytes may be a mutant of the tracked one).
 func g1a76Sources(t *testing.T, expected []byte) G1Audit76Input {
 	t.Helper()
-	a := g1cLoad(t)
-	src := a.expIn.R1.Src
-	src.Expected, src.Executed = nil, nil
-	all, err := CSharpG1RoslynSources(src)
-	if err != nil {
-		t.Fatal(err)
+	// the source versions depend on the pinned declarations only, not on the asset: derived once per process
+	g1a76Once.Do(func() {
+		src := g1cLoad(t).expIn.R1.Src
+		src.Expected, src.Executed = nil, nil
+		g1a76All, g1a76Err = CSharpG1RoslynSources(src)
+	})
+	if g1a76Err != nil {
+		t.Fatal(g1a76Err)
 	}
 	texts := map[string][]byte{}
-	for _, s := range all {
+	for _, s := range g1a76All {
 		texts[s.ID] = s.Data
 	}
 	in, err := G1Audit76View(expected, texts)
@@ -316,7 +325,7 @@ func TestCSharpG1CorrectedWitnessesAreObserved(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ParseCSharpG1ExpectedR2(data, a.expIn); err == nil || !strings.Contains(err.Error(), "G1_CORRECTION_WITNESS") {
+		if _, err := g1cParseR2(t, a, data); err == nil || !strings.Contains(err.Error(), "G1_CORRECTION_WITNESS") {
 			t.Errorf("%s: %v", name, err)
 		}
 	}

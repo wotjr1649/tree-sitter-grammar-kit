@@ -270,6 +270,23 @@ func TestCSharpG1CorrectedAssetsDifferOnlyByTheCorrections(t *testing.T) {
 
 // ---- counterexamples ----------------------------------------------------------------------------
 
+var (
+	g1cR1Once sync.Once
+	g1cR1     CSharpG1Expected
+	g1cR1Err  error
+)
+
+// g1cParseR2 is ParseCSharpG1ExpectedR2 for a candidate r2 asset over the tracked inputs: the sealed r1 is verified
+// once per process (the same bytes and sources every time), then each candidate is checked against it.
+func g1cParseR2(t *testing.T, a *g1cAssets, data []byte) (CSharpG1Expected, error) {
+	t.Helper()
+	g1cR1Once.Do(func() { g1cR1, g1cR1Err = ParseCSharpG1Expected(a.expIn.Previous, a.expIn.R1) })
+	if g1cR1Err != nil {
+		t.Fatal(g1cR1Err)
+	}
+	return parseCSharpG1ExpectedR2(data, a.expIn, &g1cR1)
+}
+
 func g1cExpectedMutant(t *testing.T, a *g1cAssets, mutate func(x *CSharpG1Expected)) error {
 	t.Helper()
 	x, err := DecodeCSharpG1Expected(a.r2Exp)
@@ -281,7 +298,7 @@ func g1cExpectedMutant(t *testing.T, a *g1cAssets, mutate func(x *CSharpG1Expect
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = ParseCSharpG1ExpectedR2(data, a.expIn)
+	_, err = g1cParseR2(t, a, data)
 	return err
 }
 
@@ -692,12 +709,12 @@ func TestCSharpG1ExecutedR2SplitsTheStatistics(t *testing.T) {
 	} {
 		in := g1cExecIn(t, a)
 		bad(&in)
-		if _, err := ParseCSharpG1Executed(data, in); err == nil {
+		if _, err := g1xParse(data, in); err == nil {
 			t.Errorf("%s: accepted by the r2 executed asset", name)
 		}
 	}
 	r1data := mustRead(t, "../contracts/csharp-g1-executed-b01b02-r1.json")
-	if _, err := ParseCSharpG1Executed(r1data, in); g1Code(err) != "G1_EXECUTED_SCHEMA" {
+	if _, err := g1xParse(r1data, in); g1Code(err) != "G1_EXECUTED_SCHEMA" {
 		t.Errorf("r1 executed asset against r2 inputs: %v", err)
 	}
 	for _, c := range []struct {
@@ -727,7 +744,7 @@ func TestCSharpG1ExecutedR2SplitsTheStatistics(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ParseCSharpG1Executed(d, in); g1Code(err) != c.code {
+		if _, err := g1xParse(d, in); g1Code(err) != c.code {
 			t.Errorf("%s: %v, want %s", c.name, err, c.code)
 		}
 	}
@@ -759,7 +776,7 @@ func TestCSharpG1ExecutedR2SyntheticDerivation(t *testing.T) {
 		t.Fatal(err)
 	}
 	in.Raw = g1xSynthetic(t, &g1xAssets{in: in, ctx: ctx}, nil)
-	x, err := DeriveCSharpG1Executed(in)
+	x, err := g1xDeriveShared(in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -770,7 +787,7 @@ func TestCSharpG1ExecutedR2SyntheticDerivation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ParseCSharpG1Executed(data, in); err != nil {
+	if _, err := g1xParse(data, in); err != nil {
 		t.Fatal(err)
 	}
 	// a corrected witness whose native tree has no node of the corrected type is a mismatch, and needs a disposition
@@ -789,7 +806,7 @@ func TestCSharpG1ExecutedR2SyntheticDerivation(t *testing.T) {
 		})
 		in2 := in
 		in2.Raw = raw
-		y, err := DeriveCSharpG1Executed(in2)
+		y, err := g1xDeriveShared(in2)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -866,7 +883,7 @@ func TestCSharpG1ExecutedR2ContextAndRevisionCases(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ParseCSharpG1Executed(d, in); g1Code(err) != c.code {
+		if _, err := g1xParse(d, in); g1Code(err) != c.code {
 			t.Errorf("%s: %v, want %s", c.name, err, c.code)
 		}
 	}

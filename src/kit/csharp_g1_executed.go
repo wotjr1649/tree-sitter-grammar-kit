@@ -345,11 +345,11 @@ func g1xContextOf(in CSharpG1ExecutedSources) (g1xContext, error) {
 	}
 	src := in.Src
 	src.Expected, src.Executed = nil, nil
-	ledger, err := DeriveCSharpG1Ledger(src)
+	ledger, data, err := deriveCSharpG1(src)
 	if err != nil {
 		return c, err
 	}
-	all, err := CSharpG1RoslynSources(src)
+	all, err := g1rSourcesOf(ledger, data)
 	if err != nil {
 		return c, err
 	}
@@ -393,11 +393,16 @@ func g1xContextOf(in CSharpG1ExecutedSources) (g1xContext, error) {
 // DeriveCSharpG1Executed compares the raw native observation with the sealed assets. A mismatch
 // without an authored disposition is returned as is (the verifier rejects the asset).
 func DeriveCSharpG1Executed(in CSharpG1ExecutedSources) (CSharpG1Executed, error) {
-	var out CSharpG1Executed
 	c, err := g1xContextOf(in)
 	if err != nil {
-		return out, err
+		return CSharpG1Executed{}, err
 	}
+	return g1xDerive(c, in)
+}
+
+// g1xDerive is DeriveCSharpG1Executed after the context: c is the context of in (it is read, not changed).
+func g1xDerive(c g1xContext, in CSharpG1ExecutedSources) (CSharpG1Executed, error) {
+	var out CSharpG1Executed
 	raw, err := DecodeCSharpG1NativeRaw(in.Raw)
 	if err != nil {
 		return out, err
