@@ -72,6 +72,8 @@ var g1SepClass = map[string]string{
 	"csharp_g1_typeaudit76.go": "derivation",
 	"csharp_g1_executed.go":    "comparison",
 	"csharp_g1_native.go":      "comparison",
+	// the approval of the bundle: it reads the tracked assets as bytes and names them by path; it derives and compares nothing.
+	"csharp_g1_approval.go": "neutral",
 }
 
 // g1SepNeutral are the files outside the G1 prefix that the closure of the derivation reaches (the closure

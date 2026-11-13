@@ -258,6 +258,28 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
   - 후보 집합과 같음(3행)은 type 도출이 아니다. 외부 token 7행은 type만 도출했다.
   - 위치는 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 보고 type은 이 감사가 본다. 둘 다 기대값 asset 전체의 오류율이 아니다.
 
+## G1 번들 승인 tuple (G1APPROVAL)
+
+사용자 결정([#233, 2026-11-13 "승인 묶음"](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233#issuecomment-6851518154))은 아래 11개를 한 묶음으로 승인한다. 이 절은 그 승인을 **content-addressed tuple object**로 만들고 검사하는 계약이며, object 자체는 아직 없다.
+
+| 역할 | revision | 경로 |
+|---|---|---|
+| `expected`·`kind-map`·`executed` (봉인) | r1 | `src/contracts/csharp-g1-expected-b01b02-r1.json`, `csharp-g1-kind-map-r1.json`, `csharp-g1-executed-b01b02-r1.json` |
+| `expected`·`kind-map`·`executed` | r2 | 같은 이름의 `-r2.json` |
+| `roslyn-observation` | r2 (유도 입력), r3 (재현 가능한 도구 hash) | `csharp-g1-roslyn-observed-r2.json`, `-r3.json` |
+| `ledger` | r1 | `csharp-g1-ledger-r1.json` |
+| `position-audit` | r1 | `csharp-g1-audit76-r1.json` |
+| `type-audit` | r1 | `csharp-g1-typeaudit76-r1.json` |
+
+- **tuple:** schema `tsgk-csharp-g1-approval/r1`, scope `csharp-g1-bundle`. 멤버는 이 순서의 `schema`, `scope`, `decision`(위 결정 코멘트 URL), `members`(경로·`role`·`revision`·`bytes`·`sha256`, 위 표의 순서)이다. 정규 bytes는 compact JSON 한 줄과 줄바꿈 하나이며, object의 이름은 그 bytes의 SHA-256이다. 위치는 `src/contracts/evidence-pins/objects/<sha256>`다.
+- **scope:** 기존 값을 넓히지 않고 새 schema에 새 scope를 둔다. `legacy-observation`(roslyn pin tuple)과 `historical-materials`(evidence pin 승인)의 뜻·object·set은 그대로다. 이 object는 어떤 set·selection·`repository-defaults.json`에도 들어가지 않고 reader가 읽지 않는다: 저장소 경로 묶음의 승인이며 evidence subject의 승인이 아니다.
+- **검증(`kit.VerifyCSharpG1Approval`):**
+  - object가 없으면 상태는 **`PENDING_APPROVAL`**이다. 오류도 PASS도 아니며 아무것도 승인되지 않았다는 보고다. 도구는 exit 3, 시험은 통과하되 로그에 상태를 적는다.
+  - object가 있으면(approval schema의 object가 정확히 하나) 이름이 bytes의 SHA-256이어야 하고(`G1_APPROVAL_OBJECT`), 엄격히 decode되어 정규 bytes와 같아야 하고, scope(`G1_APPROVAL_SCOPE`)·decision(`G1_APPROVAL_DECISION`)·멤버의 경로·역할·revision과 순서(`G1_APPROVAL_BUNDLE`)가 코드의 묶음과 같아야 하고, 모든 멤버 파일의 길이와 SHA-256이 같아야 한다(`G1_APPROVAL_MEMBER`: 한 byte 변경·추가·삭제·누락). 마지막으로 `src/contracts/csharp-g1-*.json`에 묶음 밖의 asset이 없어야 한다(`G1_APPROVAL_UNAPPROVED`). approval object가 둘 이상이면 `G1_APPROVAL_AMBIGUOUS`다. 모두 맞을 때만 `APPROVED`다.
+  - 새 G1 asset이나 asset의 변경은 묶음 밖이므로 새 승인(새 revision의 tuple)이 필요하다. 기존 object는 바꾸지 않는다.
+- **CI의 pending:** object가 생기기 전의 CI는 `TestCSharpG1ApprovalOfTheTrackedBundle`이 `PENDING_APPROVAL`을 로그에 적고 통과한다(승인 전에 CI가 통과해야 Root가 object를 만들 수 있다). 이는 승인의 주장이 아니다. 게이트가 필요한 곳은 도구의 exit 3을 실패로 취급한다. object가 생기면 같은 시험이 `APPROVED`를 요구하며 이후 asset 변경은 모두 실패한다.
+- **도구:** `go run ./src/dev/csharp-g1-approval -root . -print > tuple.json`은 현재 추적 asset의 정규 tuple bytes를 stdout에, 길이와 SHA-256(object 이름)을 stderr에 적는다. `-verify`는 위 검증이다. 도구는 `src/contracts/evidence-pins/`에 쓰지 않는다. Root가 사용자가 SHA 목록을 확인한 뒤 `<sha256>` 이름으로 손으로 만든다.
+
 ## 분리 시험
 
 `TestCSharpG1ExpectedSeparation`은 다음을 보인다.
@@ -302,4 +324,4 @@ go run ./src/dev/csharp-g1-ledger -root .
 - tree-sitter 결과가 맞다는 판정. 기대값 asset은 native를 처음 실행하기 전의 기대값이며, native 비교는 별도 asset이 witness에 한정해 기록한다.
 - Roslyn이 명세와 같다는 일반 주장. 표본 감사와 대조는 이 관측 범위 안의 근거다.
 - BLOCKED 대안과 B03~B05·V 행의 기대값, 오류 복구(D3)와 symbols 문맥. native 비교의 기록(`EXECUTED`)은 BLOCKED 대안에 없다.
-- 승인 pin: 관측·기대값·매핑표·executed asset은 사용자가 함께 승인한다(Q1). 승인 tuple은 관측 **r3**를 묶는다(사용자 결정 2026-11-13); 관측 r2는 기대값·executed가 pin하는 동결 입력이다. 승인 object는 만들지 않았다. 승인 대상 SHA-256은 위 재생성 순서의 고정점 값이다.
+- 승인 pin: 사용자 결정(2026-11-13, 승인 묶음)은 G1 asset 11개를 한 묶음으로 승인한다. 묶음의 구성과 tuple은 [G1 번들 승인 tuple](#g1-번들-승인-tuple-g1approval)이 정하며, 관측은 r2(유도 입력)와 r3(재현 가능한 도구 hash) 둘 다 묶는다. 승인 object는 만들지 않았다: Root가 CI 통과와 사용자의 SHA 확인 뒤에 만든다.
