@@ -26,6 +26,19 @@ func ordinaryVisitObserved(kind string, visits uint64) {
 	}
 }
 
+// factStepHook receives the steps the dynamic SQL adapters really take: "pair-steps" (scans,
+// sort comparisons and outputs of one capIndex.pairs call or of the site sort), "chain-hops"
+// (lastIdent hops) and "decoded-bytes" (source bytes decoded by srcText.span). It is separate
+// from ordinaryVisitHook because sort comparison counts follow map iteration order, so the
+// ledger harness that records visits must not see them.
+var factStepHook func(kind string, steps uint64)
+
+func factStepObserved(kind string, steps uint64) {
+	if factStepHook != nil {
+		factStepHook(kind, steps)
+	}
+}
+
 // ordinaryDecodeHook receives each use of an expected asset decode: shared is true when the
 // decoded value came from the per-pass share instead of a new decode.
 var ordinaryDecodeHook func(doc string, shared bool)

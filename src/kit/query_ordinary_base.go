@@ -745,6 +745,9 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 	if q.Facts != FactDynamicSQL {
 		return nil
 	}
+	if route.Route == "csharp" {
+		return b.ordinaryBaseCSharpFactReservation(query, n)
+	}
 	if route.Route != "tsql" {
 		// Keep the legacy conservative bound for other dynamic SQL adapters.
 		work, e := eligibilityProduct("ordinary-base-fact-derive", 64, n, n, n+uint64(len(source))+text+1)
@@ -764,6 +767,55 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 			return e
 		}
 		if e := b.charge(work, work, "ordinary-base-fact-derive"); e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+// csharpFactScans is deriveCSharp's fixed number of sorted passes over the captures: eleven
+// capIndex.pairs calls plus the final site sort.
+const csharpFactScans = 12
+
+// ordinaryBaseCSharpFactReservation charges what deriveCSharp does: csharpFactScans sorted
+// passes (n log n), one chain walk per command argument (at most the qualified-name captures
+// long) and at most two decoded spans per argument or assignment (bounded by the longest span
+// of a capture that is decoded). n is the capture count plus one.
+func (b *eligibilityBudget) ordinaryBaseCSharpFactReservation(query querywire.Query, n uint64) *Error {
+	var args, lefts, names, longest uint64
+	for _, row := range query.Captures {
+		name := query.CaptureNames[row[2]]
+		switch name {
+		case "oc.arg":
+			args++
+		case "ini.left", "ma.name":
+			lefts++
+		case "qn.name", "aq.name", "gn.name":
+			names++
+		}
+		if (name == "bin.op" || name == "ini.left" || name == "ma.name" || query.Types[row[4]] == "identifier") && row[6] >= 0 && row[7] >= row[6] {
+			longest = max(longest, uint64(row[7]-row[6]))
+		}
+	}
+	decodes := 2 * (args + lefts)
+	for _, term := range []struct {
+		work, logical []uint64
+	}{
+		{[]uint64{64, csharpFactScans, n, 2 + uint64(bits.Len64(n))}, []uint64{1024, csharpFactScans, n}},
+		{[]uint64{64, args, names + 1}, nil},
+		{[]uint64{64, decodes, longest + 1}, []uint64{8, decodes, longest + 1}},
+	} {
+		work, e := eligibilityProduct("ordinary-base-fact-derive", term.work...)
+		if e != nil {
+			return e
+		}
+		var logical uint64
+		if term.logical != nil {
+			if logical, e = eligibilityProduct("ordinary-base-fact-derive", term.logical...); e != nil {
+				return e
+			}
+		}
+		if e := b.charge(work, logical, "ordinary-base-fact-derive"); e != nil {
 			return e
 		}
 	}
