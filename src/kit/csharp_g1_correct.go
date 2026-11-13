@@ -2,10 +2,14 @@ package kit
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	jsonv2 "encoding/json/v2"
 
@@ -19,8 +23,9 @@ import (
 // entry shared by three alternatives (csharp-B01.a383, a396, a397). The sealed r1 files stay byte for
 // byte as sealed. A r2 file is the r1 file plus an explicit list of corrections, each with the value
 // it replaces, the value it sets, and its grounds in the pinned specification and grammar text. Every
-// correction is marked post_native: it was made after the native result was seen, so it counts apart
-// from the independent expectations (see the specification, "Corrections after the seal").
+// correction is marked after_native: it was made after the native result was seen, so it counts apart
+// from the independent expectations (see the specification, "Corrections after the seal"). The second mark,
+// basis_independent, says whether the grounds are the specification and grammar text only.
 //
 // A r2 verifier accepts a file only when (1) the r1 file it pins verifies as the sealed asset, (2) the
 // file equals the r1 file with exactly its own corrections applied (no other difference), (3) every
@@ -37,31 +42,60 @@ const (
 	G1FieldTS           = "ts"
 	G1FieldWitnessMatch = "witnesses[0].match"
 	G1FieldEntry        = "entry"
-	G1FieldTSOnly       = "ts_only"
+	// G1FieldTSBasis records that the ts of a differential-oracle alternative no longer comes from the kind map
+	G1FieldTSBasis = "ts_basis"
+	G1FieldTSOnly  = "ts_only"
 
 	// where a ground is written
 	G1DocGrammar = "grammar.js"
 	G1DocSpec    = "spec"
+
+	// the documents the grounds quote, by SHA-256: the grammar.js of the commit the kind map pins and the two files of
+	// the specification (dotnet/csharpstandard at the commit of g1gSpecPre) the grounds name
+	g1gGrammarSHA = "63d357e04fdbe05f424463f365fb595f8f05866711cc279f85a7288638e753bd"
+	g1gLexSHA     = "332d112957907adc721cf549ccaa05af85e582f5342aa6c4edfbbdba933060d2"
+	g1gExprSHA    = "bcc4c11c6d25aae3584d038aa7272adae5e26820f62d0120424f2c180fede64c"
+
+	g1gMinQuote = 40  // characters of a quote, whitespace runs counted as one
+	g1gMaxGap   = 200 // lines between the heading and the quote
 )
 
+// g1gSpecSHA is the SHA-256 of each specification file a ground may name.
+var g1gSpecSHA = map[string]string{"lexical-structure.md": g1gLexSHA, "expressions.md": g1gExprSHA}
+
+var g1gSpecAt = regexp.MustCompile(`standard/([a-z-]+\.md) ([0-9]+(?:\.[0-9]+)*) `)
+
 // G1Ground is one place in the pinned grammar text or the specification that supports a correction.
-// Quote is a verbatim text of that place (whitespace runs count as one space).
+// Quote is a verbatim text of that place (whitespace runs count as one space). The ground is checkable without the
+// document: DocSHA256 names the document (the pinned grammar.js, or the pinned specification file), Heading is the
+// heading line of the section At names (a markdown heading of the specification, "<rule>:" of the grammar) and Gap is
+// the number of lines from that heading line to the first line of the quote. The offline check requires a quote of at
+// least g1gMinQuote characters, the document SHA-256 pinned below and a heading that carries the section of At within
+// g1gMaxGap lines; the check against the document itself (CheckG1Grounds) needs the documents and is a dev tool step.
 type G1Ground struct {
-	Doc   string `json:"doc"`
-	At    string `json:"at"`
-	Quote string `json:"quote"`
+	Doc       string `json:"doc"`
+	At        string `json:"at"`
+	Quote     string `json:"quote"`
+	DocSHA256 string `json:"doc_sha256"`
+	Heading   string `json:"heading"`
+	Gap       int    `json:"gap"`
 }
 
 // G1Correction replaces Old by New in the field Field of the item Item. Old and New are JSON texts:
 // the old value r1 holds and the value r2 holds.
 type G1Correction struct {
-	Item       string     `json:"item"`
-	Field      string     `json:"field"`
-	Old        string     `json:"old"`
-	New        string     `json:"new"`
-	Reason     string     `json:"reason"`
-	Grounds    []G1Ground `json:"ground"`
-	PostNative bool       `json:"post_native"`
+	Item    string     `json:"item"`
+	Field   string     `json:"field"`
+	Old     string     `json:"old"`
+	New     string     `json:"new"`
+	Reason  string     `json:"reason"`
+	Grounds []G1Ground `json:"ground"`
+	// AfterNative: the correction was made after the native result was seen (the timing). It is true for every r2
+	// correction; the statistics of post-seal changes count by it.
+	AfterNative bool `json:"after_native"`
+	// BasisIndependent: the grounds are the specification and grammar text only (the basis), whatever prompted the
+	// correction.
+	BasisIndependent bool `json:"basis_independent"`
 }
 
 func g1cFault(code string) error { return fail(KindInvalidInput, code, CSharpG1ExpectedPathR2, nil) }
@@ -76,107 +110,134 @@ const (
 // specification text only.
 var g1ExpectedCorrections = []G1Correction{
 	{
-		Item: "csharp-B01.a335", Field: G1FieldTS, Old: `["identifier"]`, New: `["preproc_arg"]`, PostNative: true,
+		Item: "csharp-B01.a335", Field: G1FieldTS, Old: `["identifier"]`, New: `["preproc_arg"]`, AfterNative: true, BasisIndependent: true,
 		Reason: "The specification defines the symbol of #define and #undef as PP_Conditional_Symbol, a lexeme, and names no tree-sitter type. The pinned grammar text builds preproc_define and preproc_undef from the directive and one preproc_arg token, which runs to the end of the line, and has no identifier rule in them (identifier appears only in the #if and #elif condition). The witness is the symbol DEBUG of '#define DEBUG' followed directly by the line end, so the token has the witness's span.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "preproc_define", "preproc_define: $ => seq( preprocessor('define'), $.preproc_arg, /\\n/, ),"},
-			{G1DocGrammar, "preproc_undef", "preproc_undef: $ => seq( preprocessor('undef'), $.preproc_arg, /\\n/, ),"},
-			{G1DocGrammar, "preproc_arg", "preproc_arg: _ => token(prec(-1, /\\S([^/\\n]|\\/[^*]|\\\\\\r?\\n)*/)),"},
-			{G1DocSpec, g1gLex + "6.5.4 PP_Declaration", "'define' PP_Whitespace PP_Conditional_Symbol"},
-			{G1DocSpec, g1gLex + "6.5.2 PP_Conditional_Symbol", "fragment PP_Conditional_Symbol // Must not be equal to tokens TRUE or FALSE. See note below. : Basic_Identifier ;"},
+			{G1DocGrammar, "preproc_define", "preproc_define: $ => seq( preprocessor('define'), $.preproc_arg, /\\n/, ),", g1gGrammarSHA, "preproc_define:", 0},
+			{G1DocGrammar, "preproc_undef", "preproc_undef: $ => seq( preprocessor('undef'), $.preproc_arg, /\\n/, ),", g1gGrammarSHA, "preproc_undef:", 0},
+			{G1DocGrammar, "preproc_arg", "preproc_arg: _ => token(prec(-1, /\\S([^/\\n]|\\/[^*]|\\\\\\r?\\n)*/)),", g1gGrammarSHA, "preproc_arg:", 0},
+			{G1DocSpec, g1gLex + "6.5.4 PP_Declaration", "'define' PP_Whitespace PP_Conditional_Symbol", g1gLexSHA, "### 6.5.4 Definition directives", 6},
+			{G1DocSpec, g1gLex + "6.5.2 PP_Conditional_Symbol", "fragment PP_Conditional_Symbol // Must not be equal to tokens TRUE or FALSE. See note below. : Basic_Identifier ;", g1gLexSHA, "### 6.5.2 Conditional compilation symbols", 5},
 		},
 	},
 	{
-		Item: "csharp-B01.a383", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, PostNative: true,
+		Item: "csharp-B01.a383", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, AfterNative: true, BasisIndependent: true,
 		Reason: "The specification makes Interpolated_Regular_String_Start one lexeme of two characters ($\"). The pinned grammar text has no node of that extent: interpolated_string_expression begins with two nodes, an interpolation_start (an alias of the external token interpolation_regular_start) and then a quote node. The grammar text does not give the extent of the external token, so only the start is derivable: an interpolation_start node starts where the lexeme starts.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_regular_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_regular_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),", g1gGrammarSHA, "interpolated_string_expression:", 1},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 37},
 		},
 	},
 	{
-		Item: "csharp-B01.a396", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, PostNative: true,
+		Item: "csharp-B01.a396", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, AfterNative: true, BasisIndependent: true,
 		Reason: "The specification makes Interpolated_Verbatim_String_Start one lexeme ($@\" or @$\"). The pinned grammar text begins the verbatim form with an interpolation_start (an alias of the external token interpolation_verbatim_start) and then a quote node, so no node has the lexeme's extent, and only the start is derivable: an interpolation_start node starts where the lexeme starts.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),", g1gGrammarSHA, "interpolated_string_expression:", 7},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 83},
 		},
 	},
 	{
-		Item: "csharp-B01.a397", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, PostNative: true,
+		Item: "csharp-B01.a397", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, AfterNative: true, BasisIndependent: true,
 		Reason: "Same lexeme class and grammar rule as csharp-B01.a396: the verbatim start @$\" is one lexeme in the specification and begins with an interpolation_start (alias of interpolation_verbatim_start) followed by a quote node in the pinned grammar text, so only the start is derivable.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),", g1gGrammarSHA, "interpolated_string_expression:", 7},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 83},
 		},
 	},
+	// The kind map r2 gives the start tokens of interpolated strings no node type (see g1KindMapCorrections), so the ts of
+	// these three differential-oracle alternatives no longer comes from the map. It is the type the pinned grammar text
+	// names for the start of the interpolated string; the basis of the value is the grammar text, not the kind map. The
+	// alternatives keep their differential-oracle label for the witness (the lexeme and its position are what Roslyn
+	// observed).
+	g1TSBasis("csharp-B01.a383", "interpolation_regular_start", 1,
+		"seq( alias($.interpolation_regular_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),",
+		g1gExpr+"12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;", 37),
+	g1TSBasis("csharp-B01.a396", "interpolation_verbatim_start", 7,
+		"seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),",
+		g1gExpr+"12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", 83),
+	g1TSBasis("csharp-B01.a397", "interpolation_verbatim_start", 7,
+		"seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),",
+		g1gExpr+"12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", 83),
+}
+
+// g1TSBasis is the correction that records the new basis of the ts of an interpolated string start alternative.
+func g1TSBasis(item, external string, gap int, gramQuote, specAt, specQuote string, specGap int) G1Correction {
+	return G1Correction{
+		Item: item, Field: G1FieldTSBasis, Old: `"kind-map"`, New: `"grammar-text"`, AfterNative: true, BasisIndependent: true,
+		Reason: "The ts of this differential-oracle alternative, interpolation_start, was translated from the kind map r1 entry of its Roslyn kind. The kind map r2 relates that kind to no node type (the lexeme has no node of its extent), so the value is no longer a translation. It stays interpolation_start because the pinned grammar text begins the interpolated string with an interpolation_start node (an alias of the external token " + external + "): the basis of the ts is that grammar text.",
+		Grounds: []G1Ground{
+			{G1DocGrammar, "interpolated_string_expression", gramQuote, g1gGrammarSHA, "interpolated_string_expression:", gap},
+			{G1DocSpec, specAt, specQuote, g1gExprSHA, "### 12.8.3 Interpolated string expressions", specGap},
+		},
+	}
 }
 
 // g1KindMapCorrections are the kind map entries of the start tokens of interpolated strings, and the one
 // consequence for the list of unreferenced types. The map relates a Roslyn kind to the node types of
 // the same source extent; for a start token of an interpolated string the pinned grammar text has no
 // node of that extent. The first two entries are behind the three mismatching alternatives (found
-// after the native result: post_native). The two raw entries have the same structure in the grammar
-// text and no native mismatch showed it (post_native false): they are derived from the specification
-// and the grammar text alone, on the Root decision to correct the same structural error everywhere.
+// after the native result). The two raw entries have the same structure in the grammar text and no native
+// mismatch showed it; they were corrected on the Root decision to correct the same structural error everywhere,
+// so after the native result as well, and they too are derived from the specification and the grammar text alone.
 var g1KindMapCorrections = []G1Correction{
 	{
-		Item: "InterpolatedStringStartToken", Field: G1FieldEntry, PostNative: true,
+		Item: "InterpolatedStringStartToken", Field: G1FieldEntry, AfterNative: true, BasisIndependent: true,
 		Old:    `{"roslyn":"InterpolatedStringStartToken","class":"token","map":"1:1","ts":["interpolation_start"]}`,
 		New:    `{"roslyn":"InterpolatedStringStartToken","class":"token","map":"none","ts":[],"reason":"NO_SEPARATE_NODE"}`,
 		Reason: "The map relates a Roslyn kind to the node types of the same extent. The token $\" is one lexeme in the specification, but the pinned grammar text builds the start of an interpolated regular string from two nodes (interpolation_start, then a quote node), so no node type has the extent of the token.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_regular_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_regular_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),", g1gGrammarSHA, "interpolated_string_expression:", 1},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 37},
 		},
 	},
 	{
-		Item: "InterpolatedVerbatimStringStartToken", Field: G1FieldEntry, PostNative: true,
+		Item: "InterpolatedVerbatimStringStartToken", Field: G1FieldEntry, AfterNative: true, BasisIndependent: true,
 		Old:    `{"roslyn":"InterpolatedVerbatimStringStartToken","class":"token","map":"1:1","ts":["interpolation_start"]}`,
 		New:    `{"roslyn":"InterpolatedVerbatimStringStartToken","class":"token","map":"none","ts":[],"reason":"NO_SEPARATE_NODE"}`,
 		Reason: "The tokens $@\" and @$\" are one lexeme in the specification, but the pinned grammar text builds the start of an interpolated verbatim string from two nodes (interpolation_start, then a quote node), so no node type has the extent of the token.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),", g1gGrammarSHA, "interpolated_string_expression:", 7},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 83},
 		},
 	},
 	{
-		Item: "InterpolatedSingleLineRawStringStartToken", Field: G1FieldEntry, PostNative: false,
+		Item: "InterpolatedSingleLineRawStringStartToken", Field: G1FieldEntry, AfterNative: true, BasisIndependent: true,
 		Old:    `{"roslyn":"InterpolatedSingleLineRawStringStartToken","class":"token","map":"1:1","ts":["interpolation_start"]}`,
 		New:    `{"roslyn":"InterpolatedSingleLineRawStringStartToken","class":"token","map":"none","ts":[],"reason":"NO_SEPARATE_NODE"}`,
 		Reason: "Same structural error as the regular and verbatim starts, derived from the specification and the grammar text alone (no native mismatch showed it): Interpolated_Raw_String_Start is one lexeme (the dollar signs and the raw string delimiter), but the pinned grammar text begins the raw form with an interpolation_start (an alias of the external token interpolation_raw_start) and then a quote node (interpolation_quote), so no node type has the extent of the token.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_raw_start, $.interpolation_start), alias($.interpolation_start_quote, $.interpolation_quote),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Raw_String_Start", "Interpolated_Raw_String_Start : Interpolated_Raw_String_Prefix Raw_String_Literal_Delimiter ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_raw_start, $.interpolation_start), alias($.interpolation_start_quote, $.interpolation_quote),", g1gGrammarSHA, "interpolated_string_expression:", 13},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Raw_String_Start", "Interpolated_Raw_String_Start : Interpolated_Raw_String_Prefix Raw_String_Literal_Delimiter ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 140},
 		},
 	},
 	{
-		Item: "InterpolatedMultiLineRawStringStartToken", Field: G1FieldEntry, PostNative: false,
+		Item: "InterpolatedMultiLineRawStringStartToken", Field: G1FieldEntry, AfterNative: true, BasisIndependent: true,
 		Old:    `{"roslyn":"InterpolatedMultiLineRawStringStartToken","class":"token","map":"1:1","ts":["interpolation_start"]}`,
 		New:    `{"roslyn":"InterpolatedMultiLineRawStringStartToken","class":"token","map":"none","ts":[],"reason":"NO_SEPARATE_NODE"}`,
 		Reason: "Same as InterpolatedSingleLineRawStringStartToken: the multi-line raw form uses the same Interpolated_Raw_String_Start lexeme and the same grammar rule (one interpolated_string_expression choice for both), so no node type has the extent of the token.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_raw_start, $.interpolation_start), alias($.interpolation_start_quote, $.interpolation_quote),"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Raw_String_Start", "Interpolated_Raw_String_Start : Interpolated_Raw_String_Prefix Raw_String_Literal_Delimiter ;"},
+			{G1DocGrammar, "interpolated_string_expression", "seq( alias($.interpolation_raw_start, $.interpolation_start), alias($.interpolation_start_quote, $.interpolation_quote),", g1gGrammarSHA, "interpolated_string_expression:", 13},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Raw_String_Start", "Interpolated_Raw_String_Start : Interpolated_Raw_String_Prefix Raw_String_Literal_Delimiter ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 140},
 		},
 	},
 	{
-		Item: "interpolation_start", Field: G1FieldTSOnly, PostNative: true,
+		Item: "interpolation_start", Field: G1FieldTSOnly, AfterNative: true, BasisIndependent: true,
 		Old:    `null`,
 		New:    `{"type":"interpolation_start","reason":"EXTERNAL_SCANNER_NODE"}`,
 		Reason: "A consequence of the four entries above: interpolation_start was the type of the four start kinds and no kind refers to it now, so it joins the named types without a Roslyn kind. The pinned grammar text declares the three tokens it aliases (interpolation_regular_start, interpolation_verbatim_start, interpolation_raw_start) as external scanner tokens, the reason r1 gives to interpolation_brace and the other aliases of external tokens.",
 		Grounds: []G1Ground{
-			{G1DocGrammar, "externals", "$.interpolation_regular_start, $.interpolation_verbatim_start, $.interpolation_raw_start,"},
-			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;"},
+			{G1DocGrammar, "externals", "$.interpolation_regular_start, $.interpolation_verbatim_start, $.interpolation_raw_start,", g1gGrammarSHA, "externals:", 2},
+			{G1DocSpec, g1gExpr + "12.8.3 Interpolated_Regular_String_Start", "Interpolated_Regular_String_Start : '$\"' ;", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 37},
 		},
 	},
 }
 
 // g1CheckCorrections checks the form of a list of corrections: at least one, each with the allowed
 // field, a different old and new value, a reason, a ground in the grammar text (the tree-sitter side
-// of every correction comes from there) and a ground in the specification; no (item, field) twice. The
-// post_native flag says whether the native result prompted the correction; its value is authored with
-// the correction and checked by the comparison with the authored list.
+// of every correction comes from there) and a ground in the specification; no (item, field) twice. Every
+// ground is checkable offline (g1CheckGround). after_native is true for every r2 correction (the decision
+// of 2026-11-13: a r2 correction is one made after the native result); basis_independent is authored with the
+// correction and checked by the comparison with the authored list.
 func g1CheckCorrections(cs []G1Correction, field func(string) bool) error {
 	if len(cs) == 0 {
 		return g1cFault("G1_CORRECTION_FORM")
@@ -184,13 +245,13 @@ func g1CheckCorrections(cs []G1Correction, field func(string) bool) error {
 	seen := map[string]bool{}
 	for _, c := range cs {
 		key := c.Item + "|" + c.Field
-		if c.Item == "" || !field(c.Field) || seen[key] || c.Old == "" || c.New == "" || c.Old == c.New || c.Reason == "" {
+		if c.Item == "" || !field(c.Field) || seen[key] || c.Old == "" || c.New == "" || c.Old == c.New || c.Reason == "" || !c.AfterNative {
 			return g1cFault("G1_CORRECTION_FORM")
 		}
 		seen[key] = true
 		grammar, spec := false, false
 		for _, g := range c.Grounds {
-			if g.At == "" || strings.TrimSpace(g.Quote) == "" || g.Doc != G1DocGrammar && g.Doc != G1DocSpec {
+			if !g1CheckGround(g) {
 				return g1cFault("G1_CORRECTION_GROUND")
 			}
 			grammar = grammar || g.Doc == G1DocGrammar
@@ -203,12 +264,35 @@ func g1CheckCorrections(cs []G1Correction, field func(string) bool) error {
 	return nil
 }
 
+// g1CheckGround is the offline check of one ground: a quote of at least g1gMinQuote characters; the SHA-256 of the
+// document it quotes, which is the pinned one (the grammar.js of the kind map's commit, or the specification file the
+// ground names); and a heading, within g1gMaxGap lines of the quote, that carries the section the ground names (the
+// rule name of a grammar ground, the section number of a specification ground).
+func g1CheckGround(g G1Ground) bool {
+	if g.At == "" || utf8.RuneCountInString(G1CorrectionNorm(g.Quote)) < g1gMinQuote || g.Gap < 0 || g.Gap > g1gMaxGap || strings.TrimSpace(g.Heading) != g.Heading || g.Heading == "" {
+		return false
+	}
+	switch g.Doc {
+	case G1DocGrammar:
+		return g.DocSHA256 == g1gGrammarSHA && g.Heading == g.At+":"
+	case G1DocSpec:
+		m := g1gSpecAt.FindStringSubmatch(g.At)
+		if m == nil || g1gSpecSHA[m[1]] == "" || g.DocSHA256 != g1gSpecSHA[m[1]] {
+			return false
+		}
+		return regexp.MustCompile(`^#+ ` + regexp.QuoteMeta(m[2]) + ` `).MatchString(g.Heading)
+	}
+	return false
+}
+
 // G1CorrectionNorm collapses whitespace runs, the form a ground's quote is compared in.
 func G1CorrectionNorm(s string) string { return strings.Join(strings.Fields(s), " ") }
 
-// CheckG1Grounds checks that every ground of the corrections quotes its document: the grammar text for
-// a grammar ground and the specification text of the named file (lexical-structure.md or
-// expressions.md) for a spec ground. It reads the documents the caller supplies and nothing else.
+// CheckG1Grounds checks every ground of the corrections against the documents themselves: the grammar text for
+// a grammar ground and the specification text of the named file (lexical-structure.md or expressions.md) for a spec
+// ground. The document has the SHA-256 of the ground, the quote is in it, and the heading line of the ground is
+// exactly Gap lines before the line where that quote starts. It reads the documents the caller supplies and nothing
+// else; it is the live counterpart of the offline check (g1CheckGround) and runs where the documents are present.
 func CheckG1Grounds(cs []G1Correction, grammar string, spec map[string]string) error {
 	for _, c := range cs {
 		for _, g := range c.Grounds {
@@ -221,12 +305,46 @@ func CheckG1Grounds(cs []G1Correction, grammar string, spec map[string]string) e
 					}
 				}
 			}
-			if !strings.Contains(G1CorrectionNorm(doc), G1CorrectionNorm(g.Quote)) {
-				return fmt.Errorf("correction %s: the %s ground %q is not in the document", c.Item, g.Doc, g.At)
+			bad := func(why string) error {
+				return fmt.Errorf("correction %s: the %s ground %q: %s", c.Item, g.Doc, g.At, why)
+			}
+			if sum := sha256.Sum256([]byte(doc)); hex.EncodeToString(sum[:]) != g.DocSHA256 {
+				return bad("the document is not the pinned one")
+			}
+			if !g1gHeadingGap(doc, g) {
+				return bad("the quote is not exactly Gap lines after the heading line")
 			}
 		}
 	}
 	return nil
+}
+
+// g1gHeadingGap reports whether some place of doc holds the quote, starting on a line that is Gap lines after a line
+// that begins with the heading (the quote may start in the middle of that line).
+func g1gHeadingGap(doc string, g G1Ground) bool {
+	lines := strings.Split(strings.ReplaceAll(doc, "\r\n", "\n"), "\n")
+	norm := make([]string, len(lines))
+	for i, l := range lines {
+		norm[i] = G1CorrectionNorm(l)
+	}
+	quote := G1CorrectionNorm(g.Quote)
+	for h, l := range norm {
+		if !strings.HasPrefix(l, g.Heading) || h+g.Gap >= len(norm) {
+			continue
+		}
+		// the quote starts on the line h+Gap: that line and the following ones, joined, hold it from a place in that line
+		first := len(norm[h+g.Gap])
+		var text string
+		for _, l := range norm[h+g.Gap:] {
+			if text += l + " "; len(text) > first+len(quote) {
+				break
+			}
+		}
+		if i := strings.Index(text, quote); i >= 0 && i < first {
+			return true
+		}
+	}
+	return false
 }
 
 func g1cJSON(v any) string {
@@ -236,7 +354,9 @@ func g1cJSON(v any) string {
 
 // ---- expected asset -----------------------------------------------------------------------------
 
-func g1cExpectedField(f string) bool { return f == G1FieldTS || f == G1FieldWitnessMatch }
+func g1cExpectedField(f string) bool {
+	return f == G1FieldTS || f == G1FieldWitnessMatch || f == G1FieldTSBasis
+}
 
 // g1cCloneExpected copies the alternatives, the only part a correction changes.
 func g1cCloneExpected(x CSharpG1Expected) CSharpG1Expected {
@@ -271,6 +391,11 @@ func g1cApplyExpected(x CSharpG1Expected, cs []G1Correction) (CSharpG1Expected, 
 				return out, g1cFault("G1_CORRECTION_OLD")
 			}
 			alt.TS = ts
+		case G1FieldTSBasis:
+			// a record, not a change of value: the ts of a differential-oracle alternative that the kind map no longer gives
+			if c.Old != `"kind-map"` || c.New != `"grammar-text"` || alt.Basis != G1BasisDiff {
+				return out, g1cFault("G1_CORRECTION_OLD")
+			}
 		case G1FieldWitnessMatch:
 			var m string
 			if len(alt.Witnesses) == 0 || g1cJSON(alt.Witnesses[0].Match) != c.Old || json.Unmarshal([]byte(c.New), &m) != nil || m != "span" && m != "starts-at" {
@@ -415,6 +540,9 @@ func g1cBuildKindMap(r1 CSharpG1KindMap, previous []byte, cs []G1Correction) (CS
 		return m, err
 	}
 	m.Schema = CSharpG1KindMapSchemaR2
+	if m.Grammar.GrammarJS.SHA256 != g1gGrammarSHA {
+		return m, g1cFault("G1_CORRECTION_GROUND")
+	}
 	m.Previous = queryregistrycore.FilePin(CSharpG1KindMapPath, previous)
 	m.Corrections = slices.Clone(cs)
 	// the list of unreferenced types changes only by the ts_only corrections; that it is still exactly the

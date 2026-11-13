@@ -155,7 +155,7 @@ type g1xRev struct {
 	dispositions                                   map[string]G1ExecDisposition
 }
 
-const csharpG1ExecutedBasisR2 = csharpG1ExecutedBasis + " Revision r2 compares the r2 expected asset and kind map, which correct four values after the r1 native result was seen (post_native corrections); the r1 executed asset stays as sealed. The counts sealed_match, corrected and corrected_match keep the uncorrected comparisons and the post-native corrections apart."
+const csharpG1ExecutedBasisR2 = csharpG1ExecutedBasis + " Revision r2 compares the r2 expected asset and kind map, which correct four values after the r1 native result was seen (after_native corrections); the r1 executed asset stays as sealed. The counts sealed_match, corrected and corrected_match keep the uncorrected comparisons and the post-native corrections apart."
 
 var g1xRevisions = map[string]g1xRev{
 	CSharpG1ExpectedSchema:   {CSharpG1ExecutedSchema, CSharpG1ExecutedPath, CSharpG1ExpectedPath, CSharpG1KindMapPath, csharpG1ExecutedBasis, g1ExecDispositions},

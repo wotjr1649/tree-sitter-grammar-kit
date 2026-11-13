@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"bytes"
 	"cmp"
 	"encoding/base64"
 	"encoding/json"
@@ -26,7 +27,16 @@ import (
 const (
 	CSharpG1RoslynSchema      = "tsgk-csharp-g1-roslyn-observed/r2"
 	CSharpG1RoslynInputSchema = "tsgk-csharp-g1-roslyn-input/r1"
-	CSharpG1RoslynPath        = "src/contracts/csharp-g1-roslyn-observed-r2.json"
+	// CSharpG1RoslynPath is the frozen r2 observation: the sealed expected and executed assets (r1 and r2) pin it
+	// and every derivation of them reads it. It is a historical input; nothing writes it any more.
+	CSharpG1RoslynPath = "src/contracts/csharp-g1-roslyn-observed-r2.json"
+	// CSharpG1RoslynPathR3 is the observation the observer tooling writes and verifies from now on: the r2 observation
+	// with the observer hash (provenance.tool_sha256) of a clean build of the tracked observer source.
+	CSharpG1RoslynPathR3 = "src/contracts/csharp-g1-roslyn-observed-r3.json"
+	// CSharpG1RoslynR3ToolSHA256 is the SHA-256 of the Observe.dll that a clean build of the observer source (Observe.cs,
+	// Observe.csproj and global.json as of commit a12bd3c, SDK 10.0.401) produces. Build mode: Release,
+	// --no-incremental, -p:UseSharedCompilation=false. Another mode (Debug, an incremental build) gives another hash.
+	CSharpG1RoslynR3ToolSHA256 = "1cf824bdc98607d5e300aa205110bec707e62d325b40b9caa842584184f043ca"
 	// shortcut: the asset is about 2.1 MB today; raise only with a new revision.
 	csharpG1RoslynMaxBytes = 4 << 20
 	g1RoslynInputMaxBytes  = 32 << 20
@@ -244,6 +254,37 @@ func ParseCSharpG1RoslynObserved(data, ledger []byte, src CSharpG1Sources) (CSha
 		return CSharpG1RoslynObserved{}, err
 	}
 	return checkCSharpG1Roslyn(data, queryregistrycore.FilePin(CSharpG1LedgerPath, ledger), input, sources)
+}
+
+// ParseCSharpG1RoslynObservedR3 verifies the r3 observation: it parses with the same schema and bindings as every
+// observation, it equals the frozen r2 observation in every value except provenance.tool_sha256, and that hash is the
+// one of a clean build of the tracked observer source (CSharpG1RoslynR3ToolSHA256).
+func ParseCSharpG1RoslynObservedR3(r3, r2, ledger []byte, src CSharpG1Sources) (CSharpG1RoslynObserved, error) {
+	x, err := ParseCSharpG1RoslynObserved(r3, ledger, src)
+	if err != nil {
+		return x, err
+	}
+	old, err := ParseCSharpG1RoslynObserved(r2, ledger, src)
+	if err != nil {
+		return x, err
+	}
+	if x.Provenance.ToolSHA256 != CSharpG1RoslynR3ToolSHA256 || x.Provenance.ToolSHA256 == old.Provenance.ToolSHA256 {
+		return x, g1rFault("G1_ROSLYN_R3_TOOL")
+	}
+	a, b := x, old
+	a.Provenance.ToolSHA256, b.Provenance.ToolSHA256 = "", ""
+	am, err := json.Marshal(a)
+	if err != nil {
+		return x, err
+	}
+	bm, err := json.Marshal(b)
+	if err != nil {
+		return x, err
+	}
+	if !bytes.Equal(am, bm) {
+		return x, g1rFault("G1_ROSLYN_R3_DIFFERS")
+	}
+	return x, nil
 }
 
 func checkCSharpG1Roslyn(data []byte, ledger queryregistrycore.Pin, input []byte, sources []G1RoslynCaseSource) (CSharpG1RoslynObserved, error) {

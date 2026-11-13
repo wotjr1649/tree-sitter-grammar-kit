@@ -3,6 +3,7 @@
 //
 //	go run ./src/dev/csharp-g1-roslyn-asset -root . -input <out.json>      write the tool's input document
 //	go run ./src/dev/csharp-g1-roslyn-asset -root . -verify <observed>     verify an observation against the tracked ledger
+//	go run ./src/dev/csharp-g1-roslyn-asset -root . -verify-r3 <observed>  also require the tracked r3 observation (r2 except provenance.tool_sha256)
 //	go run ./src/dev/csharp-g1-roslyn-asset -root . -pp-check <generated>  compare the pp-r2 mode's run over src/testdata/csharp-pp/cases.json
 //	                                                                       byte for byte with roslyn-observed.json and its approved pin
 package main
@@ -68,7 +69,9 @@ func writeInput(root, out string) error {
 	return os.WriteFile(out, data, 0o644)
 }
 
-func verify(root, observed string) error {
+// verify checks an observation against the tracked ledger. With r3 set it also requires the observation to be the
+// tracked r3 one: equal to the frozen r2 observation except provenance.tool_sha256, with the hash of a clean build.
+func verify(root, observed string, r3 bool) error {
 	src, err := sources(root)
 	if err != nil {
 		return err
@@ -81,7 +84,16 @@ func verify(root, observed string) error {
 	if err != nil {
 		return err
 	}
-	x, err := kit.ParseCSharpG1RoslynObserved(data, ledger, src)
+	var x kit.CSharpG1RoslynObserved
+	if r3 {
+		var r2 []byte
+		if r2, err = os.ReadFile(filepath.Join(root, filepath.FromSlash(kit.CSharpG1RoslynPath))); err != nil {
+			return err
+		}
+		x, err = kit.ParseCSharpG1RoslynObservedR3(data, r2, ledger, src)
+	} else {
+		x, err = kit.ParseCSharpG1RoslynObserved(data, ledger, src)
+	}
 	if err != nil {
 		return err
 	}
@@ -137,6 +149,7 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	input := flag.String("input", "", "write the tool input document to this path")
 	verifyPath := flag.String("verify", "", "verify this observation asset")
+	verifyR3 := flag.String("verify-r3", "", "verify this observation asset as the r3 observation")
 	ppPath := flag.String("pp-check", "", "compare this pp-r2 run over cases.json with roslyn-observed.json and its approved pin")
 	flag.Parse()
 	var err error
@@ -144,11 +157,13 @@ func main() {
 	case *input != "":
 		err = writeInput(*root, *input)
 	case *verifyPath != "":
-		err = verify(*root, *verifyPath)
+		err = verify(*root, *verifyPath, false)
+	case *verifyR3 != "":
+		err = verify(*root, *verifyR3, true)
 	case *ppPath != "":
 		err = ppCheck(*root, *ppPath)
 	default:
-		err = errors.New("one of -input, -verify, -pp-check is required")
+		err = errors.New("one of -input, -verify, -verify-r3, -pp-check is required")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

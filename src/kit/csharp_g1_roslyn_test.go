@@ -420,17 +420,122 @@ func TestCSharpG1RoslynRejectsMalformedBytes(t *testing.T) {
 	}
 }
 
+// g1rInstallPathFlow reports every way an install path or an absolute path can reach an assembly attribute or
+// property of the observer: in the csproj, $(RoslynDir) and $(NetCoreRoot) may only define the Roslyn directory and
+// feed a Reference HintPath (restore and compile read it, the assembly does not carry it), and AssemblyMetadata is only
+// the SDK version; in Observe.cs no assembly attribute may take a path, and no string literal is an absolute path.
+func g1rInstallPathFlow(csproj, cs string) []string {
+	var out []string
+	if items := regexp.MustCompile(`<AssemblyMetadata\b[^>]*>`).FindAllString(csproj, -1); len(items) != 1 || !regexp.MustCompile(`^<AssemblyMetadata\s+Include="TSGK\.SDK"\s+Value="\$\(NETCoreSdkVersion\)"\s*/>$`).MatchString(items[0]) {
+		out = append(out, "AssemblyMetadata must be exactly TSGK.SDK = $(NETCoreSdkVersion)")
+	}
+	pathProp := regexp.MustCompile(`\$\((RoslynDir|NetCoreRoot|DOTNET_[A-Za-z_]*|MSBuild[A-Za-z]*|ProjectDir)\)`)
+	for _, line := range strings.Split(csproj, "\n") {
+		t := strings.TrimSpace(line)
+		if pathProp.MatchString(t) && !strings.HasPrefix(t, "<Reference ") && !strings.HasPrefix(t, "<RoslynDir ") {
+			out = append(out, "csproj line takes a path outside a Reference or the RoslynDir definition: "+t)
+		}
+	}
+	if regexp.MustCompile(`GetFullPath|\b[A-Za-z]:[\\/]|"/(usr|home|opt|Users|mnt|var)/`).MatchString(csproj) {
+		out = append(out, "csproj holds GetFullPath or an absolute path literal")
+	}
+	for _, attr := range regexp.MustCompile(`(?m)^\s*\[\s*assembly\s*:.*$`).FindAllString(cs, -1) {
+		if regexp.MustCompile(`GetFullPath|roslynDir|RoslynDir|Location|BaseDirectory|CurrentDirectory|\b[A-Za-z]:[\\/]|"/`).MatchString(attr) {
+			out = append(out, "assembly attribute takes a path: "+attr)
+		}
+	}
+	for _, lit := range regexp.MustCompile(`"(?:[^"\\\n]|\\.)*"`).FindAllString(cs, -1) {
+		if regexp.MustCompile(`^"(?:[A-Za-z]:[\\/]|(?:\\\\|/)(?:usr|home|opt|Users|mnt|var|Program)\b)`).MatchString(lit) {
+			out = append(out, "Observe.cs holds an absolute path literal: "+lit)
+		}
+	}
+	return out
+}
+
 // TestCSharpG1ObserverCarriesNoInstallPath: the observer's assembly hash (tool_sha256) must not depend on where
 // dotnet is installed, so the only assembly metadata is the SDK version string (not a path); the Roslyn
 // directory is found at run time. A local check (two directory junctions to one SDK build the same Observe.dll)
 // is in the csharp-g1-ledger spec.
 func TestCSharpG1ObserverCarriesNoInstallPath(t *testing.T) {
-	data, err := os.ReadFile("../dev/csharp-g1-roslyn/Observe.csproj")
+	csproj, cs := string(mustRead(t, "../dev/csharp-g1-roslyn/Observe.csproj")), string(mustRead(t, "../dev/csharp-g1-roslyn/Observe.cs"))
+	if got := g1rInstallPathFlow(csproj, cs); len(got) != 0 {
+		t.Errorf("the observer assembly can carry an install path: %q", got)
+	}
+	// mutants: each way for a path to reach the assembly must be reported
+	for name, m := range map[string][2]string{
+		"description from RoslynDir":  {strings.Replace(csproj, "<AssemblyMetadata Include=", "<Description>$(RoslynDir)</Description><AssemblyMetadata Include=", 1), cs},
+		"second AssemblyMetadata":     {strings.Replace(csproj, "<Reference ", `<AssemblyMetadata Include="TSGK.Dir" Value="$(RoslynDir)" /><Reference `, 1), cs},
+		"informational version path":  {strings.Replace(csproj, "<DebugType>", "<InformationalVersion>$(NetCoreRoot)</InformationalVersion><DebugType>", 1), cs},
+		"absolute path in the csproj": {strings.Replace(csproj, "<DebugType>", `<Description>C:\dotnet\</Description><DebugType>`, 1), cs},
+		"assembly attribute path":     {csproj, cs + "\n[assembly: System.Reflection.AssemblyMetadata(\"dir\", System.IO.Path.GetFullPath(\".\"))]\n"},
+		"assembly attribute literal":  {csproj, cs + "\n[assembly: System.Reflection.AssemblyDescription(\"C:\\\\dotnet\")]\n"},
+		"absolute path literal":       {csproj, cs + "\nclass Z { string p = \"/usr/share/dotnet\"; }\n"},
+	} {
+		if len(g1rInstallPathFlow(m[0], m[1])) == 0 {
+			t.Errorf("mutant %q was not reported", name)
+		}
+	}
+}
+
+const (
+	g1rR3SHA = "01b220ba178af7457e42994a3d3be6af6f8401c29c0083d004c981f1084e6e71"
+	// the observer source a clean build of which gives CSharpG1RoslynR3ToolSHA256 (Release, --no-incremental,
+	// UseSharedCompilation=false, SDK 10.0.401; the source as of commit a12bd3c). A change of the source needs a new
+	// build, a new tool hash and a new observation revision.
+	g1rObserverCsSHA     = "b166185ef8d3eeed7a3b7f257f65c5328e0171a0235d0676983cc7226c14a5e1"
+	g1rObserverCsprojSHA = "efeae420c28e37ef9011ace82370ee0e6526b4f675bfe86284c0011bbffc1bc7"
+	g1rObserverGlobalSHA = "9969064a379ad96f0fd9358b4133bf2652018a32c60d44f37a0638168381a90d"
+)
+
+// TestCSharpG1RoslynR3IsR2WithTheBuildHash: r3 is the observation the tooling writes now; the frozen r2 stays as it
+// is and r3 differs from it in provenance.tool_sha256 only (an independent byte-level comparison besides the verifier's).
+func TestCSharpG1RoslynR3IsR2WithTheBuildHash(t *testing.T) {
+	a := g1rLoad(t)
+	r3, err := os.ReadFile("../contracts/csharp-g1-roslyn-observed-r3.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	items := regexp.MustCompile(`<AssemblyMetadata\b[^>]*>`).FindAllString(string(data), -1)
-	if len(items) != 1 || !regexp.MustCompile(`^<AssemblyMetadata\s+Include="TSGK\.SDK"\s+Value="\$\(NETCoreSdkVersion\)"\s*/>$`).MatchString(items[0]) {
-		t.Errorf("Observe.csproj AssemblyMetadata must be exactly TSGK.SDK = $(NETCoreSdkVersion): %q", items)
+	if len(r3) != 2142812 || digestHex(r3) != g1rR3SHA {
+		t.Fatalf("r3 observation changed: %d/%s", len(r3), digestHex(r3))
 	}
+	x, err := ParseCSharpG1RoslynObservedR3(r3, a.data, a.ledger, a.src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if x.Schema != CSharpG1RoslynSchema {
+		t.Errorf("schema %q", x.Schema)
+	}
+	old := a.decode(t)
+	if old.Provenance.ToolSHA256 == x.Provenance.ToolSHA256 || x.Provenance.ToolSHA256 != CSharpG1RoslynR3ToolSHA256 {
+		t.Errorf("tool hashes: r2 %s, r3 %s", old.Provenance.ToolSHA256, x.Provenance.ToolSHA256)
+	}
+	// byte level: replacing the one hash in r2 gives r3 exactly
+	if !bytes.Equal(bytes.Replace(a.data, []byte(old.Provenance.ToolSHA256), []byte(CSharpG1RoslynR3ToolSHA256), -1), r3) || bytes.Count(a.data, []byte(old.Provenance.ToolSHA256)) != 1 {
+		t.Error("r3 differs from r2 by more than provenance.tool_sha256")
+	}
+	// the hash is the one of the tracked observer source, so a changed source cannot keep this r3
+	for file, want := range map[string]string{"Observe.cs": g1rObserverCsSHA, "Observe.csproj": g1rObserverCsprojSHA, "global.json": g1rObserverGlobalSHA} {
+		if got := digestHex(mustRead(t, "../dev/csharp-g1-roslyn/"+file)); got != want {
+			t.Errorf("%s changed (%s): build it again and write a new observation revision", file, got)
+		}
+	}
+
+	check := func(name string, data []byte, want string) {
+		t.Helper()
+		_, err := ParseCSharpG1RoslynObservedR3(data, a.data, a.ledger, a.src)
+		if got := g1Code(err); got != want {
+			t.Errorf("%s: code %q, want %q (%v)", name, got, want, err)
+		}
+	}
+	// mutants: another changed value, another tool hash, r2 given as r3
+	var m CSharpG1RoslynObserved = x
+	m.Provenance.Runtime.Version += ".1"
+	moved, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("another changed field", moved, "G1_ROSLYN_R3_DIFFERS")
+	check("another tool hash", bytes.Replace(r3, []byte(CSharpG1RoslynR3ToolSHA256), []byte(strings.Repeat("0", 64)), 1), "G1_ROSLYN_R3_TOOL")
+	check("r2 as r3", a.data, "G1_ROSLYN_R3_TOOL")
+	check("r3 not a valid observation", r3[:len(r3)/2], "G1_ROSLYN_JSON")
 }

@@ -37,6 +37,13 @@ const (
 	G1Blocked    = "BLOCKED"
 	G1Executed   = "EXECUTED"
 
+	// The result words of the executed asset that the ledger reads. They are declared here, not taken from
+	// the comparison file, so that the derivation side does not reach a declaration of the comparison side;
+	// a test pins them to the comparison file's G1ResMatch, G1ResMismatch and G1ResNotApplicable.
+	g1LedgerResMatch    = "MATCH"
+	g1LedgerResMismatch = "MISMATCH"
+	g1LedgerResNone     = "NOT_APPLICABLE"
+
 	// Presence of an alternative in the registered case sources, by static pattern only.
 	G1PresenceMatch      = "LITERAL_MATCH"       // every required literal occurs, in order, in a linked P step source
 	G1PresenceAbsent     = "LITERAL_ABSENT"      // a pattern exists but no linked P step source holds it
@@ -757,7 +764,8 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 
 // g1ApplyStates moves the alternatives of the two lexical rows out of NO_EXPECTED. The expected asset
 // decides SEALED (EXPECTED) or BLOCKED (BLOCKED, with its reason code); the executed asset, when
-// present, moves SEALED alternatives to EXECUTED. Both assets are read here only for alternative IDs,
+// present, moves SEALED alternatives to EXECUTED when native was compared with them and matched (result
+// MATCH; MISMATCH and NOT_APPLICABLE stay SEALED). Both assets are read here only for alternative IDs,
 // statuses and reason codes; each is verified on its own against the same pinned sources
 // (ParseCSharpG1Expected, ParseCSharpG1Executed), and the ledger test compares the three.
 func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
@@ -794,6 +802,7 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 				ID       string `json:"id"`
 				Row      string `json:"row"`
 				Executed bool   `json:"executed"`
+				Result   string `json:"result"`
 			} `json:"alternatives"`
 		}
 		if err := json.Unmarshal(executed, &ex); err != nil || len(ex.Alternatives) == 0 {
@@ -804,8 +813,13 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 			if !sealed[a.ID] || a.Row != rowOf[a.ID] || a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 || listed[a.ID] {
 				return g1Fault("G1_LEDGER_EXECUTED")
 			}
+			// the result must be a known one and agree with the flag: a comparison ran (MATCH or MISMATCH) or it did not
+			if a.Executed != (a.Result == g1LedgerResMatch || a.Result == g1LedgerResMismatch) || !a.Executed && a.Result != g1LedgerResNone {
+				return g1Fault("G1_LEDGER_EXECUTED")
+			}
 			listed[a.ID] = true
-			if a.Executed {
+			// EXECUTED means "compared with native and matched": a MISMATCH stays SEALED
+			if a.Result == g1LedgerResMatch {
 				executedIDs[a.ID] = true
 			}
 		}

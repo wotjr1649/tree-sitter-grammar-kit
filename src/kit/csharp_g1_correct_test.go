@@ -94,7 +94,7 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(km.Corrections) != 5 || len(x.Corrections) != 4 {
+	if len(km.Corrections) != 5 || len(x.Corrections) != 7 {
 		t.Fatalf("corrections: kind map %d, expected %d", len(km.Corrections), len(x.Corrections))
 	}
 	for _, c := range append(slices.Clone(km.Corrections), x.Corrections...) {
@@ -102,17 +102,29 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 			t.Errorf("%s: correction lacks its record: %+v", c.Item, c)
 		}
 	}
-	// post_native: the four expected values and the first two entries were corrected after the native result was seen; the raw starts were derived from the text alone
-	for _, c := range x.Corrections {
-		if !c.PostNative {
-			t.Errorf("%s: not post_native", c.Item)
+	// the authored flags are pinned directly (nothing is inferred from an item name): every r2 correction is after_native,
+	// the timing (the decision of 2026-11-13), and every ground is the specification or the grammar text, so
+	// basis_independent holds for all of them
+	type flag struct{ item, field string }
+	wantFlags := func(got []G1Correction, want []flag) {
+		t.Helper()
+		if len(got) != len(want) {
+			t.Fatalf("%d corrections, want %d", len(got), len(want))
+		}
+		for i, c := range got {
+			if c.Item != want[i].item || c.Field != want[i].field || !c.AfterNative || !c.BasisIndependent {
+				t.Errorf("correction %d: %s %s after_native %v basis_independent %v", i, c.Item, c.Field, c.AfterNative, c.BasisIndependent)
+			}
 		}
 	}
-	for _, c := range km.Corrections {
-		if want := !strings.Contains(c.Item, "Raw"); c.PostNative != want {
-			t.Errorf("%s: post_native %v, want %v", c.Item, c.PostNative, want)
-		}
-	}
+	wantFlags(x.Corrections, []flag{
+		{"csharp-B01.a335", "ts"}, {"csharp-B01.a383", "witnesses[0].match"}, {"csharp-B01.a396", "witnesses[0].match"}, {"csharp-B01.a397", "witnesses[0].match"},
+		{"csharp-B01.a383", "ts_basis"}, {"csharp-B01.a396", "ts_basis"}, {"csharp-B01.a397", "ts_basis"},
+	})
+	wantFlags(km.Corrections, []flag{
+		{"InterpolatedStringStartToken", "entry"}, {"InterpolatedVerbatimStringStartToken", "entry"},
+		{"InterpolatedSingleLineRawStringStartToken", "entry"}, {"InterpolatedMultiLineRawStringStartToken", "entry"}, {"interpolation_start", "ts_only"},
+	})
 	// the derivation is what is tracked
 	if d, err := DeriveCSharpG1ExpectedR2(a.expIn); err != nil {
 		t.Fatal(err)
@@ -310,7 +322,17 @@ func TestCSharpG1CorrectedExpectedRejects(t *testing.T) {
 		{"a ground without a quote", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].Quote = "  " }},
 		{"a ground without a place", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].At = "" }},
 		{"a ground in an unknown document", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].Doc = "native" }},
-		{"a post-native correction not marked so", "G1_CORRECTION_UNAUTHORED", func(x *CSharpG1Expected) { x.Corrections[0].PostNative = false }},
+		{"a correction not marked after_native", "G1_CORRECTION_FORM", func(x *CSharpG1Expected) { x.Corrections[0].AfterNative = false }},
+		{"a basis_independent flag that is not the authored one", "G1_CORRECTION_UNAUTHORED", func(x *CSharpG1Expected) { x.Corrections[0].BasisIndependent = false }},
+		// the grounds are checkable offline (F5)
+		{"a quote below the minimum length", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].Quote = "preproc_define: $ => seq(" }},
+		{"a ground of another grammar.js", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].DocSHA256 = strings.Repeat("0", 64) }},
+		{"a spec ground of the other spec file", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[3].DocSHA256 = g1gExprSHA }},
+		{"a heading of another section", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[3].Heading = "### 6.5.5 Line directives" }},
+		{"a grammar heading of another rule", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].Heading = "preproc_undef:" }},
+		{"a gap beyond the bound", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[3].Gap = 201 }},
+		{"a negative gap", "G1_CORRECTION_GROUND", func(x *CSharpG1Expected) { x.Corrections[0].Grounds[0].Gap = -1 }},
+		{"a ts_basis record on a spec-derived alternative", "G1_CORRECTION_OLD", func(x *CSharpG1Expected) { x.Corrections[4].Item = "csharp-B01.a335" }},
 		{"a correction without a reason", "G1_CORRECTION_FORM", func(x *CSharpG1Expected) { x.Corrections[0].Reason = "" }},
 		{"a correction that changes nothing", "G1_CORRECTION_FORM", func(x *CSharpG1Expected) { x.Corrections[0].New = x.Corrections[0].Old }},
 		{"a correction of an unknown field", "G1_CORRECTION_FORM", func(x *CSharpG1Expected) { x.Corrections[0].Field = "status" }},
@@ -477,8 +499,9 @@ func TestCSharpG1CorrectedKindMapRejects(t *testing.T) {
 		}},
 		{"a correction without grounds", "G1_CORRECTION_GROUND", func(m *CSharpG1KindMap) { m.Corrections[0].Grounds = nil }},
 		{"a correction with a grammar ground only", "G1_CORRECTION_GROUND", func(m *CSharpG1KindMap) { m.Corrections[0].Grounds = m.Corrections[0].Grounds[:1] }},
-		{"a post-native correction not marked so", "G1_CORRECTION_UNAUTHORED", func(m *CSharpG1KindMap) { m.Corrections[0].PostNative = false }},
-		{"a correction from the text alone marked post-native", "G1_CORRECTION_UNAUTHORED", func(m *CSharpG1KindMap) { m.Corrections[2].PostNative = true }},
+		{"a correction not marked after_native", "G1_CORRECTION_FORM", func(m *CSharpG1KindMap) { m.Corrections[0].AfterNative = false }},
+		{"a raw start correction not marked after_native", "G1_CORRECTION_FORM", func(m *CSharpG1KindMap) { m.Corrections[2].AfterNative = false }},
+		{"a basis_independent flag that is not the authored one", "G1_CORRECTION_UNAUTHORED", func(m *CSharpG1KindMap) { m.Corrections[2].BasisIndependent = false }},
 		{"the unreferenced type correction removed, its change kept", "G1_CORRECTION_UNLISTED", func(m *CSharpG1KindMap) { m.Corrections = m.Corrections[:4] }},
 		{"an unreferenced type no grammar has", "G1_CORRECTION_OLD", func(m *CSharpG1KindMap) {
 			m.Corrections[4].Item = "no_such_type"
@@ -543,26 +566,32 @@ func TestCSharpG1CorrectedKindMapRejects(t *testing.T) {
 // The grounds are checked against the pinned documents when a checkout is supplied (the grammar text
 // and the specification are not tracked). A quote that is not in the document is refused.
 func TestCSharpG1CorrectionGroundsAreQuotes(t *testing.T) {
-	grammar := "x preproc_define: $ => seq(\n  preprocessor('define'),\n  $.preproc_arg,\n  /\\n/,\n),\n y"
-	spec := map[string]string{"lexical-structure.md": "'define' PP_Whitespace  PP_Conditional_Symbol"}
+	grammar := "x\npreproc_define: $ => seq(\n  preprocessor('define'),\n  $.preproc_arg,\n  /\\n/,\n),\n y"
+	lex := "intro\n### 6.5.4 Definition directives\n\n'define' PP_Whitespace  PP_Conditional_Symbol\n"
+	spec := map[string]string{"lexical-structure.md": lex}
 	c := []G1Correction{{Item: "i", Grounds: []G1Ground{
-		{G1DocGrammar, "preproc_define", "preproc_define: $ => seq( preprocessor('define'), $.preproc_arg, /\\n/, ),"},
-		{G1DocSpec, g1gSpecPre + "standard/lexical-structure.md 6.5.4", "'define' PP_Whitespace PP_Conditional_Symbol"}}}}
+		{G1DocGrammar, "preproc_define", "preproc_define: $ => seq( preprocessor('define'), $.preproc_arg, /\\n/, ),", digestHex([]byte(grammar)), "preproc_define:", 0},
+		{G1DocSpec, g1gSpecPre + "standard/lexical-structure.md 6.5.4", "'define' PP_Whitespace PP_Conditional_Symbol", digestHex([]byte(lex)), "### 6.5.4 Definition directives", 2}}}}
 	if err := CheckG1Grounds(c, grammar, spec); err != nil {
 		t.Fatal(err)
 	}
-	for _, mut := range []func(c []G1Correction){
-		func(c []G1Correction) {
+	for name, mut := range map[string]func(c []G1Correction){
+		"a quote that is not in the document": func(c []G1Correction) {
 			c[0].Grounds[0].Quote = "preproc_define: $ => seq( preprocessor('define'), $.identifier,"
 		},
-		func(c []G1Correction) { c[0].Grounds[1].Quote = "'undef' PP_Whitespace" },
-		func(c []G1Correction) { c[0].Grounds[1].At = g1gSpecPre + "standard/expressions.md 12.8.3" },
+		"another quote":                         func(c []G1Correction) { c[0].Grounds[1].Quote = "'undef' PP_Whitespace" },
+		"a spec ground of another file":         func(c []G1Correction) { c[0].Grounds[1].At = g1gSpecPre + "standard/expressions.md 12.8.3" },
+		"a document that is not the pinned one": func(c []G1Correction) { c[0].Grounds[1].DocSHA256 = strings.Repeat("0", 64) },
+		"a gap that is too short":               func(c []G1Correction) { c[0].Grounds[1].Gap = 1 },
+		"a gap that is too long":                func(c []G1Correction) { c[0].Grounds[1].Gap = 3 },
+		"a heading that is not there":           func(c []G1Correction) { c[0].Grounds[1].Heading = "### 6.5.5 Line directives" },
+		"a grammar heading that is not there":   func(c []G1Correction) { c[0].Grounds[0].Heading = "preproc_undef:" },
 	} {
 		cc := slices.Clone(c)
 		cc[0].Grounds = slices.Clone(c[0].Grounds)
 		mut(cc)
 		if CheckG1Grounds(cc, grammar, spec) == nil {
-			t.Error("a ground that quotes nothing was accepted")
+			t.Errorf("%s: a ground that quotes nothing was accepted", name)
 		}
 	}
 	// when the pinned documents are at hand, every authored ground quotes them
@@ -859,5 +888,94 @@ func TestCSharpG1DecodersTieTheSchemaToTheRecord(t *testing.T) {
 		t.Fatal(err)
 	} else if _, err := ParseCSharpG1KindMap(data, a.vocab); g1Code(err) != "G1_KINDMAP_SCHEMA" {
 		t.Errorf("r1 kind map with corrections: %v", err)
+	}
+}
+
+// F4: the r2 expected asset pins the r2 kind map, but the ts of three alternatives is not what the r2 kind map gives
+// (the map relates the start tokens of interpolated strings to no node type). Every EXPECTED ts of r2 equals the
+// derivation from the r2 kind map, or its alternative is listed in the change record (a ts or ts_basis correction).
+func g1cTSOffMap(x, derived CSharpG1Expected) (unlisted, vacuous []string) {
+	by := map[string]G1ExpAlt{}
+	for _, a := range derived.Alternatives {
+		by[a.ID] = a
+	}
+	listed, basis := map[string]bool{}, map[string]bool{}
+	for _, c := range x.Corrections {
+		listed[c.Item] = listed[c.Item] || c.Field == G1FieldTS || c.Field == G1FieldTSBasis
+		basis[c.Item] = basis[c.Item] || c.Field == G1FieldTSBasis
+	}
+	off := map[string]bool{}
+	for _, a := range x.Alternatives {
+		if a.Status != G1ExpExpected {
+			continue
+		}
+		if d := by[a.ID]; d.Status != G1ExpExpected || !slices.Equal(d.TS, a.TS) {
+			off[a.ID] = true
+			if !listed[a.ID] {
+				unlisted = append(unlisted, a.ID)
+			}
+		}
+	}
+	for item := range basis {
+		if !off[item] {
+			vacuous = append(vacuous, item)
+		}
+	}
+	slices.Sort(vacuous)
+	return unlisted, vacuous
+}
+
+func TestCSharpG1CorrectedExpectedTSFollowsTheR2KindMap(t *testing.T) {
+	a := g1cLoad(t)
+	x, err := ParseCSharpG1ExpectedR2(a.r2Exp, a.expIn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := a.expIn.R1
+	in.KindMap = a.r2Km
+	derived, err := DeriveCSharpG1Expected(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unlisted, vacuous := g1cTSOffMap(x, derived)
+	if len(unlisted) != 0 || len(vacuous) != 0 {
+		t.Fatalf("r2 EXPECTED ts off the r2 kind map and not in the change record: %v; ts_basis records of a ts the map gives: %v", unlisted, vacuous)
+	}
+	// the three that the map does not give are exactly the ts_basis records
+	var basis []string
+	for _, c := range x.Corrections {
+		if c.Field == G1FieldTSBasis {
+			basis = append(basis, c.Item)
+		}
+	}
+	if !slices.Equal(basis, []string{"csharp-B01.a383", "csharp-B01.a396", "csharp-B01.a397"}) {
+		t.Errorf("ts_basis records: %v", basis)
+	}
+	// mutants: a record dropped, a ts changed without a record, a record of a ts that the map gives
+	dropped := x
+	dropped.Corrections = slices.DeleteFunc(slices.Clone(x.Corrections), func(c G1Correction) bool { return c.Item == "csharp-B01.a383" && c.Field == G1FieldTSBasis })
+	if u, _ := g1cTSOffMap(dropped, derived); !slices.Equal(u, []string{"csharp-B01.a383"}) {
+		t.Errorf("a dropped ts_basis record was not reported: %v", u)
+	}
+	moved := g1cCloneExpected(x)
+	for i := range moved.Alternatives {
+		if moved.Alternatives[i].Status == G1ExpExpected && moved.Alternatives[i].Basis == G1BasisSpec && !slices.Contains(basis, moved.Alternatives[i].ID) && moved.Alternatives[i].ID != "csharp-B01.a335" {
+			moved.Alternatives[i].TS = append(moved.Alternatives[i].TS, "zz_type")
+			slices.Sort(moved.Alternatives[i].TS)
+			break
+		}
+	}
+	if u, _ := g1cTSOffMap(moved, derived); len(u) != 1 {
+		t.Errorf("a ts changed without a record was not reported: %v", u)
+	}
+	for _, alt := range x.Alternatives {
+		if alt.Status == G1ExpExpected && alt.Basis == G1BasisDiff && !slices.Contains(basis, alt.ID) {
+			extra := x
+			extra.Corrections = append(slices.Clone(x.Corrections), g1TSBasis(alt.ID, "x", 1, "q", "a", "q", 1))
+			if _, v := g1cTSOffMap(extra, derived); !slices.Equal(v, []string{alt.ID}) {
+				t.Errorf("a ts_basis record of a ts the map gives was not reported: %v", v)
+			}
+			break
+		}
 	}
 }

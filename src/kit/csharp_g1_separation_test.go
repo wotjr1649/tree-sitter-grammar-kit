@@ -49,8 +49,65 @@ var g1SepClass = map[string]string{
 	"csharp_g1_kindmap.go":         "derivation",
 	"csharp_g1_roslyn.go":          "derivation",
 	"csharp_g1_ledger.go":          "derivation",
-	"csharp_g1_executed.go":        "comparison",
-	"csharp_g1_native.go":          "comparison",
+	// r2 corrections: authored literals plus code that applies them to the sealed r1 bytes. No function of the
+	// file reads an executed asset or a native record (the closure proves it from the roots below); the
+	// literals themselves were written after the native comparison, which their after_native flag records.
+	"csharp_g1_correct.go":      "derivation",
+	"csharp_g1_audit_report.go": "derivation",
+	"csharp_g1_executed.go":     "comparison",
+	"csharp_g1_native.go":       "comparison",
+}
+
+// g1SepNeutral are the files outside the G1 prefix that the closure of the derivation reaches (the closure
+// over-approximates: a method name or a type pulls in every file that has one). They are neither derivation nor
+// comparison code of G1: shared helpers of the package. A reached file that is not listed here fails the proof, and a
+// package variable of one of them that the comparison side uses and the derivation reads fails it too. The package
+// allow list applies to every node of such a file the closure reaches.
+var g1SepNeutral = []string{
+	"capture.go",
+	"grammar.go",
+	"query_large_template.go",
+	"replay.go",
+	"csharp_pp.go",
+	"edit.go",
+	"encoding.go",
+	"evidence.go",
+	"facts.go",
+	"incremental.go",
+	"kit.go",
+	"oracle.go",
+	"preprocess.go",
+	"preprocess_cst.go",
+	"preprocess_route.go",
+	"profile.go",
+	"qualify.go",
+	"qualify_accepted.go",
+	"qualify_preprocess_cst.go",
+	"qualify_symbols.go",
+	"query_svc_inline_derive.go",
+	"query_witness.go",
+	"replay_native.go",
+	"replay_numeric.go",
+	"reproduce.go",
+	"reuse_accepted_registry.go",
+	"schema.go",
+	"strict.go",
+	"svc.go",
+	"svc_context.go",
+	"tree.go",
+	"verify.go",
+}
+
+// g1SepClasses is the file table with the neutral files added.
+func g1SepClasses() map[string]string {
+	c := map[string]string{}
+	for f, k := range g1SepClass {
+		c[f] = k
+	}
+	for _, f := range g1SepNeutral {
+		c[f] = "neutral"
+	}
+	return c
 }
 
 // g1SepRoots are the entry points of the derivation side: the expectation, the kind map, the
@@ -60,7 +117,16 @@ var g1SepRoots = []string{
 	"ParseCSharpG1KindMap", "MarshalCSharpG1KindMap", "DeriveCSharpG1KindMapCounts",
 	"ParseCSharpG1RoslynObserved", "CSharpG1RoslynSources", "MarshalCSharpG1RoslynInput",
 	"G1MetaVariantSources", "CSharpG1AuditSamples", "CSharpG1StructureDigest",
+	"DeriveCSharpG1ExpectedR2", "ParseCSharpG1ExpectedR2", "DeriveCSharpG1KindMapR2", "ParseCSharpG1KindMapR2",
+	"CSharpG1RoslynVocabulary", "CheckG1Grounds", "G1ExpectedCorrections", "G1KindMapCorrections",
+	"G1AuditStrata", "G1AuditUpper95",
+	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
 }
+
+// g1SepExcluded are exported Derive*, Parse*, Check* and Marshal* functions of derivation files that no root reaches
+// and that need none: a function that is not a derivation entry point of the expectation side. Add one only with the
+// reason.
+var g1SepExcluded = []string{}
 
 // g1SepAllowed are the packages a derivation node may use (pure computation on bytes and strings).
 //
@@ -387,6 +453,38 @@ func g1SepCheck(g *g1SepGraph, class map[string]string, roots []string, forbidCl
 	return slices.Compact(problems)
 }
 
+// g1SepReach is the set of nodes (keys of g.nodes) the closure of the roots contains, by the same edges as g1SepCheck.
+func g1SepReach(g *g1SepGraph, roots []string) map[string]bool {
+	seen := map[string]bool{}
+	queue := slices.Clone(roots)
+	for _, r := range roots {
+		seen[r] = true
+	}
+	for len(queue) > 0 {
+		k := queue[0]
+		queue = queue[1:]
+		var next []string
+		for _, n := range g.nodes[k] {
+			for r := range n.refs {
+				next = append(next, r)
+			}
+			if n.kind == "type" {
+				next = append(next, g.methods[k]...)
+			}
+		}
+		for _, r := range next {
+			if !seen[r] && len(g.nodes[r]) > 0 {
+				seen[r] = true
+				queue = append(queue, r)
+			}
+		}
+	}
+	return seen
+}
+
+// g1SepDeriveName matches the exported entry points of a derivation file that a root must reach.
+var g1SepDeriveName = regexp.MustCompile(`^(Derive|Parse|Check|Marshal)[A-Z0-9]`)
+
 // g1SepProve is the whole proof on a set of files: the file table, the closure of the derivation roots, the
 // closure of the spec deriver, the initialisation of the package and the one-way use of package state.
 func g1SepProve(files map[string]string, class map[string]string, roots []string) ([]string, error) {
@@ -431,6 +529,44 @@ func g1SepProve(files map[string]string, class map[string]string, roots []string
 	// the spec deriver reads the source text only: it stays in its file and uses three packages
 	for _, p := range g1SepCheck(g, class, specRoots, "", []string{"csharp_g1_spec.go"}, g1SepSpecAllowed) {
 		problems = append(problems, "spec: "+p)
+	}
+	reach := g1SepReach(g, all)
+	reachedFiles := map[string]bool{}
+	for key := range reach {
+		for _, n := range g.nodes[key] {
+			reachedFiles[n.file] = true
+		}
+	}
+	// a file the derivation reaches is a derivation file, or is registered as neutral (a helper that is no part of
+	// either side); a file nobody classified is a channel nobody checked
+	for file := range reachedFiles {
+		if c := class[file]; c != "derivation" && c != "comparison" && c != "neutral" {
+			problems = append(problems, file+": reached by the derivation but neither derivation, comparison nor neutral")
+		}
+	}
+	// every exported Derive, Parse, Check and Marshal function of a derivation file is a root, is reached by one or is
+	// listed as excluded: a derivation entry point outside the roots would be proved by nothing
+	for key, nodes := range g.nodes {
+		for _, n := range nodes {
+			if n.kind == "func" && class[n.file] == "derivation" && g1SepDeriveName.MatchString(key) && !reach[key] && !slices.Contains(g1SepExcluded, key) {
+				problems = append(problems, n.file+": "+key+" is not a root, not reached by one and not excluded")
+			}
+		}
+	}
+	// a package variable of a neutral file that the comparison side uses must not be reached by the derivation
+	for key, nodes := range g.nodes {
+		for _, n := range nodes {
+			if n.kind != "var" || class[n.file] != "neutral" || !reach[key] {
+				continue
+			}
+			for ckey, cn := range g.nodes {
+				for _, c := range cn {
+					if class[c.file] == "comparison" && c.refs[key] {
+						problems = append(problems, c.file+": "+ckey+" uses the neutral variable "+key+" that the derivation reads")
+					}
+				}
+			}
+		}
 	}
 	// the initialisation of the comparison files does not read the process either
 	for _, p := range g1SepCheck(g, class, comparisonInit, "", nil, g1SepAllowed) {
@@ -485,12 +621,12 @@ func g1SepReadPackage(t *testing.T) map[string]string {
 
 func TestCSharpG1SeparationClosure(t *testing.T) {
 	files := g1SepReadPackage(t)
-	for name := range g1SepClass {
+	for name := range g1SepClasses() {
 		if _, ok := files[name]; !ok {
 			t.Errorf("classified file %s does not exist", name)
 		}
 	}
-	problems, err := g1SepProve(files, g1SepClass, g1SepRoots)
+	problems, err := g1SepProve(files, g1SepClasses(), g1SepRoots)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -508,11 +644,12 @@ func TestCSharpG1SeparationClosureCatchesBypasses(t *testing.T) {
 			"csharp_g1_executed.go": "package kit\n\nimport \"os\"\n\nvar table = map[string]string{\"a\": \"b\"}\n\nfunc Compare() []byte { b, _ := os.ReadFile(\"x\"); return b }\n\nfunc neutral() string { return table[\"a\"] }\n",
 		}
 	}
-	class := map[string]string{"csharp_g1_expected.go": "derivation", "csharp_g1_executed.go": "comparison"}
+	class := map[string]string{"csharp_g1_expected.go": "derivation", "csharp_g1_executed.go": "comparison", "csharp_g1_correct.go": "derivation", "memo.go": "neutral"}
+	roots := []string{"Derive"}
 	run := func(mutate func(f map[string]string)) []string {
 		f := base()
 		mutate(f)
-		p, err := g1SepProve(f, class, []string{"Derive"})
+		p, err := g1SepProve(f, class, roots)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -570,11 +707,31 @@ func TestCSharpG1SeparationClosureCatchesBypasses(t *testing.T) {
 		{"stale root", "root Derive does not exist", func(f map[string]string) {
 			f["csharp_g1_expected.go"] = strings.Replace(f["csharp_g1_expected.go"], "func Derive()", "func Gone()", 1)
 		}},
+		// F2: a derivation entry point of a classified file that no root reaches is proved by nothing, even when it
+		// calls a comparison function
+		{"derivation function outside the roots", "csharp_g1_correct.go: DeriveR2 is not a root, not reached by one and not excluded", func(f map[string]string) {
+			f["csharp_g1_correct.go"] = "package kit\n\nfunc DeriveR2() { _ = Compare() }\n"
+		}},
+		{"derivation function as a root", "reaches a comparison file", func(f map[string]string) {
+			f["csharp_g1_correct.go"] = "package kit\n\nfunc DeriveR2() { _ = Compare() }\n"
+			roots = []string{"Derive", "DeriveR2"}
+		}},
+		// F3: state through a file that is neither derivation nor comparison
+		{"unclassified file reached", "hook.go: reached by the derivation but neither derivation, comparison nor neutral", func(f map[string]string) {
+			f["hook.go"] = "package kit\n\nvar cache = map[string]string{}\n\nfunc get() string { return cache[\"a\"] }\n"
+			f["csharp_g1_expected.go"] = strings.Replace(f["csharp_g1_expected.go"], "return helper()", "_ = get()\n\treturn helper()", 1)
+		}},
+		{"neutral variable shared with the comparison", "uses the neutral variable cache that the derivation reads", func(f map[string]string) {
+			f["memo.go"] = "package kit\n\nvar cache = map[string]string{}\n\nfunc get() string { return cache[\"a\"] }\n"
+			f["csharp_g1_expected.go"] = strings.Replace(f["csharp_g1_expected.go"], "return helper()", "_ = get()\n\treturn helper()", 1)
+			f["csharp_g1_executed.go"] += "\nfunc put() { cache[\"a\"] = string(Compare()) }\n"
+		}},
 		{"dot import", "import of strings", func(f map[string]string) {
 			f["csharp_g1_expected.go"] = strings.Replace(f["csharp_g1_expected.go"], "import \"strings\"", "import . \"strings\"", 1)
 		}},
 	}
 	for _, c := range cases {
+		roots = []string{"Derive"}
 		p := run(c.mutate)
 		if !slices.ContainsFunc(p, func(s string) bool { return strings.Contains(s, c.want) }) {
 			t.Errorf("%s: no problem containing %q in %v", c.name, c.want, p)

@@ -38,8 +38,8 @@ func g1Load(t *testing.T) g1Assets {
 			Alternatives: read("../contracts/feature-alternatives.json"),
 			FactMapping:  read("../contracts/fact-mapping.json"),
 			Fixtures:     map[string][]byte{},
-			Expected:     read("../contracts/csharp-g1-expected-b01b02-r1.json"),
-			Executed:     read("../contracts/csharp-g1-executed-b01b02-r1.json"),
+			Expected:     read("../contracts/csharp-g1-expected-b01b02-r2.json"),
+			Executed:     read("../contracts/csharp-g1-executed-b01b02-r2.json"),
 		}
 		for _, dir := range csharpG1Fixtures {
 			a.src.Fixtures[dir] = read("../testdata/native/" + dir + "/csharp.json")
@@ -125,6 +125,7 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 		Alternatives []struct {
 			ID       string
 			Executed bool
+			Result   string
 		}
 	}
 	if err := json.Unmarshal(a.src.Executed, &exeDoc); err != nil {
@@ -140,7 +141,8 @@ func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
 		}
 	}
 	for _, e := range exeDoc.Alternatives {
-		if e.Executed {
+		// EXECUTED means compared with native and matched
+		if e.Executed && e.Result == G1ResMatch {
 			executed[e.ID] = true
 		}
 	}
@@ -459,6 +461,7 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 		ID       string `json:"id"`
 		Row      string `json:"row"`
 		Executed bool   `json:"executed"`
+		Result   string `json:"result"`
 	}
 	var b02 []string
 	for _, alt := range plain.Alternatives {
@@ -466,14 +469,15 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 			b02 = append(b02, alt.ID)
 		}
 	}
-	mk := func(status func(i int) (string, string), executed func(i int) (bool, bool)) CSharpG1Sources {
+	// mkRes is mk with the result of each executed alternative chosen by the caller ("" = not listed)
+	mkRes := func(status func(i int) (string, string), result func(i int) string) CSharpG1Sources {
 		var exp []expAlt
 		var exe []exeAlt
 		for i, id := range b02 {
 			s, block := status(i)
 			exp = append(exp, expAlt{id, g1ExpRowB02, s, block})
-			if ok, listed := executed(i); listed {
-				exe = append(exe, exeAlt{id, g1ExpRowB02, ok})
+			if r := result(i); r != "" {
+				exe = append(exe, exeAlt{id, g1ExpRowB02, r == G1ResMatch || r == G1ResMismatch, r})
 			}
 		}
 		e, _ := json.Marshal(map[string]any{"alternatives": exp})
@@ -484,6 +488,17 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 			s.Executed = x
 		}
 		return s
+	}
+	mk := func(status func(i int) (string, string), executed func(i int) (bool, bool)) CSharpG1Sources {
+		return mkRes(status, func(i int) string {
+			switch ok, listed := executed(i); {
+			case !listed:
+				return ""
+			case ok:
+				return G1ResMatch
+			}
+			return G1ResNotApplicable
+		})
 	}
 	allExpected := func(int) (string, string) { return G1ExpExpected, "" }
 	pStatus := func(l CSharpG1Ledger) string {
@@ -534,6 +549,39 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 	if st, why := altStatus(l, b02[1]); err != nil || st != G1Blocked || why != "SEMANTIC_BINDING" || pStatus(l) != G1NoExpected {
 		t.Fatalf("one blocked: %v %q %q P %q", err, st, why, pStatus(l))
 	}
+	// EXECUTED means compared with native and matched: a MISMATCH (or NOT_APPLICABLE) alternative stays
+	// SEALED, and a row whose alternative is not EXECUTED stays SEALED too
+	for _, bad := range []string{G1ResMismatch, G1ResNotApplicable} {
+		l, err = DeriveCSharpG1Ledger(mkRes(allExpected, func(i int) string {
+			if i == 2 {
+				return bad
+			}
+			return G1ResMatch
+		}))
+		if st, _ := altStatus(l, b02[2]); err != nil || st != G1Sealed || pStatus(l) != G1Sealed {
+			t.Fatalf("%s alternative: %v %q P %q, want SEALED", bad, err, st, pStatus(l))
+		}
+		if st, _ := altStatus(l, b02[3]); st != G1Executed {
+			t.Errorf("%s of one alternative moved its neighbour to %q", bad, st)
+		}
+	}
+	// the tracked data: with the r1 executed asset the four mismatches of the sealed values are not EXECUTED
+	r1 := a.src
+	r1.Expected, r1.Executed = mustRead(t, "../contracts/csharp-g1-expected-b01b02-r1.json"), mustRead(t, "../contracts/csharp-g1-executed-b01b02-r1.json")
+	l, err = DeriveCSharpG1Ledger(r1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := map[string]int{}
+	for _, alt := range l.Alternatives {
+		n[alt.Status]++
+		if alt.ID == "csharp-B01.a335" && alt.Status != G1Sealed {
+			t.Errorf("a335 is a MISMATCH in r1 but %s", alt.Status)
+		}
+	}
+	if n[G1Executed] != 422 || n[G1Sealed] != 4 {
+		t.Errorf("r1 executed asset: states %v, want 422 EXECUTED and 4 SEALED", n)
+	}
 	// counterexamples of the transitions
 	for _, tc := range []struct {
 		name string
@@ -543,12 +591,12 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 		{"executing a blocked alternative", mk(blockOne, func(int) (bool, bool) { return true, true }), "G1_LEDGER_EXECUTED"},
 		{"executing an alternative that is not in the expected asset", func() CSharpG1Sources {
 			s := mk(allExpected, func(int) (bool, bool) { return true, true })
-			s.Executed = []byte(`{"alternatives":[{"id":"csharp-B02.a9999","row":"csharp-B02","executed":true}]}`)
+			s.Executed = []byte(`{"alternatives":[{"id":"csharp-B02.a9999","row":"csharp-B02","executed":true,"result":"MATCH"}]}`)
 			return s
 		}(), "G1_LEDGER_EXECUTED"},
 		{"executing an alternative twice", func() CSharpG1Sources {
 			s := mk(allExpected, func(int) (bool, bool) { return false, false })
-			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true},{"id":"` + b02[0] + `","row":"csharp-B02","executed":true}]}`)
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true,"result":"MATCH"},{"id":"` + b02[0] + `","row":"csharp-B02","executed":true,"result":"MATCH"}]}`)
 			return s
 		}(), "G1_LEDGER_EXECUTED"},
 		{"executing without a sealed expected asset", func() CSharpG1Sources {
@@ -558,7 +606,27 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 		}(), "G1_LEDGER_EXECUTED"},
 		{"executed row mismatch", func() CSharpG1Sources {
 			s := mk(allExpected, func(int) (bool, bool) { return false, false })
-			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B01","executed":true}]}`)
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B01","executed":true,"result":"MATCH"}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"executed without a result", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"unknown result", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true,"result":"MAYBE"}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"MATCH that did not execute", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":false,"result":"MATCH"}]}`)
+			return s
+		}(), "G1_LEDGER_EXECUTED"},
+		{"NOT_APPLICABLE that executed", func() CSharpG1Sources {
+			s := mk(allExpected, func(int) (bool, bool) { return false, false })
+			s.Executed = []byte(`{"alternatives":[{"id":"` + b02[0] + `","row":"csharp-B02","executed":true,"result":"NOT_APPLICABLE"}]}`)
 			return s
 		}(), "G1_LEDGER_EXECUTED"},
 		{"blocked without a reason", mk(func(i int) (string, string) { return G1ExpBlocked, "" }, func(int) (bool, bool) { return false, false }), "G1_LEDGER_SEALED"},
@@ -567,5 +635,13 @@ func TestCSharpG1LedgerStateRules(t *testing.T) {
 		if _, err := DeriveCSharpG1Ledger(tc.src); g1Code(err) != tc.code {
 			t.Errorf("%s: %v, want %s", tc.name, err, tc.code)
 		}
+	}
+}
+
+// The ledger reads the result words under its own names (it must not reach the comparison file); they are
+// the executed asset's words.
+func TestCSharpG1LedgerResultWordsAreTheExecutedAssets(t *testing.T) {
+	if g1LedgerResMatch != G1ResMatch || g1LedgerResMismatch != G1ResMismatch || g1LedgerResNone != G1ResNotApplicable {
+		t.Fatal("the ledger's result words differ from the executed asset's")
 	}
 }

@@ -289,10 +289,12 @@ func g1Audit(c *g1Ctx, alts []G1ExpAlt, prod map[string]string) (G1ExpAudit, err
 			a.Estimate.Mismatches++
 		}
 	}
+	// shortcut: with no mismatch the sealed r1 bytes hold the rule of three (300/n, above the exact bound), so it
+	// stays; with mismatches the bound is the exact binomial one (a point estimate is not an upper bound).
 	if a.Estimate.Mismatches == 0 && n > 0 {
 		a.Estimate.Upper95 = fmt.Sprintf("%.1f", 300/float64(n))
 	} else if n > 0 {
-		a.Estimate.Upper95 = fmt.Sprintf("%.1f", 100*float64(a.Estimate.Mismatches)/float64(n))
+		a.Estimate.Upper95 = fmt.Sprintf("%.1f", G1AuditUpper95(a.Estimate.Mismatches, n))
 	}
 	return a, nil
 }

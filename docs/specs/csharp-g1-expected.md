@@ -65,8 +65,21 @@ BLOCKED는 golden으로 채우지 않는다. `POSITION_DEPENDENT`·`SEMANTIC_BIN
 
 - 표본: 행마다 대안의 5%를 올림해 B01 21·B02 5 = 26개. 고정 seed `csharp-g1-3a-audit/r1`로 `SHA-256(seed|id)`가 작은 순서로 고르므로 기대값과 무관하고 결정적이다.
 - 각 표본은 근거 문서·절을 갖는 손 도출(`csharpG1AuditHand`)이다. 기대값을 보기 전에 명세 본문과 `grammar.js`에서 썼다. 도출은 기대 상태, 허용 type, witness text가 따라야 할 정규식이다.
-- 결과: 일치 25, **COVERAGE_GAP 1**(`csharp-B01.a356`, `#error`: 명세는 기대를 도출하지만 연결된 수락 source에 없다), 불일치 0. 불일치가 0이므로 Roslyn 오류율의 95% 상한은 3/26 ≈ **11.5%**(rule of three)다. 표본이 작아 이 상한은 느슨하다.
-- 표본 감사가 확인한 것은 도출한 기대값과 명세의 일치다. 표본 밖의 오류율은 이 결과로 줄지 않는다.
+- 결과: 일치 25, **COVERAGE_GAP 1**(`csharp-B01.a356`, `#error`: 명세는 기대를 도출하지만 연결된 수락 source에 없다), 불일치 0.
+- **상한은 층별로 적는다.** 한 숫자(3/26 ≈ 11.5%)로 합치지 않는다. 상한은 정확한 단측 95% 이항(Clopper–Pearson) 상한이며 `G1AuditUpper95`가 계산하고 `G1AuditStrata`가 층별로 낸다(asset을 바꾸지 않는 보고 함수).
+
+  | 층 | 표본 | 불일치 | 95% 상한(정확) |
+  |---|---:|---:|---:|
+  | `spec-derived`(lexeme은 명세에서 도출하고 Roslyn은 위치만 관측) | 16 | 0 | 17.1% |
+  | `differential-oracle`(구조가 Roslyn 관측이며 매핑표로 옮김) | 4 | 0 | 52.7% |
+  | BLOCKED 처분 확인 | 5 | 0 | 45.1% |
+  | COVERAGE_GAP(비교 없음) | 1 | — | — |
+  | 기대값을 비교한 표본(위 두 층) | 20 | 0 | 13.9% |
+  | 전체 | 26 | 0 | 10.9% |
+
+- 봉인된 r1 asset의 `estimate.upper_95_percent`는 rule of three(`300/n`)의 `11.5`다. 정확한 값(10.9)보다 크므로 보수적이며 r1은 바꾸지 않는다. 불일치가 있을 때 asset을 유도하는 `g1Audit`는 불일치율 자체가 아니라 정확한 상한을 쓴다(이전에는 불일치율을 상한으로 적었다. `TestCSharpG1AuditEstimateWithMismatches`).
+- 표본 감사가 확인한 것은 같은 명세·grammar를 읽는 손 도출과 도출한 기대값의 일치다. Roslyn의 오류율도, 기대값 asset 전체의 오류율도 아니다. 층마다 표본이 작아 차분 oracle 층(4개)은 상한 52.7%밖에 보이지 못한다. 이 층의 대안 76개(B02 56 + B01 보간 20)를 명세에서 모두 손으로 도출해 대조하는 감사는 별도 단계로 두며 이 변경에 포함하지 않는다.
+- **사후 확인:** 표본에 든 `csharp-B01.a335`는 감사에서 MATCH였다(손 도출도 `identifier`). native 대조가 이 값이 틀림을 드러냈고 r2가 정정했다. 이를 오류로 세면 `spec-derived` 층은 1/16(상한 26.4%), 기대값을 비교한 표본은 1/20(21.6%), 전체는 1/26(17.0%)이다(`later_wrong`, `upper_95_percent_with_later_wrong`). 표본 감사 하나가 이 오류를 잡지 못했으므로 위 상한을 "기대값이 틀릴 확률의 상한"으로 읽으면 안 된다.
 
 ## metamorphic 검사 (D2)
 
@@ -86,18 +99,19 @@ BLOCKED는 golden으로 채우지 않는다. `POSITION_DEPENDENT`·`SEMANTIC_BIN
 |---|---|
 | `NO_EXPECTED` → `SEALED` | 기대값 asset이 그 대안을 `EXPECTED`로 가진다 |
 | `NO_EXPECTED` → `BLOCKED` | 기대값 asset이 그 대안을 `BLOCKED`로 가진다. 원장의 `block` member가 그 사유 code를 같은 값으로 옮긴다 |
-| `SEALED` → `EXECUTED` | executed asset이 그 대안을 `executed: true`로 가진다(native로 실행해 대조했다) |
+| `SEALED` → `EXECUTED` | executed asset이 그 대안을 `executed: true`이고 `result: MATCH`로 가진다(native와 대조해 **일치했다**) |
 
+- `EXECUTED`는 "native와 대조해 일치했다"를 뜻한다. 대조가 돌았어도 `MISMATCH`인 대안과 대조가 돌지 못한 `NOT_APPLICABLE` 대안은 `SEALED`에 남는다(상태 어휘와 schema는 그대로다). 그래서 행의 P 의무가 `EXECUTED`이면 그 행의 모든 대안이 native와 일치한 것이다. executed asset의 `executed` member는 "비교가 돌았다"는 뜻이고 `result`가 판정이다. 두 member가 모순이거나(`executed: true`인데 `result`가 `NOT_APPLICABLE`, `executed: false`인데 `MATCH`·`MISMATCH`), `result`가 없거나 `MATCH`·`MISMATCH`·`NOT_APPLICABLE` 밖의 값이면 원장 유도가 `G1_LEDGER_EXECUTED`로 거부한다.
 - `NO_EXPECTED`는 "아직 기대값을 만들지 않음"에만 쓴다. 두 asset이 다루지 않는 대안(B03 이후 행의 모든 대안)과 다른 행의 의무는 `NO_EXPECTED`다.
 - `BLOCKED`는 기대값을 만들 수 없다고 처분한 대안이며 `EXECUTED`가 될 수 없다. 사유를 풀려면 기대값 asset의 새 revision이 필요하다. executed asset이 `BLOCKED`·알 수 없는 대안·다른 행·중복을 가리키면 원장 유도가 `G1_LEDGER_EXECUTED`로 거부하고, 기대값 asset이 `BLOCKED`에 사유를 달지 않았거나 알 수 없는 상태를 쓰면 `G1_LEDGER_SEALED`다. executed asset이 기대값 asset 없이 주어져도 `G1_LEDGER_EXECUTED`다.
 - 행의 P 의무는 그 행의 모든 대안이 `SEALED` 또는 `EXECUTED`일 때만 `SEALED`, 모두 `EXECUTED`일 때만 `EXECUTED`다. `csharp-B01`·`csharp-B02`는 모두 `BLOCKED` 대안이 있어 P 의무가 `NO_EXPECTED`다. N·R·E·Q·W 의무는 다른 단계의 기대값이 필요하므로 바뀌지 않는다.
-- 이 revision의 상태: B01·B02 대안 505개 중 `EXECUTED` 426(native 비교가 끝난 EXPECTED 대안 전부), `BLOCKED` 79(사유 code는 위 표), `SEALED` 0. 나머지 1,026개는 `NO_EXPECTED`다.
-- 원장 verifier는 유도 결과와의 정확한 일치를 요구한다. 손으로 바꾼 상태(`BLOCKED`→`EXECUTED`, `EXECUTED`→`SEALED`, 사유 삭제·변경, 실행되지 않은 대안의 `EXECUTED`)는 `G1_LEDGER_ALTERNATIVE`·`G1_LEDGER_ROWS`로, 어휘 밖의 상태는 `G1_LEDGER_STATUS`로 거부된다(`TestCSharpG1LedgerForgeries`, `TestCSharpG1LedgerStateRules`).
+- 이 revision의 상태: B01·B02 대안 505개 중 `EXECUTED` 426(native와 대조해 일치한 EXPECTED 대안 전부: r2 executed asset 기준이며 426개가 모두 `MATCH`다), `BLOCKED` 79(사유 code는 위 표), `SEALED` 0. 나머지 1,026개는 `NO_EXPECTED`다. 원장은 기대값·executed의 r2 쌍에서 유도한다. 같은 원장 코드에 r1 쌍을 주면 r1 executed의 `MISMATCH` 4건이 `SEALED`로 남아 `EXECUTED` 422·`SEALED` 4가 된다(`TestCSharpG1LedgerStateRules`가 이 실제 자료를 반례로 쓴다).
+- 원장 verifier는 유도 결과와의 정확한 일치를 요구한다. 손으로 바꾼 상태(`BLOCKED`→`EXECUTED`, `EXECUTED`→`SEALED`, 사유 삭제·변경, 실행되지 않은 대안과 `MISMATCH` 대안의 `EXECUTED`)는 `G1_LEDGER_ALTERNATIVE`·`G1_LEDGER_ROWS`로, 어휘 밖의 상태는 `G1_LEDGER_STATUS`로 거부된다(`TestCSharpG1LedgerForgeries`, `TestCSharpG1LedgerStateRules`).
 - asset 간 결속은 한 방향이다: executed asset이 기대값·매핑표·관측 asset을, 기대값 asset이 관측 asset을, 관측 asset이 원장을 pin한다. 원장은 기대값·executed asset의 bytes를 pin하지 않고 상태만 받는다(되돌아 pin하면 순환이다). 원장 bytes가 바뀌면 관측 asset의 `ledger` pin(관측 내용은 그대로)과 그 SHA-256을 pin한 기대값·executed asset의 pin 한 줄이 따라 바뀌므로, 재생성은 원장 → 관측 pin → 기대값 → executed → 원장 → … 순서로 고정점까지 돌린다.
 
 ## native 비교 (봉인 뒤 단계)
 
-별도 asset `csharp-g1-executed-b01b02-r1.json`이 봉인된 기대값 426개를 등록된 C# route의 tree-sitter-c-sharp native 빌드로 대조한 결과다. 기대값·매핑표는 이 단계에서 바뀌지 않는다. 관측 asset은 `ledger` pin 한 줄만, 그 결과로 기대값 asset은 `inputs.observation.sha256` 한 줄만 따라 바뀐다. 시험 `TestCSharpG1ExpectedContentIsTheSealedOne`은 그 한 줄을 비운 내용의 digest가 봉인 commit의 값과 같음을 고정한다.
+별도 asset `csharp-g1-executed-b01b02-r1.json`이 봉인된 기대값 426개를 등록된 C# route의 tree-sitter-c-sharp native 빌드로 대조한 결과다. 기대값·매핑표는 이 단계에서 바뀌지 않는다. 관측 asset은 `ledger` pin 한 줄만, 그 결과로 기대값 asset은 `inputs.observation.sha256` 한 줄만 따라 바뀐다. 시험 `TestCSharpG1ExpectedContentIsTheSealedOne`은 그 한 줄을 비운 내용의 digest가 봉인 commit의 값과 같음을 고정한다. 관측 r2 asset은 동결된 입력이다: 기대값·executed의 r1·r2가 그 파일을 pin하며 다시 만든 관측은 새 파일 `csharp-g1-roslyn-observed-r3.json`(r2와 `provenance.tool_sha256` 값 하나만 다르다)이므로 r1 파일은 바뀌지 않는다([Roslyn 관측 계약](csharp-g1-ledger.md#roslyn-관측-계약-g1-2)).
 
 ### 실행
 
@@ -116,7 +130,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 | `MISMATCH` | native가 완료됐는데 그런 node가 없다. 같은 범위를 겹치는 더 작은 node(`near`)를 함께 적는다 |
 | `NOT_APPLICABLE` | native parse가 완료되지 않아(자원 한도·실패) 비교할 tree가 없다 |
 
-대안은 witness 하나라도 `MISMATCH`이면 `MISMATCH`, 아니고 `MATCH`가 있으면 `MATCH`, 아니면 `NOT_APPLICABLE`이다. 비교가 실제로 돈 대안(완료된 native witness가 있음)만 원장에서 `EXECUTED`가 된다. 증거(`found`: 같은 범위 또는 같은 시작의 native node, `ts`에 속한 type을 앞에 두고 8개까지)가 witness마다 asset에 있고, verifier가 그 증거에서 결과를 다시 계산한다.
+대안은 witness 하나라도 `MISMATCH`이면 `MISMATCH`, 아니고 `MATCH`가 있으면 `MATCH`, 아니면 `NOT_APPLICABLE`이다. 비교가 실제로 돈 대안(완료된 native witness가 있음)은 asset에서 `executed: true`이고, 그중 `MATCH`인 대안만 원장에서 `EXECUTED`가 된다(`MISMATCH`는 `SEALED`). 증거(`found`: 같은 범위 또는 같은 시작의 native node, `ts`에 속한 type을 앞에 두고 8개까지)가 witness마다 asset에 있고, verifier가 그 증거에서 결과를 다시 계산한다.
 
 매핑표 점검(`map`): witness가 Roslyn token·node 하나의 범위와 정확히 같으면 native type이 매핑표가 그 Roslyn 종류에 적은 type 중 하나인지(`IN_MAP`) 아닌지(`OUTSIDE_MAP`)를 적고, 그 종류의 일부(예: 문자 literal 안의 escape)이면 `FRAGMENT`다. 판정은 봉인된 `ts`로 하며 `map`은 매핑표가 봉인된 `ts`를 거쳐 가려질 수 있는 불일치를 드러내는 보조 점검이다.
 
@@ -138,7 +152,8 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 ### 기대값을 거꾸로 만들 수 없음
 
 - executed asset은 기대값·매핑표·관측을 pin으로만 가리킨다. witness·`ts`·근거는 봉인된 것과 같아야 하고(`G1_EXECUTED_EXPECTATION`), 봉인된 type을 native 결과에 맞춰 넓히면 거부된다.
-- 도출 경로의 코드(명세 도출기, 기대값, 규칙·검사·자료, 매핑표, 관측)는 비교 쪽 식별자(`G1Exec…`, `g1x…`, 원시 관측 타입 등)와 asset 이름을 가리키지 않는다. 비교 쪽 파일은 기대값·매핑표를 쓰거나 유도하거나 반환하는 함수를 쓰지 않는다. native tree가 전부 어긋나는 합성 입력에서도 기대값 유도는 봉인된 bytes를 그대로 낸다(`TestCSharpG1NativeNeverFeedsExpectations`).
+- 도출 경로의 코드(명세 도출기, 기대값, 규칙·검사·자료, 매핑표, 관측, r2 정정)는 비교 쪽 파일의 어떤 선언도 호출·참조하지 않고, 파일·process·network·환경 변수에 닿는 package를 쓰지 않는다. 이것은 식별자 이름이 아니라 도출 진입점에서 닿는 선언의 **호출 폐쇄**로 증명한다(`TestCSharpG1SeparationClosure`: 도달한 선언이 비교 파일에 있거나 허용 목록 밖 package·`//go:embed`·`//go:linkname`을 쓰면 실패하고, 분류 표에 없는 새 파일도 실패한다. 음성 대조 `TestCSharpG1SeparationClosureCatchesBypasses`가 분석기가 비어서 통과하는 일을 막는다). 도출은 입력 bytes가 바뀌면 결과가 바뀌고 native 결과에 반응하지 않는다(`TestCSharpG1ExpectedFollowsItsInputsOnly`). 식별자·import 정규식 검사(`TestCSharpG1NativeNeverFeedsExpectations`·`TestCSharpG1ExpectedSeparation`)는 보조 검사로 남긴다. native tree가 전부 어긋나는 합성 입력에서도 기대값 유도는 봉인된 bytes를 그대로 낸다.
+- 호출 폐쇄의 분류에서 `csharp_g1_correct.go`(r2 정정)는 도출 쪽이다. 정정 값은 native 산출물을 읽어 만들지 않고 grammar.js·명세 원문에서 저작한 상수이며, 그 코드는 봉인된 r1 bytes와 저작된 상수만 입력으로 받는다. 다만 상수가 쓰인 시점은 native 비교 뒤이며 그 사실은 코드로 증명할 수 없어 `after_native` 표지로 기록한다(아래 "봉인 뒤 정정"). 폐쇄가 보이는 것은 호출 경로에 native 입력이 없다는 사실까지다.
 
 ### 한계
 
@@ -151,22 +166,25 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 봉인된 asset의 값이 native 결과를 본 뒤에 명세·grammar 원문과 어긋난 것으로 드러나면 그 asset을 고치지 않고 **새 revision(r2)**으로 올려 정정한다. 규칙은 다음과 같다.
 
 - **r1 보존.** r1 asset(`csharp-g1-expected-b01b02-r1.json`, `csharp-g1-kind-map-r1.json`, `csharp-g1-executed-b01b02-r1.json`)은 봉인된 그대로 둔다. 시험 `TestCSharpG1CorrectR1StaysAsSealed`가 크기와 SHA-256을 고정한다. r2 asset은 r1의 SHA-256과 크기를 `previous` pin으로 가리키고, r2 verifier는 그 r1이 봉인된 asset으로 검증되는지부터 확인한다(r1 변조 거부).
-- **변경 기록(`corrections`).** r2 asset은 r1과 변경 기록만큼만 다르다. 항목마다 대안 id(매핑표는 Roslyn 종류, 목록 정정은 type)·`field`·이전 값(`old`)·새 값(`new`)·`reason`·`ground`·`post_native`를 둔다. `post_native`는 native 결과를 본 뒤의 정정이면 `true`, 명세·grammar 원문에서만 도출한 정정이면 `false`이며 저작된 기록과 같아야 한다. `ground`는 고정 grammar 원문(`grammar.js`의 규칙)과 명세(csharpstandard alpha-v13 commit `79ad4e90…`의 파일·절)의 인용문이며 둘 다 있어야 한다(tree-sitter 쪽은 grammar 원문만이 근거다). `old`는 r1이 가진 값과 같아야 하고, 기록에 없는 차이·근거 없는 항목·저작되지 않은(`post_native` 값이 다른 것 포함) 항목은 거부된다. `src/dev/csharp-g1-correct -grammar … -spec …`은 모든 인용문이 고정 grammar.js(SHA-256이 매핑표의 pin과 같아야 한다)와 명세 파일에 실제로 있는지 확인한다.
+- **변경 기록(`corrections`).** r2 asset은 r1과 변경 기록만큼만 다르다. 항목마다 대안 id(매핑표는 Roslyn 종류, 목록 정정은 type)·`field`·이전 값(`old`)·새 값(`new`)·`reason`·`ground`·`after_native`·`basis_independent`를 둔다. `after_native`는 시간이다: native 결과를 본 뒤의 정정이면 `true`이며, 사용자 결정(2026-11-13)에 따라 **r2의 모든 정정이 `true`**다(raw 시작 token 두 항목도 native 불일치를 본 뒤 같은 구조 오류를 고친 것이다). verifier는 `false`를 형식 위반으로 거부한다. `basis_independent`는 근거다: 정정의 근거가 명세·grammar 원문뿐이면 `true`다(r2의 모든 정정이 그렇다). 사후 정정의 통계(표본 감사의 `later_wrong` 등)는 `after_native`로 센다. 두 표지는 저작된 표와 같아야 하고 시험이 항목 이름이 아니라 저작된 표를 직접 고정한다(`TestCSharpG1CorrectedAssetsVerify`). `ground`는 고정 grammar 원문(`grammar.js`의 규칙)과 명세(csharpstandard alpha-v13 commit `79ad4e90…`의 파일·절)의 인용문이며 둘 다 있어야 한다(tree-sitter 쪽은 grammar 원문만이 근거다). 각 ground는 문서 없이 CI에서 확인된다(`doc_sha256`·`heading`·`gap`과 인용문이 정정 기록 자체에 있다): 인용문은 공백을 하나로 접어 40자 이상이어야 하고, `doc_sha256`은 고정 문서의 SHA-256이어야 하며(grammar.js는 매핑표의 pin `63d357e0…`, 명세는 `lexical-structure.md` `332d1129…`·`expressions.md` `bcc4c11c…`), `heading`은 `at`이 가리키는 절(명세는 절 번호를 가진 markdown 제목, grammar는 `<규칙>:`)이어야 하고 인용문까지의 줄 수 `gap`은 200 이하여야 한다. `src/dev/csharp-g1-correct -grammar … -spec …`(시험의 `TSGK_G1_GRAMMAR_JS`·`TSGK_G1_SPEC_DIR`)은 문서가 있을 때만 도는 **실제 문서 점검**이다: 문서의 SHA-256이 ground와 같고, 인용문이 있고, heading 줄이 인용문 시작 줄보다 정확히 `gap`줄 앞에 있다. 한계: CI는 인용문이 문서에서 왔음을 증명하지 못하고(문서가 추적되지 않는다), 문서가 고정 SHA-256과 같고 인용문이 거기 있음은 문서가 있는 환경의 점검만이 보인다. `old`는 r1이 가진 값과 같아야 하고, 기록에 없는 차이·근거 없는 항목·저작되지 않은(표지 값이 다른 것 포함) 항목은 거부된다.
 - **근거는 명세·grammar 원문만.** 정정 값은 native 산출물이 아니라 명세와 grammar 원문에서 다시 도출한다. native와 같아지는 것은 근거가 아니다. 원문으로 정할 수 없으면 정정하지 않고 BLOCKED와 사유로 둔다. 도출 코드(`csharp_g1_correct.go`)는 native 입력을 받지 않는다.
 - **통계를 둘로 나눈다.** "봉인 시 일치"(r1 executed asset: 426 중 422)와 "사후 정정 뒤 일치"(r2 executed asset의 `corrected`·`corrected_match`: 정정 4건 중 n건)를 합치지 않는다. 정정한 대안은 독립 기대값 통계(표본 감사, 봉인 시 일치율)에서 "사후 정정"으로 따로 센다. r2의 표본 감사·metamorphic·cross_check 절은 r1의 것 그대로다(봉인 당시의 기록이며 정정 값으로 다시 계산하지 않는다).
 - **r2 executed asset**은 r2 기대값·매핑표를 같은 native 원시 관측(`raw_native`)과 다시 대조한 기록이며, `sealed_match`(정정하지 않은 대안 중 일치)·`corrected`·`corrected_match`를 가진다.
 
-### r2 정정 9건
+### r2 정정 12건
 
 | 항목 | field | 이전 → 새 | 근거 |
 |---|---|---|---|
 | `csharp-B01.a335` (#define·#undef의 조건부 심볼) | `ts` | `["identifier"]` → `["preproc_arg"]` | grammar.js `preproc_define`·`preproc_undef`는 심볼을 `preproc_arg` 하나로 둔다(identifier는 #if·#elif 조건에만 있다). 명세 §6.5.4는 심볼을 `PP_Conditional_Symbol`(어휘 조각)로만 정의하고 tree-sitter type을 정하지 않는다 |
 | `csharp-B01.a383` (`$"`) | `witnesses[0].match` | `span` → `starts-at` | 명세 `Interpolated_Regular_String_Start`는 `$"` 한 lexeme이다. grammar.js `interpolated_string_expression`은 시작을 `interpolation_start`(외부 token의 alias)와 그 뒤 따옴표 node 둘로 만든다. 외부 token의 범위는 grammar 원문에 없으므로 도출할 수 있는 것은 시작뿐이다 |
 | `csharp-B01.a396` (`$@"`), `a397` (`@$"`) | `witnesses[0].match` | `span` → `starts-at` | 위와 같은 규칙(`interpolation_verbatim_start`). 명세 `Interpolated_Verbatim_String_Start` |
+| `csharp-B01.a383`·`a396`·`a397` | `ts_basis` | `kind-map` → `grammar-text` | (F4) 세 대안은 `differential-oracle`이고 r1의 `ts`(`interpolation_start`)는 r1 매핑표의 항목을 옮긴 것이었다. 매핑표 r2는 시작 token에 node type을 주지 않으므로 r2의 `ts`는 더 이상 r2 매핑표의 도출이 아니다(r1 도출에 r2 매핑표를 넣으면 세 대안은 `BLOCKED`가 된다). 값은 그대로 `interpolation_start`이고 근거는 grammar 원문이다: `interpolated_string_expression`이 시작을 `interpolation_start` node(외부 token의 alias)와 따옴표 node로 만든다. 대안의 `basis`는 `differential-oracle`로 두고(witness의 lexeme·위치는 Roslyn 관측이다) 이 기록이 `ts`의 근거가 매핑표에서 grammar 원문으로 바뀌었음을 밝힌다. 시험 `TestCSharpG1CorrectedExpectedTSFollowsTheR2KindMap`이 r2 EXPECTED 대안의 `ts`가 r2 매핑표 도출과 같거나 변경 기록(`ts`·`ts_basis`)에 열거됨을 고정하고, 기록 누락·무기록 변경·불필요한 기록을 변이로 거부한다 |
 | 매핑표 `InterpolatedStringStartToken` | `entry` | `1:1 [interpolation_start]` → `none NO_SEPARATE_NODE` | 매핑표는 같은 범위의 node type을 적는데 grammar 원문에는 그 범위의 node가 없다 |
 | 매핑표 `InterpolatedVerbatimStringStartToken` | `entry` | 위와 같은 변경 | 위와 같다 |
-| 매핑표 `InterpolatedSingleLineRawStringStartToken`·`InterpolatedMultiLineRawStringStartToken` (`post_native: false`) | `entry` | 위와 같은 변경 | 명세 `Interpolated_Raw_String_Start`는 lexeme 하나이고 grammar.js의 raw 선택지는 `interpolation_start`(`interpolation_raw_start`의 alias)와 `interpolation_quote` 둘이다. native 불일치로 드러난 적이 없고 명세·grammar 원문만으로 도출했으며, 이 두 종류를 쓰는 B01·B02 대안은 없다(관측 token은 cross_check의 `TOKEN_OF_OTHER_ROW`) |
+| 매핑표 `InterpolatedSingleLineRawStringStartToken`·`InterpolatedMultiLineRawStringStartToken` | `entry` | 위와 같은 변경 | 명세 `Interpolated_Raw_String_Start`는 lexeme 하나이고 grammar.js의 raw 선택지는 `interpolation_start`(`interpolation_raw_start`의 alias)와 `interpolation_quote` 둘이다. native 불일치로 드러난 적은 없으나 같은 구조 오류라 사용자 결정으로 함께 정정했고(`after_native`, 근거는 명세·grammar 원문뿐이다), 이 두 종류를 쓰는 B01·B02 대안은 없다(관측 token은 cross_check의 `TOKEN_OF_OTHER_ROW`) |
 | 매핑표 `ts_only` `interpolation_start` | `ts_only` | 없음 → `EXTERNAL_SCANNER_NODE` | 위 네 항목의 결과: 이 type을 가리키는 Roslyn 종류가 더는 없어 목록에 든다. grammar.js `externals`가 세 시작 token을 외부 scanner token으로 선언하며 r1이 `interpolation_brace`에 준 사유와 같다 |
+
+**사후 정정의 통계(F6).** 사후 정정은 `after_native`로 센다(r2의 12건 모두). 표본 감사의 `later_wrong`은 `after_native`이고 `ts`를 바꾼 정정이 감사에서 일치로 판정된 표본에 닿은 수(`csharp-B01.a335` 1건)이며, 항목 이름으로 판정하지 않는다. `basis_independent`는 통계가 아니라 근거의 성격이다. 사후 정정 4건(기대값)은 일치로 센다: r2 executed의 `corrected` 4·`corrected_match` 4는 그대로다.
 
 한계: 보간 시작 정정 대안의 새 기대값은 `interpolation_start` node의 **시작**만 요구하고 뒤따르는 따옴표 node는 확인하지 않는다(범위·순서를 도출할 근거가 grammar 원문에 없다). **남은 과제(G1-3d):** 시작 token을 "시작 node + 따옴표 node"의 복합으로 매핑표에 적고 그 순서·범위를 대조하는 것은 매핑표 schema 확장이 필요해 G1-3d(보간 문자열)로 넘겼다.
 
@@ -176,7 +194,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 
 `TestCSharpG1ExpectedSeparation`은 다음을 보인다.
 
-- 도출 경로의 코드(`csharp_g1_spec.go`, `_expected*.go`, `csharp_g1_kindmap.go`)는 `os`·`exec`·네트워크·native·reproduce·runner 패키지를 import하지 않고 native 입력을 가리키는 식별자·문자열을 갖지 않는다. 도출은 바이트 입력만 받는 함수다.
+- (보조) 도출 경로의 코드(`csharp_g1_spec.go`, `_expected*.go`, `csharp_g1_kindmap.go`)는 `os`·`exec`·네트워크·native·reproduce·runner 패키지를 import하지 않고 native 입력을 가리키는 식별자·문자열을 갖지 않는다. 이 검사는 이름과 고정 파일 목록에 기대므로 우회할 수 있어, 우회를 막는 증명은 위 호출 폐쇄 시험이 한다. 도출은 바이트 입력만 받는 함수다.
 - 명세 도출기(`csharp_g1_spec.go`)는 `regexp`·`strings`·`unicode/utf8`만 쓰며 Roslyn 관측·매핑표·기대값·원장을 가리키는 식별자가 없다. 관측 verifier와 매핑표 코드는 기대값 쪽을 가리키지 않는다.
 - asset이 pin하는 입력은 선언 3개, 사례 원문 fixture 4개, 관측 asset, 매핑표뿐이다. fixture에는 native 결과를 담는 member가 없다.
 
@@ -193,7 +211,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 | `G1_EXECUTED_PIN`, `_SOURCES`, `_NATIVE` | 기대값·매핑표·관측 pin, source 목록·신원·수락 여부, native provenance·한도·원시 관측 pin |
 | `G1_EXECUTED_ALTERNATIVES`, `_EXPECTATION` | 대안의 누락·추가, 봉인된 witness·type·근거·행의 변조 |
 | `G1_EXECUTED_RESULT`, `_EVIDENCE`, `_COUNTS`, `_UNDISPOSED`, `_RAW` | 증거와 모순되는 결과·`executed`·`map`, 증거 형식, 집계, 처분 없거나 바뀐 불일치, 원시 관측과 다른 asset |
-| `G1_CORRECTION_FORM`, `_GROUND`, `_ITEM`, `_OLD` | r2 변경 기록의 형식(`post_native`·사유·중복·필드), 근거(grammar·명세 인용 둘 다), 알 수 없는 항목, r1이 가진 값과 다른 이전 값·새 값 형식 |
+| `G1_CORRECTION_FORM`, `_GROUND`, `_ITEM`, `_OLD` | r2 변경 기록의 형식(`after_native`·사유·중복·필드), 근거(grammar·명세 인용 둘 다, 인용 길이·문서 SHA-256·heading·gap), 알 수 없는 항목, r1이 가진 값과 다른 이전 값·새 값 형식 |
 | `G1_CORRECTION_UNLISTED`, `_UNAUTHORED`, `_PIN`, `_BYTES` | 변경 기록에 없는 차이, 저작되지 않은(바뀐) 기록, r1·매핑표 pin 불일치, 정규 bytes와 다름. r1 변조는 r1 verifier의 code(`G1_EXPECTED_*`·`G1_KINDMAP_*`)로 거부된다 |
 | `G1_NATIVE_JSON`, `_SCHEMA`, `_SIZE`, `_SOURCE`, `_TREE` | 원시 관측의 형식, source 중복·상태, node 범위·부모·digest |
 | `G1_LEDGER_SEALED`, `_EXECUTED` | 원장이 읽는 기대값·executed asset의 상태·사유·대안 참조 위반 |
@@ -212,4 +230,4 @@ go run ./src/dev/csharp-g1-ledger -root .
 - tree-sitter 결과가 맞다는 판정. 기대값 asset은 native를 처음 실행하기 전의 기대값이며, native 비교는 별도 asset이 witness에 한정해 기록한다.
 - Roslyn이 명세와 같다는 일반 주장. 표본 감사와 대조는 이 관측 범위 안의 근거다.
 - BLOCKED 대안과 B03~B05·V 행의 기대값, 오류 복구(D3)와 symbols 문맥. native 비교의 기록(`EXECUTED`)은 BLOCKED 대안에 없다.
-- 승인 pin: 관측 r2·기대값·매핑표·executed asset은 사용자가 함께 승인한다(Q1). 승인 object는 만들지 않았다. 승인 대상 SHA-256은 위 재생성 순서의 고정점 값이다.
+- 승인 pin: 관측·기대값·매핑표·executed asset은 사용자가 함께 승인한다(Q1). 승인 tuple은 관측 **r3**를 묶는다(사용자 결정 2026-11-13); 관측 r2는 기대값·executed가 pin하는 동결 입력이다. 승인 object는 만들지 않았다. 승인 대상 SHA-256은 위 재생성 순서의 고정점 값이다.
