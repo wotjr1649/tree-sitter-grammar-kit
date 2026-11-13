@@ -219,7 +219,8 @@ type Process struct {
 	captureErr error
 
 	mu          sync.Mutex
-	residual    int // descendants terminated by supervise after an interactive exit
+	residual    int  // descendants terminated by supervise after an interactive exit
+	stdoutHeld  bool // an interactive read ended in ErrClosed: release closed stdout while a holder kept it open
 	reason      string
 	kill        chan struct{}
 	sampledPeak uint64
@@ -540,13 +541,22 @@ func (p *Process) Wait() Result {
 		<-p.errs.done
 		close(pipes)
 	}()
+	held := false
 	select {
 	case <-pipes:
 	case <-time.After(p.spec.Grace):
-		verified = false
-		r.Cleanup.Detail = joinDetail(r.Cleanup.Detail, "output pipe still held after grace")
+		held = true
 		p.outPipe.Close()
 		p.errPipe.Close()
+	}
+	// An interactive stdout is not drained here: its reader found it still open when release
+	// closed it after Grace. That is the same evidence as an undrained captured pipe.
+	p.mu.Lock()
+	held = held || p.stdoutHeld
+	p.mu.Unlock()
+	if held {
+		verified = false
+		r.Cleanup.Detail = joinDetail(r.Cleanup.Detail, "output pipe still held after grace")
 	}
 	r.Cleanup.Verified = verified && r.Cleanup.Detail == ""
 	if !verified && r.Cleanup.Detail == "" {
@@ -663,7 +673,7 @@ func (c *capReader) Read(b []byte) (int, error) {
 	if c.n >= c.limit {
 		// Probe one byte so a stream that ends exactly at the cap is not a violation.
 		var one [1]byte
-		k, err := c.r.Read(one[:])
+		k, err := c.read(one[:])
 		if k == 0 {
 			return 0, err
 		}
@@ -675,11 +685,23 @@ func (c *capReader) Read(b []byte) (int, error) {
 	if int64(len(b)) > c.limit-c.n {
 		b = b[:c.limit-c.n]
 	}
-	k, err := c.r.Read(b)
+	k, err := c.read(b)
 	if k > 0 {
 		c.p.captureChunk("stdout", b[:k])
 	}
 	c.n += int64(k)
+	return k, err
+}
+
+// read notes the one error that proves a holder: release closes the pipe Grace after the
+// main process exited, so ErrClosed means stdout had not reached EOF by then.
+func (c *capReader) read(b []byte) (int, error) {
+	k, err := c.r.Read(b)
+	if errors.Is(err, os.ErrClosed) {
+		c.p.mu.Lock()
+		c.p.stdoutHeld = true
+		c.p.mu.Unlock()
+	}
 	return k, err
 }
 

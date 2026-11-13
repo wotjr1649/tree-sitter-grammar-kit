@@ -171,6 +171,51 @@ func TestBatchExitDeadline(t *testing.T) {
 	})
 }
 
+// exitHolderBatch runs a batch whose helper exits 0 after its last frame and leaves a
+// detached descendant holding stdout. FrameGrace is shorter than the spec Grace so the exit
+// deadline is not what ends the batch.
+func exitHolderBatch(t *testing.T, processGroup bool) (BatchResult, []int) {
+	t.Helper()
+	s, pids := helperSpec(t, "frames:exit-holder")
+	s.Grace = time.Second
+	if processGroup {
+		// The process-group backend, which does not contain descendants, even where CI
+		// delegates a cgroup; it samples memory, so the spec cannot ask for a hard cap.
+		s.CgroupParent, s.Memory.Hard = "", false
+	}
+	awaitStart(t, pids)
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 20 * time.Second, FrameGrace: 300 * time.Millisecond,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	r, err := RunBatch(context.Background(), s, pol, []Frame{{ID: "a", Request: []byte("x")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	holders := readPIDs(t, pids)
+	t.Cleanup(func() {
+		for _, pid := range holders {
+			killPID(pid)
+		}
+	})
+	if r.Frames[0].Status != FrameCompleted || r.Process.Reason != ReasonExited || r.Process.ExitCode != 0 {
+		t.Fatalf("the helper's own clean exit was rewritten: %+v", r)
+	}
+	return r, holders
+}
+
+// A descendant left alive by a clean exit is ended by a contained backend at once. Its
+// cleanup is verified, so the evidence that the driver left something behind is
+// ResidualAfterExit; the native batch judgement rejects on it (batchCleanupClean).
+func TestBatchExitHolderContained(t *testing.T) {
+	r, holders := exitHolderBatch(t, false)
+	if r.Process.Capabilities.EscapedDescendants != Contained {
+		t.Skip("covered by TestBatchExitHolderEscaped on a backend that does not contain descendants")
+	}
+	if !r.Process.Cleanup.Verified || r.Process.Cleanup.ResidualAfterExit < 1 {
+		t.Fatalf("a descendant outliving the clean exit must show as residual: %+v", r.Process.Cleanup)
+	}
+	requireDead(t, holders, 1)
+}
+
 func TestBatchCaptureKeepsPartialAndUnsentTail(t *testing.T) {
 	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: time.Second, FrameGrace: time.Second,
 		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}

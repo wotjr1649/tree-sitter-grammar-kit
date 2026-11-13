@@ -461,8 +461,9 @@ type OracleBatch struct {
 }
 
 // Accepted reports whether the process may vouch for its answered frames: it exited 0 by
-// itself (status COMPLETED, so not a signal), cleanup is verified and nothing followed the
-// last response. Any other end accepts none: a limit, cancellation or crash, STATE_LEAK, the
+// itself (status COMPLETED, so not a signal), cleanup is verified and the driver left no
+// descendant behind (cleanup_verified is false otherwise) and nothing followed the last
+// response. Any other end accepts none: a limit, cancellation or crash, STATE_LEAK, the
 // exit 3 of a fatal resource response, or a process that did not exit after its last frame.
 // A batch that left a sent frame unanswered accepts none either (checkBatches, live run).
 func (b OracleBatch) Accepted() bool {

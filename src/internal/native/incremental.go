@@ -626,16 +626,8 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 				c.ExecutionStatus, c.Assessment, c.Code = kit.StatusFailed, kit.AssessNotAssessed, err.(*Error).Code
 			}
 		}
-		if br.TrailingBytes > 0 || !br.Process.Cleanup.Verified || (br.Process.ExitCode != 0 && !fatal && br.Process.Reason == runner.ReasonExited) || br.Process.Reason == runner.ReasonBatchExit {
+		if code := batchRejection(br, fatal); code != "" {
 			// The batch broke the protocol or cleanup: none of its frames is accepted.
-			code := "RESPONSE_TRAILING_BYTES"
-			if !br.Process.Cleanup.Verified {
-				code = "PROCESS_CLEANUP_UNVERIFIED"
-			} else if br.Process.Reason == runner.ReasonBatchExit {
-				code = "BATCH_EXIT_TIMEOUT" // it did not exit after its last frame
-			} else if br.TrailingBytes == 0 {
-				code = "BATCH_EXIT_NONZERO"
-			}
 			for _, i := range idx {
 				if out[i].ExecutionStatus == kit.StatusCompleted {
 					out[i].ExecutionStatus, out[i].Assessment, out[i].Code = kit.StatusFailed, kit.AssessNotAssessed, code
@@ -650,6 +642,31 @@ func runBatches(ctx context.Context, b *Build, x Context, root string, cases []k
 		x.observeCase(&out[i])
 	}
 	return out, batches
+}
+
+// batchRejection is the code that makes a batch vouch for none of its frames, or "" when the
+// process may. fatal is a deliberate driver stop, whose exit code is not a violation.
+func batchRejection(br runner.BatchResult, fatal bool) string {
+	switch {
+	case !batchCleanupClean(br.Process):
+		return "PROCESS_CLEANUP_UNVERIFIED"
+	case br.Process.Reason == runner.ReasonBatchExit:
+		return "BATCH_EXIT_TIMEOUT" // it did not exit after its last frame
+	case br.TrailingBytes > 0:
+		return "RESPONSE_TRAILING_BYTES"
+	case br.Process.ExitCode != 0 && !fatal && br.Process.Reason == runner.ReasonExited:
+		return "BATCH_EXIT_NONZERO"
+	}
+	return ""
+}
+
+// batchCleanupClean is the cleanup half of every batch acceptance: the tree was verified empty
+// and the driver left nothing behind. A descendant still alive after the driver's exit is
+// ended by the runner (Verified stays true, ResidualAfterExit counts it), but a driver that
+// leaves one behind is not a clean producer, so its batch vouches for none of its frames. This
+// is the rule the other consumers of a process result already apply to ResidualAfterExit.
+func batchCleanupClean(p runner.Result) bool {
+	return p.Cleanup.Verified && p.Cleanup.ResidualAfterExit == 0
 }
 
 // recordResult keeps only the retained record of a corpus file: status, has_error,
