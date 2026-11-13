@@ -258,6 +258,22 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
   - 후보 집합과 같음(3행)은 type 도출이 아니다. 외부 token 7행은 type만 도출했다.
   - 위치는 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 보고 type은 이 감사가 본다. 둘 다 기대값 asset 전체의 오류율이 아니다.
 
+## G1-3b 분류 (B03·B04, G1CLASSIFY)
+
+행 `csharp-B03`(257)·`csharp-B04`(131)의 production 대안 388개는 기대값을 만들기 전에 아래 셋 중 하나로 나뉜다. 이 단계(PR1)는 분류기와 dry-run만이며 asset을 만들지 않는다. 코드는 `csharp_g1_classify.go`(분류)·`csharp_g1_classify_rules.go`(규칙 표)·`csharp_g1_classify_view.go`(입력 뷰), 도구는 `go run ./src/dev/csharp-g1-classify -root . [-list] [-kinds]`다.
+
+| 부류 | 근거 종류 | 대상 | 증거 |
+|---|---|---|---|
+| A | `spec-derived` | 필수 literal이 있는 대안, 또는 고정 lexeme인 비단말(`!`·`>>`·`>>=`·`_`)을 가진 대안 | 연결 사례의 수락된 source에서 anchor가 token 문자열로 **순서대로** 나타난다 |
+| B | `differential-oracle` | 자기 Roslyn node 종류가 있는 대안(규칙 표가 종류를, 필요하면 직접 부모 종류를 적는다) | 연결 사례의 수락된 source에 그 종류의 node가 있다(부모 종류가 있으면 그 아래) |
+| C | BLOCKED | 나머지 | 사유 code(아래) |
+
+- **D-1(구조 대조의 깊이).** literal 앵커는 그 keyword·punctuation token이 나타남만 증명하고 구성 node의 type은 증명하지 않는다. 구성 node는 literal이 없는 대안(B)에서만 본다. 약한 일치는 결과의 `discriminating`이 `false`다. A는 anchor에 낱말이나 두 글자 이상의 token이 하나라도 있으면 `true`다(`(`·`,`·`;`·`.`·`:`·`=`처럼 한 글자 punctuation만이면 `false`). B는 규칙의 모든 종류가 매핑표에서 1:1이고 같은 node type을 구성 밖의 다른 Roslyn 종류와 나누지 않으면 `true`다. 이 정의는 R-5의 정의를 대신하지 않는다: PR2의 `discriminating` asset 필드는 기대 type 집합으로 따로 정한다.
+- **사유 code 5개.** `ABSTRACT_CATEGORY`(사다리·범주 pass-through: 다음 단계나 union을 가리키며 자기 node가 없다), `POSITION_DEPENDENT`(부모 안의 역할: slot을 관측이 기록하지 않는다), `SEMANTIC_BINDING`(이름 binding 없이는 구별되지 않는다), `NO_OWN_NODE_FOR_CONSTRUCT`(Roslyn 또는 grammar에 자기 node가 없다: 분리된 목록, 숨은 node, 매핑표가 `none`인 종류), `NO_WITNESS_IN_LINKED_SOURCES`(연결 source에 증거가 없다). 앞의 셋과 마지막은 G1-3a와 같은 이름이고 `NO_OWN_NODE_FOR_CONSTRUCT`만 새 코드다. 매핑표가 `none`을 주는 종류만 있는 규칙은 규칙에 적힌 사유가 아니라 매핑표의 사유(`HIDDEN_NODE`·`NO_SEPARATE_NODE`)를 문장에 담아 이 코드로 막는다.
+- **입력은 좁은 값이다(`G1ClassifyInput`).** 대안(id·행·production·원장의 필수 literal·연결 사례), source(수락 여부·token 문자열·node 종류와 부모 종류), Roslyn 종류(class·map·reason과 node type을 공유하는 다른 종류의 이름)뿐이다. **node type과 기대값 asset은 member가 없다.** `TestCSharpG1ClassifyInputIsNarrow`가 member를 고정하고, 호출 폐쇄 시험의 항목 "classification"이 분류 함수가 자기 두 파일 밖의 G1 파일(기대값·정정·뷰 포함)에 닿지 않음을, 우회 사례가 입력에 없는 `TS` member를 읽는 문장이 컴파일되지 않음을 고정한다. 분류 파일은 분리 시험에서 도출 쪽이며 native 입력에 닿지 않음은 같은 호출 폐쇄가 증명한다.
+- **규칙 표의 한계.** 표는 production 텍스트와 Roslyn 종류 이름에서 사람이 쓴 것이다. 키는 `head#i`·`head>target`·`head`·`>target` 순으로 찾고, 규칙이 없는 대안은 오류다(기본 부류가 없다). 쓰이지 않는 규칙과 관측에 없는 종류를 가리키는 규칙은 시험이 거부한다. anchor는 순서만 보며 인접성이나 같은 node 안인지는 보지 않는다. B의 증거는 "그 종류의 node가 있다"이며 명세 production의 범위와 같다는 뜻이 아니다(예: Roslyn `ArgumentList`는 괄호를 포함하고 명세 `argument_list`는 그렇지 않다): 범위는 PR3의 위치 감사가 본다.
+- **dry-run 수치(관측 r3·매핑표 r2).** 388 = A 198 + B 100 + C 90. A 198 = 변별 131 + 약 67(원장의 `LITERAL_MATCH` 194 + 고정 lexeme 비단말 4). B 100 = 변별 74 + 약 26. C 90 = `ABSTRACT_CATEGORY` 36 + `NO_OWN_NODE_FOR_CONSTRUCT` 29 + `POSITION_DEPENDENT` 14 + `SEMANTIC_BINDING` 9 + `NO_WITNESS_IN_LINKED_SOURCES` 2. 행별은 B03이 A 137·B 61·C 59, B04가 A 61·B 39·C 31이다(`TestCSharpG1ClassifyCountsOfThePinnedInputs`).
+
 ## G1 번들 승인 tuple (G1APPROVAL)
 
 사용자 결정([#233, 2026-11-13 "승인 묶음"](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233#issuecomment-6851518154))은 아래 11개를 한 묶음으로 승인한다. 이 절은 그 승인을 **content-addressed tuple object**로 만들고 검사하는 계약이며, object 자체는 아직 없다.
@@ -288,6 +304,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - 명세 도출기(`csharp_g1_spec.go`)는 `regexp`·`strings`·`unicode/utf8`만 쓰며 Roslyn 관측·매핑표·기대값·원장을 가리키는 식별자가 없다. 관측 verifier와 매핑표 코드는 기대값 쪽을 가리키지 않는다.
 - 전수 감사 파일(`csharp_g1_audit76.go`)과 그 규칙·ground·핀 표·뷰 파일은 도출 쪽으로 분류하고 호출 폐쇄의 진입점(`ParseCSharpG1Audit76`, `G1Audit76View` 등)에 넣었다. 폐쇄가 표현하지 못하는 "`ts`를 읽지 않음"은 호출 폐쇄 시험이 아니라 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 적은 구조(좁은 입력 타입, 감사별 폐쇄의 파일 목록, 타입 검사)가 고정하고 AST 시험은 보조다.
 - type 감사 파일(`csharp_g1_typeaudit76.go`)도 도출 쪽으로 분류하고 진입점(`ParseCSharpG1TypeAudit76` 등)에 넣었다. "매핑표를 읽지 않음"도 [type 감사](#차분-oracle-대안-type-감사-g1typeaudit76)가 적은 같은 구조가 고정한다.
+- G1-3b 분류 파일 셋(`csharp_g1_classify.go`·`_rules.go`·`_view.go`)도 도출 쪽으로 분류하고 진입점(`ClassifyCSharpG1`·`G1ClassifyView`)에 넣었다. 분류 함수만의 폐쇄는 [G1-3b 분류](#g1-3b-분류-b03b04-g1classify)가 적은 대로 기대값·정정·뷰 파일에 닿지 않는다.
 - asset이 pin하는 입력은 선언 3개, 사례 원문 fixture 4개, 관측 asset, 매핑표뿐이다. fixture에는 native 결과를 담는 member가 없다.
 
 ## 검증 code

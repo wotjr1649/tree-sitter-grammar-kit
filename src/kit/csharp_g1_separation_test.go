@@ -70,8 +70,14 @@ var g1SepClass = map[string]string{
 	// proves it cannot reach native input; that it never reads the kind map is a syntactic check of its own
 	// (TestCSharpG1TypeAudit76NeverReadsTheKindMap).
 	"csharp_g1_typeaudit76.go": "derivation",
-	"csharp_g1_executed.go":    "comparison",
-	"csharp_g1_native.go":      "comparison",
+	// the G1-3b classification of csharp-B03 and csharp-B04: its input is a narrow value (TestCSharpG1ClassifyInputIsNarrow), it names no
+	// tree-sitter node type (TestCSharpG1ClassifyNeverNamesTheExpectedTypes) and its call closure reaches no other G1 file
+	// (csharp_g1_audit_independence_test.go). The view is the one place that reads the ledger, the observation and the kind map for it.
+	"csharp_g1_classify.go":       "derivation",
+	"csharp_g1_classify_rules.go": "derivation",
+	"csharp_g1_classify_view.go":  "derivation",
+	"csharp_g1_executed.go":       "comparison",
+	"csharp_g1_native.go":         "comparison",
 	// the approval of the bundle: it reads the tracked assets as bytes and names them by path; it derives and compares nothing.
 	"csharp_g1_approval.go": "neutral",
 }
@@ -142,6 +148,7 @@ var g1SepRoots = []string{
 	"G1Audit76View", "G1TypeAudit76View", "G1GroundPin", "G1GroundPinSource", "G1Audit76GroundPins", "G1TypeAudit76GroundPins",
 	"DeriveCSharpG1TypeAudit76", "ParseCSharpG1TypeAudit76", "DecodeCSharpG1TypeAudit76", "MarshalCSharpG1TypeAudit76", "CheckG1TypeAudit76Grounds", "G1AuditStrataWithTypes",
 	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
+	"ClassifyCSharpG1", "G1ClassifyView",
 }
 
 // g1SepExcluded are exported Derive*, Parse*, Check* and Marshal* functions of derivation files that no root reaches

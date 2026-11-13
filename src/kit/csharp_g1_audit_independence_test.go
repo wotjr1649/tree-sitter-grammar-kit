@@ -35,6 +35,10 @@ var g1SepAudits = []struct {
 	{"type audit",
 		[]string{"DeriveCSharpG1TypeAudit76", "ParseCSharpG1TypeAudit76", "DecodeCSharpG1TypeAudit76", "MarshalCSharpG1TypeAudit76", "CheckG1TypeAudit76Grounds"},
 		[]string{"csharp_g1_typeaudit76.go", "csharp_g1_audit76.go", "csharp_g1_ground.go", "csharp_g1_ground_pins.go"}},
+	// the G1-3b classification sees no expected value: not the expected asset, its types or its corrections, and not the view that builds its input
+	{"classification",
+		[]string{"ClassifyCSharpG1"},
+		[]string{"csharp_g1_classify.go", "csharp_g1_classify_rules.go"}},
 }
 
 // g1SepAuditOutside lists the declarations of G1 files outside allowed that the closure of the roots reaches.
@@ -124,6 +128,7 @@ func g1SepWith(t *testing.T, files map[string]string, edits map[string][2]string
 func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
 	files := g1SepReadPackage(t)
 	posFill, typFill := "r.Result, r.Relation = g1a76Compare(*r, alt.Witness, text)", "r.Result, r.Relation = g1t76Compare(*r, alt.TS)"
+	clsFill := "res := G1ClassifyResult{ID: a.ID, Row: a.Row}"
 	call := func(f, old, stmt string) map[string][2]string {
 		return map[string][2]string{f: {old, stmt + "\n\t" + old}}
 	}
@@ -143,6 +148,11 @@ func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
 		{"a read of the correction table", 0, g1SepWith(t, files, call("csharp_g1_audit76.go", posFill, "_ = len(g1ExpectedCorrections)"), nil), "g1ExpectedCorrections in csharp_g1_correct.go"},
 		{"a call of the parser of the kind map", 1, g1SepWith(t, files, call("csharp_g1_typeaudit76.go", typFill, "_, _ = ParseCSharpG1KindMapR2(nil, CSharpG1KindMapSources{})"), nil), "ParseCSharpG1KindMapR2 in csharp_g1_correct.go"},
 		{"the position audit calls the type audit", 0, g1SepWith(t, files, call("csharp_g1_audit76.go", posFill, "_ = g1t76Compare"), nil), "g1t76Compare in csharp_g1_typeaudit76.go"},
+		// the classification: a helper of the expected file, the decoder of the expected asset and the view that builds its input
+		{"S, a helper in another file (classification)", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_ = g1Peek3(G1ExpAlt{})"),
+			map[string]string{"csharp_g1_expected.go": "func g1Peek3(a G1ExpAlt) int { return len(a.TS) }"}), "g1Peek3 in csharp_g1_expected.go"},
+		{"a call of the decoder of the expected asset (classification)", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_, _ = DecodeCSharpG1Expected(nil)"), nil), "DecodeCSharpG1Expected in csharp_g1_expected.go"},
+		{"the classification calls its own view", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_, _ = G1ClassifyView(CSharpG1ExpectedSources{})"), nil), "G1ClassifyView in csharp_g1_classify_view.go"},
 	}
 	for _, a := range g1SepAudits {
 		if got, err := g1SepAuditOutside(files, a.roots, a.allowed); err != nil || len(got) != 0 {
@@ -190,33 +200,48 @@ func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
 	if !slices.ContainsFunc(s2t, func(m string) bool { return strings.Contains(m, "alt.KindMap undefined") }) {
 		t.Errorf("S2 for the type audit: a read of a kind map member of the input type-checks (new errors %v)", s2t)
 	}
+	// S2 for the classification: the alternative and the kind it is given carry no node type
+	s2c := newErrors(g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_ = a.TS\n\t_ = kinds[a.ID].TS"), nil))
+	for _, want := range []string{"a.TS undefined", "kinds[a.ID].TS undefined"} {
+		if !slices.ContainsFunc(s2c, func(m string) bool { return strings.Contains(m, want) }) {
+			t.Errorf("S2 for the classification: %q is not an error (new errors %v)", want, s2c)
+		}
+	}
 }
 
 // Every member of what an audit is given is pinned: a member for the other audit's data (or for the bytes of the r2 asset) is a
 // reviewed change of this list.
-func TestCSharpG1AuditInputsAreNarrow(t *testing.T) {
-	var walk func(rt reflect.Type, seen map[reflect.Type]bool, out *[]string)
-	walk = func(rt reflect.Type, seen map[reflect.Type]bool, out *[]string) {
-		switch rt.Kind() {
-		case reflect.Slice, reflect.Array, reflect.Map, reflect.Pointer:
-			if rt.Kind() == reflect.Map {
-				walk(rt.Key(), seen, out)
-			}
-			walk(rt.Elem(), seen, out)
-		case reflect.Struct:
-			if seen[rt] {
-				return
-			}
-			seen[rt] = true
-			for i := 0; i < rt.NumField(); i++ {
-				f := rt.Field(i)
-				*out = append(*out, rt.Name()+"."+f.Name+" "+f.Type.String())
-				walk(f.Type, seen, out)
-			}
-		case reflect.Interface, reflect.Func, reflect.Chan, reflect.UnsafePointer:
-			*out = append(*out, rt.String()+" (a member that can carry anything)")
+func g1WalkMembers(rt reflect.Type, seen map[reflect.Type]bool, out *[]string) {
+	switch rt.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map, reflect.Pointer:
+		if rt.Kind() == reflect.Map {
+			g1WalkMembers(rt.Key(), seen, out)
 		}
+		g1WalkMembers(rt.Elem(), seen, out)
+	case reflect.Struct:
+		if seen[rt] {
+			return
+		}
+		seen[rt] = true
+		for i := 0; i < rt.NumField(); i++ {
+			f := rt.Field(i)
+			*out = append(*out, rt.Name()+"."+f.Name+" "+f.Type.String())
+			g1WalkMembers(f.Type, seen, out)
+		}
+	case reflect.Interface, reflect.Func, reflect.Chan, reflect.UnsafePointer:
+		*out = append(*out, rt.String()+" (a member that can carry anything)")
 	}
+}
+
+// g1TypeMembers lists, sorted, every member reachable from the type of v: what a value of that type can carry.
+func g1TypeMembers(v any) []string {
+	var got []string
+	g1WalkMembers(reflect.TypeOf(v), map[reflect.Type]bool{}, &got)
+	sort.Strings(got)
+	return got
+}
+
+func TestCSharpG1AuditInputsAreNarrow(t *testing.T) {
 	for _, c := range []struct {
 		name string
 		v    any
@@ -229,9 +254,7 @@ func TestCSharpG1AuditInputsAreNarrow(t *testing.T) {
 		{"type audit", G1TypeAudit76Input{}, []string{
 			"G1TypeAudit76Alt.ID string", "G1TypeAudit76Alt.InitialTS []string", "G1TypeAudit76Alt.TS []string", "G1TypeAudit76Input.Alts []kit.G1TypeAudit76Alt"}},
 	} {
-		var got []string
-		walk(reflect.TypeOf(c.v), map[reflect.Type]bool{}, &got)
-		sort.Strings(got)
+		got := g1TypeMembers(c.v)
 		if !slices.Equal(got, c.want) {
 			t.Errorf("%s: the members of its input are %q, want %q", c.name, got, c.want)
 		}
