@@ -857,7 +857,7 @@ jobs:
             if ($inlineExit -ne 0) { Write-Output "::warning::SVC inline test exited $inlineExit; its judgments are kept only if it stored them" }
             # a skipped run passes go test and stores nothing; the test must have run (PASS or FAIL) and stored its result
             if (!(Select-String -LiteralPath $inlineLog -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \(')) { throw 'SVC inline test did not run' }
-            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 3) { throw 'scope judgment files missing' }
+            if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 4) { throw 'scope judgment files missing' }
             & src/dev/s08-qualify/run-identity.ps1 -Destination $scopeOut -HeadSHA $env:PR_HEAD_SHA
             if ($LASTEXITCODE -ne 0) { throw 'scope run identity failed' }
           } catch {

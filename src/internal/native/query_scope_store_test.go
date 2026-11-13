@@ -9,22 +9,14 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
 
-// storeQueryScopeHost writes this host's scope result to the directory named by
-// TSGK_QUERY_SCOPE_OUT under the given file name and reads it back; without the variable nothing is
-// written. A stored file is never overwritten: evidence of an earlier run stays.
-func storeQueryScopeHost(t *testing.T, host, file string, r kit.QueryScopeResult) {
+// storeQueryScopeFile writes one file of this host's collection into the directory named by
+// TSGK_QUERY_SCOPE_OUT and reports whether it did; without the variable nothing is written. A stored
+// file is never overwritten: evidence of an earlier run stays.
+func storeQueryScopeFile(t *testing.T, file string, data []byte) bool {
 	t.Helper()
 	dir := os.Getenv(kit.QueryScopeHostEnv)
 	if dir == "" {
-		return
-	}
-	h, err := kit.NewQueryScopeHostResult(host, r)
-	if err != nil {
-		t.Fatal(err)
-	}
-	data, err := kit.EncodeQueryScopeHostResult(h)
-	if err != nil {
-		t.Fatal(err)
+		return false
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
@@ -37,6 +29,24 @@ func storeQueryScopeHost(t *testing.T, host, file string, r kit.QueryScopeResult
 	if err := f.Close(); werr != nil || err != nil {
 		t.Fatalf("write: %v %v", werr, err)
 	}
+	return true
+}
+
+// storeQueryScopeHost stores this host's scope result under the given file name and reads it back.
+func storeQueryScopeHost(t *testing.T, host, file string, r kit.QueryScopeResult) {
+	t.Helper()
+	if os.Getenv(kit.QueryScopeHostEnv) == "" {
+		return
+	}
+	h, err := kit.NewQueryScopeHostResult(host, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := kit.EncodeQueryScopeHostResult(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	storeQueryScopeFile(t, file, data)
 	back, err := kit.DecodeQueryScopeHostResult(data)
 	if err != nil || !reflect.DeepEqual(back, h) {
 		t.Fatalf("stored %s/%s does not read back: %v", r.Scope, host, err)

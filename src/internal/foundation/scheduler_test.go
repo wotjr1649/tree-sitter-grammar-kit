@@ -1152,7 +1152,7 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		"TSGK_QUERY_SCOPE_OUT = $scopeOut", "-run '^TestNativeQueryCompletionCurrentState$'",
 		// #362 L3: the SVC inline run on the C# closure this job prepared, counted only when it ran and stored
 		"$env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "-run '^TestNativeSvcInlineRealGrammar$'",
-		"-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", ".Count -ne 3) { throw 'scope judgment files missing' }",
+		"-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", ".Count -ne 4) { throw 'scope judgment files missing' }",
 		// the producer is a required job: its upload of this extra evidence continues on error as well
 		scopeEvidenceUploadHead,
 		"name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n",
@@ -1261,7 +1261,7 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		"inline-not-run":        strings.Replace(text, "-run '^TestNativeSvcInlineRealGrammar$'", "-run '^TestNativeSvcInline$'", 1),
 		"inline-skip-passes":    strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
 		"inline-fail-dropped":   strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", 1),
-		"inline-file-uncounted": strings.Replace(text, ".Count -ne 3) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
+		"inline-file-uncounted": strings.Replace(text, ".Count -ne 4) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
 		"inline-other-grammar":  strings.Replace(text, "Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "Join-Path $env:TSGK_BENCH_PREPARED 'routes/json'", 1),
 		// a FAILED judgment must not be thrown away as a collection failure
 		"fan-in-exit-throws": strings.Replace(text, "Write-Output \"::warning::scope fan-in test exited $LASTEXITCODE; its judgments are kept only if it stored them\"", "throw \"scope fan-in test failed ($LASTEXITCODE)\"", 1),

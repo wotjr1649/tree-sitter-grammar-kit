@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/scopeobligations"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
@@ -31,6 +32,14 @@ type fixture struct {
 	registry, predAsset, svcAsset, svcInline []byte
 	svc                                      kit.SvcExpected
 	inventory                                []byte
+	rec                                      map[string][]kit.SvcJudgment // svc judgments by the result they were folded into
+}
+
+// record remembers the judgments a host's svc result was built from; writeHost stores them as the
+// per-obligation companion of that result.
+func (f *fixture) record(h kit.QueryScopeHostResult, js []kit.SvcJudgment) kit.QueryScopeHostResult {
+	f.rec[h.Result.ResultSHA256] = slices.Clone(js)
+	return h
 }
 
 var (
@@ -55,6 +64,7 @@ func fixtureFor(t *testing.T) *fixture {
 			t.Fatal(err)
 		}
 		fix.svc = svc
+		fix.rec = map[string][]kit.SvcJudgment{}
 	})
 	return &fix
 }
@@ -108,6 +118,9 @@ func (f *fixture) hostResults(t *testing.T, host string, failSvc bool) map[strin
 			t.Fatal(err)
 		}
 		out[scope] = h
+		if scope == kit.QueryScopeSvc {
+			f.record(h, svcJudgments)
+		}
 	}
 	return out
 }
@@ -138,7 +151,7 @@ func (f *fixture) inlineResult(t *testing.T, host string, offline []kit.SvcJudgm
 	if err != nil {
 		t.Fatal(err)
 	}
-	return h
+	return f.record(h, js)
 }
 
 func runIdentity(host string) kit.RunIdentity {
@@ -163,6 +176,14 @@ func writeJSON(t *testing.T, path string, v any) {
 // results may be altered before they are written.
 func writeHost(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity), results func(map[string]kit.QueryScopeHostResult)) string {
 	t.Helper()
+	return writeHostWith(t, f, host, id, results, nil)
+}
+
+// writeHostWith also lets a test alter the per-obligation companion before it is written. The companion
+// holds the judgments the two svc results were built from (the standard ones for a result a test made
+// by editing counters).
+func writeHostWith(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity), results func(map[string]kit.QueryScopeHostResult), companion func(*scopeobligations.Document)) string {
+	t.Helper()
 	dir := t.TempDir()
 	identity := runIdentity(host)
 	if id != nil {
@@ -170,6 +191,7 @@ func writeHost(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity),
 	}
 	writeJSON(t, filepath.Join(dir, identityFile), identity)
 	rs := f.hostResults(t, host, false)
+	standard := [2][]kit.SvcJudgment{f.rec[rs[kit.QueryScopeSvc].Result.ResultSHA256], f.rec[rs[svcInlineKey].Result.ResultSHA256]}
 	if results != nil {
 		results(rs)
 	}
@@ -181,6 +203,25 @@ func writeHost(t *testing.T, f *fixture, host string, id func(*kit.RunIdentity),
 		if err := os.WriteFile(filepath.Join(dir, fileOf(scope, host)), data, 0o644); err != nil {
 			t.Fatal(err)
 		}
+	}
+	offline, ok := f.rec[rs[kit.QueryScopeSvc].Result.ResultSHA256]
+	if !ok {
+		offline = standard[0]
+	}
+	inline, ok := f.rec[rs[svcInlineKey].Result.ResultSHA256]
+	if !ok {
+		inline = standard[1]
+	}
+	doc := scopeobligations.New(host, offline, inline)
+	if companion != nil {
+		companion(&doc)
+	}
+	data, err := scopeobligations.Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, scopeobligations.FileName(host)), data, 0o644); err != nil {
+		t.Fatal(err)
 	}
 	return dir
 }
@@ -223,7 +264,7 @@ func TestMergeBothHosts(t *testing.T) {
 	if inline[kit.SvcKindInlineTree] != 30 || inline[kit.SvcKindQuery] != 60 {
 		t.Errorf("inline rows %v, want 30 trees and 60 queries VERIFIED", inline)
 	}
-	if len(rep.Inputs) != 2 || len(rep.Inputs[0].Files) != 4 || len(rep.Scopes) != 2 {
+	if len(rep.Inputs) != 2 || len(rep.Inputs[0].Files) != 5 || len(rep.Scopes) != 2 {
 		t.Fatalf("inputs %+v scopes %v", rep.Inputs, rep.Scopes)
 	}
 }
@@ -259,10 +300,9 @@ func TestMergeRefusesAnInlineResultThatDisagreesWithTheOfflineOne(t *testing.T) 
 		"offline result in the inline file (no inline pin)": {func(rs map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
 			return rs[kit.QueryScopeSvc]
 		}, "QUERY_SCOPE_SVC_INLINE_MISMATCH"},
-		// the two hosts then disagree on the pinned assets
 		"inline asset pin of another asset on one host": {func(rs map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
 			return foreignPin(rs[svcInlineKey])
-		}, "QUERY_SCOPE_HOST_MISMATCH"},
+		}, "QUERY_SCOPE_SVC_OBLIGATIONS"},
 		"the other host's rows claimed": {func(map[string]kit.QueryScopeHostResult) kit.QueryScopeHostResult {
 			return f.inlineResult(t, windows, offline, nil) // a Windows result under the Linux name
 		}, "QUERY_SCOPE_HOST_MISMATCH"},
@@ -273,12 +313,13 @@ func TestMergeRefusesAnInlineResultThatDisagreesWithTheOfflineOne(t *testing.T) 
 			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
 		}
 	}
-	// both hosts agree on an inline asset pin that is not the checkout's: the fold refuses it
+	// both hosts agree on an inline asset pin that is not the checkout's: the recomputation from the
+	// per-obligation companion (which pins the checkout's inline asset) refuses it
 	dirs := twoHosts(t, f)
 	for _, host := range []string{windows, linux} {
 		dirs[host] = writeHost(t, f, host, nil, func(rs map[string]kit.QueryScopeHostResult) { rs[svcInlineKey] = foreignPin(rs[svcInlineKey]) })
 	}
-	if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_ASSET_PIN" || rep.Completion != nil {
+	if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_SVC_OBLIGATIONS" || rep.Completion != nil {
 		t.Errorf("foreign inline pin on both hosts: %s %s", rep.Status, rep.Code)
 	}
 }
@@ -447,7 +488,7 @@ func svcHostResult(t *testing.T, f *fixture, host string, js []kit.SvcJudgment) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	return h
+	return f.record(h, js)
 }
 
 // The inline file only refines the offline one (#362): it moves inline obligations out of BLOCKED and
@@ -599,5 +640,155 @@ func TestMergeKeepsAnInlineJudgmentFailure(t *testing.T) {
 	rep := merge(root, expected(), dirs)
 	if rep.Status != statusFail || rep.Completion == nil || rep.Completion.Total.Failed != 1 || rep.Completion.Code == "" {
 		t.Fatalf("%s %s %+v", rep.Status, rep.Code, rep.Completion)
+	}
+}
+
+// The inline file may change only the offline BLOCKED obligations, one by one (#362): an exchange that
+// keeps every per-kind count (an offline FAILED turned VERIFIED while another inline obligation turns
+// FAILED; an offline VERIFIED turned BLOCKED while another turns VERIFIED) must not merge.
+func TestMergeRefusesAnExchangeOfInlineJudgments(t *testing.T) {
+	f := fixtureFor(t)
+	offline, err := kit.VerifySvcExpected(f.svc, f.inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trees []int
+	for i, o := range f.svc.Obligations() {
+		if o.Kind == kit.SvcKindInlineTree {
+			trees = append(trees, i)
+		}
+	}
+	id := func(i int) string { return f.svc.Obligations()[i].ID }
+	allTrees := slices.Clone(offline) // the first 30 inline trees VERIFIED offline
+	for _, i := range trees[:30] {
+		allTrees[i] = kit.SvcJudgment{ID: id(i), State: "VERIFIED"}
+	}
+	failedFirst := slices.Clone(offline) // the first inline tree FAILED offline
+	failedFirst[trees[0]] = kit.SvcJudgment{ID: id(trees[0]), State: "FAILED", Code: "SVC_OFFLINE_INLINE_FAIL"}
+	for name, c := range map[string]struct {
+		offline []kit.SvcJudgment
+		inline  func(js []kit.SvcJudgment)
+	}{
+		"offline FAILED turned VERIFIED, another inline tree FAILED": {failedFirst, func(js []kit.SvcJudgment) {
+			js[trees[0]] = kit.SvcJudgment{ID: id(trees[0]), State: "VERIFIED"}
+			js[trees[1]] = kit.SvcJudgment{ID: id(trees[1]), State: "FAILED", Code: "SVC_INLINE_NATIVE_TREE"}
+		}},
+		"offline VERIFIED turned BLOCKED, another inline tree VERIFIED": {allTrees, func(js []kit.SvcJudgment) {
+			js[trees[0]] = kit.SvcJudgment{ID: id(trees[0]), State: "BLOCKED", Code: "SVC_BLOCKED_AGAIN"}
+			js[trees[30]] = kit.SvcJudgment{ID: id(trees[30]), State: "VERIFIED"}
+		}},
+	} {
+		dirs := twoHosts(t, f)
+		dirs[windows] = writeHost(t, f, windows, nil, func(rs map[string]kit.QueryScopeHostResult) {
+			rs[kit.QueryScopeSvc] = svcHostResult(t, f, windows, c.offline)
+			rs[svcInlineKey] = f.inlineResult(t, windows, c.offline, c.inline)
+		})
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_SVC_INLINE_MISMATCH" || rep.Completion != nil {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
+	}
+}
+
+// The stored results count obligations per kind; the per-obligation companion says which obligation was
+// judged how, and both stored svc results must recompute from it (#362). A companion that is missing,
+// another host's, incomplete, out of order, not strict JSON, or that does not recompute to the stored
+// results is refused, and so is an exchange among obligations the inline run may not change.
+func TestMergeChecksThePerObligationCompanion(t *testing.T) {
+	f := fixtureFor(t)
+	n := len(f.svc.Obligations())
+	tree := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool { return o.Kind == kit.SvcKindInlineTree })
+	history := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool {
+		return o.Kind != kit.SvcKindInlineTree && o.Kind != kit.SvcKindQuery
+	})
+	for name, c := range map[string]struct {
+		edit func(d *scopeobligations.Document)
+		code string
+	}{
+		"another host's companion": {func(d *scopeobligations.Document) { d.Host = linux }, scopeobligations.CodeShape},
+		"an obligation dropped":    {func(d *scopeobligations.Document) { d.Inline = d.Inline[:n-1] }, scopeobligations.CodeShape},
+		"obligations out of order": {func(d *scopeobligations.Document) {
+			d.Offline[0], d.Offline[1], d.Inline[0], d.Inline[1] = d.Offline[1], d.Offline[0], d.Inline[1], d.Inline[0]
+		}, scopeobligations.CodeShape},
+		"unknown state": {func(d *scopeobligations.Document) { d.Inline[0].State = "PASSED" }, scopeobligations.CodeShape},
+		"inline list does not recompute to the stored inline result": {func(d *scopeobligations.Document) {
+			d.Inline[tree] = scopeobligations.Judgment{ID: d.Inline[tree].ID, State: "BLOCKED", Code: "SVC_ONLY_HERE"}
+		}, scopeobligations.CodeShape},
+		"offline list does not recompute to the stored offline result": {func(d *scopeobligations.Document) {
+			// the inline list still agrees with the stored inline result; only the offline one does not
+			d.Offline[tree] = scopeobligations.Judgment{ID: d.Offline[tree].ID, State: "VERIFIED"}
+		}, scopeobligations.CodeShape},
+		"offline judgment taken back by the inline list": {func(d *scopeobligations.Document) {
+			d.Inline[history] = scopeobligations.Judgment{ID: d.Inline[history].ID, State: "BLOCKED", Code: "SVC_ONLY_HERE"}
+		}, scopeobligations.CodeInline},
+	} {
+		dirs := twoHosts(t, f)
+		dirs[windows] = writeHostWith(t, f, windows, nil, nil, c.edit)
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != c.code || rep.Completion != nil {
+			t.Errorf("%s: %s %s, want %s", name, rep.Status, rep.Code, c.code)
+		}
+	}
+	// the file itself: missing, unknown member, repeated member, trailing data
+	file := scopeobligations.FileName(windows)
+	for name, change := range map[string]func(string) string{
+		"unknown member": func(s string) string { return strings.Replace(s, `"host":`, `"extra":1,"host":`, 1) },
+		"repeated member": func(s string) string {
+			return strings.Replace(s, `"host":"windows-amd64"`, `"host":"windows-amd64","host":"windows-amd64"`, 1)
+		},
+		"trailing data": func(s string) string { return s + ` {}` },
+		"empty":         func(string) string { return "" },
+	} {
+		dirs := twoHosts(t, f)
+		data, err := os.ReadFile(filepath.Join(dirs[windows], file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if edited := change(string(data)); edited == string(data) {
+			t.Fatalf("%s: not edited", name)
+		} else if err := os.WriteFile(filepath.Join(dirs[windows], file), []byte(edited), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != scopeobligations.CodeShape {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
+	}
+	dirs := twoHosts(t, f)
+	if err := os.Remove(filepath.Join(dirs[windows], file)); err != nil {
+		t.Fatal(err)
+	}
+	if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_HOST_FILES" {
+		t.Errorf("missing companion: %s %s", rep.Status, rep.Code)
+	}
+
+	// an exchange among obligations the inline run may not change at all (offline FAILED and VERIFIED of
+	// one kind swapped): every per-kind count is kept
+	offline, err := kit.VerifySvcExpected(f.svc, f.inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	x := history
+	y := slices.IndexFunc(f.svc.Obligations()[x+1:], func(o kit.SvcObligation) bool { return o.Kind == f.svc.Obligations()[x].Kind }) + x + 1
+	if y <= x {
+		t.Fatal("no second obligation of the kind")
+	}
+	id := func(i int, state, code string) kit.SvcJudgment {
+		return kit.SvcJudgment{ID: f.svc.Obligations()[i].ID, State: state, Code: code}
+	}
+	for name, c := range map[string]struct {
+		offline, inline [2]kit.SvcJudgment // the judgments of x and y before and after the inline run
+	}{
+		"offline FAILED and VERIFIED swapped":           {[2]kit.SvcJudgment{id(x, "FAILED", "SVC_OFFLINE_FAIL"), id(y, "VERIFIED", "")}, [2]kit.SvcJudgment{id(x, "VERIFIED", ""), id(y, "FAILED", "SVC_OFFLINE_FAIL")}},
+		"offline BLOCKED and VERIFIED swapped":          {[2]kit.SvcJudgment{id(x, "BLOCKED", "SVC_BLOCKED"), id(y, "VERIFIED", "")}, [2]kit.SvcJudgment{id(x, "VERIFIED", ""), id(y, "BLOCKED", "SVC_BLOCKED")}},
+		"offline FAILED kept with another failure code": {[2]kit.SvcJudgment{id(x, "FAILED", "SVC_OFFLINE_FAIL"), id(y, "VERIFIED", "")}, [2]kit.SvcJudgment{id(x, "FAILED", "SVC_OTHER_FAIL"), id(y, "VERIFIED", "")}},
+	} {
+		offlineJ := slices.Clone(offline)
+		offlineJ[x], offlineJ[y] = c.offline[0], c.offline[1]
+		dirs = twoHosts(t, f)
+		dirs[windows] = writeHost(t, f, windows, nil, func(rs map[string]kit.QueryScopeHostResult) {
+			rs[kit.QueryScopeSvc] = svcHostResult(t, f, windows, offlineJ)
+			rs[svcInlineKey] = f.inlineResult(t, windows, offlineJ, func(js []kit.SvcJudgment) { js[x], js[y] = c.inline[0], c.inline[1] })
+		})
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != scopeobligations.CodeInline {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
 	}
 }

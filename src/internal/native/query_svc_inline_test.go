@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/scopeobligations"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
@@ -270,5 +271,12 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if storable && !forgedVerified {
 		pins := append(slices.Clone(result.Assets), queryregistrycore.FilePin(kit.SvcInlinePath, inlineContract))
 		storeQueryScopeHost(t, platform, kit.QueryScopeSvcInlineFile(platform), kit.NewQueryScopeResult(result.Scope, result.RegistrySHA256, pins, result.Counters, result.FirstFailure))
+		// the judgment of every obligation, offline and final: the merge recomputes both stored results from it
+		// and checks per obligation that the inline run changed only what the offline run left BLOCKED
+		companion, err := scopeobligations.Encode(scopeobligations.New(platform, offline, merged))
+		if err != nil {
+			t.Fatal(err)
+		}
+		storeQueryScopeFile(t, scopeobligations.FileName(platform), companion)
 	}
 }

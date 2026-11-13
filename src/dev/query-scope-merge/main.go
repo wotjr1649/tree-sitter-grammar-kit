@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/wotjr1649/tree-sitter-grammar-kit/src/internal/scopeobligations"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
@@ -159,13 +160,14 @@ func wantedFiles(host string) []string {
 	for _, key := range append(slices.Clone(scopes), svcInlineKey) {
 		names = append(names, fileOf(key, host))
 	}
+	names = append(names, scopeobligations.FileName(host))
 	slices.Sort(names)
 	return names
 }
 
 // loadHost reads one host directory: exactly its identity and its two scope files, no other
 // entry. The decoded results are returned per scope, and a file under another host's name is refused.
-func loadHost(dir, host string, expected kit.RunIdentity) (hostInput, map[string]kit.QueryScopeHostResult, error) {
+func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInput, map[string]kit.QueryScopeHostResult, error) {
 	in := hostInput{Host: host}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -220,8 +222,58 @@ func loadHost(dir, host string, expected kit.RunIdentity) (hostInput, map[string
 	if !refinesOffline(results[kit.QueryScopeSvc], results[svcInlineKey]) {
 		return in, nil, refuse("QUERY_SCOPE_SVC_INLINE_MISMATCH")
 	}
+	// the per-obligation companion: both stored results recomputed from it, the inline run changing only
+	// what the offline run left BLOCKED
+	if code := c.checkObligations(read[scopeobligations.FileName(host)], host, results); code != "" {
+		return in, nil, refuse(code)
+	}
 	results[kit.QueryScopeSvc] = results[svcInlineKey]
 	return in, results, nil
+}
+
+// contracts are the committed contracts of the run's checkout: the fold request and the parsed SVC
+// denominator the per-obligation checks run against.
+type contracts struct {
+	req kit.QueryCompletionRequest
+	e   kit.SvcExpected
+}
+
+func loadContracts(root string) (contracts, error) {
+	req, err := foldRequest(root)
+	if err != nil {
+		return contracts{}, err
+	}
+	e, err := kit.ParseSvcExpected(req.SvcExpected, req.Registry, req.Qualification, req.SvcFixture)
+	return contracts{req, e}, err
+}
+
+// checkObligations validates a host's companion file (scopeobligations): it is the host's, lists exactly
+// the SVC obligations, refines per obligation (Document.Check), and recomputes to the two stored svc
+// results of the host, the offline one and the inline one. It returns the refusal code, "" when sound.
+func (c contracts) checkObligations(data []byte, host string, results map[string]kit.QueryScopeHostResult) string {
+	d, err := scopeobligations.Decode(data)
+	if err != nil || d.Host != host {
+		return scopeobligations.CodeShape
+	}
+	if code := d.Check(c.e); code != "" {
+		return code
+	}
+	blocked := map[string]bool{}
+	for h := range hostPairs {
+		blocked[h] = h != host
+	}
+	recompute := func(js []kit.SvcJudgment, extra ...queryregistrycore.Pin) string {
+		r, err := kit.SvcScopeResult(c.e, c.req.SvcExpected, c.req.Registry, host, js, blocked)
+		if err != nil {
+			return ""
+		}
+		return kit.NewQueryScopeResult(r.Scope, r.RegistrySHA256, append(slices.Clone(r.Assets), extra...), r.Counters, r.FirstFailure).ResultSHA256
+	}
+	if recompute(d.OfflineJudgments()) != results[kit.QueryScopeSvc].Result.ResultSHA256 ||
+		recompute(d.InlineJudgments(), c.req.AssetPins[kit.QueryScopeSvc][1:]...) != results[svcInlineKey].Result.ResultSHA256 {
+		return scopeobligations.CodeShape
+	}
+	return ""
 }
 
 func codeOf(err error) string {
@@ -287,6 +339,10 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 	if !expectedComplete(expected) {
 		return fail(refuse("QUERY_SCOPE_RUN_EXPECTED"))
 	}
+	c, err := loadContracts(root)
+	if err != nil {
+		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
+	}
 	byScope := map[string][]kit.QueryScopeHostResult{}
 	var absent error
 	for _, host := range []string{"windows-amd64", "linux-amd64"} {
@@ -295,7 +351,7 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 			absent = refusal{statusBlocked, "QUERY_SCOPE_HOST_ABSENT"}
 			continue
 		}
-		in, results, err := loadHost(dir, host, expected)
+		in, results, err := loadHost(dir, host, expected, c)
 		rep.Inputs = append(rep.Inputs, in)
 		var r refusal
 		if errors.As(err, &r) && r.status == statusBlocked {
@@ -312,10 +368,7 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 	if absent != nil { // a present host is not folded alone: the other host stays unjudged
 		return fail(absent)
 	}
-	req, err := foldRequest(root)
-	if err != nil {
-		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
-	}
+	req := c.req
 	rep.Scopes = map[string]string{}
 	for _, scope := range scopes {
 		merged, err := kit.MergeQueryScopeHostResults(byScope[scope])
