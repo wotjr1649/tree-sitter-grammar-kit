@@ -24,9 +24,16 @@ func hardBackend() bool {
 func helperSpec(t *testing.T, mode string) (Spec, string) {
 	t.Helper()
 	pids := filepath.Join(t.TempDir(), "pids")
+	env := []string{"TSGK_RUNNER_HELPER=" + mode, "TSGK_PIDS=" + pids}
+	if strings.HasPrefix(mode, "frames:") {
+		// A race-built helper otherwise sleeps atexit_sleep_ms (1 s) before a clean exit,
+		// which equals the 1 s FrameGrace of these batches and ends it as BATCH_EXIT_TIMEOUT.
+		// Race detection inside the helper stays on; only the exit sleep is dropped.
+		env = append(env, "GORACE=atexit_sleep_ms=0")
+	}
 	return Spec{
 		Path: self(), Dir: t.TempDir(),
-		Env:         []string{"TSGK_RUNNER_HELPER=" + mode, "TSGK_PIDS=" + pids},
+		Env:         env,
 		StdoutBytes: 1 << 20, StderrBytes: 1 << 20, Wall: 30 * time.Second, Grace: 5 * time.Second,
 		Memory:       Memory{Bytes: 1 << 30, Hard: hardBackend()},
 		CgroupParent: os.Getenv("TSGK_CGROUP_PARENT"),

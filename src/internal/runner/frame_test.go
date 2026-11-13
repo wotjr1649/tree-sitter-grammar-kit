@@ -136,6 +136,41 @@ func TestBatchCaptureKeepsActualWireBytes(t *testing.T) {
 	}
 }
 
+// The linger deadline is on the helper's exit. A helper that exited cleanly keeps its
+// COMPLETED/EXITED result even when the work after the exit outlasts FrameGrace; a helper
+// that stays alive is still ended as BATCH_EXIT_TIMEOUT.
+func TestBatchExitDeadline(t *testing.T) {
+	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: 20 * time.Second, FrameGrace: 300 * time.Millisecond,
+		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}
+	frames := []Frame{{ID: "a", Request: []byte("x")}}
+	t.Run("slow-cleanup-after-exit", func(t *testing.T) {
+		s, pids := helperSpec(t, "frames:echo")
+		awaitStart(t, pids)
+		testHookBeforeWait = func(p *Process) {
+			select { // the exit is observed first, then the work after it takes longer than FrameGrace
+			case <-p.exited:
+			case <-time.After(10 * time.Second):
+				t.Error("helper did not exit")
+			}
+			time.Sleep(2 * pol.FrameGrace)
+		}
+		t.Cleanup(func() { testHookBeforeWait = nil })
+		r, err := RunBatch(context.Background(), s, pol, frames)
+		if err != nil || !r.Process.Succeeded() || r.Process.Reason != ReasonExited || r.Frames[0].Status != FrameCompleted {
+			t.Fatalf("clean exit rewritten by slow cleanup: %v %+v", err, r)
+		}
+	})
+	t.Run("lingering-helper", func(t *testing.T) {
+		s, pids := helperSpec(t, "frames:linger")
+		awaitStart(t, pids)
+		r, err := RunBatch(context.Background(), s, pol, frames)
+		if err != nil || r.Process.Reason != ReasonBatchExit || r.Process.Status != StatusResourceLimit ||
+			r.Frames[0].Status != FrameCompleted || !r.Process.Cleanup.Verified {
+			t.Fatalf("lingering helper: %v %+v", err, r)
+		}
+	})
+}
+
 func TestBatchCaptureKeepsPartialAndUnsentTail(t *testing.T) {
 	pol := BatchPolicy{RequestBytes: 1024, ResponseBytes: 1024, FrameWall: time.Second, FrameGrace: time.Second,
 		StdoutBytes: 1 << 20, BatchWall: 30 * time.Second}

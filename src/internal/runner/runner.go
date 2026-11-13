@@ -383,6 +383,24 @@ func (p *Process) Terminate(reason string) {
 	p.mu.Unlock()
 }
 
+// terminateIfRunning is Terminate for a deadline on the main process's own exit: once the
+// exit was observed it records nothing, so slow cleanup after a clean exit cannot rewrite
+// the reason. The check and the reason write share p.mu, and a Terminate that wins the lock
+// first is the same as a limit that fired first.
+func (p *Process) terminateIfRunning(reason string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	select {
+	case <-p.exited:
+		return
+	default:
+	}
+	if p.reason == "" {
+		p.reason = reason
+		close(p.kill)
+	}
+}
+
 func (p *Process) currentReason() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()

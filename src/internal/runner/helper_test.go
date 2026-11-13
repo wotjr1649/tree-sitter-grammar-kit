@@ -182,7 +182,7 @@ func helper(mode string) int {
 
 // frameHelper answers length-prefixed frames. arg is "<action>@<k>" acting at frame k
 // (0-based): hang, crash, big (oversized response header), fat (1000-byte padded response),
-// alloc; "echo" answers all.
+// alloc; "echo" answers all; "linger" answers all and then does not exit.
 func frameHelper(arg string) int {
 	action, at, _ := strings.Cut(arg, "@")
 	k := -1
@@ -199,6 +199,9 @@ func frameHelper(arg string) int {
 	for i := 0; ; i++ {
 		var hdr [4]byte
 		if _, err := io.ReadFull(in, hdr[:]); err != nil {
+			if action == "linger" { // does not exit after its last frame
+				time.Sleep(time.Hour)
+			}
 			if action == "tail" { // stray bytes after the last response
 				out.WriteString("junk")
 				out.Flush()
