@@ -1146,10 +1146,12 @@ func TestWorkflowConcurrencyPolicy(t *testing.T) {
 
 // qualificationScopeSteps are the gate-external steps of the qualification job in order, with the step limit each
 // has (minutes). The job limit is 15 min (margin.go, marginFormerJobs) and a job timeout is not absorbed by
-// continue-on-error, so the limits add up: qualificationScopeMinutes. The steps that were there before have
-// no step limits; qualificationExistingMinutes is the estimate of their nominal time (checkout and setup-go 1,
-// module download 1, host download 1, listing wait and retry up to 1, aggregation 2; not measured: the first
-// run of this job with the new steps gives the data). The slack keeps the sum clearly below the job limit.
+// continue-on-error, so the limits add up (the policy sums the limits it reads from the workflow over every step
+// between the merge anchor and the clean-tree check, and requires exactly this many steps). The steps that were
+// there before have no step limits; qualificationExistingMinutes is a ceiling chosen by hand, not something
+// the test measures or can check against the workflow: run 43376075451 (a53c9eb, before the scope steps) ran
+// this whole job in 1.4 min, its longest step 56 s, so 6 min is about four times that. If the existing steps
+// grow, nothing here notices: raise the constant by hand then. The slack keeps the sum clearly below the job limit.
 var qualificationScopeSteps = [5]struct {
 	name    string
 	minutes int
@@ -1162,7 +1164,6 @@ var qualificationScopeSteps = [5]struct {
 }
 
 const (
-	qualificationScopeMinutes    = 6
 	qualificationExistingMinutes = 6
 	qualificationBudgetSlack     = 3
 )
@@ -1190,13 +1191,26 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		return fmt.Errorf("scope collection inside a required step")
 	}
 	// what the collection step takes over from the required route step, through GITHUB_ENV
-	for _, required := range []string{"\"TSGK_SCOPE_CC=$cc\" | Out-File -FilePath $env:GITHUB_ENV -Append", "\"TSGK_SCOPE_CGROUP=$cgroup\" | Out-File -FilePath $env:GITHUB_ENV -Append"} {
-		if !strings.Contains(routes, required) {
-			return fmt.Errorf("native-routes scope collection input missing: %s", required)
-		}
+	if !strings.Contains(routes, "\"TSGK_SCOPE_CC=$cc\" | Out-File -FilePath $env:GITHUB_ENV -Append") {
+		return fmt.Errorf("native-routes scope collection input missing: the compiler")
+	}
+	// the cgroup parent is not handed over: the collection is a new process outside the required step's supervisor
+	// cgroup, where the clone into a jobs leaf is refused (run 43384610234), so it delegates a subtree of its own
+	if strings.Contains(routes, "TSGK_SCOPE_CGROUP") {
+		return fmt.Errorf("the cgroup parent must not be handed to the collection through the environment")
 	}
 	for _, required := range []string{
-		"$env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC", "$env:TSGK_CGROUP_PARENT = $env:TSGK_SCOPE_CGROUP",
+		"$env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC", "$env:TSGK_CGROUP_PARENT = $cgroup\n",
+		// the same delegation as the required step, under a base name of its own (the required step's is not reused)
+		`$base = "/sys/fs/cgroup/tsgk-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"`,
+		`sudo mkdir -p "$base/supervisor" "$base/jobs"`, "sudo chown -R \"$(id -u):$(id -g)\" $base",
+		`sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"`,
+		`Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'`,
+		`Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'`,
+		`$cgroup = "$base/jobs"`,
+		"throw 'cgroup create failed'", "throw 'cgroup delegate failed'", "throw 'cgroup move failed'",
+		// the cleanup: leave the supervisor, remove the subtree, both best effort
+		"sudo sh -c \"echo $PID > '$origin/cgroup.procs'\" 2>$null", `sudo rmdir "$base/jobs" "$base/supervisor" $base 2>$null`,
 		// each go test keeps its own time limit, 180 s and 300 s: no other limit and no other test
 		"TSGK_QUERY_SCOPE_OUT = $scopeOut", "-run '^TestNativeQueryCompletionCurrentState$' -count=1 -v -timeout=180s\n",
 		// #362 L3: the SVC inline run on the C# closure this job prepared, counted only when it ran and stored
@@ -1209,6 +1223,10 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		if !strings.Contains(collect, required) {
 			return fmt.Errorf("native-routes scope collection missing: %s", required)
 		}
+	}
+	// the process must be in the supervisor before the first go test starts a native child
+	if move, first := strings.Index(collect, "$base/supervisor/cgroup.procs"), strings.Index(collect, "go test "); move < 0 || first < move {
+		return fmt.Errorf("the collection must move itself into its supervisor cgroup before its first go test")
 	}
 	if len(regexp.MustCompile(`(?m)^\s*go test `).FindAllString(collect, -1)) != 2 || strings.Count(collect, "-timeout") != 2 {
 		return fmt.Errorf("the scope collection runs exactly two go test commands, each with its own timeout")
@@ -1239,12 +1257,14 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 	if m, a, v := strings.Index(qual, "      - name: Margin 실행 구성 보관"), strings.Index(qual, anchor), strings.Index(qual, "      - name: Verify clean validation output"); m < 0 || m > a || a > v {
 		return fmt.Errorf("scope merge steps must follow the margin configuration steps and precede the clean-tree check")
 	}
+	// every step from the anchor up to the clean-tree check is a scope step: a further one is not ignored
+	tail, _, _ = strings.Cut(tail, "\n      - name: Verify clean validation output")
 	steps := strings.Split("\n"+tail, "\n      - ")[1:]
-	if len(steps) < 5 {
-		return fmt.Errorf("qualification scope merge steps incomplete")
+	if len(steps) != len(qualificationScopeSteps) {
+		return fmt.Errorf("qualification has %d scope steps before the clean-tree check, pinned %d", len(steps), len(qualificationScopeSteps))
 	}
 	merged, sum := 0, 0
-	for i, step := range steps[:5] {
+	for i, step := range steps {
 		name, _, _ := strings.Cut(step, "\n")
 		limit := regexp.MustCompile(`(?m)^        timeout-minutes: ([1-9][0-9]*)$`).FindStringSubmatch(step)
 		if !strings.Contains(name, "(gate 밖)") || !strings.Contains(step, "\n        if: ${{ !cancelled()") || limit == nil {
@@ -1254,7 +1274,8 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		if want := qualificationScopeSteps[i]; name != "name: "+want.name || limit[1] != strconv.Itoa(want.minutes) {
 			return fmt.Errorf("scope merge step %q has limit %s min, pinned %q at %d min", name, limit[1], want.name, want.minutes)
 		}
-		sum += qualificationScopeSteps[i].minutes
+		limitMinutes, _ := strconv.Atoi(limit[1])
+		sum += limitMinutes
 		// the wait for a trailing artifact listing: one 30 s sleep, inside the 1 min step limit
 		if strings.Contains(step, "Start-Sleep") && (strings.Count(step, "Start-Sleep") != 1 || !strings.Contains(step, "Start-Sleep -Seconds 30\n")) {
 			return fmt.Errorf("the listing wait must be one sleep of 30 s")
@@ -1277,8 +1298,8 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 	// minutes of the steps that were there before (unmeasured estimate, see qualificationExistingMinutes) must
 	// stay at least qualificationBudgetSlack minutes below the job limit, which a step timeout cannot absorb.
 	jobLimit := regexp.MustCompile(`(?m)^    timeout-minutes: ([1-9][0-9]*)$`).FindStringSubmatch(qual)
-	if jobLimit == nil || sum != qualificationScopeMinutes {
-		return fmt.Errorf("scope merge step limits add up to %d min, pinned %d", sum, qualificationScopeMinutes)
+	if jobLimit == nil {
+		return fmt.Errorf("qualification job limit missing")
 	}
 	if limit, _ := strconv.Atoi(jobLimit[1]); sum+qualificationExistingMinutes+qualificationBudgetSlack > limit {
 		return fmt.Errorf("qualification job limit %d min: scope steps %d + existing %d + slack %d", limit, sum, qualificationExistingMinutes, qualificationBudgetSlack)
@@ -1347,15 +1368,32 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		"collection-runs-after-fail":   strings.Replace(text, collect, strings.Replace(collect, "${{ success() }}", "${{ always() }}", 1), 1),
 		"collection-inputs-not-handed": strings.Replace(text, "          \"TSGK_SCOPE_CC=$cc\" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8\n", "", 1),
 		"collection-step-removed":      strings.Replace(text, collect, "", 1),
-		"upload-requires":              strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
-		"upload-fails-producer":        without(upload, "        continue-on-error: true\n"),
-		"previous-attempt":             strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
-		"gate-waits":                   strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
-		"inline-not-run":               strings.Replace(text, "-run '^TestNativeSvcInlineRealGrammar$'", "-run '^TestNativeSvcInline$'", 1),
-		"inline-skip-passes":           strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
-		"inline-fail-dropped":          strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", 1),
-		"inline-file-uncounted":        strings.Replace(text, ".Count -ne 4) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
-		"inline-other-grammar":         strings.Replace(text, "Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "Join-Path $env:TSGK_BENCH_PREPARED 'routes/json'", 1),
+		// #362 N1 (run 43384610234): the collection is a new process outside the required step's supervisor cgroup,
+		// so it delegates a subtree of its own; dropping any part of that, or the order, must fail the policy
+		"collection-supervisor-move-dropped": strings.Replace(text, "              sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }\n", "", 1),
+		"collection-cgroup-from-env":         strings.Replace(text, "            $env:TSGK_CGROUP_PARENT = $cgroup\n            $env:TSGK_BENCH_PREPARED", "            $env:TSGK_CGROUP_PARENT = $env:TSGK_SCOPE_CGROUP\n            $env:TSGK_BENCH_PREPARED", 1),
+		"collection-cgroup-handed-over":      strings.Replace(text, "          \"TSGK_SCOPE_CC=$cc\" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8\n", "          \"TSGK_SCOPE_CC=$cc\" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8\n          \"TSGK_SCOPE_CGROUP=$cgroup\" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8\n", 1),
+		"collection-shares-required-base":    strings.Replace(text, `$base = "/sys/fs/cgroup/tsgk-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"`, `$base = "/sys/fs/cgroup/tsgk-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"`, 1),
+		"collection-chown-dropped":           strings.Replace(text, "              sudo chown -R \"$(id -u):$(id -g)\" $base\n              if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }\n", "", 1),
+		"collection-memory-not-enabled":      strings.Replace(text, "              Set-Content -NoNewline -Path \"$base/jobs/cgroup.subtree_control\" -Value '+memory'\n", "", 1),
+		"collection-cleanup-dropped":         strings.Replace(text, "            sudo rmdir \"$base/jobs\" \"$base/supervisor\" $base 2>$null\n", "", 1),
+		"collection-move-after-go-test": strings.Replace(strings.Replace(text, "              sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n", "", 1),
+			"            $inlineLog = Join-Path", "            sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n            $inlineLog = Join-Path", 1),
+		// #362 N3: a further gate-external step between the merge steps and the clean-tree check is counted
+		"sixth-step-40min": func() string {
+			q := strings.Index(text, "\n  qualification:\n")
+			v := q + strings.Index(text[q:], "      - name: Verify clean validation output")
+			return text[:v] + "      - name: sixth (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 40\n        continue-on-error: true\n        run: Write-Output 'x'\n" + text[v:]
+		}(),
+		"upload-requires":       strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
+		"upload-fails-producer": without(upload, "        continue-on-error: true\n"),
+		"previous-attempt":      strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
+		"gate-waits":            strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
+		"inline-not-run":        strings.Replace(text, "-run '^TestNativeSvcInlineRealGrammar$'", "-run '^TestNativeSvcInline$'", 1),
+		"inline-skip-passes":    strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
+		"inline-fail-dropped":   strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", 1),
+		"inline-file-uncounted": strings.Replace(text, ".Count -ne 4) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
+		"inline-other-grammar":  strings.Replace(text, "Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "Join-Path $env:TSGK_BENCH_PREPARED 'routes/json'", 1),
 		// a FAILED judgment must not be thrown away as a collection failure
 		"fan-in-exit-throws": strings.Replace(text, "Write-Output \"::warning::scope fan-in test exited $LASTEXITCODE; its judgments are kept only if it stored them\"", "throw \"scope fan-in test failed ($LASTEXITCODE)\"", 1),
 		"inline-exit-throws": strings.Replace(text, "Write-Output \"::warning::SVC inline test exited $inlineExit; its judgments are kept only if it stored them\"", "throw \"SVC inline test failed ($inlineExit)\"", 1),

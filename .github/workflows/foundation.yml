@@ -786,9 +786,9 @@ jobs:
             $cgroup = "$base/jobs"
           }
           $cc = & src/dev/s05-native/select-compiler.ps1
-          # #362: the gate-external scope collection step after this one reuses this compiler and cgroup parent
+          # #362: the gate-external scope collection step after this one reuses this compiler. It cannot reuse
+          # this step's cgroup parent: it is a new process outside this step's supervisor, so it delegates its own.
           "TSGK_SCOPE_CC=$cc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "TSGK_SCOPE_CGROUP=$cgroup" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           # #218: the csharp-symbols role runs on Windows and Linux; darwin is deferred (#243)
           & src/dev/s05-native/run-routes.ps1 -Prepared (Join-Path $env:RUNNER_TEMP 's05-prepared') -Destination $out -Compiler $cc -Platform $env:PLATFORM -CgroupParent $cgroup -Large -Oracle -Symbols:(-not $IsMacOS)
@@ -865,9 +865,28 @@ jobs:
           # required step passed. A failed collection leaves no files and the merge reports this host absent.
           $out = Join-Path $env:RUNNER_TEMP "s05-routes-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          $base = ''
+          $origin = ''
           try {
+            if ($IsLinux) {
+              # This step is a new process outside the required step's supervisor cgroup, where the runner's
+              # clone into a jobs leaf is refused (run 43384610234: fork/exec permission denied): delegate
+              # a subtree of its own, as the required step does.
+              $origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')
+              $base = "/sys/fs/cgroup/tsgk-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              sudo mkdir -p "$base/supervisor" "$base/jobs"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+              sudo chown -R "$(id -u):$(id -g)" $base
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+              sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+              Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+              Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+              $cgroup = "$base/jobs"
+            }
             $env:TSGK_NATIVE_REQUIRED = '1'
-            $env:TSGK_CGROUP_PARENT = $env:TSGK_SCOPE_CGROUP
+            $env:TSGK_CGROUP_PARENT = $cgroup
             $env:TSGK_BENCH_PREPARED = Join-Path $env:RUNNER_TEMP 's05-prepared'
             $env:TSGK_NATIVE_RUNTIME = Join-Path $env:TSGK_BENCH_PREPARED 'runtime'
             $env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC
@@ -893,6 +912,11 @@ jobs:
           } catch {
             Write-Output "::warning::query scope collection failed: $_"
             if (Test-Path -LiteralPath $scopeOut) { Remove-Item -LiteralPath $scopeOut -Recurse -Force }
+          }
+          if ($base -ne '') {
+            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner
+            sudo sh -c "echo $PID > '$origin/cgroup.procs'" 2>$null
+            sudo rmdir "$base/jobs" "$base/supervisor" $base 2>$null
           }
           $global:LASTEXITCODE = 0
         env:
@@ -1225,7 +1249,7 @@ jobs:
               if (Test-Path -LiteralPath $dir) { $cliArgs += @('-host', "$($p[1])=$dir") } else { Write-Output "scope host evidence missing: $($p[1])" }
             }
             go run ./src/dev/query-scope-merge @cliArgs
-            if ($LASTEXITCODE -ne 0) { throw "scope merge did not merge both hosts (exit $LASTEXITCODE)" }
+            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, FAIL or REFUSED)" }
           } catch {
             Write-Output "::warning::query scope merge: $_"
           }
