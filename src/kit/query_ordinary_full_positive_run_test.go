@@ -18,12 +18,19 @@ func ordinaryFullPosVerify(t *testing.T, ctx context.Context, req OrdinaryQueryS
 }
 
 // ordinaryFullPosRequireAllVerified checks the public result, then that the r9 replay and `tsgk replay` agree with it.
-func ordinaryFullPosRequireAllVerified(t *testing.T, ctx context.Context, name string, in ordinaryFullPosInput, req OrdinaryQuerySemanticsRequest, required int) {
+// The recorder (nil when the result is not collected) keeps the result for the ordinary scope result of this host. A
+// run whose only deviation is tuples FAILED against the native tree is a verdict, not an integrity failure: the replay
+// parity and the rest of the test still run, and the FAILED verdict fails the test last (ordinaryScopeRecorder).
+func ordinaryFullPosRequireAllVerified(t *testing.T, ctx context.Context, name string, in ordinaryFullPosInput, req OrdinaryQuerySemanticsRequest, required int, rec *ordinaryScopeRecorder) {
 	t.Helper()
 	api, err := ordinaryFullPosVerify(t, ctx, req)
-	if err != nil || api.Assessment != AssessPass || api.Semantic != AssessPass || api.BaseVerified.Assessment != AssessPass || !api.Complete || !api.ProcessingComplete || !api.BindingValid || api.FullScopeComplete ||
-		api.Tuple.Required != uint64(required) || api.Tuple.Verified != uint64(required) || api.Tuple.Failed != 0 || api.Tuple.Blocked != 0 || api.Tuple.Unprocessed != 0 || len(api.SelectedObligationIDs) != required {
+	verdictOnly := rec.Judged(api, err, required)
+	if !verdictOnly && (err != nil || api.Assessment != AssessPass || api.Semantic != AssessPass || api.BaseVerified.Assessment != AssessPass || !api.Complete || !api.ProcessingComplete || !api.BindingValid || api.FullScopeComplete ||
+		api.Tuple.Required != uint64(required) || api.Tuple.Verified != uint64(required) || api.Tuple.Failed != 0 || api.Tuple.Blocked != 0 || api.Tuple.Unprocessed != 0 || len(api.SelectedObligationIDs) != required) {
 		t.Fatalf("%s: public ordinary API over the owned r8: err=%v result=%+v", name, err, api)
+	}
+	if verdictOnly {
+		rec.VerdictFailed("%s: %d of %d tuples FAILED against the native tree: %+v", name, api.Tuple.Failed, required, api.Tuple)
 	}
 	env := ordinaryFullPosBuildCLI(t)
 	replay, cli := ordinaryFullPosParity(t, ctx, env, req, api)
@@ -69,6 +76,8 @@ func ordinaryFullPosSwapReferences(t *testing.T, refs []ordinaryE2EReference, ca
 // TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase records two zero-edit JSON shards in one owned-native run
 // from tracked files only and requires the API, the r9 replay and `tsgk replay` to agree on 2/2 VERIFIED.
 func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
+	// the recorder comes first: its cleanup runs after every other one
+	rec := ordinaryScopeCollect(t, "json-zero-edit")
 	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryFullPosNativeSetup(t)
 	grammarRoot := ordinaryFullPosGrammarRoot(t)
@@ -77,7 +86,7 @@ func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
 	caseIDs := []string{"alt-json-B01-05", "alt-json-B01-09"}
 	in := ordinaryFullPosJSONInput(t, grammarRoot, caseIDs, ordinaryFullPosMutation{})
 	req, producerDir := ordinaryFullPosProduce(t, in)
-	ordinaryFullPosRequireAllVerified(t, ctx, "zero-edit multi-case", in, req, 2)
+	ordinaryFullPosRequireAllVerified(t, ctx, "zero-edit multi-case", in, req, 2, rec)
 
 	// Case substitution: the two documents swap their independent expectations. Every pin stays consistent,
 	// so only the comparison with the actual native tree can object.
@@ -104,6 +113,8 @@ func TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase(t *testing.T) {
 // steps 1..3), all expected from the grammar. It checks 14/14 VERIFIED through the API, the r9 replay and
 // `tsgk replay`, then the version-order, step and case counterexamples.
 func TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase(t *testing.T) {
+	// the recorder comes first: its cleanup runs after every other one
+	rec := ordinaryScopeCollect(t, "json-history")
 	t.Parallel() // owned-native run in its own temporary directories and producer process; no hook or environment write
 	ordinaryFullPosNativeSetup(t)
 	grammarRoot := ordinaryFullPosGrammarRoot(t)
@@ -115,7 +126,7 @@ func TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase(t *testing.T) {
 		t.Fatalf("the history cases must have four versions: %d %d", len(in.Cases[0].Versions), len(in.Cases[1].Versions))
 	}
 	req, producerDir := ordinaryFullPosProduce(t, in)
-	ordinaryFullPosRequireAllVerified(t, ctx, "edit-history multi-case", in, req, 14)
+	ordinaryFullPosRequireAllVerified(t, ctx, "edit-history multi-case", in, req, 14, rec)
 
 	// Step missing: the step-2 reference row of the first case is absent.
 	ordinaryFullPosRequireNotVerified(t, ctx, "step 2 reference row missing",
@@ -184,7 +195,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	caseIDs := []string{"alt-json-B01-05", "json-feature-r1"}
 	in := ordinaryFullPosJSONInput(t, grammarRoot, caseIDs, ordinaryFullPosMutation{})
 	registered := []string{in.Cases[0].ID, in.Cases[1].ID}
-	byPlan := []string{ordinaryPlanShardKey("json", "windows-amd64", caseIDs[0]), ordinaryPlanShardKey("json", "windows-amd64", caseIDs[1])}
+	byPlan := []string{ordinaryPlanShardKey("json", ordinaryHostPlatform(), caseIDs[0]), ordinaryPlanShardKey("json", ordinaryHostPlatform(), caseIDs[1])}
 	if !slices.Equal(registered, []string{"json-feature-r1", "alt-json-B01-05"}) || !slices.Equal(in.ShardIDs, byPlan) || !slices.IsSorted(in.ShardIDs) {
 		t.Fatalf("the premise changed: the registration order must be the reverse of the plan order: cases=%v shards=%v", registered, in.ShardIDs)
 	}
@@ -198,7 +209,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	if !slices.Equal(manifest.Cases, registered) || !slices.Equal(manifest.ShardIDs, byPlan) {
 		t.Fatalf("the r8 must list cases in registration order and shard IDs in plan order: cases=%v shards=%v", manifest.Cases, manifest.ShardIDs)
 	}
-	ordinaryFullPosRequireAllVerified(t, ctx, "shard order differs from registration order", in, req, 8)
+	ordinaryFullPosRequireAllVerified(t, ctx, "shard order differs from registration order", in, req, 8, nil)
 
 	// Same shard-ID set, different binding: every variant must be refused by the public API.
 	swap := func(ids []string) []string { ids[0], ids[1] = ids[1], ids[0]; return ids }
@@ -209,7 +220,7 @@ func TestOrdinaryFullPositiveOwnedJSONShardOrderDiffers(t *testing.T) {
 	ordinaryFullPosRequireNotVerified(t, ctx, "one shard ID omitted", ordinaryFullPosSelect(t, req, func(ids []string) []string { return ids[:1] }, func(p [][]byte) [][]byte { return p[:1] }))
 	ordinaryFullPosRequireNotVerified(t, ctx, "shard ID of another case substituted", ordinaryFullPosSelect(t, req,
 		func(ids []string) []string {
-			ids[1] = ordinaryPlanShardKey("json", "windows-amd64", "alt-json-B01-09")
+			ids[1] = ordinaryPlanShardKey("json", ordinaryHostPlatform(), "alt-json-B01-09")
 			return ids
 		}, nil))
 }

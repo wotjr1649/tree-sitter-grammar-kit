@@ -650,8 +650,20 @@ jobs:
           }
           $dest = Join-Path $env:RUNNER_TEMP "s05-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform linux/amd64 -CgroupParent $cgroup
-          # keep the regeneration reports, drop the duplicated outputs, tools and CLI
-          Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory | Remove-Item -Recurse -Force }
+          # keep the regeneration reports, drop the duplicated outputs, tools and CLI. The PostgreSQL route keeps the
+          # two small generated files of each workspace (out/grammar.json 1.4 MB, out/node-types.json 0.5 MB, about
+          # 3.9 MB for both workspaces): the ordinary PostgreSQL regressions (#427 P1) check their hand-authored tree
+          # against them and against the pinned digests of src/contracts/reproduction-routes.json, so the opt-in
+          # collection finds what a local preparation holds. Only workspace-*/out/ of that route stays.
+          Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object {
+            $route = $_.Name
+            Get-ChildItem -LiteralPath $_.FullName -Directory | ForEach-Object {
+              $workspace = $_
+              if ($route -ne 'postgresql-sql' -or $workspace.Name -notlike 'workspace-*') { Remove-Item -LiteralPath $workspace.FullName -Recurse -Force; return }
+              $keep = Join-Path $workspace.FullName 'out'
+              Get-ChildItem -LiteralPath $workspace.FullName -File -Recurse | Where-Object { $_.DirectoryName -ne $keep -or $_.Name -notin @('grammar.json', 'node-types.json') } | Remove-Item -Force
+            }
+          }
           Remove-Item -LiteralPath (Join-Path $dest 'tools'), (Join-Path $dest 'profiles') -Recurse -Force
           Get-ChildItem -LiteralPath $dest -File -Filter 'tsgk*' | Remove-Item -Force
       - name: 준비한 입력 전달
@@ -921,6 +933,145 @@ jobs:
           $global:LASTEXITCODE = 0
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: ordinary 선택 shard 수집 (host별, gate 밖)
+        if: ${{ success() }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: |
+          # #427 P1: the selected ordinary shards (JSON 2 and 14 tuples, PostgreSQL 9, TSQL 72) run their native
+          # regressions on this host and store the public pass results; the last test folds them into this host's
+          # ordinary scope result next to the predicate and SVC ones, for the qualification job's merge. Gate-external
+          # in a step of its own, after the scope collection: a step timeout bounds it (the go test timeouts below add
+          # up to 9 min), a failure or a timeout cannot fail this required producer (continue-on-error), and a
+          # missing or partial result leaves the tuples it did not judge BLOCKED. It extends the host directory the
+          # scope collection stored, and does nothing without it. The rule is the one of #362 L2/L3: a regression whose
+          # run integrity held stores its result (a PASS, or a run whose only failure is tuples FAILED against the
+          # native tree: the merge then reports FAIL); a test that failed otherwise (a build, a start, a replay parity,
+          # a ledger, a negative control, a panic, a timeout) stores nothing, is named in a warning, and its tuples stay
+          # BLOCKED (the merge reports the host's ordinary rows under-filled). The store writes the host's file even
+          # when no test stored a result (every tuple unjudged); the merge, told of this step (-ordinary-step), reports
+          # a host without the file as absent. A skipped test passes go test and stores nothing: every test must have
+          # run (PASS or FAIL), else the step ends with a warning. The VERIFIED rows rest on synthetic reference rows
+          # and approval (#427 decision B5).
+          $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $ordinaryOut = Join-Path $env:RUNNER_TEMP "ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $cgroup = ''
+          $base = ''
+          $origin = ''
+          # a go test that exits nonzero is named in a warning with the tests that failed in it. A test that failed for
+          # a reason other than a FAILED verdict stores no result and its tuples stay BLOCKED; a FAILED verdict is stored.
+          function Write-OrdinaryFailure($log, $status) {
+            if ($status -eq 0) { return }
+            $failed = @(Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+            if ($failed.Count -eq 0) { $failed = @('none named, a build failure or a panic or timeout') }
+            Write-Output "::warning::ordinary go test exited ${status} ($(Split-Path -Leaf $log)); failed: $($failed -join ', '); a failed test stores no result (its tuples stay BLOCKED) unless its only failure is a FAILED verdict, which is stored and reported as FAIL by the merge"
+          }
+          try {
+            if (!(Test-Path -LiteralPath (Join-Path $scopeOut 'run-identity.json') -PathType Leaf)) { throw 'the scope collection stored no host files to extend' }
+            if ($IsLinux) {
+              # a new process outside the earlier steps' supervisor cgroups: delegate a subtree of its own (run 43384610234)
+              $origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')
+              $base = "/sys/fs/cgroup/tsgk-ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              sudo mkdir -p "$base/supervisor" "$base/jobs"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup create failed' }
+              sudo chown -R "$(id -u):$(id -g)" $base
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup delegate failed' }
+              sudo sh -c "echo $PID > '$base/supervisor/cgroup.procs'"
+              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }
+              Set-Content -NoNewline -Path "$base/cgroup.subtree_control" -Value '+memory'
+              Set-Content -NoNewline -Path "$base/jobs/cgroup.subtree_control" -Value '+memory'
+              $cgroup = "$base/jobs"
+            }
+            $prepared = Join-Path $env:RUNNER_TEMP 's05-prepared'
+            $env:TSGK_NATIVE_REQUIRED = '1'
+            $env:TSGK_CGROUP_PARENT = $cgroup
+            $env:TSGK_NATIVE_RUNTIME = Join-Path $prepared 'runtime'
+            $env:TSGK_NATIVE_CC = $env:TSGK_SCOPE_CC
+            if ([string]::IsNullOrWhiteSpace($env:TSGK_NATIVE_CC)) { throw 'compiler of the route step missing' }
+            $env:TSGK_ORDINARY_SQL_E2E = '1'
+            $env:TSGK_ORDINARY_GRAMMAR_ROOT = Join-Path $prepared 'routes'
+            $env:TSGK_ORDINARY_E2E_ARTIFACTS = Join-Path $ordinaryOut 'artifacts'
+            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'
+            New-Item -ItemType Directory -Force -Path $ordinaryOut | Out-Null
+            $notRun = @()
+            # JSON: the single case, the two-case zero-edit run and the 14-tuple history run (the first tuple of the
+            # single case is the first of the two-case run, so only the two multi-case results are stored)
+            $log = Join-Path $ordinaryOut 'json.log'
+            go test ./src/kit -run '^(TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases|TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase|TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase)$' -count=1 -v -timeout=150s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            foreach ($test in @('TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases', 'TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase', 'TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase')) {
+              if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
+            }
+            $log = Join-Path $ordinaryOut 'postgresql.log'
+            go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^postgresql-sql$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/postgresql-sql \(')) { $notRun += 'postgresql-sql' }
+            # PostgreSQL forgery counterexamples: one tampered tree node, capture or fact fails exactly the tuples that consume it
+            $log = Join-Path $ordinaryOut 'postgresql-tamper.log'
+            go test ./src/kit -run '^TestOrdinaryPostgreSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryPostgreSQLExpectedAgainstNative \(')) { $notRun += 'postgresql-tamper' }
+            # TSQL: the 72-tuple public pass (about 96.5 % of the logical limit on Windows) and the tamper counterexamples
+            $log = Join-Path $ordinaryOut 'tsql.log'
+            go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^tsql$' -count=1 -v -timeout=100s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql \(')) { $notRun += 'tsql' }
+            $log = Join-Path $ordinaryOut 'tsql-tamper.log'
+            go test ./src/kit -run '^TestOrdinaryTSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryTSQLExpectedAgainstNative \(')) { $notRun += 'tsql-tamper' }
+            # the platform neutrality of the inputs: the same bytes on both hosts, and the scanners that ask the host's libc
+            $log = Join-Path $ordinaryOut 'neutrality.log'
+            go test ./src/dev/query-witness -run '^(TestOrdinarySourcesAreByteIdenticalOnBothHosts|TestOrdinaryScannerLibcExposure)$' -count=1 -v -timeout=45s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            foreach ($test in @('TestOrdinarySourcesAreByteIdenticalOnBothHosts', 'TestOrdinaryScannerLibcExposure')) {
+              if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
+            }
+            # the store: this host's ordinary scope result from what the tests above stored
+            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
+            $log = Join-Path $ordinaryOut 'store.log'
+            go test ./src/kit -run '^TestOrdinaryScopeStore$' -count=1 -v -timeout=30s > $log 2>&1
+            Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
+            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore \(')) { $notRun += 'store' }
+            if ($notRun.Count -gt 0) { throw "ordinary tests did not run: $($notRun -join ', ')" }
+            if (!(Test-Path -LiteralPath (Join-Path $scopeOut "query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json"))) { throw 'ordinary scope file missing' }
+          } catch {
+            Write-Output "::warning::ordinary scope collection failed: $_"
+          }
+          if ($base -ne '') {
+            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner
+            sudo sh -c "echo $PID > '$origin/cgroup.procs'" 2>$null
+            sudo rmdir "$base/jobs" "$base/supervisor" $base 2>$null
+          }
+          $global:LASTEXITCODE = 0
+        env:
+          PLATFORM: ${{ matrix.goos }}/${{ matrix.goarch }}
+      - name: ordinary 결과와 원장 보관 (host별, gate 밖)
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # #427 P1: the stored public pass results, the test logs and the ledgers of the first Linux ordinary runs.
+          # Evidence apart from the closed host file set of the scope merge, which names none of it.
+          name: ordinary-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/*.log
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/results
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/public-ledger.jsonl
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/public-result.json
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/capacity-stop.json
+            ${{ runner.temp }}/ordinary-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*/native-producer.log
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 6
       - name: route 결과 보관
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -1243,13 +1394,13 @@ jobs:
             New-Item -ItemType Directory -Path $out | Out-Null
             & src/dev/s08-qualify/run-identity.ps1 -Destination $out -HeadSHA $env:PR_HEAD_SHA
             if ($LASTEXITCODE -ne 0) { throw 'merge run identity failed' }
-            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'))
+            $cliArgs = @('-expected', (Join-Path $out 'run-identity.json'), '-out', (Join-Path $out 'query-scope-merge.json'), '-ordinary-step')
             foreach ($p in @(@('windows', 'windows-amd64'), @('linux', 'linux-amd64'))) {
               $dir = Join-Path $hosts "query-scope-$($p[0])-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
               if (Test-Path -LiteralPath $dir) { $cliArgs += @('-host', "$($p[1])=$dir") } else { Write-Output "scope host evidence missing: $($p[1])" }
             }
             go run ./src/dev/query-scope-merge @cliArgs
-            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, FAIL or REFUSED)" }
+            if ($LASTEXITCODE -ne 0) { throw "scope merge status is not MERGED (exit $LASTEXITCODE; the report's status and code say why: host absent, inline underfilled, ordinary rejected, absent or underfilled, FAIL or REFUSED)" }
           } catch {
             Write-Output "::warning::query scope merge: $_"
           }

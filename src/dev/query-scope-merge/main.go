@@ -2,7 +2,18 @@
 //
 // Each host hands over a closed directory: its run-identity.json, the two files
 // query-scope-{predicate,svc}-<host>.json that the native fan-in test stores, and
-// query-scope-svc-inline-<host>.json from the real-C#-grammar SVC test (#362 L3). The last is the same
+// query-scope-svc-inline-<host>.json from the real-C#-grammar SVC test (#362 L3), and optionally
+// query-scope-ordinary-<host>.json from the selected-shard ordinary regressions (#427 P1). The ordinary file
+// is optional because its collection is a step of its own that can fail or time out without taking the other
+// evidence with it: a host without it leaves its ordinary rows BLOCKED. It is optional only for a run that had no
+// ordinary step (-ordinary-step not given, e.g. an older run): when the run did have the step, a host directory
+// without the file is reported (status BLOCKED, QUERY_SCOPE_ORDINARY_ABSENT, ordinary.absent), so that a step that
+// stored nothing (every test failed, it threw or timed out) is never a silent MERGED. A present one is checked like the
+// others, but a defect of it (unreadable, damaged, another host's, pinned to other sources, judging more than the
+// selected shards derive from the registry) drops that file alone: its rows stay BLOCKED, the predicate and SVC
+// evidence is still folded, and the report says so (status BLOCKED, QUERY_SCOPE_ORDINARY_REJECTED, ordinary.code).
+// A host file that judged fewer of the selected shards' tuples than they derive is reported the same way
+// (QUERY_SCOPE_ORDINARY_UNDERFILLED, as the inline run is). The svc-inline file is the same
 // scope and rows as the svc file with that host's inline rows judged further; it must agree with the
 // svc file everywhere else and then stands for the host's svc result. The tool binds those
 // directories to the run it executes in (artifact layer: run id, attempt, commit and head SHA, the
@@ -18,6 +29,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -35,7 +47,7 @@ const (
 
 	statusMerged  = "MERGED"  // both hosts bound, merged and folded, no FAILED row
 	statusFail    = "FAIL"    // merged and folded, a host judged an obligation FAILED
-	statusBlocked = "BLOCKED" // a registered host's evidence is absent, or its inline run judged less than the asset derives
+	statusBlocked = "BLOCKED" // a registered host's evidence is absent, or an inline or ordinary run judged less than derived, or an ordinary file was dropped or absent
 	statusRefused = "REFUSED" // evidence present but not bound to this run or not intact
 
 	maxIdentityBytes = 64 << 10
@@ -46,6 +58,9 @@ const (
 var hostPairs = map[string][2]string{"windows-amd64": {"windows", "amd64"}, "linux-amd64": {"linux", "amd64"}}
 
 var scopes = []string{kit.QueryScopePredicate, kit.QueryScopeSvc}
+
+// The ordinary scope is not in scopes: its file is optional (see above), so it is read apart.
+const ordinaryKey = kit.QueryScopeOrdinary
 
 // svcInlineKey names the stored svc result of the inline run next to the scopes; it is not a scope.
 const svcInlineKey = "svc-inline"
@@ -96,6 +111,19 @@ type hostInput struct {
 	// InlineUnjudged counts the inline obligations the committed inline expected asset derives that the host's
 	// inline run left BLOCKED (not run): a host that judged less than it could.
 	InlineUnjudged int `json:"inline_unjudged"`
+	// OrdinaryCode is why the host's ordinary file was dropped (it is not folded), "" when it was taken or absent.
+	OrdinaryCode string `json:"ordinary_code,omitempty"`
+	// OrdinaryAbsent is set when the run had the ordinary step and the host handed over no ordinary file.
+	OrdinaryAbsent bool `json:"ordinary_absent,omitempty"`
+}
+
+// ordinaryReport is what the merge says about the ordinary scope when a host handed over a file for it.
+type ordinaryReport struct {
+	Basis     string            `json:"basis"`              // what a VERIFIED row rests on (kit.OrdinaryScopeBasis)
+	Code      string            `json:"code,omitempty"`     // why a host's file was dropped, the first one
+	Absent    []string          `json:"absent,omitempty"`   // hosts that ran the ordinary step and handed over no file
+	Claimable map[string]uint64 `json:"claimable"`          // tuples per platform the selected shards derive from the registry
+	Unjudged  map[string]uint64 `json:"unjudged,omitempty"` // claimable tuples per platform the folded result left unjudged
 }
 
 type report struct {
@@ -105,6 +133,7 @@ type report struct {
 	Run        kit.RunIdentity            `json:"run"`
 	Inputs     []hostInput                `json:"inputs"`
 	Scopes     map[string]string          `json:"scope_result_sha256,omitempty"`
+	Ordinary   *ordinaryReport            `json:"ordinary,omitempty"`
 	Completion *kit.QueryCompletionResult `json:"completion,omitempty"`
 }
 
@@ -159,12 +188,15 @@ func bound(got, want kit.RunIdentity, host string) bool {
 		got.EvidenceMode == "NEW_RUN" && got.Job == producerJob && got.GOOS == pair[0] && got.GOARCH == pair[1]
 }
 
-func wantedFiles(host string) []string {
+func wantedFiles(host string, ordinary bool) []string {
 	names := []string{identityFile}
 	for _, key := range append(slices.Clone(scopes), svcInlineKey) {
 		names = append(names, fileOf(key, host))
 	}
 	names = append(names, scopeobligations.FileName(host))
+	if ordinary {
+		names = append(names, fileOf(ordinaryKey, host))
+	}
 	slices.Sort(names)
 	return names
 }
@@ -186,9 +218,12 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 		}
 		names = append(names, e.Name())
 	}
-	if !slices.Equal(names, wantedFiles(host)) { // ReadDir is sorted by name
+	// ReadDir is sorted by name
+	withOrdinary := slices.Equal(names, wantedFiles(host, true))
+	if !withOrdinary && !slices.Equal(names, wantedFiles(host, false)) {
 		return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
 	}
+	in.OrdinaryAbsent = c.ordinaryStep && !withOrdinary
 	read := map[string][]byte{}
 	for _, name := range names {
 		limit := int64(maxHostBytes)
@@ -196,7 +231,11 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 			limit = maxIdentityBytes
 		}
 		data, err := readBounded(filepath.Join(dir, name), limit)
-		if err != nil {
+		if err != nil && name == fileOf(ordinaryKey, host) { // the optional file alone: dropped, not a refusal of the host
+			in.OrdinaryCode = "QUERY_SCOPE_HOST_FILES"
+			withOrdinary = false
+			continue
+		} else if err != nil {
 			return in, nil, refuse("QUERY_SCOPE_HOST_FILES")
 		}
 		read[name] = data
@@ -224,6 +263,19 @@ func loadHost(dir, host string, expected kit.RunIdentity, c contracts) (hostInpu
 		}
 		results[key] = h
 	}
+	if withOrdinary {
+		// a defect of the optional file drops it alone; the host's other evidence stays (F5 of #435)
+		switch h, err := kit.DecodeQueryScopeHostResult(read[fileOf(ordinaryKey, host)]); {
+		case err != nil:
+			in.OrdinaryCode = codeOf(err)
+		case h.Host != host || h.Result.Scope != kit.QueryScopeOrdinary:
+			in.OrdinaryCode = "QUERY_SCOPE_HOST_MISMATCH"
+		case kit.OrdinaryScopeOverclaim(h.Result, c.claims):
+			in.OrdinaryCode = "QUERY_SCOPE_ORDINARY_OVERCLAIM"
+		default:
+			results[ordinaryKey] = h
+		}
+	}
 	// the inline run's result is the same scope and rows: it stands for the host's svc result
 	if !refinesOffline(results[kit.QueryScopeSvc], results[svcInlineKey]) {
 		return in, nil, refuse("QUERY_SCOPE_SVC_INLINE_MISMATCH")
@@ -246,6 +298,10 @@ type contracts struct {
 	req    kit.QueryCompletionRequest
 	e      kit.SvcExpected
 	inline map[string]string
+	// claims are the ordinary tuples per platform the selected shards derive from the registry (the P1 selection)
+	claims map[string]uint64
+	// ordinaryStep is set when the run had the ordinary collection step: a host without its file is then reported
+	ordinaryStep bool
 }
 
 func loadContracts(root string) (contracts, error) {
@@ -267,7 +323,11 @@ func loadContracts(root string) (contracts, error) {
 		return contracts{}, err
 	}
 	x, err := kit.ParseSvcInlineExpected(asset, req.SvcExpected, req.Registry, req.Qualification, req.SvcFixture, pack)
-	return contracts{req, e, x.InlineCodes()}, err
+	if err != nil {
+		return contracts{}, err
+	}
+	claims, err := kit.OrdinaryScopeClaims(req)
+	return contracts{req: req, e: e, inline: x.InlineCodes(), claims: claims}, err
 }
 
 // checkObligations validates a host's companion file (scopeobligations): it is the host's, lists exactly
@@ -335,6 +395,11 @@ func foldRequest(root string) (kit.QueryCompletionRequest, error) {
 		},
 		ResultPins: map[string]string{},
 	}
+	ordinaryPins, err := kit.OrdinaryScopeAssetPins(func(path string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(path))) })
+	if err != nil {
+		return req, err
+	}
+	req.AssetPins[kit.QueryScopeOrdinary] = ordinaryPins
 	for _, b := range [][]byte{registry, predicate, svc, svcInline, large, req.Qualification, req.Slots, req.SvcFixture, req.LargeFixtures} {
 		if len(b) == 0 {
 			return req, errors.New("committed contract missing")
@@ -348,8 +413,14 @@ func foldRequest(root string) (kit.QueryCompletionRequest, error) {
 	return req, nil
 }
 
-// merge binds the host directories to the run, merges both hosts of each scope and folds the result.
+// merge binds the host directories to the run, merges both hosts of each scope and folds the result, for a run
+// without the ordinary collection step (ordinary files optional).
 func merge(root string, expected kit.RunIdentity, dirs map[string]string) report {
+	return mergeRun(root, expected, dirs, false)
+}
+
+// mergeRun is merge for a run that did (ordinaryStep) or did not have the ordinary collection step.
+func mergeRun(root string, expected kit.RunIdentity, dirs map[string]string, ordinaryStep bool) report {
 	rep := report{Schema: reportSchema, Run: expected, Inputs: []hostInput{}}
 	fail := func(err error) report {
 		var r refusal
@@ -367,7 +438,9 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 	if err != nil {
 		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
 	}
+	c.ordinaryStep = ordinaryStep
 	byScope := map[string][]kit.QueryScopeHostResult{}
+	var ordinary []kit.QueryScopeHostResult
 	var absent error
 	for _, host := range []string{"windows-amd64", "linux-amd64"} {
 		dir, ok := dirs[host]
@@ -388,6 +461,9 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		for _, scope := range scopes {
 			byScope[scope] = append(byScope[scope], results[scope])
 		}
+		if h, ok := results[ordinaryKey]; ok {
+			ordinary = append(ordinary, h)
+		}
 	}
 	if absent != nil { // a present host is not folded alone: the other host stays unjudged
 		return fail(absent)
@@ -403,9 +479,69 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		req.ResultPins[scope] = merged.ResultSHA256 // the pin is the merged digest itself: only the checks above give it meaning
 		rep.Scopes[scope] = merged.ResultSHA256
 	}
-	res, err := kit.FoldQueryCompletion(req)
+	// ordinary: both hosts' files merge; one host's file stands alone (the other host's rows are BLOCKED in it
+	// by construction); none leaves the scope absent, which the fold counts BLOCKED. A file the host check let
+	// through but the fold does not take (other registry, sources or denominator) is dropped too, but only when the
+	// same fold without it succeeds: the error is then the ordinary one's. Predicate and SVC stay folded (F5 of #435).
+	ordinaryCode, present := "", len(ordinary) > 0
+	var absentHosts []string
+	for _, in := range rep.Inputs {
+		if in.OrdinaryAbsent {
+			present = true
+			absentHosts = append(absentHosts, in.Host)
+		}
+		if in.OrdinaryCode != "" {
+			present = true
+			if ordinaryCode == "" {
+				ordinaryCode = in.OrdinaryCode
+			}
+		}
+	}
+	var ordinaryScope *kit.QueryScopeResult
+	if len(ordinary) > 0 {
+		scope := ordinary[0].Result
+		if len(ordinary) > 1 {
+			var merr error
+			if scope, merr = kit.MergeQueryScopeHostResults(ordinary); merr != nil {
+				ordinary = nil
+				if ordinaryCode == "" {
+					ordinaryCode = codeOf(merr)
+				}
+			}
+		}
+		if len(ordinary) > 0 {
+			ordinaryScope = &scope
+		}
+	}
+	foldWith := func(s *kit.QueryScopeResult) (kit.QueryCompletionResult, error) {
+		r := req
+		r.Scopes, r.ResultPins = slices.Clone(req.Scopes), maps.Clone(req.ResultPins)
+		if s != nil {
+			r.Scopes = append(r.Scopes, *s)
+			r.ResultPins[ordinaryKey] = s.ResultSHA256
+		}
+		return kit.FoldQueryCompletion(r)
+	}
+	res, err := foldWith(ordinaryScope)
+	if err != nil && ordinaryScope != nil {
+		if without, err2 := foldWith(nil); err2 == nil {
+			if ordinaryCode == "" {
+				ordinaryCode = codeOf(err)
+			}
+			ordinaryScope, res, err = nil, without, nil
+		}
+	}
 	if err != nil {
 		return fail(refuse(codeOf(err)))
+	}
+	if ordinaryScope != nil {
+		rep.Scopes[ordinaryKey] = ordinaryScope.ResultSHA256
+	}
+	if present {
+		rep.Ordinary = &ordinaryReport{Basis: kit.OrdinaryScopeBasis, Code: ordinaryCode, Absent: absentHosts, Claimable: c.claims}
+		if ordinaryScope != nil {
+			rep.Ordinary.Unjudged = kit.OrdinaryScopeUnjudged(*ordinaryScope, c.claims)
+		}
 	}
 	rep.Completion = &res
 	rep.Status, rep.Code = statusMerged, res.Code
@@ -415,6 +551,16 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 	case slices.ContainsFunc(rep.Inputs, func(in hostInput) bool { return in.InlineUnjudged != 0 }):
 		// folded and sound, but not complete: a host's inline run judged less than the asset derives
 		rep.Status, rep.Code = statusBlocked, "QUERY_SCOPE_SVC_INLINE_UNDERFILLED"
+	case ordinaryCode != "":
+		// folded and sound without the dropped ordinary file: the predicate and SVC evidence stands, ordinary does not
+		rep.Status, rep.Code = statusBlocked, "QUERY_SCOPE_ORDINARY_REJECTED"
+	case len(absentHosts) != 0:
+		// the run had the ordinary step and a host stored nothing: a file that is not there is not a silent MERGED
+		rep.Status, rep.Code = statusBlocked, "QUERY_SCOPE_ORDINARY_ABSENT"
+	case rep.Ordinary != nil && len(rep.Ordinary.Unjudged) != 0:
+		// a present ordinary file judged fewer of the selected shards' tuples than the registry derives (a test that
+		// failed stores nothing, so its tuples are unjudged here)
+		rep.Status, rep.Code = statusBlocked, "QUERY_SCOPE_ORDINARY_UNDERFILLED"
 	}
 	return rep
 }
@@ -439,6 +585,7 @@ func main() {
 	root := flag.String("root", ".", "repository root of the run's checkout")
 	expectedPath := flag.String("expected", "", "this run's run-identity.json")
 	out := flag.String("out", "", "report file to create")
+	ordinaryStep := flag.Bool("ordinary-step", false, "the run had the ordinary collection step: a host without its ordinary file is reported")
 	hosts := hostFlags{}
 	flag.Var(hosts, "host", "<host>=<artifact directory>; once per host")
 	flag.Parse()
@@ -455,7 +602,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "expected run identity unreadable")
 		os.Exit(2)
 	}
-	rep := merge(*root, expected, hosts)
+	rep := mergeRun(*root, expected, hosts, *ordinaryStep)
 	encoded, err := json.MarshalIndent(rep, "", "  ")
 	if err == nil {
 		var f *os.File

@@ -36,7 +36,7 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 	route := inventory.Routes[routeIndex]
 	if caseID == "" {
 		for _, shard := range plan.Shards {
-			if shard.Route == route.Route && shard.Platform == "windows-amd64" {
+			if shard.Route == route.Route && shard.Platform == ordinaryHostPlatform() {
 				caseID = shard.Case
 				break
 			}
@@ -77,7 +77,7 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 	plan.Assets = queryregistrycore.FilePin("profile/assets.json", assetData)
 	registration := OrdinaryRegistration{Schema: "tsgk-query-semantics-registration/r2", Registry: plan.Registry, Namespace: plan.Namespace,
 		Inventory: queryregistrycore.QualificationPin, Slots: queryregistrycore.SlotPin, Profile: plan.Profile, Assets: plan.Assets,
-		Route: route.Route, Set: route.Workload.Set, Platform: "windows-amd64", Subject: "windows/amd64", MembershipContext: "qualification/r8",
+		Route: route.Route, Set: route.Workload.Set, Platform: ordinaryHostPlatform(), Subject: ordinaryHostSubject(), MembershipContext: "qualification/r8",
 		Context: OrdinaryContext, ClosureEncoding: closure, Candidate: plan.Candidate, SemanticCohort: plan.SemanticCohort, PlannedMembers: append([]OrdinaryMember{}, planned...)}
 	selectedIndex := -1
 	for i, shard := range plan.Shards {
@@ -200,9 +200,9 @@ func ordinarySelectedInput(t *testing.T, routeName, caseID string, assets Ordina
 		}
 		registration.Required = append(registration.Required, required)
 	}
-	registrationPath, profilePath, assetsPath := "registrations/"+routeName+"-windows.json", "profile/ordinary.json", "profile/assets.json"
+	registrationPath, profilePath, assetsPath := "registrations/"+routeName+"-"+ordinaryHostPlatform()+".json", "profile/ordinary.json", "profile/assets.json"
 	if exactSource {
-		registrationPath, profilePath, assetsPath = "registrations/"+routeName+"/windows-amd64.json", "profile/tsgk-oracle-r4.json", "profile/ordinary-assets-r1.json"
+		registrationPath, profilePath, assetsPath = "registrations/"+routeName+"/"+ordinaryHostPlatform()+".json", "profile/tsgk-oracle-r4.json", "profile/ordinary-assets-r1.json"
 	}
 	plan.Registrations = []OrdinaryPin{}
 	plan.Profile = queryregistrycore.FilePin(profilePath, planningProfile)
@@ -766,21 +766,27 @@ func TestOrdinarySQLPublicPassCapacity(t *testing.T) {
 	artifactRoot := ordinarySQLEnv(t)
 	for _, route := range []string{"postgresql-sql", "tsql"} {
 		t.Run(route, func(t *testing.T) {
+			rec := ordinaryScopeCollect(t, "sql-"+route) // first: its cleanup runs after every other one
 			run := ordinarySQLRunRoute(t, filepath.Join(artifactRoot, "sql-"+route), route, nil)
 			result, verifyErr := run.Result, run.Err
 			limits := OrdinaryPlanLimits()
+			// Tuples FAILED against the native r8 are a verdict, not an integrity failure: the remaining checks run and the
+			// verdict fails the test last (ordinaryScopeRecorder). Any other deviation is fatal as before.
+			verdictOnly := rec.Judged(result, verifyErr, int(result.Tuple.Required)) && run.AssetBodies != 0
 			if run.AssetBodies == 0 && (result.Tuple.Verified != 0 || result.Semantic == AssessPass) {
 				t.Fatalf("synthetic SQL references without independent expected assets were incorrectly treated as verified: %+v", result)
 			}
-			if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
+			if verdictOnly {
+				rec.VerdictFailed("%s: %d of %d independently authored tuples FAILED against the native r8: %+v", route, result.Tuple.Failed, result.Tuple.Required, result.Tuple)
+			} else if run.AssetBodies != 0 && result.Tuple.Failed != 0 {
 				t.Fatalf("%s: an independently authored tuple FAILED against the native r8: %+v", route, result)
 			}
 			// A route with independently authored expected assets must finish with every required tuple VERIFIED;
 			// a capacity stop is a failure here, not a measurement.
-			if run.AssetBodies != 0 && verifyErr != nil {
+			if !verdictOnly && run.AssetBodies != 0 && verifyErr != nil {
 				t.Fatalf("%s did not finish: err=%v capacity=%s stop_boundary=%s rejected=%v verified=%d/%d", route, verifyErr, run.Capacity, run.LastStage, run.LastRejected, result.Tuple.Verified, result.Tuple.Required)
 			}
-			if run.AssetBodies != 0 {
+			if !verdictOnly && run.AssetBodies != 0 {
 				if !result.Complete || !result.ProcessingComplete || result.BaseVerified.Assessment != AssessPass || result.Semantic != AssessPass || result.Assessment != AssessPass || result.Tuple.Required == 0 ||
 					result.Tuple.Failed != 0 || result.Tuple.Verified != result.Tuple.Required || result.Tuple.Blocked != 0 {
 					t.Fatalf("%s body adjudication did not finish with a recomputed base PASS: %+v", route, result)

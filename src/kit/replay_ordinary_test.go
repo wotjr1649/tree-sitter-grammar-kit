@@ -47,7 +47,7 @@ func ordinaryPartialReplayFixture(t *testing.T) (OrdinaryQuerySemanticsRequest, 
 		t.Fatal(err)
 	}
 	profile := map[string]any{"schema": ReplaySchema, "id": "ordinary-partial", "reducer": "oracle-set-r9", "operation": "evidence-replay",
-		"subject": ReplaySubject{Run: req.Selection.RunID, Attempt: 1, Platform: "windows/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked},
+		"subject": ReplaySubject{Run: req.Selection.RunID, Attempt: 1, Platform: ordinaryHostSubject(), EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked},
 		"records": api.SelectedObligationIDs, "members": members,
 		"identities": map[string]string{"workload": digestHex(req.Profile), "ordinary-selection": digestHex(selection),
 			"ordinary-registration": digestHex(req.Registration), "ordinary-assets": digestHex(req.AssetRegistration),

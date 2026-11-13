@@ -229,7 +229,7 @@ func newOwnedNativeReaderFixture(t *testing.T, setDir string, manifest OrdinaryO
 	for i, version := range versions {
 		casePins[i] = OrdinaryPin{Path: "source-witness/" + digestHex(version) + ".utf8", Bytes: uint64(len(version)), SHA256: digestHex(version)}
 	}
-	registration := OrdinaryRegistration{Namespace: "ordinary-owned-test/r1", Route: profile.Native.Route, Platform: "windows-amd64", Subject: "windows/amd64", Context: OrdinaryContext, ClosureEncoding: "plain",
+	registration := OrdinaryRegistration{Namespace: "ordinary-owned-test/r1", Route: profile.Native.Route, Platform: ordinaryHostPlatform(), Subject: ordinaryHostSubject(), Context: OrdinaryContext, ClosureEncoding: "plain",
 		Cases:   []OrdinaryCase{{ID: caseProfile.ID, InitialSource: casePins[0], Edits: caseProfile.Edits, VersionPins: casePins, Points: points}},
 		Queries: []OrdinaryQuery{{ID: profile.Queries[0].ID, Source: OrdinaryPin{Path: "queries/q0.scm", Bytes: uint64(len(profile.Queries[0].Source)), SHA256: digestHex([]byte(profile.Queries[0].Source))}}}}
 	ordinary := ordinaryEligibilityBinding{Schema: ordinaryEligibilityBindingSchema, Context: manifest.Context, ClosureEncoding: manifest.ClosureEncoding,
