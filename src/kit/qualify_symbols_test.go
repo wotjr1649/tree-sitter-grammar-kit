@@ -8,9 +8,19 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
+
+// lateDeadlineCtx reports a settable deadline while its Err stays nil until cancelled, the
+// state of a wall context whose deadline passed but whose timer has not run yet (#440).
+type lateDeadlineCtx struct {
+	context.Context
+	deadline atomic.Int64 // unix nanoseconds
+}
+
+func (c *lateDeadlineCtx) Deadline() (time.Time, bool) { return time.Unix(0, c.deadline.Load()), true }
 
 // qfxSymbolRole adds an owned symbol-mode role (#218) executed on windows and deferred
 // elsewhere: one all-OK case and one zero-active case.
@@ -397,15 +407,19 @@ func qualifySymbolSetLimits(t *testing.T, schema string) {
 	}
 	// the qualification wall's deadline passing while the set replays is the qualification's
 	// WALL_LIMIT (RESOURCE_LIMIT), not a caller cancellation: the replay starts after it
-	var deadline time.Time
+	// the deadline is moved into the past as the replay starts while Err stays nil, as when the
+	// context's timer has not run yet on a loaded host: no sleep, no race with the timer (#440)
+	var late *lateDeadlineCtx
 	wallCalls := 0
 	_, err = qualify(&runOptions{wall: func() (context.Context, context.CancelFunc) {
 		wallCalls++
-		if deadline.IsZero() {
-			deadline = time.Now().Add(2 * time.Second)
-			return context.WithDeadline(context.Background(), deadline)
+		if late == nil {
+			base, cancel := context.WithCancel(context.Background())
+			late = &lateDeadlineCtx{Context: base}
+			late.deadline.Store(time.Now().Add(time.Hour).UnixNano())
+			return late, cancel
 		}
-		time.Sleep(time.Until(deadline) + 50*time.Millisecond)
+		late.deadline.Store(time.Now().Add(-time.Second).UnixNano())
 		return context.WithCancel(context.Background())
 	}})
 	if e := asError(err); e.Kind != KindResourceLimit || e.Code != "WALL_LIMIT" || wallCalls != 2 {

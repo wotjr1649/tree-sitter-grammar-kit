@@ -324,6 +324,11 @@ func (r *run) check() *Error {
 	if r.wall.Err() != nil {
 		return fail(KindResourceLimit, "WALL_LIMIT", "", context.Cause(r.wall))
 	}
+	// Err stays nil until the context's timer runs, which can lag a loaded host: a run past its
+	// deadline is a WALL_LIMIT at every checkpoint, never a success (#440)
+	if dl, ok := r.wall.Deadline(); ok && !time.Now().Before(dl) {
+		return fail(KindResourceLimit, "WALL_LIMIT", "", errWall)
+	}
 	if r.eligibility != nil && r.eligibility.err != nil {
 		return r.eligibility.err
 	}
