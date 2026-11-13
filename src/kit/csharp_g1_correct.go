@@ -45,23 +45,32 @@ const (
 	// G1FieldTSBasis records that the ts of a differential-oracle alternative no longer comes from the kind map
 	G1FieldTSBasis = "ts_basis"
 	G1FieldTSOnly  = "ts_only"
+	// G1FieldEvidence replaces the ts and the first witness of an alternative together (the old and the new value are one
+	// JSON record of both): a witness that moves to another node has the types of that node
+	G1FieldEvidence = "ts+witnesses[0]"
 
 	// where a ground is written
 	G1DocGrammar = "grammar.js"
 	G1DocSpec    = "spec"
 
-	// the documents the grounds quote, by SHA-256: the grammar.js of the commit the kind map pins and the two files of
+	// the documents the grounds quote, by SHA-256: the grammar.js of the commit the kind map pins and the files of
 	// the specification (dotnet/csharpstandard at the commit of g1gSpecPre) the grounds name
 	g1gGrammarSHA = "63d357e04fdbe05f424463f365fb595f8f05866711cc279f85a7288638e753bd"
 	g1gLexSHA     = "332d112957907adc721cf549ccaa05af85e582f5342aa6c4edfbbdba933060d2"
 	g1gExprSHA    = "bcc4c11c6d25aae3584d038aa7272adae5e26820f62d0120424f2c180fede64c"
+	g1gTypesSHA   = "294308e75f99d6416c41ee65eea655fb0a3bc1bd14d32dcf134946b0ad049bf4"
+	g1gClassesSHA = "0d6ac924504cdf5e4bf6974639a5853fa0c77ce00dd09c833b7607477864623f"
+	g1gUnsafeSHA  = "ba0202020568b066e46b30bdb5146b1c29676d6a0b3a1c286cfad8ab5d7d4a91"
 
 	g1gMinQuote = 40  // characters of a quote, whitespace runs counted as one
 	g1gMaxGap   = 200 // lines between the heading and the quote
 )
 
 // g1gSpecSHA is the SHA-256 of each specification file a ground may name.
-var g1gSpecSHA = map[string]string{"lexical-structure.md": g1gLexSHA, "expressions.md": g1gExprSHA}
+var g1gSpecSHA = map[string]string{"lexical-structure.md": g1gLexSHA, "expressions.md": g1gExprSHA, "types.md": g1gTypesSHA, "classes.md": g1gClassesSHA, "unsafe-code.md": g1gUnsafeSHA}
+
+// G1SpecFiles are the specification files a ground may name.
+var G1SpecFiles = []string{"lexical-structure.md", "expressions.md", "types.md", "classes.md", "unsafe-code.md"}
 
 var g1gSpecAt = regexp.MustCompile(`standard/([a-z-]+\.md) ([0-9]+(?:\.[0-9]+)*) `)
 
@@ -106,7 +115,7 @@ const (
 	g1gExpr    = g1gSpecPre + "standard/expressions.md "
 )
 
-// g1ExpectedCorrections are the four corrections of the expected asset, authored from the grammar and
+// g1ExpectedCorrections are the corrections of the expected asset (the first four values come from the native comparison, then the eleven of the audit of the differential-oracle alternatives), authored from the grammar and
 // specification text only.
 var g1ExpectedCorrections = []G1Correction{
 	{
@@ -158,6 +167,115 @@ var g1ExpectedCorrections = []G1Correction{
 	g1TSBasis("csharp-B01.a397", "interpolation_verbatim_start", 7,
 		"seq( alias($.interpolation_verbatim_start, $.interpolation_start), alias($.interpolation_start_quote, '\"'),",
 		g1gExpr+"12.8.3 Interpolated_Verbatim_String_Start", "Interpolated_Verbatim_String_Start : '$@\"' | '@$\"' ;", 83),
+
+	// The audit of the 76 differential-oracle alternatives (G1AUDIT76, after the native result) found eleven witnesses that the
+	// specification and the pinned grammar text do not support. Each is corrected from those texts alone; the native result
+	// shows only that the corrected value is not contradicted (the executed asset). Nine move the witness to the token or node
+	// that is the instance (with the types of that node), two keep the node and claim only its start.
+	g1Evidence("csharp-B02.a021",
+		[]string{"pointer_type"}, G1ExpWitness{"alt-csharp-B02-02#0", 24, 28, "PointerType", "span"},
+		[]string{"pointer_type"}, G1ExpWitness{"alt-csharp-B02-02#0", 62, 66, "PointerType", "span"},
+		"non_array_type: pointer_type is the pointer type as the element type of an array type (8.2.1; 24.3.2 lists int*[] as an array of pointers to int). The old witness is the type of the field 'int* p' (24-28), which is the instance of type: pointer_type (a008) and not of this alternative. The instance here is the element type 'int*' of 'int*[] arr' (62-66): the pinned grammar text lets array_type take a pointer_type as its base, and a pointer_type covers 'int*' exactly. The Roslyn observation holds a PointerType at 62-66.",
+		G1Ground{G1DocGrammar, "_array_base_type", "_array_base_type: $ => choice( $.array_type, $._name, $.nullable_type, $.pointer_type,", g1gGrammarSHA, "_array_base_type:", 0},
+		G1Ground{G1DocGrammar, "pointer_type", "pointer_type: $ => seq(field('type', $._pointer_base_type), '*'),", g1gGrammarSHA, "pointer_type:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/types.md 8.2.1 non_array_type", "non_array_type : non_array_non_nullable_type nullable_type_annotation? | pointer_type", g1gTypesSHA, "### 8.2.1 General", 33},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/unsafe-code.md 24.3.2 int*[]", "Single-dimensional array of pointers to `int`", g1gUnsafeSHA, "### 24.3.2 Data pointers", 19},
+	),
+	g1Evidence("csharp-B02.a062",
+		[]string{"pointer_type"}, G1ExpWitness{"alt-csharp-B02-02#0", 24, 28, "PointerType", "span"},
+		[]string{"pointer_type"}, G1ExpWitness{"alt-csharp-B02-02#0", 211, 215, "PointerType", "span"},
+		"unmanaged_type: pointer_type is the pointer type as the operand of sizeof (8.8; 12.8.19 sizeof_expression takes an unmanaged_type). The old witness is the type of the field 'int* p' (24-28), the instance of type: pointer_type (a008). The instance here is the operand 'int*' of 'sizeof(int*)' (211-215): the pinned grammar text gives sizeof_expression a type field and a pointer_type covers 'int*' exactly. The Roslyn observation holds a PointerType at 211-215.",
+		G1Ground{G1DocGrammar, "sizeof_expression", "sizeof_expression: $ => seq( 'sizeof', '(', field('type', $.type), ')', ),", g1gGrammarSHA, "sizeof_expression:", 0},
+		G1Ground{G1DocGrammar, "pointer_type", "pointer_type: $ => seq(field('type', $._pointer_base_type), '*'),", g1gGrammarSHA, "pointer_type:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/types.md 8.8 unmanaged_type", "unmanaged_type : value_type | pointer_type", g1gTypesSHA, "## 8.8 Unmanaged types", 3},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/expressions.md 12.8.19 sizeof_expression", "sizeof_expression : 'sizeof' '(' unmanaged_type ')'", g1gExprSHA, "### 12.8.19 The sizeof operator", 5},
+	),
+	g1Evidence("csharp-B02.a030",
+		[]string{"nullable_type"}, G1ExpWitness{"alt-csharp-B02-01#0", 86, 90, "NullableType", "span"},
+		[]string{"\"?\""}, G1ExpWitness{"alt-csharp-B02-01#0", 89, 90, "QuestionToken", "span"},
+		"nullable_type_annotation is the token '?' (8.2.1, 6.4.6). The old witness is the nullable type 'int?' (86-90), a node that contains the instance. In the pinned grammar text the '?' is an anonymous token of nullable_type, so the token '?' (89-90, Roslyn QuestionToken) is the exact witness and its type is the anonymous token '\"?\"', the type the kind map r2 gives QuestionToken.",
+		G1Ground{G1DocGrammar, "nullable_type", "nullable_type: $ => seq(field('type', $._nullable_base_type), '?'),", g1gGrammarSHA, "nullable_type:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/types.md 8.2.1 nullable_type_annotation", "nullable_type_annotation : '?' ; ``` *pointer_type*", g1gTypesSHA, "### 8.2.1 General", 59},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/lexical-structure.md 6.4.6 operator_or_punctuator", "| '=' | '<' | '>' | '?' | '??' | '::' | '++'", g1gLexSHA, "### 6.4.6 Operators and punctuators", 12},
+	),
+	g1Evidence("csharp-B02.a072",
+		[]string{"type_parameter_constraints_clause"}, G1ExpWitness{"alt-csharp-B02-04#0", 66, 81, "TypeParameterConstraintClause", "span"},
+		[]string{"type_parameter_constraint"}, G1ExpWitness{"alt-csharp-B02-04#0", 76, 81, "ClassConstraint", "span"},
+		"type_parameter_constraints is the constraint list of a where clause (15.2.5). The old witness is the whole clause 'where T : class' (66-81), a node that contains the instance. The pinned grammar text has no node for the list: the clause is 'where', an identifier, ':' and a comma separated list of type_parameter_constraint nodes. In this source the list holds one constraint, so the instance is that constraint, 'class' (76-81, Roslyn ClassConstraint), which has the extent of the list. The witness therefore proves a single constraint list only; a list of several constraints is not shown.",
+		G1Ground{G1DocGrammar, "type_parameter_constraints_clause", "type_parameter_constraints_clause: $ => seq( 'where', $.identifier, ':', commaSep1($.type_parameter_constraint),", g1gGrammarSHA, "type_parameter_constraints_clause:", 0},
+		G1Ground{G1DocGrammar, "type_parameter_constraint", "type_parameter_constraint: $ => choice( seq('class', optional('?')), 'struct',", g1gGrammarSHA, "type_parameter_constraint:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.2.5 type_parameter_constraints", "type_parameter_constraints : restrictive_type_parameter_constraints (',' anti_constraints_clause)? | anti_constraints_clause ;", g1gClassesSHA, "### 15.2.5 Type parameter constraints", 9},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.2.5 primary_constraint", "primary_constraint : class_type nullable_type_annotation? | 'class' nullable_type_annotation?", g1gClassesSHA, "### 15.2.5 Type parameter constraints", 20},
+	),
+	g1Evidence("csharp-B02.a084",
+		[]string{"implicit_parameter", "parameter", "receiver_parameter"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 40, "Parameter", "span"},
+		[]string{"\"ref\"", "modifier"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 34, "RefKeyword", "span"},
+		"ref_kind: 'ref' is the keyword ref of a parameter (15.6.1). The old witness is the whole parameter 'ref int a' (31-40), a node that contains the instance. The pinned grammar text makes every parameter modifier keyword its own modifier node, so the exact witness is the keyword 'ref' (31-34, Roslyn RefKeyword), typed as the anonymous token and the modifier node the kind map r2 gives RefKeyword.",
+		G1Ground{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped',", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.1 ref_kind", "ref_kind : 'ref' | 'ref' 'readonly' ; ref_method_modifiers", g1gClassesSHA, "### 15.6.1 General", 17},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+	),
+	g1Evidence("csharp-B02.a086",
+		[]string{"implicit_parameter", "parameter", "receiver_parameter"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 40, "Parameter", "span"},
+		[]string{"\"ref\"", "modifier"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 34, "RefKeyword", "span"},
+		"parameter_modifier: parameter_mode_modifier is a ref, out or in keyword on a parameter (15.6.2.1). The old witness is the whole parameter 'ref int a' (31-40), a node that contains the instance. The pinned grammar text makes each such keyword its own modifier node, so the exact witness is the keyword 'ref' (31-34, Roslyn RefKeyword), typed as the kind map r2 types RefKeyword.",
+		G1Ground{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped',", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_modifier", "parameter_modifier : parameter_mode_modifier | 'this' 'scoped'? parameter_mode_modifier?", g1gClassesSHA, "#### 15.6.2.1 General", 27},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+	),
+	g1Evidence("csharp-B02.a087",
+		[]string{"implicit_parameter", "parameter", "receiver_parameter"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 40, "Parameter", "span"},
+		[]string{"\"ref\"", "modifier"}, G1ExpWitness{"alt-csharp-B02-03#0", 31, 34, "RefKeyword", "span"},
+		"parameter_mode_modifier: ref_kind is the ref keyword form of the modifier (15.6.2.1, 15.6.1). The old witness is the whole parameter 'ref int a' (31-40), a node that contains the instance. The pinned grammar text makes the keyword its own modifier node, so the exact witness is 'ref' (31-34, Roslyn RefKeyword), typed as the kind map r2 types RefKeyword.",
+		G1Ground{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped',", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.1 ref_kind", "ref_kind : 'ref' | 'ref' 'readonly' ; ref_method_modifiers", g1gClassesSHA, "### 15.6.1 General", 17},
+	),
+	g1Evidence("csharp-B02.a088",
+		[]string{"implicit_parameter", "parameter", "receiver_parameter"}, G1ExpWitness{"alt-csharp-B02-03#0", 42, 51, "Parameter", "span"},
+		[]string{"\"out\"", "modifier"}, G1ExpWitness{"alt-csharp-B02-03#0", 42, 45, "OutKeyword", "span"},
+		"parameter_mode_modifier: 'out' is the keyword out of a parameter (15.6.2.1). The old witness is the whole parameter 'out int b' (42-51), a node that contains the instance. The pinned grammar text makes the keyword its own modifier node, so the exact witness is 'out' (42-45, Roslyn OutKeyword), typed as the kind map r2 types OutKeyword.",
+		G1Ground{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped',", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+	),
+	g1Evidence("csharp-B02.a089",
+		[]string{"implicit_parameter", "parameter", "receiver_parameter"}, G1ExpWitness{"alt-csharp-B02-03#0", 53, 61, "Parameter", "span"},
+		[]string{"\"in\"", "modifier"}, G1ExpWitness{"alt-csharp-B02-03#0", 53, 55, "InKeyword", "span"},
+		"parameter_mode_modifier: 'in' is the keyword in of a parameter (15.6.2.1). The old witness is the whole parameter 'in int c' (53-61), a node that contains the instance. The pinned grammar text makes the keyword its own modifier node, so the exact witness is 'in' (53-55, Roslyn InKeyword), typed as the kind map r2 types InKeyword.",
+		G1Ground{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped',", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+		G1Ground{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+	),
+	{
+		Item: "csharp-B01.a381", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, AfterNative: true, BasisIndependent: true,
+		Reason: "The specification's regular_interpolation is the expression, alignment and format between the braces; the braces are terminals of the enclosing rule. The pinned grammar text builds the interpolation node with an interpolation_brace first child (an alias of the external token interpolation_open_brace) and one last (an alias of interpolation_close_brace). The node therefore starts at the opening brace and ends with the closing brace; the grammar text does not give the extent of an external token, so only the start is derivable (the principle of csharp-B01.a383): an interpolation node starts where its opening brace starts.",
+		Grounds: []G1Ground{
+			G1Ground{G1DocGrammar, "interpolation", "interpolation: $ => seq( alias($.interpolation_open_brace, $.interpolation_brace), $.expression,", g1gGrammarSHA, "interpolation:", 0},
+			G1Ground{G1DocSpec, g1gSpecPre + "standard/expressions.md 12.8.3 regular_interpolation", "regular_interpolation : expression (',' interpolation_minimum_width)? Regular_Interpolation_Format?", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 28},
+		},
+	},
+	{
+		Item: "csharp-B01.a395", Field: G1FieldWitnessMatch, Old: `"span"`, New: `"starts-at"`, AfterNative: true, BasisIndependent: true,
+		Reason: "Same node and grammar rule as csharp-B01.a381 for a verbatim interpolated string: the verbatim string content uses the same interpolation rule, whose first and last children are aliases of the external tokens interpolation_open_brace and interpolation_close_brace, so only the start of the node is derivable.",
+		Grounds: []G1Ground{
+			G1Ground{G1DocGrammar, "interpolation", "interpolation: $ => seq( alias($.interpolation_open_brace, $.interpolation_brace), $.expression,", g1gGrammarSHA, "interpolation:", 0},
+			G1Ground{G1DocGrammar, "_interpolated_verbatim_string_content", "_interpolated_verbatim_string_content: $ => choice( alias($.interpolation_string_content,", g1gGrammarSHA, "_interpolated_verbatim_string_content:", 0},
+			G1Ground{G1DocSpec, g1gSpecPre + "standard/expressions.md 12.8.3 verbatim_interpolation", "verbatim_interpolation : expression (',' interpolation_minimum_width)? Verbatim_Interpolation_Format?", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 78},
+		},
+	},
+}
+
+// g1cEvidence is the value of a G1FieldEvidence correction: the ts and the first witness of an alternative.
+type g1cEvidence struct {
+	TS      []string     `json:"ts"`
+	Witness G1ExpWitness `json:"witness"`
+}
+
+// g1Evidence is the correction that moves the witness of an alternative to another token or node, with the ts of that node.
+func g1Evidence(item string, oldTS []string, oldW G1ExpWitness, newTS []string, newW G1ExpWitness, reason string, grounds ...G1Ground) G1Correction {
+	return G1Correction{
+		Item: item, Field: G1FieldEvidence, Old: g1cJSON(g1cEvidence{oldTS, oldW}), New: g1cJSON(g1cEvidence{newTS, newW}),
+		Reason: reason, Grounds: grounds, AfterNative: true, BasisIndependent: true,
+	}
 }
 
 // g1TSBasis is the correction that records the new basis of the ts of an interpolated string start alternative.
@@ -295,25 +413,33 @@ func G1CorrectionNorm(s string) string { return strings.Join(strings.Fields(s), 
 // else; it is the live counterpart of the offline check (g1CheckGround) and runs where the documents are present.
 func CheckG1Grounds(cs []G1Correction, grammar string, spec map[string]string) error {
 	for _, c := range cs {
-		for _, g := range c.Grounds {
-			doc := grammar
-			if g.Doc == G1DocSpec {
-				doc = ""
-				for name, text := range spec {
-					if strings.Contains(g.At, "standard/"+name+" ") {
-						doc = text
-					}
+		if err := CheckG1GroundList(c.Item, c.Grounds, grammar, spec); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CheckG1GroundList checks the grounds of one item against the documents, as CheckG1Grounds does for a correction.
+func CheckG1GroundList(item string, grounds []G1Ground, grammar string, spec map[string]string) error {
+	for _, g := range grounds {
+		doc := grammar
+		if g.Doc == G1DocSpec {
+			doc = ""
+			for name, text := range spec {
+				if strings.Contains(g.At, "standard/"+name+" ") {
+					doc = text
 				}
 			}
-			bad := func(why string) error {
-				return fmt.Errorf("correction %s: the %s ground %q: %s", c.Item, g.Doc, g.At, why)
-			}
-			if sum := sha256.Sum256([]byte(doc)); hex.EncodeToString(sum[:]) != g.DocSHA256 {
-				return bad("the document is not the pinned one")
-			}
-			if !g1gHeadingGap(doc, g) {
-				return bad("the quote is not exactly Gap lines after the heading line")
-			}
+		}
+		bad := func(why string) error {
+			return fmt.Errorf("%s: the %s ground %q: %s", item, g.Doc, g.At, why)
+		}
+		if sum := sha256.Sum256([]byte(doc)); hex.EncodeToString(sum[:]) != g.DocSHA256 {
+			return bad("the document is not the pinned one")
+		}
+		if !g1gHeadingGap(doc, g) {
+			return bad("the quote is not exactly Gap lines after the heading line")
 		}
 	}
 	return nil
@@ -336,6 +462,9 @@ func g1gHeadingGap(doc string, g G1Ground) bool {
 		first := len(norm[h+g.Gap])
 		var text string
 		for _, l := range norm[h+g.Gap:] {
+			if l == "" { // a blank line is whitespace: the quote may run over it
+				continue
+			}
 			if text += l + " "; len(text) > first+len(quote) {
 				break
 			}
@@ -355,7 +484,7 @@ func g1cJSON(v any) string {
 // ---- expected asset -----------------------------------------------------------------------------
 
 func g1cExpectedField(f string) bool {
-	return f == G1FieldTS || f == G1FieldWitnessMatch || f == G1FieldTSBasis
+	return f == G1FieldTS || f == G1FieldWitnessMatch || f == G1FieldTSBasis || f == G1FieldEvidence
 }
 
 // g1cCloneExpected copies the alternatives, the only part a correction changes.
@@ -396,6 +525,17 @@ func g1cApplyExpected(x CSharpG1Expected, cs []G1Correction) (CSharpG1Expected, 
 			if c.Old != `"kind-map"` || c.New != `"grammar-text"` || alt.Basis != G1BasisDiff {
 				return out, g1cFault("G1_CORRECTION_OLD")
 			}
+		case G1FieldEvidence:
+			var n g1cEvidence
+			if len(alt.Witnesses) != 1 || g1cJSON(g1cEvidence{alt.TS, alt.Witnesses[0]}) != c.Old || json.Unmarshal([]byte(c.New), &n) != nil || g1cJSON(n) != c.New {
+				return out, g1cFault("G1_CORRECTION_OLD")
+			}
+			w := n.Witness
+			if len(n.TS) == 0 || !slices.IsSorted(n.TS) || slices.Contains(n.TS, "") || w.Source != alt.Witnesses[0].Source || w.Start < 0 || w.Start >= w.End ||
+				w.Roslyn == "" || w.Match != "span" && w.Match != "starts-at" {
+				return out, g1cFault("G1_CORRECTION_OLD")
+			}
+			alt.TS, alt.Witnesses[0] = n.TS, w
 		case G1FieldWitnessMatch:
 			var m string
 			if len(alt.Witnesses) == 0 || g1cJSON(alt.Witnesses[0].Match) != c.Old || json.Unmarshal([]byte(c.New), &m) != nil || m != "span" && m != "starts-at" {
@@ -407,6 +547,55 @@ func g1cApplyExpected(x CSharpG1Expected, cs []G1Correction) (CSharpG1Expected, 
 		}
 	}
 	return out, nil
+}
+
+// g1cCheckEvidence checks the new value of every evidence correction against the observation and the r2 kind map: the
+// witness is a token or node of its source that Roslyn observed, and every type it carries is a type the kind map gives
+// the Roslyn kind of that witness. So a witness cannot move to a place nobody observed or take a type the map does not
+// relate to it.
+func g1cCheckEvidence(cs []G1Correction, observation, kindMap []byte) error {
+	var obs CSharpG1RoslynObserved
+	var km CSharpG1KindMap
+	loaded := false
+	for _, c := range cs {
+		if c.Field != G1FieldEvidence {
+			continue
+		}
+		if !loaded {
+			if err := jsonv2.Unmarshal(observation, &obs, jsonv2.RejectUnknownMembers(true)); err != nil {
+				return fail(KindInvalidInput, "G1_EXPECTED_OBSERVATION", CSharpG1RoslynPath, err)
+			}
+			var err error
+			if km, err = ParseCSharpG1KindMap(kindMap, obs.Kinds); err != nil {
+				return err
+			}
+			loaded = true
+		}
+		var n g1cEvidence
+		if json.Unmarshal([]byte(c.New), &n) != nil {
+			return g1cFault("G1_CORRECTION_OLD")
+		}
+		kind := slices.Index(obs.Kinds, n.Witness.Roslyn)
+		seen := false
+		for _, s := range obs.Sources {
+			if s.ID != n.Witness.Source {
+				continue
+			}
+			for _, list := range [][][3]int{s.Tokens, s.Nodes} {
+				seen = seen || slices.Contains(list, [3]int{kind, n.Witness.Start, n.Witness.End})
+			}
+		}
+		i := slices.IndexFunc(km.Kinds, func(k G1KMKind) bool { return k.Roslyn == n.Witness.Roslyn })
+		if kind < 0 || !seen || i < 0 {
+			return g1cFault("G1_CORRECTION_WITNESS")
+		}
+		for _, t := range n.TS {
+			if !slices.Contains(km.Kinds[i].TS, t) {
+				return g1cFault("G1_CORRECTION_WITNESS")
+			}
+		}
+	}
+	return nil
 }
 
 // CSharpG1ExpectedR2Sources are the inputs of the r2 expected asset: the inputs of the r1 derivation
@@ -458,6 +647,9 @@ func ParseCSharpG1ExpectedR2(data []byte, in CSharpG1ExpectedR2Sources) (CSharpG
 	}
 	want, err := g1cBuildExpected(r1, in, x.Corrections)
 	if err != nil {
+		return x, err
+	}
+	if err := g1cCheckEvidence(x.Corrections, in.R1.Observation, in.KindMap); err != nil {
 		return x, err
 	}
 	// (2) no difference beyond the corrections

@@ -67,12 +67,22 @@ type G1AuditStratum struct {
 	// the audit had matched it; Upper95Later is the exact bound with those counted as errors too.
 	LaterWrong   int    `json:"later_wrong"`
 	Upper95Later string `json:"upper_95_percent_with_later_wrong,omitempty"`
+	// Found counts the alternatives of the full audit (G1AUDIT76) whose witness did not pass the first comparison and was
+	// corrected from the specification and grammar text; Upper95Found is the exact bound with those counted as errors.
+	// The full audit compares the position of the witness, not the types (the sample audit compares the types).
+	Found        int    `json:"found_and_corrected,omitempty"`
+	Upper95Found string `json:"upper_95_percent_with_found,omitempty"`
 }
 
 // G1AuditStrata groups the samples of the audit of x by stratum and gives each stratum's exact upper
 // bound, then two totals: the expected values that were compared with a hand derivation and all samples.
 // The audit's own estimate is the all-samples row computed exactly.
-func G1AuditStrata(x CSharpG1Expected) []G1AuditStratum {
+//
+// With full (the rows of the audit of all differential-oracle alternatives) the differential-oracle stratum counts those
+// rows, all 76 of the stratum, not the samples of the sample audit that fall in it (they are among the 76); a nil full
+// keeps the samples. The 76 are the whole stratum, so the bound is the bound of the audited property for a stratum read
+// as a sample, not an estimate for alternatives that were not compared.
+func G1AuditStrata(x CSharpG1Expected, full []G1Audit76Row) []G1AuditStratum {
 	basis := map[string]string{}
 	for _, a := range x.Alternatives {
 		basis[a.ID] = a.Basis
@@ -88,7 +98,7 @@ func G1AuditStrata(x CSharpG1Expected) []G1AuditStratum {
 	}
 	corrected := map[string]bool{}
 	for _, c := range x.Corrections {
-		if c.AfterNative && c.Field == G1FieldTS {
+		if c.AfterNative && (c.Field == G1FieldTS || c.Field == G1FieldEvidence) {
 			corrected[c.Item] = true
 		}
 	}
@@ -102,6 +112,9 @@ func G1AuditStrata(x CSharpG1Expected) []G1AuditStratum {
 		case basis[s.ID] == G1BasisDiff:
 			name = G1StratumDifferential
 		}
+		if name == G1StratumDifferential && full != nil {
+			continue
+		}
 		st := byName[name]
 		st.Samples++
 		if s.Outcome == "MISMATCH" {
@@ -110,29 +123,40 @@ func G1AuditStrata(x CSharpG1Expected) []G1AuditStratum {
 			st.LaterWrong++
 		}
 	}
+	for _, r := range full {
+		st := byName[G1StratumDifferential]
+		st.Samples++
+		if r.Result == G1AuditMismatch {
+			st.Mismatches++
+		} else if r.Initial == G1AuditMismatch {
+			st.Found++
+		}
+	}
 	values := G1AuditStratum{Stratum: "expected values compared (spec-derived and differential-oracle)", Compared: true}
 	all := G1AuditStratum{Stratum: "all samples", Compared: true}
 	for i := range out {
-		if out[i].Compared && out[i].Samples > 0 {
-			out[i].Upper95 = fmt.Sprintf("%.1f", G1AuditUpper95(out[i].Mismatches, out[i].Samples))
-		}
 		if out[i].Stratum == G1StratumSpecDerived || out[i].Stratum == G1StratumDifferential {
 			values.Samples += out[i].Samples
 			values.Mismatches += out[i].Mismatches
 			values.LaterWrong += out[i].LaterWrong
+			values.Found += out[i].Found
 		}
 		all.Samples += out[i].Samples
 		all.Mismatches += out[i].Mismatches
 		all.LaterWrong += out[i].LaterWrong
+		all.Found += out[i].Found
 	}
+	out = append(out, values, all)
 	for i := range out {
-		if out[i].Compared && out[i].Samples > 0 {
-			out[i].Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(out[i].Mismatches+out[i].LaterWrong, out[i].Samples))
+		st := &out[i]
+		if !st.Compared || st.Samples == 0 {
+			continue
+		}
+		st.Upper95 = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches, st.Samples))
+		st.Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong, st.Samples))
+		if st.Found > 0 {
+			st.Upper95Found = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong+st.Found, st.Samples))
 		}
 	}
-	values.Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(values.Mismatches+values.LaterWrong, values.Samples))
-	all.Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(all.Mismatches+all.LaterWrong, all.Samples))
-	values.Upper95 = fmt.Sprintf("%.1f", G1AuditUpper95(values.Mismatches, values.Samples))
-	all.Upper95 = fmt.Sprintf("%.1f", G1AuditUpper95(all.Mismatches, all.Samples))
-	return append(out, values, all)
+	return out
 }

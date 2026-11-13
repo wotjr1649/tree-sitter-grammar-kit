@@ -54,8 +54,12 @@ var g1SepClass = map[string]string{
 	// literals themselves were written after the native comparison, which their after_native flag records.
 	"csharp_g1_correct.go":      "derivation",
 	"csharp_g1_audit_report.go": "derivation",
-	"csharp_g1_executed.go":     "comparison",
-	"csharp_g1_native.go":       "comparison",
+	// the audit of the differential-oracle alternatives: a hand derivation from the specification compared with the r2 witnesses.
+	// The closure proves it cannot reach native input; that it never reads the expected types is a syntactic check of its own
+	// (TestCSharpG1Audit76NeverNamesTheExpectedTypes), which the closure cannot express.
+	"csharp_g1_audit76.go":  "derivation",
+	"csharp_g1_executed.go": "comparison",
+	"csharp_g1_native.go":   "comparison",
 }
 
 // g1SepNeutral are the files outside the G1 prefix that the closure of the derivation reaches (the closure
@@ -120,6 +124,7 @@ var g1SepRoots = []string{
 	"DeriveCSharpG1ExpectedR2", "ParseCSharpG1ExpectedR2", "DeriveCSharpG1KindMapR2", "ParseCSharpG1KindMapR2",
 	"CSharpG1RoslynVocabulary", "CheckG1Grounds", "G1ExpectedCorrections", "G1KindMapCorrections",
 	"G1AuditStrata", "G1AuditUpper95",
+	"DeriveCSharpG1Audit76", "ParseCSharpG1Audit76", "DecodeCSharpG1Audit76", "MarshalCSharpG1Audit76", "CheckG1Audit76Grounds", "CheckG1GroundList",
 	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
 }
 

@@ -93,7 +93,7 @@ func TestCSharpG1AuditStrata(t *testing.T) {
 		"expected values compared (spec-derived and differential-oracle)": {20, 0, 1, "13.9", "21.6"},
 		"all samples": {26, 0, 1, "10.9", "17.0"},
 	}
-	got := G1AuditStrata(r2)
+	got := G1AuditStrata(r2, nil)
 	if len(got) != len(want) {
 		t.Fatalf("%d rows: %+v", len(got), got)
 	}
@@ -108,7 +108,7 @@ func TestCSharpG1AuditStrata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, g := range G1AuditStrata(r1) {
+	for _, g := range G1AuditStrata(r1, nil) {
 		if g.LaterWrong != 0 {
 			t.Errorf("r1 %s: later wrong %d", g.Stratum, g.LaterWrong)
 		}
@@ -121,7 +121,7 @@ func TestCSharpG1AuditStrata(t *testing.T) {
 			m.Audit.Samples[i].Outcome = "MISMATCH"
 		}
 	}
-	for _, g := range G1AuditStrata(m) {
+	for _, g := range G1AuditStrata(m, nil) {
 		switch g.Stratum {
 		case G1StratumDifferential:
 			if g.Mismatches != 1 || g.Upper95 != strconv.FormatFloat(G1AuditUpper95(1, 4), 'f', 1, 64) {

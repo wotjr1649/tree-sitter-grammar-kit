@@ -94,7 +94,7 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(km.Corrections) != 5 || len(x.Corrections) != 7 {
+	if len(km.Corrections) != 5 || len(x.Corrections) != 18 {
 		t.Fatalf("corrections: kind map %d, expected %d", len(km.Corrections), len(x.Corrections))
 	}
 	for _, c := range append(slices.Clone(km.Corrections), x.Corrections...) {
@@ -120,6 +120,10 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 	wantFlags(x.Corrections, []flag{
 		{"csharp-B01.a335", "ts"}, {"csharp-B01.a383", "witnesses[0].match"}, {"csharp-B01.a396", "witnesses[0].match"}, {"csharp-B01.a397", "witnesses[0].match"},
 		{"csharp-B01.a383", "ts_basis"}, {"csharp-B01.a396", "ts_basis"}, {"csharp-B01.a397", "ts_basis"},
+		// the audit of the differential-oracle alternatives (G1AUDIT76): the witness moves with its types, or only its match relaxes
+		{"csharp-B02.a021", G1FieldEvidence}, {"csharp-B02.a062", G1FieldEvidence}, {"csharp-B02.a030", G1FieldEvidence}, {"csharp-B02.a072", G1FieldEvidence},
+		{"csharp-B02.a084", G1FieldEvidence}, {"csharp-B02.a086", G1FieldEvidence}, {"csharp-B02.a087", G1FieldEvidence}, {"csharp-B02.a088", G1FieldEvidence},
+		{"csharp-B02.a089", G1FieldEvidence}, {"csharp-B01.a381", "witnesses[0].match"}, {"csharp-B01.a395", "witnesses[0].match"},
 	})
 	wantFlags(km.Corrections, []flag{
 		{"InterpolatedStringStartToken", "entry"}, {"InterpolatedVerbatimStringStartToken", "entry"},
@@ -215,8 +219,32 @@ func TestCSharpG1CorrectedAssetsDifferOnlyByTheCorrections(t *testing.T) {
 	}
 	want := []string{"/schema", "/corrections", "/inputs/previous", "/inputs/kind_map/path", "/inputs/kind_map/bytes", "/inputs/kind_map/sha256",
 		fmt.Sprintf("/alternatives/%d/ts/0", idx("csharp-B01.a335"))}
-	for _, id := range []string{"csharp-B01.a383", "csharp-B01.a396", "csharp-B01.a397"} {
+	for _, id := range []string{"csharp-B01.a383", "csharp-B01.a396", "csharp-B01.a397", "csharp-B01.a381", "csharp-B01.a395"} {
 		want = append(want, fmt.Sprintf("/alternatives/%d/witnesses/0/match", idx(id)))
+	}
+	// an evidence correction changes the members of its record that differ between the old and the new value, nowhere else
+	for _, c := range x.Corrections {
+		if c.Field != G1FieldEvidence {
+			continue
+		}
+		var o, n g1cEvidence
+		if err := json.Unmarshal([]byte(c.Old), &o); err != nil || json.Unmarshal([]byte(c.New), &n) != nil {
+			t.Fatal(c.Item, err)
+		}
+		at := fmt.Sprintf("/alternatives/%d", idx(c.Item))
+		if len(o.TS) != len(n.TS) {
+			want = append(want, at+"/ts")
+		}
+		for i := range o.TS {
+			if len(o.TS) == len(n.TS) && o.TS[i] != n.TS[i] {
+				want = append(want, fmt.Sprintf("%s/ts/%d", at, i))
+			}
+		}
+		for name, differs := range map[string]bool{"start": o.Witness.Start != n.Witness.Start, "end": o.Witness.End != n.Witness.End, "roslyn": o.Witness.Roslyn != n.Witness.Roslyn, "match": o.Witness.Match != n.Witness.Match} {
+			if differs {
+				want = append(want, at+"/witnesses/0/"+name)
+			}
+		}
 	}
 	slices.Sort(want)
 	if got := g1cDiffFiles(t, a.r1Exp, a.r2Exp); !slices.Equal(got, want) {
@@ -618,8 +646,9 @@ func g1cExecIn(t *testing.T, a *g1cAssets) CSharpG1ExecutedSources {
 	return CSharpG1ExecutedSources{Src: g1Load(t).src, Expected: a.r2Exp, KindMap: a.r2Km, Observation: a.obs}
 }
 
-// The native result after the corrections: the 422 alternatives that matched when sealed still match,
-// and the four corrected ones are counted apart.
+// The native result after the corrections: the 411 alternatives that matched when sealed and were not corrected still match,
+// and the fifteen corrected ones (four after the native comparison, eleven after the audit of the differential-oracle
+// alternatives) are counted apart.
 func TestCSharpG1ExecutedR2SplitsTheStatistics(t *testing.T) {
 	a := g1cLoad(t)
 	data := mustRead(t, "../contracts/csharp-g1-executed-b01b02-r2.json")
@@ -632,12 +661,13 @@ func TestCSharpG1ExecutedR2SplitsTheStatistics(t *testing.T) {
 	if x.Schema != CSharpG1ExecutedSchemaR2 || r1.Counts.Match != 422 || r1.Counts.Mismatch != 4 {
 		t.Fatalf("schema %s, r1 match %d mismatch %d", x.Schema, r1.Counts.Match, r1.Counts.Mismatch)
 	}
-	if x.Counts.SealedMatch != r1.Counts.Match || x.Counts.Corrected != 4 || x.Counts.CorrectedMatch != 4 || x.Counts.Match != 426 || x.Counts.Mismatch != 0 || len(x.Dispositions) != 0 {
+	if x.Counts.SealedMatch != r1.Counts.Match-11 || x.Counts.Corrected != 15 || x.Counts.CorrectedMatch != 15 || x.Counts.Match != 426 || x.Counts.Mismatch != 0 || len(x.Dispositions) != 0 {
 		t.Fatalf("r2 counts %+v", x.Counts)
 	}
-	// the corrected alternatives are the four of the expected asset's record, and nothing else matches newly
+	// the alternatives the native comparison contradicted are the four of the first corrections, and nothing else matches
+	// newly; the eleven corrections of the audit matched in r1 too (the native result could not tell them wrong) and still match
 	corrected := map[string]bool{}
-	for _, c := range g1ExpectedCorrections {
+	for _, c := range g1ExpectedCorrections[:7] {
 		corrected[c.Item] = true
 	}
 	r1res := map[string]string{}
@@ -731,7 +761,7 @@ func TestCSharpG1ExecutedR2SyntheticDerivation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if x.Schema != CSharpG1ExecutedSchemaR2 || x.Basis != csharpG1ExecutedBasisR2 || x.Counts.Corrected != 4 || x.Counts.CorrectedMatch != 4 || x.Counts.SealedMatch != 422 {
+	if x.Schema != CSharpG1ExecutedSchemaR2 || x.Basis != csharpG1ExecutedBasisR2 || x.Counts.Corrected != 15 || x.Counts.CorrectedMatch != 15 || x.Counts.SealedMatch != 411 {
 		t.Fatalf("schema %s counts %+v", x.Schema, x.Counts)
 	}
 	data, err := MarshalCSharpG1Executed(x)
@@ -901,7 +931,7 @@ func g1cTSOffMap(x, derived CSharpG1Expected) (unlisted, vacuous []string) {
 	}
 	listed, basis := map[string]bool{}, map[string]bool{}
 	for _, c := range x.Corrections {
-		listed[c.Item] = listed[c.Item] || c.Field == G1FieldTS || c.Field == G1FieldTSBasis
+		listed[c.Item] = listed[c.Item] || c.Field == G1FieldTS || c.Field == G1FieldTSBasis || c.Field == G1FieldEvidence
 		basis[c.Item] = basis[c.Item] || c.Field == G1FieldTSBasis
 	}
 	off := map[string]bool{}
@@ -916,8 +946,8 @@ func g1cTSOffMap(x, derived CSharpG1Expected) (unlisted, vacuous []string) {
 			}
 		}
 	}
-	for item := range basis {
-		if !off[item] {
+	for item, recorded := range basis {
+		if recorded && !off[item] {
 			vacuous = append(vacuous, item)
 		}
 	}

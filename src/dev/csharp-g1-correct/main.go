@@ -58,7 +58,7 @@ func checkGrounds(grammarDir, specDir string, kmGrammarSHA string) error {
 		return errors.New("grammar.js is not the pinned one")
 	}
 	spec := map[string]string{}
-	for _, name := range []string{"lexical-structure.md", "expressions.md"} {
+	for _, name := range kit.G1SpecFiles {
 		d, err := os.ReadFile(filepath.Join(specDir, name))
 		if err != nil {
 			return err
@@ -137,7 +137,7 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	write := flag.Bool("write", false, "write the r2 files instead of comparing")
 	grammar := flag.String("grammar", "", "pinned tree-sitter-c-sharp checkout (checks the grammar grounds)")
-	spec := flag.String("spec", "", "directory holding the pinned lexical-structure.md and expressions.md (checks the spec grounds)")
+	spec := flag.String("spec", "", "directory holding the pinned specification files (kit.G1SpecFiles) (checks the spec grounds)")
 	flag.Parse()
 	if (*grammar == "") != (*spec == "") {
 		fmt.Fprintln(os.Stderr, "-grammar and -spec go together")
