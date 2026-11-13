@@ -65,12 +65,38 @@ func otherQueryHost(platform string) (other string, ok bool) {
 	return "", false
 }
 
+// queryHostPlan is the one rule the two-host query tests share (#362): a host the registry does not
+// judge skips, and the fan-in (collectOnly) runs on windows-amd64 as it always did but on another
+// registered host only while the opt-in collection (TSGK_QUERY_SCOPE_OUT) asks for its judgments, so
+// the required sanitizer and foundation native runs on Linux do not gain its time or its failures.
+func queryHostPlan(platform string, collecting, collectOnly bool) (other, skip string) {
+	other, ok := otherQueryHost(platform)
+	switch {
+	case !ok:
+		return "", "the registry judges windows-amd64 and linux-amd64 only; " + platform + " is not registered"
+	case collectOnly && platform != "windows-amd64" && !collecting:
+		return "", "on " + platform + " this test runs only when " + kit.QueryScopeHostEnv + " collects its judgments"
+	}
+	return other, ""
+}
+
+// queryHostOrSkip applies queryHostPlan to this host.
+func queryHostOrSkip(t *testing.T, collectOnly bool) (platform, subject, other string) {
+	t.Helper()
+	platform, subject = predicateHost()
+	other, skip := queryHostPlan(platform, os.Getenv(kit.QueryScopeHostEnv) != "", collectOnly)
+	if skip != "" {
+		t.Skip(skip)
+	}
+	return platform, subject, other
+}
+
 // The 20 EVALUATED tuples run against the owned native with the shared witness verifier. The
 // expected file was sealed before the first native run and holds no native output.
 func TestNativePredicateScopeEvaluatedTuples(t *testing.T) {
+	platform, subject, other := queryHostOrSkip(t, false)
 	b := fixtureBuild(t, "plain")
 	_, registry, expected := predicateScopeAssets(t)
-	_, subject := predicateHost()
 	reg, err := queryregistrycore.Parse(registry)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +135,6 @@ func TestNativePredicateScopeEvaluatedTuples(t *testing.T) {
 	}
 
 	// Fold this host's adjudicated rows; the other registered host stays BLOCKED (not run).
-	platform, _ := predicateHost()
 	var judgments []queryregistrycore.Judgment
 	for _, c := range queryregistrycore.Expand(nil, queryregistrycore.Platforms(), reg.Probes, nil) {
 		if c.Platform != platform || !verified[c.Case] && !controls[c.Case] {
@@ -125,7 +150,6 @@ func TestNativePredicateScopeEvaluatedTuples(t *testing.T) {
 		}
 		judgments = append(judgments, j)
 	}
-	other, _ := otherQueryHost(platform)
 	coverage, err := kit.FoldPredicateScope(registry, queryregistrycore.Digest(registry), judgments, map[string]bool{other: true})
 	if err != nil || coverage.FullScopeComplete {
 		t.Fatalf("fold: %+v %v", coverage, err)

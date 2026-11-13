@@ -845,15 +845,18 @@ jobs:
           try {
             $env:TSGK_QUERY_SCOPE_OUT = $scopeOut
             go test ./src/internal/native -run '^TestNativeQueryCompletionCurrentState$' -count=1 -v -timeout=180s
-            if ($LASTEXITCODE -ne 0) { throw "scope fan-in test failed ($LASTEXITCODE)" }
+            # A FAILED judgment also ends a test nonzero, but the test stores its judgments before it concludes, so
+            # the stored file is kept and the merge reports the host's FAIL. A run that stored nothing is a
+            # collection failure: the file count below sends it to the catch block.
+            if ($LASTEXITCODE -ne 0) { Write-Output "::warning::scope fan-in test exited $LASTEXITCODE; its judgments are kept only if it stored them" }
             $env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'
             $inlineLog = Join-Path $out 'svc-inline.log'
             go test ./src/internal/native -run '^TestNativeSvcInlineRealGrammar$' -count=1 -v -timeout=300s > $inlineLog 2>&1
             $inlineExit = $LASTEXITCODE
             Get-Content -LiteralPath $inlineLog
-            if ($inlineExit -ne 0) { throw "SVC inline test failed ($inlineExit)" }
-            # a skipped run passes go test; it must have run and stored its result
-            if (!(Select-String -LiteralPath $inlineLog -CaseSensitive -Quiet -Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \(')) { throw 'SVC inline test did not run' }
+            if ($inlineExit -ne 0) { Write-Output "::warning::SVC inline test exited $inlineExit; its judgments are kept only if it stored them" }
+            # a skipped run passes go test and stores nothing; the test must have run (PASS or FAIL) and stored its result
+            if (!(Select-String -LiteralPath $inlineLog -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \(')) { throw 'SVC inline test did not run' }
             if (@(Get-ChildItem -LiteralPath $scopeOut -File -Filter 'query-scope-*.json').Count -ne 3) { throw 'scope judgment files missing' }
             & src/dev/s08-qualify/run-identity.ps1 -Destination $scopeOut -HeadSHA $env:PR_HEAD_SHA
             if ($LASTEXITCODE -ne 0) { throw 'scope run identity failed' }
@@ -910,9 +913,11 @@ jobs:
       - name: scope 판정 근거 보관 (host별, gate 밖)
         if: always()
         timeout-minutes: 2
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          # #362 L2: separate evidence like the JSON holdout: neither the closed qualification host file
+          # #362 L2: separate evidence like the JSON holdout (but this producer is a required job, so a failing
+          # upload of the extra evidence must not fail it): neither the closed qualification host file
           # set nor the gate's artifact set changes. A host without files uploads nothing, which the
           # merge reports as that host absent.
           name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1125,9 +1130,25 @@ jobs:
           path: ${{ runner.temp }}/qualification-${{ github.run_id }}-${{ github.run_attempt }}/qualification.json
           if-no-files-found: error
           retention-days: 7
+      - name: Margin 실행 구성 기록
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          & src/dev/ci-gate/config.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
+      - name: Margin 실행 구성 보관
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-config-qualification-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-config-qualification-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
+          if-no-files-found: error
+          retention-days: 7
       # #362 L2: gate-external evidence. The two hosts' stored scope judgments of this run and attempt are
       # merged and folded by src/dev/query-scope-merge. These steps never fail the job (the integration
       # gate does not read their artifact); a missing or unbound host shows as a warning and in the report.
+      # Every step continues on error: the script steps catch their own errors, but a step timeout is not an
+      # error a script can catch. They run after the margin configuration steps the gate requires, so even a
+      # step that runs to its timeout cannot keep those artifacts from being written.
       - name: scope 판정 host 근거 받기 (gate 밖)
         if: ${{ !cancelled() }}
         timeout-minutes: 2
@@ -1140,6 +1161,7 @@ jobs:
         id: scope_hosts
         if: ${{ !cancelled() }}
         timeout-minutes: 2
+        continue-on-error: true
         run: |
           # The listing can trail the producers; wait once before the merge reads the hosts.
           $hosts = Join-Path $env:RUNNER_TEMP 'query-scope-hosts'
@@ -1160,6 +1182,7 @@ jobs:
       - name: 두 host scope 판정 병합과 fold (gate 밖)
         if: ${{ !cancelled() }}
         timeout-minutes: 4
+        continue-on-error: true
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -1191,19 +1214,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
           compression-level: 6
-      - name: Margin 실행 구성 기록
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          & src/dev/ci-gate/config.ps1
-          if ($LASTEXITCODE -ne 0) { throw 'margin configuration failed' }
-      - name: Margin 실행 구성 보관
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ci-config-qualification-linux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-config-qualification-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}/config.json
-          if-no-files-found: error
-          retention-days: 7
       - name: Verify clean validation output
         run: |
           if (git status --porcelain=v1 --untracked-files=all --ignored=matching) { throw 'CI requires a clean worktree including untracked and ignored files' }

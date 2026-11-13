@@ -140,6 +140,10 @@ func workflowJobBody(text, name string) string {
 	return body
 }
 
+// scopeEvidenceUploadHead is the one native-routes step that may continue on error: the extra evidence upload of
+// the scope judgments, which is not part of the required result.
+const scopeEvidenceUploadHead = "      - name: scope 판정 근거 보관 (host별, gate 밖)\n        if: always()\n        timeout-minutes: 2\n        continue-on-error: true\n"
+
 func routeSchedulePolicy(text string) error {
 	// #332: macOS is out of CI; no route job targets darwin
 	matrix := "          - os: windows-2025\n            goos: windows\n            goarch: amd64\n          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n"
@@ -154,7 +158,8 @@ func routeSchedulePolicy(text string) error {
 			return fmt.Errorf("route execution contract")
 		}
 	}
-	if strings.Contains(body, "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
+	// a required producer has no continue-on-error, except on the one gate-external evidence upload (#362)
+	if strings.Contains(strings.Replace(body, scopeEvidenceUploadHead, strings.Replace(scopeEvidenceUploadHead, "        continue-on-error: true\n", "", 1), 1), "continue-on-error:") || regexp.MustCompile(`(?m)^    (if|env|permissions):`).MatchString(body) {
 		return fmt.Errorf("route job override")
 	}
 	if strings.Contains(text, "native-routes-macos") || strings.Contains(text, "macos-15") || strings.Contains(text, "native-route-steps") {
@@ -178,15 +183,16 @@ func TestWorkflowRouteSchedulePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, broken := range map[string]string{
-		"missing-linux":          strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
-		"mac-matrix":             strings.Replace(text, "    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", "          - os: macos-15\n            goos: darwin\n            goarch: arm64\n    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", 1),
-		"mac-job":                text + "\n  native-routes-macos:\n    runs-on: macos-15\n",
-		"large-skips-foundation": strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: native-prepare\n", 1),
-		"large-waits-routes":     strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: [foundation, native-prepare, native-routes]\n", 1),
-		"routes-skip-foundation": strings.Replace(text, "    name: native routes (${{ matrix.os }})\n    needs: [foundation, native-prepare]\n", "    name: native routes (${{ matrix.os }})\n    needs: native-prepare\n", 1),
-		"partial-qualification":  strings.Replace(text, "needs: [native-routes]\n", "needs: native-prepare\n", 1),
-		"qual-runs-skipped":      strings.Replace(text, " && needs.native-routes.result != 'skipped' }}", " }}", 1),
-		"conditional-large":      strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
+		"missing-linux":             strings.Replace(text, "          - os: ubuntu-24.04\n            goos: linux\n            goarch: amd64\n", "", 2),
+		"required-upload-continues": strings.Replace(text, "      - name: route 결과 보관\n        if: always()\n", "      - name: route 결과 보관\n        if: always()\n        continue-on-error: true\n", 1),
+		"mac-matrix":                strings.Replace(text, "    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", "          - os: macos-15\n            goos: darwin\n            goarch: arm64\n    runs-on: ${{ matrix.os }}\n    timeout-minutes: 60\n", 1),
+		"mac-job":                   text + "\n  native-routes-macos:\n    runs-on: macos-15\n",
+		"large-skips-foundation":    strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: native-prepare\n", 1),
+		"large-waits-routes":        strings.Replace(text, "    name: large API (windows-2025)\n    needs: [foundation, native-prepare]\n", "    name: large API (windows-2025)\n    needs: [foundation, native-prepare, native-routes]\n", 1),
+		"routes-skip-foundation":    strings.Replace(text, "    name: native routes (${{ matrix.os }})\n    needs: [foundation, native-prepare]\n", "    name: native routes (${{ matrix.os }})\n    needs: native-prepare\n", 1),
+		"partial-qualification":     strings.Replace(text, "needs: [native-routes]\n", "needs: native-prepare\n", 1),
+		"qual-runs-skipped":         strings.Replace(text, " && needs.native-routes.result != 'skipped' }}", " }}", 1),
+		"conditional-large":         strings.Replace(text, "    name: large API (windows-2025)\n", "    name: large API (windows-2025)\n    if: ${{ always() }}\n", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || routeSchedulePolicy(broken) == nil {
@@ -1134,29 +1140,46 @@ func TestWorkflowConcurrencyPolicy(t *testing.T) {
 // budget has no room), no required check. The producers store files without failing, the
 // qualification job merges them with steps that cannot fail it, and neither the gate's needs nor its
 // artifact set name the evidence.
+//
+// Failure containment: a script step catches its own errors (try/catch, LASTEXITCODE 0), but a step
+// timeout is not an error a script can catch, so every gate-external step, script or action, also
+// continues on error. On the producer a FAILED judgment is kept (a test that stored its judgments and
+// then ended nonzero is a result, not a collection failure) so the merge can report the FAIL. The
+// qualification steps run after the margin configuration steps the gate requires.
 func queryScopeEvidencePolicy(text, gateSource string) error {
 	routes := workflowJobBody(text, "native-routes")
 	for _, required := range []string{
 		"TSGK_QUERY_SCOPE_OUT = $scopeOut", "-run '^TestNativeQueryCompletionCurrentState$'",
 		// #362 L3: the SVC inline run on the C# closure this job prepared, counted only when it ran and stored
 		"$env:TSGK_SVC_CSHARP_GRAMMAR = Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "-run '^TestNativeSvcInlineRealGrammar$'",
-		"-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", ".Count -ne 3) { throw 'scope judgment files missing' }",
-		"      - name: scope 판정 근거 보관 (host별, gate 밖)\n        if: always()\n        timeout-minutes: 2\n",
+		"-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", ".Count -ne 3) { throw 'scope judgment files missing' }",
+		// the producer is a required job: its upload of this extra evidence continues on error as well
+		scopeEvidenceUploadHead,
 		"name: query-scope-${{ matrix.goos }}-${{ github.run_id }}-${{ github.run_attempt }}", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n",
+		// a FAILED judgment ends a test nonzero but is stored before the verdict: kept, not thrown away
+		"Write-Output \"::warning::scope fan-in test exited $LASTEXITCODE", "Write-Output \"::warning::SVC inline test exited $inlineExit",
 		"$global:LASTEXITCODE = 0\n",
 	} {
 		if !strings.Contains(routes, required) {
 			return fmt.Errorf("native-routes scope collection missing: %s", required)
 		}
 	}
+	if strings.Contains(routes, "throw \"scope fan-in test failed") || strings.Contains(routes, "throw \"SVC inline test failed") {
+		return fmt.Errorf("a FAILED judgment must be kept and merged, not turned into a collection failure")
+	}
 	// the producer is a required check: its collection may only warn
 	if !strings.Contains(routes, "Write-Output \"::warning::query scope collection failed: $_\"") || strings.Contains(workflowJobBody(text, "foundation"), "query-scope") {
 		return fmt.Errorf("scope collection must warn in native-routes and stay out of the foundation job")
 	}
 	qual := workflowJobBody(text, "qualification")
-	_, tail, ok := strings.Cut(qual, "      # #362 L2: gate-external evidence.")
+	anchor := "      # #362 L2: gate-external evidence."
+	_, tail, ok := strings.Cut(qual, anchor)
 	if !ok {
 		return fmt.Errorf("qualification scope merge steps missing")
+	}
+	// after the margin configuration the gate requires, before the clean-tree check
+	if m, a, v := strings.Index(qual, "      - name: Margin 실행 구성 보관"), strings.Index(qual, anchor), strings.Index(qual, "      - name: Verify clean validation output"); m < 0 || m > a || a > v {
+		return fmt.Errorf("scope merge steps must follow the margin configuration steps and precede the clean-tree check")
 	}
 	steps := strings.Split("\n"+tail, "\n      - ")[1:]
 	if len(steps) < 5 {
@@ -1168,9 +1191,9 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 		if !strings.Contains(name, "(gate 밖)") || !strings.Contains(step, "\n        if: ${{ !cancelled()") || !regexp.MustCompile(`(?m)^        timeout-minutes: [1-9][0-9]*$`).MatchString(step) {
 			return fmt.Errorf("scope merge step must be bounded and skip only on cancellation: %s", name)
 		}
-		// an action step cannot catch its own failure; a script step ends with LASTEXITCODE 0
-		if strings.Contains(step, "\n        uses: ") != strings.Contains(step, "\n        continue-on-error: true\n") {
-			return fmt.Errorf("scope merge action steps (and only they) must continue on error: %s", name)
+		// a script catches its own errors but not its own timeout: every step continues on error
+		if !strings.Contains(step, "\n        continue-on-error: true\n") {
+			return fmt.Errorf("scope merge steps must continue on error: %s", name)
 		}
 		if strings.Contains(step, "go run ./src/dev/query-scope-merge @cliArgs") {
 			merged++
@@ -1205,24 +1228,45 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		t.Fatal(err)
 	}
 	download := "      - name: scope 판정 host 근거 받기 (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        continue-on-error: true\n"
-	merge := "      - name: 두 host scope 판정 병합과 fold (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 4\n"
+	hosts := "      - name: scope 판정 host 근거 목록 지연 확인 (gate 밖)\n        id: scope_hosts\n        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        continue-on-error: true\n"
+	merge := "      - name: 두 host scope 판정 병합과 fold (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 4\n        continue-on-error: true\n"
+	upload := scopeEvidenceUploadHead
+	without := func(block, line string) string {
+		return strings.Replace(text, block, strings.Replace(block, line, "", 1), 1)
+	}
+	// the merge steps moved in front of the margin configuration steps
+	moved := func() string {
+		q := strings.Index(text, "\n  qualification:\n")
+		a := q + strings.Index(text[q:], "      # #362 L2: gate-external evidence.")
+		m := q + strings.Index(text[q:], "      - name: Margin 실행 구성 기록")
+		v := q + strings.Index(text[q:], "      - name: Verify clean validation output")
+		return text[:m] + text[a:v] + text[m:a] + text[v:]
+	}()
 	for name, broken := range map[string]string{
-		"download-fails-job":    strings.Replace(text, download, strings.Replace(download, "        continue-on-error: true\n", "", 1), 1),
-		"download-unbounded":    strings.Replace(text, download, strings.Replace(download, "        timeout-minutes: 2\n", "", 1), 1),
-		"merge-unbounded":       strings.Replace(text, merge, strings.Replace(merge, "        timeout-minutes: 4\n", "", 1), 1),
+		"download-fails-job":    without(download, "        continue-on-error: true\n"),
+		"download-unbounded":    without(download, "        timeout-minutes: 2\n"),
+		"hosts-script-timeout":  without(hosts, "        continue-on-error: true\n"),
+		"merge-unbounded":       without(merge, "        timeout-minutes: 4\n"),
+		"merge-timeout-fails":   without(merge, "        continue-on-error: true\n"),
 		"merge-fails-job":       strings.Replace(text, "          $global:LASTEXITCODE = 0\n      - name: scope 병합 결과 보관", "      - name: scope 병합 결과 보관", 1),
 		"merge-throws":          strings.Replace(text, "Write-Output \"::warning::query scope merge: $_\"", "throw $_", 1),
 		"merge-skips-failure":   strings.Replace(text, merge, strings.Replace(merge, "!cancelled()", "success()", 1), 1),
+		"merge-before-margin":   moved,
 		"collection-throws":     strings.Replace(text, "Write-Output \"::warning::query scope collection failed: $_\"", "throw $_", 1),
 		"collection-fails-job":  strings.Replace(text, "          $env:TSGK_SVC_CSHARP_GRAMMAR = $null\n          $global:LASTEXITCODE = 0\n", "          $env:TSGK_SVC_CSHARP_GRAMMAR = $null\n", 1),
 		"upload-requires":       strings.Replace(text, "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: ignore\n", "query-scope-${{ github.run_id }}-${{ github.run_attempt }}\n          if-no-files-found: error\n", 1),
+		"upload-fails-producer": without(upload, "        continue-on-error: true\n"),
 		"previous-attempt":      strings.ReplaceAll(text, "pattern: query-scope-*-${{ github.run_id }}-${{ github.run_attempt }}", "pattern: query-scope-*"),
 		"gate-waits":            strings.ReplaceAll(text, "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification]", "needs: [mode, foundation, native-prepare, native-routes, large-api, qualification, scope-merge]"),
 		"inline-not-run":        strings.Replace(text, "-run '^TestNativeSvcInlineRealGrammar$'", "-run '^TestNativeSvcInline$'", 1),
-		"inline-skip-passes":    strings.Replace(text, "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
+		"inline-skip-passes":    strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^'", 1),
+		"inline-fail-dropped":   strings.Replace(text, "-Pattern '^--- (PASS|FAIL): TestNativeSvcInlineRealGrammar \\('", "-Pattern '^--- PASS: TestNativeSvcInlineRealGrammar \\('", 1),
 		"inline-file-uncounted": strings.Replace(text, ".Count -ne 3) { throw 'scope judgment files missing' }", ".Count -ne 2) { throw 'scope judgment files missing' }", 1),
 		"inline-other-grammar":  strings.Replace(text, "Join-Path $env:TSGK_BENCH_PREPARED 'routes/csharp'", "Join-Path $env:TSGK_BENCH_PREPARED 'routes/json'", 1),
-		"foundation-step":       strings.Replace(text, "      - name: Verify clean validation output\n        timeout-minutes: 1\n        run: |\n          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching\n          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }\n          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }\n\n  race:", "      - name: scope 판정 query-scope\n        timeout-minutes: 1\n        run: Write-Output 'x'\n\n  race:", 1),
+		// a FAILED judgment must not be thrown away as a collection failure
+		"fan-in-exit-throws": strings.Replace(text, "Write-Output \"::warning::scope fan-in test exited $LASTEXITCODE; its judgments are kept only if it stored them\"", "throw \"scope fan-in test failed ($LASTEXITCODE)\"", 1),
+		"inline-exit-throws": strings.Replace(text, "Write-Output \"::warning::SVC inline test exited $inlineExit; its judgments are kept only if it stored them\"", "throw \"SVC inline test failed ($inlineExit)\"", 1),
+		"foundation-step":    strings.Replace(text, "      - name: Verify clean validation output\n        timeout-minutes: 1\n        run: |\n          $treeState = git status --porcelain=v1 --untracked-files=all --ignored=matching\n          if ($LASTEXITCODE -ne 0) { throw 'CI worktree query failed' }\n          if ($treeState) { throw 'CI requires a clean worktree including untracked and ignored files' }\n\n  race:", "      - name: scope 판정 query-scope\n        timeout-minutes: 1\n        run: Write-Output 'x'\n\n  race:", 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if broken == text || queryScopeEvidencePolicy(broken, gate) == nil {

@@ -434,3 +434,170 @@ func TestHostFlagsRefuseDuplicatesAndUnknownHosts(t *testing.T) {
 		t.Fatalf("%v", h)
 	}
 }
+
+// svcHostResult seals a host's svc result of the given judgments (the offline file when the judgments
+// leave the inline obligations BLOCKED).
+func svcHostResult(t *testing.T, f *fixture, host string, js []kit.SvcJudgment) kit.QueryScopeHostResult {
+	t.Helper()
+	r, err := kit.SvcScopeResult(f.svc, f.svcAsset, f.registry, host, js, map[string]bool{otherOf(host): true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, err := kit.NewQueryScopeHostResult(host, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
+}
+
+// The inline file only refines the offline one (#362): it moves inline obligations out of BLOCKED and
+// never takes an offline VERIFIED or FAILED back, so a FAILED the offline run recorded on one of this
+// host's inline rows cannot disappear behind a later all-VERIFIED inline run.
+func TestMergeRefusesAnInlineResultThatTakesBackAnOfflineJudgment(t *testing.T) {
+	f := fixtureFor(t)
+	offline, err := kit.VerifySvcExpected(f.svc, f.inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := func(kind string) int {
+		for i, o := range f.svc.Obligations() {
+			if o.Kind == kind {
+				return i
+			}
+		}
+		t.Fatalf("no %s obligation", kind)
+		return -1
+	}
+	with := func(i int, j kit.SvcJudgment) []kit.SvcJudgment {
+		js := slices.Clone(offline)
+		js[i] = j
+		return js
+	}
+	tree, query := first(kit.SvcKindInlineTree), first(kit.SvcKindQuery)
+	allTrees := slices.Clone(offline)
+	for i, n := 0, 0; i < len(allTrees) && n < 30; i++ {
+		if o := f.svc.Obligations()[i]; o.Kind == kit.SvcKindInlineTree {
+			allTrees[i], n = kit.SvcJudgment{ID: o.ID, State: "VERIFIED"}, n+1
+		}
+	}
+	id := func(i int) string { return f.svc.Obligations()[i].ID }
+	for name, c := range map[string]struct {
+		offline []kit.SvcJudgment
+		inline  func(js []kit.SvcJudgment)
+	}{
+		// the inline run judges everything VERIFIED on top: the offline FAILED would be erased
+		"offline FAILED inline tree row":  {with(tree, kit.SvcJudgment{ID: id(tree), State: "FAILED", Code: "SVC_OFFLINE_INLINE_FAIL"}), nil},
+		"offline FAILED inline query row": {with(query, kit.SvcJudgment{ID: id(query), State: "FAILED", Code: "SVC_OFFLINE_INLINE_FAIL"}), nil},
+		// an offline VERIFIED inline row turned back into BLOCKED (rows are counted per kind: the offline file
+		// holds all 30 inline trees VERIFIED, so one taken back shows as a lower count)
+		"offline VERIFIED inline row blocked again": {allTrees, func(js []kit.SvcJudgment) {
+			js[tree] = kit.SvcJudgment{ID: id(tree), State: "BLOCKED", Code: "SVC_BLOCKED_AGAIN"}
+		}},
+	} {
+		dirs := twoHosts(t, f)
+		dirs[windows] = writeHost(t, f, windows, nil, func(rs map[string]kit.QueryScopeHostResult) {
+			rs[kit.QueryScopeSvc] = svcHostResult(t, f, windows, c.offline)
+			rs[svcInlineKey] = f.inlineResult(t, windows, c.offline, c.inline)
+		})
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_SVC_INLINE_MISMATCH" || rep.Completion != nil {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
+	}
+	// an inline row may not move an obligation to UNPROCESSED either (the sums still hold)
+	dirs := twoHosts(t, f)
+	dirs[windows] = writeHost(t, f, windows, nil, func(rs map[string]kit.QueryScopeHostResult) {
+		r := rs[svcInlineKey].Result
+		rows := slices.Clone(r.Counters)
+		for i, c := range rows {
+			if c.Platform == windows && c.Kind == kit.SvcKindInlineTree {
+				rows[i].Blocked, rows[i].Unprocessed = c.Blocked-1, c.Unprocessed+1
+				break
+			}
+		}
+		h, err := kit.NewQueryScopeHostResult(windows, kit.NewQueryScopeResult(r.Scope, r.RegistrySHA256, r.Assets, rows, r.FirstFailure))
+		if err != nil {
+			t.Fatal(err)
+		}
+		rs[svcInlineKey] = h
+	})
+	if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_SVC_INLINE_MISMATCH" {
+		t.Errorf("inline obligation moved to UNPROCESSED: %s %s", rep.Status, rep.Code)
+	}
+	// the refinement itself still merges: the offline file leaves the inline rows BLOCKED
+	if rep := merge(root, expected(), twoHosts(t, f)); rep.Status != statusMerged {
+		t.Errorf("refinement refused: %s %s", rep.Status, rep.Code)
+	}
+}
+
+// The identity of the run this tool executes in names every field a host identity is compared with, and
+// an identity file is decoded strictly (#362).
+func TestMergeRefusesIncompleteExpectedAndLooseIdentities(t *testing.T) {
+	f := fixtureFor(t)
+	for name, blank := range map[string]func(*kit.RunIdentity){
+		"repository": func(id *kit.RunIdentity) { id.Repository = "" },
+		"workflow":   func(id *kit.RunIdentity) { id.Workflow = "" },
+		"event":      func(id *kit.RunIdentity) { id.Event = "" },
+		"checkout":   func(id *kit.RunIdentity) { id.Checkout = "" },
+		"job":        func(id *kit.RunIdentity) { id.Job = "" },
+		"goos":       func(id *kit.RunIdentity) { id.GOOS = "" },
+		"head":       func(id *kit.RunIdentity) { id.HeadSHA = " " },
+	} {
+		// the hosts carry the same blank value: equal blanks must not count as a binding
+		dirs := map[string]string{windows: writeHost(t, f, windows, blank, nil), linux: writeHost(t, f, linux, blank, nil)}
+		e := expected()
+		blank(&e)
+		if name == "job" || name == "goos" {
+			dirs = twoHosts(t, f)
+		}
+		if rep := merge(root, e, dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_RUN_EXPECTED" {
+			t.Errorf("blank expected %s: %s %s", name, rep.Status, rep.Code)
+		}
+	}
+	for name, change := range map[string]func(string) string{
+		"upper-case member name": func(s string) string { return strings.Replace(s, `"run_id"`, `"RUN_ID"`, 1) },
+		"repeated member":        func(s string) string { return strings.Replace(s, `"run_id":"100"`, `"run_id":"100","run_id":"100"`, 1) },
+		"trailing data":          func(s string) string { return s + ` {}` },
+	} {
+		dirs := twoHosts(t, f)
+		path := filepath.Join(dirs[linux], identityFile)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		edited := change(string(data))
+		if edited == string(data) {
+			t.Fatalf("%s: identity not edited", name)
+		}
+		if err := os.WriteFile(path, []byte(edited), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if rep := merge(root, expected(), dirs); rep.Status != statusRefused || rep.Code != "QUERY_SCOPE_RUN_IDENTITY" {
+			t.Errorf("%s: %s %s", name, rep.Status, rep.Code)
+		}
+		// the expected identity file is read with the same decoder
+		if _, err := readIdentity([]byte(edited)); err == nil {
+			t.Errorf("%s: readIdentity accepted it", name)
+		}
+	}
+}
+
+// A FAILED judgment of the inline run is stored with the host's result and reaches the merge as FAIL
+// (#362): the producer keeps a result whose judgment failed instead of dropping the host.
+func TestMergeKeepsAnInlineJudgmentFailure(t *testing.T) {
+	f := fixtureFor(t)
+	offline, err := kit.VerifySvcExpected(f.svc, f.inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirs := twoHosts(t, f)
+	dirs[linux] = writeHost(t, f, linux, nil, func(rs map[string]kit.QueryScopeHostResult) {
+		rs[svcInlineKey] = f.inlineResult(t, linux, offline, func(js []kit.SvcJudgment) {
+			i := slices.IndexFunc(f.svc.Obligations(), func(o kit.SvcObligation) bool { return o.Kind == kit.SvcKindInlineTree })
+			js[i] = kit.SvcJudgment{ID: js[i].ID, State: "FAILED", Code: "SVC_INLINE_NATIVE_TREE"}
+		})
+	})
+	rep := merge(root, expected(), dirs)
+	if rep.Status != statusFail || rep.Completion == nil || rep.Completion.Total.Failed != 1 || rep.Completion.Code == "" {
+		t.Fatalf("%s %s %+v", rep.Status, rep.Code, rep.Completion)
+	}
+}

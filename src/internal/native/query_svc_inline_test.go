@@ -24,6 +24,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if grammarRoot == "" {
 		t.Skip("set TSGK_SVC_CSHARP_GRAMMAR to the prepared registered C# grammar directory to run the SVC inline native regression (the grammar is not tracked)")
 	}
+	platform, _, otherHost := queryHostOrSkip(t, false)
 	rt, cc := os.Getenv("TSGK_NATIVE_RUNTIME"), os.Getenv("TSGK_NATIVE_CC")
 	if rt == "" || cc == "" {
 		if os.Getenv("TSGK_NATIVE_REQUIRED") == "1" {
@@ -171,6 +172,9 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// a failure before the judgments (a case that did not run) leaves nothing to store; a FAILED judgment is a
+	// result of this host and is stored, so the merge reports it as FAIL (#362)
+	storable := !t.Failed()
 	for _, j := range inline {
 		if j.State == "BLOCKED" && j.Code == kit.SvcInlineNativeNotRunCode {
 			t.Errorf("%s: the native run did not report every tree role the step needs", j.ID)
@@ -188,11 +192,6 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 		if j.State == "FAILED" {
 			t.Errorf("FAILED %s: %s", j.ID, j.Code)
 		}
-	}
-	platform, _ := predicateHost()
-	otherHost, registered := otherQueryHost(platform)
-	if !registered {
-		t.Fatalf("host %s is not a registered query host", platform)
 	}
 	coverage, err := kit.FoldSvcScope(e, platform, merged, map[string]bool{otherHost: true})
 	if err != nil {
@@ -244,6 +243,7 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			return o
 		},
 	}
+	forgedVerified := false
 	for name, f := range mutate {
 		forged := slices.Clone(observed)
 		forged[0] = f(first)
@@ -258,14 +258,16 @@ func TestNativeSvcInlineRealGrammar(t *testing.T) {
 			}
 		}
 		if failed == 0 {
+			forgedVerified = true
 			t.Errorf("forged native evidence %q verified", name)
 		}
 	}
 
 	// opt-in (TSGK_QUERY_SCOPE_OUT): this host's complete SVC result, the offline judgments plus the
 	// inline ones, for the merge of both hosts. It pins the inline expected asset its inline VERIFIED
-	// rows rest on, and is stored only when nothing above failed.
-	if !t.Failed() {
+	// rows rest on. It is stored with its FAILED rows too, but not when the run itself broke or the judge
+	// accepted forged evidence.
+	if storable && !forgedVerified {
 		pins := append(slices.Clone(result.Assets), queryregistrycore.FilePin(kit.SvcInlinePath, inlineContract))
 		storeQueryScopeHost(t, platform, kit.QueryScopeSvcInlineFile(platform), kit.NewQueryScopeResult(result.Scope, result.RegistrySHA256, pins, result.Counters, result.FirstFailure))
 	}

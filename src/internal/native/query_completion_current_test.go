@@ -19,6 +19,7 @@ import (
 // they are absent. The gate
 // must stay closed and the table shows which scope's obligations close it.
 func TestNativeQueryCompletionCurrentState(t *testing.T) {
+	platform, subject, otherHost := queryHostOrSkip(t, true)
 	read := func(path string) []byte {
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -34,12 +35,6 @@ func TestNativeQueryCompletionCurrentState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	platform, subject := predicateHost()
-	otherHost, registered := otherQueryHost(platform)
-	if !registered {
-		t.Skip("the registry judges windows-amd64 and linux-amd64 only; " + platform + " is not registered")
-	}
-
 	// predicate scope: 20 EVALUATED tuples on the owned native plus the 47 rejection rows
 	b := fixtureBuild(t, "plain")
 	ok := map[string]bool{}

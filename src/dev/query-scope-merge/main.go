@@ -11,8 +11,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"flag"
 	"fmt"
@@ -55,9 +55,11 @@ func fileOf(key, host string) string {
 	return kit.QueryScopeHostFile(key, host)
 }
 
-// refinesOffline reports whether the inline-run svc result of a host is the host's offline svc
-// result with only that host's inline rows judged further, and the inline expected asset pinned
-// after the offline pins. Any other difference means the two runs disagree about the same judgments.
+// refinesOffline reports whether the inline-run svc result of a host only refines the host's offline svc
+// result: every row is the same except this host's inline rows (SVC_INLINE_TREE, SVC_INLINE_QUERY), and
+// those may only move obligations out of BLOCKED into judged ones. An offline VERIFIED or FAILED is never
+// taken back, UNPROCESSED never changes, and the inline expected asset is pinned after the offline pins.
+// Any other difference means the two runs disagree about the same judgments.
 func refinesOffline(off, in kit.QueryScopeHostResult) bool {
 	a, b := off.Result, in.Result
 	n := len(a.Assets)
@@ -66,10 +68,15 @@ func refinesOffline(off, in kit.QueryScopeHostResult) bool {
 		return false
 	}
 	for i, c := range b.Counters {
-		if inlineRow := c.Platform == in.Host && (c.Kind == kit.SvcKindInlineTree || c.Kind == kit.SvcKindQuery); !inlineRow && c != a.Counters[i] {
+		x := a.Counters[i]
+		if c.Kind != x.Kind || c.Platform != x.Platform || c.Required != x.Required {
 			return false
 		}
-		if x := a.Counters[i]; c.Kind != x.Kind || c.Platform != x.Platform || c.Required != x.Required {
+		if inlineRow := c.Platform == in.Host && (c.Kind == kit.SvcKindInlineTree || c.Kind == kit.SvcKindQuery); !inlineRow {
+			if c != x {
+				return false
+			}
+		} else if c.Verified < x.Verified || c.Failed < x.Failed || c.Unprocessed != x.Unprocessed {
 			return false
 		}
 	}
@@ -116,15 +123,25 @@ func readBounded(path string, limit int64) ([]byte, error) {
 	return data, nil
 }
 
-// readIdentity strictly decodes a run identity.
+// readIdentity strictly decodes a run identity: exact member names (no case folding), no unknown or
+// repeated member, no trailing data.
 func readIdentity(data []byte) (kit.RunIdentity, error) {
 	var id kit.RunIdentity
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	if dec.Decode(&id) != nil || dec.More() || id.Schema != kit.RunIdentitySchema {
+	if jsonv2.Unmarshal(data, &id, jsonv2.RejectUnknownMembers(true)) != nil || id.Schema != kit.RunIdentitySchema {
 		return kit.RunIdentity{}, errors.New("run identity form")
 	}
 	return id, nil
+}
+
+// expectedComplete reports whether the identity of the run this tool executes in names everything a host
+// identity is compared with. A blank field would let a blank host field "match" it.
+func expectedComplete(id kit.RunIdentity) bool {
+	for _, v := range []string{id.Repository, id.Workflow, id.RunID, id.RunAttempt, id.Event, id.SHA, id.HeadSHA, id.Checkout, id.Job, id.GOOS, id.GOARCH} {
+		if strings.TrimSpace(v) == "" {
+			return false
+		}
+	}
+	return id.Schema == kit.RunIdentitySchema && id.EvidenceMode == "NEW_RUN"
 }
 
 // bound reports whether a host's identity belongs to the run this tool executes in: the same
@@ -267,7 +284,7 @@ func merge(root string, expected kit.RunIdentity, dirs map[string]string) report
 		}
 		return rep
 	}
-	if expected.Schema != kit.RunIdentitySchema || expected.EvidenceMode != "NEW_RUN" || expected.RunID == "" || expected.RunAttempt == "" || expected.SHA == "" || expected.HeadSHA == "" {
+	if !expectedComplete(expected) {
 		return fail(refuse("QUERY_SCOPE_RUN_EXPECTED"))
 	}
 	byScope := map[string][]kit.QueryScopeHostResult{}
