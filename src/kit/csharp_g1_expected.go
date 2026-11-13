@@ -306,7 +306,7 @@ func g1ExpContext(in CSharpG1ExpectedSources) (G1ExpInputs, *g1Ctx, CSharpG1Ledg
 	if err := jsonv2.Unmarshal(in.Observation, &obs, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return inputs, nil, ledger, fail(KindInvalidInput, "G1_EXPECTED_OBSERVATION", CSharpG1RoslynPath, err)
 	}
-	km, err := ParseCSharpG1KindMap(in.KindMap, obs.Kinds)
+	km, _, err := g1ParseKindMapAny(in.KindMap, obs.Kinds)
 	if err != nil {
 		return inputs, nil, ledger, err
 	}
@@ -460,7 +460,7 @@ func g1SpecLabel(ref string) string {
 	}
 	doc, anchor, _ := strings.Cut(ref[i+len(marker):], "#")
 	digits, _, _ := strings.Cut(anchor, "-")
-	chapter := map[string]int{"lexical-structure": 1, "basic-concepts": 1, "types": 1, "variables": 1, "expressions": 2, "classes": 2, "unsafe-code": 2}[doc]
+	chapter := map[string]int{"lexical-structure": 1, "basic-concepts": 1, "types": 1, "variables": 1, "expressions": 2, "classes": 2, "unsafe-code": 2, "patterns": 2, "statements": 2}[doc]
 	if chapter == 0 || len(digits) <= chapter {
 		return "C# standard v13 (" + doc + "#" + anchor + ")"
 	}

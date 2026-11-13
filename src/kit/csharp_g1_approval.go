@@ -66,6 +66,28 @@ var csharpG1ApprovalBundle = []CSharpG1ApprovalMember{
 	{Path: CSharpG1TypeAudit76Path, Role: "type-audit", Revision: "r1"},
 }
 
+// csharpG1ApprovalPendingAssets are G1 assets of a later stage that are tracked but belong to no approved bundle yet (#233, G1-3b).
+// They are not approved and the verifier says so (CSharpG1PendingAssets): they are only allowed to exist next to the approved bundle, so
+// that adding the assets of the next stage does not make the approved bundle fail. A new approval tuple lists them and removes them
+// from this list. Any other G1 asset outside the bundle is still G1_APPROVAL_UNAPPROVED.
+var csharpG1ApprovalPendingAssets = []string{
+	CSharpG1AuditB34Path,
+	CSharpG1B34Path,
+	CSharpG1KindMapPathR3,
+	CSharpG1TypeAuditB34Path,
+}
+
+// CSharpG1PendingAssets lists the pending assets that exist in root: tracked G1 assets that no approval object covers.
+func CSharpG1PendingAssets(root fs.FS) []string {
+	var out []string
+	for _, p := range csharpG1ApprovalPendingAssets {
+		if _, err := fs.Stat(root, p); err == nil {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 func csharpG1ApprovalSum(b []byte) string {
 	s := sha256.Sum256(b)
 	return hex.EncodeToString(s[:])
@@ -163,7 +185,7 @@ func VerifyCSharpG1Approval(root fs.FS) (state, object string, err error) {
 		return "", object, err
 	}
 	for _, p := range all {
-		if !slices.ContainsFunc(t.Members, func(m CSharpG1ApprovalMember) bool { return m.Path == p }) {
+		if !slices.ContainsFunc(t.Members, func(m CSharpG1ApprovalMember) bool { return m.Path == p }) && !slices.Contains(csharpG1ApprovalPendingAssets, p) {
 			return "", object, fmt.Errorf("G1_APPROVAL_UNAPPROVED: %s is a G1 asset outside the approved bundle", p)
 		}
 	}

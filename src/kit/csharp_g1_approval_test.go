@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -81,8 +82,14 @@ func TestCSharpG1ApprovalPendingIsNotApproved(t *testing.T) {
 
 func TestCSharpG1ApprovalBundleCoversEveryTrackedAsset(t *testing.T) {
 	all, err := fs.Glob(os.DirFS("../.."), csharpG1ApprovalGlob)
-	if err != nil || len(all) != len(csharpG1ApprovalBundle) || len(csharpG1ApprovalBundle) != 11 {
-		t.Fatalf("%d tracked G1 assets (%v), %d in the bundle", len(all), err, len(csharpG1ApprovalBundle))
+	pending := CSharpG1PendingAssets(os.DirFS("../.."))
+	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(pending) || len(csharpG1ApprovalBundle) != 11 || len(pending) != len(csharpG1ApprovalPendingAssets) {
+		t.Fatalf("%d tracked G1 assets (%v), %d in the bundle, %d pending of %d", len(all), err, len(csharpG1ApprovalBundle), len(pending), len(csharpG1ApprovalPendingAssets))
+	}
+	for _, p := range csharpG1ApprovalPendingAssets {
+		if slices.ContainsFunc(csharpG1ApprovalBundle, func(m CSharpG1ApprovalMember) bool { return m.Path == p }) {
+			t.Errorf("%s is both in the bundle and pending", p)
+		}
 	}
 	if csharpG1ApprovalBundle[2].Path != CSharpG1ExecutedPath || csharpG1ApprovalBundle[5].Path != CSharpG1ExecutedPathR2 {
 		t.Errorf("executed paths differ from the constants")
@@ -91,6 +98,31 @@ func TestCSharpG1ApprovalBundleCoversEveryTrackedAsset(t *testing.T) {
 		if !strings.HasSuffix(m.Path, "-"+m.Revision+".json") {
 			t.Errorf("%s: revision %s is not the revision of the file name", m.Path, m.Revision)
 		}
+	}
+}
+
+// The assets of a later stage (G1-3b) are tracked beside the approved bundle and pending: they do not make the bundle fail, they are not
+// approved (the verifier lists them), and a G1 asset that is neither in the bundle nor pending still fails.
+func TestCSharpG1ApprovalToleratesOnlyThePendingAssets(t *testing.T) {
+	fsys := g1ApprovalClone(g1ApprovalFS(t))
+	_, data := g1ApprovalTupleOf(t, fsys)
+	g1ApprovalWith(fsys, data)
+	for _, p := range csharpG1ApprovalPendingAssets {
+		fsys[p] = &fstest.MapFile{Data: []byte("{}\n")}
+	}
+	state, _, err := VerifyCSharpG1Approval(fsys)
+	if err != nil || state != CSharpG1ApprovalApproved {
+		t.Fatalf("the bundle with its pending assets: %q %v", state, err)
+	}
+	if got := CSharpG1PendingAssets(fsys); !slices.Equal(got, csharpG1ApprovalPendingAssets) {
+		t.Errorf("pending assets %v, want %v", got, csharpG1ApprovalPendingAssets)
+	}
+	if got := CSharpG1PendingAssets(g1ApprovalFS(t)); len(got) != 0 {
+		t.Errorf("pending assets of a tree without them: %v", got)
+	}
+	fsys["src/contracts/csharp-g1-other-r1.json"] = &fstest.MapFile{Data: []byte("{}\n")}
+	if _, _, err := VerifyCSharpG1Approval(fsys); err == nil || !strings.Contains(err.Error(), "G1_APPROVAL_UNAPPROVED") {
+		t.Errorf("an asset that is not pending: %v", err)
 	}
 }
 

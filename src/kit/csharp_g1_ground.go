@@ -24,22 +24,24 @@ const (
 
 	// the documents the grounds quote, by SHA-256: the grammar.js of the commit the kind map pins and the files of
 	// the specification (dotnet/csharpstandard at the commit of g1gSpecPre) the grounds name
-	g1gGrammarSHA = "63d357e04fdbe05f424463f365fb595f8f05866711cc279f85a7288638e753bd"
-	g1gLexSHA     = "332d112957907adc721cf549ccaa05af85e582f5342aa6c4edfbbdba933060d2"
-	g1gExprSHA    = "bcc4c11c6d25aae3584d038aa7272adae5e26820f62d0120424f2c180fede64c"
-	g1gTypesSHA   = "294308e75f99d6416c41ee65eea655fb0a3bc1bd14d32dcf134946b0ad049bf4"
-	g1gClassesSHA = "0d6ac924504cdf5e4bf6974639a5853fa0c77ce00dd09c833b7607477864623f"
-	g1gUnsafeSHA  = "ba0202020568b066e46b30bdb5146b1c29676d6a0b3a1c286cfad8ab5d7d4a91"
+	g1gGrammarSHA    = "63d357e04fdbe05f424463f365fb595f8f05866711cc279f85a7288638e753bd"
+	g1gLexSHA        = "332d112957907adc721cf549ccaa05af85e582f5342aa6c4edfbbdba933060d2"
+	g1gExprSHA       = "bcc4c11c6d25aae3584d038aa7272adae5e26820f62d0120424f2c180fede64c"
+	g1gTypesSHA      = "294308e75f99d6416c41ee65eea655fb0a3bc1bd14d32dcf134946b0ad049bf4"
+	g1gClassesSHA    = "0d6ac924504cdf5e4bf6974639a5853fa0c77ce00dd09c833b7607477864623f"
+	g1gUnsafeSHA     = "ba0202020568b066e46b30bdb5146b1c29676d6a0b3a1c286cfad8ab5d7d4a91"
+	g1gPatternsSHA   = "2952f64a2a4eec42c9db98d3d1925e14baa03594cac773dfd6107e257d5f12e7"
+	g1gStatementsSHA = "3b7182984567b2a0390df4fde0ad441c8b6001e390a696ddd4820e467eea39ae"
 
 	g1gMinQuote = 40  // characters of a quote, whitespace runs counted as one
 	g1gMaxGap   = 200 // lines between the heading and the quote
 )
 
 // g1gSpecSHA is the SHA-256 of each specification file a ground may name.
-var g1gSpecSHA = map[string]string{"lexical-structure.md": g1gLexSHA, "expressions.md": g1gExprSHA, "types.md": g1gTypesSHA, "classes.md": g1gClassesSHA, "unsafe-code.md": g1gUnsafeSHA}
+var g1gSpecSHA = map[string]string{"lexical-structure.md": g1gLexSHA, "expressions.md": g1gExprSHA, "types.md": g1gTypesSHA, "classes.md": g1gClassesSHA, "unsafe-code.md": g1gUnsafeSHA, "patterns.md": g1gPatternsSHA, "statements.md": g1gStatementsSHA}
 
 // G1SpecFiles are the specification files a ground may name.
-var G1SpecFiles = []string{"lexical-structure.md", "expressions.md", "types.md", "classes.md", "unsafe-code.md"}
+var G1SpecFiles = []string{"lexical-structure.md", "expressions.md", "types.md", "classes.md", "unsafe-code.md", "patterns.md", "statements.md"}
 
 var g1gSpecAt = regexp.MustCompile(`standard/([a-z-]+\.md) ([0-9]+(?:\.[0-9]+)*) `)
 

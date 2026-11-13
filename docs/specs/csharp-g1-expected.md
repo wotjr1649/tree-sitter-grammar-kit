@@ -274,6 +274,56 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - **규칙 표의 한계.** 표는 production 텍스트와 Roslyn 종류 이름에서 사람이 쓴 것이다. 키는 `head#i`·`head>target`·`head`·`>target` 순으로 찾고, 규칙이 없는 대안은 오류다(기본 부류가 없다). 쓰이지 않는 규칙과 관측에 없는 종류를 가리키는 규칙은 시험이 거부한다. anchor는 순서만 보며 인접성이나 같은 node 안인지는 보지 않는다. B의 증거는 "그 종류의 node가 있다"이며 명세 production의 범위와 같다는 뜻이 아니다(예: Roslyn `ArgumentList`는 괄호를 포함하고 명세 `argument_list`는 그렇지 않다): 범위는 PR3의 위치 감사가 본다.
 - **dry-run 수치(관측 r3·매핑표 r2).** 388 = A 198 + B 100 + C 90. A 198 = 변별 131 + 약 67(원장의 `LITERAL_MATCH` 194 + 고정 lexeme 비단말 4). B 100 = 변별 74 + 약 26. C 90 = `ABSTRACT_CATEGORY` 36 + `NO_OWN_NODE_FOR_CONSTRUCT` 29 + `POSITION_DEPENDENT` 14 + `SEMANTIC_BINDING` 9 + `NO_WITNESS_IN_LINKED_SOURCES` 2. 행별은 B03이 A 137·B 61·C 59, B04가 A 61·B 39·C 31이다(`TestCSharpG1ClassifyCountsOfThePinnedInputs`).
 
+## G1-3b 기대값 (B03·B04, G1B34)
+
+분류(위)를 기대값으로 바꾼 PR2다. asset 넷을 더한다. native를 읽지 않고, 봉인 전에 두 감사를 끝내 발견을 고친 뒤 봉인한다(사용자 결정, #233). 승인된 묶음 11개는 한 byte도 바뀌지 않았고 새 asset은 새 승인 tuple을 기다린다([대기 asset](#g1-번들-승인-tuple-g1approval)).
+
+| asset | schema | 내용 |
+|---|---|---|
+| [`csharp-g1-expected-b03b04-r1.json`](../../src/contracts/csharp-g1-expected-b03b04-r1.json) | `tsgk-csharp-g1-expected-b03b04/r1` | 대안 388개의 기대값 또는 BLOCKED. 도출 `kit.DeriveCSharpG1B34`, 검증 `ParseCSharpG1B34`(도출과 member별 정확 일치) |
+| [`csharp-g1-kind-map-r3.json`](../../src/contracts/csharp-g1-kind-map-r3.json) | `tsgk-csharp-g1-kind-map/r3` | 매핑표 r2 + class B가 쓰는 1:n 종류의 문맥 항목. r2는 pin하고 바꾸지 않는다 |
+| [`csharp-g1-audit-b03b04-r1.json`](../../src/contracts/csharp-g1-audit-b03b04-r1.json) | `tsgk-csharp-g1-audit-b03b04/r1` | 위치 감사: B 98행 전수와 A 198개의 앵커 |
+| [`csharp-g1-typeaudit-b03b04-r1.json`](../../src/contracts/csharp-g1-typeaudit-b03b04-r1.json) | `tsgk-csharp-g1-typeaudit-b03b04/r1` | type 감사: B 98행 전수와 A 앵커 어휘 119개 |
+
+모두 `go run ./src/dev/csharp-g1-b34 -root . [-list] [-write]`, `-kindmap [-write]`, `-audit pos|type [-in <저작 행> -write] [-pins] [-grammar <dir> -spec <dir>]`가 쓰고 검증한다. 명세 문서는 고정 commit `79ad4e90…`의 `statements.md`(SHA-256 `3b718298…`)·`patterns.md`(`2952f64a…`)를 `G1SpecFiles`에 더했다(기존 다섯 문서의 SHA-256은 그 commit의 파일과 같음을 다시 확인했다).
+
+### 기대값
+
+- 입력 pin: 원장 원천, 관측 r3, 매핑표 **r3**. 대안은 원장 순서이고 `group`(A·B·C)·`status`·`basis`·`discriminating`을 가진다.
+- **A**(198, `spec-derived`, D-1): `anchors`는 production이 요구하는 keyword·punctuation token과 그 Roslyn token 종류가 매핑표에서 갖는 type이다. witness는 연결 사례의 수락된 source에서 앵커를 순서대로 가진 **가장 좁은 run**이고(`tokens`: 앵커마다 span 하나) 기대는 "그 type의 node가 그 token의 범위와 정확히 같다"이다. 앵커를 품은 구성 node는 단언하지 않는다.
+- **B**(98, `differential-oracle`): witness는 분류기의 Roslyn 종류(와 부모 종류)를 가진 첫 node의 범위(`span`)이고 `ts`는 **그 witness node의 종류**가 갖는 type이다(분류의 종류 합집합이 아니다. 아래 type 발견). 부모 종류에 따라 갈리는 종류는 매핑표 r3의 문맥 항목이 정한다.
+- **C**(92): BLOCKED와 분류의 사유 code. 감사가 B에서 C로 옮긴 둘(`a028`·`a209`)을 포함한다.
+- `discriminating: false`는 약한 일치다(D-1, R-5): 한 글자 punctuation만의 앵커, 구성 밖의 다른 Roslyn 종류와 type을 나누는 종류, `ts`가 `identifier`를 담거나 type이 5개 이상인 집합. A는 앵커 하나라도 그 type에 `identifier`가 있으면 약하다(문맥 keyword의 `identifier` 쪽).
+- 수치(관측 r3·매핑표 r3): 388 = A 198 + B 98 + C 92. EXPECTED 296(변별 180·약 116), BLOCKED 92(`ABSTRACT_CATEGORY` 36·`NO_OWN_NODE_FOR_CONSTRUCT` 31·`POSITION_DEPENDENT` 14·`SEMANTIC_BINDING` 9·`NO_WITNESS_IN_LINKED_SOURCES` 2). 행별은 B03이 A 137·B 59·C 61, B04가 A 61·B 39·C 31이다. B 98개 중 변별 72·약 26, A 198개 중 변별 108·약 90.
+- 한계: 증거는 대안마다 witness 하나다(연결 사례가 대안당 하나). A는 앵커가 나타남만 증명하고 같은 구성에 속함은 증명하지 않는다(위치 감사의 앵커 점검은 그 token이 렉서가 읽는 어휘소임만 본다). B는 단일 Roslyn oracle의 구조다.
+
+### 매핑표 r3 (class B 항목)
+
+- r3는 r2에서 도출한다: 같은 461 종류 항목, 같은 어휘, `previous`가 r2의 길이·SHA-256을 pin하고 `contextual` 항목이 더해진다. 항목은 Roslyn 종류와 **직접 부모 종류**로 type을 가른다(`parent`면 `ts`, 아니면 `otherwise`; 둘은 r2 항목의 type을 분할한다). 근거는 `grammar.js`의 인용문(ground)이며 항목은 코드의 저작 목록(`g1KindMapContextual`)이 정하고 verifier는 r2에서 다시 도출해 bytes까지 대조한다.
+- 항목은 하나다: `SimpleAssignmentExpression`의 r2 항목 `[assignment_expression, with_initializer]`(1:n)을 부모 `WithInitializerExpression`이면 `with_initializer`, 그 밖에는 `assignment_expression`으로 가른다. `grammar.js`는 `with_initializer`를 `with` 식의 본문(`_with_body`)에서만 만들고 object initializer의 `X = 1`은 `assignment_expression`이다. class B가 쓰는 종류 95개 중 1:n은 이것 하나이고 새 종류 항목은 필요 없었다(PR1의 결론대로). 나머지 94개의 type 존재와 의미는 type 감사가 대조한다.
+
+### 위치 감사
+
+- 행(98)은 B 대안마다 witness source 안의 **모든 인스턴스**를 명세 production에서 손으로 적는다(`instances`), 규칙(`g1b34PosRuleTexts`: 인스턴스 하나의 본문 전체 일치, 선택적 `Not`)을 코드 표로 두고 verifier가 모든 인스턴스를 확인한다. ground는 명세 production의 인용문이고(문서 SHA-256·heading·gap, 행별 핀 `g1b34PosPins`) 문법이 production 밖의 terminal을 node에 넣는 행은 `node`(앞 `(`·뒤 `)`)와 grammar ground를 가진다(`argument_list`: 명세는 괄호를 포함하지 않고 `grammar.js`의 node는 포함한다). 비교는 witness가 인스턴스와 범위가 같은지다.
+- A 198개는 앵커만 본다: 렉서(`g1b34Lexemes`: 주석·문자열·문자·숫자·식별자·punctuator, Roslyn 출력 없음)가 witness의 각 앵커 span에서 같은 어휘소를 읽어야 한다.
+- **발견 8건(첫 비교의 불일치, 봉인 전에 도출을 고침)**: `B03.a014`(tuple 요소는 `tuple_element`이지 인수가 아님 → 부모 `ArgumentList`·`BracketedArgumentList`), `a025`(`base[0]`은 `base_access` → `base[` 제외), `a026`(`a?.b`는 멤버 접근 → `?[` 꼴만), `a028`(`base_access`의 범위는 `base.g`이고 Roslyn `BaseExpression`은 `base`뿐 → BLOCKED `NO_OWN_NODE_FOR_CONSTRUCT`), `a209`(`join_into_clause`는 join 절 전체이고 Roslyn·grammar의 node는 `into g`뿐 → BLOCKED 같은 사유), `B04.a004`(witness가 method 본문 → 부모 `Block`), `a031`·`a033`(`var a = 1`은 암시적 형식 선언 → `var`·`ref` 제외). 보정은 `csharp_g1_b34_rules.go`(`g1b34Picks`·`g1b34Overrides`)에 있고 시험이 보정을 빼면 달라짐을 보인다(`TestCSharpG1B34CorrectionsOfTheAuditsMatter`). 발견은 asset의 `findings`에 남는다. 보정 뒤 98/98 MATCH, 앵커 198/198 MATCH.
+
+### type 감사
+
+- 입력은 기대 type만이고 위치·매핑표가 없다. 행(98)은 `grammar.js`만으로 도출한 witness 위치의 type(`class`: `NODE` 93·`NO_OWN_NODE` 4(지정자가 `identifier`, `this`가 익명 token)·`ALIAS` 1(`using`의 선언))와 grammar ground를 가진다. 앵커 어휘 119개는 `grammar.js`가 그 어휘에 주는 역할의 합집합이다: 한 역할이면 `NODE`(익명 token 또는 `predefined_type`), 둘 이상이면 `NOT_DERIVABLE`(후보 집합: 문맥 keyword의 `identifier`, `modifier` alias, `implicit_type`·`implicit_parameter` 등) 27개. 후보 집합과 같음은 type 도출이 아니다(G1-3a와 같은 읽기).
+- **발견 3건(첫 비교의 불일치, 봉인 전에 고침)**: `B03.a031`·`B04.a002`(기대 type이 분류의 종류 **합집합**이었다 → witness node 종류의 type), `B03.a226`(`with_initializer`가 object initializer에도 있는 것처럼 둔 r2 항목 → 매핑표 r3의 문맥 항목).
+- 감사 도출기의 첫 실행에서 앵커 4개가 불일치였으나 모두 감사 저작 스크립트의 역할 판정 오류(여러 줄에 걸친 `alias(choice(…), $.modifier)`와 이웃 줄의 `delegate`)였고 기대값 오류가 아니다. 저작을 고쳐 재생성했고 기대값은 그대로다.
+
+### 독립성
+
+- 두 감사의 입력은 좁은 값이다(`G1B34AuditInput`: witness·앵커·source 본문, `G1B34TypeInput`: type만). 뷰 `csharp_g1_b34_view.go`가 기대값 asset을 읽는 유일한 곳이다. `TestCSharpG1AuditInputsAreNarrow`가 member를 고정하고 `TestCSharpG1AuditsReachOnlyTheirOwnInputs`·`…RejectTheBypassesOfTheReview`의 항목 "B03/B04 position audit"·"B03/B04 type audit"이 호출 폐쇄가 자기 파일(과 G1-3a 감사의 공용 비교 함수·ground 표)밖의 G1 파일에 닿지 않음을, 우회 사례(기대값 파일의 도우미, 기대값 decoder, 뷰, 매핑표 parser, 기대값 도출)가 잡힘을 고정한다. 새 여섯 파일은 분리 시험에서 도출 쪽이다.
+- 한계: 인스턴스 목록은 한 사람이 명세에서 도출한 것이고(규칙은 적힌 인스턴스만 확인한다), 위치 감사는 슬롯(대안이 놓인 문법 자리)을 단언하지 않는다 — 보정의 `Parent`는 Roslyn 부모 종류이며 명세 슬롯의 증명이 아니다. type 감사는 grammar 도출이 한 사람이 읽은 것이고 파서 실행이 아니다. 작성자는 도출 전에 PR1의 분류 결과를 알고 있었다.
+
+### 봉인과 다음 단계
+
+- 봉인: 이 단계의 asset 넷의 SHA-256을 `TestCSharpG1B34AssetsAreSealed`가 고정한다. native 결과를 읽기 전이다. 정정은 새 revision이다.
+- 원장 r2(PR3): 원장 코드가 기대값 asset 둘(B01·B02의 r2와 이 asset)과 executed asset 둘을 받아야 하고(지금은 하나씩), 이 asset의 EXPECTED(296)를 `SEALED`로, BLOCKED(92)를 `BLOCKED`와 사유로 옮기며, B03·B04의 P 의무는 BLOCKED 대안이 있어 `NO_EXPECTED`로 남는다. 원장 입력 asset이 다중이므로 중복·행 대조(R-8)와 `EXECUTED = MATCH만`(R-2)이 새 코드에 필요하다. executed 비교는 A의 앵커 token(`tokens`)과 B의 `span`을 쓰고 `match`가 새 값(`tokens`)을 가지므로 executed schema 확장이 든다. 새 asset 넷과 원장 r2·executed는 새 승인 tuple에 들어간다.
+
 ## G1 번들 승인 tuple (G1APPROVAL)
 
 사용자 결정([#233, 2026-11-13 "승인 묶음"](https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233#issuecomment-6851518154))은 아래 11개를 한 묶음으로 승인한다. 이 절은 그 승인을 **content-addressed tuple object**로 만들고 검사하는 계약이며, object 자체는 아직 없다.
@@ -291,7 +341,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - **scope:** 기존 값을 넓히지 않고 새 schema에 새 scope를 둔다. `legacy-observation`(roslyn pin tuple)과 `historical-materials`(evidence pin 승인)의 뜻·object·set은 그대로다. 이 object는 어떤 set·selection·`repository-defaults.json`에도 들어가지 않고 reader가 읽지 않는다: 저장소 경로 묶음의 승인이며 evidence subject의 승인이 아니다.
 - **검증(`kit.VerifyCSharpG1Approval`):**
   - object가 없으면 상태는 **`PENDING_APPROVAL`**이다. 오류도 PASS도 아니며 아무것도 승인되지 않았다는 보고다. 도구는 exit 3, 시험은 통과하되 로그에 상태를 적는다.
-  - object가 있으면(approval schema의 object가 정확히 하나) 이름이 bytes의 SHA-256이어야 하고(`G1_APPROVAL_OBJECT`), 엄격히 decode되어 정규 bytes와 같아야 하고, scope(`G1_APPROVAL_SCOPE`)·decision(`G1_APPROVAL_DECISION`)·멤버의 경로·역할·revision과 순서(`G1_APPROVAL_BUNDLE`)가 코드의 묶음과 같아야 하고, 모든 멤버 파일의 길이와 SHA-256이 같아야 한다(`G1_APPROVAL_MEMBER`: 한 byte 변경·추가·삭제·누락). 마지막으로 `src/contracts/csharp-g1-*.json`에 묶음 밖의 asset이 없어야 한다(`G1_APPROVAL_UNAPPROVED`). approval object가 둘 이상이면 `G1_APPROVAL_AMBIGUOUS`다. 모두 맞을 때만 `APPROVED`다.
+  - object가 있으면(approval schema의 object가 정확히 하나) 이름이 bytes의 SHA-256이어야 하고(`G1_APPROVAL_OBJECT`), 엄격히 decode되어 정규 bytes와 같아야 하고, scope(`G1_APPROVAL_SCOPE`)·decision(`G1_APPROVAL_DECISION`)·멤버의 경로·역할·revision과 순서(`G1_APPROVAL_BUNDLE`)가 코드의 묶음과 같아야 하고, 모든 멤버 파일의 길이와 SHA-256이 같아야 한다(`G1_APPROVAL_MEMBER`: 한 byte 변경·추가·삭제·누락). 마지막으로 `src/contracts/csharp-g1-*.json`에 묶음 밖의 asset이 없어야 한다(`G1_APPROVAL_UNAPPROVED`). 예외는 **대기 asset**뿐이다: 다음 단계(G1-3b)의 asset 넷(`csharp_g1_approval.go`의 `csharpG1ApprovalPendingAssets`)은 묶음 옆에 있어도 묶음의 `APPROVED`를 깨지 않는다. 대기 asset은 승인된 것이 아니며(`CSharpG1PendingAssets`가 존재하는 것을 나열하고 도구가 `-verify`에 적는다) 새 승인 tuple이 그것을 묶음에 넣고 목록에서 뺀다. 목록에 없는 G1 asset은 여전히 거부된다(`TestCSharpG1ApprovalToleratesOnlyThePendingAssets`). approval object가 둘 이상이면 `G1_APPROVAL_AMBIGUOUS`다. 모두 맞을 때만 `APPROVED`다.
   - 새 G1 asset이나 asset의 변경은 묶음 밖이므로 새 승인(새 revision의 tuple)이 필요하다. 기존 object는 바꾸지 않는다.
 - **CI의 pending:** object가 생기기 전의 CI는 `TestCSharpG1ApprovalOfTheTrackedBundle`이 `PENDING_APPROVAL`을 로그에 적고 통과한다(승인 전에 CI가 통과해야 Root가 object를 만들 수 있다). 이는 승인의 주장이 아니다. 게이트가 필요한 곳은 도구의 exit 3을 실패로 취급한다. object가 생기면 같은 시험이 `APPROVED`를 요구하며 이후 asset 변경은 모두 실패한다.
 - **도구:** `go run ./src/dev/csharp-g1-approval -root . -print > tuple.json`은 현재 추적 asset의 정규 tuple bytes를 stdout에, 길이와 SHA-256(object 이름)을 stderr에 적는다. `-verify`는 위 검증이다. 도구는 `src/contracts/evidence-pins/`에 쓰지 않는다. Root가 사용자가 SHA 목록을 확인한 뒤 `<sha256>` 이름으로 손으로 만든다.
@@ -304,6 +354,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - 명세 도출기(`csharp_g1_spec.go`)는 `regexp`·`strings`·`unicode/utf8`만 쓰며 Roslyn 관측·매핑표·기대값·원장을 가리키는 식별자가 없다. 관측 verifier와 매핑표 코드는 기대값 쪽을 가리키지 않는다.
 - 전수 감사 파일(`csharp_g1_audit76.go`)과 그 규칙·ground·핀 표·뷰 파일은 도출 쪽으로 분류하고 호출 폐쇄의 진입점(`ParseCSharpG1Audit76`, `G1Audit76View` 등)에 넣었다. 폐쇄가 표현하지 못하는 "`ts`를 읽지 않음"은 호출 폐쇄 시험이 아니라 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 적은 구조(좁은 입력 타입, 감사별 폐쇄의 파일 목록, 타입 검사)가 고정하고 AST 시험은 보조다.
 - type 감사 파일(`csharp_g1_typeaudit76.go`)도 도출 쪽으로 분류하고 진입점(`ParseCSharpG1TypeAudit76` 등)에 넣었다. "매핑표를 읽지 않음"도 [type 감사](#차분-oracle-대안-type-감사-g1typeaudit76)가 적은 같은 구조가 고정한다.
+- G1-3b 기대값 파일 여섯(`csharp_g1_b34.go`·`_rules.go`·`_audit.go`·`_audit_rules.go`·`_view.go`와 `csharp_g1_kindmap_r3.go`)은 도출 쪽이다. 감사 둘의 호출 폐쇄는 [G1-3b 기대값](#g1-3b-기대값-b03b04-g1b34)의 독립성이 적은 대로 자기 파일(과 G1-3a 감사의 공용 비교·ground 표) 밖의 G1 파일에 닿지 않는다.
 - G1-3b 분류 파일 셋(`csharp_g1_classify.go`·`_rules.go`·`_view.go`)도 도출 쪽으로 분류하고 진입점(`ClassifyCSharpG1`·`G1ClassifyView`)에 넣었다. 분류 함수만의 폐쇄는 [G1-3b 분류](#g1-3b-분류-b03b04-g1classify)가 적은 대로 기대값·정정·뷰 파일에 닿지 않는다.
 - asset이 pin하는 입력은 선언 3개, 사례 원문 fixture 4개, 관측 asset, 매핑표뿐이다. fixture에는 native 결과를 담는 member가 없다.
 

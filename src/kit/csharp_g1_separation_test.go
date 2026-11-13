@@ -76,8 +76,17 @@ var g1SepClass = map[string]string{
 	"csharp_g1_classify.go":       "derivation",
 	"csharp_g1_classify_rules.go": "derivation",
 	"csharp_g1_classify_view.go":  "derivation",
-	"csharp_g1_executed.go":       "comparison",
-	"csharp_g1_native.go":         "comparison",
+	// the G1-3b expected values of csharp-B03 and csharp-B04, the corrections the audits demanded, the audits, their views and the kind map
+	// r3: all derivation. The audits' input is narrow (TestCSharpG1AuditInputsAreNarrow) and their call closures reach no other G1 file
+	// (g1SepAudits).
+	"csharp_g1_b34.go":             "derivation",
+	"csharp_g1_b34_rules.go":       "derivation",
+	"csharp_g1_b34_audit.go":       "derivation",
+	"csharp_g1_b34_audit_rules.go": "derivation",
+	"csharp_g1_b34_view.go":        "derivation",
+	"csharp_g1_kindmap_r3.go":      "derivation",
+	"csharp_g1_executed.go":        "comparison",
+	"csharp_g1_native.go":          "comparison",
 	// the approval of the bundle: it reads the tracked assets as bytes and names them by path; it derives and compares nothing.
 	"csharp_g1_approval.go": "neutral",
 }
@@ -149,6 +158,11 @@ var g1SepRoots = []string{
 	"DeriveCSharpG1TypeAudit76", "ParseCSharpG1TypeAudit76", "DecodeCSharpG1TypeAudit76", "MarshalCSharpG1TypeAudit76", "CheckG1TypeAudit76Grounds", "G1AuditStrataWithTypes",
 	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
 	"ClassifyCSharpG1", "G1ClassifyView",
+	"DeriveCSharpG1B34", "ParseCSharpG1B34", "DecodeCSharpG1B34", "CheckCSharpG1B34", "MarshalCSharpG1B34",
+	"DeriveCSharpG1KindMapR3", "ParseCSharpG1KindMapR3", "MarshalCSharpG1KindMapR3",
+	"DeriveCSharpG1AuditB34", "ParseCSharpG1AuditB34", "DecodeCSharpG1AuditB34", "MarshalCSharpG1AuditB34", "CheckG1AuditB34Grounds", "G1B34PosGroundPins", "CheckG1TypeAuditB34Grounds", "CheckG1KindMapR3Grounds",
+	"DeriveCSharpG1TypeAuditB34", "ParseCSharpG1TypeAuditB34", "DecodeCSharpG1TypeAuditB34", "MarshalCSharpG1TypeAuditB34", "G1B34TypeGroundPins",
+	"G1B34AuditView", "G1B34TypeView",
 }
 
 // g1SepExcluded are exported Derive*, Parse*, Check* and Marshal* functions of derivation files that no root reaches

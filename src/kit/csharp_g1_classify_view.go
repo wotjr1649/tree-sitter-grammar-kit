@@ -14,11 +14,16 @@ var g1ClassifyRows = []string{"csharp-B03", "csharp-B04"}
 
 // G1ClassifyView builds the classification input from the pinned declarations, the Roslyn observation (r3) and the kind map (r2).
 func G1ClassifyView(in CSharpG1ExpectedSources) (G1ClassifyInput, error) {
-	var out G1ClassifyInput
 	_, c, ledger, err := g1ExpContext(in)
 	if err != nil {
-		return out, err
+		return G1ClassifyInput{}, err
 	}
+	return g1ClassifyViewOf(in, c, ledger)
+}
+
+// g1ClassifyViewOf builds the input from a context that the caller derived (the derivation of the expected asset shares it).
+func g1ClassifyViewOf(in CSharpG1ExpectedSources, c *g1Ctx, ledger CSharpG1Ledger) (G1ClassifyInput, error) {
+	var out G1ClassifyInput
 	var alts g1ExpAltFile
 	if err := json.Unmarshal(in.Src.Alternatives, &alts); err != nil {
 		return out, g1eFault("G1_EXPECTED_ALTERNATIVES")

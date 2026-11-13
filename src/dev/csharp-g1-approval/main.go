@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit"
 )
@@ -46,6 +47,9 @@ func run(root string, print, verify bool, stdout, stderr io.Writer) int {
 		return exitPending
 	}
 	fmt.Fprintf(stdout, "%s by object %s\n", state, object)
+	if pending := kit.CSharpG1PendingAssets(fsys); len(pending) > 0 {
+		fmt.Fprintf(stdout, "pending, not approved: %s\n", strings.Join(pending, " "))
+	}
 	return 0
 }
 

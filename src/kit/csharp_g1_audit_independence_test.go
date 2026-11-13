@@ -39,6 +39,13 @@ var g1SepAudits = []struct {
 	{"classification",
 		[]string{"ClassifyCSharpG1"},
 		[]string{"csharp_g1_classify.go", "csharp_g1_classify_rules.go"}},
+	// the audits of the G1-3b expectations (their input is the narrow value of csharp_g1_b34_view.go, which they do not call)
+	{"B03/B04 position audit",
+		[]string{"DeriveCSharpG1AuditB34", "ParseCSharpG1AuditB34", "DecodeCSharpG1AuditB34", "MarshalCSharpG1AuditB34", "CheckG1AuditB34Grounds"},
+		[]string{"csharp_g1_b34_audit.go", "csharp_g1_b34_audit_rules.go", "csharp_g1_audit76.go", "csharp_g1_audit76_rules.go", "csharp_g1_ground.go", "csharp_g1_ground_pins.go"}},
+	{"B03/B04 type audit",
+		[]string{"DeriveCSharpG1TypeAuditB34", "ParseCSharpG1TypeAuditB34", "DecodeCSharpG1TypeAuditB34", "MarshalCSharpG1TypeAuditB34"},
+		[]string{"csharp_g1_b34_audit.go", "csharp_g1_b34_audit_rules.go", "csharp_g1_typeaudit76.go", "csharp_g1_audit76.go", "csharp_g1_ground.go", "csharp_g1_ground_pins.go"}},
 }
 
 // g1SepAuditOutside lists the declarations of G1 files outside allowed that the closure of the roots reaches.
@@ -132,6 +139,7 @@ func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
 	call := func(f, old, stmt string) map[string][2]string {
 		return map[string][2]string{f: {old, stmt + "\n\t" + old}}
 	}
+	b34Pos, b34Typ := "rows[i].Result, rows[i].Relation = g1b34PosCompare(rows[i], b[i].Witness, in.Texts[rows[i].Source])", "rows[i].Result, rows[i].Relation = g1b34TypeCompare(rows[i].Class, rows[i].Types, rows[i].Coincident, in.Alts[i].TS)"
 	cases := []struct {
 		name    string
 		audit   int
@@ -152,6 +160,13 @@ func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
 		{"S, a helper in another file (classification)", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_ = g1Peek3(G1ExpAlt{})"),
 			map[string]string{"csharp_g1_expected.go": "func g1Peek3(a G1ExpAlt) int { return len(a.TS) }"}), "g1Peek3 in csharp_g1_expected.go"},
 		{"a call of the decoder of the expected asset (classification)", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_, _ = DecodeCSharpG1Expected(nil)"), nil), "DecodeCSharpG1Expected in csharp_g1_expected.go"},
+		// the B03/B04 audits: a helper of the expected file, the decoder of the expected asset, the kind map, the other audit
+		{"S, a helper in another file (B03/B04 position audit)", 3, g1SepWith(t, files, call("csharp_g1_b34_audit.go", b34Pos, "_ = g1Peek4(G1B34Alt{})"),
+			map[string]string{"csharp_g1_b34.go": "func g1Peek4(a G1B34Alt) int { return len(a.TS) }"}), "g1Peek4 in csharp_g1_b34.go"},
+		{"a call of the decoder of the expected asset (B03/B04 position audit)", 3, g1SepWith(t, files, call("csharp_g1_b34_audit.go", b34Pos, "_, _ = DecodeCSharpG1B34(nil)"), nil), "DecodeCSharpG1B34 in csharp_g1_b34.go"},
+		{"a call of the view (B03/B04 position audit)", 3, g1SepWith(t, files, call("csharp_g1_b34_audit.go", b34Pos, "_, _ = G1B34AuditView(nil, nil)"), nil), "G1B34AuditView in csharp_g1_b34_view.go"},
+		{"a read of the kind map (B03/B04 type audit)", 4, g1SepWith(t, files, call("csharp_g1_b34_audit.go", b34Typ, "_, _ = ParseCSharpG1KindMapR3(nil, nil)"), nil), "ParseCSharpG1KindMapR3 in csharp_g1_kindmap_r3.go"},
+		{"a call of the derivation of the expected asset (B03/B04 type audit)", 4, g1SepWith(t, files, call("csharp_g1_b34_audit.go", b34Typ, "_, _ = DeriveCSharpG1B34(CSharpG1ExpectedSources{})"), nil), "DeriveCSharpG1B34 in csharp_g1_b34.go"},
 		{"the classification calls its own view", 2, g1SepWith(t, files, call("csharp_g1_classify.go", clsFill, "_, _ = G1ClassifyView(CSharpG1ExpectedSources{})"), nil), "G1ClassifyView in csharp_g1_classify_view.go"},
 	}
 	for _, a := range g1SepAudits {
@@ -251,6 +266,13 @@ func TestCSharpG1AuditInputsAreNarrow(t *testing.T) {
 			"G1Audit76Alt.ID string", "G1Audit76Alt.Initial kit.G1Audit76Witness", "G1Audit76Alt.Witness kit.G1Audit76Witness",
 			"G1Audit76Input.Alts []kit.G1Audit76Alt", "G1Audit76Input.Texts map[string][]uint8",
 			"G1Audit76Witness.End int", "G1Audit76Witness.Match string", "G1Audit76Witness.Source string", "G1Audit76Witness.Start int"}},
+		{"B03/B04 position audit", G1B34AuditInput{}, []string{
+			"G1Audit76Witness.End int", "G1Audit76Witness.Match string", "G1Audit76Witness.Source string", "G1Audit76Witness.Start int",
+			"G1B34AuditAlt.Group string", "G1B34AuditAlt.ID string", "G1B34AuditAlt.Texts []string", "G1B34AuditAlt.Tokens [][2]int", "G1B34AuditAlt.Witness kit.G1Audit76Witness",
+			"G1B34AuditInput.Alts []kit.G1B34AuditAlt", "G1B34AuditInput.Texts map[string][]uint8"}},
+		{"B03/B04 type audit", G1B34TypeInput{}, []string{
+			"G1B34AnchorTS.TS []string", "G1B34AnchorTS.Text string", "G1B34TypeAlt.ID string", "G1B34TypeAlt.TS []string",
+			"G1B34TypeInput.Alts []kit.G1B34TypeAlt", "G1B34TypeInput.Anchors []kit.G1B34AnchorTS"}},
 		{"type audit", G1TypeAudit76Input{}, []string{
 			"G1TypeAudit76Alt.ID string", "G1TypeAudit76Alt.InitialTS []string", "G1TypeAudit76Alt.TS []string", "G1TypeAudit76Input.Alts []kit.G1TypeAudit76Alt"}},
 	} {
