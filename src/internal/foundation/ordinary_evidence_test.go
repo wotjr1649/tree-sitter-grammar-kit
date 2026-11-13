@@ -56,8 +56,13 @@ func ordinaryEvidencePolicy(text string) error {
 		return fmt.Errorf("native-routes ordinary collection step missing, unbounded or not continuing on error")
 	}
 	step, _, _ = strings.Cut(step, "\n      - ")
+	// the position inside native-routes (F3 of #435): the host directory is created by the scope collection, extended
+	// by the ordinary collection, and only then carried by the scope upload; the ordinary upload follows its collection
 	if scopeAt, ordinaryAt := strings.Index(routes, scopeCollectName), strings.Index(routes, ordinaryEvidenceCollectHead); scopeAt < 0 || scopeAt > ordinaryAt {
 		return fmt.Errorf("the ordinary collection must follow the scope collection it extends")
+	}
+	if ordinaryAt, evidenceUploadAt, scopeUploadAt := strings.Index(routes, ordinaryEvidenceCollectHead), strings.Index(routes, ordinaryUploadName), strings.Index(routes, scopeUploadName); evidenceUploadAt < ordinaryAt || scopeUploadAt < 0 || ordinaryAt > scopeUploadAt {
+		return fmt.Errorf("the ordinary collection must come before the scope upload that carries its file, and its own upload after it")
 	}
 	if rest := strings.Replace(routes, step, "", 1); strings.Contains(rest, "TSGK_ORDINARY_") || strings.Contains(rest, "TestOrdinaryScopeStore") {
 		return fmt.Errorf("ordinary collection inside another step")
@@ -82,6 +87,10 @@ func ordinaryEvidencePolicy(text string) error {
 		"$env:TSGK_ORDINARY_E2E_ARTIFACTS = Join-Path $ordinaryOut 'artifacts'", "$env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'",
 		// a test that did not run is named, kept as a warning, and does not discard what the others stored
 		"if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }",
+		// a go test that exits nonzero is visible: a warning naming the failed tests (F1 of #435), never a throw
+		"function Write-OrdinaryFailure($log, $status) {", "if ($status -eq 0) { return }",
+		`Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)'`, "$($failed -join ', ')",
+		`Write-Output "::warning::ordinary go test exited ${status} (`, "a test that failed stores no result and its tuples stay BLOCKED",
 		`Write-Output "::warning::ordinary scope collection failed: $_"`, "$global:LASTEXITCODE = 0\n",
 		`$env:PLATFORM -replace '/', '-'`,
 	} {
@@ -97,9 +106,9 @@ func ordinaryEvidencePolicy(text string) error {
 	}
 	// exactly the seven go test commands, each followed by its log and none turning a failing test into a collection
 	// failure (the next line shows the log; a FAILED tuple is a result), each with its own pinned time limit
-	goTests := regexp.MustCompile(`(?m)^\s*go test (\S+ )?(.*)> \$log 2>&1\n\s*Get-Content -LiteralPath \$log\n`).FindAllStringSubmatch(step, -1)
+	goTests := regexp.MustCompile(`(?m)^\s*go test (\S+ )?(.*)> \$log 2>&1\n\s*Get-Content -LiteralPath \$log\n\s*Write-OrdinaryFailure \$log \$LASTEXITCODE\n`).FindAllStringSubmatch(step, -1)
 	if all := regexp.MustCompile(`(?m)^\s*go test `).FindAllString(step, -1); len(all) != len(ordinaryGoTests) || len(goTests) != len(all) || strings.Count(step, "-timeout") != len(all) {
-		return fmt.Errorf("the ordinary collection runs exactly %d go test commands, each logged and each with its own timeout", len(ordinaryGoTests))
+		return fmt.Errorf("the ordinary collection runs exactly %d go test commands, each logged, each followed by its failure warning and each with its own timeout", len(ordinaryGoTests))
 	}
 	seconds := 0
 	for i, want := range ordinaryGoTests {
@@ -132,6 +141,9 @@ func ordinaryEvidencePolicy(text string) error {
 	// cleanup behind its guard after the catch, outside the try, after the last go test
 	if tryAt, init := at("          try {\n            if (!(Test-Path"), at("          $base = ''\n          $origin = ''\n"); tryAt < 0 || init < 0 || init > tryAt {
 		return fmt.Errorf("the ordinary collection must initialise $base and $origin before its try")
+	}
+	if funcAt, tryAt := at("          function Write-OrdinaryFailure("), at("          try {\n"); funcAt < 0 || funcAt > tryAt {
+		return fmt.Errorf("the failure warning must be defined before the first go test, outside the try")
 	}
 	if guardAt, linuxAt := at("            if (!(Test-Path"), at("            if ($IsLinux) {\n"); guardAt < 0 || linuxAt < guardAt {
 		return fmt.Errorf("the host-file guard must come before the cgroup delegation")
@@ -219,6 +231,41 @@ func TestWorkflowOrdinaryEvidenceIsGateExternal(t *testing.T) {
 	moveCheck := "              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }\n"
 	cleanup := "          if ($base -ne '') {\n            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner\n            sudo sh -c \"echo $PID > '$origin/cgroup.procs'\" 2>$null\n            sudo rmdir \"$base/jobs\" \"$base/supervisor\" $base 2>$null\n          }\n"
 	firstGo := "            go test ./src/kit -run '^(TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases|"
+	// the failure warning of each go test (F1 of #435): after the log, before the completion check
+	tsqlCheck := "            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql"
+	tsqlShowAndWarn := "            Get-Content -LiteralPath $log\n            Write-OrdinaryFailure $log $LASTEXITCODE\n" + tsqlCheck
+	funcStart := strings.Index(block, "          function Write-OrdinaryFailure(")
+	failureFunc := block[funcStart : funcStart+strings.Index(block[funcStart:], "\n          }\n")+len("\n          }\n")]
+	// the position (F3 of #435): the step moved behind the upload that carries its file, behind the next uploads, or
+	// exchanged with the step it extends or with its own upload, and its own upload moved in front of it
+	without := strings.Replace(text, block, "", 1)
+	stepEnd := func(s, name string) int {
+		i := strings.Index(s, name) + len(name)
+		return i + strings.Index(s[i:], "      - name: ")
+	}
+	place := func(s string, at int, step string) string { return s[:at] + step + "\n" + s[at:] }
+	_, scopeBody, _ := strings.Cut(text, scopeEvidenceCollectHead)
+	scopeBody, _, _ = strings.Cut(scopeBody, "\n      - ")
+	scopeBlock := scopeEvidenceCollectHead + scopeBody
+	swap := func(a, b string) string {
+		s := strings.Replace(text, a, "\x00", 1)
+		return strings.Replace(strings.Replace(s, b, a, 1), "\x00", b, 1)
+	}
+	for name, broken := range map[string]string{
+		"after-scope-upload":         place(without, stepEnd(without, scopeUploadName), block),
+		"after-route-upload":         place(without, stepEnd(without, "      - name: route 결과 보관\n"), block),
+		"swap-with-ordinary-upload":  swap(block, upload),
+		"swap-with-scope-collection": swap(block, scopeBlock),
+		"upload-before-collection":   strings.Replace(strings.Replace(text, upload, "", 1), block, upload+"\n"+block, 1),
+	} {
+		t.Run("position-"+name, func(t *testing.T) {
+			if err := ordinaryEvidencePolicy(broken); broken == text || err == nil {
+				t.Fatal("ordinary step position control not rejected")
+			} else {
+				t.Logf("rejected: %v", err)
+			}
+		})
+	}
 	for name, broken := range map[string]string{
 		// the step itself: present, bounded, continuing, after a success, after the scope collection
 		"step-removed":     strings.Replace(text, block, "", 1),
@@ -269,13 +316,23 @@ func TestWorkflowOrdinaryEvidenceIsGateExternal(t *testing.T) {
 		"skip-passes-store":        inBlock("-Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore \\('", "-Pattern '^'"),
 		"fail-dropped-tsql":        inBlock("'^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql \\('", "'^    --- PASS: TestOrdinarySQLPublicPassCapacity/tsql \\('"),
 		"skip-passes-json":         inBlock("-Pattern \"^--- (PASS|FAIL): $test \\(\")) { $notRun += $test }\n            }\n            $log = Join-Path $ordinaryOut 'postgresql.log'", "-Pattern '^')) { $notRun += $test }\n            }\n            $log = Join-Path $ordinaryOut 'postgresql.log'"),
-		"unlogged-go-test":         inBlock("            Get-Content -LiteralPath $log\n            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql", "            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql"),
-		"exit-code-throws":         inBlock("            Get-Content -LiteralPath $log\n            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql", "            if ($LASTEXITCODE -ne 0) { throw \"ordinary test failed ($LASTEXITCODE)\" }\n            Get-Content -LiteralPath $log\n            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql"),
-		"not-run-ignored":          inBlock("            if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }\n", ""),
-		"scope-dir-global":         "", // two edits, below
-		"scope-dir-not-named":      inBlock("            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", ""),
-		"result-dir-dropped":       inBlock("            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'\n", ""),
-		"file-check-dropped":       inBlock("            if (!(Test-Path -LiteralPath (Join-Path $scopeOut \"query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json\"))) { throw 'ordinary scope file missing' }\n", ""),
+		"unlogged-go-test":         inBlock(tsqlShowAndWarn, tsqlCheck),
+		"exit-code-throws":         inBlock(tsqlShowAndWarn, "            if ($LASTEXITCODE -ne 0) { throw \"ordinary test failed ($LASTEXITCODE)\" }\n"+tsqlShowAndWarn),
+		// a nonzero go test is visible (F1 of #435): each test names itself, the warning keeps its content, a throw is not it
+		"failure-warning-dropped-tsql":  inBlock(tsqlShowAndWarn, "            Get-Content -LiteralPath $log\n"+tsqlCheck),
+		"failure-warning-dropped-json":  inBlock("            Get-Content -LiteralPath $log\n            Write-OrdinaryFailure $log $LASTEXITCODE\n            foreach ($test in @('TestVerifyOrdinary", "            Get-Content -LiteralPath $log\n            foreach ($test in @('TestVerifyOrdinary"),
+		"failure-warning-dropped-store": inBlock("            Write-OrdinaryFailure $log $LASTEXITCODE\n            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore", "            if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore"),
+		"failure-warning-silent":        inBlock("            if ($status -eq 0) { return }\n", "            return\n"),
+		"failure-warning-always-silent": inBlock("            Write-Output \"::warning::ordinary go test exited ${status} (", "            Write-Verbose \"::warning::ordinary go test exited ${status} ("),
+		"failure-tests-not-named":       inBlock("failed: $($failed -join ', '); ", ""),
+		"failure-pattern-wrong":         inBlock("'^\\s*--- FAIL: (\\S+)'", "'^--- FAIL: (\\S+)'"),
+		"failure-claim-not-stated":      inBlock("; a test that failed stores no result and its tuples stay BLOCKED", ""),
+		"failure-function-in-try":       strings.Replace(inBlock(failureFunc, ""), "            $log = Join-Path $ordinaryOut 'postgresql.log'\n", strings.ReplaceAll(failureFunc, "          ", "            ")+"            $log = Join-Path $ordinaryOut 'postgresql.log'\n", 1),
+		"not-run-ignored":               inBlock("            if ($notRun.Count -gt 0) { throw \"ordinary tests did not run: $($notRun -join ', ')\" }\n", ""),
+		"scope-dir-global":              "", // two edits, below
+		"scope-dir-not-named":           inBlock("            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", ""),
+		"result-dir-dropped":            inBlock("            $env:TSGK_ORDINARY_SCOPE_RESULTS = Join-Path $ordinaryOut 'results'\n", ""),
+		"file-check-dropped":            inBlock("            if (!(Test-Path -LiteralPath (Join-Path $scopeOut \"query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json\"))) { throw 'ordinary scope file missing' }\n", ""),
 		// the upload
 		"upload-requires":       inUpload("if-no-files-found: ignore\n", "if-no-files-found: error\n"),
 		"upload-fails-producer": strings.Replace(text, ordinaryEvidenceUploadHead, strings.Replace(ordinaryEvidenceUploadHead, "        continue-on-error: true\n", "", 1), 1),
@@ -292,8 +349,10 @@ func TestWorkflowOrdinaryEvidenceIsGateExternal(t *testing.T) {
 			broken = strings.Replace(inBlock("            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", ""), "            $env:TSGK_NATIVE_REQUIRED = '1'\n", "            $env:TSGK_NATIVE_REQUIRED = '1'\n            $env:TSGK_QUERY_SCOPE_OUT = $scopeOut\n", 1)
 		}
 		t.Run(name, func(t *testing.T) {
-			if broken == text || ordinaryEvidencePolicy(broken) == nil {
+			if err := ordinaryEvidencePolicy(broken); broken == text || err == nil {
 				t.Fatal("ordinary evidence control not rejected")
+			} else {
+				t.Logf("rejected: %v", err)
 			}
 		})
 	}

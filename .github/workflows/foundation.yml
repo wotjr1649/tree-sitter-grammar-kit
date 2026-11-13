@@ -650,8 +650,17 @@ jobs:
           }
           $dest = Join-Path $env:RUNNER_TEMP "s05-prepared-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & src/dev/s05-native/prepare-routes.ps1 -Destination $dest -Platform linux/amd64 -CgroupParent $cgroup
-          # keep the regeneration reports, drop the duplicated outputs, tools and CLI
-          Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory | Remove-Item -Recurse -Force }
+          # keep the regeneration reports, drop the duplicated outputs, tools and CLI. The PostgreSQL route keeps the
+          # two small generated files of each workspace (grammar.json, node-types.json; about 2 MB each): the ordinary
+          # PostgreSQL regressions (#427 P1) check their hand-authored tree against them and against the pinned digests
+          # of src/contracts/reproduction-routes.json, so the opt-in collection finds what a local preparation holds.
+          Get-ChildItem -LiteralPath (Join-Path $dest 'repro') -Directory | ForEach-Object {
+            $route = $_.Name
+            Get-ChildItem -LiteralPath $_.FullName -Directory | ForEach-Object {
+              if ($route -ne 'postgresql-sql') { Remove-Item -LiteralPath $_.FullName -Recurse -Force; return }
+              Get-ChildItem -LiteralPath $_.FullName -File -Recurse | Where-Object { $_.Directory.Name -ne 'out' -or $_.Name -notin @('grammar.json', 'node-types.json') } | Remove-Item -Force
+            }
+          }
           Remove-Item -LiteralPath (Join-Path $dest 'tools'), (Join-Path $dest 'profiles') -Recurse -Force
           Get-ChildItem -LiteralPath $dest -File -Filter 'tsgk*' | Remove-Item -Force
       - name: 준비한 입력 전달
@@ -932,13 +941,24 @@ jobs:
           # in a step of its own, after the scope collection: a step timeout bounds it (the go test timeouts below add
           # up to 9 min), a failure or a timeout cannot fail this required producer (continue-on-error), and a
           # missing or partial result leaves the tuples it did not judge BLOCKED. It extends the host directory the
-          # scope collection stored, and does nothing without it. A skipped test passes go test and stores nothing:
-          # every test must have run (PASS or FAIL), else the step ends with a warning.
+          # scope collection stored, and does nothing without it. A regression stores its result only when it has
+          # passed: a test that failed (a FAILED tuple included) stores nothing, is named in a warning, and the
+          # merge reports the host's ordinary rows under-filled. A skipped test passes go test and stores nothing:
+          # every test must have run (PASS or FAIL), else the step ends with a warning. The VERIFIED rows rest on
+          # synthetic reference rows and approval (#427 decision B5).
           $scopeOut = Join-Path $env:RUNNER_TEMP "query-scope-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $ordinaryOut = Join-Path $env:RUNNER_TEMP "ordinary-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $cgroup = ''
           $base = ''
           $origin = ''
+          # a go test that exits nonzero is named in a warning with the tests that failed in it. The regressions store
+          # their result only once they have passed, so a failed test leaves no claim and its tuples stay BLOCKED.
+          function Write-OrdinaryFailure($log, $status) {
+            if ($status -eq 0) { return }
+            $failed = @(Select-String -LiteralPath $log -CaseSensitive -Pattern '^\s*--- FAIL: (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+            if ($failed.Count -eq 0) { $failed = @('none named, a build failure or a panic or timeout') }
+            Write-Output "::warning::ordinary go test exited ${status} ($(Split-Path -Leaf $log)); failed: $($failed -join ', '); a test that failed stores no result and its tuples stay BLOCKED"
+          }
           try {
             if (!(Test-Path -LiteralPath (Join-Path $scopeOut 'run-identity.json') -PathType Leaf)) { throw 'the scope collection stored no host files to extend' }
             if ($IsLinux) {
@@ -972,31 +992,37 @@ jobs:
             $log = Join-Path $ordinaryOut 'json.log'
             go test ./src/kit -run '^(TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases|TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase|TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase)$' -count=1 -v -timeout=150s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             foreach ($test in @('TestVerifyOrdinaryQuerySemanticsOwnedJSONPublicPassAndNegativeCases', 'TestOrdinaryFullPositiveOwnedJSONZeroEditMultiCase', 'TestOrdinaryFullPositiveOwnedJSONHistoryMultiCase')) {
               if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
             }
             $log = Join-Path $ordinaryOut 'postgresql.log'
             go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^postgresql-sql$' -count=1 -v -timeout=75s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/postgresql-sql \(')) { $notRun += 'postgresql-sql' }
             # PostgreSQL forgery counterexamples: one tampered tree node, capture or fact fails exactly the tuples that consume it
             $log = Join-Path $ordinaryOut 'postgresql-tamper.log'
             go test ./src/kit -run '^TestOrdinaryPostgreSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryPostgreSQLExpectedAgainstNative \(')) { $notRun += 'postgresql-tamper' }
             # TSQL: the 72-tuple public pass (about 96.5 % of the logical limit on Windows) and the tamper counterexamples
             $log = Join-Path $ordinaryOut 'tsql.log'
             go test ./src/kit -run '^TestOrdinarySQLPublicPassCapacity$/^tsql$' -count=1 -v -timeout=100s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^    --- (PASS|FAIL): TestOrdinarySQLPublicPassCapacity/tsql \(')) { $notRun += 'tsql' }
             $log = Join-Path $ordinaryOut 'tsql-tamper.log'
             go test ./src/kit -run '^TestOrdinaryTSQLExpectedAgainstNative$' -count=1 -v -timeout=75s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryTSQLExpectedAgainstNative \(')) { $notRun += 'tsql-tamper' }
             # the platform neutrality of the inputs: the same bytes on both hosts, and the scanners that ask the host's libc
             $log = Join-Path $ordinaryOut 'neutrality.log'
             go test ./src/dev/query-witness -run '^(TestOrdinarySourcesAreByteIdenticalOnBothHosts|TestOrdinaryScannerLibcExposure)$' -count=1 -v -timeout=45s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             foreach ($test in @('TestOrdinarySourcesAreByteIdenticalOnBothHosts', 'TestOrdinaryScannerLibcExposure')) {
               if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern "^--- (PASS|FAIL): $test \(")) { $notRun += $test }
             }
@@ -1005,6 +1031,7 @@ jobs:
             $log = Join-Path $ordinaryOut 'store.log'
             go test ./src/kit -run '^TestOrdinaryScopeStore$' -count=1 -v -timeout=30s > $log 2>&1
             Get-Content -LiteralPath $log
+            Write-OrdinaryFailure $log $LASTEXITCODE
             if (!(Select-String -LiteralPath $log -CaseSensitive -Quiet -Pattern '^--- (PASS|FAIL): TestOrdinaryScopeStore \(')) { $notRun += 'store' }
             if ($notRun.Count -gt 0) { throw "ordinary tests did not run: $($notRun -join ', ')" }
             if (!(Test-Path -LiteralPath (Join-Path $scopeOut "query-scope-ordinary-$($env:PLATFORM -replace '/', '-').json"))) { throw 'ordinary scope file missing' }

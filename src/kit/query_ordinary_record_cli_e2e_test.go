@@ -94,7 +94,7 @@ func ordinaryCLIReplayProfile(t *testing.T, req OrdinaryQuerySemanticsRequest, r
 	members = append(members, nested...)
 	profile := ReplayProfile{
 		ID: "ordinary-record-cli-replay", Reducer: "oracle-set-r9", Operation: "evidence-replay",
-		Subject: ReplaySubject{Run: req.Selection.RunID, Attempt: 1, Platform: "windows/amd64", EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked},
+		Subject: ReplaySubject{Run: req.Selection.RunID, Attempt: 1, Platform: ordinaryHostSubject(), EvidenceMode: ModeNewRun, ExecutionStatus: StatusCompleted, Assessment: AssessBlocked},
 		Identities: map[string]string{
 			"workload": req.Selection.Profile.SHA256, "ordinary-selection": digestHex(selection), "ordinary-registration": req.Selection.Registration.SHA256,
 			"ordinary-assets": req.Selection.Assets.SHA256, "ordinary-plan-commitment": req.Selection.Commitment.SHA256, "registry": req.RegistrySHA256,
