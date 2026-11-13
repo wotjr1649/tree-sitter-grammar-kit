@@ -1228,8 +1228,25 @@ func queryScopeEvidencePolicy(text, gateSource string) error {
 	if move, first := strings.Index(collect, "$base/supervisor/cgroup.procs"), strings.Index(collect, "go test "); move < 0 || first < move {
 		return fmt.Errorf("the collection must move itself into its supervisor cgroup before its first go test")
 	}
-	if len(regexp.MustCompile(`(?m)^\s*go test `).FindAllString(collect, -1)) != 2 || strings.Count(collect, "-timeout") != 2 {
+	goTests := regexp.MustCompile(`(?m)^\s*go test `).FindAllStringIndex(collect, -1)
+	if len(goTests) != 2 || strings.Count(collect, "-timeout") != 2 {
 		return fmt.Errorf("the scope collection runs exactly two go test commands, each with its own timeout")
+	}
+	// The state the cleanup reads, the origin cgroup and the cleanup itself (review of de93254, F1): the state is
+	// initialised before the try, the origin is read on Linux only and before the move (else "back" is the supervisor),
+	// and the cleanup runs behind its guard after the catch, outside the try, after the last go test.
+	at := func(s string) int { return strings.Index(collect, s) }
+	if tryAt, init := at("          try {\n            if ($IsLinux) {\n"), at("          $base = ''\n          $origin = ''\n"); tryAt < 0 || init < 0 || init > tryAt {
+		return fmt.Errorf("the collection must initialise $base and $origin before a try whose Linux guard opens the delegation")
+	}
+	originAt := at(`$origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')`)
+	if moveAt := at("$base/supervisor/cgroup.procs"); originAt < 0 || originAt > moveAt {
+		return fmt.Errorf("the collection must read its origin cgroup before it moves into the supervisor")
+	}
+	catchAt, guardAt := at("\n          } catch {\n"), at("\n          if ($base -ne '') {\n")
+	backAt, removeAt, exitAt := at("sudo sh -c \"echo $PID > '$origin/cgroup.procs'\" 2>$null"), at("sudo rmdir "), at("$global:LASTEXITCODE = 0\n")
+	if lastGo := goTests[len(goTests)-1][0]; catchAt < lastGo || guardAt < catchAt || backAt < guardAt || removeAt < backAt || exitAt < removeAt {
+		return fmt.Errorf("the collection cleanup must follow the catch block, guarded, after the last go test and before the exit code reset")
 	}
 	for _, required := range []string{
 		// the producer is a required job: its upload of this extra evidence continues on error as well
@@ -1331,6 +1348,10 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 	merge := "      - name: 두 host scope 판정 병합과 fold (gate 밖)\n        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        continue-on-error: true\n"
 	upload := scopeEvidenceUploadHead
 	collect := scopeEvidenceCollectHead
+	originLine := "              $origin = '/sys/fs/cgroup' + ((Get-Content -LiteralPath /proc/self/cgroup -TotalCount 1) -replace '^0::', '')\n"
+	moveLine := "              sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n"
+	moveCheck := "              if ($LASTEXITCODE -ne 0) { throw 'cgroup move failed' }\n"
+	cleanup := "          if ($base -ne '') {\n            # best effort: leave the supervisor, then remove the delegated subtree; a leftover dies with the runner\n            sudo sh -c \"echo $PID > '$origin/cgroup.procs'\" 2>$null\n            sudo rmdir \"$base/jobs\" \"$base/supervisor\" $base 2>$null\n          }\n"
 	without := func(block, line string) string {
 		return strings.Replace(text, block, strings.Replace(block, line, "", 1), 1)
 	}
@@ -1379,6 +1400,15 @@ func TestWorkflowQueryScopeEvidenceIsGateExternal(t *testing.T) {
 		"collection-cleanup-dropped":         strings.Replace(text, "            sudo rmdir \"$base/jobs\" \"$base/supervisor\" $base 2>$null\n", "", 1),
 		"collection-move-after-go-test": strings.Replace(strings.Replace(text, "              sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n", "", 1),
 			"            $inlineLog = Join-Path", "            sudo sh -c \"echo $PID > '$base/supervisor/cgroup.procs'\"\n            $inlineLog = Join-Path", 1),
+		// review of de93254 F1: the origin read, its place before the move, the Linux guard, the state
+		// initialisation and the cleanup (guard, place after the last go test, outside the try)
+		"collection-origin-dropped":         strings.Replace(text, originLine, "", 1),
+		"collection-origin-read-after-move": strings.Replace(strings.Replace(text, originLine, "", 1), moveLine+moveCheck, moveLine+moveCheck+originLine, 1),
+		"collection-islinux-guard-dropped":  strings.Replace(text, "            if ($IsLinux) {\n              # This step is a new process", "            if ($true) {\n              # This step is a new process", 1),
+		"collection-cleanup-before-go-test": strings.Replace(strings.Replace(text, cleanup, "", 1), "            $env:TSGK_NATIVE_REQUIRED = '1'\n", strings.ReplaceAll(cleanup, "          ", "            ")+"            $env:TSGK_NATIVE_REQUIRED = '1'\n", 1),
+		"collection-cleanup-guard-dropped":  strings.Replace(text, "          if ($base -ne '') {\n", "          if ($true) {\n", 1),
+		"collection-state-init-dropped":     strings.Replace(text, "          $base = ''\n          $origin = ''\n", "", 1),
+		"collection-cleanup-inside-try":     strings.Replace(strings.Replace(text, cleanup, "", 1), "          } catch {\n            Write-Output \"::warning::query scope collection failed: $_\"", strings.ReplaceAll(cleanup, "          ", "            ")+"          } catch {\n            Write-Output \"::warning::query scope collection failed: $_\"", 1),
 		// #362 N3: a further gate-external step between the merge steps and the clean-tree check is counted
 		"sixth-step-40min": func() string {
 			q := strings.Index(text, "\n  qualification:\n")
