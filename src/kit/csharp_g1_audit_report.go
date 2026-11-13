@@ -72,6 +72,16 @@ type G1AuditStratum struct {
 	// The full audit compares the position of the witness, not the types (the sample audit compares the types).
 	Found        int    `json:"found_and_corrected,omitempty"`
 	Upper95Found string `json:"upper_95_percent_with_found,omitempty"`
+	// The type bound of the differential-oracle stratum (G1TYPEAUDIT76), stated apart from the position bound above: Samples
+	// and Mismatches there are the position audit, these the type audit of the same 76 alternatives. TypeFound counts the rows
+	// whose ts did not pass the first comparison and were corrected, TypeNotDerivable the rows where the grammar text leaves the
+	// type open (the candidate set is kept; they count as compared and not as errors).
+	TypeSamples      int    `json:"type_samples,omitempty"`
+	TypeMismatches   int    `json:"type_mismatches,omitempty"`
+	TypeFound        int    `json:"type_found_and_corrected,omitempty"`
+	TypeNotDerivable int    `json:"type_not_derivable,omitempty"`
+	TypeUpper95      string `json:"type_upper_95_percent,omitempty"`
+	TypeUpper95Found string `json:"type_upper_95_percent_with_found,omitempty"`
 }
 
 // G1AuditStrata groups the samples of the audit of x by stratum and gives each stratum's exact upper
@@ -83,6 +93,13 @@ type G1AuditStratum struct {
 // keeps the samples. The 76 are the whole stratum, so the bound is the bound of the audited property for a stratum read
 // as a sample, not an estimate for alternatives that were not compared.
 func G1AuditStrata(x CSharpG1Expected, full []G1Audit76Row) []G1AuditStratum {
+	return G1AuditStrataWithTypes(x, full, nil)
+}
+
+// G1AuditStrataWithTypes is G1AuditStrata with the rows of the type audit (G1TYPEAUDIT76): the differential-oracle stratum then
+// states the type bound next to the position bound, each from its own audit of the same 76 alternatives. The totals count the
+// position bound; the type bound is not added to them, because the two audits compare different properties.
+func G1AuditStrataWithTypes(x CSharpG1Expected, full []G1Audit76Row, types []G1TypeAudit76Row) []G1AuditStratum {
 	basis := map[string]string{}
 	for _, a := range x.Alternatives {
 		basis[a.ID] = a.Basis
@@ -132,6 +149,18 @@ func G1AuditStrata(x CSharpG1Expected, full []G1Audit76Row) []G1AuditStratum {
 			st.Found++
 		}
 	}
+	for _, r := range types {
+		st := byName[G1StratumDifferential]
+		st.TypeSamples++
+		if r.Result == G1AuditMismatch {
+			st.TypeMismatches++
+		} else if r.Initial == G1AuditMismatch {
+			st.TypeFound++
+		}
+		if r.Class == G1TypeNotDerivable {
+			st.TypeNotDerivable++
+		}
+	}
 	values := G1AuditStratum{Stratum: "expected values compared (spec-derived and differential-oracle)", Compared: true}
 	all := G1AuditStratum{Stratum: "all samples", Compared: true}
 	for i := range out {
@@ -156,6 +185,12 @@ func G1AuditStrata(x CSharpG1Expected, full []G1Audit76Row) []G1AuditStratum {
 		st.Upper95Later = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong, st.Samples))
 		if st.Found > 0 {
 			st.Upper95Found = fmt.Sprintf("%.1f", G1AuditUpper95(st.Mismatches+st.LaterWrong+st.Found, st.Samples))
+		}
+		if st.TypeSamples > 0 {
+			st.TypeUpper95 = fmt.Sprintf("%.1f", G1AuditUpper95(st.TypeMismatches, st.TypeSamples))
+			if st.TypeFound > 0 {
+				st.TypeUpper95Found = fmt.Sprintf("%.1f", G1AuditUpper95(st.TypeMismatches+st.TypeFound, st.TypeSamples))
+			}
 		}
 	}
 	return out

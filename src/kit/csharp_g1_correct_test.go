@@ -94,7 +94,7 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(km.Corrections) != 5 || len(x.Corrections) != 18 {
+	if len(km.Corrections) != 5 || len(x.Corrections) != 20 {
 		t.Fatalf("corrections: kind map %d, expected %d", len(km.Corrections), len(x.Corrections))
 	}
 	for _, c := range append(slices.Clone(km.Corrections), x.Corrections...) {
@@ -124,6 +124,8 @@ func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
 		{"csharp-B02.a021", G1FieldEvidence}, {"csharp-B02.a062", G1FieldEvidence}, {"csharp-B02.a030", G1FieldEvidence}, {"csharp-B02.a072", G1FieldEvidence},
 		{"csharp-B02.a084", G1FieldEvidence}, {"csharp-B02.a086", G1FieldEvidence}, {"csharp-B02.a087", G1FieldEvidence}, {"csharp-B02.a088", G1FieldEvidence},
 		{"csharp-B02.a089", G1FieldEvidence}, {"csharp-B01.a381", "witnesses[0].match"}, {"csharp-B01.a395", "witnesses[0].match"},
+		// the type audit (G1TYPEAUDIT76): the ts of the two parameter modifier keywords is narrowed after the evidence corrections
+		{"csharp-B02.a088", "ts"}, {"csharp-B02.a089", "ts"},
 	})
 	wantFlags(km.Corrections, []flag{
 		{"InterpolatedStringStartToken", "entry"}, {"InterpolatedVerbatimStringStartToken", "entry"},
@@ -629,7 +631,7 @@ func TestCSharpG1CorrectionGroundsAreQuotes(t *testing.T) {
 		return
 	}
 	gt, st := mustRead(t, g), map[string]string{}
-	for _, name := range []string{"lexical-structure.md", "expressions.md"} {
+	for _, name := range G1SpecFiles {
 		st[name] = string(mustRead(t, s+"/"+name))
 	}
 	for _, cs := range [][]G1Correction{g1ExpectedCorrections, g1KindMapCorrections} {

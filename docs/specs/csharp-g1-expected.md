@@ -89,6 +89,14 @@ BLOCKED는 golden으로 채우지 않는다. `POSITION_DEPENDENT`·`SEMANTIC_BIN
   | 전체 | 98 | 0 | 3.0% | 11 | 19.1% (later_wrong 1 포함) |
 
   두 층은 비교한 성질이 달라 합산 상한(3.2%·3.0%)은 "spec-derived의 type·text 일치"와 "차분 oracle의 위치 일치"를 섞은 값이다. 층별 값을 우선한다.
+- **차분 oracle 층의 type 상한(`G1AuditStrataWithTypes(x, rows, typeRows)`).** 위 표의 차분 oracle 행은 **위치** 상한이다. type 상한은 같은 76개를 type 감사([G1TYPEAUDIT76](#차분-oracle-대안-type-감사-g1typeaudit76))로 따로 대조한 값이고 같은 층 행의 별도 member(`type_samples`·`type_mismatches`·`type_found_and_corrected`·`type_not_derivable`·`type_upper_95_percent`·`type_upper_95_percent_with_found`)로 적는다. 두 상한을 하나로 합치지 않고, 합계 행도 위치 상한만 센다.
+
+  | 차분 oracle 층(76개) | 비교 | 불일치 | 95% 상한(정확) | 정정된 대안 | 정정을 오류로 센 상한 | 문법 원문으로 정해지지 않음 |
+  |---|---|---:|---:|---:|---:|---:|
+  | 위치(witness) | 76 | 0 | 3.9% | 11 | 22.8% | — |
+  | type(`ts`) | 76 | 0 | 3.9% | 2 | 8.1% | 3 (후보 집합 유지) |
+
+  type 행의 "비교 76"에는 grammar 원문이 type을 정하지 못해 후보 집합(`["ref", modifier]`)을 `ts`와 대조한 3개가 들어 있다. 이들은 후보 집합과 같음만 보이고 type을 도출한 것이 아니므로 "도출한 73 + 후보 일치 3"으로 읽는다. 위치 상한도 type 상한도 grammar.js와 명세를 읽는 손 도출과 기대값의 일치를 말하며 Roslyn이나 tree-sitter-c-sharp의 오류율이 아니다.
 - 봉인된 r1 asset의 `estimate.upper_95_percent`는 rule of three(`300/n`)의 `11.5`다. 정확한 값(10.9)보다 크므로 보수적이며 r1은 바꾸지 않는다. 불일치가 있을 때 asset을 유도하는 `g1Audit`는 불일치율 자체가 아니라 정확한 상한을 쓴다(이전에는 불일치율을 상한으로 적었다. `TestCSharpG1AuditEstimateWithMismatches`).
 - 표본 감사가 확인한 것은 같은 명세·grammar를 읽는 손 도출과 도출한 기대값의 일치다. Roslyn의 오류율도, 기대값 asset 전체의 오류율도 아니다. 층마다 표본이 작아 차분 oracle 층(4개)은 상한 52.7%밖에 보이지 못한다. 이 층의 대안 76개(B02 56 + B01 보간 20)는 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 모두 명세에서 손으로 도출해 대조했고, 층별 보고(`G1AuditStrata(x, rows)`)의 차분 oracle 층은 그 76개를 센다(표본 4개는 76개에 포함되어 두 번 세지 않는다).
 - **사후 확인:** 표본에 든 `csharp-B01.a335`는 감사에서 MATCH였다(손 도출도 `identifier`). native 대조가 이 값이 틀림을 드러냈고 r2가 정정했다. 이를 오류로 세면 `spec-derived` 층은 1/16(상한 26.4%), 기대값을 비교한 표본은 1/20(21.6%), 전체는 1/26(17.0%)이다(`later_wrong`, `upper_95_percent_with_later_wrong`). 표본 감사 하나가 이 오류를 잡지 못했으므로 위 상한을 "기대값이 틀릴 확률의 상한"으로 읽으면 안 된다.
@@ -183,7 +191,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - **통계를 둘로 나눈다.** "봉인 시 일치"(r1 executed asset: 426 중 422)와 "사후 정정 뒤 일치"(r2 executed asset의 `corrected`·`corrected_match`: 정정 15건 중 n건)를 합치지 않는다. 정정한 대안은 독립 기대값 통계(표본 감사, 봉인 시 일치율)에서 "사후 정정"으로 따로 센다. r2의 표본 감사·metamorphic·cross_check 절은 r1의 것 그대로다(봉인 당시의 기록이며 정정 값으로 다시 계산하지 않는다).
 - **r2 executed asset**은 r2 기대값·매핑표를 같은 native 원시 관측(`raw_native`)과 다시 대조한 기록이며, `sealed_match`(정정하지 않은 대안 중 일치)·`corrected`·`corrected_match`를 가진다.
 
-### r2 정정 23건 (기대값 18 + 매핑표 5)
+### r2 정정 25건 (기대값 20 + 매핑표 5)
 
 | 항목 | field | 이전 → 새 | 근거 |
 |---|---|---|---|
@@ -200,11 +208,12 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 | `csharp-B02.a072` (`type_parameter_constraints`) | `ts+witnesses[0]` | 절 `where T : class`(66–81) → `ClassConstraint class`(76–81), ts `type_parameter_constraint` | grammar.js에 제약 목록 node는 없고 각 제약만 node다. 단일 제약 목록에서 목록의 범위는 그 제약과 같다. 다중 제약 목록은 증명하지 않는다 |
 | `csharp-B02.a084`·`a086`·`a087` (`ref_kind 'ref'`, `parameter_modifier`, `parameter_mode_modifier: ref_kind`) | `ts+witnesses[0]` | `Parameter ref int a`(31–40) → `RefKeyword ref`(31–34), ts `["\"ref\"", "modifier"]` | grammar.js `_parameter_type_with_modifiers`가 한정자 키워드마다 독립 `modifier` node를 만든다. 세 대안의 증거 위치가 같아진다(규칙 문맥만 다르다) |
 | `csharp-B02.a088` (`'out'`) · `a089` (`'in'`) | `ts+witnesses[0]` | `Parameter out int b`(42–51) → `OutKeyword`(42–45), `Parameter in int c`(53–61) → `InKeyword`(53–55) | 위와 같다 |
+| `csharp-B02.a088` · `a089` | `ts` | `["\"out\"", modifier]` → `[modifier]`, `["\"in\"", modifier]` → `[modifier]` | type 감사(G1TYPEAUDIT76)가 찾았다. 파라미터 위치의 `out`·`in`은 grammar.js `_parameter_type_with_modifiers`의 `alias(choice('this', 'scoped', 'ref', 'out', 'in', 'readonly'), $.modifier)`를 거쳐 `modifier` 리프 하나가 되고, `type`의 `ref_type`은 `ref`만 가져 같은 자리에서 익명 `"out"`·`"in"`을 만드는 규칙이 없다. 앞 정정이 증거와 함께 가져온 `ts`가 매핑표 r2의 일대다 대응(익명 token과 `modifier`)이었던 것을 좁힌다. 매핑표는 바꾸지 않는다. 저장된 native 관측과 다시 대조해 두 대안은 MATCH다(executed r2 426/426) |
 | `csharp-B01.a381` (`regular_interpolation`) · `a395` (`verbatim_interpolation`) | `witnesses[0].match` | `span` → `starts-at` | 명세 심볼은 중괄호 사이의 식이고 grammar.js `interpolation` node는 외부 scanner token의 alias `interpolation_brace`로 시작해 끝난다. 외부 token의 범위는 grammar 원문에 없으므로 시작만 도출할 수 있다(a383과 같은 원칙) |
 | (`csharp-B01.a382` 판정) | 변경 없음 | witness `,5`(75–77) 유지 | grammar.js `interpolation_alignment_clause: seq(',', $.expression)`가 쉼표를 node 안에 두고 쉼표는 일반 anonymous token(§6.4.6)이다. 감사 asset의 `node`(앞 `,`, 외부 아님)로 표현한다 |
 | 매핑표 `ts_only` `interpolation_start` | `ts_only` | 없음 → `EXTERNAL_SCANNER_NODE` | 위 네 항목의 결과: 이 type을 가리키는 Roslyn 종류가 더는 없어 목록에 든다. grammar.js `externals`가 세 시작 token을 외부 scanner token으로 선언하며 r1이 `interpolation_brace`에 준 사유와 같다 |
 
-**사후 정정의 통계(F6).** 사후 정정은 `after_native`로 센다(r2의 23건 모두). 표본 감사의 `later_wrong`은 `after_native`이고 `ts`를 바꾼 정정이 감사에서 일치로 판정된 표본에 닿은 수(`csharp-B01.a335` 1건)이며, 항목 이름으로 판정하지 않는다. `basis_independent`는 통계가 아니라 근거의 성격이다. 사후 정정한 기대값 대안은 15개(native 비교에서 4개, 전수 감사에서 11개)이고 모두 일치로 센다: r2 executed의 `corrected` 15·`corrected_match` 15·`sealed_match` 411이다. 전수 감사가 고친 11건의 `after_native`는 시간 표지다: 정정 시점이 native 대조 이후이고 근거에는 native 결과가 없다(`basis_independent`). native는 정정된 값이 모순되지 않음을 확인할 뿐이다.
+**사후 정정의 통계(F6).** 사후 정정은 `after_native`로 센다(r2의 25건 모두). 표본 감사의 `later_wrong`은 `after_native`이고 `ts`를 바꾼 정정이 감사에서 일치로 판정된 표본에 닿은 수(`csharp-B01.a335` 1건)이며, 항목 이름으로 판정하지 않는다. `basis_independent`는 통계가 아니라 근거의 성격이다. 사후 정정한 기대값 대안은 15개(native 비교에서 4개, 전수 감사에서 11개)이고 모두 일치로 센다: r2 executed의 `corrected` 15·`corrected_match` 15·`sealed_match` 411이다. type 감사가 고친 a088·a089의 `ts` 좁힘 2건은 이미 센 대안(전수 감사의 11건 안)에 대한 두 번째 정정이므로 정정한 대안 수 15를 늘리지 않는다. 전수 감사가 고친 11건의 `after_native`는 시간 표지다: 정정 시점이 native 대조 이후이고 근거에는 native 결과가 없다(`basis_independent`). native는 정정된 값이 모순되지 않음을 확인할 뿐이다.
 
 한계: 보간 시작 정정 대안의 새 기대값은 `interpolation_start` node의 **시작**만 요구하고 뒤따르는 따옴표 node는 확인하지 않는다(범위·순서를 도출할 근거가 grammar 원문에 없다). **남은 과제(G1-3d):** 시작 token을 "시작 node + 따옴표 node"의 복합으로 매핑표에 적고 그 순서·범위를 대조하는 것은 매핑표 schema 확장이 필요해 G1-3d(보간 문자열)로 넘겼다.
 
@@ -225,6 +234,26 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
   - 인스턴스 목록은 한 사람이 명세 문장에서 도출한 것이고 구문 분석 결과가 아니다. 비교하는 성질은 **위치와 lexeme 형식**이며 type이 아니다. 판정이 명세로 정해지지 않는 인스턴스(`T?`의 값 형식 여부 등)는 감사 초안에서 따로 적었고 비교 결과에 영향이 없다.
   - 인용문은 명세의 production 한 문단이다(어휘소가 명세에서 정의되는 곳). 문장 근거는 JSON의 `form`과 이 절이 요약한다.
 
+## 차분 oracle 대안 type 감사 (G1TYPEAUDIT76)
+
+[전수 감사](#차분-oracle-대안-전수-감사-g1audit76)는 위치만 본다(결정 R-4 B: 위치 감사에 grammar 지식이 섞이지 않게 type 대조는 따로 둔다). 같은 76개의 기대 type(`ts`)은 Roslyn 종류를 매핑표로 옮긴 값이어서 표본 4개만 대조됐다. 이 감사가 나머지를 대조한다.
+
+- **asset:** [`csharp-g1-typeaudit76-r1.json`](../../src/contracts/csharp-g1-typeaudit76-r1.json)(schema `tsgk-csharp-g1-typeaudit76/r1`). 위치 감사 asset(`csharp-g1-audit76-r1.json`)은 바꾸지 않고(SHA-256 고정: `TestCSharpG1PositionAuditIsFrozenAndFreeOfTypes`) 별도 계약으로 둔 것은 그 asset의 header가 "type을 읽지 않고 도출했다"고 약속하고 verifier·시험이 그것을 고정하기 때문이다. 같은 파일에 type을 넣으면 약속의 뜻이 바뀐다. 도구 `src/dev/csharp-g1-typeaudit76`(`-in`으로 저작한 행을 비교 결과와 함께 완성해 쓰고, `-in` 없이 추적 asset을 검증하고, `-grammar`로 모든 ground를 고정 grammar.js와 대조한다), 검증 `ParseCSharpG1TypeAudit76`.
+- **도출:** 고정 `grammar.js`(SHA-256 `63d357e0…`, 매핑표의 pin)의 규칙 이름·alias·`field()`·숨김 규칙(`_x`)·`inline`·`supertypes`·`externals`만으로 witness 위치의 node type을 손으로 도출했다. 매핑표·기대 type·Roslyn 종류·native 출력은 도출 중에 보지 않았다. 기대 type은 도출표를 확정한 뒤 처음 읽었다.
+- **행(76개, id순):** `id`, 도출 분류(`class`), 도출한 type(`types`), 같은 범위의 다른 node type(`coincident`, 선택), 외부 token 표지(`extent`), 사유(`reason`), grammar ground(`ground`: 규칙·줄이 아니라 인용문·`doc_sha256`·`heading`·`gap`, 정정 기록의 ground와 같은 형식과 같은 offline 점검), 비교 결과(`result`·`relation`)와 `ts`를 고치기 전의 결과(`initial`). ground는 grammar.js만이다(명세 ground는 없다: type은 grammar가 정한다).
+- **분류(76):** `NODE` 55(규칙 이름이 곧 node type), `NO_OWN_NODE` 5(명세 production이 자기 node가 없고 같은 범위의 node가 type: 어휘 조각 4, 제약 목록 1), `ALIAS` 6(`prefix_unary_expression`으로 alias된 `*`·`&` 4, 파라미터 `out`·`in`의 `modifier` 2), `EXTERNAL_TOKEN` 7, `NOT_DERIVABLE` 3. 익명 token은 `ts`와 같은 따옴표 표기(`"?"`)로 적는다.
+- **외부 scanner token 7행**(보간 문자열의 시작·본문·닫는 따옴표: a383·a384·a386·a396·a397·a398·a400)은 `extent`가 "type only, extent in the position audit"이다. grammar.js는 외부 token의 type 이름(`externals`와 alias)만 정하고 범위는 scanner가 정하므로 type만 감사하고 범위는 위치 감사가 맡는다. 이 표지는 외부 token 행에만 있어야 하고 verifier가 강제한다.
+- **`NOT_DERIVABLE` 3행**(a084·a086·a087, 파라미터 `ref`): 같은 자리에서 `modifier` alias와 `ref_type`의 첫 token이 경합한다. grammar.js는 이 쌍을 `conflicts`에 적지 않았고 해소는 `prec.left`(`_parameter_type_with_modifiers`)가 암시하는 우선순위에 달려 있어 원문만으로 확정할 수 없다. 그래서 후보 집합 `["\"ref\"", modifier]`를 그대로 두고 "grammar 원문으로 도출 불가"로 표시한다(사용자 결정). native 출력으로 닫지 않는다: 닫으면 기대값이 native에서 나오게 된다. verifier는 후보 집합과 `ts`가 정확히 같을 것을 요구한다(좁히거나 넓히면 거부).
+- **비교 규칙:** 도출 type 하나가 `ts`와 같으면 `EQUAL`, `ts`가 도출 type에 같은 범위의 node(`coincident`)를 더한 것이면 `WITH_COINCIDENT_NODES`(예: `new()`는 `constructor_constraint`와 그것을 감싼 `type_parameter_constraint`), 후보 집합이면 `CANDIDATE_SET_EQUAL`이고 모두 `MATCH`다. 그 밖은 `MISMATCH`이며 relation은 `EXPECTED_SUPERSET`·`EXPECTED_SUBSET`·`OVERLAP`·`DISJOINT`다.
+- **결과:** 처음 비교(r2 정정 전)는 일치 70, 같은 범위의 동시 node 1(a083), 후보 집합 일치 3, **불일치 2**(a088·a089: `ts`가 파라미터 위치에서 만들어지지 않는 익명 `"out"`·`"in"`을 더 가졌다)였다. 사용자 결정으로 r2에 `ts` 좁힘 정정 2건(`[modifier]`)을 더했고(`after_native`·`basis_independent`, 위 표) 저장된 native 관측과 다시 대조해 둘 다 MATCH였다. 정정 뒤 **76/76 MATCH**이고 `initial`이 MISMATCH였던 행은 2(`corrected`)다.
+- **verifier가 보이는 것:** asset이 파싱되고, 행이 r2의 차분 oracle 대안 76개와 정확히 같고, 모든 행이 형식(분류별 type 개수, 정렬·중복 없는 type 이름, 외부 token 표지, 사유, grammar ground)을 지키고, 각 행의 `result`·`relation`·`initial`이 **지금의 r2 `ts`와 정정 기록(`ts` 정정의 이전 값)으로 다시 계산한 것과 같고**, 합계와 정규 bytes가 맞다. r2는 pin하지 않는다.
+- **독립성과 한계:**
+  - type 감사는 매핑표를 읽지 않는다. 입력은 저작한 행과 r2 기대값 asset뿐이다(`G1TypeAudit76Sources`에 다른 필드가 없다). `TestCSharpG1TypeAudit76NeverReadsTheKindMap`이 감사 파일에 매핑표를 가리키는 식별자(`KindMap`·`G1KM` 계열)가 없음을 AST로 고정하고(변이: 매핑표 parser 호출·타입·종류 구조체·경로 상수) 관측·executed asset 이름도 없음을 확인한다. 이 검사는 같은 파일 밖의 도우미가 매핑표를 읽는 경로를 막지 못한다. 감사 파일은 분리 시험에서 **도출 쪽**으로 분류되어 native 입력에 닿지 않음은 호출 폐쇄가 증명한다.
+  - 도출은 한 사람이 grammar.js 원문에서 한 것이고 파서 실행이 아니다. tree-sitter의 alias·우선순위 의미에 대한 일반 지식이 쓰였다(예: alias된 문자열 token은 이름 있는 리프 하나가 된다). 이 점이 a088·a089의 판정을 받친다.
+  - 도출 전에 작업자는 이 문서의 r2 정정 표를 훑다가 몇 줄(`a335`, 보간 시작의 `interpolation_start`)을 보았다. 보간 시작 type은 grammar.js 원문에서 독립적으로 확인되고 `a335`는 76개에 없다.
+  - 후보 집합과 같음(3행)은 type 도출이 아니다. 외부 token 7행은 type만 도출했다.
+  - 위치는 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)가 보고 type은 이 감사가 본다. 둘 다 기대값 asset 전체의 오류율이 아니다.
+
 ## 분리 시험
 
 `TestCSharpG1ExpectedSeparation`은 다음을 보인다.
@@ -232,6 +261,7 @@ witness는 봉인된 값을 그대로 옮긴 것이다. 각 witness를 그 sourc
 - (보조) 도출 경로의 코드(`csharp_g1_spec.go`, `_expected*.go`, `csharp_g1_kindmap.go`)는 `os`·`exec`·네트워크·native·reproduce·runner 패키지를 import하지 않고 native 입력을 가리키는 식별자·문자열을 갖지 않는다. 이 검사는 이름과 고정 파일 목록에 기대므로 우회할 수 있어, 우회를 막는 증명은 위 호출 폐쇄 시험이 한다. 도출은 바이트 입력만 받는 함수다.
 - 명세 도출기(`csharp_g1_spec.go`)는 `regexp`·`strings`·`unicode/utf8`만 쓰며 Roslyn 관측·매핑표·기대값·원장을 가리키는 식별자가 없다. 관측 verifier와 매핑표 코드는 기대값 쪽을 가리키지 않는다.
 - 전수 감사 파일(`csharp_g1_audit76.go`)은 도출 쪽으로 분류하고 호출 폐쇄의 진입점(`ParseCSharpG1Audit76` 등)에 넣었다. 폐쇄가 표현하지 못하는 "`ts`를 읽지 않음"은 [전수 감사](#차분-oracle-대안-전수-감사-g1audit76)의 AST 시험이 따로 고정한다.
+- type 감사 파일(`csharp_g1_typeaudit76.go`)도 도출 쪽으로 분류하고 진입점(`ParseCSharpG1TypeAudit76` 등)에 넣었다. "매핑표를 읽지 않음"은 [type 감사](#차분-oracle-대안-type-감사-g1typeaudit76)의 AST 시험이 따로 고정한다.
 - asset이 pin하는 입력은 선언 3개, 사례 원문 fixture 4개, 관측 asset, 매핑표뿐이다. fixture에는 native 결과를 담는 member가 없다.
 
 ## 검증 code

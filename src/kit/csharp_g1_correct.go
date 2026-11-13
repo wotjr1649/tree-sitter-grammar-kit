@@ -262,6 +262,11 @@ var g1ExpectedCorrections = []G1Correction{
 			G1Ground{G1DocSpec, g1gSpecPre + "standard/expressions.md 12.8.3 verbatim_interpolation", "verbatim_interpolation : expression (',' interpolation_minimum_width)? Verbatim_Interpolation_Format?", g1gExprSHA, "### 12.8.3 Interpolated string expressions", 78},
 		},
 	},
+	// The type audit (G1TYPEAUDIT76, grammar text only, after the native result) found that the ts of two parameter modifier
+	// keywords names an anonymous token that the grammar text cannot produce in that place. The ts the evidence corrections
+	// above took over from the kind map r2 is narrowed to the one type the grammar text gives; the kind map is not changed.
+	g1NarrowModifierTS("csharp-B02.a088", "out", `["\"out\"","modifier"]`, "OutKeyword"),
+	g1NarrowModifierTS("csharp-B02.a089", "in", `["\"in\"","modifier"]`, "InKeyword"),
 }
 
 // g1cEvidence is the value of a G1FieldEvidence correction: the ts and the first witness of an alternative.
@@ -275,6 +280,19 @@ func g1Evidence(item string, oldTS []string, oldW G1ExpWitness, newTS []string, 
 	return G1Correction{
 		Item: item, Field: G1FieldEvidence, Old: g1cJSON(g1cEvidence{oldTS, oldW}), New: g1cJSON(g1cEvidence{newTS, newW}),
 		Reason: reason, Grounds: grounds, AfterNative: true, BasisIndependent: true,
+	}
+}
+
+// g1NarrowModifierTS narrows the ts of a parameter modifier keyword (out, in) from the anonymous token and modifier to modifier.
+func g1NarrowModifierTS(item, keyword, old, roslyn string) G1Correction {
+	return G1Correction{
+		Item: item, Field: G1FieldTS, Old: old, New: `["modifier"]`, AfterNative: true, BasisIndependent: true,
+		Reason: "The ts of this alternative came from the kind map r2, which relates " + roslyn + " to both the anonymous token and modifier because the keyword is a plain token in other places. In a parameter the pinned grammar text builds the keyword only through alias(choice('this', 'scoped', 'ref', 'out', 'in', 'readonly'), modifier), so the node of the witness is a modifier leaf named by the alias; no anonymous '" + keyword + "' token is produced there, and the ref_type rule that competes with the modifier for 'ref' has no '" + keyword + "'. The grounds are the grammar text and the specification only, and the stored native observation is compared again after the change (the executed asset).",
+		Grounds: []G1Ground{
+			{G1DocGrammar, "_parameter_type_with_modifiers", "_parameter_type_with_modifiers: $ => seq( repeat(prec.left(alias( choice('this', 'scoped', 'ref', 'out', 'in', 'readonly'), $.modifier, ))),", g1gGrammarSHA, "_parameter_type_with_modifiers:", 0},
+			{G1DocGrammar, "ref_type", "ref_type: $ => seq( 'ref', optional('readonly'), field('type', $.type), ),", g1gGrammarSHA, "ref_type:", 0},
+			{G1DocSpec, g1gSpecPre + "standard/classes.md 15.6.2.1 parameter_mode_modifier", "parameter_mode_modifier : ref_kind | 'out' | 'in' ;", g1gClassesSHA, "#### 15.6.2.1 General", 34},
+		},
 	}
 }
 
