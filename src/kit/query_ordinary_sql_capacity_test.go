@@ -888,6 +888,9 @@ func ordinaryE2EEnv(overrides map[string]string) []string {
 
 func ordinaryRouteSources(t *testing.T, route string) map[string]string {
 	t.Helper()
+	if sources, ok := ordinaryMeasureSources(t, route); ok {
+		return sources
+	}
 	var file struct {
 		Cases []struct {
 			ID     string `json:"id"`
