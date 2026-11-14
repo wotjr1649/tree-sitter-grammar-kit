@@ -4,6 +4,7 @@ The current implementation consists of repository foundation checks, the Session
 
 | Task | Canonical owner |
 |---|---|
+| 저장소 종료와 go-treesitter 인계 (2026-11-14) | [종료 결정](reports/repository-closure.md), [인계 A부](reports/repository-closure-handoff-a.md), [인계 B부](reports/repository-closure-handoff-b.md) |
 | Purpose and release-candidate scope | [scope](specs/scope.md) |
 | 목적·설계 이유, 전체 grammar 지원 버전과 테스트·제외 경계 안내 | [한국어](grammar-support.md) · [English](grammar-support.en.md) (계약 소유자는 각 절의 링크 참조) |
 | Commands, errors, profile fields | [CLI/profile](specs/cli-and-profile.md) |
