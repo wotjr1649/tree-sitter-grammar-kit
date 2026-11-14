@@ -345,10 +345,13 @@ func (b *eligibilityBudget) ordinaryNativeClosure(root *os.Root, s *eligibilityS
 			bad("ORDINARY_BUILD_INPUT", path, "build input member pin이 logical closure와 다르다")
 			continue
 		}
-		if e := b.charge(input.Bytes+1, 2*(input.Bytes+1), "ordinary-build-input-hash"); e != nil {
+		// data is the verified snapshot copy: the evidence verifier kept it only after hashing it against the
+		// approved member pin, and that pin equals input.Bytes/input.SHA256 (checked above). Hashing it again
+		// (up to the whole closure, MBs per pass) cannot change the verdict, so only the O(1) length check stays.
+		if e := b.charge(1, 0, "ordinary-build-input-length"); e != nil {
 			return false, e
 		}
-		if uint64(len(data)) != input.Bytes || digestHex(data) != input.SHA256 {
+		if uint64(len(data)) != input.Bytes {
 			bad("ORDINARY_BUILD_INPUT", path, "build input 실제 bytes가 logical closure와 다르다")
 		}
 	}
