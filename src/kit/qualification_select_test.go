@@ -110,6 +110,7 @@ func inventoryErrorClass(t *testing.T, err error) string {
 }
 
 func TestQualificationInventoryRouteAcceptedPlatformParity(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../contracts/qualification-c1.json")
 	if err != nil {
 		t.Fatal(err)
@@ -315,6 +316,7 @@ func TestQualificationInventoryRouteValidationProductLimit(t *testing.T) {
 }
 
 func TestQualificationInventoryRouteJSONLimits(t *testing.T) {
+	t.Parallel()
 	oversized := make([]byte, MaxDocumentBytes+1)
 	if _, e := parseQualificationInventoryRoute(oversized, "", "json", inventorySelectionBudget(t)); e == nil || e.Code != "DOCUMENT_BYTES_LIMIT" {
 		t.Fatalf("document cap: %v", e)
@@ -326,6 +328,7 @@ func TestQualificationInventoryRouteJSONLimits(t *testing.T) {
 }
 
 func TestQualificationInventoryRouteSpecialParity(t *testing.T) {
+	t.Parallel()
 	f := newQfx(t)
 	base := f.invBytes(t)
 	for _, ri := range []int{0, 1} {

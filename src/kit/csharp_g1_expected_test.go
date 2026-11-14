@@ -81,6 +81,7 @@ func TestCSharpG1ExpectedContentIsTheSealedOne(t *testing.T) {
 }
 
 func TestCSharpG1ExpectedSealedAndBound(t *testing.T) {
+	t.Parallel()
 	a := g1ExpLoad(t)
 	if len(a.asset) != 236615 || digestHex(a.asset) != "fe8cc88ef48c2596c391b07c88050539641e985e6cc28c22af98b4f0958fd869" {
 		t.Fatalf("sealed expected asset changed: %d/%s", len(a.asset), digestHex(a.asset))
@@ -213,6 +214,7 @@ func TestCSharpG1ExpectedSealedAndBound(t *testing.T) {
 const g1KindMapSHA = "83322b72849ba6fd5101e206a7c08f1cb9e26f39aa3e8773d6ef4d50d47f0393"
 
 func TestCSharpG1ExpectedRejectsTampering(t *testing.T) {
+	t.Parallel()
 	a := g1ExpLoad(t)
 	clone := func() CSharpG1Expected {
 		var x CSharpG1Expected
@@ -373,6 +375,7 @@ func g1Imports(f *ast.File) []string {
 }
 
 func TestCSharpG1ExpectedSeparation(t *testing.T) {
+	t.Parallel()
 	deriver := []string{"csharp_g1_spec.go"}
 	derivation := []string{"csharp_g1_spec.go", "csharp_g1_expected.go", "csharp_g1_expected_rules.go", "csharp_g1_expected_checks.go", "csharp_g1_expected_data.go", "csharp_g1_kindmap.go"}
 	// the derivation reads bytes it is handed: no file, process, network or native package
@@ -540,6 +543,7 @@ func TestCSharpG1SpecForms(t *testing.T) {
 }
 
 func TestCSharpG1ExpectedMetamorphicVariants(t *testing.T) {
+	t.Parallel()
 	a := g1ExpLoad(t)
 	vs, err := G1MetaVariantSources(a.in)
 	if err != nil {

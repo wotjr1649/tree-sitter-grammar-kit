@@ -85,6 +85,7 @@ func mustRead(t *testing.T, name string) []byte {
 }
 
 func TestCSharpG1CorrectedAssetsVerify(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	km, err := ParseCSharpG1KindMapR2(a.r2Km, a.kmIn)
 	if err != nil {
@@ -270,21 +271,20 @@ func TestCSharpG1CorrectedAssetsDifferOnlyByTheCorrections(t *testing.T) {
 
 // ---- counterexamples ----------------------------------------------------------------------------
 
-var (
-	g1cR1Once sync.Once
-	g1cR1     CSharpG1Expected
-	g1cR1Err  error
-)
+// g1cR1Load verifies the sealed r1 once per process; g1cLoad has filled g1cLoaded before the first call.
+var g1cR1Load = sync.OnceValues(func() (CSharpG1Expected, error) {
+	return ParseCSharpG1Expected(g1cLoaded.expIn.Previous, g1cLoaded.expIn.R1)
+})
 
 // g1cParseR2 is ParseCSharpG1ExpectedR2 for a candidate r2 asset over the tracked inputs: the sealed r1 is verified
 // once per process (the same bytes and sources every time), then each candidate is checked against it.
 func g1cParseR2(t *testing.T, a *g1cAssets, data []byte) (CSharpG1Expected, error) {
 	t.Helper()
-	g1cR1Once.Do(func() { g1cR1, g1cR1Err = ParseCSharpG1Expected(a.expIn.Previous, a.expIn.R1) })
-	if g1cR1Err != nil {
-		t.Fatal(g1cR1Err)
+	r1, err := g1cR1Load()
+	if err != nil {
+		t.Fatal(err)
 	}
-	return parseCSharpG1ExpectedR2(data, a.expIn, &g1cR1)
+	return parseCSharpG1ExpectedR2(data, a.expIn, &r1)
 }
 
 func g1cExpectedMutant(t *testing.T, a *g1cAssets, mutate func(x *CSharpG1Expected)) error {
@@ -319,6 +319,7 @@ func g1cExtra(item string) G1Correction {
 }
 
 func TestCSharpG1CorrectedExpectedRejects(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	// an alternative that no correction touches and whose first witness is a span
 	var spare string
@@ -430,6 +431,7 @@ func TestCSharpG1CorrectedExpectedRejects(t *testing.T) {
 
 // A tampered r1 asset is refused by the r2 verifier, whatever the r2 asset says.
 func TestCSharpG1CorrectedExpectedRejectsATamperedR1(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	r1, err := DecodeCSharpG1Expected(a.r1Exp)
 	if err != nil {
@@ -669,6 +671,7 @@ func g1cExecIn(t *testing.T, a *g1cAssets) CSharpG1ExecutedSources {
 // and the fifteen corrected ones (four after the native comparison, eleven after the audit of the differential-oracle
 // alternatives) are counted apart.
 func TestCSharpG1ExecutedR2SplitsTheStatistics(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	data := mustRead(t, "../contracts/csharp-g1-executed-b01b02-r2.json")
 	in := g1cExecIn(t, a)
@@ -769,6 +772,7 @@ func TestCSharpG1LedgerFromTheR2Assets(t *testing.T) {
 // The comparison logic of r2 on a synthetic native observation (every witness has a node of a sealed
 // type): the derivation follows the r2 revision and the verifier accepts what it derives.
 func TestCSharpG1ExecutedR2SyntheticDerivation(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	in := g1cExecIn(t, a)
 	ctx, err := g1xContextOf(in)
@@ -841,6 +845,7 @@ func TestCSharpG1ExecutedR2MatchesRawNative(t *testing.T) {
 }
 
 func TestCSharpG1ExecutedR2ContextAndRevisionCases(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	data := mustRead(t, "../contracts/csharp-g1-executed-b01b02-r2.json")
 	// the context refuses inputs the expected asset does not pin
@@ -975,6 +980,7 @@ func g1cTSOffMap(x, derived CSharpG1Expected) (unlisted, vacuous []string) {
 }
 
 func TestCSharpG1CorrectedExpectedTSFollowsTheR2KindMap(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	x, err := ParseCSharpG1ExpectedR2(a.r2Exp, a.expIn)
 	if err != nil {

@@ -13,26 +13,24 @@ import (
 	"testing"
 )
 
-var (
-	g1a76Once sync.Once
-	g1a76All  []G1RoslynCaseSource
-	g1a76Err  error
-)
+// g1a76Load derives the case sources once per process; g1a76Sources has run g1cLoad before the first call.
+var g1a76Load = sync.OnceValues(func() ([]G1RoslynCaseSource, error) {
+	src := g1cLoaded.expIn.R1.Src
+	src.Expected, src.Executed = nil, nil
+	return CSharpG1RoslynSources(src)
+})
 
 // g1a76Sources is the input of the position audit made from an r2 asset (the bytes may be a mutant of the tracked one).
 func g1a76Sources(t *testing.T, expected []byte) G1Audit76Input {
 	t.Helper()
 	// the source versions depend on the pinned declarations only, not on the asset: derived once per process
-	g1a76Once.Do(func() {
-		src := g1cLoad(t).expIn.R1.Src
-		src.Expected, src.Executed = nil, nil
-		g1a76All, g1a76Err = CSharpG1RoslynSources(src)
-	})
-	if g1a76Err != nil {
-		t.Fatal(g1a76Err)
+	g1cLoad(t)
+	all, err := g1a76Load()
+	if err != nil {
+		t.Fatal(err)
 	}
 	texts := map[string][]byte{}
-	for _, s := range g1a76All {
+	for _, s := range all {
 		texts[s.ID] = s.Data
 	}
 	in, err := G1Audit76View(expected, texts)
@@ -56,6 +54,7 @@ func g1a76Tracked(t *testing.T) (CSharpG1Audit76, []byte, G1Audit76Input) {
 // The tracked audit parses, its rows are exactly the 76 differential-oracle alternatives of r2, and the comparison it
 // states is the fresh one: after the corrections of r2 every row is consistent.
 func TestCSharpG1Audit76IsConsistentWithR2(t *testing.T) {
+	t.Parallel()
 	x, _, in := g1a76Tracked(t)
 	r2, alts, err := g1ViewDifferential(g1cLoad(t).r2Exp)
 	if err != nil {
@@ -295,6 +294,7 @@ func TestCSharpG1Audit76GroundsQuoteTheDocuments(t *testing.T) {
 
 // A witness correction must point at a place Roslyn observed, with types the kind map gives that kind.
 func TestCSharpG1CorrectedWitnessesAreObserved(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	for name, mut := range map[string]func(w *G1ExpWitness, ts *[]string){
 		"a span nobody observed": func(w *G1ExpWitness, ts *[]string) { w.End++ },

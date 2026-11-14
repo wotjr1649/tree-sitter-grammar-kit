@@ -87,6 +87,7 @@ func g1rFirst(t *testing.T, x CSharpG1RoslynObserved, what string, ok func(s G1R
 }
 
 func TestCSharpG1RoslynAssetSealedAndBound(t *testing.T) {
+	t.Parallel()
 	a := g1rLoad(t)
 	if len(a.data) != 2142812 || digestHex(a.data) != "8930422a2b06743e22ffe47c5189447974c7567e6f0c0ff6943417170335c39f" {
 		t.Fatalf("sealed observation changed: %d/%s", len(a.data), digestHex(a.data))
@@ -175,6 +176,7 @@ func TestCSharpG1RoslynInputIsDerivedAndStable(t *testing.T) {
 }
 
 func TestCSharpG1RoslynRejectsTampering(t *testing.T) {
+	t.Parallel()
 	a := g1rLoad(t)
 	base := a.decode(t)
 	// the sources the mutations act on
@@ -395,6 +397,7 @@ func TestCSharpG1RoslynRejectsTampering(t *testing.T) {
 }
 
 func TestCSharpG1RoslynRejectsMalformedBytes(t *testing.T) {
+	t.Parallel()
 	a := g1rLoad(t)
 	check := func(name string, data []byte, want string) {
 		t.Helper()
@@ -490,6 +493,7 @@ const (
 // TestCSharpG1RoslynR3IsR2WithTheBuildHash: r3 is the observation the tooling writes now; the frozen r2 stays as it
 // is and r3 differs from it in provenance.tool_sha256 only (an independent byte-level comparison besides the verifier's).
 func TestCSharpG1RoslynR3IsR2WithTheBuildHash(t *testing.T) {
+	t.Parallel()
 	a := g1rLoad(t)
 	r3, err := os.ReadFile("../contracts/csharp-g1-roslyn-observed-r3.json")
 	if err != nil {

@@ -22,6 +22,7 @@ func svcInlineAssets(t *testing.T) (asset, svcContract, registry, inventory, fix
 }
 
 func TestSvcInlineSealedAndBound(t *testing.T) {
+	t.Parallel()
 	asset, svc, registry, inventory, fixture, pack := svcInlineAssets(t)
 	if len(asset) != 76826 || digestHex(asset) != "f2ad5d41e7852d6f5f80c6727a0d53381ccb2e5f2825b554270d1f17d03dcbb7" {
 		t.Fatalf("sealed inline expected asset changed: %d/%s", len(asset), digestHex(asset))
@@ -510,6 +511,7 @@ func TestSvcInlineKnownEmptyObservationBlocked(t *testing.T) {
 // Without native evidence the inline obligations stay BLOCKED in the fold; with the offline
 // judgments the scope is still BLOCKED, never COMPLETE.
 func TestSvcInlineFoldWithoutEvidence(t *testing.T) {
+	t.Parallel()
 	asset, svc, registry, inventory, fixture, pack := svcInlineAssets(t)
 	x, err := ParseSvcInlineExpected(asset, svc, registry, inventory, fixture, pack)
 	if err != nil {

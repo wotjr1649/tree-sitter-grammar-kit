@@ -337,6 +337,7 @@ func TestCSharpG1TypeAudit76GroundsQuoteTheGrammar(t *testing.T) {
 // The r2 narrowing of the two parameter modifier keywords: recorded as ts corrections after the native result with grammar and
 // specification grounds, and the stored native observation still matches.
 func TestCSharpG1ModifierNarrowingIsRecordedAndMatches(t *testing.T) {
+	t.Parallel()
 	a := g1cLoad(t)
 	x, err := DecodeCSharpG1Expected(a.r2Exp)
 	if err != nil {

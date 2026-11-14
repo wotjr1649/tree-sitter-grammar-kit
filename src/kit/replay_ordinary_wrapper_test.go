@@ -6,6 +6,7 @@ import (
 )
 
 func TestOrdinaryReplayVerifiedIdentityReuse(t *testing.T) {
+	t.Parallel()
 	_, root, profile := ordinaryPartialReplayFixture(t)
 	selection := "ordinary-selection"
 	members := profile["members"].([]ReplayMember)

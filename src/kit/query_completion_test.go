@@ -283,6 +283,7 @@ func TestQueryCompletionDenominatorsAreDerivedFromTheRegistry(t *testing.T) {
 // Every P0 upper coordinate has lower obligations and none is left over: this is what lets the
 // lower obligations replace the upper ones.
 func TestQueryCompletionLargeLowerObligationsRefineTheUpperCoordinates(t *testing.T) {
+	t.Parallel()
 	f := faninFixtureFor(t)
 	if err := checkLargeBinding(f.v, f.large); err != nil {
 		t.Fatal(err)
