@@ -721,18 +721,25 @@ func ordinaryBaseDynamicClaim(want DynamicSQLExpectation, got *DynamicSQLFacts) 
 }
 
 func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactPackRoute, query querywire.Query, source []byte) *Error {
-	if e := b.charge(uint64(len(query.Captures))+1, 0, "ordinary-base-fact-index"); e != nil {
+	return b.factReservation(q.Facts, route.Route, len(query.Captures), func(i int) Capture { return witnessCapture(query, query.Captures[i]) }, source)
+}
+
+// factReservation reads either wire or materialized captures without allocating another list.
+// All consumers reserve the same bound before conversion, indexing or derivation.
+func (b *eligibilityBudget) factReservation(kind, route string, count int, capture func(int) Capture, source []byte) *Error {
+	if e := b.charge(uint64(count)+1, 0, "ordinary-base-fact-index"); e != nil {
 		return e
 	}
-	n := uint64(len(query.Captures)) + 1
+	n := uint64(count) + 1
 	var text, spans, execs, withErrors uint64
 	var tsql tsqlFactCounts
-	for _, row := range query.Captures {
-		name := query.CaptureNames[row[2]]
+	for i := 0; i < count; i++ {
+		row := capture(i)
+		name := row.Name
 		tsql.add(name)
-		text += uint64(len(name) + len(query.Types[row[4]]))
-		if row[7] >= row[6] && row[6] >= 0 && uint64(row[7]) <= uint64(len(source)) {
-			spans += uint64(row[7] - row[6])
+		text += uint64(len(name) + len(row.Type))
+		if row.EndByte >= row.StartByte && uint64(row.EndByte) <= uint64(len(source)) {
+			spans += uint64(row.EndByte - row.StartByte)
 		}
 		if name == "exec" {
 			execs++
@@ -744,13 +751,13 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 	if e := b.charge(64*n+8*text, 1024*n+4*text, "ordinary-base-fact-derive"); e != nil {
 		return e
 	}
-	if q.Facts != FactDynamicSQL {
+	if kind != FactDynamicSQL {
 		return nil
 	}
-	if route.Route == "csharp" {
-		return b.ordinaryBaseCSharpFactReservation(query, n)
+	if route == "csharp" {
+		return b.ordinaryBaseCSharpFactReservation(count, capture, n)
 	}
-	if route.Route != "tsql" {
+	if route != "tsql" {
 		// Keep the legacy conservative bound for other dynamic SQL adapters.
 		work, e := eligibilityProduct("ordinary-base-fact-derive", 64, n, n, n+uint64(len(source))+text+1)
 		if e != nil {
@@ -813,10 +820,11 @@ const (
 // passes (n log n), one chain walk per command argument (at most the qualified-name captures
 // long) and at most two decoded spans per argument or assignment (bounded by the longest span
 // of a capture that is decoded). n is the capture count plus one.
-func (b *eligibilityBudget) ordinaryBaseCSharpFactReservation(query querywire.Query, n uint64) *Error {
+func (b *eligibilityBudget) ordinaryBaseCSharpFactReservation(count int, capture func(int) Capture, n uint64) *Error {
 	var args, lefts, names, longest uint64
-	for _, row := range query.Captures {
-		name := query.CaptureNames[row[2]]
+	for i := 0; i < count; i++ {
+		row := capture(i)
+		name := row.Name
 		switch name {
 		case "oc.arg":
 			args++
@@ -825,8 +833,8 @@ func (b *eligibilityBudget) ordinaryBaseCSharpFactReservation(query querywire.Qu
 		case "qn.name", "aq.name", "gn.name":
 			names++
 		}
-		if (name == "bin.op" || name == "ini.left" || name == "ma.name" || query.Types[row[4]] == "identifier") && row[6] >= 0 && row[7] >= row[6] {
-			longest = max(longest, uint64(row[7]-row[6]))
+		if (name == "bin.op" || name == "ini.left" || name == "ma.name" || row.Type == "identifier") && row.EndByte >= row.StartByte {
+			longest = max(longest, uint64(row.EndByte-row.StartByte))
 		}
 	}
 	decodes := 2 * (args + lefts)

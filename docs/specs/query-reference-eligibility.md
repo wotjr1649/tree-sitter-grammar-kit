@@ -557,3 +557,11 @@ Qualification은 inventory/r8과 host의 exact run-identity subject를 유지한
 자료/tuple 누락은 BLOCKED이고 승인/실제 bytes 또는 subject 모순은 FAIL, 미지원 reader는 UNSUPPORTED다. 확정 FAIL과 부분 counter는 뒤의 취소·한도 오류에도 남는다. Resolve와 runtime 의미 검사는 기존 read/work/logical/wall 원장을 공유하며 새 한도를 만들거나 완화하지 않는다. Context는 검증 함수와 ordinary set 종료 때 복원된다. 기존 nil 호출의 schema·current 검증·오류 순서는 유지한다.
 
 V2-C2 단계의 opt-in은 ordinary host set logger 판독과 native-result logger replay를 지원한다. Accepted·preprocess-CST의 별도 reader 전달은 V2-C3, standalone replay·qualification CLI admission과 Roslyn은 V2-D에서 추가했다. 실제 역사 build/raw/provenance가 없는 자료는 계속 BLOCKED이며 자료를 추측해 PASS로 만들지 않는다.
+
+## #441 dynamic SQL fact의 공용 사전 예약
+
+`factReservation`은 ordinary base 재계산, `adjudicateOrdinaryFact`의 dynamic SQL 분기, `JudgeSvcInline`의 inline C# fact 분기가 함께 사용한다. wire capture와 이미 변환된 capture를 같은 accessor로 읽으므로 새 capture 목록을 만들지 않는다. 같은 route·capture·source는 같은 순서·label·work·logical을 예약한다. 위 base의 공통 변환·index 항, C# 세 항, TSQL scan·span·known-miss sort 항과 기타 route의 보수식 값은 그대로다. adversarial capture도 실제 grammar가 생성하는 모양으로 가정하지 않는다. 각 path는 실패할 수 있는 예약을 모두 마친 뒤 `DeriveDynamicSQLChecked`를 호출한다.
+
+Adjudication은 기존 `ordinary-fact-adjudication`의 `m+1` work·`256m` logical을 유지하고 공용 예약 전체를 추가한다. C#과 TSQL에 모두 적용하며 declaration/XML 분기는 바꾸지 않는다. SVC는 C#만 지원한다. `JudgeSvcInline` 호출 하나가 모든 step·query·incremental/fresh view의 fact 비용을 기존 eligibility 한도인 work 32,000,000·logical 1 GiB에 누적한다. 다음 도출을 예약할 수 없으면 그 도출을 시작하지 않고 `RESOURCE_LIMIT/ELIGIBILITY_WORK_LIMIT`를 error로 반환한다. 큰 입력을 VERIFIED/FAILED로 판정하거나 별도 unmetered 경로로 우회하지 않는다. 공개 함수에 context가 없으므로 새 wall 한도나 context 인자는 추가하지 않는다. source가 없는 incomplete 경로와 기존 source·CST·capture mismatch 판정은 유지한다.
+
+`DeriveDynamicSQL`·`DeriveDynamicSQLChecked` 자체는 caller가 예산을 소유하는 순수 offline API이며 내부에서 eligibility 원장을 만들지 않는다. `deriveCSharp`·`deriveTSQL`의 유일한 dispatch는 이 checked 함수다. 별도 native producer인 `src/internal/native/oracle.go`와 `oracle_ordinary_facts.go`도 같은 순수 API를 사용하지만 eligibility 판정 원장을 소유하지 않는다. 이번 변경으로 producer 실행을 eligibility 예약으로 계상했다고 주장하지 않는다. 새 adapter는 공용 예약 분기를 추가하고 모든 판정 경로에 같은 반례를 통과시켜야 한다.

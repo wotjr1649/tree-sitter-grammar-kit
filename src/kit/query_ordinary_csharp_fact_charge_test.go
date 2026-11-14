@@ -295,6 +295,12 @@ func assertCSharpFactChargeCovers(t *testing.T, label string, caps []Capture, sr
 	if ratio.logical > 1 {
 		t.Fatalf("%s: allocated %d bytes exceed the logical reservation %d", label, real, logical)
 	}
+	// Adjudication and SVC accept UTF-8; feed every raw shape through that contract too.
+	pathRun := run
+	if enc != EncodingUTF8 {
+		pathRun = csharpFactSteps(t, caps, src, EncodingUTF8)
+	}
+	assertFactPathReservations(t, "csharp", caps, src, pathRun.facts, 64*(pathRun.pair+pathRun.hops+pathRun.decoded)+8*pathRun.text, pathRun.alloc, 0)
 	return run.facts, ratio
 }
 

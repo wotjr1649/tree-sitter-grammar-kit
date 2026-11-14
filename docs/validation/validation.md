@@ -1022,3 +1022,21 @@ Native의 `TestQueryClassificationCJRStaticProfiles`, `TestQueryClassificationCJ
 Kit helper는 고정된 과거 static build/control closure와 새 current native/reference를 별도 graph로 조립한다. 실제 current graph에 대한 외부 caller 승인 이후에만 guarded bytes의 독립 CST·request/frame 결속 및 기존 eligibility9/4/53/36/tuple3과 공개 API 판정을 확인한다. 보고서 자체는 서명이나 실행 인증이 아니며 전체 semantic completion으로 집계하지 않는다. 기존 필수 baseline CI와 독립 검토·PR/actual-main gate는 유지한다.
 
 수동 `TestQueryReferenceBuildControlAssembleLocal`은 `TSGK_QUERY_REFERENCE_STATIC_ROOT`와 `TSGK_QUERY_REFERENCE_STATIC_FRESH`를 모두 비우면 SKIP한다. 명시한 두 절대 경로에서 ROOT는 `..` 경로 구성요소와 링크·junction이 없고 FRESH와 겹치지 않는 새 물리적 빈 출력 디렉터리이며, FRESH는 검토·채택한 reference build/control 원본이어야 한다. Windows의 이 수동 출력 guard는 ROOT와 FRESH가 같은 volume인 경우만 지원한다. 저장된 patch-check request가 가리키는 외부 `instrumentation.patch` 원본은 조립 전에 해당 절대 경로와 채택 hash를 별도로 고정하고 읽기 전용 입력으로 보존해야 한다. 이 진입점은 기존 JSON/C# 조립기와 같은 build/control 조립·graph 무결성 검사를 사용하여9 build+53 control invocation,10 tool,178 owned member의 static-only 후보를 만든다. Current native·reference 호출이나 관측·승인을 생성하지 않으며 새 compiler/native/reference 프로세스를 시작하지 않는다. 기존 JSON/C# 전체 조립기는 current capture 검증과 조립을 계속 요구한다. 새 reference source pin으로 catalogue가 달라졌다면 해당 catalogue와 일치하는 새 build/control 근거와 donor registration hash를 별도로 고정한다. 과거 승인·관측을 새 reader의 현재 자격으로 자동 승격하지 않는다. Static-only 후보의 graph 무결성 PASS는 현재 tuple·caller approval·eligibility·전체 semantic PASS가 아니다.
+
+## #441 dynamic SQL fact 경로별 예약 검증
+
+`query_dynamic_sql_fact_paths_test.go`는 실제 `adjudicateOrdinaryFact`와 공개 `JudgeSvcInline`을 호출하고 첫 adapter step 시점에 이미 기록된 fact 예약만 보존한다. 이후 expected/producer decode 비용을 fact 예약에 더하지 않는다. 같은 입력의 base 예약과 work·logical·known-miss-sort가 정확히 같아야 하며, 실제 step의 work와 누적 `TotalAlloc`보다 작으면 실패한다. C#의 기존 charge assertion을 통해 추적 fixture·무작위 shape·자기/상호 순환·anti-pdqsort·다중 argument·긴 span 반례를 두 추가 경로에 공유한다. TSQL의 기존 측정 helper도 반복 EXEC·known miss·넓은 match·무작위 목록·긴 ERROR parent·EXEC 없는 최종 정렬을 adjudication에 공유한다. 두 추가 경로의 encoding 계약은 UTF-8이므로 다른 encoding의 원본 bytes도 UTF-8 계약으로 별도 측정하며, encoded base 경로의 기존 검증은 유지한다. SVC에는 TSQL adapter가 없다.
+
+`TestDynamicSQLFactPathsCSharp`·`TestDynamicSQLFactPathsTSQL`은 경로의 사전 예약과 측정 비용을 직접 확인한다. `TestDynamicSQLFactPathsRejectBeforeDerivation`은 C# 두 경로와 TSQL adjudication에서 한도를 넘는 예약 뒤 adapter가 호출되지 않는지 확인한다. `TestDynamicSQLFactPathsSvcAccumulatesViews`는 한 view가 통과해도 두 view의 합이 한도를 넘으면 같은 원장에서 거절하는지 확인한다. `TestDynamicSQLFactPathLedgerChanges`는 추적 `csharp-command.cs`, `tsql-dynamic.sql`의 선택 statement와 등록 SVC fragment의 전후 fact 원장 및 실제 판정 성공을 기록한다. Adjudication 측정 fixture는 expected payload를 생략하고 도출 뒤 `ORDINARY_EXPECTED_FACT_SHAPE`로 거부되는 것을 고정하여 회계만 검사한다. derivation 출력에서 독립 expected를 만들지 않으며 end-to-end VERIFIED를 주장하지 않는다. SVC 대표 fragment는 실제 VERIFIED 판정도 확인한다. 대표 입력이 새 예약 때문에 한도를 넘으면 한도를 올리지 않고 결정 사항으로 보고한다.
+
+음성 대조는 위 새 시험 모두와 공유된 기존 적대 시험을 현재 test source 그대로 두고, 변경한 세 production 파일만 `a369bcc`의 원본으로 교체하는 Go overlay로 실행한다. 컴파일 오류가 아니라 해당 사전 예약·도출 차단·view 누적 assertion에서 실패해야 한다. 실제 native/reference 실행이나 전량 route admission은 이 offline 검증의 결과로 세지 않는다. `go test`·`go vet`·native 실행은 작업 지시의 공용 `hardjob.lock`을 원자적으로 획득한 뒤 직렬로 실행하고, 자기 획득분만 해제하며 각 실행은 15분 안으로 제한한다.
+
+2026-11-14 Windows/amd64·Go 1.27.4·`CGO_ENABLED=0` fixture 측정에서 추가 예약으로 대표 입력의 fact 구간이 한도를 넘지 않았다. 아래 값은 전체 eligibility pass가 아니라 해당 derivation 구간의 원장이다. adjudication의 기존 선형 항도 합산했다. C# fixture의 공용 base 예약 work 1,278,313·logical 2,006,444는 `a369bcc` overlay에서도 같았다. SVC는 등록 `n461-svc-inline-pe-r1` step 0의 도출 가능한 fragment다.
+
+| 경로·입력 | work 이전 → 이후 | logical 이전 → 이후 (B) |
+|---|---:|---:|
+| adjudication C# `csharp-command.cs`, captures 144 | 145 → 1,278,458 | 36,864 → 2,043,308 |
+| adjudication TSQL `tsql-dynamic.sql`의 선택 `sp_executesql` statement, captures 13 | 14 → 55,300 | 3,328 → 147,732 |
+| SVC 등록 inline fragment | 0 → 20,053 | 0 → 66,824 |
+
+새 시험 5개는 `a369bcc` production overlay에서 전부 실제 assertion으로 실패했다. 새 코드의 `./src/kit/... -count=1`은 wall 113.60초로 통과했다(Windows CI 상한 420초). 이 측정은 실제 owned-native 전체 pass·reference 실행·전량 admission의 증명이 아니다.

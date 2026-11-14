@@ -2,6 +2,7 @@ package kit
 
 import (
 	"bytes"
+	"context"
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"math"
@@ -314,7 +315,12 @@ func svcInlineID(kind string, s SvcInlineStep, query string) string {
 // a view role its step needs is never VERIFIED: it is BLOCKED unless a view it does have already
 // mismatches, which stays FAILED. The same holds for a missing Source; a Source that does not hold
 // the registered fragment (range, length, SHA-256) is FAILED SVC_INLINE_SOURCE_MISMATCH.
+// Dynamic SQL derivations share one 32M-work/1GiB-logical ledger per call; a reservation that
+// exceeds it returns RESOURCE_LIMIT/ELIGIBILITY_WORK_LIMIT before that derivation starts.
 func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJudgment, error) {
+	// This standalone API has no caller context; one fact ledger covers all steps and views.
+	ctx := context.Background()
+	b := &eligibilityBudget{r: &run{caller: ctx, wall: ctx}}
 	byStep := map[string]SvcInlineObserved{}
 	for _, o := range observed {
 		key := svcID("", o.Case, o.Step, "")
@@ -372,7 +378,11 @@ func JudgeSvcInline(x SvcInlineExpected, observed []SvcInlineObserved) ([]SvcJud
 		}
 		out = append(out, judge(treeID, svcInlineTreeCode(s, o)))
 		for _, q := range s.Queries {
-			out = append(out, judge(svcInlineID(SvcKindQuery, s, q.ID), svcInlineQueryCode(q, o)))
+			code, err := svcInlineQueryCode(b, q, o)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, judge(svcInlineID(SvcKindQuery, s, q.ID), code))
 		}
 	}
 	if used != len(byStep) {
@@ -474,34 +484,37 @@ func svcInlineTreeCode(s SvcInlineStep, o SvcInlineObserved) string {
 	return ""
 }
 
-func svcInlineQueryCode(q SvcInlineQuery, o SvcInlineObserved) string {
+func svcInlineQueryCode(b *eligibilityBudget, q SvcInlineQuery, o SvcInlineObserved) (string, *Error) {
 	for _, v := range o.Views {
 		r, ok := v.Queries[q.ID]
 		if !ok || r.Status != StatusCompleted {
-			return "SVC_INLINE_QUERY_NOT_COMPLETED"
+			return "SVC_INLINE_QUERY_NOT_COMPLETED", nil
 		}
 		for i := 1; i < len(r.Captures); i++ {
 			if r.Captures[i].StartByte < r.Captures[i-1].StartByte {
-				return "SVC_INLINE_QUERY_ORDER"
+				return "SVC_INLINE_QUERY_ORDER", nil
 			}
 		}
 		got := siSummarize(q.ID, q.Patterns, siCapturesOf(r.Captures))
 		switch {
 		case got.Captures != q.Captures:
-			return "SVC_INLINE_QUERY_COUNT"
+			return "SVC_INLINE_QUERY_COUNT", nil
 		case !slices.Equal(got.ByName, q.ByName):
-			return "SVC_INLINE_QUERY_NAMES"
+			return "SVC_INLINE_QUERY_NAMES", nil
 		case got.SHA256 != q.SHA256:
-			return "SVC_INLINE_QUERY_DIGEST"
+			return "SVC_INLINE_QUERY_DIGEST", nil
 		}
 		if q.Facts != nil && len(o.Source) > 0 { // without source the step stays BLOCKED, not FAILED
+			if e := b.factReservation(FactDynamicSQL, "csharp", len(r.Captures), func(i int) Capture { return r.Captures[i] }, o.Source); e != nil {
+				return "", e
+			}
 			facts, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, r.Captures, o.Source)
 			if err != nil || uint64(len(facts.Items)) != *q.Facts || len(facts.KnownMisses) != 0 || !strings.HasPrefix(facts.Mapping, "dynamic-sql-") {
-				return "SVC_INLINE_DYNAMIC_FACTS"
+				return "SVC_INLINE_DYNAMIC_FACTS", nil
 			}
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // MergeSvcJudgments replaces the judgment of every obligation that over names; an obligation that

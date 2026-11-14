@@ -177,6 +177,12 @@ func (c tsqlFactCase) derive(t *testing.T, enc string) (r tsqlFactRun) {
 	}
 	runtime.ReadMemStats(&after)
 	r.facts, r.alloc = facts, after.TotalAlloc-before.TotalAlloc
+	if enc == EncodingUTF8 {
+		assertFactPathReservations(t, "tsql", c.caps, c.src, r.facts, 64*(r.steps+r.decoded+r.missSort), r.alloc, 64*r.missSort)
+	} else {
+		// Adjudication accepts UTF-8; retain the encoded base check and also exercise its raw shape.
+		c.derive(t, EncodingUTF8)
+	}
 	return r
 }
 

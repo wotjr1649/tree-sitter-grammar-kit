@@ -621,6 +621,9 @@ func adjudicateOrdinaryFact(b *eligibilityBudget, id ordinaryTupleIdentity, capt
 		items := DeriveDeclarations(route.Declarations, captures)
 		actualFact.Declarations = &ordinaryExpectedDeclarations{Items: items, Assessment: ordinaryDeclarationAssessment(items)}
 	case FactDynamicSQL:
+		if e := b.factReservation(FactDynamicSQL, expected.Pack.Route, len(captures), func(i int) Capture { return captures[i] }, source); e != nil {
+			return e
+		}
 		facts, err := DeriveDynamicSQLChecked(expected.Pack.Route, EncodingUTF8, captures, source)
 		if err != nil {
 			actualFact.Status, actualFact.Code = StatusFailed, "FACT_DERIVATION_FAILED"
