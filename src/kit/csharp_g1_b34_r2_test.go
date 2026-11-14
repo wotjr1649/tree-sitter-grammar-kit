@@ -257,6 +257,52 @@ func TestCSharpG1TypeAuditB34R2FindsWhatR1Missed(t *testing.T) {
 	}
 }
 
+// Re-deriving the comparison cannot authorize a different grammar type from the same candidate set.
+func TestCSharpG1TypeAuditB34R2RejectsRederivedRoleTypes(t *testing.T) {
+	a, r := g1b34Load(t), g1b34r2Load(t)
+	for _, tc := range []struct {
+		name, lexeme, role string
+		types              []string
+	}{
+		{"async alias replaced by keyword", "async", "modifier of an anonymous function", []string{`"async"`}},
+		{"var widened to hide r1 mismatches", "var", "implicit type", []string{`"var"`, "identifier", "implicit_type"}},
+	} {
+		for _, input := range []struct {
+			name  string
+			pairs []G1B34AnchorPair
+		}{{"r1", r.pairsR1}, {"r2", r.pairs}} {
+			t.Run(tc.name+"/"+input.name, func(t *testing.T) {
+				x, err := DecodeCSharpG1TypeAuditB34R2(r.typ2)
+				if err != nil {
+					t.Fatal(err)
+				}
+				i := slices.IndexFunc(x.Roles, func(role G1B34Role) bool { return role.Lexeme == tc.lexeme && role.Role == tc.role })
+				if i < 0 {
+					t.Fatal("the authored role is missing")
+				}
+				x.Roles[i].Types = slices.Clone(tc.types)
+				forged, err := DeriveCSharpG1TypeAuditB34R2(x.Roles, x.Contexts, a.typ, input.pairs)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if tc.lexeme == "async" && input.name == "r2" && forged.Counts != x.Counts {
+					t.Fatal("the async mutation must preserve every headline count")
+				}
+				if tc.lexeme == "var" && forged.Counts.Mismatch != 0 {
+					t.Fatal("the widened var role must hide the four r1 mismatches")
+				}
+				data, err := MarshalCSharpG1TypeAuditB34R2(forged)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := ParseCSharpG1TypeAuditB34R2(data, a.typ, input.pairs); g1Code(err) != "G1_TYPEAUDITB34R2_GROUND" {
+					t.Fatalf("re-derived role types: %v, want G1_TYPEAUDITB34R2_GROUND", err)
+				}
+			})
+		}
+	}
+}
+
 func TestCSharpG1TypeAuditB34R2Compare(t *testing.T) {
 	for _, c := range []struct {
 		role, ts      []string

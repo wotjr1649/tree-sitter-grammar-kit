@@ -35,7 +35,7 @@ var g1ApprovalPendingPinned = []CSharpG1ApprovalMember{
 	{Path: "src/contracts/csharp-g1-expected-b03b04-r2.json", Role: "expected", Revision: "r2", SHA256: "255653f48e20218dd778b95a011acaecd790187e5324956a611d0dee7e168383"},
 	{Path: "src/contracts/csharp-g1-typeaudit-b03b04-r2.json", Role: "type-audit", Revision: "r2", SHA256: "b633c7d59bf8a66c79cc41d8be7a61ed11735a2e3dbe8d2b9711f3cf63e59306"},
 	{Path: "src/contracts/csharp-g1-executed-b03b04-r2.json", Role: "executed", Revision: "r2", SHA256: "ef66ecdb00dd18edd875e544b7582e0b860fba899b35817007677e202c4e9c5c"},
-	{Path: "src/contracts/csharp-g1-ledger-r2.json", Role: "ledger", Revision: "r2", SHA256: "3ae7d253f0c3bb54fefaa91e372cc2c655170f93b49f86139abbaf3a2cf37789"},
+	{Path: "src/contracts/csharp-g1-ledger-r2.json", Role: "ledger", Revision: "r2", SHA256: "854626700e6006b3ce1762d35f6156a8b62479be7ffefa38ec4dd7fc5c38edfd"},
 }
 
 // g1ApprovalB34Paths are the paths of g1ApprovalPendingPinned.

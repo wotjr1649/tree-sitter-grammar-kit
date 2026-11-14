@@ -1,8 +1,10 @@
 package kit
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -71,6 +73,47 @@ func g1l2Statuses(l CSharpG1Ledger) map[string]int {
 		n[a.Row+" "+a.Status]++
 	}
 	return n
+}
+
+// Read the B03/B04 inputs from the ledger's own provenance, not the paths used by the generator or test fixture.
+func TestCSharpG1LedgerR2BasisInputsReproduceAsset(t *testing.T) {
+	a := g1l2Load(t)
+	var ledger CSharpG1Ledger
+	if err := json.Unmarshal(a.asset, &ledger); err != nil {
+		t.Fatal(err)
+	}
+	names := regexp.MustCompile(`\((csharp-g1-(expected|executed)-b03b04-r[0-9]+\.json)\)`).FindAllStringSubmatch(ledger.Basis, -1)
+	if len(names) != 2 {
+		t.Fatalf("basis must name exactly the expected and executed B03/B04 inputs: %q", ledger.Basis)
+	}
+	src := a.src
+	src.ExpectedB34, src.ExecutedB34 = nil, nil
+	for _, name := range names {
+		data, err := os.ReadFile("../contracts/" + name[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		switch name[2] {
+		case "expected":
+			src.ExpectedB34 = data
+		case "executed":
+			src.ExecutedB34 = data
+		}
+	}
+	if src.ExpectedB34 == nil || src.ExecutedB34 == nil {
+		t.Fatal("basis must name both the expected and executed B03/B04 inputs")
+	}
+	want, err := DeriveCSharpG1LedgerR2(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := MarshalCSharpG1Ledger(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(data, a.asset) {
+		t.Fatalf("ledger cannot be reproduced from its basis inputs %s and %s", names[0][1], names[1][1])
+	}
 }
 
 func TestCSharpG1LedgerR2IsTheDerivation(t *testing.T) {

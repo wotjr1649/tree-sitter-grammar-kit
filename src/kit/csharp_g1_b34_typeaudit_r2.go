@@ -163,6 +163,12 @@ func g1b34ContextPin(c G1B34Context) string {
 
 func g1b34RoleKey(lexeme, role string) string { return lexeme + "/" + role }
 
+// A role's grammar types and grounds are one authored claim; re-derived comparisons cannot change it.
+func g1b34RolePin(r G1B34Role) string {
+	sum := sha256.Sum256([]byte(strings.Join(r.Types, "\x1f") + "\x1e" + G1GroundPin(r.Grounds)))
+	return hex.EncodeToString(sum[:])
+}
+
 // DeriveCSharpG1TypeAuditB34R2 completes the authored roles and contexts with the comparison of every context against the anchors of the
 // expected asset (pairs) and returns the audit r2. previous is the sealed type audit r1 file the audit pins.
 func DeriveCSharpG1TypeAuditB34R2(roles []G1B34Role, contexts []G1B34Context, previous []byte, pairs []G1B34AnchorPair) (CSharpG1TypeAuditB34R2, error) {
@@ -242,8 +248,8 @@ func MarshalCSharpG1TypeAuditB34R2(x CSharpG1TypeAuditB34R2) ([]byte, error) {
 }
 
 // ParseCSharpG1TypeAuditB34R2 decodes the asset and verifies it against the sealed r1 audit file and the anchors of the expected asset it
-// audits: it pins that r1 file; its roles are well formed (types of the lexeme's r1 candidate set, a reason, grammar grounds pinned to the
-// row) and each is used; its contexts are exactly the anchors of the NOT_DERIVABLE lexemes, in order, each with a role of its lexeme, the
+// audits: it pins that r1 file; its roles are well formed (types of the lexeme's r1 candidate set, a reason, types and grammar grounds pinned
+// together) and each is used; its contexts are exactly the anchors of the NOT_DERIVABLE lexemes, in order, each with a role of its lexeme, the
 // types of that role and the comparison made now; the findings are the authored ones.
 func ParseCSharpG1TypeAuditB34R2(data []byte, previous []byte, pairs []G1B34AnchorPair) (CSharpG1TypeAuditB34R2, error) {
 	x, err := DecodeCSharpG1TypeAuditB34R2(data)
@@ -264,7 +270,7 @@ func ParseCSharpG1TypeAuditB34R2(data []byte, previous []byte, pairs []G1B34Anch
 			i > 0 && g1b34RoleKey(x.Roles[i-1].Lexeme, x.Roles[i-1].Role) >= g1b34RoleKey(r.Lexeme, r.Role) {
 			return x, g1b34xFault("G1_TYPEAUDITB34R2_ROLE")
 		}
-		if G1GroundPin(r.Grounds) != g1b34RolePins[g1b34RoleKey(r.Lexeme, r.Role)] {
+		if g1b34RolePin(r) != g1b34RolePins[g1b34RoleKey(r.Lexeme, r.Role)] {
 			return x, g1b34xFault("G1_TYPEAUDITB34R2_GROUND")
 		}
 		used[g1b34RoleKey(r.Lexeme, r.Role)] = false
@@ -316,11 +322,11 @@ func g1b34RoleTypes(types, candidates []string) bool {
 	return true
 }
 
-// G1B34ContextGroundPins are the pins of the roles ("<lexeme>/<role>") of the audit r2.
+// G1B34ContextGroundPins binds the types and normalized grounds of each role ("<lexeme>/<role>") of the audit r2.
 func G1B34ContextGroundPins(x CSharpG1TypeAuditB34R2) map[string]string {
 	pins := map[string]string{}
 	for _, r := range x.Roles {
-		pins[g1b34RoleKey(r.Lexeme, r.Role)] = G1GroundPin(r.Grounds)
+		pins[g1b34RoleKey(r.Lexeme, r.Role)] = g1b34RolePin(r)
 	}
 	return pins
 }
