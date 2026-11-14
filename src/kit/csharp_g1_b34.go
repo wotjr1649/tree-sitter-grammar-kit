@@ -80,6 +80,8 @@ type G1B34Inputs struct {
 	Ledger      CSharpG1Inputs        `json:"ledger_sources"`
 	Observation queryregistrycore.Pin `json:"observation"`
 	KindMap     queryregistrycore.Pin `json:"kind_map"`
+	// Previous is the sealed r1 asset an r2 asset corrects (csharp_g1_b34_correct.go); r1 has none.
+	Previous queryregistrycore.Pin `json:"previous,omitzero"`
 }
 
 type G1B34Counts struct {
@@ -100,7 +102,10 @@ type CSharpG1B34 struct {
 	Basis        string      `json:"basis"`
 	WitnessLimit int         `json:"witness_limit"`
 	Counts       G1B34Counts `json:"counts"`
-	Alternatives []G1B34Alt  `json:"alternatives"`
+	// PostSeal and Corrections are the members of an r2 asset only.
+	PostSeal     *G1B34PostSeal `json:"post_seal,omitempty"`
+	Corrections  []G1Correction `json:"corrections,omitempty"`
+	Alternatives []G1B34Alt     `json:"alternatives"`
 }
 
 const csharpG1B34Basis = "Expected values for the production rows csharp-B03 (expressions and patterns) and csharp-B04 (statements), derived without any native output. An alternative of group A (a literal anchor, basis spec-derived) expects a node of the types of each anchor token, spanning exactly that token, at the tightest ordered run of the required keyword and punctuation tokens in an accepted source of a linked case; it does not assert the node that holds the anchors (decision D-1). An alternative of group B (a Roslyn structure, basis differential-oracle) expects a node of the kind map's types for the classified Roslyn kinds with exactly the span of the first such node of an accepted source of a linked case. An alternative of group C is BLOCKED with a reason code. discriminating false is a weak match: an anchor of single punctuation characters, a type that other Roslyn kinds share, or a type set that holds identifier or five or more types. The single-oracle limit applies: a differential-oracle expectation is the behavior of one Roslyn build, not the specification. The position audit and the type audit of this revision are separate assets."
@@ -313,6 +318,23 @@ func MarshalCSharpG1B34(x CSharpG1B34) ([]byte, error) {
 		put(f.v)
 		b.WriteString(",\n")
 	}
+	if x.PostSeal != nil {
+		b.WriteString(" \"post_seal\": ")
+		put(x.PostSeal)
+		b.WriteString(",\n")
+	}
+	if len(x.Corrections) > 0 {
+		b.WriteString(" \"corrections\": [\n")
+		for i, c := range x.Corrections {
+			b.WriteString("  ")
+			put(c)
+			if i < len(x.Corrections)-1 {
+				b.WriteByte(',')
+			}
+			b.WriteByte('\n')
+		}
+		b.WriteString(" ],\n")
+	}
 	b.WriteString(" \"alternatives\": [\n")
 	for i, a := range x.Alternatives {
 		b.WriteString("  ")
@@ -335,7 +357,7 @@ func DecodeCSharpG1B34(data []byte) (CSharpG1B34, error) {
 	if err := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return x, fail(KindInvalidInput, "G1_B34_JSON", CSharpG1B34Path, err)
 	}
-	if x.Schema != CSharpG1B34Schema || x.Basis == "" {
+	if x.Schema != CSharpG1B34Schema && x.Schema != CSharpG1B34SchemaR2 || x.Basis == "" {
 		return x, g1b34Fault("G1_B34_SCHEMA")
 	}
 	return x, nil
@@ -346,6 +368,9 @@ func ParseCSharpG1B34(data []byte, in CSharpG1ExpectedSources) (CSharpG1B34, err
 	x, err := DecodeCSharpG1B34(data)
 	if err != nil {
 		return x, err
+	}
+	if x.Schema != CSharpG1B34Schema || x.PostSeal != nil || len(x.Corrections) > 0 {
+		return x, g1b34Fault("G1_B34_SCHEMA")
 	}
 	want, err := DeriveCSharpG1B34(in)
 	if err != nil {

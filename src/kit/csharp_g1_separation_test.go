@@ -84,9 +84,14 @@ var g1SepClass = map[string]string{
 	"csharp_g1_b34_audit.go":       "derivation",
 	"csharp_g1_b34_audit_rules.go": "derivation",
 	"csharp_g1_b34_view.go":        "derivation",
-	"csharp_g1_kindmap_r3.go":      "derivation",
-	"csharp_g1_executed.go":        "comparison",
-	"csharp_g1_native.go":          "comparison",
+	// the post-seal corrections of the B03/B04 expectations (authored literals applied to the verified r1 bytes) and the type audit r2 with its pins: derivation,
+	// the call closure reaches no native input (the after_native flag records that the literals were written after the native comparison)
+	"csharp_g1_b34_correct.go":           "derivation",
+	"csharp_g1_b34_typeaudit_r2.go":      "derivation",
+	"csharp_g1_b34_typeaudit_r2_pins.go": "derivation",
+	"csharp_g1_kindmap_r3.go":            "derivation",
+	"csharp_g1_executed.go":              "comparison",
+	"csharp_g1_native.go":                "comparison",
 	// the native comparison of the B03 and B04 expectations (G1-3b): reads the raw native observation and the sealed expected asset
 	"csharp_g1_b34_executed.go": "comparison",
 	// the approval of the bundle: it reads the tracked assets as bytes and names them by path; it derives and compares nothing.
@@ -165,6 +170,9 @@ var g1SepRoots = []string{
 	"DeriveCSharpG1AuditB34", "ParseCSharpG1AuditB34", "DecodeCSharpG1AuditB34", "MarshalCSharpG1AuditB34", "CheckG1AuditB34Grounds", "G1B34PosGroundPins", "CheckG1TypeAuditB34Grounds", "CheckG1KindMapR3Grounds",
 	"DeriveCSharpG1TypeAuditB34", "ParseCSharpG1TypeAuditB34", "DecodeCSharpG1TypeAuditB34", "MarshalCSharpG1TypeAuditB34", "G1B34TypeGroundPins",
 	"G1B34AuditView", "G1B34TypeView",
+	// the post-seal corrections of the B03/B04 expectations and the type audit r2
+	"DeriveCSharpG1B34R2", "ParseCSharpG1B34R2", "G1B34Corrections",
+	"DeriveCSharpG1TypeAuditB34R2", "ParseCSharpG1TypeAuditB34R2", "DecodeCSharpG1TypeAuditB34R2", "MarshalCSharpG1TypeAuditB34R2", "CheckG1TypeAuditB34R2Grounds", "G1B34ContextView", "G1B34ContextGroundPins", "G1B34ContextRowPins",
 }
 
 // g1SepExcluded are exported Derive*, Parse*, Check* and Marshal* functions of derivation files that no root reaches

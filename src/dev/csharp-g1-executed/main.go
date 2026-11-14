@@ -115,7 +115,7 @@ func main() {
 	flag.Parse()
 	run := func() error { return run(*root, *raw, *write, !*r1) }
 	if *set == "b34" {
-		run = func() error { return runB34(*root, *raw, *write) }
+		run = func() error { return runB34(*root, *raw, *write, *r1) }
 	}
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

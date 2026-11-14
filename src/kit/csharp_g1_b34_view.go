@@ -78,3 +78,22 @@ func G1B34TypeView(expected []byte) (G1B34TypeInput, error) {
 	}
 	return out, nil
 }
+
+// G1B34ContextView is the input of the type audit r2: every anchor of the EXPECTED A alternatives of the expected asset (either revision),
+// in the order of the alternatives and of the anchors in them, with the types of the anchor. It has no witness, Roslyn kind or kind map.
+func G1B34ContextView(expected []byte) ([]G1B34AnchorPair, error) {
+	x, err := DecodeCSharpG1B34(expected)
+	if err != nil {
+		return nil, err
+	}
+	var out []G1B34AnchorPair
+	for _, a := range x.Alternatives {
+		if a.Status != G1ExpExpected || a.Group != G1ClassLiteral {
+			continue
+		}
+		for i, an := range a.Anchors {
+			out = append(out, G1B34AnchorPair{Alt: a.ID, Index: i, Text: an.Text, TS: slices.Clone(an.TS)})
+		}
+	}
+	return out, nil
+}

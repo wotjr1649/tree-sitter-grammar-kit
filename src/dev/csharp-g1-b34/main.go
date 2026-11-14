@@ -115,13 +115,16 @@ func runKindMap(root string, write bool) error {
 	return nil
 }
 
-func run(root string, doList, write bool, kindmap bool, audit, authored string, pins bool, grammarDir, specDir string) error {
+func run(root string, doList, write bool, kindmap bool, r2 bool, audit, authored string, pins bool, grammarDir, specDir string) error {
 	if kindmap {
 		return runKindMap(root, write)
 	}
 	in, err := load(root)
 	if err != nil {
 		return err
+	}
+	if r2 {
+		return runR2(root, in, write, grammarDir, specDir)
 	}
 	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1B34Path))
 	if audit != "" {
@@ -172,6 +175,7 @@ func main() {
 	doList := flag.Bool("list", false, "print every alternative with the text of its witness")
 	write := flag.Bool("write", false, "write the asset instead of comparing")
 	kindmap := flag.Bool("kindmap", false, "write or verify the kind map r3 (derived from r2)")
+	r2 := flag.Bool("r2", false, "write or verify the r2 expected asset (the sealed r1 asset with the post-seal corrections)")
 	audit := flag.String("audit", "", "pos or type: build or verify an audit asset")
 	in := flag.String("in", "", "authored audit rows (JSON) to complete and verify")
 	pins := flag.Bool("pins", false, "print the ground pin table of the tracked audit asset as Go source")
@@ -182,8 +186,51 @@ func main() {
 		fmt.Fprintln(os.Stderr, "-grammar and -spec go together")
 		os.Exit(2)
 	}
-	if err := run(*root, *doList, *write, *kindmap, *audit, *in, *pins, *grammar, *spec); err != nil {
+	if err := run(*root, *doList, *write, *kindmap, *r2, *audit, *in, *pins, *grammar, *spec); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// runR2 builds (-write) or verifies the r2 asset: the sealed r1 asset with the post-seal corrections (csharp_g1_b34_correct.go).
+func runR2(root string, in kit.CSharpG1ExpectedSources, write bool, grammarDir, specDir string) error {
+	previous, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(kit.CSharpG1B34Path)))
+	if err != nil {
+		return err
+	}
+	src := kit.CSharpG1B34R2Sources{R1: in, Previous: previous}
+	want, err := kit.DeriveCSharpG1B34R2(src)
+	if err != nil {
+		return err
+	}
+	data, err := kit.MarshalCSharpG1B34(want)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1B34PathR2))
+	if write {
+		if err := os.WriteFile(path, data, 0o644); err != nil {
+			return err
+		}
+		fmt.Printf("wrote %s: %d bytes %+v post_seal %+v\n", kit.CSharpG1B34PathR2, len(data), want.Counts, *want.PostSeal)
+		return nil
+	}
+	old, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if _, err := kit.ParseCSharpG1B34R2(old, src); err != nil {
+		return fmt.Errorf("the r2 asset does not verify: %w", err)
+	}
+	if grammarDir != "" {
+		g, spec, err := readSpec(grammarDir, specDir)
+		if err != nil {
+			return err
+		}
+		if err := kit.CheckG1Grounds(kit.G1B34Corrections(), g, spec); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("verified %s: %+v post_seal %+v\n", kit.CSharpG1B34PathR2, want.Counts, *want.PostSeal)
+	return nil
 }

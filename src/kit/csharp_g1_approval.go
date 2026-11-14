@@ -18,7 +18,7 @@ import (
 // approval, and it does not touch their objects. Until the object exists the state is PENDING_APPROVAL, which is not a pass.
 // Nothing here writes: the object is written by hand after the user confirms the tuple that PrintCSharpG1Approval shows.
 //
-// The second bundle (G1-3b: the B03 and B04 assets, their executed asset and ledger r2) is a second object of the same schema with its
+// The second bundle (G1-3b: the B03 and B04 assets and their post-seal corrections, the executed assets and ledger r2) is a second object of the same schema with its
 // own scope. It names the first object (base) and no asset of the first bundle; the first object stays valid and unchanged, and the
 // first bundle knows the second one only by the paths of its assets, so that they may exist beside it.
 
@@ -76,14 +76,19 @@ var csharpG1ApprovalBundle = []CSharpG1ApprovalMember{
 	{Path: CSharpG1TypeAudit76Path, Role: "type-audit", Revision: "r1"},
 }
 
-// csharpG1ApprovalBundleB34 is the second bundle (#233, G1-3b): the sealed B03 and B04 expectations with the kind map r3 they use, the two
-// audits made before the seal, the native comparison and ledger r2. The executed path is a literal for the reason given above.
+// csharpG1ApprovalBundleB34 is the second bundle (#233, G1-3b): the sealed B03 and B04 expectations (r1) with the kind map r3 they use, the two
+// audits made before the seal, the native comparison of the sealed asset (executed r1), the post-seal corrections (expected r2), the type audit
+// r2 that audits per alternative, the native comparison of the corrected asset (executed r2) and ledger r2. The executed paths are literals for
+// the reason given above.
 var csharpG1ApprovalBundleB34 = []CSharpG1ApprovalMember{
 	{Path: CSharpG1B34Path, Role: "expected", Revision: "r1"},
 	{Path: CSharpG1KindMapPathR3, Role: "kind-map", Revision: "r3"},
 	{Path: CSharpG1AuditB34Path, Role: "position-audit", Revision: "r1"},
 	{Path: CSharpG1TypeAuditB34Path, Role: "type-audit", Revision: "r1"},
 	{Path: "src/contracts/csharp-g1-executed-b03b04-r1.json", Role: "executed", Revision: "r1"},
+	{Path: CSharpG1B34PathR2, Role: "expected", Revision: "r2"},
+	{Path: CSharpG1TypeAuditB34PathR2, Role: "type-audit", Revision: "r2"},
+	{Path: "src/contracts/csharp-g1-executed-b03b04-r2.json", Role: "executed", Revision: "r2"},
 	{Path: CSharpG1LedgerPathR2, Role: "ledger", Revision: "r2"},
 }
 

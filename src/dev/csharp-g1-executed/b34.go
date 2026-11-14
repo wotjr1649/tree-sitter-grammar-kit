@@ -11,8 +11,9 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-// runB34 derives or verifies src/contracts/csharp-g1-executed-b03b04-r1.json (#233 G1-3b), like run does for the lexical rows.
-func runB34(root, rawPath string, write bool) error {
+// runB34 derives or verifies src/contracts/csharp-g1-executed-b03b04-r2.json (#233 G1-3b: the expected asset r2 against the raw native
+// observation), or with r1 the frozen r1 asset (the sealed expected asset), like run does for the lexical rows.
+func runB34(root, rawPath string, write, r1 bool) error {
 	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
 	var in kit.CSharpG1B34ExecutedSources
 	in.Src = kit.CSharpG1Sources{Fixtures: map[string][]byte{}}
@@ -31,7 +32,12 @@ func runB34(root, rawPath string, write bool) error {
 			return err
 		}
 	}
-	if in.Expected, err = read(kit.CSharpG1B34Path); err != nil {
+	expectedPath, executedPath := kit.CSharpG1B34PathR2, kit.CSharpG1B34ExecutedPathR2
+	if r1 {
+		expectedPath, executedPath = kit.CSharpG1B34Path, kit.CSharpG1B34ExecutedPath
+	}
+	in.R2 = !r1
+	if in.Expected, err = read(expectedPath); err != nil {
 		return err
 	}
 	if in.Observation, err = read(kit.CSharpG1RoslynPathR3); err != nil {
@@ -42,7 +48,7 @@ func runB34(root, rawPath string, write bool) error {
 			return err
 		}
 	}
-	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1B34ExecutedPath))
+	path := filepath.Join(root, filepath.FromSlash(executedPath))
 	if rawPath == "" {
 		if write {
 			return errors.New("-write needs -native")
@@ -75,6 +81,6 @@ func runB34(root, rawPath string, write bool) error {
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s: %d bytes %+v\n", kit.CSharpG1B34ExecutedPath, len(data), x.Counts)
+	fmt.Printf("wrote %s: %d bytes %+v\n", executedPath, len(data), x.Counts)
 	return nil
 }

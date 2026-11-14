@@ -76,9 +76,9 @@ func TestCSharpG1ApprovalSecondBundle(t *testing.T) {
 	if got := CSharpG1PendingAssets(pend); !slices.Equal(got, g1ApprovalB34Paths()) {
 		t.Errorf("pending %v", got)
 	}
-	// the second tuple names the first object and the six assets, none of the first bundle
+	// the second tuple names the first object and the nine assets, none of the first bundle
 	x := g1ApprovalTupleB34Of(t, pend)
-	if x.Scope != CSharpG1ApprovalScopeB34 || x.Decision != CSharpG1ApprovalDecisionB34 || x.Base != first || len(x.Members) != 6 || x.Schema != CSharpG1ApprovalSchema {
+	if x.Scope != CSharpG1ApprovalScopeB34 || x.Decision != CSharpG1ApprovalDecisionB34 || x.Base != first || len(x.Members) != 9 || x.Schema != CSharpG1ApprovalSchema {
 		t.Fatalf("tuple: %+v", x)
 	}
 	for _, m := range x.Members {

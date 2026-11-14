@@ -49,11 +49,11 @@ func run(root string, write, r2 bool) error {
 	derive, parse, outPath := kit.DeriveCSharpG1Ledger, kit.ParseCSharpG1Ledger, kit.CSharpG1LedgerPath
 	if r2 {
 		derive, parse, outPath = kit.DeriveCSharpG1LedgerR2, kit.ParseCSharpG1LedgerR2, kit.CSharpG1LedgerPathR2
-		if src.ExpectedB34, err = read(kit.CSharpG1B34Path); err != nil {
+		if src.ExpectedB34, err = read(kit.CSharpG1B34PathR2); err != nil {
 			return err
 		}
 		// the executed asset of the two rows is optional like the one of the lexical rows: without it nothing is EXECUTED there
-		if exe, err := read(kit.CSharpG1B34ExecutedPath); err == nil {
+		if exe, err := read(kit.CSharpG1B34ExecutedPathR2); err == nil {
 			src.ExecutedB34 = exe
 		}
 	}

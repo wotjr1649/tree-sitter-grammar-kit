@@ -36,15 +36,19 @@ func readSpec(grammarDir, specDir string) (string, map[string]string, error) {
 // runAudit builds (-in, -write) or verifies the position audit (pos) or the type audit (type).
 func runAudit(root string, in kit.CSharpG1ExpectedSources, audit, authored string, write, pins bool, grammarDir, specDir string) error {
 	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
-	expected, err := read(kit.CSharpG1B34Path)
-	if err != nil {
-		return err
-	}
 	var raw []byte
 	if authored != "" {
+		var err error
 		if raw, err = os.ReadFile(authored); err != nil {
 			return err
 		}
+	}
+	if audit == "type2" {
+		return runType2(root, raw, write, pins, grammarDir)
+	}
+	expected, err := read(kit.CSharpG1B34Path)
+	if err != nil {
+		return err
 	}
 	switch audit {
 	case "pos":
@@ -52,7 +56,7 @@ func runAudit(root string, in kit.CSharpG1ExpectedSources, audit, authored strin
 	case "type":
 		return runType(root, expected, raw, write, pins, grammarDir)
 	}
-	return fmt.Errorf("-audit is pos or type")
+	return fmt.Errorf("-audit is pos, type or type2")
 }
 
 func emit(path, rel string, data, old []byte, write bool) error {
@@ -215,5 +219,73 @@ func runType(root string, expected, raw []byte, write, pins bool, grammarDir str
 		return nil
 	}
 	fmt.Printf("verified %s: %+v\n", kit.CSharpG1TypeAuditB34Path, x.Counts)
+	return nil
+}
+
+// authoredContexts is the JSON the type audit r2 is authored in: the roles and the role of each context (types and comparison are derived).
+type authoredContexts struct {
+	Roles    []kit.G1B34Role    `json:"roles"`
+	Contexts []kit.G1B34Context `json:"contexts"`
+}
+
+// runType2 builds (-in, -write) or verifies the type audit r2 against the expected asset r2 and the sealed type audit r1.
+func runType2(root string, raw []byte, write, pins bool, grammarDir string) error {
+	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
+	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1TypeAuditB34PathR2))
+	expected, err := read(kit.CSharpG1B34PathR2)
+	if err != nil {
+		return err
+	}
+	previous, err := read(kit.CSharpG1TypeAuditB34Path)
+	if err != nil {
+		return err
+	}
+	pairs, err := kit.G1B34ContextView(expected)
+	if err != nil {
+		return err
+	}
+	var data []byte
+	if raw != nil {
+		var a authoredContexts
+		if err := jsonv2.Unmarshal(raw, &a, jsonv2.RejectUnknownMembers(true)); err != nil {
+			return err
+		}
+		x, err := kit.DeriveCSharpG1TypeAuditB34R2(a.Roles, a.Contexts, previous, pairs)
+		if err != nil {
+			return err
+		}
+		if pins {
+			fmt.Print(kit.G1GroundPinSource("g1b34RolePins", kit.G1B34ContextGroundPins(x)))
+			fmt.Print(kit.G1GroundPinSource("g1b34ContextPins", kit.G1B34ContextRowPins(x)))
+			return nil
+		}
+		if data, err = kit.MarshalCSharpG1TypeAuditB34R2(x); err != nil {
+			return err
+		}
+	} else if data, err = os.ReadFile(path); err != nil {
+		return err
+	}
+	x, err := kit.ParseCSharpG1TypeAuditB34R2(data, previous, pairs)
+	if err != nil {
+		return fmt.Errorf("the type audit r2 does not verify: %w", err)
+	}
+	if grammarDir != "" {
+		g, err := os.ReadFile(filepath.Join(grammarDir, "grammar.js"))
+		if err != nil {
+			return err
+		}
+		if err := kit.CheckG1TypeAuditB34R2Grounds(x, string(g)); err != nil {
+			return err
+		}
+	}
+	if raw != nil {
+		old, _ := os.ReadFile(path)
+		if err := emit(path, kit.CSharpG1TypeAuditB34PathR2, data, old, write); err != nil {
+			return err
+		}
+		fmt.Printf("%s %s: %d bytes %+v\n", map[bool]string{true: "wrote", false: "matches"}[write], kit.CSharpG1TypeAuditB34PathR2, len(data), x.Counts)
+		return nil
+	}
+	fmt.Printf("verified %s: %+v\n", kit.CSharpG1TypeAuditB34PathR2, x.Counts)
 	return nil
 }

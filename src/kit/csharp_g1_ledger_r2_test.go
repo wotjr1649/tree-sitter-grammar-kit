@@ -35,7 +35,7 @@ func g1l2Load(t *testing.T) *g1l2Assets {
 		}
 		a.asset = read("../contracts/csharp-g1-ledger-r2.json")
 		a.src = g1Load(t).src
-		a.src.ExpectedB34, a.src.ExecutedB34 = read("../contracts/csharp-g1-expected-b03b04-r1.json"), read("../contracts/csharp-g1-executed-b03b04-r1.json")
+		a.src.ExpectedB34, a.src.ExecutedB34 = read("../contracts/csharp-g1-expected-b03b04-r2.json"), read("../contracts/csharp-g1-executed-b03b04-r2.json")
 		if a.err != nil {
 			return
 		}
@@ -85,8 +85,8 @@ func TestCSharpG1LedgerR2IsTheDerivation(t *testing.T) {
 	n := g1l2Statuses(x)
 	for k, want := range map[string]int{
 		"csharp-B01 EXECUTED": 370, "csharp-B01 BLOCKED": 37, "csharp-B02 EXECUTED": 56, "csharp-B02 BLOCKED": 42,
-		"csharp-B03 EXECUTED": 193, "csharp-B03 SEALED": 3, "csharp-B03 BLOCKED": 61,
-		"csharp-B04 EXECUTED": 98, "csharp-B04 SEALED": 2, "csharp-B04 BLOCKED": 31,
+		"csharp-B03 EXECUTED": 195, "csharp-B03 SEALED": 0, "csharp-B03 BLOCKED": 62,
+		"csharp-B04 EXECUTED": 100, "csharp-B04 SEALED": 0, "csharp-B04 BLOCKED": 31,
 	} {
 		if n[k] != want {
 			t.Errorf("%s: %d, want %d", k, n[k], want)
@@ -364,13 +364,32 @@ func TestCSharpG1LedgerR2Forgeries(t *testing.T) {
 		t.Fatalf("no %s %s", row, status)
 		return nil
 	}
+	byID := func(l *CSharpG1Ledger, id string) *G1Alternative {
+		for i := range l.Alternatives {
+			if l.Alternatives[i].ID == id {
+				return &l.Alternatives[i]
+			}
+		}
+		t.Fatalf("no %s", id)
+		return nil
+	}
+	// the corrected a239 is BLOCKED with a registered code, and no alternative of the two rows stays SEALED
+	if x := byID(&a.want, "csharp-B03.a239"); x.Status != G1Blocked || x.Block != G1ClassBlockPosition {
+		t.Errorf("a239: %s %s", x.Status, x.Block)
+	}
+	for _, alt := range a.want.Alternatives {
+		if alt.Status == G1Sealed {
+			t.Errorf("%s stays SEALED", alt.ID)
+		}
+	}
 	for _, tc := range []struct {
 		name string
 		edit func(l *CSharpG1Ledger)
 		code string
 	}{
 		{"BLOCKED executed", func(l *CSharpG1Ledger) { find(l, "csharp-B03", G1Blocked).Status = G1Executed }, "G1_LEDGER_ALTERNATIVE"},
-		{"a MISMATCH executed", func(l *CSharpG1Ledger) { find(l, "csharp-B04", G1Sealed).Status = G1Executed }, "G1_LEDGER_ALTERNATIVE"},
+		{"the corrected a239 executed", func(l *CSharpG1Ledger) { byID(l, "csharp-B03.a239").Status = G1Executed }, "G1_LEDGER_ALTERNATIVE"},
+		{"the code of a239 changed", func(l *CSharpG1Ledger) { byID(l, "csharp-B03.a239").Block = G1ClassBlockSemantic }, "G1_LEDGER_ALTERNATIVE"},
 		{"EXECUTED sealed again", func(l *CSharpG1Ledger) { find(l, "csharp-B04", G1Executed).Status = G1Sealed }, "G1_LEDGER_ALTERNATIVE"},
 		{"a reason dropped", func(l *CSharpG1Ledger) { find(l, "csharp-B03", G1Blocked).Block = "" }, "G1_LEDGER_ALTERNATIVE"},
 		{"a reason changed", func(l *CSharpG1Ledger) { find(l, "csharp-B03", G1Blocked).Block = "SEMANTIC_BINDING_X" }, "G1_LEDGER_ALTERNATIVE"},

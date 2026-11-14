@@ -32,7 +32,10 @@ var g1ApprovalPendingPinned = []CSharpG1ApprovalMember{
 	{Path: "src/contracts/csharp-g1-audit-b03b04-r1.json", Role: "position-audit", Revision: "r1", SHA256: "d18fafc9b60de0bf7d48c05dc4087e6f807d2aafe6d47faebb79021d836008d0"},
 	{Path: "src/contracts/csharp-g1-typeaudit-b03b04-r1.json", Role: "type-audit", Revision: "r1", SHA256: "d3a7b23b9f168547ee6722bdf98ec51f33784cf5c4c1e8169313f91eb92e5ceb"},
 	{Path: "src/contracts/csharp-g1-executed-b03b04-r1.json", Role: "executed", Revision: "r1", SHA256: "281f4c49087e113478f3f8589cbc59275827eb71e7c7730cfaea44b37bf4d930"},
-	{Path: "src/contracts/csharp-g1-ledger-r2.json", Role: "ledger", Revision: "r2", SHA256: "3a5a40e00793852235d262952571a17f3818bdffc0d53df49888ad4dc1f905c7"},
+	{Path: "src/contracts/csharp-g1-expected-b03b04-r2.json", Role: "expected", Revision: "r2", SHA256: "255653f48e20218dd778b95a011acaecd790187e5324956a611d0dee7e168383"},
+	{Path: "src/contracts/csharp-g1-typeaudit-b03b04-r2.json", Role: "type-audit", Revision: "r2", SHA256: "b633c7d59bf8a66c79cc41d8be7a61ed11735a2e3dbe8d2b9711f3cf63e59306"},
+	{Path: "src/contracts/csharp-g1-executed-b03b04-r2.json", Role: "executed", Revision: "r2", SHA256: "ef66ecdb00dd18edd875e544b7582e0b860fba899b35817007677e202c4e9c5c"},
+	{Path: "src/contracts/csharp-g1-ledger-r2.json", Role: "ledger", Revision: "r2", SHA256: "3ae7d253f0c3bb54fefaa91e372cc2c655170f93b49f86139abbaf3a2cf37789"},
 }
 
 // g1ApprovalB34Paths are the paths of g1ApprovalPendingPinned.
@@ -171,7 +174,7 @@ func TestCSharpG1ApprovalBundleCoversEveryTrackedAsset(t *testing.T) {
 	if state, _, err := VerifyCSharpG1ApprovalB34(os.DirFS("../..")); err != nil || state == CSharpG1ApprovalApproved && len(pending) != 0 || state != CSharpG1ApprovalApproved && len(pending) != len(csharpG1ApprovalBundleB34) {
 		t.Fatalf("second bundle %q (%v) with %d pending assets", state, err, len(pending))
 	}
-	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(csharpG1ApprovalBundleB34) || len(csharpG1ApprovalBundle) != 11 || len(csharpG1ApprovalBundleB34) != 6 {
+	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(csharpG1ApprovalBundleB34) || len(csharpG1ApprovalBundle) != 11 || len(csharpG1ApprovalBundleB34) != 9 {
 		t.Fatalf("%d tracked G1 assets (%v), %d in the first bundle, %d in the second", len(all), err, len(csharpG1ApprovalBundle), len(csharpG1ApprovalBundleB34))
 	}
 	for _, p := range g1ApprovalB34Paths() {
@@ -182,7 +185,8 @@ func TestCSharpG1ApprovalBundleCoversEveryTrackedAsset(t *testing.T) {
 			t.Errorf("%s is not a tracked G1 asset", p)
 		}
 	}
-	if csharpG1ApprovalBundle[2].Path != CSharpG1ExecutedPath || csharpG1ApprovalBundle[5].Path != CSharpG1ExecutedPathR2 || csharpG1ApprovalBundleB34[4].Path != CSharpG1B34ExecutedPath || csharpG1ApprovalBundleB34[5].Path != CSharpG1LedgerPathR2 {
+	if csharpG1ApprovalBundle[2].Path != CSharpG1ExecutedPath || csharpG1ApprovalBundle[5].Path != CSharpG1ExecutedPathR2 || csharpG1ApprovalBundleB34[4].Path != CSharpG1B34ExecutedPath || csharpG1ApprovalBundleB34[5].Path != CSharpG1B34PathR2 || csharpG1ApprovalBundleB34[6].Path != CSharpG1TypeAuditB34PathR2 ||
+		csharpG1ApprovalBundleB34[7].Path != CSharpG1B34ExecutedPathR2 || csharpG1ApprovalBundleB34[8].Path != CSharpG1LedgerPathR2 {
 		t.Errorf("executed or ledger paths differ from the constants")
 	}
 	for _, m := range slices.Concat(csharpG1ApprovalBundle, csharpG1ApprovalBundleB34) {

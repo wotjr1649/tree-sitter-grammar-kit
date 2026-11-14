@@ -46,6 +46,11 @@ var g1SepAudits = []struct {
 	{"B03/B04 type audit",
 		[]string{"DeriveCSharpG1TypeAuditB34", "ParseCSharpG1TypeAuditB34", "DecodeCSharpG1TypeAuditB34", "MarshalCSharpG1TypeAuditB34"},
 		[]string{"csharp_g1_b34_audit.go", "csharp_g1_b34_audit_rules.go", "csharp_g1_typeaudit76.go", "csharp_g1_audit76.go", "csharp_g1_ground.go", "csharp_g1_ground_pins.go"}},
+	// the type audit r2 (per alternative, after the native comparison): its input is the anchors of the expected asset (G1B34AnchorPair), which it does
+	// not read from the asset
+	{"B03/B04 type audit r2",
+		[]string{"DeriveCSharpG1TypeAuditB34R2", "ParseCSharpG1TypeAuditB34R2", "DecodeCSharpG1TypeAuditB34R2", "MarshalCSharpG1TypeAuditB34R2", "CheckG1TypeAuditB34R2Grounds"},
+		[]string{"csharp_g1_b34_typeaudit_r2.go", "csharp_g1_b34_typeaudit_r2_pins.go", "csharp_g1_b34_audit.go", "csharp_g1_b34_audit_rules.go", "csharp_g1_typeaudit76.go", "csharp_g1_audit76.go", "csharp_g1_ground.go", "csharp_g1_ground_pins.go"}},
 }
 
 // g1SepAuditOutside lists the declarations of G1 files outside allowed that the closure of the roots reaches.
@@ -273,6 +278,8 @@ func TestCSharpG1AuditInputsAreNarrow(t *testing.T) {
 		{"B03/B04 type audit", G1B34TypeInput{}, []string{
 			"G1B34AnchorTS.TS []string", "G1B34AnchorTS.Text string", "G1B34TypeAlt.ID string", "G1B34TypeAlt.TS []string",
 			"G1B34TypeInput.Alts []kit.G1B34TypeAlt", "G1B34TypeInput.Anchors []kit.G1B34AnchorTS"}},
+		{"B03/B04 type audit r2", G1B34AnchorPair{}, []string{
+			"G1B34AnchorPair.Alt string", "G1B34AnchorPair.Index int", "G1B34AnchorPair.TS []string", "G1B34AnchorPair.Text string"}},
 		{"type audit", G1TypeAudit76Input{}, []string{
 			"G1TypeAudit76Alt.ID string", "G1TypeAudit76Alt.InitialTS []string", "G1TypeAudit76Alt.TS []string", "G1TypeAudit76Input.Alts []kit.G1TypeAudit76Alt"}},
 	} {

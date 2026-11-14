@@ -31,6 +31,10 @@ import (
 const (
 	CSharpG1B34ExecutedSchema = "tsgk-csharp-g1-executed-b03b04/r1"
 	CSharpG1B34ExecutedPath   = "src/contracts/csharp-g1-executed-b03b04-r1.json"
+	// r2 compares the expected asset r2 (the sealed r1 asset with the post-seal corrections) with the same raw native observation; r1 is
+	// the comparison of the sealed asset and stays as it is.
+	CSharpG1B34ExecutedSchemaR2 = "tsgk-csharp-g1-executed-b03b04/r2"
+	CSharpG1B34ExecutedPathR2   = "src/contracts/csharp-g1-executed-b03b04-r2.json"
 	// shortcut: the asset is far below this today; raise only with a new revision.
 	csharpG1B34ExecutedMax = 4 << 20
 )
@@ -64,6 +68,7 @@ type G1B34ExecAlt struct {
 	Basis          string             `json:"basis"`
 	Discriminating bool               `json:"discriminating"`
 	Tier           string             `json:"tier,omitempty"`
+	Corrected      bool               `json:"corrected,omitempty"` // r2: a post-seal correction touches the alternative
 	Executed       bool               `json:"executed"`
 	Result         string             `json:"result"`
 	Witnesses      []G1B34ExecWitness `json:"witnesses"`
@@ -126,6 +131,10 @@ type G1B34ExecCounts struct {
 	Sources             int `json:"sources"`
 	SourcesCompleted    int `json:"sources_completed"`
 	NativeErrorAccepted int `json:"native_error_roslyn_accepted"`
+	// r2 only: the alternatives a post-seal correction touched, how many of them match, and how many sealed ones match.
+	Corrected      int `json:"corrected,omitempty"`
+	CorrectedMatch int `json:"corrected_match,omitempty"`
+	SealedMatch    int `json:"sealed_match,omitempty"`
 }
 
 type CSharpG1B34Executed struct {
@@ -140,6 +149,9 @@ type CSharpG1B34Executed struct {
 }
 
 const csharpG1B34ExecutedBasis = "Native comparison of the sealed expected asset for csharp-B03 and csharp-B04. For every EXPECTED alternative the witness (copied unchanged from the sealed asset) is split into parts: a group A witness (match tokens) has one part per anchor token, with the anchor's sealed types and the token's span; a group B witness (match span) has one part, the witness's span with the alternative's sealed types. The tree-sitter-c-sharp tree of the witness's source, parsed by the registered native build (provenance in native; raw_native pins the local raw observation), is searched for a node of one of the part's sealed types with exactly the part's span: MATCH, else MISMATCH. A witness is MATCH when every part is, MISMATCH when one is not, and NOT_APPLICABLE when the native parse did not complete; an alternative has the result of its only witness and is executed when a completed native witness was compared. Decision D-1: a group A match says the anchor tokens are the sealed node types at those spans, not that the node holding them has any shape, and a weak match (discriminating false) proves less than a discriminating one. A discriminating group A alternative has a tier: word (a word anchor with one sealed node type), candidate (its word anchors' sealed types are candidate sets such as a keyword that may also be a modifier) or operator (no word anchor, an operator of two or more characters only); only the word tier counts as discriminating, and the counts keep the tiers, the weak matches and group B apart. Each mismatch has a disposition with a cause: GRAMMAR_DEFECT, KIND_MAP_ERROR, EXPECTED_ERROR or DESIGN_DIFFERENCE. Expectations, the kind map and the observation are not changed by this asset; a sealed value that the native result contradicts stays as sealed and is reported. The comparison covers the witnesses only: it does not say the grammar parses every construct of an alternative, and a MATCH is a property of the pinned Roslyn observation's spans on these sources."
+
+// csharpG1B34ExecutedBasisR2 is the basis of the r2 comparison: the r1 text and what r2 changes.
+const csharpG1B34ExecutedBasisR2 = csharpG1B34ExecutedBasis + " Revision r2 compares the expected asset r2 (the sealed r1 asset with its post-seal corrections: four anchor types and one alternative moved to BLOCKED) with the same raw native observation as r1, so no native run was repeated: the sealed alternatives that no correction touched are compared with their sealed values, the corrected alternatives with the corrected ones (corrected, and counted apart in corrected_match and sealed_match). r1 is the comparison of the sealed asset, with the five mismatches and their dispositions, and stays as it is."
 
 func g1bxFault(code string) error {
 	return fail(KindInvalidInput, code, CSharpG1B34ExecutedPath, nil)
@@ -281,9 +293,12 @@ type CSharpG1B34ExecutedSources struct {
 	Expected    []byte          // csharp-g1-expected-b03b04-r1.json
 	Observation []byte          // csharp-g1-roslyn-observed-r3.json
 	Raw         []byte
+	// R2 selects the revision: the expected asset is the r2 asset and the result is the r2 executed asset.
+	R2 bool
 }
 
 type g1bxContext struct {
+	r2       bool
 	exp      CSharpG1B34
 	sources  map[string]G1RoslynCaseSource
 	accepted map[string]bool
@@ -311,6 +326,10 @@ func g1bxContextOf(in CSharpG1B34ExecutedSources) (g1bxContext, error) {
 	if err != nil {
 		return c, err
 	}
+	if (exp.Schema == CSharpG1B34SchemaR2) != in.R2 {
+		return c, g1bxFault("G1_B34X_PIN")
+	}
+	c.r2 = in.R2
 	c.exp, c.sources, c.accepted = exp, map[string]G1RoslynCaseSource{}, map[string]bool{}
 	for _, s := range all {
 		c.sources[s.ID] = s
@@ -325,7 +344,7 @@ func g1bxContextOf(in CSharpG1B34ExecutedSources) (g1bxContext, error) {
 		}
 	}
 	c.inputs = G1B34ExecInputs{
-		Expected:    queryregistrycore.FilePin(CSharpG1B34Path, in.Expected),
+		Expected:    queryregistrycore.FilePin(map[bool]string{false: CSharpG1B34Path, true: CSharpG1B34PathR2}[in.R2], in.Expected),
 		Observation: queryregistrycore.FilePin(CSharpG1RoslynPathR3, in.Observation),
 	}
 	// the expected asset pins the same observation and the same ledger sources
@@ -367,6 +386,9 @@ func g1bxDerive(c g1bxContext, in CSharpG1B34ExecutedSources) (CSharpG1B34Execut
 	}
 	c.inputs.Raw = queryregistrycore.FilePin("csharp-g1-native-raw", in.Raw)
 	out.Schema, out.Basis, out.Inputs, out.Native = CSharpG1B34ExecutedSchema, csharpG1B34ExecutedBasis, c.inputs, raw.Provenance
+	if c.r2 {
+		out.Schema, out.Basis = CSharpG1B34ExecutedSchemaR2, csharpG1B34ExecutedBasisR2
+	}
 	for _, id := range c.ids {
 		s := trees[id].src
 		out.Sources = append(out.Sources, G1ExecSource{ID: id, SHA256: s.SHA256, Bytes: s.Bytes, RoslynAccepted: c.accepted[id], Status: s.Status, Code: s.Code,
@@ -376,7 +398,7 @@ func g1bxDerive(c g1bxContext, in CSharpG1B34ExecutedSources) (CSharpG1B34Execut
 		if a.Status != G1ExpExpected {
 			continue
 		}
-		alt := G1B34ExecAlt{ID: a.ID, Row: a.Row, Group: a.Group, Basis: a.Basis, Discriminating: a.Discriminating, Tier: g1bxTier(a), Witnesses: []G1B34ExecWitness{}}
+		alt := G1B34ExecAlt{ID: a.ID, Row: a.Row, Group: a.Group, Basis: a.Basis, Discriminating: a.Discriminating, Tier: g1bxTier(a), Corrected: c.corrected(a.ID), Witnesses: []G1B34ExecWitness{}}
 		for _, w := range a.Witnesses {
 			parts, ok := g1bxParts(a, w)
 			if !ok {
@@ -392,7 +414,7 @@ func g1bxDerive(c g1bxContext, in CSharpG1B34ExecutedSources) (CSharpG1B34Execut
 		alt.Result, alt.Executed = g1bxAltResult(alt.Witnesses)
 		out.Alternatives = append(out.Alternatives, alt)
 		if alt.Result == G1ResMismatch {
-			d := g1B34ExecDispositions[a.ID]
+			d := c.dispositions()[a.ID]
 			d.Alternative = a.ID
 			if d.Cause == "" {
 				d.Cause, d.Reason = "UNDISPOSED", ""
@@ -405,6 +427,19 @@ func g1bxDerive(c g1bxContext, in CSharpG1B34ExecutedSources) (CSharpG1B34Execut
 	}
 	out.Counts = g1bxCounts(out)
 	return out, nil
+}
+
+// corrected reports whether a post-seal correction of the expected asset (r2 only) names the alternative.
+func (c g1bxContext) corrected(id string) bool {
+	return slices.ContainsFunc(c.exp.Corrections, func(x G1Correction) bool { return x.Item == id })
+}
+
+// dispositions are the authored causes of the mismatches of the revision: r2 has none (a mismatch of r2 is rejected as undisposed).
+func (c g1bxContext) dispositions() map[string]G1ExecDisposition {
+	if c.r2 {
+		return nil
+	}
+	return g1B34ExecDispositions
 }
 
 func g1bxCounts(x CSharpG1B34Executed) G1B34ExecCounts {
@@ -422,9 +457,17 @@ func g1bxCounts(x CSharpG1B34Executed) G1B34ExecCounts {
 		if a.Executed {
 			n.Executed++
 		}
+		if a.Corrected {
+			n.Corrected++
+		}
 		switch a.Result {
 		case G1ResMatch:
 			n.Match++
+			if a.Corrected {
+				n.CorrectedMatch++
+			} else if x.Schema == CSharpG1B34ExecutedSchemaR2 {
+				n.SealedMatch++
+			}
 			switch {
 			case a.Tier == G1B34TierWord:
 				n.MatchStrongA++
@@ -469,7 +512,7 @@ func DecodeCSharpG1B34Executed(data []byte) (CSharpG1B34Executed, error) {
 	if err := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return x, fail(KindInvalidInput, "G1_B34X_JSON", CSharpG1B34ExecutedPath, err)
 	}
-	if x.Schema != CSharpG1B34ExecutedSchema || x.Basis == "" {
+	if x.Schema != CSharpG1B34ExecutedSchema && x.Schema != CSharpG1B34ExecutedSchemaR2 || x.Basis == "" {
 		return x, g1bxFault("G1_B34X_SCHEMA")
 	}
 	return x, nil
@@ -493,7 +536,9 @@ func ParseCSharpG1B34Executed(data []byte, in CSharpG1B34ExecutedSources) (CShar
 
 // g1bxCheck is ParseCSharpG1B34Executed after the decode and the context.
 func g1bxCheck(data []byte, x CSharpG1B34Executed, c g1bxContext, in CSharpG1B34ExecutedSources) error {
-	if x.Basis != csharpG1B34ExecutedBasis {
+	if wantSchema, wantBasis := map[bool][2]string{false: {CSharpG1B34ExecutedSchema, csharpG1B34ExecutedBasis}, true: {CSharpG1B34ExecutedSchemaR2, csharpG1B34ExecutedBasisR2}}[c.r2][0], map[bool]string{false: csharpG1B34ExecutedBasis, true: csharpG1B34ExecutedBasisR2}[c.r2]; x.Schema != wantSchema {
+		return g1bxFault("G1_B34X_SCHEMA")
+	} else if x.Basis != wantBasis {
 		return g1bxFault("G1_B34X_BYTES")
 	}
 	if x.Inputs.Expected != c.inputs.Expected || x.Inputs.Observation != c.inputs.Observation {
@@ -528,7 +573,7 @@ func g1bxCheck(data []byte, x CSharpG1B34Executed, c g1bxContext, in CSharpG1B34
 	}
 	for i, a := range x.Alternatives {
 		s := sealed[i]
-		if a.ID != s.ID || a.Row != s.Row || a.Group != s.Group || a.Basis != s.Basis || a.Discriminating != s.Discriminating || a.Tier != g1bxTier(s) || len(a.Witnesses) != len(s.Witnesses) {
+		if a.ID != s.ID || a.Row != s.Row || a.Group != s.Group || a.Basis != s.Basis || a.Discriminating != s.Discriminating || a.Tier != g1bxTier(s) || a.Corrected != c.corrected(s.ID) || len(a.Witnesses) != len(s.Witnesses) {
 			return g1bxFault("G1_B34X_EXPECTATION")
 		}
 		for j, w := range a.Witnesses {
@@ -564,7 +609,7 @@ func g1bxCheck(data []byte, x CSharpG1B34Executed, c g1bxContext, in CSharpG1B34
 		return g1bxFault("G1_B34X_UNDISPOSED")
 	}
 	for i, d := range x.Dispositions {
-		auth, ok := g1B34ExecDispositions[mismatches[i]]
+		auth, ok := c.dispositions()[mismatches[i]]
 		if d.Alternative != mismatches[i] || !ok || d.Cause != auth.Cause || d.Reason != auth.Reason || !slices.Contains([]string{G1CauseGrammar, G1CauseKindMap, G1CauseExpected, G1CauseDesign}, d.Cause) || d.Reason == "" {
 			return g1bxFault("G1_B34X_UNDISPOSED")
 		}
