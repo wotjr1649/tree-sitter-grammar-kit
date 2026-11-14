@@ -28,10 +28,10 @@ const (
 	// CSharpG1ApprovalDecision is the user decision (#233, 2026-11-13) that approves the bundle.
 	CSharpG1ApprovalDecision = "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233#issuecomment-6851518154"
 
-	// CSharpG1ApprovalScopeB34 is the scope of the second bundle. CSharpG1ApprovalDecisionB34 is the user decision that approves it: until
-	// the user has decided it is the issue itself, and the approving comment replaces it before the object is written.
+	// CSharpG1ApprovalScopeB34 is the scope of the second bundle. CSharpG1ApprovalDecisionB34 is the user decision (#233, 2026-11-14) that
+	// approves it.
 	CSharpG1ApprovalScopeB34    = "csharp-g1-b34-bundle"
-	CSharpG1ApprovalDecisionB34 = "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233"
+	CSharpG1ApprovalDecisionB34 = "https://github.com/wotjr1649/tree-sitter-grammar-kit/issues/233#issuecomment-6873534481"
 
 	CSharpG1ApprovalPending  = "PENDING_APPROVAL"
 	CSharpG1ApprovalApproved = "APPROVED"
