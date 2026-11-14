@@ -165,6 +165,59 @@ func anchorFound(nodes []TreeNode, a ExpectAnchor) bool {
 	return false
 }
 
+// anchorIndexMin is the anchor count from which the named nodes are indexed once instead of scanning the
+// whole tree for every anchor (#427). The ordinary base reservation uses the same threshold.
+const anchorIndexMin = 2
+
+// expectStepHook receives the steps the expectation checks take: one per node scanned or indexed and one per
+// anchor, contained type or index lookup. Test-only; nil in production.
+var expectStepHook func(steps uint64)
+
+func expectStepObserved(steps uint64) {
+	if expectStepHook != nil {
+		expectStepHook(steps)
+	}
+}
+
+// namedAnchorIndex is the set of the named nodes' (type, byte range): what anchorFound looks for.
+func namedAnchorIndex(nodes []TreeNode) map[ExpectAnchor]struct{} {
+	expectStepObserved(uint64(len(nodes)))
+	index := make(map[ExpectAnchor]struct{}, len(nodes)/2+1)
+	for _, n := range nodes {
+		if n.Named {
+			index[ExpectAnchor{Type: n.Type, StartByte: n.StartByte, EndByte: n.EndByte}] = struct{}{}
+		}
+	}
+	return index
+}
+
+// anchorsIn reports whether every anchor is in the index of namedAnchorIndex.
+func anchorsIn(index map[ExpectAnchor]struct{}, anchors []ExpectAnchor) bool {
+	expectStepObserved(uint64(len(anchors)))
+	for _, a := range anchors {
+		if _, ok := index[a]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// anchorsFound reports whether every anchor is found in nodes, that is anchorFound for each of them. With
+// anchorIndexMin or more anchors it indexes the named nodes once and looks each anchor up, so the cost is
+// nodes + anchors instead of nodes x anchors; the result is the same.
+func anchorsFound(nodes []TreeNode, anchors []ExpectAnchor) bool {
+	if len(anchors) < anchorIndexMin {
+		for _, a := range anchors {
+			expectStepObserved(uint64(len(nodes)))
+			if !anchorFound(nodes, a) {
+				return false
+			}
+		}
+		return true
+	}
+	return anchorsIn(namedAnchorIndex(nodes), anchors)
+}
+
 // unknownSize marks a step whose source length the edits do not determine.
 const unknownSize = ^uint64(0)
 

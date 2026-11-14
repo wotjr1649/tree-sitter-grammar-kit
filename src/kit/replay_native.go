@@ -622,15 +622,16 @@ func (x *replayEnv) replayCase(c *rcCase, idx int, want *IncrementalCase, querie
 		eg.fail(name, "EXPECTATION_REGISTRATION_MISMATCH", "기록된 기대값 수가 workload 등록과 다르다")
 		ecOK = false
 	}
+	var expectations expectCache // the step trees' type and anchor sets, built once per case
 	for i, e := range exps {
 		if e.Step < 0 || e.Step >= len(c.Steps) {
 			eg.fail(name, "EXPECTATION_STEP_INVALID", "기대값 step이 기록에 없다")
 			ecOK = false
 			continue
 		}
-		res, known := expectResult(e, c.Steps[e.Step].Incremental)
+		res, known := expectResultCached(e, c.Steps[e.Step].Incremental, &expectations)
 		if (x.svcFormat == SvcFormat || x.svcFormat == SvcLegacyFormat) && c.Steps[e.Step].Composite != nil {
-			res, known = svcExpectResult(e, c.Steps[e.Step])
+			res, known = svcExpectResultCached(e, c.Steps[e.Step], &expectations)
 		}
 		if !known {
 			eg.recorded()
@@ -859,6 +860,10 @@ func svcVerdict(steps []rcStep, expect bool) (string, string) {
 }
 
 func svcExpectResult(e StepExpectation, s rcStep) (string, bool) {
+	return svcExpectResultCached(e, s, nil)
+}
+
+func svcExpectResultCached(e StepExpectation, s rcStep, cache *expectCache) (string, bool) {
 	o := SvcObservation{Directive: s.Composite.Directive, AdditionalDirectives: s.Composite.AdditionalDirectives, Coverage: s.Composite.Coverage}
 	var inline *bool
 	result := claimPass
@@ -867,7 +872,7 @@ func svcExpectResult(e StepExpectation, s rcStep) (string, bool) {
 		copy := e
 		copy.Syntax = "ANY"
 		var known bool
-		result, known = expectResult(copy, s.Incremental)
+		result, known = expectResultCached(copy, s.Incremental, cache)
 		if !known {
 			return result, false
 		}
@@ -884,9 +889,61 @@ func svcExpectResult(e StepExpectation, s rcStep) (string, bool) {
 	return result, true
 }
 
+// expectCache holds, per step tree, the two sets expectResult builds from its nodes: the named node types
+// (Contains) and the named nodes' (type, range) (several Anchors). A case checks many expectations against the
+// same step tree and each used to rebuild the same set (#427). The sets depend only on the tree's nodes, which
+// no check changes. A nil cache builds the sets per call, as before.
+type expectCache struct {
+	types   map[*rcTree]map[string]bool
+	anchors map[*rcTree]map[ExpectAnchor]struct{}
+}
+
+func (c *expectCache) namedTypes(t *rcTree) map[string]bool {
+	if c != nil {
+		if seen, ok := c.types[t]; ok {
+			return seen
+		}
+	}
+	expectStepObserved(uint64(len(t.Tree.Nodes)))
+	seen := map[string]bool{}
+	for _, n := range t.Tree.Nodes {
+		if n.Named {
+			seen[n.Type] = true
+		}
+	}
+	if c != nil {
+		if c.types == nil {
+			c.types = map[*rcTree]map[string]bool{}
+		}
+		c.types[t] = seen
+	}
+	return seen
+}
+
+func (c *expectCache) anchorIndex(t *rcTree) map[ExpectAnchor]struct{} {
+	if c != nil {
+		if index, ok := c.anchors[t]; ok {
+			return index
+		}
+	}
+	index := namedAnchorIndex(t.Tree.Nodes)
+	if c != nil {
+		if c.anchors == nil {
+			c.anchors = map[*rcTree]map[ExpectAnchor]struct{}{}
+		}
+		c.anchors[t] = index
+	}
+	return index
+}
+
 // expectResult recomputes one expectation as S05 evaluate does; known is false when the
 // record lacks what the check needs.
 func expectResult(e StepExpectation, t *rcTree) (string, bool) {
+	return expectResultCached(e, t, nil)
+}
+
+// expectResultCached is expectResult sharing the per-tree sets of cache across the expectations of one case.
+func expectResultCached(e StepExpectation, t *rcTree, cache *expectCache) (string, bool) {
 	if t == nil {
 		return "", false
 	}
@@ -900,12 +957,8 @@ func expectResult(e StepExpectation, t *rcTree) (string, bool) {
 		if t.Tree == nil {
 			return "", false
 		}
-		seen := map[string]bool{}
-		for _, n := range t.Tree.Nodes {
-			if n.Named {
-				seen[n.Type] = true
-			}
-		}
+		seen := cache.namedTypes(t)
+		expectStepObserved(uint64(len(e.Contains)))
 		for _, ty := range e.Contains {
 			if !seen[ty] {
 				return claimFail, true
@@ -919,10 +972,14 @@ func expectResult(e StepExpectation, t *rcTree) (string, bool) {
 		if t.Tree == nil {
 			return "", false
 		}
-		for _, a := range e.Anchors {
-			if !anchorFound(t.Tree.Nodes, a) {
-				return claimFail, true
-			}
+		found := false
+		if len(e.Anchors) >= anchorIndexMin {
+			found = anchorsIn(cache.anchorIndex(t), e.Anchors)
+		} else {
+			found = anchorsFound(t.Tree.Nodes, e.Anchors)
+		}
+		if !found {
+			return claimFail, true
 		}
 	}
 	if e.Declarations != "" {

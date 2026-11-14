@@ -726,8 +726,10 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 	}
 	n := uint64(len(query.Captures)) + 1
 	var text, spans, execs, withErrors uint64
+	var tsql tsqlFactCounts
 	for _, row := range query.Captures {
 		name := query.CaptureNames[row[2]]
+		tsql.add(name)
 		text += uint64(len(name) + len(query.Types[row[4]]))
 		if row[7] >= row[6] && row[6] >= 0 && uint64(row[7]) <= uint64(len(source)) {
 			spans += uint64(row[7] - row[6])
@@ -760,8 +762,25 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 		}
 		return b.charge(work, logical, "ordinary-base-fact-derive")
 	}
-	// Fixed pair scans/sorts, repeated child/known-miss scans and decoded source spans.
-	for _, term := range [][]uint64{{128, n, n}, {64, execs + 1, spans}, {64, execs, withErrors, uint64(len(source))}} {
+	// Pair scans/sorts and repeated child/known-miss scans from the capture counts (tsqlFactBound),
+	// then the decoded source spans.
+	tsqlWork, tsqlLogical, e := tsqlFactBound(tsql)
+	if e != nil {
+		return e
+	}
+	if e := b.charge(tsqlWork, tsqlLogical, "ordinary-base-fact-derive"); e != nil {
+		return e
+	}
+	// Each EXEC and each err.first pair can append at most one known miss.
+	misses := execs + tsql.children[len(tsql.children)-1]
+	missWork, e := eligibilityProduct("ordinary-base-fact-known-miss-sort", 64, 3, misses, uint64(bits.Len64(misses)))
+	if e != nil {
+		return e
+	}
+	if e := b.charge(missWork, 0, "ordinary-base-fact-known-miss-sort"); e != nil {
+		return e
+	}
+	for _, term := range [][]uint64{{64, execs + 1, spans}, {64, execs, withErrors, uint64(len(source))}} {
 		work, e := eligibilityProduct("ordinary-base-fact-derive", term...)
 		if e != nil {
 			return e
@@ -958,6 +977,9 @@ func (b *eligibilityBudget) reserveOrdinaryBaseReplay(c *rcCase, want *Increment
 			}
 		}
 	}
+	// expectResultCached builds a step tree's type set and anchor index at most once per case: the first
+	// expectation that needs one reserves it, the later ones only their lookups.
+	typeSet, anchorSet := map[int]bool{}, map[int]bool{}
 	for _, expected := range want.Expect {
 		if e := b.charge(uint64(len(expected.Contains)+len(expected.Anchors))+1, 0, "ordinary-base-replay-size"); e != nil {
 			return e
@@ -981,11 +1003,27 @@ func (b *eligibilityBudget) reserveOrdinaryBaseReplay(c *rcCase, want *Increment
 		for _, node := range nodes {
 			types += uint64(len(node.Type))
 		}
-		if len(expected.Contains) != 0 {
+		if len(expected.Contains) != 0 && !typeSet[expected.Step] {
+			typeSet[expected.Step] = true
 			if e := b.charge(0, 256*uint64(len(nodes)), "semantic-base-replay"); e != nil {
 				return e
 			}
 			work += 64*uint64(len(nodes)) + 4*types
+		}
+		if len(expected.Anchors) >= anchorIndexMin {
+			// The anchor index holds an insert per node (hashing its type, as Contains does); every anchor
+			// is one lookup (hashing its type and comparing the key), not a scan of the tree.
+			if !anchorSet[expected.Step] {
+				anchorSet[expected.Step] = true
+				if e := b.charge(0, 256*uint64(len(nodes)), "semantic-base-replay"); e != nil {
+					return e
+				}
+				work += 64*uint64(len(nodes)) + 4*types
+			}
+			for _, anchor := range expected.Anchors {
+				work += 64 + 8*uint64(len(anchor.Type))
+			}
+			continue
 		}
 		for _, anchor := range expected.Anchors {
 			part, e := eligibilityProduct("semantic-base-replay", uint64(len(nodes)), 64+4*uint64(len(anchor.Type)))
