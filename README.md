@@ -1,5 +1,7 @@
 # tree-sitter-grammar-kit
 
+> **종료됨 (2026-11-14).** 이 저장소는 더 개발하지 않는다. 필요한 기능(`schema check`/`schema diff`)과 지식 자료는 [go-treesitter](https://github.com/wotjr1649/go-treesitter)가 흡수한다. 이유와 인계 내용은 [저장소 종료와 인계](docs/reports/repository-closure.md)에 있다. v0.3.0 release는 그대로 남는다.
+
 Go로 구현한 CGO-free CLI `tsgk`와 작은 public offline Go API다. grammar inspection, comparison, evidence 검사를 공유하며 grammar 도입과 업데이트 검증이 첫 사용 목적이다. 소비자 변환, scanner/runtime 선택과 실제 도입은 별도 책임이다.
 
 ## Status and scope
