@@ -1,9 +1,12 @@
 package kit
 
 import (
+	"cmp"
 	"fmt"
 	"math/rand"
 	"runtime"
+	"slices"
+	"strings"
 	"testing"
 )
 
@@ -122,31 +125,59 @@ func (c tsqlFactCase) counts() tsqlFactCounts {
 	return counts
 }
 
-// derive runs the adapter and returns the steps it took outside the decoded text, the number of pairs
-// calls, the decoded bytes, the number of decode calls and the cumulative allocation.
-func (c tsqlFactCase) derive(t *testing.T) (steps, pairCalls, decoded, decodeCalls, alloc uint64) {
+type tsqlFactRun struct {
+	facts                                      DynamicSQLFacts
+	steps, pairCalls, decoded, missSort, alloc uint64
+}
+
+// reserve records the actual ledger before derivation; unmetered permits adversarial lists beyond pass capacity.
+func (c tsqlFactCase) reserve(t *testing.T) (work, logical, missSort uint64) {
+	t.Helper()
+	b := semanticTestBudget(t)
+	b.unmetered = true
+	previous := ordinaryChargeHook
+	ordinaryChargeHook = func(_ *eligibilityBudget, w, l uint64, at string, _, _ uint64) {
+		work += w
+		logical += l
+		if at == "ordinary-base-fact-known-miss-sort" {
+			missSort += w
+		}
+	}
+	defer func() { ordinaryChargeHook = previous }()
+	if e := b.ordinaryBaseFactReservation(FactQuery{Facts: FactDynamicSQL}, FactPackRoute{Route: "tsql"}, ordinaryFactBudgetQuery(c.caps), c.src); e != nil {
+		t.Fatal(e)
+	}
+	return work, logical, missSort
+}
+
+// derive measures the adapter, including decoded bytes and final-sort comparisons.
+func (c tsqlFactCase) derive(t *testing.T, enc string) (r tsqlFactRun) {
 	t.Helper()
 	previous := factStepHook
 	factStepHook = func(kind string, n uint64) {
 		switch kind {
 		case "pair-steps":
-			pairCalls++
-			steps += n
+			r.pairCalls++
+			r.steps += n
 		case "index-steps", "tsql-steps":
-			steps += n
+			r.steps += n
 		case "decoded-bytes":
-			decoded += n
-			decodeCalls++
+			r.decoded += n
+		case "known-miss-sort-steps":
+			r.missSort += n
 		}
 	}
 	defer func() { factStepHook = previous }()
+	runtime.GC()
 	var before, after runtime.MemStats
 	runtime.ReadMemStats(&before)
-	if _, err := DeriveDynamicSQLChecked("tsql", EncodingUTF8, c.caps, c.src); err != nil {
+	facts, err := DeriveDynamicSQLChecked("tsql", enc, c.caps, c.src)
+	if err != nil {
 		t.Fatal(err)
 	}
 	runtime.ReadMemStats(&after)
-	return steps, pairCalls, decoded, decodeCalls, after.TotalAlloc - before.TotalAlloc
+	r.facts, r.alloc = facts, after.TotalAlloc-before.TotalAlloc
+	return r
 }
 
 func TestTSQLFactBoundCoversAdversarialCaptureLists(t *testing.T) {
@@ -166,23 +197,17 @@ func TestTSQLFactBoundCoversAdversarialCaptureLists(t *testing.T) {
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			steps, pairCalls, decoded, decodeCalls, alloc := c.derive(t)
-			if pairCalls != uint64(len(tsqlFactPairs)) {
-				t.Fatalf("deriveTSQL made %d pairs calls, tsqlFactPairs lists %d", pairCalls, len(tsqlFactPairs))
+			work, logical, _ := c.reserve(t)
+			r := c.derive(t, EncodingUTF8)
+			if r.pairCalls != uint64(len(tsqlFactPairs)) {
+				t.Fatalf("deriveTSQL made %d pairs calls, tsqlFactPairs lists %d", r.pairCalls, len(tsqlFactPairs))
 			}
-			work, logical, e := tsqlFactBound(c.counts())
-			if e != nil {
-				t.Fatal(e)
+			if work < tsqlStepWork*(r.steps+r.decoded) {
+				t.Fatalf("work %d < %d x %d real steps and decoded bytes", work, tsqlStepWork, r.steps+r.decoded)
 			}
-			if work < tsqlStepWork*steps {
-				t.Fatalf("work %d < %d x %d real steps", work, tsqlStepWork, steps)
-			}
-			// The decoded text is charged separately by span bytes (64(E+1)A and 64EWS); the strings it allocates are
-			// at most the decoded bytes (rounded up to a 16 byte size class) and are left out of the capture-list term.
-			slack := 2*decoded + 16*decodeCalls
-			t.Logf("captures %d: steps %d, work bound %d (%.1fx real), allocated %d B of logical %d B", len(c.caps), steps, work, float64(work)/float64(tsqlStepWork*steps+1), alloc, logical)
-			if alloc > logical+slack {
-				t.Fatalf("allocated %d B > logical %d B (+%d decode slack)", alloc, logical, slack)
+			t.Logf("captures %d: steps %d, decoded %d B, work %d, allocated %d B of logical %d B", len(c.caps), r.steps, r.decoded, work, r.alloc, logical)
+			if r.alloc > logical {
+				t.Fatalf("allocated %d B > pre-reserved logical %d B", r.alloc, logical)
 			}
 		})
 	}
@@ -196,6 +221,8 @@ func TestTSQLFactBoundIsNotQuadraticInCaptures(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
+		_, _, sortWork := c.reserve(t)
+		work += sortWork
 		n := uint64(captures) + 1
 		if old := 128 * n * n; captures >= 150 && (work >= old || logical >= old) {
 			t.Fatalf("captures %d: work %d logical %d not below the previous 128n² = %d", captures, work, logical, old)
@@ -203,13 +230,105 @@ func TestTSQLFactBoundIsNotQuadraticInCaptures(t *testing.T) {
 	}
 	// A real product still dominates when EXEC captures repeat: 200 execs x 200 children.
 	c := tsqlFactDuplicateExec(200, 200)
-	steps, _, _, _, _ := c.derive(t)
+	steps := c.derive(t, EncodingUTF8).steps
 	work, _, e := tsqlFactBound(c.counts())
 	if e != nil {
 		t.Fatal(e)
 	}
 	if steps < 200*200 || work < tsqlStepWork*200*200 {
 		t.Fatalf("the exec x children product was lost: steps %d work %d", steps, work)
+	}
+}
+
+func tsqlRepeatedErrorParent(enc string) tsqlFactCase {
+	source := []byte("sp_executesql " + strings.Repeat(" ", 32768-len("sp_executesql ")))
+	identifierEnd := uint32(13)
+	if enc == EncodingUTF16LE {
+		var wide []byte
+		for _, b := range source {
+			wide = append(wide, b, 0)
+		}
+		source = wide
+		identifierEnd *= 2
+	} else if enc == EncodingCP949 {
+		// Invalid lead bytes expand to U+FFFD; exercise a larger decoder allocation than UTF-8.
+		for i := 13; i < len(source); i++ {
+			source[i] = 0xff
+		}
+	}
+	var b tsqlFactBuilder
+	match := b.newMatch()
+	b.add(match, "err", b.next(), "ERROR", true, 0, uint32(len(source)))
+	for i := 0; i < 256; i++ {
+		b.add(match, "err.first", b.next(), "identifier", true, 0, identifierEnd)
+	}
+	b.add(b.newMatch(), "batch.program", b.next(), "program", true, 0, uint32(len(source)))
+	return tsqlFactCase{b.caps, source}
+}
+
+func TestTSQLRepeatedErrorParentAllocation(t *testing.T) {
+	for _, enc := range []string{EncodingUTF8, EncodingUTF16LE, EncodingCP949} {
+		t.Run(enc, func(t *testing.T) {
+			c := tsqlRepeatedErrorParent(enc)
+			work, logical, _ := c.reserve(t)
+			r := c.derive(t, enc)
+			if len(r.facts.KnownMisses) != 256 {
+				t.Fatalf("repeated children lost verdicts: %d known misses", len(r.facts.KnownMisses))
+			}
+			for _, miss := range r.facts.KnownMisses {
+				if miss != (KnownMiss{MissBatchFirstNoExe, 0, uint32(len(c.src))}) {
+					t.Fatalf("known-miss payload changed: %+v", miss)
+				}
+			}
+			t.Logf("work=%d logical=%d allocated=%d decoded=%d", work, logical, r.alloc, r.decoded)
+			if r.alloc > logical {
+				t.Fatalf("allocated %d B > pre-reserved logical %d B", r.alloc, logical)
+			}
+		})
+	}
+}
+
+func TestTSQLRepeatedErrorParentDecodedWork(t *testing.T) {
+	c := tsqlRepeatedErrorParent(EncodingUTF8)
+	work, _, _ := c.reserve(t)
+	r := c.derive(t, EncodingUTF8)
+	t.Logf("work=%d steps=%d decoded=%d", work, r.steps, r.decoded)
+	if used := 64 * (r.steps + r.decoded); used > work {
+		t.Fatalf("real work %d > pre-reserved work %d", used, work)
+	}
+}
+
+func TestTSQLKnownMissSortWithoutExec(t *testing.T) {
+	const batches = 512
+	var b tsqlFactBuilder
+	var source []byte
+	var expected []KnownMiss
+	rng := rand.New(rand.NewSource(427))
+	for _, i := range rng.Perm(batches) {
+		start := uint32(i * len("sp_executesql\nGO\n"))
+		end := start + uint32(len("sp_executesql"))
+		m := b.newMatch()
+		node := b.next()
+		b.add(m, "err", node, "ERROR", true, start, end)
+		b.add(m, "err.first", b.next(), "identifier", true, start, end)
+		b.add(b.newMatch(), "batch.child", node-1, "go_statement", true, start, start)
+		expected = append(expected, KnownMiss{MissBatchFirstNoExe, start, end})
+		source = append(source, "sp_executesql\nGO\n"...)
+	}
+	b.add(b.newMatch(), "batch.program", b.next(), "program", true, 0, uint32(len(source)))
+	c := tsqlFactCase{b.caps, source}
+	work, logical, sortWork := c.reserve(t)
+	r := c.derive(t, EncodingUTF8)
+	slices.SortFunc(expected, func(a, b KnownMiss) int { return cmp.Compare(a.StartByte, b.StartByte) })
+	if !slices.Equal(r.facts.KnownMisses, expected) || c.counts().execs != 0 {
+		t.Fatal("multi-batch known misses changed")
+	}
+	t.Logf("misses=%d comparisons=%d sort work=%d total work=%d logical=%d alloc=%d", len(expected), r.missSort, sortWork, work, logical, r.alloc)
+	if r.missSort == 0 || 64*r.missSort > sortWork {
+		t.Fatalf("sort work %d does not cover %d comparisons", sortWork, r.missSort)
+	}
+	if 64*(r.steps+r.decoded) > work || r.alloc > logical {
+		t.Fatal("measured work/allocation exceeds the pre-reserved ledger")
 	}
 }
 

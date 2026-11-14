@@ -48,7 +48,8 @@ const (
 	// A Capture is 104 bytes and a growing slice allocates at most about five times its final size in all.
 	// Per capture: the capture index holds it in two slices (2·5·104 = 1040 B); the nine pairs outputs hold at
 	// most one 208 B pair per child capture (the child names are distinct), 5·208 = 1040 B; the per-node maps
-	// take one entry (about 300 B with growth); the exec and context copies add at most 5·104 each (520 B each).
+	// take one entry (about 300 B with growth, including the per-match ERROR predicate cache);
+	// the exec and context copies add at most 5·104 each (520 B each).
 	// That sums to about 3.4 KB, so 4 KB is an upper bound; the test measures at most about 1.1 KB.
 	tsqlLogicalPerCapture = 4 * 1024
 	// Logical per (exec, child) pair: each exec rebuilds its argument slice from its children.
@@ -66,10 +67,12 @@ const (
 //   - each of the nine pairs calls: one scan of all captures, a second one when its parent capture
 //     exists, the sort of its pairs (at most 3 comparisons per element and bit of the count, pdqsort's
 //     bound) and its output; the loop over the output is one more step per pair, two for exec.child
-//     (the children map, then the comment filter) and one extra for err.first (its own loop).
+//     (the children map, then the comment filter) and three extra for err.first (its own loop,
+//     the cached predicate lookup and, on a miss, its insertion).
 //   - exec: the copy, the sort and, per exec, one step, one scan of the errwith captures, at most three
 //     scans of its children, and the end-of-statement search over the execs and semi captures.
-//   - batch.child: the copy, the sort and one walk. A known miss list is at most one per exec and sorted.
+//   - batch.child: the copy, the sort and one walk. The caller separately reserves the final sort
+//     of at most exec + err.first known misses.
 //
 // The only products are exec x (errwith, children, exec, semi): they are the loops that can really be
 // quadratic when many EXEC captures are repeated, so they use the real counts rather than the capture count.
@@ -102,15 +105,14 @@ func tsqlFactBound(c tsqlFactCounts) (work, logical uint64, e *Error) {
 		add(sortSteps(c.children[i]))
 		add(mul(2, c.children[i])) // the pair outputs and the loop over them
 	}
-	add(c.children[0])                 // exec.child: the comment filter pass
-	add(c.children[len(c.children)-1]) // err.first: the loop body's own step
+	add(c.children[0])                         // exec.child: the comment filter pass
+	add(mul(3, c.children[len(c.children)-1])) // err.first: loop and predicate cache
 	execs, kids := c.execs, c.children[0]
 	add(execs)
 	add(sortSteps(execs))
 	add(mul(execs, 1+c.withErrors+mul(3, kids)+execs+c.semis))
 	add(mul(2, c.context))
 	add(sortSteps(c.context))
-	add(sortSteps(execs)) // known misses
 	if overflow {
 		return 0, 0, fail(KindResourceLimit, "ELIGIBILITY_WORK_LIMIT", at, nil)
 	}

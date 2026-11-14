@@ -762,6 +762,7 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 	slices.SortFunc(context, func(a, b Capture) int { steps++; return cmp.Compare(a.Node, b.Node) })
 	at, first := 0, true
 	firstCall := regexp.MustCompile(`(?i)^(?:(?:\[sys\]|"sys"|sys)\s*\.\s*)?(?:\[sp_executesql\]|"sp_executesql"|sp_executesql)\b`)
+	firstCalls := map[uint32]bool{}
 	for _, pc := range pairs("err", "err.first") {
 		steps++
 		for at < len(context) && context[at].Node < pc[0].Node {
@@ -773,11 +774,23 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 			}
 			first = c.Type == "go_statement"
 		}
-		if len(x.byName["batch.program"]) > 0 && first && firstCall.MatchString(text(src, pc[0])) {
-			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissBatchFirstNoExe, pc[0].StartByte, pc[0].EndByte})
+		if len(x.byName["batch.program"]) > 0 && first {
+			// pairs repeats the same parent per match; decode its span only once.
+			steps++
+			call, seen := firstCalls[pc[0].Match]
+			if !seen {
+				steps++
+				call = firstCall.MatchString(text(src, pc[0]))
+				firstCalls[pc[0].Match] = call
+			}
+			if call {
+				out.KnownMisses = append(out.KnownMisses, KnownMiss{MissBatchFirstNoExe, pc[0].StartByte, pc[0].EndByte})
+			}
 		}
 	}
-	slices.SortFunc(out.KnownMisses, func(a, b KnownMiss) int { steps++; return cmp.Compare(a.StartByte, b.StartByte) })
+	var missCompares uint64
+	slices.SortFunc(out.KnownMisses, func(a, b KnownMiss) int { steps++; missCompares++; return cmp.Compare(a.StartByte, b.StartByte) })
+	factStepObserved("known-miss-sort-steps", missCompares)
 }
 
 // CommandAPITypes and CommandAPIProperties are csharp-command-api-r1.

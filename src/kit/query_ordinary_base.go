@@ -771,6 +771,15 @@ func (b *eligibilityBudget) ordinaryBaseFactReservation(q FactQuery, route FactP
 	if e := b.charge(tsqlWork, tsqlLogical, "ordinary-base-fact-derive"); e != nil {
 		return e
 	}
+	// Each EXEC and each err.first pair can append at most one known miss.
+	misses := execs + tsql.children[len(tsql.children)-1]
+	missWork, e := eligibilityProduct("ordinary-base-fact-known-miss-sort", 64, 3, misses, uint64(bits.Len64(misses)))
+	if e != nil {
+		return e
+	}
+	if e := b.charge(missWork, 0, "ordinary-base-fact-known-miss-sort"); e != nil {
+		return e
+	}
 	for _, term := range [][]uint64{{64, execs + 1, spans}, {64, execs, withErrors, uint64(len(source))}} {
 		work, e := eligibilityProduct("ordinary-base-fact-derive", term...)
 		if e != nil {
