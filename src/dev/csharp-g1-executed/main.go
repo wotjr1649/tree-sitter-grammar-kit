@@ -111,8 +111,13 @@ func main() {
 	raw := flag.String("native", "", "raw native observation written by csharp-g1-native")
 	write := flag.Bool("write", false, "write the asset instead of comparing")
 	r1 := flag.Bool("r1", false, "use the sealed r1 assets instead of the r2 ones")
+	set := flag.String("set", "b01b02", "rows to compare: b01b02 (lexical rows) or b34 (B03 and B04)")
 	flag.Parse()
-	if err := run(*root, *raw, *write, !*r1); err != nil {
+	run := func() error { return run(*root, *raw, *write, !*r1) }
+	if *set == "b34" {
+		run = func() error { return runB34(*root, *raw, *write) }
+	}
+	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

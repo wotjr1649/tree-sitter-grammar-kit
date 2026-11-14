@@ -22,6 +22,38 @@ func g1ApprovalFS(t *testing.T) fstest.MapFS {
 	return fsys
 }
 
+// g1ApprovalPendingPinned are the assets of the second bundle, which are the assets pending while that bundle is not approved, by literal
+// path, role, revision and SHA-256 (review of PR2, finding 1): the verifier's list is code, so a fifth asset, a removed one or a changed one
+// needs a change here too. When the second tuple is approved the assets leave the pending list and stay pinned by the approval object; they
+// must still be these bytes, because a new revision is a new asset and a new approval.
+var g1ApprovalPendingPinned = []CSharpG1ApprovalMember{
+	{Path: "src/contracts/csharp-g1-expected-b03b04-r1.json", Role: "expected", Revision: "r1", SHA256: "f37563567c1298900a41751bec3eff299e8c81bff25adc72352624c59d631bcc"},
+	{Path: "src/contracts/csharp-g1-kind-map-r3.json", Role: "kind-map", Revision: "r3", SHA256: "ecba9e296c22baacf5eb5feabe6c5f25c802681700b5247c83e8cd1c3e87aadf"},
+	{Path: "src/contracts/csharp-g1-audit-b03b04-r1.json", Role: "position-audit", Revision: "r1", SHA256: "d18fafc9b60de0bf7d48c05dc4087e6f807d2aafe6d47faebb79021d836008d0"},
+	{Path: "src/contracts/csharp-g1-typeaudit-b03b04-r1.json", Role: "type-audit", Revision: "r1", SHA256: "d3a7b23b9f168547ee6722bdf98ec51f33784cf5c4c1e8169313f91eb92e5ceb"},
+	{Path: "src/contracts/csharp-g1-executed-b03b04-r1.json", Role: "executed", Revision: "r1", SHA256: "281f4c49087e113478f3f8589cbc59275827eb71e7c7730cfaea44b37bf4d930"},
+	{Path: "src/contracts/csharp-g1-ledger-r2.json", Role: "ledger", Revision: "r2", SHA256: "3a5a40e00793852235d262952571a17f3818bdffc0d53df49888ad4dc1f905c7"},
+}
+
+// g1ApprovalB34Paths are the paths of g1ApprovalPendingPinned.
+func g1ApprovalB34Paths() []string {
+	var out []string
+	for _, m := range g1ApprovalPendingPinned {
+		out = append(out, m.Path)
+	}
+	return out
+}
+
+// g1ApprovalFS2 is g1ApprovalFS with the assets of the second bundle too.
+func g1ApprovalFS2(t *testing.T) fstest.MapFS {
+	t.Helper()
+	fsys := g1ApprovalClone(g1ApprovalFS(t))
+	for _, p := range g1ApprovalB34Paths() {
+		fsys[p] = &fstest.MapFile{Data: mustRead(t, "../../"+p)}
+	}
+	return fsys
+}
+
 func g1ApprovalClone(fsys fstest.MapFS) fstest.MapFS {
 	c := fstest.MapFS{}
 	for k, v := range fsys {
@@ -65,6 +97,58 @@ func TestCSharpG1ApprovalOfTheTrackedBundle(t *testing.T) {
 	default:
 		t.Fatalf("unknown state %q", state)
 	}
+	// the first bundle APPROVED does not make the assets of the second one approved: the log says so (review of PR2, finding 2)
+	state2, object2, err := VerifyCSharpG1ApprovalB34(os.DirFS("../.."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pending := CSharpG1PendingAssets(os.DirFS("../.."))
+	switch {
+	case state2 == CSharpG1ApprovalApproved && len(pending) == 0:
+		t.Logf("%s by object %s (scope %s)", state2, object2, CSharpG1ApprovalScopeB34)
+	case state2 == CSharpG1ApprovalPending && slices.Equal(pending, g1ApprovalB34Paths()):
+		t.Logf("%s: no object for scope %s; pending, NOT approved: %s", state2, CSharpG1ApprovalScopeB34, strings.Join(pending, " "))
+	default:
+		t.Errorf("second bundle %q with pending assets %v", state2, pending)
+	}
+}
+
+// The pending assets are pinned by literal (review of PR2, finding 1): the second bundle's list equals the literal table, the tracked files
+// are exactly these bytes, and the tracked G1 assets are the first bundle and these, no fifth one.
+func TestCSharpG1ApprovalPendingAssetsArePinned(t *testing.T) {
+	if len(csharpG1ApprovalBundleB34) != len(g1ApprovalPendingPinned) {
+		t.Fatalf("the second bundle has %d members, the pinned table %d", len(csharpG1ApprovalBundleB34), len(g1ApprovalPendingPinned))
+	}
+	for i, want := range g1ApprovalPendingPinned {
+		got := csharpG1ApprovalBundleB34[i]
+		if got.Path != want.Path || got.Role != want.Role || got.Revision != want.Revision {
+			t.Errorf("member %d is %s %s %s, pinned %s %s %s", i, got.Path, got.Role, got.Revision, want.Path, want.Role, want.Revision)
+		}
+		if sum := csharpG1ApprovalSum(mustRead(t, "../../"+want.Path)); sum != want.SHA256 {
+			t.Errorf("%s is %s, pinned %s", want.Path, sum, want.SHA256)
+		}
+	}
+	all, err := fs.Glob(os.DirFS("../.."), csharpG1ApprovalGlob)
+	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(g1ApprovalPendingPinned) {
+		t.Fatalf("%d tracked G1 assets (%v), want the %d of the first bundle and the %d pinned", len(all), err, len(csharpG1ApprovalBundle), len(g1ApprovalPendingPinned))
+	}
+	// the list the verifier reports is the pinned table while the second bundle has no object, and empty with it
+	pending := CSharpG1PendingAssets(os.DirFS("../.."))
+	state, _, err := VerifyCSharpG1ApprovalB34(os.DirFS("../.."))
+	if err != nil || state == CSharpG1ApprovalApproved && len(pending) != 0 || state != CSharpG1ApprovalApproved && !slices.Equal(pending, g1ApprovalB34Paths()) {
+		t.Errorf("second bundle %q (%v), pending %v", state, err, pending)
+	}
+	// a fifth G1 asset is neither pending nor approved: the first bundle fails on it
+	fsys := g1ApprovalClone(g1ApprovalFS2(t))
+	_, data := g1ApprovalTupleOf(t, fsys)
+	g1ApprovalWith(fsys, data)
+	fsys["src/contracts/csharp-g1-fifth-r1.json"] = &fstest.MapFile{Data: []byte("{}\n")}
+	if slices.Contains(CSharpG1PendingAssets(fsys), "src/contracts/csharp-g1-fifth-r1.json") {
+		t.Error("a fifth asset is listed as pending")
+	}
+	if _, _, err := VerifyCSharpG1Approval(fsys); err == nil || !strings.Contains(err.Error(), "G1_APPROVAL_UNAPPROVED") {
+		t.Errorf("a fifth asset: %v", err)
+	}
 }
 
 func TestCSharpG1ApprovalPendingIsNotApproved(t *testing.T) {
@@ -82,19 +166,26 @@ func TestCSharpG1ApprovalPendingIsNotApproved(t *testing.T) {
 
 func TestCSharpG1ApprovalBundleCoversEveryTrackedAsset(t *testing.T) {
 	all, err := fs.Glob(os.DirFS("../.."), csharpG1ApprovalGlob)
+	// every tracked G1 asset is in exactly one of the two bundles; the second bundle's are pending until its object exists
 	pending := CSharpG1PendingAssets(os.DirFS("../.."))
-	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(pending) || len(csharpG1ApprovalBundle) != 11 || len(pending) != len(csharpG1ApprovalPendingAssets) {
-		t.Fatalf("%d tracked G1 assets (%v), %d in the bundle, %d pending of %d", len(all), err, len(csharpG1ApprovalBundle), len(pending), len(csharpG1ApprovalPendingAssets))
+	if state, _, err := VerifyCSharpG1ApprovalB34(os.DirFS("../..")); err != nil || state == CSharpG1ApprovalApproved && len(pending) != 0 || state != CSharpG1ApprovalApproved && len(pending) != len(csharpG1ApprovalBundleB34) {
+		t.Fatalf("second bundle %q (%v) with %d pending assets", state, err, len(pending))
 	}
-	for _, p := range csharpG1ApprovalPendingAssets {
+	if err != nil || len(all) != len(csharpG1ApprovalBundle)+len(csharpG1ApprovalBundleB34) || len(csharpG1ApprovalBundle) != 11 || len(csharpG1ApprovalBundleB34) != 6 {
+		t.Fatalf("%d tracked G1 assets (%v), %d in the first bundle, %d in the second", len(all), err, len(csharpG1ApprovalBundle), len(csharpG1ApprovalBundleB34))
+	}
+	for _, p := range g1ApprovalB34Paths() {
 		if slices.ContainsFunc(csharpG1ApprovalBundle, func(m CSharpG1ApprovalMember) bool { return m.Path == p }) {
-			t.Errorf("%s is both in the bundle and pending", p)
+			t.Errorf("%s is in both bundles", p)
+		}
+		if !slices.Contains(all, p) {
+			t.Errorf("%s is not a tracked G1 asset", p)
 		}
 	}
-	if csharpG1ApprovalBundle[2].Path != CSharpG1ExecutedPath || csharpG1ApprovalBundle[5].Path != CSharpG1ExecutedPathR2 {
-		t.Errorf("executed paths differ from the constants")
+	if csharpG1ApprovalBundle[2].Path != CSharpG1ExecutedPath || csharpG1ApprovalBundle[5].Path != CSharpG1ExecutedPathR2 || csharpG1ApprovalBundleB34[4].Path != CSharpG1B34ExecutedPath || csharpG1ApprovalBundleB34[5].Path != CSharpG1LedgerPathR2 {
+		t.Errorf("executed or ledger paths differ from the constants")
 	}
-	for _, m := range csharpG1ApprovalBundle {
+	for _, m := range slices.Concat(csharpG1ApprovalBundle, csharpG1ApprovalBundleB34) {
 		if !strings.HasSuffix(m.Path, "-"+m.Revision+".json") {
 			t.Errorf("%s: revision %s is not the revision of the file name", m.Path, m.Revision)
 		}
@@ -107,15 +198,15 @@ func TestCSharpG1ApprovalToleratesOnlyThePendingAssets(t *testing.T) {
 	fsys := g1ApprovalClone(g1ApprovalFS(t))
 	_, data := g1ApprovalTupleOf(t, fsys)
 	g1ApprovalWith(fsys, data)
-	for _, p := range csharpG1ApprovalPendingAssets {
+	for _, p := range g1ApprovalB34Paths() {
 		fsys[p] = &fstest.MapFile{Data: []byte("{}\n")}
 	}
 	state, _, err := VerifyCSharpG1Approval(fsys)
 	if err != nil || state != CSharpG1ApprovalApproved {
 		t.Fatalf("the bundle with its pending assets: %q %v", state, err)
 	}
-	if got := CSharpG1PendingAssets(fsys); !slices.Equal(got, csharpG1ApprovalPendingAssets) {
-		t.Errorf("pending assets %v, want %v", got, csharpG1ApprovalPendingAssets)
+	if got := CSharpG1PendingAssets(fsys); !slices.Equal(got, g1ApprovalB34Paths()) {
+		t.Errorf("pending assets %v, want %v", got, g1ApprovalB34Paths())
 	}
 	if got := CSharpG1PendingAssets(g1ApprovalFS(t)); len(got) != 0 {
 		t.Errorf("pending assets of a tree without them: %v", got)

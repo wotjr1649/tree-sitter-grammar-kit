@@ -23,6 +23,9 @@ import (
 const (
 	CSharpG1LedgerSchema = "tsgk-csharp-g1-ledger/r1"
 	CSharpG1LedgerPath   = "src/contracts/csharp-g1-ledger-r1.json"
+	// Revision r2 (G1-3b) takes the expected and executed assets of csharp-B03 and csharp-B04 as well; r1 stays as it is.
+	CSharpG1LedgerSchemaR2 = "tsgk-csharp-g1-ledger/r2"
+	CSharpG1LedgerPathR2   = "src/contracts/csharp-g1-ledger-r2.json"
 	// shortcut: the asset is about 1 MiB today; raise only with a new ledger revision.
 	csharpG1MaxBytes = 4 << 20
 
@@ -78,6 +81,10 @@ type CSharpG1Sources struct {
 	// become EXECUTED; each must be SEALED by Expected. The ledger reads only its alternative IDs and
 	// results and does not pin its bytes (the executed asset pins the observation, which pins the ledger).
 	Executed []byte
+	// ExpectedB34 and ExecutedB34 are the expected and executed assets of csharp-B03 and csharp-B04 (G1-3b), or nil. Only ledger r2
+	// takes them (DeriveCSharpG1LedgerR2): they act on those two rows exactly as Expected and Executed act on csharp-B01 and csharp-B02.
+	ExpectedB34 []byte
+	ExecutedB34 []byte
 }
 
 type CSharpG1Inputs struct {
@@ -214,6 +221,13 @@ type CSharpG1Ledger struct {
 }
 
 const csharpG1Basis = "Obligations are enumerated from the repository declarations alone: the C# route requirements and cases of the qualification inventory, the production/fact alternatives of feature-alternatives.json, the declaration mapping of fact-mapping.json and the registered case sources of the native fixtures. No native or reference output is read and no expected value is derived here: every state is NO_EXPECTED unless the sealed expected asset (SEALED, or BLOCKED with its reason code) or the executed asset (EXECUTED) says otherwise, and the ledger takes only alternative IDs, rows, statuses and reason codes from them. An alternative's presence is a static check of the literals its production requires (top-level quoted terminals that are not optional) against the source versions of its linked P steps; it is textual (comments and strings are not excluded), so LITERAL_MATCH with PUNCTUATION strength proves little, and an alternative with no such literal is UNVERIFIED_PRESENCE. Out-of-mapping declaration constructs come from a hand-declared construct table matched against the alternatives' production heads."
+
+const csharpG1BasisR2 = csharpG1Basis + " Revision r2 (G1-3b) reads, for the rows csharp-B03 and csharp-B04, the sealed expected asset (csharp-g1-expected-b03b04-r1.json) and the executed asset (csharp-g1-executed-b03b04-r1.json) the same way, in addition to the r2 pair of csharp-B01 and csharp-B02: only IDs, rows, statuses, reason codes and results are taken from them. Both pairs are checked per row: no expected asset names an alternative twice or outside the ledger or its rows, and the one of csharp-B03 and csharp-B04 names every alternative of its rows, and an executed asset names a SEALED alternative of its own rows once. An alternative is EXECUTED only when the executed asset says MATCH; MISMATCH stays SEALED. The P obligation of a row is SEALED or EXECUTED only when every alternative of the row is, so it stays NO_EXPECTED while an alternative of the row is BLOCKED or NO_EXPECTED."
+
+var (
+	g1LedgerRowsLexical = []string{g1ExpRowB01, g1ExpRowB02}
+	g1LedgerRowsB34     = []string{"csharp-B03", "csharp-B04"}
+)
 
 func g1Fault(code string) error { return fail(KindInvalidInput, code, CSharpG1LedgerPath, nil) }
 
@@ -420,7 +434,21 @@ type g1CaseData struct {
 
 // DeriveCSharpG1Ledger derives the ledger from the pinned declarations alone.
 func DeriveCSharpG1Ledger(src CSharpG1Sources) (CSharpG1Ledger, error) {
+	if src.ExpectedB34 != nil || src.ExecutedB34 != nil {
+		return CSharpG1Ledger{}, g1Fault("G1_LEDGER_SEALED")
+	}
 	out, _, err := deriveCSharpG1(src)
+	return out, err
+}
+
+// DeriveCSharpG1LedgerR2 derives ledger r2: the declarations, the r2 expected and executed assets of csharp-B01 and csharp-B02 and the
+// expected asset of csharp-B03 and csharp-B04 are required, the executed asset of those two rows is optional like Executed is.
+func DeriveCSharpG1LedgerR2(src CSharpG1Sources) (CSharpG1Ledger, error) {
+	if src.Expected == nil || src.ExpectedB34 == nil {
+		return CSharpG1Ledger{}, g1Fault("G1_LEDGER_SEALED")
+	}
+	out, _, err := deriveCSharpG1(src)
+	out.Schema, out.Basis = CSharpG1LedgerSchemaR2, csharpG1BasisR2
 	return out, err
 }
 
@@ -735,10 +763,17 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 	}
 
 	if src.Expected != nil {
-		if err := g1ApplyStates(&out, src.Expected, src.Executed); err != nil {
+		if err := g1ApplyStates(&out, src.Expected, src.Executed, g1LedgerRowsLexical, false); err != nil {
 			return out, nil, err
 		}
 	} else if src.Executed != nil {
+		return out, nil, g1Fault("G1_LEDGER_EXECUTED")
+	}
+	if src.ExpectedB34 != nil {
+		if err := g1ApplyStates(&out, src.ExpectedB34, src.ExecutedB34, g1LedgerRowsB34, true); err != nil {
+			return out, nil, err
+		}
+	} else if src.ExecutedB34 != nil {
 		return out, nil, g1Fault("G1_LEDGER_EXECUTED")
 	}
 
@@ -768,7 +803,7 @@ func deriveCSharpG1(src CSharpG1Sources) (CSharpG1Ledger, map[string]*g1CaseData
 // MATCH; MISMATCH and NOT_APPLICABLE stay SEALED). Both assets are read here only for alternative IDs,
 // statuses and reason codes; each is verified on its own against the same pinned sources
 // (ParseCSharpG1Expected, ParseCSharpG1Executed), and the ledger test compares the three.
-func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
+func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte, rows []string, complete bool) error {
 	var doc struct {
 		Alternatives []struct {
 			ID     string `json:"id"`
@@ -782,6 +817,10 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 	}
 	sealed, blocked, rowOf := map[string]bool{}, map[string]string{}, map[string]string{}
 	for _, a := range doc.Alternatives {
+		// each alternative once, in a row of this pair (R-8)
+		if _, dup := rowOf[a.ID]; dup || !slices.Contains(rows, a.Row) {
+			return g1Fault("G1_LEDGER_SEALED")
+		}
 		rowOf[a.ID] = a.Row
 		switch a.Status {
 		case G1ExpExpected:
@@ -810,7 +849,7 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 		}
 		for _, a := range ex.Alternatives {
 			// only a SEALED alternative can be EXECUTED: BLOCKED and unknown IDs are refused
-			if !sealed[a.ID] || a.Row != rowOf[a.ID] || a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 || listed[a.ID] {
+			if !sealed[a.ID] || a.Row != rowOf[a.ID] || !slices.Contains(rows, a.Row) || listed[a.ID] {
 				return g1Fault("G1_LEDGER_EXECUTED")
 			}
 			// the result must be a known one and agree with the flag: a comparison ran (MATCH or MISMATCH) or it did not
@@ -829,8 +868,12 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 	for i := range l.Alternatives {
 		a := &l.Alternatives[i]
 		known[a.ID] = true
-		if a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 {
+		if !slices.Contains(rows, a.Row) {
 			continue
+		}
+		// an alternative the asset names has the row the ledger has; the asset of a complete pair names every alternative of its rows
+		if row, named := rowOf[a.ID]; named && row != a.Row || !named && complete {
+			return g1Fault("G1_LEDGER_SEALED")
 		}
 		rowAlts[a.Row]++
 		switch {
@@ -846,13 +889,13 @@ func g1ApplyStates(l *CSharpG1Ledger, expected, executed []byte) error {
 		}
 	}
 	for _, a := range doc.Alternatives {
-		if !known[a.ID] || a.Row != g1ExpRowB01 && a.Row != g1ExpRowB02 {
+		if !known[a.ID] {
 			return g1Fault("G1_LEDGER_SEALED")
 		}
 	}
 	for i := range l.Rows {
 		r := &l.Rows[i]
-		if r.Row != g1ExpRowB01 && r.Row != g1ExpRowB02 || rowAlts[r.Row] == 0 || rowSealed[r.Row] != rowAlts[r.Row] {
+		if !slices.Contains(rows, r.Row) || rowAlts[r.Row] == 0 || rowSealed[r.Row] != rowAlts[r.Row] {
 			continue
 		}
 		for j := range r.Obligations {
@@ -933,6 +976,15 @@ func ParseCSharpG1Ledger(data []byte, src CSharpG1Sources) (CSharpG1Ledger, erro
 	return checkCSharpG1Ledger(data, want)
 }
 
+// ParseCSharpG1LedgerR2 is ParseCSharpG1Ledger for ledger r2.
+func ParseCSharpG1LedgerR2(data []byte, src CSharpG1Sources) (CSharpG1Ledger, error) {
+	want, err := DeriveCSharpG1LedgerR2(src)
+	if err != nil {
+		return CSharpG1Ledger{}, err
+	}
+	return checkCSharpG1Ledger(data, want)
+}
+
 func checkCSharpG1Ledger(data []byte, want CSharpG1Ledger) (CSharpG1Ledger, error) {
 	var x CSharpG1Ledger
 	if len(data) > csharpG1MaxBytes {
@@ -941,7 +993,7 @@ func checkCSharpG1Ledger(data []byte, want CSharpG1Ledger) (CSharpG1Ledger, erro
 	if err := jsonv2.Unmarshal(data, &x, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return x, fail(KindInvalidInput, "G1_LEDGER_JSON", CSharpG1LedgerPath, err)
 	}
-	if x.Schema != CSharpG1LedgerSchema || x.Basis == "" {
+	if x.Schema != want.Schema || x.Basis == "" {
 		return x, g1Fault("G1_LEDGER_SCHEMA")
 	}
 	if !g1Same(x.Inputs, want.Inputs) {

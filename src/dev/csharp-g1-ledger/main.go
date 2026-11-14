@@ -2,7 +2,10 @@
 // pinned repository declarations alone. It never runs native code, Roslyn or dotnet, and never
 // reads native output.
 //
-//	go run ./src/dev/csharp-g1-ledger -root . [-write]
+//	go run ./src/dev/csharp-g1-ledger -root . [-r2] [-write]
+//
+// With -r2 it derives src/contracts/csharp-g1-ledger-r2.json (#233 G1-3b) instead, which also reads the expected and executed assets of
+// csharp-B03 and csharp-B04. Ledger r1 is frozen: the tool without -r2 only compares it.
 package main
 
 import (
@@ -17,7 +20,7 @@ import (
 	"github.com/wotjr1649/tree-sitter-grammar-kit/src/kit/queryregistrycore"
 )
 
-func run(root string, write bool) error {
+func run(root string, write, r2 bool) error {
 	read := func(rel string) ([]byte, error) { return os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) }
 	src := kit.CSharpG1Sources{Fixtures: map[string][]byte{}}
 	var err error
@@ -43,7 +46,18 @@ func run(root string, write bool) error {
 	if exe, err := read(kit.CSharpG1ExecutedPathR2); err == nil {
 		src.Executed = exe
 	}
-	l, err := kit.DeriveCSharpG1Ledger(src)
+	derive, parse, outPath := kit.DeriveCSharpG1Ledger, kit.ParseCSharpG1Ledger, kit.CSharpG1LedgerPath
+	if r2 {
+		derive, parse, outPath = kit.DeriveCSharpG1LedgerR2, kit.ParseCSharpG1LedgerR2, kit.CSharpG1LedgerPathR2
+		if src.ExpectedB34, err = read(kit.CSharpG1B34Path); err != nil {
+			return err
+		}
+		// the executed asset of the two rows is optional like the one of the lexical rows: without it nothing is EXECUTED there
+		if exe, err := read(kit.CSharpG1B34ExecutedPath); err == nil {
+			src.ExecutedB34 = exe
+		}
+	}
+	l, err := derive(src)
 	if err != nil {
 		return err
 	}
@@ -51,10 +65,10 @@ func run(root string, write bool) error {
 	if err != nil {
 		return err
 	}
-	if _, err := kit.ParseCSharpG1Ledger(data, src); err != nil {
+	if _, err := parse(data, src); err != nil {
 		return fmt.Errorf("generated ledger does not parse: %w", err)
 	}
-	path := filepath.Join(root, filepath.FromSlash(kit.CSharpG1LedgerPath))
+	path := filepath.Join(root, filepath.FromSlash(outPath))
 	if !write {
 		old, err := os.ReadFile(path)
 		if err != nil || !bytes.Equal(old, data) {
@@ -65,15 +79,16 @@ func run(root string, write bool) error {
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s: %d bytes %+v\n", kit.CSharpG1LedgerPath, len(data), l.Counts)
+	fmt.Printf("wrote %s: %d bytes %+v\n", outPath, len(data), l.Counts)
 	return nil
 }
 
 func main() {
 	root := flag.String("root", ".", "repository root")
 	write := flag.Bool("write", false, "write the ledger instead of comparing")
+	r2 := flag.Bool("r2", false, "derive ledger r2 (with the B03 and B04 assets) instead of r1")
 	flag.Parse()
-	if err := run(*root, *write); err != nil {
+	if err := run(*root, *write, *r2); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

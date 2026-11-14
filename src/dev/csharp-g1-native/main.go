@@ -7,7 +7,7 @@
 // overlay of the registered native-parse-edit operation; the product policy is unchanged) and the
 // build steps keep their 4 GiB / 120 s.
 //
-//	go run ./src/dev/csharp-g1-native -root . -prepared <dir> -cc <compiler> -work <dir> -out <raw.json>
+//	go run ./src/dev/csharp-g1-native -root . -prepared <dir> -cc <compiler> -work <dir> -out <raw.json> [-set b01b02|b34]
 package main
 
 import (
@@ -97,7 +97,7 @@ func build(ctx context.Context, root, prepared, cc, work string) (*native.Build,
 	return b, id, err
 }
 
-func run(root, prepared, cc, work, out string) error {
+func run(root, prepared, cc, work, out, set string) error {
 	for _, p := range []string{root, prepared, cc, work, out} {
 		if !filepath.IsAbs(p) {
 			return fmt.Errorf("absolute paths required: %s", p)
@@ -111,24 +111,41 @@ func run(root, prepared, cc, work, out string) error {
 	if err != nil {
 		return err
 	}
-	expData, err := read(root, kit.CSharpG1ExpectedPathR2)
-	if err != nil {
-		return err
-	}
-	exp, err := kit.DecodeCSharpG1Expected(expData)
-	if err != nil {
-		return err
-	}
-	ledger, err := kit.DeriveCSharpG1Ledger(src)
-	if err != nil {
-		return err
+	var ids []string
+	switch set {
+	case "b01b02":
+		expData, err := read(root, kit.CSharpG1ExpectedPathR2)
+		if err != nil {
+			return err
+		}
+		exp, err := kit.DecodeCSharpG1Expected(expData)
+		if err != nil {
+			return err
+		}
+		ledger, err := kit.DeriveCSharpG1Ledger(src)
+		if err != nil {
+			return err
+		}
+		ids = kit.CSharpG1NativeSourceIDs(ledger, exp)
+	case "b34":
+		expData, err := read(root, kit.CSharpG1B34Path)
+		if err != nil {
+			return err
+		}
+		exp, err := kit.DecodeCSharpG1B34(expData)
+		if err != nil {
+			return err
+		}
+		ids = kit.CSharpG1B34NativeSourceIDs(exp)
+	default:
+		return fmt.Errorf("unknown -set %q", set)
 	}
 	byID := map[string]kit.G1RoslynCaseSource{}
 	for _, s := range all {
 		byID[s.ID] = s
 	}
 	var todo []kit.G1RoslynCaseSource
-	for _, id := range kit.CSharpG1NativeSourceIDs(ledger, exp) {
+	for _, id := range ids {
 		s, ok := byID[id]
 		if !ok {
 			return fmt.Errorf("source %s is not a ledger source", id)
@@ -247,8 +264,9 @@ func main() {
 	cc := flag.String("cc", "", "C compiler (absolute)")
 	work := flag.String("work", "", "build work directory (absolute, existing)")
 	out := flag.String("out", "", "raw observation to write (absolute, must not exist)")
+	set := flag.String("set", "b01b02", "sources to parse: b01b02 (the r2 expected asset and the ledger links) or b34 (the witness sources of the B03/B04 expected asset)")
 	flag.Parse()
-	if err := run(*root, *prepared, *cc, *work, *out); err != nil {
+	if err := run(*root, *prepared, *cc, *work, *out, *set); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

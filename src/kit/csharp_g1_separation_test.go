@@ -87,6 +87,8 @@ var g1SepClass = map[string]string{
 	"csharp_g1_kindmap_r3.go":      "derivation",
 	"csharp_g1_executed.go":        "comparison",
 	"csharp_g1_native.go":          "comparison",
+	// the native comparison of the B03 and B04 expectations (G1-3b): reads the raw native observation and the sealed expected asset
+	"csharp_g1_b34_executed.go": "comparison",
 	// the approval of the bundle: it reads the tracked assets as bytes and names them by path; it derives and compares nothing.
 	"csharp_g1_approval.go": "neutral",
 }
@@ -156,7 +158,7 @@ var g1SepRoots = []string{
 	"DeriveCSharpG1Audit76", "ParseCSharpG1Audit76", "DecodeCSharpG1Audit76", "MarshalCSharpG1Audit76", "CheckG1Audit76Grounds", "CheckG1GroundList",
 	"G1Audit76View", "G1TypeAudit76View", "G1GroundPin", "G1GroundPinSource", "G1Audit76GroundPins", "G1TypeAudit76GroundPins",
 	"DeriveCSharpG1TypeAudit76", "ParseCSharpG1TypeAudit76", "DecodeCSharpG1TypeAudit76", "MarshalCSharpG1TypeAudit76", "CheckG1TypeAudit76Grounds", "G1AuditStrataWithTypes",
-	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger",
+	"ParseCSharpG1RoslynObservedR3", "DeriveCSharpG1Ledger", "ParseCSharpG1Ledger", "MarshalCSharpG1Ledger", "DeriveCSharpG1LedgerR2", "ParseCSharpG1LedgerR2",
 	"ClassifyCSharpG1", "G1ClassifyView",
 	"DeriveCSharpG1B34", "ParseCSharpG1B34", "DecodeCSharpG1B34", "CheckCSharpG1B34", "MarshalCSharpG1B34",
 	"DeriveCSharpG1KindMapR3", "ParseCSharpG1KindMapR3", "MarshalCSharpG1KindMapR3",
