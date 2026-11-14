@@ -277,9 +277,21 @@ Declaration의 인접 level owner 탐색과 locator frontier는 별도 checked p
 
 Huge numeric depth는 level 반복 전에 거부하며, frontier가 여러 경로로 증가해도 다음 복제·정렬·출력 전에 예약하므로 선행 단계의 여유로 초과 작업을 숨기지 않는다. 초기 capture/index 예약은 match grouping과 key 수집도 덮는다. Sort 항은 실제 comparator 횟수의 보수 상한이며 원소별 비교는 node/item 정수 비교다.
 
-TSQL dynamic SQL은 위 기본 예약에 work와 logical 각각 `128n² + 64(E+1)A + 64EWS`를 더한다. `E`는 `exec` capture 수, `W`는 `errwith` capture 수, `S`는 source bytes, `A`는 source 안의 유효 capture span 길이 합이다. 고정 개수의 match pair index/정렬·반복 child/known-miss 탐색, exec별 text 검사, exec×errwith의 반복 공백 gap/정규식 span 검사를 덮는다. 문자열 decode와 variable 결과도 포함한다. 각 곱은 overflow 검사 후 별도로 청구하며 아직 실행하지 않은 query의 예산을 소급 청구하지 않는다. 다른 route의 dynamic SQL은 기존 보수적인 `64n²(n+S+M+1)` / `1024n(n+S+M+1)` 식을 유지한다.
+TSQL dynamic SQL은 위 기본 예약에 work와 logical 각각 `128n² + 64(E+1)A + 64EWS`를 더한다. `E`는 `exec` capture 수, `W`는 `errwith` capture 수, `S`는 source bytes, `A`는 source 안의 유효 capture span 길이 합이다. 고정 개수의 match pair index/정렬·반복 child/known-miss 탐색, exec별 text 검사, exec×errwith의 반복 공백 gap/정규식 span 검사를 덮는다. 문자열 decode와 variable 결과도 포함한다. 각 곱은 overflow 검사 후 별도로 청구하며 아직 실행하지 않은 query의 예산을 소급 청구하지 않는다. C#과 TSQL 이외의 dynamic SQL(현재 fact pack에는 없다)은 기존 보수적인 `64n²(n+S+M+1)` / `1024n(n+S+M+1)` 식을 유지한다.
 
-Test-only overlay로 실제 loop/comparator 방문, hash/span 입력 bytes와 구체화한 capture·결과 payload를 별도로 관찰한다. PostgreSQL/TSQL 실제 owned 입력과 많은 capture·긴 문자열·큰 XML 및 반복 declaration frontier에서 각 query의 `계상 ≥ 실제`를 확인한다. 이 logical payload 검사는 process 전체 할당이나 heap/RSS peak의 실측이 아니다.
+C# dynamic SQL(#438)은 위 기본 예약에 아래 세 항을 순서대로 별도 청구한다. 이전 식 `64n²(n+S+M+1)`은 파생의 실제 연산(`n log n`)보다 capture 수에 대해 훨씬 빨리 커서 n이 25 안팎(source 1 KB 안팎)만 넘어도 한 shard가 pass work 한도를 단독으로 넘었다. `A`는 `oc.arg` capture 수, `L`은 `ini.left`와 `ma.name` capture 수, `Q`는 `qn.name`·`aq.name`·`gn.name` capture 수, `Z`는 type이 `identifier`이거나 이름이 `bin.op`·`ini.left`·`ma.name`인 capture 중 유효한 span(`0 ≤ start ≤ end`) 길이의 최댓값이다. 각 곱은 overflow 검사 후 청구한다. 한도와 fact 의미는 바꾸지 않는다.
+
+| C# 항 | work | logical |
+|---|---:|---:|
+| 정렬 pass | `64·12·n·(bits.Len64(n)+2)` | `1024·12·n` |
+| type 이름 사슬 | `64·A·(Q+1)` | 0 |
+| span 해석 | `128·2(A+L)(Z+1)` | `64·2(A+L)(Z+1)` |
+
+이 식은 `deriveCSharp`의 상한이다. 한 step(요소 하나를 한 번 건드리는 연산)을 work 64로 세고 text 한 byte의 읽기·쓰기를 work 8로 세는 위 공통 capture 변환 예약의 단위를 그대로 쓴다. **이 표의 logical은 "도출이 만드는 모든 할당의 누적 byte(해제 여부와 무관, 한 번의 peak나 RSS가 아님) + 변환한 capture 크기"의 상한이다.** (1) 정렬 pass: `capIndex.pairs`는 정확히 11회 불리고(lastIdent 3, `bin`, `arg`, `oc`, `oc.a`, `ini.as`·`ma.as`의 left·right 4) 호출마다 match를 두 번 훑고 pair를 만들어 정렬하며 site 정렬이 한 번 더 있다. 11개 호출의 자식 capture 이름은 모두 달라서 정렬 요소 합은 capture 수 이하이고, `pdqsort`의 비교를 요소 수×`bits.Len64`의 3배 이하로 보면 전체 step은 `22n` 스캔 + `2n` 출력 + `6n·bits.Len64(n)` 비교 이하다. 출력은 pair 출력(11개 호출의 자식 capture 수 합 ≤ n)과 site 정렬의 출력(site 수 ≤ A+L ≤ n)을 합쳐 `2n`이다. 합은 `24n + 6n·bits.Len64(n)`이고 식 `12n·(bits.Len64(n)+2)`는 `24n + 12n·bits.Len64(n)`이라 상수항은 정확히 같고 비교 항에 2배 여유가 있다. 식의 값이 모든 n에서 이 합 이상이다. logical은 pair 출력·map 항목·site·결과의 capture당 약 830 B 이하를 덮고 시험이 실측한 누적 할당은 이 항의 약 0.2배 이하다. (2) 사슬: `resolve`는 `(oc.a, oc.arg)` pair마다 한 번 불리고(≤ A) 한 번에 걷는 hop은 아래 guard로 lastIdent 항목 수(≤ Q) 이하다. (3) span 해석: `srcText.span` 호출은 pair마다 사슬 끝 identifier 한 번, site마다 identifier 값 또는 `+` 연산자 한 번, assignment의 left 한 번이라 `2(A+L)` 이하이고 각 호출은 `Z` 이하의 span만 읽는다. 호출 하나의 work는 원본 byte마다 64(읽기 1, 쓰기 최대 3: CP949의 잘못된 byte 하나가 3 byte `U+FFFD`가 된다)에 `csharpIdentifierName`이 디코드한 text(최대 3Z byte)를 읽고 쓰는 byte당 8을 더한 `64 + 8·6 = 112 ≤ 128`이다. 그래서 `128·2(A+L)(Z+1)`은 `64·decoded-bytes + 8·text-bytes`의 상한이다. 호출 하나의 logical은 `srcText.span`과 `csharpIdentifierName`이 원본 byte당 누적 할당하는 byte다. 1 MiB span에서 실측한 최댓값은 CP949 잘못된 byte 32.03(span 16.01 + 이름 정규화 16.01, `strings.Builder` 성장 포함), UTF-16LE 12.6~20.6, UTF-8 1.0~6.0, CP949 정상 text 10~17.5이고 계수 64는 최댓값의 2배다. 유효하지 않은 capture 범위는 `DeriveDynamicSQLChecked`가 도출 전에 거부한다.
+
+C# 형 이름 해석(`resolve`)은 lastIdent 사슬을 반복으로 걷고, hop이 항목 수를 넘으면 그 type을 미해결로 두어 해당 site를 건너뛴다. 서로 다른 노드의 사슬은 항목 수보다 길 수 없으므로 순환이 없는 입력의 hop과 결과는 같다. 조작되거나 저장된 capture 목록에서 노드가 자기 자신 또는 서로를 마지막 identifier로 가리켜도 도출은 스택 overflow(회복 불가 fatal) 없이 끝나고 나머지 site의 fact는 유지된다.
+
+Test-only overlay로 실제 loop/comparator 방문, hash/span 입력 bytes와 구체화한 capture·결과 payload를 별도로 관찰한다. PostgreSQL/TSQL 실제 owned 입력과 많은 capture·긴 문자열·큰 XML 및 반복 declaration frontier에서 각 query의 `계상 ≥ 실제`를 확인한다. 이 logical payload 검사는 process 전체 할당이나 heap/RSS peak의 실측이 아니다. C# 도출의 실제 step은 `factStepHook`(`pair-steps`·`chain-hops`·`decoded-bytes`·`text-bytes`)이 센다. C# 항의 "상한"은 이 hook이 센 step과 `runtime.MemStats.TotalAlloc`의 누적 증가분에 대한 것이다(그 밖의 연산은 위에서 항목별로 묶었다). 정렬 비교 횟수가 map 순회 순서에 따라 달라지므로 이 hook은 원장 하네스가 쓰는 `ordinaryVisitHook`과 분리되어 있고, 시험 전용이며 nil이면 아무것도 하지 않는다.
 
 ## #362 P2-C ordinary eligibility activation boundary
 

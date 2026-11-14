@@ -456,8 +456,10 @@ func indexCaptures(caps []Capture) capIndex {
 // child capture of that match (a pattern can capture several children in one match).
 func (x capIndex) pairs(parent, child string) [][2]Capture {
 	var out [][2]Capture
+	var scans, compares uint64
 	for _, mc := range x.byMatch {
 		var p *Capture
+		scans += uint64(len(mc))
 		for k := range mc {
 			if mc[k].Name == parent {
 				p = &mc[k]
@@ -466,6 +468,7 @@ func (x capIndex) pairs(parent, child string) [][2]Capture {
 		if p == nil {
 			continue
 		}
+		scans += uint64(len(mc))
 		for _, c := range mc {
 			if c.Name == child {
 				out = append(out, [2]Capture{*p, c})
@@ -473,8 +476,10 @@ func (x capIndex) pairs(parent, child string) [][2]Capture {
 		}
 	}
 	slices.SortFunc(out, func(a, b [2]Capture) int {
+		compares++
 		return cmp.Or(cmp.Compare(a[0].Node, b[0].Node), cmp.Compare(a[1].Node, b[1].Node))
 	})
+	factStepObserved("pair-steps", scans+compares+uint64(len(out)))
 	return out
 }
 
@@ -497,6 +502,7 @@ type srcText struct {
 
 func (s srcText) span(start, end uint32) string {
 	b := s.b[start:end]
+	factStepObserved("decoded-bytes", uint64(len(b)))
 	switch s.enc {
 	case EncodingUTF16LE, EncodingUTF16BE:
 		u := make([]uint16, 0, len(b)/2)
@@ -760,6 +766,7 @@ var (
 // C# 6.4.3 compares identifiers after removing @, decoding Unicode escapes,
 // and removing formatting characters. Keep source ranges and variable spelling intact.
 func csharpIdentifierName(s string) string {
+	factStepObserved("text-bytes", 2*uint64(len(s))) // reads s, writes at most as many bytes
 	s = strings.TrimPrefix(s, "@")
 	var name strings.Builder
 	for len(s) > 0 {
@@ -802,16 +809,18 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 			lastIdent[pc[0].Node] = pc[1]
 		}
 	}
-	var resolve func(c Capture) (Capture, bool)
-	resolve = func(c Capture) (Capture, bool) {
-		if c.Type == "identifier" {
-			return c, true
+	// A chain of distinct nodes is shorter than lastIdent; longer means the captures loop, so
+	// the type stays unresolved instead of recursing without end.
+	resolve := func(c Capture) (Capture, bool) {
+		for hops := 0; c.Type != "identifier"; hops++ {
+			n, ok := lastIdent[c.Node]
+			if !ok || hops >= len(lastIdent) {
+				return c, false
+			}
+			factStepObserved("chain-hops", 1)
+			c = n
 		}
-		n, ok := lastIdent[c.Node]
-		if !ok {
-			return c, false
-		}
-		return resolve(n)
+		return c, true
 	}
 	binOp := map[int64]Capture{}
 	for _, pc := range x.pairs("bin", "bin.op") {
@@ -875,7 +884,9 @@ func deriveCSharp(x capIndex, src srcText, out *DynamicSQLFacts) {
 			}
 		}
 	}
-	slices.SortFunc(sites, func(a, b site) int { return cmp.Compare(a.node, b.node) })
+	var compares uint64
+	slices.SortFunc(sites, func(a, b site) int { compares++; return cmp.Compare(a.node, b.node) })
+	factStepObserved("pair-steps", compares+uint64(len(sites)))
 	for _, s := range sites {
 		k, v := kind(s.value)
 		out.Items = append(out.Items, fact("CSHARP_COMMAND", k, s.value, v, true))
