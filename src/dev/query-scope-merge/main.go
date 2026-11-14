@@ -304,6 +304,9 @@ type contracts struct {
 	ordinaryStep bool
 }
 
+// contractsFor is loadContracts; the tests share one parse of the committed contracts.
+var contractsFor = loadContracts
+
 func loadContracts(root string) (contracts, error) {
 	req, err := foldRequest(root)
 	if err != nil {
@@ -434,7 +437,7 @@ func mergeRun(root string, expected kit.RunIdentity, dirs map[string]string, ord
 	if !expectedComplete(expected) {
 		return fail(refuse("QUERY_SCOPE_RUN_EXPECTED"))
 	}
-	c, err := loadContracts(root)
+	c, err := contractsFor(root)
 	if err != nil {
 		return fail(refuse("QUERY_SCOPE_CONTRACT_MISSING"))
 	}

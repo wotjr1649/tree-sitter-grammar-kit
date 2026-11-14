@@ -511,6 +511,7 @@ func sameDerivation(c LargeExpectedFixture, cst LargeCSTDigests, occ LargeOccurr
 // parse time, so Obligations and the page judgments never expand an unbounded count; a per-name
 // count above the total (whose sum could wrap) is refused too.
 func TestLargeExpectedBoundsCountsBeforeExpansion(t *testing.T) {
+	t.Parallel()
 	asset, registry, inventory, fixtures := largeAssets(t)
 	op := NativeOperations()["native-query-large"]
 	edit := func(f func(c *LargeExpectedFixture)) []byte {

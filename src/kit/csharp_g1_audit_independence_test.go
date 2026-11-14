@@ -61,6 +61,7 @@ func g1SepAuditOutside(files map[string]string, roots, allowed []string) ([]stri
 }
 
 func TestCSharpG1AuditsReachOnlyTheirOwnInputs(t *testing.T) {
+	t.Parallel()
 	files := g1SepReadPackage(t)
 	for _, a := range g1SepAudits {
 		got, err := g1SepAuditOutside(files, a.roots, a.allowed)
@@ -122,6 +123,7 @@ func g1SepWith(t *testing.T, files map[string]string, edits map[string][2]string
 // The bypasses of the review (S, S2 and their kin) written into the real files: each must be found by the proof, and the
 // package without them is clean.
 func TestCSharpG1AuditsRejectTheBypassesOfTheReview(t *testing.T) {
+	t.Parallel()
 	files := g1SepReadPackage(t)
 	posFill, typFill := "r.Result, r.Relation = g1a76Compare(*r, alt.Witness, text)", "r.Result, r.Relation = g1t76Compare(*r, alt.TS)"
 	call := func(f, old, stmt string) map[string][2]string {

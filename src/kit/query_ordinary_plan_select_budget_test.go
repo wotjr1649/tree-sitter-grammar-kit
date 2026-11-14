@@ -37,6 +37,7 @@ func ordinaryPlanHeaderMeasureAndChargeForTest(t *testing.T, plan OrdinaryShardP
 }
 
 func TestOrdinaryPlanHeaderReservationTracksVisitedData(t *testing.T) {
+	t.Parallel()
 	v, inventory := ordinaryP0ForPlanTest(t)
 	plan := ordinaryPlanForTest(v, inventory)
 	base := ordinaryPlanHeaderChargeForTest(t, plan)

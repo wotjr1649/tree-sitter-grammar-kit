@@ -121,6 +121,7 @@ func TestOrdinaryReplayRejectsRecordAndMemberDamage(t *testing.T) {
 }
 
 func TestOrdinaryReplayInheritsExistingLedger(t *testing.T) {
+	t.Parallel()
 	req, _, _ := ordinarySQLCapacityRequest(t, "json")
 	b := ordinaryTestBudget(t)
 	b.r.eligibility = b
@@ -133,6 +134,7 @@ func TestOrdinaryReplayInheritsExistingLedger(t *testing.T) {
 }
 
 func TestOrdinaryReplayCannotRaiseInheritedLogicalCap(t *testing.T) {
+	t.Parallel()
 	req, _, _ := ordinarySQLCapacityRequest(t, "json")
 	b := ordinaryTestBudget(t)
 	b.r.eligibility = b

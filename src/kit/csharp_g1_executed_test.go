@@ -255,6 +255,7 @@ func g1xProvenance() G1NativeProvenance {
 }
 
 func TestCSharpG1ExecutedSyntheticComparison(t *testing.T) {
+	t.Parallel()
 	a := g1xLoad(t)
 	in := a.in
 	in.Raw = g1xSynthetic(t, a, nil)
@@ -477,6 +478,7 @@ func TestCSharpG1ExecutedJudge(t *testing.T) {
 // ---- tampering ------------------------------------------------------------------------------------
 
 func TestCSharpG1ExecutedRejectsTampering(t *testing.T) {
+	t.Parallel()
 	a := g1xLoad(t)
 	clone := func() CSharpG1Executed {
 		var x CSharpG1Executed
@@ -750,6 +752,7 @@ func TestCSharpG1NativeSourceIDs(t *testing.T) {
 // checks and data, the kind map, the observation and the ledger derivation) names the native observation
 // or the executed asset, and nothing in the comparison can produce an expectation or a kind map.
 func TestCSharpG1NativeNeverFeedsExpectations(t *testing.T) {
+	t.Parallel()
 	sealedSide := []string{"csharp_g1_spec.go", "csharp_g1_expected.go", "csharp_g1_expected_rules.go", "csharp_g1_expected_checks.go", "csharp_g1_expected_data.go", "csharp_g1_kindmap.go", "csharp_g1_roslyn.go"}
 	comparisonSide := regexp.MustCompile(`^(G1Exec|g1x|G1Native|g1n[A-Z]|CSharpG1Executed|CSharpG1NativeRaw|DeriveCSharpG1Executed|ParseCSharpG1Executed|MarshalCSharpG1Executed|DecodeCSharpG1Executed|DecodeCSharpG1NativeRaw|MarshalCSharpG1NativeRaw|CSharpG1NativeSourceIDs)`)
 	for _, name := range sealedSide {

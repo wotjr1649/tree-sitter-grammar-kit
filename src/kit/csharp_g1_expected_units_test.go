@@ -109,6 +109,7 @@ func TestCSharpG1ExpectedRequiresDispositions(t *testing.T) {
 // TestCSharpG1LedgerSealedSetIsChecked: the ledger takes its SEALED statuses from the expected asset
 // and refuses an asset that names an alternative the ledger lacks or one of another row.
 func TestCSharpG1LedgerSealedSetIsChecked(t *testing.T) {
+	t.Parallel()
 	a := g1ExpLoad(t)
 	src := a.in.Src
 	src.Executed = nil

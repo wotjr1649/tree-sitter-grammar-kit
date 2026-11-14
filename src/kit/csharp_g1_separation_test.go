@@ -764,6 +764,7 @@ func TestCSharpG1SeparationClosureCatchesBypasses(t *testing.T) {
 // expectation, and the executed asset and the sealed expectation that sit in the ledger sources change
 // nothing. A hidden file or a native result that fed the derivation would show here.
 func TestCSharpG1ExpectedFollowsItsInputsOnly(t *testing.T) {
+	t.Parallel()
 	a := g1ExpLoad(t)
 	in := a.in
 	in.Sealed = a.x.Metamorphic.Results()

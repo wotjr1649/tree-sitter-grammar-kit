@@ -17,41 +17,42 @@ type g1Assets struct {
 	err   error
 }
 
-var g1Once sync.Once
-var g1Loaded g1Assets
+// g1LoadOnce reads the tracked asset and its pinned sources and derives the ledger once (parallel tests share it).
+var g1LoadOnce = sync.OnceValue(func() g1Assets {
+	var loaded g1Assets
+	read := func(name string) []byte {
+		data, err := os.ReadFile(name)
+		if err != nil && loaded.err == nil {
+			loaded.err = err
+		}
+		return data
+	}
+	a := &loaded
+	a.asset = read("../contracts/csharp-g1-ledger-r1.json")
+	a.src = CSharpG1Sources{
+		Inventory:    read("../contracts/qualification-c1.json"),
+		Alternatives: read("../contracts/feature-alternatives.json"),
+		FactMapping:  read("../contracts/fact-mapping.json"),
+		Fixtures:     map[string][]byte{},
+		Expected:     read("../contracts/csharp-g1-expected-b01b02-r2.json"),
+		Executed:     read("../contracts/csharp-g1-executed-b01b02-r2.json"),
+	}
+	for _, dir := range csharpG1Fixtures {
+		a.src.Fixtures[dir] = read("../testdata/native/" + dir + "/csharp.json")
+	}
+	if a.err == nil {
+		a.want, a.err = DeriveCSharpG1Ledger(a.src)
+	}
+	return loaded
+})
 
-// g1Load reads the tracked asset and its pinned sources and derives the ledger once.
 func g1Load(t *testing.T) g1Assets {
 	t.Helper()
-	g1Once.Do(func() {
-		read := func(name string) []byte {
-			data, err := os.ReadFile(name)
-			if err != nil && g1Loaded.err == nil {
-				g1Loaded.err = err
-			}
-			return data
-		}
-		a := &g1Loaded
-		a.asset = read("../contracts/csharp-g1-ledger-r1.json")
-		a.src = CSharpG1Sources{
-			Inventory:    read("../contracts/qualification-c1.json"),
-			Alternatives: read("../contracts/feature-alternatives.json"),
-			FactMapping:  read("../contracts/fact-mapping.json"),
-			Fixtures:     map[string][]byte{},
-			Expected:     read("../contracts/csharp-g1-expected-b01b02-r2.json"),
-			Executed:     read("../contracts/csharp-g1-executed-b01b02-r2.json"),
-		}
-		for _, dir := range csharpG1Fixtures {
-			a.src.Fixtures[dir] = read("../testdata/native/" + dir + "/csharp.json")
-		}
-		if a.err == nil {
-			a.want, a.err = DeriveCSharpG1Ledger(a.src)
-		}
-	})
-	if g1Loaded.err != nil {
-		t.Fatal(g1Loaded.err)
+	a := g1LoadOnce()
+	if a.err != nil {
+		t.Fatal(a.err)
 	}
-	return g1Loaded
+	return a
 }
 
 func g1Code(err error) string {
@@ -63,6 +64,7 @@ func g1Code(err error) string {
 }
 
 func TestCSharpG1LedgerSealedAndBound(t *testing.T) {
+	t.Parallel()
 	a := g1Load(t)
 	if len(a.asset) != 714461 || digestHex(a.asset) != "5b42627b3bb47cbb656f37541292b3a1d313f808401e85b3e438bf9c39acee77" {
 		t.Fatalf("sealed ledger changed: %d/%s", len(a.asset), digestHex(a.asset))
@@ -310,6 +312,7 @@ func g1First(l *CSharpG1Ledger, status string) int {
 }
 
 func TestCSharpG1LedgerForgeries(t *testing.T) {
+	t.Parallel()
 	a := g1Load(t)
 	clone := func() CSharpG1Ledger {
 		var c CSharpG1Ledger
@@ -408,6 +411,7 @@ func TestCSharpG1LedgerForgeries(t *testing.T) {
 // The ledger is derived from the pinned sources: a changed source is a different pin, and a source
 // whose declarations disagree is refused before any ledger is judged.
 func TestCSharpG1LedgerSourceTampering(t *testing.T) {
+	t.Parallel()
 	a := g1Load(t)
 	with := func(edit func(*CSharpG1Sources)) CSharpG1Sources {
 		s := a.src
@@ -444,6 +448,7 @@ func TestCSharpG1LedgerSourceTampering(t *testing.T) {
 // alternatives. The ledger derivation is given hand-made assets (it reads only IDs, rows, statuses and
 // reason codes), so each rule has a counterexample.
 func TestCSharpG1LedgerStateRules(t *testing.T) {
+	t.Parallel()
 	a := g1Load(t)
 	base := a.src
 	base.Expected, base.Executed = nil, nil

@@ -23,6 +23,7 @@ func semanticPinsRequest(t *testing.T, eligibility QueryReferenceEligibilityRequ
 }
 
 func TestSemanticPinsForwarding(t *testing.T) {
+	t.Parallel()
 	f := newEligibilityFixture(t)
 	eligibility := eligibilityPinRequest(t, f.request(), eligibilityPinMaterials(t))
 	req := semanticPinsRequest(t, eligibility)
