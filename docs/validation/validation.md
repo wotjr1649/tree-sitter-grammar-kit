@@ -1027,7 +1027,7 @@ Kit helper는 고정된 과거 static build/control closure와 새 current nativ
 
 `query_dynamic_sql_fact_paths_test.go`는 실제 `adjudicateOrdinaryFact`와 공개 `JudgeSvcInline`을 호출하고 첫 adapter step 시점에 이미 기록된 fact 예약만 보존한다. 이후 expected/producer decode 비용을 fact 예약에 더하지 않는다. 같은 입력의 base 예약과 work·logical·known-miss-sort가 정확히 같아야 하며, 실제 step의 work와 누적 `TotalAlloc`보다 작으면 실패한다. C#의 기존 charge assertion을 통해 추적 fixture·무작위 shape·자기/상호 순환·anti-pdqsort·다중 argument·긴 span 반례를 두 추가 경로에 공유한다. TSQL의 기존 측정 helper도 반복 EXEC·known miss·넓은 match·무작위 목록·긴 ERROR parent·EXEC 없는 최종 정렬을 adjudication에 공유한다. 두 추가 경로의 encoding 계약은 UTF-8이므로 다른 encoding의 원본 bytes도 UTF-8 계약으로 별도 측정하며, encoded base 경로의 기존 검증은 유지한다. SVC에는 TSQL adapter가 없다.
 
-`TestDynamicSQLFactPathsCSharp`·`TestDynamicSQLFactPathsTSQL`은 경로의 사전 예약과 측정 비용을 직접 확인한다. `TestDynamicSQLFactPathsRejectBeforeDerivation`은 C# 두 경로와 TSQL adjudication에서 한도를 넘는 예약 뒤 adapter가 호출되지 않는지 확인한다. `TestDynamicSQLFactPathsSvcAccumulatesViews`는 한 view가 통과해도 두 view의 합이 한도를 넘으면 같은 원장에서 거절하는지 확인한다. `TestDynamicSQLFactPathLedgerChanges`는 추적 `csharp-command.cs`, `tsql-dynamic.sql`의 선택 statement와 등록 SVC fragment의 전후 fact 원장 및 실제 판정 성공을 기록한다. Adjudication 측정 fixture는 expected payload를 생략하고 도출 뒤 `ORDINARY_EXPECTED_FACT_SHAPE`로 거부되는 것을 고정하여 회계만 검사한다. derivation 출력에서 독립 expected를 만들지 않으며 end-to-end VERIFIED를 주장하지 않는다. SVC 대표 fragment는 실제 VERIFIED 판정도 확인한다. 대표 입력이 새 예약 때문에 한도를 넘으면 한도를 올리지 않고 결정 사항으로 보고한다.
+`TestDynamicSQLFactPathsCSharp`·`TestDynamicSQLFactPathsTSQL`은 경로의 사전 예약과 측정 비용을 직접 확인한다. `TestDynamicSQLFactPathsRejectBeforeDerivation`은 C# 두 경로와 TSQL adjudication에서 한도를 넘는 예약 뒤 adapter가 호출되지 않는지 확인한다. `TestDynamicSQLFactPathsSvcAccumulatesViews`는 한 view가 통과해도 두 view의 합이 한도를 넘으면 같은 원장에서 거절하는지 확인한다. `TestDynamicSQLFactPathsSvcAccumulatesSteps`는 같은 case의 step 0(한 view)과 step 1(두 view)이 각각은 VERIFIED여도 한 호출에서 합산하면 거절되는지, `TestDynamicSQLFactPathsSvcAccumulatesQueries`는 서로 다른 ID의 두 query가 각각은 VERIFIED여도 같은 step에서 합산하면 거절되는지 확인한다. 두 경우 모두 전체 호출이 `ELIGIBILITY_WORK_LIMIT`과 nil judgments를 반환해야 한다. Step마다 또는 query마다 새 원장을 여는 production overlay는 각각 해당 시험의 누적 assertion에서 실패해야 한다. `TestDynamicSQLFactPathLedgerChanges`는 추적 `csharp-command.cs`, `tsql-dynamic.sql`의 선택 statement와 등록 SVC fragment의 전후 fact 원장 및 실제 판정 성공을 기록한다. Adjudication 측정 fixture는 expected payload를 생략하고 도출 뒤 `ORDINARY_EXPECTED_FACT_SHAPE`로 거부되는 것을 고정하여 회계만 검사한다. derivation 출력에서 독립 expected를 만들지 않으며 end-to-end VERIFIED를 주장하지 않는다. SVC 대표 fragment는 실제 VERIFIED 판정도 확인한다. 대표 입력이 새 예약 때문에 한도를 넘으면 한도를 올리지 않고 결정 사항으로 보고한다.
 
 음성 대조는 위 새 시험 모두와 공유된 기존 적대 시험을 현재 test source 그대로 두고, 변경한 세 production 파일만 `a369bcc`의 원본으로 교체하는 Go overlay로 실행한다. 컴파일 오류가 아니라 해당 사전 예약·도출 차단·view 누적 assertion에서 실패해야 한다. 실제 native/reference 실행이나 전량 route admission은 이 offline 검증의 결과로 세지 않는다. `go test`·`go vet`·native 실행은 작업 지시의 공용 `hardjob.lock`을 원자적으로 획득한 뒤 직렬로 실행하고, 자기 획득분만 해제하며 각 실행은 15분 안으로 제한한다.
 
@@ -1039,4 +1039,14 @@ Kit helper는 고정된 과거 static build/control closure와 새 current nativ
 | adjudication TSQL `tsql-dynamic.sql`의 선택 `sp_executesql` statement, captures 13 | 14 → 55,300 | 3,328 → 147,732 |
 | SVC 등록 inline fragment | 0 → 20,053 | 0 → 66,824 |
 
-새 시험 5개는 `a369bcc` production overlay에서 전부 실제 assertion으로 실패했다. 새 코드의 `./src/kit/... -count=1`은 wall 113.60초로 통과했다(Windows CI 상한 420초). 이 측정은 실제 owned-native 전체 pass·reference 실행·전량 admission의 증명이 아니다.
+등록 SVC 전체 DERIVED 30 step을 각 fragment의 파서 재구성 capture로 측정한 합계는 work 529,192·logical 1,710,164 B다. 모든 step에 두 view를 가정한 단순 합계는 work 1,058,384(약 1.06M, 32M의 3.31%)·logical 3,420,328 B(1 GiB의 0.32%)다. 이는 실제 native capture 전수 실행이 아니다.
+
+#427 최종 저장 raw capture를 `nativewire.Check`로 검증하고 각 step·role의 dynamic SQL 예약을 다시 합산한 결과, 당시 통과한 dynamic SQL shard 세 개 모두 추가 adjudication 예약을 합쳐도 한도 안에 남았다. 아래 예상 합계는 저장된 전체 pass 원장에 이번 추가 예약만 더한 offline 계산이며, 새 전체 pass나 독립 semantic 근거가 아니다. 다른 route에는 dynamic SQL fact query가 없고 이미 BLOCKED였던 shard를 통과로 세지 않는다. Adjudication은 같은 tuple을 실제로 다시 도출하므로 두 번째 예약을 유지한다.
+
+| route·통과 shard | 추가 work / logical (B) | 예상 전체 work (32M 대비) | 예상 전체 logical (B, 1 GiB 대비) |
+|---|---:|---:|---:|
+| TSQL `alt-tsql-B01-r001` | 1,393,351 / 3,469,900 | 26,811,373 (83.79%) | 750,117,074 (69.86%) |
+| TSQL `alt-tsql-B04-r144` | 44,104 / 138,172 | 10,479,235 (32.75%) | 385,810,443 (35.93%) |
+| C# `issue153-undef-eof` | 2,369 / 13,312 | 7,271,935 (22.72%) | 292,250,316 (27.22%) |
+
+최초 #441 변경의 시험 5개는 `a369bcc` production overlay에서 전부 실제 assertion으로 실패했고, 당시 `./src/kit/... -count=1`은 wall 113.60초로 통과했다. 리뷰 보완 뒤 step별·query별 원장 초기화 overlay도 각각 새 누적 시험의 assertion에서 실패했으며, 보완한 `./src/kit/... -count=1 -timeout=420s` 전체는 wall 124.52초로 통과했다(Windows CI 상한 420초). 이 측정은 실제 owned-native 전체 pass·reference 실행·전량 admission의 증명이 아니다.

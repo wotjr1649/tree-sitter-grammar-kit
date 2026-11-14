@@ -194,6 +194,68 @@ func TestDynamicSQLFactPathsSvcAccumulatesViews(t *testing.T) {
 	}
 }
 
+func TestDynamicSQLFactPathsSvcAccumulatesSteps(t *testing.T) {
+	caps, src := advHugeSpans(EncodingUTF8, "zwsp", 25000, 1)
+	facts, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, caps, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, oFirst := factPathSvc(caps, src, facts, 1)
+	second, oSecond := factPathSvc(caps, src, facts, 2)
+	for _, single := range []struct {
+		x SvcInlineExpected
+		o SvcInlineObserved
+	}{{first, oFirst}, {second, oSecond}} {
+		js, err := JudgeSvcInline(single.x, []SvcInlineObserved{single.o})
+		if err != nil || len(js) != 2*len(single.x.Steps) {
+			t.Fatalf("step %d alone: judgments=%+v err=%v", single.o.Step, js, err)
+		}
+		for _, j := range js[len(js)-2:] {
+			if j.State != "VERIFIED" {
+				t.Fatalf("step %d alone: %+v", single.o.Step, j)
+			}
+		}
+	}
+	// Step 1 needs both views; each whole step fits, but their combined three views do not.
+	first.Steps = append(first.Steps, second.Steps[1])
+	js, err := JudgeSvcInline(first, []SvcInlineObserved{oFirst, oSecond})
+	if e, ok := err.(*Error); !ok || e.Code != "ELIGIBILITY_WORK_LIMIT" || js != nil {
+		t.Fatalf("second step should exceed shared limit: judgments=%+v err=%v", js, err)
+	}
+}
+
+func TestDynamicSQLFactPathsSvcAccumulatesQueries(t *testing.T) {
+	caps, src := advHugeSpans(EncodingUTF8, "zwsp", 50000, 1)
+	facts, err := DeriveDynamicSQLChecked("csharp", EncodingUTF8, caps, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, o := factPathSvc(caps, src, facts, 1)
+	first := x.Steps[0].Queries[0]
+	second := first
+	second.ID += "-second"
+	o.Views[0].Queries[second.ID] = o.Views[0].Queries[first.ID]
+	for _, q := range []SvcInlineQuery{first, second} {
+		x.Steps[0].Queries = []SvcInlineQuery{q}
+		x.Queries = []SvcInlineQueryPin{{ID: q.ID, Patterns: q.Patterns}}
+		js, err := JudgeSvcInline(x, []SvcInlineObserved{o})
+		if err != nil || len(js) != 2 {
+			t.Fatalf("query %s alone: judgments=%+v err=%v", q.ID, js, err)
+		}
+		for _, j := range js {
+			if j.State != "VERIFIED" {
+				t.Fatalf("query %s alone: %+v", q.ID, j)
+			}
+		}
+	}
+	x.Steps[0].Queries = []SvcInlineQuery{first, second}
+	x.Queries = []SvcInlineQueryPin{{ID: first.ID, Patterns: first.Patterns}, {ID: second.ID, Patterns: second.Patterns}}
+	js, err := JudgeSvcInline(x, []SvcInlineObserved{o})
+	if e, ok := err.(*Error); !ok || e.Code != "ELIGIBILITY_WORK_LIMIT" || js != nil {
+		t.Fatalf("second query should exceed shared limit: judgments=%+v err=%v", js, err)
+	}
+}
+
 func TestDynamicSQLFactPathLedgerChanges(t *testing.T) {
 	g := csharpFixtureGen(t)
 	sql, err := os.ReadFile("../testdata/native/dynamic-sql/tsql-dynamic.sql")
