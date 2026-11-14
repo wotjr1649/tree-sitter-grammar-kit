@@ -316,6 +316,42 @@ func (g *guard) readFile(r *run, name string, before fs.FileInfo, hardMax, total
 	return g.readFileContent(r, name, before, hardMax, totalLimit, keep, true, false, sinks...)
 }
 
+// readStreamFixedLogical covers the per-read structures a streamed read allocates besides its chunk
+// buffer: the open file, two FileInfo values, the hash state and the digest text (all O(path)).
+const readStreamFixedLogical = 4096
+
+// guardedReadLogical is the logical allocation reserved before a guarded read of size bytes:
+// size+1 per pass (read buffer, hash, every sink, encoding detector, retained copy).
+//
+// A read that keeps nothing (keep == 0), has no encoding detector and feeds only streamed-chain sinks
+// (a sha256 state) never holds more than its chunk buffer: readFileContent allocates min(readChunk,size+1)
+// bytes once and, only when the file grew while open (then it fails with SOURCE_CHANGED), one more readChunk.
+// The hash and the chain sink allocate nothing per byte. So for such a read the size-proportional part is
+// bounded by 2*readChunk, which `passes*(readChunk+1)` (passes >= 2) covers with the fixed part added, and
+// the reserve is capped there. Every other read keeps the full per-pass reserve.
+func guardedReadLogical(name string, size, keep uint64, detect bool, sinks []sink) (uint64, *Error) {
+	passes := uint64(2 + len(sinks))
+	if detect {
+		passes++
+	}
+	if keep > 0 {
+		passes++
+	}
+	logical, e := eligibilityProduct(name, size+1, passes)
+	if e != nil {
+		return 0, e
+	}
+	if keep != 0 || detect {
+		return logical, nil
+	}
+	for _, s := range sinks {
+		if _, ok := s.(*streamedChain); !ok {
+			return logical, nil
+		}
+	}
+	return min(logical, passes*(readChunk+1)+readStreamFixedLogical), nil
+}
+
 func (g *guard) readFileContent(r *run, name string, before fs.FileInfo, hardMax, totalLimit, keep uint64, detect, seal bool, sinks ...sink) (*readStats, *Error) {
 	if e := r.check(); e != nil {
 		return nil, e
@@ -334,14 +370,7 @@ func (g *guard) readFileContent(r *run, name string, before fs.FileInfo, hardMax
 		}
 	}
 	if r.eligibility != nil {
-		passes := uint64(2 + len(sinks))
-		if detect {
-			passes++
-		}
-		if keep > 0 {
-			passes++
-		}
-		logical, e := eligibilityProduct(name, uint64(before.Size())+1, passes)
+		logical, e := guardedReadLogical(name, uint64(before.Size()), keep, detect, sinks)
 		if e != nil {
 			return nil, e
 		}

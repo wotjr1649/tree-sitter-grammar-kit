@@ -3,6 +3,7 @@ package kit
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"os"
 	"sync"
 	"testing"
@@ -93,6 +94,9 @@ func ordinaryInstallLedgerHooks(t *testing.T, path string) {
 		record := map[string]any{"kind": "stage", "stage": stage, "logical": b.logical, "work": b.work, "read": b.r.totalRead,
 			"remaining_logical": b.logicalCap() - b.logical, "remaining_work": eligibilityWorkLimit - b.work,
 			"remaining_read": ReplayOperations()["evidence-replay"].TotalBytes - b.r.totalRead}
+		if os.Getenv("TSGK_MEASURE_STAGE_LABELS") != "" && stage != "exit" {
+			record["labels"] = maps.Clone(labels[b]) // cumulative per-label charges; consecutive records give the per-stage breakdown
+		}
 		if stage == "exit" {
 			record["labels"] = labels[b]
 			record["decodes"] = decodes

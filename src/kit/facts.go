@@ -449,6 +449,7 @@ func indexCaptures(caps []Capture) capIndex {
 		x.byMatch[c.Match] = append(x.byMatch[c.Match], c)
 		x.byName[c.Name] = append(x.byName[c.Name], c)
 	}
+	factStepObserved("index-steps", 2*uint64(len(caps)))
 	return x
 }
 
@@ -456,8 +457,10 @@ func indexCaptures(caps []Capture) capIndex {
 // child capture of that match (a pattern can capture several children in one match).
 func (x capIndex) pairs(parent, child string) [][2]Capture {
 	var out [][2]Capture
+	var scans, compares uint64
 	for _, mc := range x.byMatch {
 		var p *Capture
+		scans += uint64(len(mc))
 		for k := range mc {
 			if mc[k].Name == parent {
 				p = &mc[k]
@@ -466,6 +469,7 @@ func (x capIndex) pairs(parent, child string) [][2]Capture {
 		if p == nil {
 			continue
 		}
+		scans += uint64(len(mc))
 		for _, c := range mc {
 			if c.Name == child {
 				out = append(out, [2]Capture{*p, c})
@@ -473,8 +477,10 @@ func (x capIndex) pairs(parent, child string) [][2]Capture {
 		}
 	}
 	slices.SortFunc(out, func(a, b [2]Capture) int {
+		compares++
 		return cmp.Or(cmp.Compare(a[0].Node, b[0].Node), cmp.Compare(a[1].Node, b[1].Node))
 	})
+	factStepObserved("pair-steps", scans+compares+uint64(len(out)))
 	return out
 }
 
@@ -497,6 +503,7 @@ type srcText struct {
 
 func (s srcText) span(start, end uint32) string {
 	b := s.b[start:end]
+	factStepObserved("decoded-bytes", uint64(len(b)))
 	switch s.enc {
 	case EncodingUTF16LE, EncodingUTF16BE:
 		u := make([]uint16, 0, len(b)/2)
@@ -577,51 +584,65 @@ func fact(construct, kind string, arg Capture, variable *string, heuristic bool)
 }
 
 func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
+	// steps counts the loop iterations of this function outside capIndex.pairs and srcText.span
+	// (those report their own); a loop that may stop early is counted at its full length. It is
+	// reported once, to the test-only factStepHook.
+	var steps uint64
+	defer func() { factStepObserved("tsql-steps", steps) }()
+	pairs := func(parent, child string) [][2]Capture {
+		out := x.pairs(parent, child)
+		steps += uint64(len(out)) // the consumer loop over the pairs
+		return out
+	}
 	children := x.childrenOf("exec.parent", "exec.child")
 	for k, list := range children { // comments (extra, not ERROR) are never construct parts
+		steps += 2 * uint64(len(list)) // childrenOf's consumer loop and this filter pass
 		children[k] = slices.DeleteFunc(list, func(c Capture) bool { return c.Extra && !c.IsError })
 	}
 	procs := map[int64]Capture{}
-	for _, pc := range x.pairs("proc.exec", "proc") {
+	for _, pc := range pairs("proc.exec", "proc") {
 		procs[pc[0].Node] = pc[1]
 	}
 	refName, refSchema := map[int64]Capture{}, map[int64]Capture{}
-	for _, pc := range x.pairs("ref", "ref.name") {
+	for _, pc := range pairs("ref", "ref.name") {
 		refName[pc[0].Node] = pc[1]
 	}
-	for _, pc := range x.pairs("ref.s", "ref.schema") {
+	for _, pc := range pairs("ref.s", "ref.schema") {
 		refSchema[pc[0].Node] = pc[1]
 	}
 	argName, argValue := map[int64]Capture{}, map[int64]Capture{}
-	for _, pc := range x.pairs("arg", "arg.name") {
+	for _, pc := range pairs("arg", "arg.name") {
 		argName[pc[0].Node] = pc[1]
 	}
-	for _, pc := range x.pairs("arg.v", "arg.value") {
+	for _, pc := range pairs("arg.v", "arg.value") {
 		argValue[pc[0].Node] = pc[1]
 	}
 	binOp := map[int64]Capture{}
-	for _, pc := range x.pairs("bin", "bin.op") {
+	for _, pc := range pairs("bin", "bin.op") {
 		binOp[pc[0].Node] = pc[1]
 	}
 	fieldName := map[int64]Capture{}
-	for _, pc := range x.pairs("field", "field.name") {
+	for _, pc := range pairs("field", "field.name") {
 		fieldName[pc[0].Node] = pc[1]
 	}
 	semis := x.byName["semi"]
 	var execs []Capture
 	execs = append(execs, x.byName["exec"]...)
-	slices.SortFunc(execs, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+	steps += uint64(len(execs))
+	slices.SortFunc(execs, func(a, b Capture) int { steps++; return cmp.Compare(a.Node, b.Node) })
 	// a known miss runs from the EXEC to the end of the first ";" after it that starts
 	// before the next EXEC; without one it is the EXEC alone
 	semiEnd := func(e Capture) uint32 {
 		limit := uint32(len(src.b))
 		for _, n := range execs {
+			steps++
 			if n.StartByte > e.StartByte {
 				limit = n.StartByte
 				break
 			}
 		}
 		for _, s := range semis {
+			steps++
 			if s.StartByte >= e.EndByte && s.StartByte < limit {
 				return s.EndByte
 			}
@@ -665,9 +686,11 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 		return "other", nil
 	}
 	for _, e := range execs {
+		steps++
 		// WITH RESULT SETS: the statement's options are an ERROR right after the EXEC (only
 		// whitespace between) whose text begins WITH RESULT SETS
 		withMiss := slices.ContainsFunc(withErrors, func(w Capture) bool {
+			steps++
 			return w.StartByte >= e.EndByte && strings.TrimSpace(src.span(e.EndByte, w.StartByte)) == "" && withResultSets.MatchString(text(src, w))
 		})
 		construct := ""
@@ -684,12 +707,14 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 			}
 			construct = "SP_EXECUTESQL"
 			var args []Capture
+			steps += uint64(len(children[e.Node]))
 			for _, c := range children[e.Node] {
 				if c.Type == "exec_argument" {
 					args = append(args, c)
 				}
 			}
 			for i, a := range args {
+				steps++
 				n, named := argName[a.Node]
 				if (i == 0 && !named) || (named && strings.EqualFold(text(src, n), "@stmt")) {
 					if v, ok := argValue[a.Node]; ok {
@@ -700,6 +725,7 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 			}
 		} else {
 			kids := children[e.Node]
+			steps += 3 * uint64(len(kids)) // the "(" search, the argument scan and the AT search
 			open := slices.IndexFunc(kids, func(c Capture) bool { return c.Type == "(" && !c.Named })
 			if open < 0 {
 				continue
@@ -732,11 +758,14 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 	// Recovery can split a batch without GO. Track its top-level children across
 	// those splits; only a parsed GO resets firstness, never GO text inside a node.
 	context := slices.Clone(x.byName["batch.child"])
-	slices.SortFunc(context, func(a, b Capture) int { return cmp.Compare(a.Node, b.Node) })
+	steps += uint64(len(context))
+	slices.SortFunc(context, func(a, b Capture) int { steps++; return cmp.Compare(a.Node, b.Node) })
 	at, first := 0, true
 	firstCall := regexp.MustCompile(`(?i)^(?:(?:\[sys\]|"sys"|sys)\s*\.\s*)?(?:\[sp_executesql\]|"sp_executesql"|sp_executesql)\b`)
-	for _, pc := range x.pairs("err", "err.first") {
+	for _, pc := range pairs("err", "err.first") {
+		steps++
 		for at < len(context) && context[at].Node < pc[0].Node {
+			steps++
 			c := context[at]
 			at++
 			if c.Type == "batch" || (c.Extra && !c.IsError) || !c.Named {
@@ -748,7 +777,7 @@ func deriveTSQL(x capIndex, src srcText, out *DynamicSQLFacts) {
 			out.KnownMisses = append(out.KnownMisses, KnownMiss{MissBatchFirstNoExe, pc[0].StartByte, pc[0].EndByte})
 		}
 	}
-	slices.SortFunc(out.KnownMisses, func(a, b KnownMiss) int { return cmp.Compare(a.StartByte, b.StartByte) })
+	slices.SortFunc(out.KnownMisses, func(a, b KnownMiss) int { steps++; return cmp.Compare(a.StartByte, b.StartByte) })
 }
 
 // CommandAPITypes and CommandAPIProperties are csharp-command-api-r1.

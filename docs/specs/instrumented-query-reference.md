@@ -663,7 +663,7 @@ P2는 공개 `VerifyOrdinaryQuerySemantics` 한 pass가 한도(`OrdinaryPlanLimi
 
 이 상수가 설명하는 범위는 측정 표본(route당 case 5~6개와 k=2~5 묶음)과 held-out 26개다. 이 표본의 plan 시점 UpperBound는 과소 예측 0건이었고 Windows에서 약 650 pass, 단독 초과 shard 약 153개(상한)·45개(중앙)로 추산한다(Linux 미측정). 증명이 아니므로 규칙 6의 재분할이 마지막 방어선이다. C#은 비-tsql dynamic SQL 어댑터의 work가 `facts.dynamic_sql` capture 수의 3차식(`64·n²·(n+byte+text+1)`, `query_ordinary_base.go`)이어서 위 선형 모델이 하한만 준다.
 
-**하네스 환경.** `TestOrdinaryMeasurePass`는 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_CASES`(쉼표 목록), `TestOrdinaryMeasurePack`은 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_PACKS`, `TestOrdinaryMeasureCaseTable`은 `TSGK_MEASURE_OUT`, `TestOrdinaryMeasureShape`는 `TSGK_MEASURE_SHAPE_ROOT`가 있어야 실행한다. `TSGK_MEASURE_WITNESS`는 source-only witness export에서 임의 case의 source를 읽고, `TSGK_MEASURE_SKIP_PHASE_C=1`은 독립 producer 재실행(phase C)을 생략한다. 실행은 `hardjob.lock`을 잡고 HARD Job 안에서 한다.
+**하네스 환경.** `TestOrdinaryMeasurePass`는 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_CASES`(쉼표 목록), `TestOrdinaryMeasurePack`은 `TSGK_MEASURE_OUT`·`TSGK_MEASURE_ROUTE`·`TSGK_MEASURE_PACKS`, `TestOrdinaryMeasureCaseTable`은 `TSGK_MEASURE_OUT`, `TestOrdinaryMeasureShape`는 `TSGK_MEASURE_SHAPE_ROOT`가 있어야 실행한다. `TSGK_MEASURE_WITNESS`는 source-only witness export에서 임의 case의 source를 읽고, `TSGK_MEASURE_SKIP_PHASE_C=1`은 독립 producer 재실행(phase C)을 생략하고, `TSGK_MEASURE_STAGE_LABELS=1`은 단계 기록마다 그 시점까지의 label별 누적 charge를 더해 연속한 두 기록의 차로 단계별 label 분해를 얻게 한다(#427). 실행은 `hardjob.lock`을 잡고 HARD Job 안에서 한다.
 
 ### #362 shard commitment와 선택 plan 검증 (P2-C)
 

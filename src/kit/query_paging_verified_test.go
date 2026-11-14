@@ -79,6 +79,16 @@ func TestVerifiedPagingCharge(t *testing.T) {
 	}
 	source, d, data := verifiedDriverSource(t, s, true)
 	gross := 2 * (d.Logical.Bytes + uint64(len(d.Parts)))
+	// A part read through the streamed chain keeps nothing, so guardedReadLogical caps its reserve (#427)
+	// instead of the 3(size+1) the retained baseline read of the same part pays.
+	var streamSaved uint64
+	for _, p := range d.Parts {
+		capped, e := guardedReadLogical(p.Path, p.Bytes, 0, false, []sink{&streamedChain{}})
+		if e != nil {
+			t.Fatal(e)
+		}
+		streamSaved += 3*(p.Bytes+1) - capped
+	}
 	// Every new allocation/key reservation is charged in addition to the guarded read.
 	overhead := uint64(2048 + 512 + 1024 + 2*(len(data)+1))
 	overhead += 1024
@@ -88,8 +98,8 @@ func TestVerifiedPagingCharge(t *testing.T) {
 		overhead += uint64(512+len("oracle/"+p.Path)) + uint64(256+len("oracle/"+p.Path)+len("driver-paged-part")+len(p.SHA256))
 		overhead += uint64(128 + len("oracle/"+p.Path) + len("driver-paged-part") + len(p.SHA256))
 	}
-	if optimized.LogicalBytes != baseline.LogicalBytes-gross+overhead || optimized.BytesRead != baseline.BytesRead || s.b.logicalCap() != eligibilityLogicalLimit {
-		t.Fatalf("core charge: before=%d after=%d gross=%d E=%d reads=%d/%d cap=%d", baseline.LogicalBytes, optimized.LogicalBytes, gross, overhead, baseline.BytesRead, optimized.BytesRead, s.b.logicalCap())
+	if optimized.LogicalBytes != baseline.LogicalBytes-gross+overhead-streamSaved || optimized.BytesRead != baseline.BytesRead || s.b.logicalCap() != eligibilityLogicalLimit {
+		t.Fatalf("core charge: before=%d after=%d gross=%d E=%d streamed=%d reads=%d/%d cap=%d", baseline.LogicalBytes, optimized.LogicalBytes, gross, overhead, streamSaved, baseline.BytesRead, optimized.BytesRead, s.b.logicalCap())
 	}
 	b := semanticTestBudget(t)
 	_, ok, e := b.semanticPagedBinary(data, "D", "driver", d.Logical.Path, "capture/driver", func(p ReplayMember) ([]byte, bool, *Error) {
